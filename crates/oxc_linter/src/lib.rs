@@ -357,15 +357,8 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let react_compiler_options = rules.iter().find_map(|(rule, _)| match rule {
-            RuleEnum::ReactGating(gating) => gating.react_compiler_options(),
-            _ => None,
-        });
-
-        let mut ctx_host = Rc::new(
-            ContextHost::new(path, context_sub_hosts, allocator, self.options, config)
-                .with_react_compiler_options(react_compiler_options),
-        );
+        let mut ctx_host =
+            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

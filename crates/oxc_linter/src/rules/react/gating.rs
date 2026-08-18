@@ -1,14 +1,74 @@
-use oxc_react_compiler::{
-    DynamicGatingConfig, ErrorCategory, GatingConfig as CompilerGatingConfig,
-};
+use oxc_ast::{AstKind, ast::FunctionBody};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::Span;
+use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{react_compiler_plugin_options, run_react_compiler_rule, should_run_react_compiler},
 };
+
+const GATING_GUIDANCE: &str = "React Compiler could not continue with this configuration. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/gating";
+
+fn invalid_gating_directive(directive: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Dynamic gating directive is not a valid JavaScript identifier")
+        .with_help(format!("Found '{directive}'"))
+        .with_label(span.primary_label("Invalid gating condition"))
+        .with_note(GATING_GUIDANCE)
+}
+
+fn multiple_gating_directives<'a>(
+    directives: impl ExactSizeIterator<Item = (&'a str, Span)>,
+) -> OxcDiagnostic {
+    let mut names = Vec::with_capacity(directives.len());
+    let mut labels = Vec::with_capacity(directives.len());
+    for (index, (name, span)) in directives.enumerate() {
+        names.push(name);
+        labels.push(if index == 0 {
+            span.primary_label("First gating directive")
+        } else {
+            span.label("Additional gating directive")
+        });
+    }
+
+    OxcDiagnostic::warn("Multiple dynamic gating directives found")
+        .with_help(format!("Expected a single directive but found [{}]", names.join(", ")))
+        .with_labels(labels)
+        .with_note(GATING_GUIDANCE)
+}
+
+fn parse_dynamic_gating_directive(value: &str) -> Option<&str> {
+    let condition = value.strip_prefix("use memo if(")?.strip_suffix(')')?;
+    (!condition.contains(')')).then_some(condition)
+}
+
+fn is_valid_identifier(value: &str) -> bool {
+    is_identifier_name(value) && !is_reserved_keyword(value)
+}
+
+fn check_dynamic_gating_directives(body: &FunctionBody, ctx: &LintContext) {
+    let mut matches = Vec::new();
+    let mut invalid = false;
+
+    for directive in &body.directives {
+        let value = directive.expression.value.as_str();
+        let Some(condition) = parse_dynamic_gating_directive(value) else { continue };
+
+        if is_valid_identifier(condition) {
+            matches.push((value, directive.expression.span));
+        } else {
+            invalid = true;
+            ctx.diagnostic(invalid_gating_directive(value, directive.expression.span));
+        }
+    }
+
+    if !invalid && matches.len() > 1 {
+        ctx.diagnostic(multiple_gating_directives(matches.into_iter()));
+    }
+}
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct Gating(Box<GatingOptions>);
@@ -41,20 +101,6 @@ pub struct DynamicGatingImport {
     source: String,
 }
 
-impl Gating {
-    pub(crate) fn react_compiler_options(&self) -> Option<oxc_react_compiler::PluginOptions> {
-        let dynamic_gating = self.0.dynamic_gating.as_ref()?;
-        let mut options = react_compiler_plugin_options();
-        options.gating = self.0.gating.as_ref().map(|gating| CompilerGatingConfig {
-            source: gating.source.clone(),
-            import_specifier_name: gating.import_specifier_name.clone(),
-        });
-        options.dynamic_gating =
-            Some(DynamicGatingConfig { source: dynamic_gating.source.clone() });
-        Some(options)
-    }
-}
-
 declare_react_compiler_lint!(
     /// ### What it does
     ///
@@ -80,12 +126,13 @@ impl Rule for Gating {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        run_react_compiler_rule(ctx, ErrorCategory::Gating);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::FunctionBody(body) = node.kind() else { return };
+        check_dynamic_gating_directives(body, ctx);
     }
 
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        self.0.dynamic_gating.is_some() && should_run_react_compiler(ctx)
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        self.0.dynamic_gating.is_some()
     }
 }
 
@@ -114,6 +161,16 @@ function Component() {
 ",
             None,
         ),
+        // An empty option object does not enable dynamic gating validation.
+        (
+            "
+const Component = () => {
+  'use memo if(true)';
+  return <div />;
+};
+",
+            Some(json!([{}])),
+        ),
         (
             "
 function Component() {
@@ -124,7 +181,12 @@ function Component() {
             Some(json!([{ "dynamicGating": { "source": "feature-flags" } }])),
         ),
         (
-            "function Component() { return <div />; }",
+            "
+function Component() {
+  'use memo if(true)';
+  return <div />;
+}
+",
             Some(json!([{
                 "gating": {
                     "source": "feature-flags",
@@ -142,6 +204,16 @@ function Component() {
   'use memo if(true)';
   return <div />;
 }
+",
+            Some(json!([{ "dynamicGating": { "source": "feature-flags" } }])),
+        ),
+        // Arrow function bodies use the same directive validation path.
+        (
+            "
+const Component = () => {
+  'use memo if(true)';
+  return <div />;
+};
 ",
             Some(json!([{ "dynamicGating": { "source": "feature-flags" } }])),
         ),
@@ -178,6 +250,12 @@ fn test_configuration() {
     assert!(
         Gating::from_configuration(json!([{
             "gating": { "importSpecifierName": "isCompilerEnabled" }
+        }]))
+        .is_err()
+    );
+    assert!(
+        Gating::from_configuration(json!([{
+            "dynamicGating": {}
         }]))
         .is_err()
     );

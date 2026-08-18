@@ -10,7 +10,6 @@ use std::{
 use oxc_allocator::{Allocator, ArenaBox};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
-use oxc_react_compiler::PluginOptions;
 use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
@@ -191,8 +190,6 @@ pub struct ContextHost<'a> {
     /// every rule in the React Compiler family (`react/hooks`, `react/refs`, …).
     /// Stays empty until the first such rule runs on this file.
     pub(super) react_compiler_results: OnceCell<ReactCompilerResults>,
-    /// Rule-specific options included in the shared React Compiler run.
-    react_compiler_options: Option<Box<PluginOptions>>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -233,19 +230,8 @@ impl<'a> ContextHost<'a> {
             frameworks: options.framework_hints,
             with_ignore_fixes: options.with_ignore_fixes,
             react_compiler_results: OnceCell::new(),
-            react_compiler_options: None,
         }
         .sniff_for_frameworks()
-    }
-
-    /// Include rule-specific options in the single shared React Compiler run.
-    pub(crate) fn with_react_compiler_options(mut self, options: Option<PluginOptions>) -> Self {
-        self.react_compiler_options = options.map(Box::new);
-        self
-    }
-
-    pub(crate) fn react_compiler_options(&self) -> Option<&PluginOptions> {
-        self.react_compiler_options.as_deref()
     }
 
     /// The current [`ContextSubHost`]

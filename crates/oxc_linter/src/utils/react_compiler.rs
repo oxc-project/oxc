@@ -16,11 +16,11 @@ use crate::{
 /// Mirrors `COMPILER_OPTIONS` in `eslint-plugin-react-hooks`'s
 /// `src/shared/RunReactCompiler.ts`.
 ///
-/// The options are a common superset shared by every rule in the family.
-/// Rule-specific options that affect compiler analysis are added before the
-/// shared per-file run is initialized, keeping the single run valid for every
-/// enabled rule.
-pub fn react_compiler_plugin_options() -> PluginOptions {
+/// The options are a fixed superset shared by every rule in the family: which
+/// rules are enabled only routes categories to reporters, it never changes
+/// what the compiler analyzes. That keeps the single shared run valid for any
+/// combination of enabled rules.
+fn react_compiler_plugin_options() -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
         // Oxlint does not parse Flow files.
@@ -65,6 +65,13 @@ pub struct ReactCompilerResults {
     diagnostics: Vec<LintDiagnostic>,
 }
 
+impl ReactCompilerResults {
+    /// Findings for one category, in the order the compiler reported them.
+    fn diagnostics_for(&self, category: ErrorCategory) -> impl Iterator<Item = &LintDiagnostic> {
+        self.diagnostics.iter().filter(move |d| d.category == category)
+    }
+}
+
 /// `LintResult::fatal` is deliberately ignored: Oxlint uses fixed compiler
 /// options, and category routing reports diagnostics independently of transform
 /// fatality.
@@ -75,7 +82,7 @@ pub fn build_react_compiler_results(host: &ContextHost) -> ReactCompilerResults 
         program,
         semantic,
         host.allocator(),
-        host.react_compiler_options().cloned().unwrap_or_else(react_compiler_plugin_options),
+        react_compiler_plugin_options(),
     );
 
     ReactCompilerResults { diagnostics: result.diagnostics }
@@ -93,15 +100,7 @@ pub fn should_run_react_compiler(ctx: &ContextHost) -> bool {
 /// Shared `run_once` body for the React Compiler family of rules: report the
 /// shared run's findings for `category` under the calling rule's name.
 pub fn run_react_compiler_rule(ctx: &LintContext, category: ErrorCategory) {
-    report_react_compiler_diagnostics(ctx, category, &ctx.react_compiler_results().diagnostics);
-}
-
-fn report_react_compiler_diagnostics(
-    ctx: &LintContext,
-    category: ErrorCategory,
-    diagnostics: &[LintDiagnostic],
-) {
-    for finding in diagnostics.iter().filter(|diagnostic| diagnostic.category == category) {
+    for finding in ctx.react_compiler_results().diagnostics_for(category) {
         let mut diagnostic = finding.diagnostic.clone();
 
         // `LintContext` supplies the per-category Oxlint rule code and primary
