@@ -26,6 +26,12 @@ fn main() -> CliRunResult {
                 None,
                 #[cfg(feature = "napi")]
                 None,
+                #[cfg(all(
+                    feature = "napi",
+                    target_pointer_width = "64",
+                    target_endian = "little"
+                ))]
+                None,
             )
             .await;
             CliRunResult::LintSucceeded

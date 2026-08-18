@@ -249,9 +249,56 @@ pub enum CliConfigLoadError {
     NestedConfigs(Vec<ConfigLoadError>),
 }
 
+/// Root and nested `oxlintrc` files after parse, before JS plugins are loaded.
+pub struct ParsedConfigs {
+    pub root: Oxlintrc,
+    pub nested: Vec<Oxlintrc>,
+}
+
+/// Whether this config, its overrides, or anything it `extends` lists `jsPlugins`.
+pub fn oxlintrc_declares_js_plugins(config: &Oxlintrc) -> bool {
+    oxlintrc_declares_js_plugins_inner(config, &mut FxHashSet::default())
+}
+
+fn oxlintrc_declares_js_plugins_inner(config: &Oxlintrc, seen: &mut FxHashSet<PathBuf>) -> bool {
+    if config.external_plugins.as_ref().is_some_and(|plugins| !plugins.is_empty()) {
+        return true;
+    }
+    if config.overrides.iter().any(|r#override| {
+        r#override.external_plugins.as_ref().is_some_and(|plugins| !plugins.is_empty())
+    }) {
+        return true;
+    }
+    for extended in &config.extends_configs {
+        if oxlintrc_declares_js_plugins_inner(extended, seen) {
+            return true;
+        }
+    }
+    let root = config.path.parent();
+    for path in &config.extends {
+        if !path.to_string_lossy().contains('.') {
+            continue;
+        }
+        let resolved = match root {
+            Some(dir) => dir.join(path),
+            None => path.clone(),
+        };
+        let canonical = resolved.canonicalize().unwrap_or(resolved);
+        if !seen.insert(canonical.clone()) {
+            continue;
+        }
+        if let Ok(extended) = Oxlintrc::from_file(&canonical)
+            && oxlintrc_declares_js_plugins_inner(&extended, seen)
+        {
+            return true;
+        }
+    }
+    false
+}
+
 /// Collection of the root configuration and all successfully loaded nested configs.
 ///
-/// Returned by [`ConfigLoader::load_root_and_nested`].
+/// Returned by [`ConfigLoader::build_root_and_nested`].
 pub struct LoadedConfigs {
     /// The root `oxlintrc` configuration used as the base for all linting.
     pub root: Oxlintrc,
@@ -349,14 +396,11 @@ impl<'a> ConfigLoader<'a> {
         }
     }
 
-    /// Load multiple configs, returning successes and errors separately
-    ///
-    /// This allows callers to decide how to handle errors (fail fast vs continue)
-    fn load_many(
-        &mut self,
+    /// Parse discovered config files without loading JS plugins.
+    pub(crate) fn parse_discovered(
+        &self,
         paths: impl IntoIterator<Item = DiscoveredConfigFile>,
-        root_config_dir: Option<&Path>,
-    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
+    ) -> (Vec<Oxlintrc>, Vec<ConfigLoadError>) {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
 
@@ -413,7 +457,17 @@ impl<'a> ConfigLoader<'a> {
             }
         }
 
+        (configs, errors)
+    }
+
+    /// Load JS plugins and build already-parsed configs.
+    pub(crate) fn build_oxlintrcs(
+        &mut self,
+        configs: Vec<Oxlintrc>,
+        root_config_dir: Option<&Path>,
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
         let mut built_configs = Vec::new();
+        let mut errors = Vec::new();
 
         for config in configs {
             let path = config.path.clone();
@@ -492,6 +546,20 @@ impl<'a> ConfigLoader<'a> {
             }
         }
 
+        (built_configs, errors)
+    }
+
+    /// Load multiple configs, returning successes and errors separately
+    ///
+    /// This allows callers to decide how to handle errors (fail fast vs continue)
+    fn load_many(
+        &mut self,
+        paths: impl IntoIterator<Item = DiscoveredConfigFile>,
+        root_config_dir: Option<&Path>,
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
+        let (configs, mut errors) = self.parse_discovered(paths);
+        let (built_configs, build_errors) = self.build_oxlintrcs(configs, root_config_dir);
+        errors.extend(build_errors);
         (built_configs, errors)
     }
 
@@ -631,49 +699,61 @@ impl<'a> ConfigLoader<'a> {
     /// # Errors
     /// Returns [`CliConfigLoadError::RootConfig`] if the root config fails to load,
     /// or [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load.
-    pub fn load_root_and_nested(
-        &mut self,
+    pub fn parse_root_and_nested(
+        &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
         paths: &[Arc<OsStr>],
         search_for_nested_configs: bool,
-    ) -> Result<LoadedConfigs, CliConfigLoadError> {
-        let oxlintrc = match self.load_root_config(cwd, config_path) {
+    ) -> Result<ParsedConfigs, CliConfigLoadError> {
+        let root = match self.load_root_config(cwd, config_path) {
             Ok(config) => config,
             Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
         };
 
         if !search_for_nested_configs {
+            return Ok(ParsedConfigs { root, nested: Vec::new() });
+        }
+
+        let config_paths: Vec<_> =
+            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
+        let (discovered_configs, conflicts) =
+            discover_configs_in_ancestors(&config_paths, &root.path);
+
+        let (nested, mut errors) = self.parse_discovered(discovered_configs);
+        for conflict in conflicts {
+            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+        }
+        if !errors.is_empty() {
+            return Err(CliConfigLoadError::NestedConfigs(errors));
+        }
+
+        Ok(ParsedConfigs { root, nested })
+    }
+
+    pub fn build_root_and_nested(
+        &mut self,
+        parsed: ParsedConfigs,
+        cwd: &Path,
+    ) -> Result<LoadedConfigs, CliConfigLoadError> {
+        if parsed.nested.is_empty() {
             return Ok(LoadedConfigs {
-                root: oxlintrc,
+                root: parsed.root,
                 nested: FxHashMap::default(),
                 nested_ignore_patterns: vec![],
             });
         }
 
-        // Discover config files by walking up from each file's directory
-        let config_paths: Vec<_> =
-            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let (discovered_configs, conflicts) =
-            discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
+        let (configs, errors) = self.build_oxlintrcs(parsed.nested, Some(cwd));
 
-        let (configs, mut errors) = self.load_many(discovered_configs, Some(cwd));
-
-        // Propagate upstream conflicts as load errors alongside parse/build failures.
-        for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
-        }
-
-        // Fail if any config failed (CLI requires all configs to be valid)
         if !errors.is_empty() {
             return Err(CliConfigLoadError::NestedConfigs(errors));
         }
 
-        // Convert loaded configs to nested config format
         let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
         let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
 
-        Ok(LoadedConfigs { root: oxlintrc, nested: nested_configs, nested_ignore_patterns })
+        Ok(LoadedConfigs { root: parsed.root, nested: nested_configs, nested_ignore_patterns })
     }
 }
 

@@ -287,7 +287,7 @@ fn require_field<T: FromNapiValue>(options: &Object, field: &'static str) -> nap
 /// 6. `create_workspace`: Create a workspace.
 /// 7. `destroy_workspace`: Destroy a workspace.
 /// 8. `load_js_configs`: Load JavaScript config files.
-/// 9. `start_js_workers`: Start `K` JS plugin worker isolates when a JS plugin is first loaded.
+/// 9. `start_js_workers`: Start `K` JS plugin worker isolates after config parse if `jsPlugins` is set.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -360,7 +360,7 @@ async fn lint_impl(
     command.handle_threads();
 
     // JS plugins are only supported on 64-bit little-endian platforms at present.
-    // Workers are not started here: `load_plugin` starts them only if a JS plugin is configured.
+    // Workers are not started here: config parse peeks `jsPlugins` first, then swaps this host.
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     let (external_linter, js_config_loader) = {
         let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
@@ -371,7 +371,6 @@ async fn lint_impl(
             forget_buffer,
             create_workspace,
             destroy_workspace,
-            start_js_workers,
         );
         (Some(external_linter), js_config_loader)
     };
@@ -392,7 +391,13 @@ async fn lint_impl(
 
     // If --lsp flag is set, run the language server
     if command.lsp {
-        crate::lsp::run_lsp(external_linter, js_config_loader).await;
+        crate::lsp::run_lsp(
+            external_linter,
+            js_config_loader,
+            #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+            Some(start_js_workers),
+        )
+        .await;
         return CliRunResult::LintSucceeded;
     }
 
@@ -404,6 +409,10 @@ async fn lint_impl(
     #[cfg(feature = "napi")]
     {
         cli_runner = cli_runner.with_config_loader(js_config_loader);
+    }
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    {
+        cli_runner = cli_runner.with_start_js_workers(start_js_workers);
     }
 
     cli_runner.run(&mut stdout)

@@ -1,7 +1,7 @@
 use std::{
     future::Future,
     sync::{
-        Arc, Mutex, PoisonError,
+        Arc,
         atomic::{AtomicBool, Ordering},
         mpsc::{Receiver, RecvTimeoutError, channel},
     },
@@ -33,10 +33,7 @@ use crate::{
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 ///
-/// Starts on the main JS thread. The first [`ExternalLinter::load_plugin`] call probes `K` and,
-/// when `K > 1`, starts worker isolates and switches over so `createOnce` runs only on those
-/// isolates. Runs that never load a JS plugin never probe a fixed-size pool and never construct a
-/// `Worker`.
+/// This is the single-isolate (`K == 1`) path, where JS plugins run on the main JS thread.
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
@@ -44,9 +41,8 @@ pub fn create_external_linter(
     forget_buffer: JsForgetBufferCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
-    start_js_workers: JsStartWorkersCb,
 ) -> ExternalLinter {
-    let main = ExternalLinter::new(
+    ExternalLinter::new(
         Box::new([wrap_load_plugin(load_plugin, None)]),
         Box::new([wrap_setup_rule_configs(setup_rule_configs, None)]),
         // No worker to die: JS plugins run on the main JS thread here.
@@ -54,175 +50,48 @@ pub fn create_external_linter(
         Box::new([wrap_forget_buffer(forget_buffer, None)]),
         Box::new([wrap_create_workspace(create_workspace, None)]),
         Box::new([wrap_destroy_workspace(destroy_workspace, None)]),
-    );
-
-    let runtime = Arc::new(DeferredJsPlugins {
-        main,
-        start_js_workers,
-        state: Mutex::new(DeferredJsPluginState {
-            host: JsPluginHost::Main,
-            started: false,
-            workspaces: Vec::new(),
-        }),
-    });
-
-    let load_plugin: ExternalLinterLoadPluginCb = {
-        let runtime = Arc::clone(&runtime);
-        Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
-            runtime.ensure_workers()?;
-            runtime.host().load_plugin(plugin_url, plugin_name, plugin_name_is_alias, workspace_uri)
-        }))
-    };
-    let setup_rule_configs: ExternalLinterSetupRuleConfigsCb = {
-        let runtime = Arc::clone(&runtime);
-        Arc::new(Box::new(move |options_json| runtime.host().setup_rule_configs(options_json)))
-    };
-    let lint_file: ExternalLinterLintFileCb = {
-        let runtime = Arc::clone(&runtime);
-        Arc::new(Box::new(
-            move |file_path,
-                  rule_ids,
-                  options_ids,
-                  settings_json,
-                  globals_json,
-                  workspace_uri,
-                  allocator| {
-                runtime.host().lint_file(
-                    file_path,
-                    rule_ids,
-                    options_ids,
-                    settings_json,
-                    globals_json,
-                    workspace_uri,
-                    allocator,
-                )
-            },
-        ))
-    };
-    let forget_buffer: ExternalLinterForgetBufferCb = {
-        let runtime = Arc::clone(&runtime);
-        Arc::new(Box::new(move |buffer_id| runtime.host().forget_buffer(buffer_id)))
-    };
-    let create_workspace: ExternalLinterCreateWorkspaceCb = {
-        let runtime = Arc::clone(&runtime);
-        Arc::new(Box::new(move |workspace_uri| runtime.create_workspace(workspace_uri)))
-    };
-    let destroy_workspace: ExternalLinterDestroyWorkspaceCb = {
-        let runtime = Arc::clone(&runtime);
-        Arc::new(Box::new(move |workspace_uri| runtime.destroy_workspace(workspace_uri)))
-    };
-
-    ExternalLinter::new(
-        Box::new([load_plugin]),
-        Box::new([setup_rule_configs]),
-        Box::new([lint_file]),
-        Box::new([forget_buffer]),
-        Box::new([create_workspace]),
-        Box::new([destroy_workspace]),
     )
 }
 
-enum JsPluginHost {
-    Main,
-    Workers(ExternalLinter),
-}
-
-struct DeferredJsPluginState {
-    host: JsPluginHost,
-    started: bool,
-    workspaces: Vec<String>,
-}
-
-struct DeferredJsPlugins {
-    main: ExternalLinter,
-    start_js_workers: JsStartWorkersCb,
-    state: Mutex<DeferredJsPluginState>,
-}
-
-impl DeferredJsPlugins {
-    fn host(&self) -> ExternalLinter {
-        let state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
-        match &state.host {
-            JsPluginHost::Main => self.main.clone(),
-            JsPluginHost::Workers(workers) => workers.clone(),
-        }
+/// Probe `K` and start worker isolates when a JS plugin is actually configured.
+///
+/// `Ok(None)` means stay on the main-thread host (`K <= 1`). `Ok(Some(linter))` replaces that
+/// host so `create_workspace` / `load_plugin` run only on the workers. A start failure is `Err`;
+/// the caller should keep the main-thread host.
+///
+/// # Errors
+///
+/// Returns an error if `startJsWorkers` fails or a worker does not register.
+pub fn try_start_js_plugin_workers(
+    start_js_workers: &JsStartWorkersCb,
+) -> Result<Option<ExternalLinter>, String> {
+    // Probe how many fixed-size arenas this machine will actually give us, then drop the probe
+    // pool. On Windows that count can be lower than the thread count, and `K` must match the
+    // real pools, otherwise a buffer would route to a worker that never sees it.
+    let k = AllocatorPool::new_fixed_size(rayon::current_num_threads()).len();
+    set_js_plugin_worker_count(u32::try_from(k).unwrap_or(u32::MAX));
+    if k <= 1 {
+        return Ok(None);
     }
 
-    /// Probe `K` and start workers on the first JS plugin load.
-    ///
-    /// `create_workspace` can run before this (CLI/LSP set up a workspace, then parse config).
-    /// Any URIs recorded there are replayed on the workers so they match the main isolate.
-    ///
-    /// A boot failure falls back to the main JS thread instead of aborting the run.
-    fn ensure_workers(&self) -> Result<(), String> {
-        let mut state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
-        if state.started {
-            return Ok(());
-        }
-
-        // Probe how many fixed-size arenas this machine will actually give us, then drop the probe
-        // pool. On Windows that count can be lower than the thread count, and `K` must match the
-        // real pools, otherwise a buffer would route to a worker that never sees it.
-        let k = AllocatorPool::new_fixed_size(rayon::current_num_threads()).len();
-        set_js_plugin_worker_count(u32::try_from(k).unwrap_or(u32::MAX));
-
-        if k <= 1 {
-            state.started = true;
-            return Ok(());
-        }
-
-        let start_result = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(start_workers(&self.start_js_workers, k))
-        });
-
-        match start_result {
-            Ok(()) => match create_external_linter_from_workers(k) {
-                Ok(workers) => {
-                    let replay = state
-                        .workspaces
-                        .iter()
-                        .try_for_each(|uri| workers.create_workspace(uri.clone()));
-                    state.host = JsPluginHost::Workers(workers);
-                    state.started = true;
-                    replay
-                }
-                Err(err) => {
-                    fallback_to_main_thread(&mut state, &err);
-                    Ok(())
-                }
-            },
-            Err(err) => {
-                fallback_to_main_thread(&mut state, &err);
-                Ok(())
-            }
-        }
-    }
-
-    fn create_workspace(&self, workspace_uri: String) -> Result<(), String> {
-        let mut state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
-        if !state.workspaces.iter().any(|uri| uri == &workspace_uri) {
-            state.workspaces.push(workspace_uri.clone());
-        }
-        match &state.host {
-            JsPluginHost::Main => self.main.create_workspace(workspace_uri),
-            JsPluginHost::Workers(workers) => workers.create_workspace(workspace_uri),
-        }
-    }
-
-    fn destroy_workspace(&self, workspace_uri: String) -> Result<(), String> {
-        let mut state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
-        state.workspaces.retain(|uri| uri != &workspace_uri);
-        match &state.host {
-            JsPluginHost::Main => self.main.destroy_workspace(workspace_uri),
-            JsPluginHost::Workers(workers) => workers.destroy_workspace(workspace_uri),
-        }
+    let start_result = tokio::task::block_in_place(|| {
+        tokio::runtime::Handle::current().block_on(start_workers(start_js_workers, k))
+    });
+    match start_result {
+        Ok(()) => create_external_linter_from_workers(k).map(Some),
+        Err(err) => Err(err),
     }
 }
 
-fn fallback_to_main_thread(state: &mut DeferredJsPluginState, err: &str) {
-    print_startup_fallback(err);
-    set_js_plugin_worker_count(1);
-    state.started = true;
+/// Report that workers failed to start and the run is continuing on the main JS thread.
+///
+/// Goes to stderr rather than stdout so this cannot land in the middle of diagnostics or the
+/// language server protocol.
+#[expect(clippy::print_stderr)]
+pub fn print_startup_fallback(err: &str) {
+    eprintln!(
+        "Failed to start JS plugin workers; running JS plugins on the main thread instead:\n{err}"
+    );
 }
 
 /// Ask JS to start `k` worker isolates, and wait until all of them have registered.
@@ -231,17 +100,6 @@ async fn start_workers(cb: &JsStartWorkersCb, k: usize) -> Result<(), String> {
     let promise =
         cb.call_async(k).await.map_err(|err| format!("`startJsWorkers` threw an error: {err}"))?;
     promise.into_future().await.map_err(|err| format!("`startJsWorkers` failed: {err}"))
-}
-
-/// Report that workers failed to start and the run is continuing on the main JS thread.
-///
-/// Goes to stderr rather than stdout so this cannot land in the middle of diagnostics or the
-/// language server protocol.
-#[expect(clippy::print_stderr)]
-fn print_startup_fallback(err: &str) {
-    eprintln!(
-        "Failed to start JS plugin workers; running JS plugins on the main thread instead:\n{err}"
-    );
 }
 
 /// Create an [`ExternalLinter`] backed by `k` JS plugin worker isolates.

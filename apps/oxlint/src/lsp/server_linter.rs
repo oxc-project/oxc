@@ -32,7 +32,7 @@ use oxc_language_server::{
 use crate::{
     config_loader::{
         ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
-        materialize_default_plugins,
+        materialize_default_plugins, oxlintrc_declares_js_plugins,
     },
     lsp::{
         code_actions::{
@@ -59,18 +59,51 @@ pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
     #[cfg(feature = "napi")]
     js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
+    #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+    start_js_workers: Option<crate::run::JsStartWorkersCb>,
+    #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+    js_plugin_workers: OnceLock<Option<ExternalLinter>>,
 }
 
 impl ServerLinterBuilder {
     pub fn new(
         external_linter: Option<ExternalLinter>,
         #[cfg(feature = "napi")] js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
+        #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+        start_js_workers: Option<crate::run::JsStartWorkersCb>,
     ) -> Self {
         Self {
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader,
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            start_js_workers,
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            js_plugin_workers: OnceLock::new(),
         }
+    }
+
+    fn host_for_plugins(&self, need_js_plugins: bool) -> Option<ExternalLinter> {
+        #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+        if need_js_plugins {
+            return self
+                .js_plugin_workers
+                .get_or_init(|| match &self.start_js_workers {
+                    Some(cb) => match crate::js_plugins::try_start_js_plugin_workers(cb) {
+                        Ok(workers) => workers,
+                        Err(err) => {
+                            crate::js_plugins::print_startup_fallback(&err);
+                            None
+                        }
+                    },
+                    None => None,
+                })
+                .clone()
+                .or_else(|| self.external_linter.clone());
+        } else if let Some(started) = self.js_plugin_workers.get() {
+            return started.clone().or_else(|| self.external_linter.clone());
+        }
+        self.external_linter.clone()
     }
 
     /// Creates a new `ServerLinter` instance based on the provided root URI and options.
@@ -94,21 +127,11 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
-        let mut external_linter = self.external_linter.as_ref();
-        let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
-
-        // Setup JS workspace. This must be done before loading any configs
-        if let Some(external_linter) = external_linter {
-            let res = external_linter.create_workspace(root_uri.as_str().to_string());
-
-            if let Err(err) = res {
-                error!("Failed to setup JS workspace:\n{err}\n");
-            }
-        }
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
         let loader = ConfigLoader::new(
-            external_linter,
+            self.external_linter.as_ref(),
             &mut external_plugin_store,
             &[],
             Some(root_uri.as_str()),
@@ -127,15 +150,52 @@ impl ServerLinterBuilder {
 
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
+        let (nested_raw, nested_errors) = if options.use_nested_configs() {
+            let config_paths = discover_configs_in_tree(&root_path, &oxlintrc.path);
+            loader.parse_discovered(config_paths)
+        } else {
+            (Vec::new(), Vec::new())
+        };
+        for error in nested_errors {
+            if let Some(path) = error.path() {
+                warn!("Skipping config file {}: {:?}", path.display(), error);
+            } else {
+                warn!("Skipping config file: {:?}", error);
+            }
+        }
+
+        let need_js_plugins = oxlintrc_declares_js_plugins(&oxlintrc)
+            || nested_raw.iter().any(oxlintrc_declares_js_plugins);
+        let mut external_linter = self.host_for_plugins(need_js_plugins);
+
+        if let Some(external_linter) = &external_linter {
+            let res = external_linter.create_workspace(root_uri.as_str().to_string());
+            if let Err(err) = res {
+                error!("Failed to setup JS workspace:\n{err}\n");
+            }
+        }
+
+        let mut loader = ConfigLoader::new(
+            external_linter.as_ref(),
+            &mut external_plugin_store,
+            &[],
+            Some(root_uri.as_str()),
+        );
+        #[cfg(feature = "napi")]
+        {
+            loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
+        }
+
         let nested_configs = if options.use_nested_configs() {
-            self.create_nested_configs(
-                &root_path,
-                &oxlintrc.path,
-                &mut external_plugin_store,
-                &mut nested_ignore_patterns,
-                &mut extended_paths,
-                Some(root_uri.as_str()),
-            )
+            let (configs, errors) = loader.build_oxlintrcs(nested_raw, Some(&root_path));
+            for error in errors {
+                if let Some(path) = error.path() {
+                    warn!("Skipping config file {}: {:?}", path.display(), error);
+                } else {
+                    warn!("Skipping config file: {:?}", error);
+                }
+            }
+            build_nested_configs(configs, &mut nested_ignore_patterns, Some(&mut extended_paths))
         } else {
             FxHashMap::default()
         };
@@ -148,7 +208,7 @@ impl ServerLinterBuilder {
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
-            external_linter,
+            external_linter.as_ref(),
             &mut external_plugin_store,
             Some(root_uri.as_str()),
         ) {
@@ -197,7 +257,7 @@ impl ServerLinterBuilder {
         let config_store_clone = config_store.clone();
 
         // Send JS plugins config to JS side
-        if let Some(external_linter) = external_linter {
+        if let Some(external_linter) = &external_linter {
             let res = config_store.external_plugin_store().setup_rule_configs(
                 root_path.to_string_lossy().into_owned(),
                 Some(root_uri.as_str()),
@@ -208,7 +268,7 @@ impl ServerLinterBuilder {
             }
         }
 
-        let linter = Linter::new(lint_options, config_store, external_linter.cloned())
+        let linter = Linter::new(lint_options, config_store, external_linter.clone())
             .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
@@ -221,9 +281,8 @@ impl ServerLinterBuilder {
             }
         }
 
-        // This folder gets its own pool of arenas. Workers were already started once, before
-        // `run_lsp`, so building a pool here never spawns more of them — it only mints buffer ids
-        // that `ExternalLinter` routes to the existing workers.
+        // This folder gets its own pool of arenas. Workers start at most once per process, on the
+        // first folder that actually lists `jsPlugins`. Later folders only mint buffer ids.
         let mut buffer_ids = Vec::new();
         let mut new_allocator_pools = || {
             // `external_linter` was already cleared above if no JS plugins were loaded.
@@ -246,9 +305,8 @@ impl ServerLinterBuilder {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
-                let linter =
-                    Linter::new(lint_options, config_store_clone, external_linter.cloned())
-                        .with_workspace_uri(Some(root_uri.as_str()));
+                let linter = Linter::new(lint_options, config_store_clone, external_linter.clone())
+                    .with_workspace_uri(Some(root_uri.as_str()));
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
@@ -350,6 +408,7 @@ impl ToolBuilder for ServerLinterBuilder {
 impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
+    #[allow(dead_code)]
     fn create_nested_configs(
         &self,
         root_path: &Path,

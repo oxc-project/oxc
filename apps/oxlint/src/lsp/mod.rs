@@ -21,6 +21,8 @@ pub mod options;
 pub async fn run_lsp(
     external_linter: Option<ExternalLinter>,
     #[cfg(feature = "napi")] js_config_loader: Option<JsConfigLoaderCb>,
+    #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+    start_js_workers: Option<crate::run::JsStartWorkersCb>,
 ) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
@@ -36,6 +38,8 @@ pub async fn run_lsp(
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader,
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            start_js_workers,
         ))),
     )
     .await;

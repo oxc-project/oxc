@@ -29,6 +29,7 @@ use crate::{
     },
     config_loader::{
         CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+        oxlintrc_declares_js_plugins,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -43,6 +44,8 @@ pub struct CliRunner {
     /// This is only available when running via Node.js with NAPI.
     #[cfg(feature = "napi")]
     js_config_loader: Option<JsConfigLoaderCb>,
+    #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+    start_js_workers: Option<crate::run::JsStartWorkersCb>,
 }
 
 impl Debug for CliRunner {
@@ -70,6 +73,8 @@ impl CliRunner {
             external_linter,
             #[cfg(feature = "napi")]
             js_config_loader: None,
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            start_js_workers: None,
         }
     }
 
@@ -99,7 +104,7 @@ impl CliRunner {
             return crate::mode::run_init(&self.cwd, stdout);
         }
 
-        let external_linter = self.external_linter.as_ref();
+        let mut external_linter = self.external_linter;
 
         let mut paths = paths;
         let provided_path_count = paths.len();
@@ -230,17 +235,7 @@ impl CliRunner {
             paths.sort_unstable();
         }
 
-        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
-
-        // Setup JS workspace before loading any configs (config parsing can load JS plugins).
-        if let Some(external_linter) = &external_linter {
-            let res = external_linter.create_workspace(self.cwd.to_string_lossy().into_owned());
-
-            if let Err(err) = res {
-                print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
-                return CliRunResult::JsPluginWorkspaceSetupFailed;
-            }
-        }
+        let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -249,19 +244,70 @@ impl CliRunner {
             !misc_options.print_config &&
             !self.options.list_rules;
 
-        let config_result = {
-            let mut config_loader =
-                ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+        let parsed = {
+            let loader = ConfigLoader::new(
+                external_linter.as_ref(),
+                &mut external_plugin_store,
+                &filters,
+                None,
+            );
             #[cfg(feature = "napi")]
-            {
-                config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
-            }
-            config_loader.load_root_and_nested(
+            let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
+            loader.parse_root_and_nested(
                 &self.cwd,
                 basic_options.config.as_ref(),
                 &paths,
                 search_for_nested_configs,
             )
+        };
+
+        let config_result = match parsed {
+            Err(error) => Err(error),
+            Ok(parsed) => {
+                if oxlintrc_declares_js_plugins(&parsed.root)
+                    || parsed.nested.iter().any(oxlintrc_declares_js_plugins)
+                {
+                    #[cfg(all(
+                        feature = "napi",
+                        target_pointer_width = "64",
+                        target_endian = "little"
+                    ))]
+                    if let Some(start_js_workers) = &self.start_js_workers {
+                        match crate::js_plugins::try_start_js_plugin_workers(start_js_workers) {
+                            Ok(Some(workers)) => external_linter = Some(workers),
+                            Ok(None) => {}
+                            Err(err) => crate::js_plugins::print_startup_fallback(&err),
+                        }
+                    }
+                }
+
+                // One host: create the JS workspace after the main-vs-workers decision,
+                // before `load_plugin`.
+                if let Some(external_linter) = &external_linter {
+                    let res =
+                        external_linter.create_workspace(self.cwd.to_string_lossy().into_owned());
+                    if let Err(err) = res {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!("Failed to setup JS workspace:\n{err}\n"),
+                        );
+                        return CliRunResult::JsPluginWorkspaceSetupFailed;
+                    }
+                }
+
+                let mut config_loader = ConfigLoader::new(
+                    external_linter.as_ref(),
+                    &mut external_plugin_store,
+                    &filters,
+                    None,
+                );
+                #[cfg(feature = "napi")]
+                {
+                    config_loader =
+                        config_loader.with_js_config_loader(self.js_config_loader.as_ref());
+                }
+                config_loader.build_root_and_nested(parsed, &self.cwd)
+            }
         };
 
         let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
@@ -324,7 +370,7 @@ impl CliRunner {
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             root_config.clone(),
-            external_linter,
+            external_linter.as_ref(),
             &mut external_plugin_store,
             None,
         ) {
@@ -386,7 +432,6 @@ impl CliRunner {
         }
 
         // If no external rules, discard `ExternalLinter`
-        let mut external_linter = self.external_linter;
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
@@ -631,6 +676,13 @@ impl CliRunner {
     #[must_use]
     pub fn with_config_loader(mut self, config_loader: Option<JsConfigLoaderCb>) -> Self {
         self.js_config_loader = config_loader;
+        self
+    }
+
+    #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+    #[must_use]
+    pub fn with_start_js_workers(mut self, start_js_workers: crate::run::JsStartWorkersCb) -> Self {
+        self.start_js_workers = Some(start_js_workers);
         self
     }
 
