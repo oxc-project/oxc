@@ -44,7 +44,7 @@ declare_react_compiler_lint!(
     /// ```
     IncompatibleLibrary,
     react,
-    suspicious,
+    correctness,
     version = "next",
     short_description = "Warns on usage of libraries that are incompatible with memoization.",
 );
