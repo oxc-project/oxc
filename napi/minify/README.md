@@ -69,17 +69,17 @@ console.log(result.map);
 
 ### Property-name mangling
 
-Property mangling is opt-in and independent from identifier mangling. `include` is a
-[Rust regex](https://docs.rs/regex/latest/regex/#syntax) source string and is required when
-`mangleProps` is present. JavaScript regex flags and look-around are not supported; Rust
-character classes such as `\w` are Unicode-aware by default.
+Property mangling is opt-in and independent from identifier mangling. `include` is a JavaScript
+`RegExp` and is required when `mangleProps` is present. Its source and flags are compiled with
+[Rust's regex engine](https://docs.rs/regex/latest/regex/#syntax). Flags `i`, `m`, `s`, and `u` are
+supported. Other JavaScript flags and unsupported syntax are reported in `errors`.
 
 ```javascript
 const result = minifySync("component.js", source, {
   mangle: false,
   mangleProps: {
-    include: "^_",
-    exclude: "^__public",
+    include: /^_/,
+    exclude: /^__public/,
     reserved: ["_externalApi"],
     quoted: false,
     cache: previousResult?.mangleCache,

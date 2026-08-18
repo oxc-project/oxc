@@ -169,12 +169,12 @@ export interface MangleOptionsKeepNames {
 
 export interface ManglePropertiesOptions {
   /**
-   * Rust-regex source selecting property names to mangle. Matching is unanchored unless the
-   * expression contains anchors. JavaScript regex flags and look-around are not supported.
+   * JavaScript `RegExp` selecting property names to mangle. The source and flags are compiled
+   * with Rust's regex engine. Flags `i`, `m`, `s`, and `u` are supported.
    */
-  include: string
-  /** Rust-regex source excluding property names selected by `include`. */
-  exclude?: string
+  include: RegExp
+  /** JavaScript `RegExp` excluding property names selected by `include`. */
+  exclude?: RegExp
   /** Exact names that are neither mangled nor emitted as automatic output names. */
   reserved?: Array<string>
   /**

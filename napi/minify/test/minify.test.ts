@@ -145,7 +145,7 @@ describe("property mangling", () => {
     const ret = minifySync("test.js", "let local; obj._often; obj._rare; obj._often;", {
       compress: false,
       mangle: false,
-      mangleProps: { include: "^_" },
+      mangleProps: { include: /^_/ },
     });
 
     expect(ret.errors).toHaveLength(0);
@@ -159,14 +159,14 @@ describe("property mangling", () => {
       minifySync("test.js", source, {
         compress: false,
         mangle: false,
-        mangleProps: { include: "^_" },
+        mangleProps: { include: /^_/ },
       }).code,
     ).toBe("obj.e;obj[`_field`];");
     expect(
       minifySync("test.js", source, {
         compress: false,
         mangle: false,
-        mangleProps: { include: "^_", quoted: true },
+        mangleProps: { include: /^_/, quoted: true },
       }).code,
     ).toBe("obj.e;obj.e;");
   });
@@ -176,7 +176,7 @@ describe("property mangling", () => {
       compress: false,
       mangle: false,
       mangleProps: {
-        include: "^_",
+        include: /^_/,
         cache: { _first: "A", _second: "A", _keep: false },
       },
     });
@@ -189,7 +189,7 @@ describe("property mangling", () => {
     const first = minifySync("test.js", "obj.foo;", {
       compress: false,
       mangle: false,
-      mangleProps: { include: ".", cache: { e: false } },
+      mangleProps: { include: /./, cache: { e: false } },
     });
     expect(first.code).toBe("obj.t;");
     expect(first.mangleCache).toEqual({ e: false, foo: "t" });
@@ -197,7 +197,7 @@ describe("property mangling", () => {
     const second = minifySync("test.js", "obj.e; obj.foo;", {
       compress: false,
       mangle: false,
-      mangleProps: { include: ".", cache: first.mangleCache },
+      mangleProps: { include: /./, cache: first.mangleCache },
     });
     expect(second.code).toBe("obj.e;obj.t;");
     expect(second.mangleCache).toEqual(first.mangleCache);
@@ -207,7 +207,7 @@ describe("property mangling", () => {
     const ret = minifySync("test.js", "obj._alpha; obj._beta; obj._gamma;", {
       compress: false,
       mangle: false,
-      mangleProps: { include: "^_", debug: true },
+      mangleProps: { include: /^_/, debug: true },
     });
     expect(ret.code).toBe("obj._$_alpha$_;obj._$_beta$_;obj._$_gamma$_;");
   });
@@ -217,8 +217,8 @@ describe("property mangling", () => {
       compress: false,
       mangle: false,
       mangleProps: {
-        include: "^_",
-        exclude: "^_skip(?:One|Two)$",
+        include: /^_/,
+        exclude: /^_skip(?:One|Two)$/,
         reserved: ["_reserved"],
       },
     });
@@ -226,11 +226,21 @@ describe("property mangling", () => {
     expect(ret.code).toBe("obj._skipOne;obj._reserved;obj.e;");
   });
 
+  it("preserves the case-insensitive RegExp flag", () => {
+    const ret = minifySync("test.js", "obj._FIELD; obj._other;", {
+      compress: false,
+      mangle: false,
+      mangleProps: { include: /^_field$/i },
+    });
+    expect(ret.errors).toHaveLength(0);
+    expect(ret.code).toBe("obj.e;obj._other;");
+  });
+
   it("works through the async API", async () => {
     const ret = await minify("test.js", "obj._field; obj._field;", {
       compress: false,
       mangle: false,
-      mangleProps: { include: "^_" },
+      mangleProps: { include: /^_/ },
     });
     expect(ret.errors).toHaveLength(0);
     expect(ret.code).toBe("obj.e;obj.e;");
@@ -241,7 +251,7 @@ describe("property mangling", () => {
     const ret = minifySync("test.js", "const invalid; obj._field;", {
       compress: false,
       mangle: false,
-      mangleProps: { include: "^_" },
+      mangleProps: { include: /^_/ },
     });
     expect(ret.errors).toHaveLength(1);
     expect(ret.code).toBe("const invalid;obj._field;");
@@ -255,7 +265,7 @@ describe("property mangling", () => {
       {
         compress: false,
         mangle: false,
-        mangleProps: { include: "^_" },
+        mangleProps: { include: /^_/ },
       },
     );
     expect(Object.keys(ret.mangleCache!)).toEqual([
@@ -267,21 +277,30 @@ describe("property mangling", () => {
     ]);
   });
 
+  it("requires RegExp filters", () => {
+    expect(() =>
+      minifySync("test.js", "obj._field;", {
+        mangleProps: { include: "^_" as any },
+      }),
+    ).toThrow(/RegExp/);
+  });
+
   it.each([
-    [{ include: "[" }, "Invalid mangleProps.include regex"],
-    [{ include: "^_", cache: { _field: true as any } }, "expected a string or false"],
+    [{ include: /^(?!_keep)/ }, "Invalid mangleProps.include regex"],
+    [{ include: /^_/g }, "Invalid mangleProps.include regex"],
+    [{ include: /^_/, cache: { _field: true as any } }, "expected a string or false"],
     [
-      { include: "^_", cache: { ["__proto__"]: false } },
+      { include: /^_/, cache: { ["__proto__"]: false } },
       "this original name cannot be used as a cache key",
     ],
-    [{ include: "^_", cache: { _field: "not-valid" } }, "must be an IdentifierName"],
-    [{ include: "^_", cache: { _field: "__proto__" } }, "must be an IdentifierName"],
+    [{ include: /^_/, cache: { _field: "not-valid" } }, "must be an IdentifierName"],
+    [{ include: /^_/, cache: { _field: "__proto__" } }, "must be an IdentifierName"],
     [
-      { include: "^_", cache: { _field: "constructor" } },
+      { include: /^_/, cache: { _field: "constructor" } },
       "other than '__proto__', 'constructor', or 'prototype'",
     ],
     [
-      { include: "^_", cache: { _field: "prototype" } },
+      { include: /^_/, cache: { _field: "prototype" } },
       "other than '__proto__', 'constructor', or 'prototype'",
     ],
   ])("rejects invalid options", (mangleProps, message) => {

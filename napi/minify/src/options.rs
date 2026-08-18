@@ -1,4 +1,11 @@
-use napi::Either;
+use napi::{
+    Either, Env, Error, Status, Unknown,
+    bindgen_prelude::{
+        FnArgs, FromNapiValue, Function, JsObjectValue, JsValue, Object, ToNapiValue, TypeName,
+        ValidateNapiValue,
+    },
+    sys,
+};
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
@@ -275,14 +282,75 @@ impl From<&MangleOptionsKeepNames> for oxc_minifier::MangleOptionsKeepNames {
     }
 }
 
+/// Owned source and flags from a JavaScript `RegExp`.
+pub struct JsRegExp {
+    /// Pattern source without delimiters.
+    pub source: String,
+    /// JavaScript regular expression flags.
+    pub flags: String,
+}
+
+impl TypeName for JsRegExp {
+    fn type_name() -> &'static str {
+        "RegExp"
+    }
+
+    fn value_type() -> napi::ValueType {
+        napi::ValueType::Object
+    }
+}
+
+impl ValidateNapiValue for JsRegExp {}
+
+impl FromNapiValue for JsRegExp {
+    unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> napi::Result<Self> {
+        let object = Object::from_raw(env, napi_val);
+        let env = Env::from(env);
+        let global = env.get_global()?;
+        let constructor = global.get_named_property::<Function<Unknown, ()>>("RegExp")?;
+
+        if !object.instanceof(constructor)? {
+            return Err(Error::new(Status::ObjectExpected, "Expected a RegExp object"));
+        }
+
+        Ok(Self {
+            source: object.get_named_property::<String>("source")?,
+            flags: object.get_named_property::<String>("flags")?,
+        })
+    }
+}
+
+impl ToNapiValue for JsRegExp {
+    unsafe fn to_napi_value(env: sys::napi_env, value: Self) -> napi::Result<sys::napi_value> {
+        let global = Env::from(env).get_global()?;
+        let constructor =
+            global.get_named_property::<Function<FnArgs<(String, String)>, Unknown>>("RegExp")?;
+        let object = constructor.new_instance(FnArgs::from((value.source, value.flags)))?;
+        Ok(object.raw())
+    }
+}
+
+impl JsRegExp {
+    fn compile(&self, option_name: &str) -> Result<lazy_regex::Regex, String> {
+        let error = |error| format!("Invalid mangleProps.{option_name} regex: {error}");
+        if self.flags.is_empty() {
+            lazy_regex::Regex::new(&self.source).map_err(error)
+        } else {
+            lazy_regex::Regex::new(&format!("(?{}){}", self.flags, self.source)).map_err(error)
+        }
+    }
+}
+
 #[napi(object)]
 pub struct ManglePropertiesOptions {
-    /// Rust-regex source selecting property names to mangle. Matching is unanchored unless the
-    /// expression contains anchors. JavaScript regex flags and look-around are not supported.
-    pub include: String,
+    /// JavaScript `RegExp` selecting property names to mangle. The source and flags are compiled
+    /// with Rust's regex engine. Flags `i`, `m`, `s`, and `u` are supported.
+    #[napi(ts_type = "RegExp")]
+    pub include: JsRegExp,
 
-    /// Rust-regex source excluding property names selected by `include`.
-    pub exclude: Option<String>,
+    /// JavaScript `RegExp` excluding property names selected by `include`.
+    #[napi(ts_type = "RegExp")]
+    pub exclude: Option<JsRegExp>,
 
     /// Exact names that are neither mangled nor emitted as automatic output names.
     pub reserved: Option<Vec<String>>,
@@ -310,16 +378,8 @@ impl TryFrom<&ManglePropertiesOptions> for oxc_minifier::ManglePropertiesOptions
     type Error = String;
 
     fn try_from(options: &ManglePropertiesOptions) -> Result<Self, Self::Error> {
-        let include = lazy_regex::Regex::new(&options.include)
-            .map_err(|error| format!("Invalid mangleProps.include regex: {error}"))?;
-        let exclude = options
-            .exclude
-            .as_ref()
-            .map(|pattern| {
-                lazy_regex::Regex::new(pattern)
-                    .map_err(|error| format!("Invalid mangleProps.exclude regex: {error}"))
-            })
-            .transpose()?;
+        let include = options.include.compile("include")?;
+        let exclude = options.exclude.as_ref().map(|regex| regex.compile("exclude")).transpose()?;
         let mut cache = oxc_minifier::ManglePropertyCache::default();
         if let Some(entries) = &options.cache {
             for (original, value) in entries {
