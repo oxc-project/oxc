@@ -431,8 +431,8 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
-  let name: string | undefined;
   if (location === false) {
+    let name: string | undefined;
     const printedName = typeof node.name === "string" ? node.name : undefined;
     if (printedName !== undefined) {
       // Almost every identifier is printed exactly as it appeared in the source. Avoid scanning it
@@ -458,14 +458,14 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
     } else {
       name = printedName;
     }
+
+    if (name !== undefined) {
+      const mappingIndex = state.mapPositions.length >> 1;
+      (state.mapNames ??= []).push(mappingIndex, name);
+    }
   }
 
-  const mappingIndex = state.mapPositions.length >> 1;
   state.mapPositions.push(state.output.length, sourceOffset);
-
-  if (name !== undefined) {
-    (state.mapNames ??= []).push(mappingIndex, name);
-  }
 }
 
 /**
