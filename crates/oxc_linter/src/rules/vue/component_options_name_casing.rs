@@ -127,6 +127,10 @@ impl Rule for ComponentOptionsNameCasing {
         let case_type = self.0;
         for prop_kind in &components_obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
+            // Deliberate deviation from upstream: computed keys are skipped
+            // entirely. Upstream flags `['foo-bar']: Bar`, but its fix
+            // replaces the key with a bare identifier inside the brackets,
+            // turning it into a variable reference.
             if prop.computed {
                 continue;
             }
@@ -301,9 +305,40 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // additional case (not in upstream tests): computed keys are skipped
+        (
+            "
+                    <script>
+                    export default {
+                      components: {
+                        [fooBar]: FooBar,
+                        ['foo-bar']: FooBar
+                      }
+                    }
+                    </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
+        // additional case (not in upstream tests): options objects in plain
+        // .ts files (`defineComponent`) are linted too
+        (
+            "
+                    import { defineComponent } from 'vue';
+                    export const FooBar = defineComponent({
+                      components: {
+                        fooBar
+                      }
+                    });
+                  ",
+            None,
+            None,
+            None,
+        ),
         (
             "
                     <script>

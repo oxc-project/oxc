@@ -15,6 +15,15 @@ assertion_line: 505
   ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
    ╭─[component_options_name_casing.tsx:5:25]
  4 │                       components: {
+ 5 │                         fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `FooBar: fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
  5 │                         fooBar: FooBar
    ·                         ──────
  6 │                       }
