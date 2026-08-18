@@ -62,7 +62,7 @@ function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state:
 
     const property = properties[i];
     if (property.type === "RestElement") {
-      write(state, "...", CAT_OTHER);
+      writeWithMap(state, "...", CAT_OTHER, property);
       printAssignmentTarget(property.argument, state);
     } else {
       printAssignmentTargetProperty(property, state);
@@ -155,7 +155,7 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
 
   if (rest !== null) {
     if (length > 0) write(state, " ", CAT_OTHER);
-    write(state, "...", CAT_OTHER);
+    writeWithMap(state, "...", CAT_OTHER, rest);
     printAssignmentTarget(rest.argument, state);
   }
 

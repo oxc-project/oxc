@@ -2563,15 +2563,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "additionalItems": {
                 "type": "string"
               },
-              "minItems": 2,
+              "minItems": 1,
               "uniqueItems": true
             }
           ]
@@ -5218,15 +5215,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5239,15 +5233,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5260,15 +5251,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/PropertyDetails"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/PropertyDetails"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -6713,9 +6701,6 @@
               "minItems": 2
             }
           ]
-        },
-        "react/gating": {
-          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/globals": {
           "$ref": "#/definitions/RuleNoConfig"

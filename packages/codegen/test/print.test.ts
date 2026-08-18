@@ -107,6 +107,60 @@ function checkCases(cases: Case[]): void {
 
 // --- Tests ----------------------------------------------------------------------------------
 
+describe("single statements", () => {
+  /** Parse one source statement for public-API tests which do not print a whole program. */
+  function parseStatement(filename: string, sourceText: string): ESTree.Statement {
+    const { program: parsed, errors } = parseSync(filename, sourceText, PARSE_OPTIONS);
+    if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
+    const [statement] = parsed.body;
+    if (statement === undefined || parsed.body.length !== 1) {
+      throw new Error(`Expected exactly one statement in ${filename}`);
+    }
+    return statement;
+  }
+
+  test("prints a JavaScript statement", () => {
+    const statement = parseStatement("statement.js", "const value=1;");
+    expect(printSync(statement).code).toBe("const value = 1;\n");
+  });
+
+  test("prints a TypeScript statement", () => {
+    const statement = parseStatement("statement.ts", "type Box<T>={value:T};");
+    expect(printSync(statement, { ts: true }).code).toBe("type Box<T> = {\n\tvalue: T;\n};\n");
+  });
+
+  test("returns a source map for a JavaScript statement", () => {
+    const sourceText = "const value=1;";
+    const statement = parseStatement("statement.js", sourceText);
+    const { code, map } = printSync(statement, {
+      sourcemap: true,
+      sourceFilename: "statement.js",
+      sourceText,
+    });
+    expect(code).toBe("const value = 1;\n");
+    expect(map).toMatchObject({
+      sources: ["statement.js"],
+      sourcesContent: [sourceText],
+    });
+  });
+});
+
+describe("indent", () => {
+  const ast = e(id("x"));
+
+  test.each(["", "x", "\n", "\r\n", " x "])("rejects %j", (indent) => {
+    expect(() => printSync(ast, { indent })).toThrow(
+      new TypeError("`indent` must be a non-empty string containing only spaces and tabs"),
+    );
+  });
+
+  test.each([4, null, {}])("rejects non-string value %j", (indent) => {
+    expect(() => printSync(ast, { indent: indent as unknown as string })).toThrow(
+      new TypeError("`indent` must be a non-empty string containing only spaces and tabs"),
+    );
+  });
+});
+
 describe("starting indent level", () => {
   const ast = e(id("x"));
 

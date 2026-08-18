@@ -1,5 +1,6 @@
 mod assert_consistent_identifiers;
 mod assert_terminal_blocks_exist;
+mod assert_valid_block_nesting;
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
@@ -11,12 +12,16 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
+use std::fmt;
+
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
 pub use assert_consistent_identifiers::assert_consistent_identifiers;
 pub use assert_terminal_blocks_exist::{
     assert_terminal_preds_exist, assert_terminal_successors_exist,
 };
+pub use assert_valid_block_nesting::assert_valid_block_nesting;
+pub(crate) use assert_valid_block_nesting::{get_scopes, recursively_traverse_items};
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
@@ -301,7 +306,6 @@ pub struct Phi<'a> {
 // Terminal enum
 // =============================================================================
 
-#[derive(Debug)]
 pub enum Terminal<'a> {
     Unreachable {
         id: EvaluationOrder,
@@ -459,6 +463,40 @@ pub enum Terminal<'a> {
         id: EvaluationOrder,
         span: Option<Span>,
     },
+}
+
+impl fmt::Display for Terminal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Unreachable { .. } => "Unreachable",
+            Self::Throw { .. } => "Throw",
+            Self::Return { .. } => "Return",
+            Self::Goto { .. } => "Goto",
+            Self::If { .. } => "If",
+            Self::Branch { .. } => "Branch",
+            Self::Switch { .. } => "Switch",
+            Self::DoWhile { .. } => "DoWhile",
+            Self::While { .. } => "While",
+            Self::For { .. } => "For",
+            Self::ForOf { .. } => "ForOf",
+            Self::ForIn { .. } => "ForIn",
+            Self::Logical { .. } => "Logical",
+            Self::Ternary { .. } => "Ternary",
+            Self::Optional { .. } => "Optional",
+            Self::Label { .. } => "Label",
+            Self::Sequence { .. } => "Sequence",
+            Self::MaybeThrow { .. } => "MaybeThrow",
+            Self::Try { .. } => "Try",
+            Self::Scope { .. } => "Scope",
+            Self::PrunedScope { .. } => "PrunedScope",
+        })
+    }
+}
+
+impl fmt::Debug for Terminal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
 impl<'a> Terminal<'a> {

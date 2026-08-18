@@ -186,6 +186,7 @@ impl<'a> TriviaBuilder<'a> {
                 | CommentContent::Pure
                 | CommentContent::PureNotApplied
                 | CommentContent::NoSideEffects
+                | CommentContent::PropertyKey
         )
     }
 
@@ -273,6 +274,14 @@ impl<'a> TriviaBuilder<'a> {
         }
 
         if start >= bytes.len() {
+            return;
+        }
+
+        let rest = &bytes[start..];
+        if (rest.starts_with(b"@__KEY__") || rest.starts_with(b"#__KEY__") || !rest[0].is_ascii())
+            && is_property_key_annotation(s)
+        {
+            comment.content = CommentContent::PropertyKey;
             return;
         }
 
@@ -367,6 +376,11 @@ impl<'a> TriviaBuilder<'a> {
             comment.content = CommentContent::Legal;
         }
     }
+}
+
+#[inline]
+fn is_property_key_annotation(source: &str) -> bool {
+    matches!(source.trim().strip_prefix(['@', '#']), Some("__KEY__"))
 }
 
 #[inline(always)]
@@ -635,6 +649,23 @@ function bar() {}";
     }
 
     #[test]
+    fn property_key_comment_after_code_is_attached_to_next_literal() {
+        for (source_text, literal) in [
+            ("work();/* #__KEY__ */\n\"_field\";", "\"_field\""),
+            ("work();// @__KEY__\n`_field`;", "`_field`"),
+        ] {
+            let comments = get_comments(source_text);
+            let literal_start = u32::try_from(source_text.find(literal).unwrap()).unwrap();
+
+            assert_eq!(comments.len(), 1);
+            assert_eq!(comments[0].position, CommentPosition::Leading);
+            assert_eq!(comments[0].attached_to, literal_start);
+            assert!(comments[0].is_property_key_annotation());
+            assert!(comments[0].is_annotation());
+        }
+    }
+
+    #[test]
     fn leading_comments_after_eq() {
         let source_text = "
             const v1 = // Leading comment 1
@@ -816,6 +847,17 @@ function bar() {}";
             ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* #__PURE__ */", CommentContent::Pure),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* @__KEY__ */", CommentContent::PropertyKey),
+            ("/* #__KEY__ */", CommentContent::PropertyKey),
+            ("/*\u{a0}@__KEY__\u{a0}*/", CommentContent::PropertyKey),
+            ("//@__KEY__", CommentContent::PropertyKey),
+            ("// #__KEY__", CommentContent::PropertyKey),
+            ("/**\n * @__KEY__\n */", CommentContent::Jsdoc),
+            ("/* __KEY__ */", CommentContent::None),
+            ("/* @ __KEY__ */", CommentContent::None),
+            ("/* @__key__ */", CommentContent::None),
+            ("/* @__KEY___ */", CommentContent::None),
+            ("/* @__KEY__ extra */", CommentContent::None),
             ("/* turbopackOptional: true */", CommentContent::Turbopack),
             ("/* v8 ignore next */", CommentContent::CoverageIgnore),
             ("/* v8 ignore filename */", CommentContent::CoverageIgnore),

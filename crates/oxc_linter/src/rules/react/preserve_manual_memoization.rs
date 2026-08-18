@@ -21,20 +21,18 @@ declare_react_compiler_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When the compiler cannot preserve manual memoization it skips
-    /// optimizing that code, and the mismatch usually points at an incomplete
-    /// dependency list in the original `useMemo` or `useCallback`, which can
-    /// produce stale values.
+    /// When the compiler cannot prove that existing manual memoization is
+    /// preserved, it skips optimizing that code.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// import { useMemo } from 'react';
-    /// function Component({ propA }) {
-    ///   return useMemo(() => {
-    ///     return propA.x();
-    ///   }, [propA.x]);
+    /// import { useCallback } from 'react';
+    /// function useFoo(props) {
+    ///   const values = [];
+    ///   values.push(props);
+    ///   return useCallback(() => values, [values]);
     /// }
     /// ```
     ///
@@ -77,15 +75,6 @@ function Component({propA}) {
     ];
 
     let fail = vec![
-        // Derived from crates/oxc_react_compiler/fixtures cases.
-        "
-import {useMemo} from 'react';
-function Component({propA}) {
-  return useMemo(() => {
-    return propA.x();
-  }, [propA.x]);
-}
-",
         // Identify the manual memoization without highlighting the callback body.
         "
 import {useCallback} from 'react';

@@ -11,70 +11,26 @@
 //!
 //! Ported from TypeScript `src/HIR/BuildReactiveScopeTerminalsHIR.ts`.
 
-use std::cmp::Ordering;
-
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_diagnostics::OxcDiagnostic;
 
 use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
 use rustc_hash::FxHashMap;
-use rustc_hash::FxHashSet;
 
 use crate::react_compiler_hir::BasicBlock;
 use crate::react_compiler_hir::BlockId;
 use crate::react_compiler_hir::EvaluationOrder;
 use crate::react_compiler_hir::GotoVariant;
 use crate::react_compiler_hir::HirFunction;
-use crate::react_compiler_hir::IdentifierId;
 use crate::react_compiler_hir::MutableRange;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::Terminal;
 use crate::react_compiler_hir::environment::Environment;
-use crate::react_compiler_hir::visitors::each_instruction_lvalue_ids;
-use crate::react_compiler_hir::visitors::each_instruction_operand_ids;
-use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
+use crate::react_compiler_hir::{get_scopes, recursively_traverse_items};
 use crate::react_compiler_lowering::get_reverse_postordered_blocks;
 use crate::react_compiler_lowering::mark_instruction_ids;
 use crate::react_compiler_lowering::mark_predecessors;
 use crate::react_compiler_utils::OrderedMap;
-
-// =============================================================================
-// getScopes
-// =============================================================================
-
-/// Collect all unique scopes from places in the function that have non-empty ranges.
-/// Corresponds to TS `getScopes(fn)`.
-fn get_scopes(func: &HirFunction, env: &Environment) -> Vec<ScopeId> {
-    let mut scope_ids: FxHashSet<ScopeId> = FxHashSet::default();
-
-    let mut visit_place = |identifier_id: IdentifierId| {
-        if let Some(scope_id) = env.identifiers[identifier_id].scope {
-            let range = &env.scopes[scope_id].range;
-            if range.start != range.end {
-                scope_ids.insert(scope_id);
-            }
-        }
-    };
-
-    for (_block_id, block) in &func.body.blocks {
-        for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.index()];
-            // lvalues
-            for id in each_instruction_lvalue_ids(instr) {
-                visit_place(id);
-            }
-            // operands
-            for id in each_instruction_operand_ids(instr, env) {
-                visit_place(id);
-            }
-        }
-        // terminal operands
-        for id in each_terminal_operand_ids(&block.terminal) {
-            visit_place(id);
-        }
-    }
-
-    scope_ids.into_iter().collect()
-}
 
 // =============================================================================
 // TerminalRewriteInfo
@@ -107,73 +63,49 @@ impl TerminalRewriteInfo {
 // =============================================================================
 
 /// Collect all scope rewrites by traversing scopes in pre-order.
-fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<TerminalRewriteInfo> {
+fn collect_scope_rewrites(
+    func: &HirFunction,
+    env: &mut Environment,
+) -> Result<Vec<TerminalRewriteInfo>, OxcDiagnostic> {
     let scope_ids = get_scopes(func, env);
+    let mut context =
+        ScopeTraversalContext { fallthroughs: FxHashMap::default(), rewrites: Vec::new(), env };
+    recursively_traverse_items(
+        scope_ids,
+        |scope_id, context| {
+            let range = context.env.scopes[*scope_id].range;
+            (range.start, range.end)
+        },
+        &mut context,
+        push_start_scope_terminal,
+        push_end_scope_terminal,
+    )?;
+    Ok(context.rewrites)
+}
 
-    // Sort: ascending by start, descending by end for ties
-    let mut items: Vec<ScopeId> = scope_ids;
-    items.sort_unstable_by(|a, b| {
-        let a_range = &env.scopes[*a].range;
-        let b_range = &env.scopes[*b].range;
-        let start_diff = a_range.start.cmp(&b_range.start);
-        if start_diff != Ordering::Equal {
-            return start_diff;
-        }
-        b_range.end.cmp(&a_range.end)
+struct ScopeTraversalContext<'env, 'alloc> {
+    fallthroughs: FxHashMap<ScopeId, BlockId>,
+    rewrites: Vec<TerminalRewriteInfo>,
+    env: &'env mut Environment<'alloc>,
+}
+
+fn push_start_scope_terminal(scope_id: ScopeId, context: &mut ScopeTraversalContext<'_, '_>) {
+    let block_id = context.env.next_block_id();
+    let fallthrough_id = context.env.next_block_id();
+    let instr_id = context.env.scopes[scope_id].range.start;
+    context.rewrites.push(TerminalRewriteInfo::StartScope {
+        block_id,
+        fallthrough_id,
+        instr_id,
+        scope_id,
     });
+    context.fallthroughs.insert(scope_id, fallthrough_id);
+}
 
-    let mut rewrites: Vec<TerminalRewriteInfo> = Vec::new();
-    let mut fallthroughs: FxHashMap<ScopeId, BlockId> = FxHashMap::default();
-    let mut active_items: Vec<ScopeId> = Vec::new();
-
-    for &curr in &items {
-        let curr_start = env.scopes[curr].range.start;
-        let curr_end = env.scopes[curr].range.end;
-
-        // Pop active items that are disjoint with current
-        let mut j = active_items.len();
-        while j > 0 {
-            j -= 1;
-            let maybe_parent = active_items[j];
-            let parent_end = env.scopes[maybe_parent].range.end;
-            let disjoint = curr_start >= parent_end;
-            let nested = curr_end <= parent_end;
-            assert!(disjoint || nested, "Invalid nesting in program blocks or scopes");
-            if disjoint {
-                // Exit this scope
-                let fallthrough_id =
-                    *fallthroughs.get(&maybe_parent).expect("Expected scope to exist");
-                let end_instr_id = env.scopes[maybe_parent].range.end;
-                rewrites
-                    .push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
-                active_items.truncate(j);
-            } else {
-                break;
-            }
-        }
-
-        // Enter scope
-        let block_id = env.next_block_id();
-        let fallthrough_id = env.next_block_id();
-        let start_instr_id = env.scopes[curr].range.start;
-        rewrites.push(TerminalRewriteInfo::StartScope {
-            block_id,
-            fallthrough_id,
-            instr_id: start_instr_id,
-            scope_id: curr,
-        });
-        fallthroughs.insert(curr, fallthrough_id);
-        active_items.push(curr);
-    }
-
-    // Exit remaining active items
-    while let Some(curr) = active_items.pop() {
-        let fallthrough_id = *fallthroughs.get(&curr).expect("Expected scope to exist");
-        let end_instr_id = env.scopes[curr].range.end;
-        rewrites.push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
-    }
-
-    rewrites
+fn push_end_scope_terminal(scope_id: ScopeId, context: &mut ScopeTraversalContext<'_, '_>) {
+    let fallthrough_id = *context.fallthroughs.get(&scope_id).expect("Expected scope to exist");
+    let instr_id = context.env.scopes[scope_id].range.end;
+    context.rewrites.push(TerminalRewriteInfo::EndScope { instr_id, fallthrough_id });
 }
 
 // =============================================================================
@@ -259,9 +191,9 @@ fn handle_rewrite<'a>(
 pub fn build_reactive_scope_terminals_hir<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-) {
+) -> Result<(), OxcDiagnostic> {
     // Step 1: Collect rewrites
-    let mut queued_rewrites = collect_scope_rewrites(func, env);
+    let mut queued_rewrites = collect_scope_rewrites(func, env)?;
 
     // Step 2: Apply rewrites by splitting blocks
     let mut rewritten_final_blocks: FxHashMap<BlockId, BlockId> = FxHashMap::default();
@@ -354,6 +286,8 @@ pub fn build_reactive_scope_terminals_hir<'a>(
 
     // Step 5: Fix scope and identifier ranges to account for renumbered instructions
     fix_scope_and_identifier_ranges(func, env);
+
+    Ok(())
 }
 
 /// Fix scope ranges after instruction renumbering.

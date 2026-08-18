@@ -92,7 +92,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferExportFrom {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -679,7 +679,7 @@ impl PreferExportFrom {
 
         let mut parent_nodes: Vec<&AstNode> =
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
-        parent_nodes.sort_by_key(|node| node.span().start);
+        parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()

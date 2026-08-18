@@ -26,11 +26,11 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_react_compiler::{
-    BuiltInTypeRef, CompilationMode, CompileResult, CompilerOutputMode, DynamicGatingConfig,
-    Effect, EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig,
-    FunctionTypeConfig, FxIndexMap, GatingConfig, HookTypeConfig, InstrumentationConfig,
-    ObjectTypeConfig, PanicThreshold, PluginOptions, TypeConfig, TypeReferenceConfig, ValueKind,
-    compile, lint,
+    AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeRef, CompilationMode, CompileResult,
+    CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig, ExhaustiveEffectDepsMode,
+    ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig, HookTypeConfig,
+    InstrumentationConfig, ObjectTypeConfig, PanicThreshold, PluginOptions, TypeConfig,
+    TypeReferenceConfig, ValueKind, ValueReason, compile, lint,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -414,6 +414,12 @@ fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
                     "knownIncompatible",
                     incompatible_fn("useKnownIncompatible is known to be incompatible"),
                 ),
+                (
+                    "knownIncompatibleAliasing",
+                    incompatible_aliasing_fn(
+                        "knownIncompatibleAliasing is known to be incompatible",
+                    ),
+                ),
             ]),
         ),
         (
@@ -486,6 +492,33 @@ fn incompatible_fn(message: &str) -> TypeConfig {
         impure: None,
         canonical_name: None,
         aliasing: None,
+        known_incompatible: Some(message.to_string()),
+    })
+}
+
+fn incompatible_aliasing_fn(message: &str) -> TypeConfig {
+    TypeConfig::Function(FunctionTypeConfig {
+        positional_params: Vec::new(),
+        rest_param: Some(Effect::Read),
+        callee_effect: Effect::Read,
+        return_type: Box::new(type_ref()),
+        return_value_kind: ValueKind::Mutable,
+        no_alias: None,
+        mutable_only_if_operands_are_mutable: None,
+        impure: None,
+        canonical_name: None,
+        aliasing: Some(AliasingSignatureConfig {
+            receiver: "@receiver",
+            params: &[],
+            rest: Some("@rest"),
+            returns: "@returns",
+            temporaries: &[],
+            effects: &[AliasingEffectConfig::Create {
+                into: "@returns",
+                value: ValueKind::Mutable,
+                reason: ValueReason::KnownReturnSignature,
+            }],
+        }),
         known_incompatible: Some(message.to_string()),
     })
 }

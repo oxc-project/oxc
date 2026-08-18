@@ -2429,9 +2429,6 @@ fn compute_effects_for_legacy_signature<'a>(
         effects.push(AliasingEffect::Impure { place: *receiver, error });
     }
 
-    // TODO: check signature.known_incompatible and throw (TS line 2351-2370)
-    // This requires threading Result through apply_effect/apply_signature.
-
     // If the function is mutable only if operands are mutable, and all
     // arguments are immutable/non-mutating, short-circuit with simple aliasing.
     if signature.mutable_only_if_operands_are_mutable

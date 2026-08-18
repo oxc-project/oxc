@@ -105,7 +105,7 @@ eslint/no-plusplus                                         |    769
 eslint/no-promise-executor-return                          |   1421
 eslint/no-proto                                            |  95297
 eslint/no-prototype-builtins                               |  62606
-eslint/no-redeclare                                        |      1
+eslint/no-redeclare                                        |      7
 eslint/no-regex-spaces                                     |  64236
 eslint/no-restricted-exports                               |     70
 eslint/no-restricted-globals                               |      7
@@ -419,7 +419,6 @@ react/exhaustive-effect-dependencies                       |      7
 react/forbid-component-props                               |    452
 react/forward-ref-uses-ref                                 |  62606
 react/function-component-definition                        |  16812
-react/gating                                               |      7
 react/globals                                              |      7
 react/hook-use-state                                       |  62606
 react/hooks                                                |      7

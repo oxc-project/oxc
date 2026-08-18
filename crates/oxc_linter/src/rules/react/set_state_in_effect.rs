@@ -47,7 +47,7 @@ declare_react_compiler_lint!(
     /// ```
     SetStateInEffect,
     react,
-    perf,
+    correctness,
     version = "next",
     short_description = "Disallow calling `setState` synchronously inside an effect.",
 );

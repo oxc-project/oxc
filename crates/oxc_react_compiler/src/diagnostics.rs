@@ -276,13 +276,27 @@ pub fn invariant_unexpected_error() -> OxcDiagnostic {
 #[cold]
 pub fn terminal_successor_references_unknown_block(
     successor: impl Display,
-    terminal: impl Debug,
+    terminal: impl Display,
     span: Option<Span>,
 ) -> OxcDiagnostic {
     const REASON: &str = "Terminal successor references unknown block";
     diagnostic(ErrorCategory::Invariant, REASON)
-        .with_help(format!("Block bb{successor} does not exist for terminal '{terminal:?}'"))
+        .with_help(format!("Block bb{successor} does not exist for terminal '{terminal}'"))
         .with_labels(span.map(|span| span.primary_label(REASON)))
+}
+
+#[cold]
+pub fn invalid_block_nesting(
+    parent_start: impl Display,
+    parent_end: impl Display,
+    current_start: impl Display,
+    current_end: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Invariant, "Invalid nesting in program blocks or scopes").with_help(
+        format!(
+            "Items overlap but are not nested: {parent_start}:{parent_end}({current_start}:{current_end})"
+        ),
+    )
 }
 
 #[cold]
@@ -502,20 +516,6 @@ pub fn todo_codegen_reactive_function_codegen_instruction_value_handle_conversio
         ErrorCategory::Todo,
         "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression",
     )
-}
-
-#[cold]
-pub fn effect_derivations_of_state_values_derived_from_props_and_state_should_calculated_during_render_not(
-    label: impl Into<oxc_diagnostics::LabeledSpan>,
-) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::EffectDerivationsOfState,
-        "Values derived from props and state should be calculated during render, not in an effect",
-    )
-    .with_help(
-        "Calculate the derived value while rendering instead of storing it in state from an effect",
-    )
-    .with_label(primary_label(label))
 }
 
 #[cold]
@@ -865,20 +865,6 @@ where
         "Expected sequence expression to have at least one expression",
     )
     .with_labels(labels)
-}
-
-#[cold]
-pub fn todo_build_hir_lower_expression_handle_tagged_template_where_cooked_value_different_from_raw_value<
-    L,
-    T,
->(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(ErrorCategory::Todo, "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value").with_labels(labels)
 }
 
 #[cold]
@@ -1814,22 +1800,6 @@ pub fn enter_ssa_cycle(block: impl Display) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unsupported_object_destructuring_assignment_target(
-    type_name: &str,
-    span: Option<Span>,
-) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!(
-            "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ),
-    )
-    .with_labels(span.map(|span| {
-        span.primary_label(format!("Unsupported destructuring assignment target `{type_name}`"))
-    }))
-}
-
-#[cold]
 pub fn expected_scope_terminal(block: impl Display) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Invariant,
@@ -2057,15 +2027,6 @@ pub fn missing_function_declaration_binding(name: &str, span: Span) -> OxcDiagno
         format!("Could not find binding for function declaration `{name}`"),
     )
     .with_label(span.primary_label(format!("No binding was found for `{name}`")))
-}
-
-#[cold]
-pub fn jsx_attribute_colon(name: &str, span: Span) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!("(BuildHIR::lowerExpression) Unexpected colon in attribute name `{name}`"),
-    )
-    .with_label(span.primary_label(format!("`{name}` contains an unsupported colon")))
 }
 
 #[cold]
@@ -2524,6 +2485,33 @@ pub fn derived_state_in_effect(description: String, span: Option<Span>) -> OxcDi
             span.primary_label("This should be computed during render, not in an effect")
         }),
     )
+}
+
+#[cold]
+pub fn derived_state_in_effect_from_dependencies(
+    description: String,
+    span: Option<Span>,
+    dependency_spans: impl IntoIterator<Item = Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
+        ErrorCategory::EffectDerivationsOfState,
+        "Values derived from props and state should be calculated during render, not in an effect",
+    )
+    .with_help(description)
+    .with_labels(span.map(|span| {
+        span.primary_label("This state update stores a value that can be calculated during render")
+    }));
+    let mut dependency_spans = dependency_spans.into_iter().peekable();
+    if let Some(span) = dependency_spans.next() {
+        let label = if dependency_spans.peek().is_some() {
+            "These reactive values contribute to the derived state"
+        } else {
+            "This reactive value contributes to the derived state"
+        };
+        diagnostic.labels.push(span.label(label));
+        diagnostic.labels.extend(dependency_spans.map(Into::into));
+    }
+    diagnostic
 }
 
 #[cold]

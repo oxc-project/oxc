@@ -6,12 +6,12 @@ fn test_minimize_expr_condition() {
     test("(x ? false : true) && y()", "!x && y()");
     test("(x ? true : y) && y()", "(x || y) && y();");
     test("(x ? y : false) && y()", "(x && y) && y()");
-    test("var x; (x && true) && y()", "var x; x && y()");
+    test("v = function(x) { (x && true) && y() }", "v = function(x) { x && y() }");
     test("var x; (x && false) && y()", "var x");
     test("(x && true) && y()", "x && y()");
     test("(x && false) && y()", "x");
     test("var x; (x || true) && y()", "var x; y()");
-    test("var x; (x || false) && y()", "var x; x && y()");
+    test("v = function(x) { (x || false) && y() }", "v = function(x) { x && y() }");
 
     test("(x || true) && y()", "x, y()");
     test("(x || false) && y()", "x && y()");
@@ -48,29 +48,48 @@ fn minimize_conditional_exprs() {
     test("a ? (b, c) : c", "(a && b), c");
     test("a ? b || c : c", "(a && b) || c");
     test("a ? c : b && c", "(a || b) && c");
-    test("var a, b; a ? b(c, d) : b(e, d)", "var a, b; b(a ? c : e, d)");
-    test("var a, b; a ? b(...c) : b(...e)", "var a, b; b(...a ? c : e)");
-    test("var a, b; a ? b(c) : b(e)", "var a, b; b(a ? c : e)");
-    test("var a, b; a ? b() : b()", "var a, b; b()");
-    test("var a, b; a === 0 ? b(c) : b(e)", "var a, b; b(a === 0 ? c : e)");
-    test_same("var a; a === 0 ? b(c) : b(e)"); // accessing global `b` may assign a different value to `a`
-    test_same("var b; a === 0 ? b(c) : b(e)"); // accessing global `a` may assign a different value to `b`
+    test(
+        "v = function(a, b) { return a ? b(c, d) : b(e, d) }",
+        "v = function(a, b) { return b(a ? c : e, d) }",
+    );
+    test(
+        "v = function(a, b) { return a ? b(...c) : b(...e) }",
+        "v = function(a, b) { return b(...a ? c : e) }",
+    );
+    test(
+        "v = function(a, b) { return a ? b(c) : b(e) }",
+        "v = function(a, b) { return b(a ? c : e) }",
+    );
+    test("v = function(a, b) { return a ? b() : b() }", "v = function(a, b) { return b() }");
+    test(
+        "v = function(a, b) { return a === 0 ? b(c) : b(e) }",
+        "v = function(a, b) { return b(a === 0 ? c : e) }",
+    );
+    test_same("v = function(a) { return a === 0 ? b(c) : b(e) }"); // accessing global `b` may assign a different value to `a`
+    test_same("v = function(b) { return a === 0 ? b(c) : b(e) }"); // accessing global `a` may assign a different value to `b`
     test_same("a === 0 ? b(c) : b(e)"); // accessing global `a`, `b` may have a side effect
     test("a() != null ? a() : b", "a() == null ? b : a()");
-    test("var a; a != null ? a : b", "var a; a ?? b");
+    test("v = function(a) { return a != null ? a : b }", "v = function(a) { return a ?? b }");
     test("var a; (a = _a) != null ? a : b", "var a; (a = _a) ?? b");
     test("v = a != null ? a : b", "v = a == null ? b : a"); // accessing global `a` may have a getter with side effects
-    test_target("var a; v = a != null ? a : b", "var a; v = a == null ? b : a", "chrome79");
-    test("var a; v = a != null ? a.b.c[d](e) : undefined", "var a; v = a?.b.c[d](e)");
+    test_target(
+        "v = function(a) { return a != null ? a : b }",
+        "v = function(a) { return a == null ? b : a }",
+        "chrome79",
+    );
+    test(
+        "v = function(a) { return a != null ? a.b.c[d](e) : undefined }",
+        "v = function(a) { return a?.b.c[d](e) }",
+    );
     test("var a; v = (a = _a) != null ? a.b.c[d](e) : undefined", "var a; v = (a = _a)?.b.c[d](e)");
     test("v = a != null ? a.b.c[d](e) : undefined", "v = a == null ? void 0 : a.b.c[d](e)"); // accessing global `a` may have a getter with side effects
     test(
-        "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined",
-        "var a; v = a == null ? 1 : a.b.c[d](e)",
+        "v = function(a) { var undefined = 1; return a != null ? a.b.c[d](e) : undefined }",
+        "v = function(a) { return a == null ? 1 : a.b.c[d](e) }",
     );
     test_target(
-        "var a; v = a != null ? a.b.c[d](e) : undefined",
-        "var a; v = a == null ? void 0 : a.b.c[d](e)",
+        "v = function(a) { return a != null ? a.b.c[d](e) : undefined }",
+        "v = function(a) { return a == null ? void 0 : a.b.c[d](e) }",
         "chrome79",
     );
     test("v = cmp !== 0 ? cmp : (bar, cmp);", "v = (cmp === 0 && bar, cmp);");

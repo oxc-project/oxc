@@ -94,8 +94,7 @@ impl Rule for MaxClassesPerFile {
         {
             Ok(Self(Box::new(MaxClassesPerFileConfig { max, ignore_expressions: false })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
         }
     }
 
