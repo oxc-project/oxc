@@ -436,6 +436,9 @@ fn test_fold_binary_expression() {
     test("v = function(a, b) { 'a' + +b }", "v = function(a, b) { '' + +b }"); // can be improved to `+b`
     test_same("v = function(a, b) { a + ('' + b) }");
     test("v = function(a, b, c) { a + ('' + (b === c)) }", "v = function(a, b, c) { a + '' }");
+
+    test("0.1 + 0.2", "");
+    test_same("v = function(a) { a + ('' + foo()) }");
 }
 
 #[test]
