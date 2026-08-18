@@ -1,0 +1,328 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "items" prop.
+    ╭─[no_mutating_props.tsx:16:29]
+ 15 │                           openModal() {
+ 16 │                             ++this.items
+    ·                             ────────────
+ 17 │                             this.todo.type = 'completed'
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "todo" prop.
+    ╭─[no_mutating_props.tsx:17:29]
+ 16 │                             ++this.items
+ 17 │                             this.todo.type = 'completed'
+    ·                             ────────────────────────────
+ 18 │                             this.items.push('something')
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "items" prop.
+    ╭─[no_mutating_props.tsx:18:29]
+ 17 │                             this.todo.type = 'completed'
+ 18 │                             this.items.push('something')
+    ·                             ────────────────────────────
+ 19 │                             delete this.todo.type
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "todo" prop.
+    ╭─[no_mutating_props.tsx:19:29]
+ 18 │                             this.items.push('something')
+ 19 │                             delete this.todo.type
+    ·                             ─────────────────────
+ 20 │                           }
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "foo" prop.
+   ╭─[no_mutating_props.tsx:7:29]
+ 6 │                           openModal() {
+ 7 │                             this?.foo?.push?.('something')
+   ·                             ──────────────────────────────
+ 8 │                             ;(this?.bar)?.push?.('something')
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "bar" prop.
+   ╭─[no_mutating_props.tsx:8:30]
+ 7 │                             this?.foo?.push?.('something')
+ 8 │                             ;(this?.bar)?.push?.('something')
+   ·                              ────────────────────────────────
+ 9 │                             ;(this?.baz?.push)?.('something')
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "baz" prop.
+    ╭─[no_mutating_props.tsx:9:30]
+  8 │                             ;(this?.bar)?.push?.('something')
+  9 │                             ;(this?.baz?.push)?.('something')
+    ·                              ────────────────────────────────
+ 10 │                           }
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup(props) {
+ 5 │                           props.a ++
+   ·                           ──────────
+ 6 │                           props.b = 1
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "b" prop.
+   ╭─[no_mutating_props.tsx:6:27]
+ 5 │                           props.a ++
+ 6 │                           props.b = 1
+   ·                           ───────────
+ 7 │                           props.c.push(1)
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "c" prop.
+   ╭─[no_mutating_props.tsx:7:27]
+ 6 │                           props.b = 1
+ 7 │                           props.c.push(1)
+   ·                           ───────────────
+ 8 │                           delete props.d
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "d" prop.
+   ╭─[no_mutating_props.tsx:8:27]
+ 7 │                           props.c.push(1)
+ 8 │                           delete props.d
+   ·                           ──────────────
+ 9 │                         }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup({a,b,c, d: [e, , f]}) {
+ 5 │                           a.foo ++
+   ·                           ────────
+ 6 │                           b.foo = 1
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "b" prop.
+   ╭─[no_mutating_props.tsx:6:27]
+ 5 │                           a.foo ++
+ 6 │                           b.foo = 1
+   ·                           ─────────
+ 7 │                           c.push(1)
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "c" prop.
+   ╭─[no_mutating_props.tsx:7:27]
+ 6 │                           b.foo = 1
+ 7 │                           c.push(1)
+   ·                           ─────────
+ 8 │             
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "c" prop.
+    ╭─[no_mutating_props.tsx:9:27]
+  8 │             
+  9 │                           c.x.push(1)
+    ·                           ───────────
+ 10 │                           delete c.y
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "c" prop.
+    ╭─[no_mutating_props.tsx:10:27]
+  9 │                           c.x.push(1)
+ 10 │                           delete c.y
+    ·                           ──────────
+ 11 │                           e.foo++
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "d" prop.
+    ╭─[no_mutating_props.tsx:11:27]
+ 10 │                           delete c.y
+ 11 │                           e.foo++
+    ·                           ───────
+ 12 │                           f.foo++
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "d" prop.
+    ╭─[no_mutating_props.tsx:12:27]
+ 11 │                           e.foo++
+ 12 │                           f.foo++
+    ·                           ───────
+ 13 │                         }
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup({a: foo, b: [...bar], c: baz = 1}) {
+ 5 │                           foo.x ++
+   ·                           ────────
+ 6 │                           delete foo.y
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+   ╭─[no_mutating_props.tsx:6:27]
+ 5 │                           foo.x ++
+ 6 │                           delete foo.y
+   ·                           ────────────
+ 7 │                           bar.x = 1
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "b" prop.
+   ╭─[no_mutating_props.tsx:7:27]
+ 6 │                           delete foo.y
+ 7 │                           bar.x = 1
+   ·                           ─────────
+ 8 │                           baz.push(1)
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "c" prop.
+   ╭─[no_mutating_props.tsx:8:27]
+ 7 │                           bar.x = 1
+ 8 │                           baz.push(1)
+   ·                           ───────────
+ 9 │                         }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup({...props}) {
+ 5 │                           props.a ++
+   ·                           ──────────
+ 6 │                           props.b = 1
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "b" prop.
+   ╭─[no_mutating_props.tsx:6:27]
+ 5 │                           props.a ++
+ 6 │                           props.b = 1
+   ·                           ───────────
+ 7 │                           props.c.push(1)
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "c" prop.
+   ╭─[no_mutating_props.tsx:7:27]
+ 6 │                           props.b = 1
+ 7 │                           props.c.push(1)
+   ·                           ───────────────
+ 8 │                           delete props.d
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "d" prop.
+   ╭─[no_mutating_props.tsx:8:27]
+ 7 │                           props.c.push(1)
+ 8 │                           delete props.d
+   ·                           ──────────────
+ 9 │                         }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "[a]" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup(props) {
+ 5 │                           props[a] ++
+   ·                           ───────────
+ 6 │                         }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "[a]" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup({[a]: c}) {
+ 5 │                           c.foo ++
+   ·                           ────────
+ 6 │                         }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "value" prop.
+   ╭─[no_mutating_props.tsx:6:21]
+ 5 │                     })
+ 6 │                     props.value++
+   ·                     ─────────────
+ 7 │                     </script>
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "value" prop.
+   ╭─[no_mutating_props.tsx:6:21]
+ 5 │                     })
+ 6 │                     value.value++
+   ·                     ─────────────
+ 7 │                     </script>
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "value" prop.
+   ╭─[no_mutating_props.tsx:6:21]
+ 5 │                     })
+ 6 │                     props.value++
+   ·                     ─────────────
+ 7 │                     </script>
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+   ╭─[no_mutating_props.tsx:5:27]
+ 4 │                         setup(props) {
+ 5 │                           props.a ++
+   ·                           ──────────
+ 6 │                           props.b = 1
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "b" prop.
+   ╭─[no_mutating_props.tsx:6:27]
+ 5 │                           props.a ++
+ 6 │                           props.b = 1
+   ·                           ───────────
+ 7 │                           props.c.push(1)
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "d" prop.
+   ╭─[no_mutating_props.tsx:8:27]
+ 7 │                           props.c.push(1)
+ 8 │                           delete props.d
+   ·                           ──────────────
+ 9 │             
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "a" prop.
+    ╭─[no_mutating_props.tsx:11:29]
+ 10 │                           function foo() {
+ 11 │                             props.a ++
+    ·                             ──────────
+ 12 │                           }
+    ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "data" prop.
+   ╭─[no_mutating_props.tsx:7:36]
+ 6 │                           update() {
+ 7 │                             return Object.assign(this.data, { extra: 'value' })
+   ·                                    ────────────────────────────────────────────
+ 8 │                           }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
