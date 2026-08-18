@@ -360,6 +360,7 @@ export function markWithMapAtStartOffset(
   columnOffset: number,
 ): void {
   if (!SOURCEMAPS) return;
+
   const { sourceText } = state;
   if (sourceText === undefined) return;
 
@@ -380,6 +381,7 @@ export function markWithMapAtStartOffset(
     state.mapPositions !== null,
     "Source map positions should exist when source maps are enabled",
   );
+
   const sourceOffset = start + columnOffset;
   if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
@@ -392,6 +394,7 @@ export function markWithMapAtStartOffset(
  */
 function recordSourceMapping(state: State, node: MappableNode, location: false | 1 | 2 | 3): void {
   if (!SOURCEMAPS) return;
+
   const { sourceText } = state;
   if (sourceText === undefined) return;
 
@@ -421,6 +424,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
   } else {
     sourceOffset = start;
   }
+
   if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
@@ -442,6 +446,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
         (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
           ? printedName
           : originalNameFromSource(sourceText, node, start, end);
+
       // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
       // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
       name =
@@ -457,6 +462,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
 
   const mappingIndex = state.mapPositions.length >> 1;
   state.mapPositions.push(state.output.length, sourceOffset);
+
   if (name !== undefined) {
     (state.mapNames ??= []).push(mappingIndex, name);
   }

@@ -44,14 +44,14 @@ export interface Options {
   ts?: boolean;
 
   /**
-   * Original source text. Required for source-map mappings.
-   */
-  sourceText?: string;
-
-  /**
    * Generate and return a source map in `CodegenResult.map`.
    */
   sourcemap?: boolean;
+
+  /**
+   * Original source text. Required for source-map mappings.
+   */
+  sourceText?: string;
 
   /**
    * Original source filename recorded in the returned source map.

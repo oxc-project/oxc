@@ -67,6 +67,7 @@ export function getEcmaScriptLineTable(sourceText: string): {
   }
 
   lines.push(sourceText.slice(lineStart));
+
   return { lines, lineStarts };
 }
 
