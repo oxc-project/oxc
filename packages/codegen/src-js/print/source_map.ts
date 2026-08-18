@@ -11,6 +11,22 @@ import { debugAssert } from "../asserts.ts";
 import type { Options, SourceMap } from "./options.ts";
 import type { State } from "../state.ts";
 
+const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const BASE64_CODES = /* @__PURE__ */ Buffer.from(BASE64_CHARS, "ascii");
+const LINE_SEARCH_ITERATIONS = 16;
+const MIN_LF_FAST_PATH_MAPPINGS = 64;
+const MAX_LF_FAST_PATH_CHARS_PER_MAPPING = 256;
+const MAX_BACKWARD_SOURCE_SCAN = 4096;
+const MAX_REPLAYED_SOURCE_SCAN = 16384;
+const MAX_BITWISE_VLQ = 0x7fffffff;
+const MIN_MAPPING_BUFFER_LENGTH = 64;
+// Real-world fixtures use 5.2–5.5 bytes per mapping. Leave some headroom and grow for outliers.
+const ESTIMATED_BYTES_PER_MAPPING = 6;
+const MAX_MAPPING_SEGMENT_LENGTH = 64;
+
+// `\r\n` must be one line terminator, rather than two.
+const NEXT_LINE_TERMINATOR_REGEX = /\r\n|[\r\n\u2028\u2029]/g;
+
 /**
  * Convert deferred mapping data into a standard Source Map v3 object.
  */
@@ -382,19 +398,3 @@ function hasOnlyLineFeedsAndCrLf(sourceText: string): boolean {
 
   return true;
 }
-
-const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const BASE64_CODES = /* @__PURE__ */ Buffer.from(BASE64_CHARS, "ascii");
-const LINE_SEARCH_ITERATIONS = 16;
-const MIN_LF_FAST_PATH_MAPPINGS = 64;
-const MAX_LF_FAST_PATH_CHARS_PER_MAPPING = 256;
-const MAX_BACKWARD_SOURCE_SCAN = 4096;
-const MAX_REPLAYED_SOURCE_SCAN = 16384;
-const MAX_BITWISE_VLQ = 0x7fffffff;
-const MIN_MAPPING_BUFFER_LENGTH = 64;
-// Real-world fixtures use 5.2–5.5 bytes per mapping. Leave some headroom and grow for outliers.
-const ESTIMATED_BYTES_PER_MAPPING = 6;
-const MAX_MAPPING_SEGMENT_LENGTH = 64;
-
-// `\r\n` must be one line terminator, rather than two.
-const NEXT_LINE_TERMINATOR_REGEX = /\r\n|[\r\n\u2028\u2029]/g;
