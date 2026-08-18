@@ -13,7 +13,11 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
         boolean_context: bool,
     ) -> Expression<'a> {
-        if !Self::try_negate_expression(&mut expr, ctx, boolean_context) {
+        if Self::try_negate_expression(&mut expr, ctx, boolean_context) {
+            if boolean_context {
+                Self::minimize_expression_in_boolean_context(&mut expr, ctx);
+            }
+        } else {
             return Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx);
         }
         expr

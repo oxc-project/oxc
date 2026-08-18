@@ -8,24 +8,6 @@ use crate::TraverseCtx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    /// Negate and simplify expression when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
-    pub fn negate_expression_in_boolean_context(
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if Self::try_negate_expression(expr, ctx, true) {
-            Self::minimize_expression_in_boolean_context(expr, ctx);
-        } else {
-            let new_expr = Expression::new_unary_expression(
-                expr.span(),
-                UnaryOperator::LogicalNot,
-                expr.take_in(ctx),
-                ctx,
-            );
-            ctx.replace_expression(expr, new_expr);
-        }
-    }
-
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
     /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
@@ -99,32 +81,30 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.alternate, ctx);
                 if let Some(boolean) = e.consequent.get_side_free_boolean_value(ctx) {
                     let right = e.alternate.take_in(ctx);
+                    let left = e.test.take_in(ctx);
                     let span = e.span;
-                    let op = if boolean {
+                    let (op, left) = if boolean {
                         // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
-                        LogicalOperator::Or
+                        (LogicalOperator::Or, left)
                     } else {
                         // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
-                        Self::negate_expression_in_boolean_context(&mut e.test, ctx);
-                        LogicalOperator::And
+                        (LogicalOperator::And, Self::minimize_not(left.span(), left, ctx, true))
                     };
-                    let left = e.test.take_in(ctx);
                     let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
                     ctx.replace_expression(expr, new_expr);
                     return;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
+                    let left = e.test.take_in(ctx);
                     let right = e.consequent.take_in(ctx);
                     let span = e.span;
-                    let op = if boolean {
+                    let (op, left) = if boolean {
                         // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
-                        Self::negate_expression_in_boolean_context(&mut e.test, ctx);
-                        LogicalOperator::Or
+                        (LogicalOperator::Or, Self::minimize_not(left.span(), left, ctx, true))
                     } else {
                         // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
-                        LogicalOperator::And
+                        (LogicalOperator::And, left)
                     };
-                    let left = e.test.take_in(ctx);
                     let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
                     ctx.replace_expression(expr, new_expr);
                 }

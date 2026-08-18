@@ -41,9 +41,8 @@ impl<'a> PeepholeOptimizations {
             };
 
             let Statement::IfStatement(if_stmt) = first else { unreachable!() };
-            let IfStatement { mut test, alternate, .. } = if_stmt.unbox();
-            Self::negate_expression_in_boolean_context(&mut test, ctx);
-            let expr = test;
+            let IfStatement { test, alternate, .. } = if_stmt.unbox();
+            let expr = Self::minimize_not(test.span(), test, ctx, true);
 
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);

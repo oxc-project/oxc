@@ -40,7 +40,9 @@ impl<'a> PeepholeOptimizations {
 
             // `if (!a) {} else x;` => `if (a) x;`
             // `if (a)  {} else x;` => `if (!a) x;`
-            Self::negate_expression_in_boolean_context(&mut if_stmt.test, ctx);
+            ctx.replace_expression_with(&mut if_stmt.test, |old, ctx| {
+                Self::minimize_not(old.span(), old, ctx, true)
+            });
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
 
