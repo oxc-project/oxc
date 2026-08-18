@@ -436,7 +436,6 @@ pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomP
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
 pub use crate::rules::react::function_component_definition::FunctionComponentDefinition as ReactFunctionComponentDefinition;
-pub use crate::rules::react::gating::Gating as ReactGating;
 pub use crate::rules::react::globals::Globals as ReactGlobals;
 pub use crate::rules::react::hook_use_state::HookUseState as ReactHookUseState;
 pub use crate::rules::react::hooks::Hooks as ReactHooks;
@@ -1295,7 +1294,6 @@ pub enum RuleEnum {
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
     ReactFunctionComponentDefinition(ReactFunctionComponentDefinition),
-    ReactGating(ReactGating),
     ReactGlobals(ReactGlobals),
     ReactHookUseState(ReactHookUseState),
     ReactHooks(ReactHooks),
@@ -2221,8 +2219,7 @@ const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usiz
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
 const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
-const REACT_GATING_ID: usize = REACT_FUNCTION_COMPONENT_DEFINITION_ID + 1usize;
-const REACT_GLOBALS_ID: usize = REACT_GATING_ID + 1usize;
+const REACT_GLOBALS_ID: usize = REACT_FUNCTION_COMPONENT_DEFINITION_ID + 1usize;
 const REACT_HOOK_USE_STATE_ID: usize = REACT_GLOBALS_ID + 1usize;
 const REACT_HOOKS_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
 const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOKS_ID + 1usize;
@@ -2751,7 +2748,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 871usize] = [
+static RULE_NAMES: [&str; 870usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3154,7 +3151,6 @@ static RULE_NAMES: [&str; 871usize] = [
     ReactForbidElements::NAME,
     ReactForwardRefUsesRef::NAME,
     ReactFunctionComponentDefinition::NAME,
-    ReactGating::NAME,
     ReactGlobals::NAME,
     ReactHookUseState::NAME,
     ReactHooks::NAME,
@@ -4101,7 +4097,6 @@ impl RuleEnum {
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
             Self::ReactFunctionComponentDefinition(_) => REACT_FUNCTION_COMPONENT_DEFINITION_ID,
-            Self::ReactGating(_) => REACT_GATING_ID,
             Self::ReactGlobals(_) => REACT_GLOBALS_ID,
             Self::ReactHookUseState(_) => REACT_HOOK_USE_STATE_ID,
             Self::ReactHooks(_) => REACT_HOOKS_ID,
@@ -5131,7 +5126,6 @@ impl RuleEnum {
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::CATEGORY,
-            Self::ReactGating(_) => ReactGating::CATEGORY,
             Self::ReactGlobals(_) => ReactGlobals::CATEGORY,
             Self::ReactHookUseState(_) => ReactHookUseState::CATEGORY,
             Self::ReactHooks(_) => ReactHooks::CATEGORY,
@@ -6155,7 +6149,6 @@ impl RuleEnum {
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::FIX,
-            Self::ReactGating(_) => ReactGating::FIX,
             Self::ReactGlobals(_) => ReactGlobals::FIX,
             Self::ReactHookUseState(_) => ReactHookUseState::FIX,
             Self::ReactHooks(_) => ReactHooks::FIX,
@@ -7255,7 +7248,6 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::documentation()
             }
-            Self::ReactGating(_) => ReactGating::documentation(),
             Self::ReactGlobals(_) => ReactGlobals::documentation(),
             Self::ReactHookUseState(_) => ReactHookUseState::documentation(),
             Self::ReactHooks(_) => ReactHooks::documentation(),
@@ -9084,9 +9076,6 @@ impl RuleEnum {
                 ReactFunctionComponentDefinition::config_schema(generator)
                     .or_else(|| ReactFunctionComponentDefinition::schema(generator))
             }
-            Self::ReactGating(_) => {
-                ReactGating::config_schema(generator).or_else(|| ReactGating::schema(generator))
-            }
             Self::ReactGlobals(_) => {
                 ReactGlobals::config_schema(generator).or_else(|| ReactGlobals::schema(generator))
             }
@@ -10842,7 +10831,6 @@ impl RuleEnum {
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
             Self::ReactFunctionComponentDefinition(_) => "react",
-            Self::ReactGating(_) => "react",
             Self::ReactGlobals(_) => "react",
             Self::ReactHookUseState(_) => "react",
             Self::ReactHooks(_) => "react",
@@ -12848,7 +12836,6 @@ impl RuleEnum {
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run(node, ctx),
-            Self::ReactGating(rule) => rule.run(node, ctx),
             Self::ReactGlobals(rule) => rule.run(node, ctx),
             Self::ReactHookUseState(rule) => rule.run(node, ctx),
             Self::ReactHooks(rule) => rule.run(node, ctx),
@@ -13736,7 +13723,6 @@ impl RuleEnum {
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_once(ctx),
-            Self::ReactGating(rule) => rule.run_once(ctx),
             Self::ReactGlobals(rule) => rule.run_once(ctx),
             Self::ReactHookUseState(rule) => rule.run_once(ctx),
             Self::ReactHooks(rule) => rule.run_once(ctx),
@@ -14695,7 +14681,6 @@ impl RuleEnum {
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactGating(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15630,7 +15615,6 @@ impl RuleEnum {
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.should_run(ctx),
-            Self::ReactGating(rule) => rule.should_run(ctx),
             Self::ReactGlobals(rule) => rule.should_run(ctx),
             Self::ReactHookUseState(rule) => rule.should_run(ctx),
             Self::ReactHooks(rule) => rule.should_run(ctx),
@@ -16683,7 +16667,6 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::IS_TSGOLINT_RULE
             }
-            Self::ReactGating(_) => ReactGating::IS_TSGOLINT_RULE,
             Self::ReactGlobals(_) => ReactGlobals::IS_TSGOLINT_RULE,
             Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
             Self::ReactHooks(_) => ReactHooks::IS_TSGOLINT_RULE,
@@ -17864,7 +17847,6 @@ impl RuleEnum {
             Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::VERSION,
-            Self::ReactGating(_) => ReactGating::VERSION,
             Self::ReactGlobals(_) => ReactGlobals::VERSION,
             Self::ReactHookUseState(_) => ReactHookUseState::VERSION,
             Self::ReactHooks(_) => ReactHooks::VERSION,
@@ -18932,7 +18914,6 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::HAS_CONFIG
             }
-            Self::ReactGating(_) => ReactGating::HAS_CONFIG,
             Self::ReactGlobals(_) => ReactGlobals::HAS_CONFIG,
             Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
             Self::ReactHooks(_) => ReactHooks::HAS_CONFIG,
@@ -19979,7 +19960,6 @@ impl RuleEnum {
             Self::ReactForbidElements(_) => ReactForbidElements::INFO,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::INFO,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::INFO,
-            Self::ReactGating(_) => ReactGating::INFO,
             Self::ReactGlobals(_) => ReactGlobals::INFO,
             Self::ReactHookUseState(_) => ReactHookUseState::INFO,
             Self::ReactHooks(_) => ReactHooks::INFO,
@@ -20905,7 +20885,6 @@ impl RuleEnum {
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
             Self::ReactFunctionComponentDefinition(rule) => rule.types_info(),
-            Self::ReactGating(rule) => rule.types_info(),
             Self::ReactGlobals(rule) => rule.types_info(),
             Self::ReactHookUseState(rule) => rule.types_info(),
             Self::ReactHooks(rule) => rule.types_info(),
@@ -21780,7 +21759,6 @@ impl RuleEnum {
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_info(),
-            Self::ReactGating(rule) => rule.run_info(),
             Self::ReactGlobals(rule) => rule.run_info(),
             Self::ReactHookUseState(rule) => rule.run_info(),
             Self::ReactHooks(rule) => rule.run_info(),
@@ -22745,7 +22723,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
         RuleEnum::ReactFunctionComponentDefinition(ReactFunctionComponentDefinition::default()),
-        RuleEnum::ReactGating(ReactGating::default()),
         RuleEnum::ReactGlobals(ReactGlobals::default()),
         RuleEnum::ReactHookUseState(ReactHookUseState::default()),
         RuleEnum::ReactHooks(ReactHooks::default()),

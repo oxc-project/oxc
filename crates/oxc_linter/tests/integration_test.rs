@@ -68,11 +68,10 @@ fn test_declare_oxc_lint() {
 
 #[test]
 fn test_react_compiler_rule_categories() {
-    const EXPECTED: [(&str, RuleCategory); 23] = [
+    const EXPECTED: [(&str, RuleCategory); 22] = [
         ("capitalized-calls", RuleCategory::Suspicious),
         ("error-boundaries", RuleCategory::Correctness),
         ("exhaustive-effect-dependencies", RuleCategory::Correctness),
-        ("gating", RuleCategory::Correctness),
         ("globals", RuleCategory::Correctness),
         ("hooks", RuleCategory::Correctness),
         ("immutability", RuleCategory::Correctness),

@@ -47,6 +47,7 @@ fn react_compiler_plugin_options() -> PluginOptions {
             validate_no_capitalized_calls: Some(vec![]),
             validate_hooks_usage: true,
             validate_no_derived_computations_in_effects: true,
+            validate_exhaustive_memoization_dependencies: true,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::All,
             ..EnvironmentConfig::default()
         },
