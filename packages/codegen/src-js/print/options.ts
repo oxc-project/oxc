@@ -49,7 +49,7 @@ export interface Options {
   sourcemap?: boolean;
 
   /**
-   * Original source text. Required for source-map mappings.
+   * Original source text. Required when `sourcemap` is `true`.
    */
   sourceText?: string;
 

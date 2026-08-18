@@ -201,6 +201,47 @@ describe("Rust conformance", () => {
   });
 });
 
+describe("source map options", () => {
+  const code = "const value = 1;";
+  const program = parseProgram("options.js", code);
+
+  test.each([
+    ["missing", undefined],
+    ["null", null],
+    ["number", 1],
+  ])("rejects %s sourceText", (_name, sourceText) => {
+    expect(() =>
+      printSync(program, { sourcemap: true, sourceText: sourceText as unknown as string }),
+    ).toThrowError(new TypeError("`sourceText` must be a string when `sourcemap` is true"));
+  });
+
+  test.each([
+    ["null", null],
+    ["number", 1],
+  ])("rejects %s sourceFilename", (_name, sourceFilename) => {
+    expect(() =>
+      printSync(program, {
+        sourcemap: true,
+        sourceText: code,
+        sourceFilename: sourceFilename as unknown as string,
+      }),
+    ).toThrowError(new TypeError("`sourceFilename` must be a string when supplied"));
+  });
+
+  test("accepts valid source map options", () => {
+    expect(
+      printSync(program, {
+        sourcemap: true,
+        sourceText: code,
+        sourceFilename: "options.js",
+      }).map,
+    ).toMatchObject({
+      sources: ["options.js"],
+      sourcesContent: [code],
+    });
+  });
+});
+
 interface Fixture {
   name: string;
   /** Source text, or `null` if the fixture is a cached file which has not been downloaded */
