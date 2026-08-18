@@ -40,9 +40,10 @@ impl<'a> PeepholeOptimizations {
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Statement::IfStatement(if_stmt) = first else { unreachable!() };
+            let IfStatement { test, alternate, .. } = if_stmt.unbox();
 
-            let expr = match if_stmt.test.take_in(ctx) {
+            let expr = match test {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                     unary_expr.unbox().argument
                 }
@@ -61,7 +62,6 @@ impl<'a> PeepholeOptimizations {
                 for_stmt.test = Some(expr);
             }
 
-            let alternate = if_stmt.alternate.take();
             let new_body = Self::drop_first_statement(span, body, alternate, ctx);
             ctx.replace_statement(&mut for_stmt.body, new_body);
             return;
@@ -84,9 +84,10 @@ impl<'a> PeepholeOptimizations {
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Statement::IfStatement(if_stmt) = first else { unreachable!() };
+            let IfStatement { test, consequent, .. } = if_stmt.unbox();
 
-            let expr = if_stmt.test.take_in(ctx);
+            let expr = test;
 
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);
@@ -100,7 +101,6 @@ impl<'a> PeepholeOptimizations {
                 for_stmt.test = Some(expr);
             }
 
-            let consequent = if_stmt.consequent.take_in(ctx);
             let new_body = Self::drop_first_statement(span, body, Some(consequent), ctx);
             ctx.replace_statement(&mut for_stmt.body, new_body);
         }
@@ -119,7 +119,7 @@ impl<'a> PeepholeOptimizations {
                 } else if block_stmt.body.len() == 2
                     && !Self::statement_cares_about_scope(&block_stmt.body[1])
                 {
-                    return block_stmt.body[1].take_in(ctx);
+                    return block_stmt.body.pop().unwrap();
                 } else {
                     block_stmt.body.remove(0);
                 }

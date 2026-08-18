@@ -679,7 +679,7 @@ impl PreferExportFrom {
 
         let mut parent_nodes: Vec<&AstNode> =
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
-        parent_nodes.sort_by_key(|node| node.span().start);
+        parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()

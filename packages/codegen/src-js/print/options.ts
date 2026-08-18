@@ -44,7 +44,8 @@ export interface Position {
 export interface Options {
   /**
    * String to use for indentation, defaults to `"\t"`.
-   * Must consist only of spaces and/or tabs - anything else falls back to a tab.
+   * Must be a non-empty string consisting only of spaces and/or tabs.
+   * Throws a `TypeError` otherwise.
    */
   indent?: string;
 

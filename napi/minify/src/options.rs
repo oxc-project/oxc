@@ -1,5 +1,13 @@
-use napi::Either;
+use napi::{
+    Either, Env, Error, Status, Unknown,
+    bindgen_prelude::{
+        FnArgs, FromNapiValue, Function, JsObjectValue, JsValue, Object, ToNapiValue, TypeName,
+        ValidateNapiValue,
+    },
+    sys,
+};
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
 
 use oxc_compat::EngineTargets;
 use oxc_str::CompactStr;
@@ -274,6 +282,141 @@ impl From<&MangleOptionsKeepNames> for oxc_minifier::MangleOptionsKeepNames {
     }
 }
 
+/// Owned source and flags from a JavaScript `RegExp`.
+pub struct JsRegExp {
+    /// Pattern source without delimiters.
+    pub source: String,
+    /// JavaScript regular expression flags.
+    pub flags: String,
+}
+
+impl TypeName for JsRegExp {
+    fn type_name() -> &'static str {
+        "RegExp"
+    }
+
+    fn value_type() -> napi::ValueType {
+        napi::ValueType::Object
+    }
+}
+
+impl ValidateNapiValue for JsRegExp {}
+
+impl FromNapiValue for JsRegExp {
+    unsafe fn from_napi_value(env: sys::napi_env, napi_val: sys::napi_value) -> napi::Result<Self> {
+        let object = Object::from_raw(env, napi_val);
+        let env = Env::from(env);
+        let global = env.get_global()?;
+        let constructor = global.get_named_property::<Function<Unknown, ()>>("RegExp")?;
+
+        if !object.instanceof(constructor)? {
+            return Err(Error::new(Status::ObjectExpected, "Expected a RegExp object"));
+        }
+
+        Ok(Self {
+            source: object.get_named_property::<String>("source")?,
+            flags: object.get_named_property::<String>("flags")?,
+        })
+    }
+}
+
+impl ToNapiValue for JsRegExp {
+    unsafe fn to_napi_value(env: sys::napi_env, value: Self) -> napi::Result<sys::napi_value> {
+        let global = Env::from(env).get_global()?;
+        let constructor =
+            global.get_named_property::<Function<FnArgs<(String, String)>, Unknown>>("RegExp")?;
+        let object = constructor.new_instance(FnArgs::from((value.source, value.flags)))?;
+        Ok(object.raw())
+    }
+}
+
+impl JsRegExp {
+    fn compile(&self, option_name: &str) -> Result<lazy_regex::Regex, String> {
+        let error = |error| format!("Invalid mangleProps.{option_name} regex: {error}");
+        if self.flags.is_empty() {
+            lazy_regex::Regex::new(&self.source).map_err(error)
+        } else {
+            lazy_regex::Regex::new(&format!("(?{}){}", self.flags, self.source)).map_err(error)
+        }
+    }
+}
+
+#[napi(object)]
+pub struct ManglePropertiesOptions {
+    /// JavaScript `RegExp` selecting property names to mangle. The source and flags are compiled
+    /// with Rust's regex engine. Flags `i`, `m`, `s`, and `u` are supported.
+    #[napi(ts_type = "RegExp")]
+    pub include: JsRegExp,
+
+    /// JavaScript `RegExp` excluding property names selected by `include`.
+    #[napi(ts_type = "RegExp")]
+    pub exclude: Option<JsRegExp>,
+
+    /// Exact names that are neither mangled nor emitted as automatic output names.
+    pub reserved: Option<Vec<String>>,
+
+    /// Mangle quoted property occurrences in addition to unquoted occurrences.
+    ///
+    /// @default false
+    pub quoted: Option<bool>,
+
+    /// Generate readable `_$name$_`-style output names.
+    ///
+    /// @default false
+    pub debug: Option<bool>,
+
+    /// Stable mappings from original names to output names. `false` reserves an original name.
+    /// Entries that do not match `include`, or that match `exclude`, remain inert but are
+    /// preserved in the returned `mangleCache`. String targets must be `IdentifierName` values
+    /// other than `__proto__`, `constructor`, or `prototype`. The original name `__proto__` is
+    /// always reserved and cannot be used as a cache key.
+    #[napi(ts_type = "Record<string, string | false>")]
+    pub cache: Option<FxHashMap<String, Either<String, bool>>>,
+}
+
+impl TryFrom<&ManglePropertiesOptions> for oxc_minifier::ManglePropertiesOptions {
+    type Error = String;
+
+    fn try_from(options: &ManglePropertiesOptions) -> Result<Self, Self::Error> {
+        let include = options.include.compile("include")?;
+        let exclude = options.exclude.as_ref().map(|regex| regex.compile("exclude")).transpose()?;
+        let mut cache = oxc_minifier::ManglePropertyCache::default();
+        if let Some(entries) = &options.cache {
+            for (original, value) in entries {
+                if original == "__proto__" {
+                    return Err(
+                        "Invalid mangleProps.cache key '__proto__': this original name cannot be used as a cache key"
+                            .to_string(),
+                    );
+                }
+                let target = match value {
+                    Either::A(target) => Some(CompactStr::from(target.as_str())),
+                    Either::B(false) => None,
+                    Either::B(true) => {
+                        return Err(format!(
+                            "Invalid mangleProps.cache value for '{original}': expected a string or false"
+                        ));
+                    }
+                };
+                cache
+                    .insert(CompactStr::from(original.as_str()), target)
+                    .map_err(|error| format!("Invalid mangleProps.cache: {error}"))?;
+            }
+        }
+
+        Ok(Self {
+            include,
+            exclude,
+            reserved: options.reserved.as_ref().map_or_else(Default::default, |names| {
+                names.iter().map(|name| CompactStr::from(name.as_str())).collect()
+            }),
+            mangle_quoted: options.quoted.unwrap_or(false),
+            debug: options.debug.unwrap_or(false),
+            cache,
+        })
+    }
+}
+
 #[napi(string_enum = "lowercase")]
 pub enum LegalCommentsMode {
     /// Do not preserve any legal comments.
@@ -364,6 +507,11 @@ pub struct MinifyOptions {
 
     pub mangle: Option<Either<bool, MangleOptions>>,
 
+    /// Mangle matching property names independently of identifier mangling. Properties owned by
+    /// unminified code, imported module namespaces, globals, or host APIs must be excluded or
+    /// reserved.
+    pub mangle_props: Option<ManglePropertiesOptions>,
+
     pub codegen: Option<Either<bool, CodegenOptions>>,
 
     pub sourcemap: Option<bool>,
@@ -383,6 +531,11 @@ impl TryFrom<&MinifyOptions> for oxc_minifier::MinifierOptions {
             None | Some(Either::A(true)) => Some(oxc_minifier::MangleOptions::default()),
             Some(Either::B(o)) => Some(oxc_minifier::MangleOptions::from(o)),
         };
-        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties: None })
+        let mangle_properties = o
+            .mangle_props
+            .as_ref()
+            .map(oxc_minifier::ManglePropertiesOptions::try_from)
+            .transpose()?;
+        Ok(oxc_minifier::MinifierOptions { compress, mangle, mangle_properties })
     }
 }

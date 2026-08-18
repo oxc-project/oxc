@@ -104,6 +104,11 @@ pub enum CommentContent {
     /// Classified separately because its meaning remains valid if the next AST
     /// node is removed, unlike position-sensitive coverage annotations.
     CoverageIgnoreFile = 11,
+
+    /// Marks the following string or no-substitution template as a property name.
+    /// `/* @__KEY__ */` or `/* #__KEY__ */`
+    /// <https://esbuild.github.io/api/#mangle-key>
+    PropertyKey = 12,
 }
 
 bitflags! {
@@ -275,6 +280,12 @@ impl Comment {
     #[inline]
     pub fn is_no_side_effects(self) -> bool {
         self.content == CommentContent::NoSideEffects
+    }
+
+    /// Is a leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
+    #[inline]
+    pub fn is_property_key_annotation(self) -> bool {
+        self.content == CommentContent::PropertyKey && self.is_leading()
     }
 
     /// Is webpack magic comment.

@@ -161,19 +161,11 @@ fn is_canonical_numeric_string(name: &str) -> bool {
     numeric_key_string(value) == name
 }
 
-fn is_key_annotation(comment: &Comment, source_text: &str) -> bool {
-    let text = comment.content_span().source_text(source_text).trim();
-    matches!(text.strip_prefix(['@', '#']), Some("__KEY__"))
-}
-
 fn key_annotated_spans(program: &Program<'_>) -> FxHashSet<u32> {
     program
         .comments
         .iter()
-        .filter(|comment| {
-            comment.position == CommentPosition::Leading
-                && is_key_annotation(comment, program.source_text)
-        })
+        .filter(|comment| comment.is_property_key_annotation())
         .map(|comment| comment.attached_to)
         .collect()
 }

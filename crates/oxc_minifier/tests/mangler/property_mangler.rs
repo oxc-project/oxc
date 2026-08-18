@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast_visit::VisitMut;
-use oxc_codegen::Codegen;
+use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_minifier::{
     CompressOptions, MangleOptions, ManglePropertiesOptions, ManglePropertyCache, Minifier,
     MinifierOptions, PropertyMangleCollection, PropertyMangler,
@@ -144,6 +144,31 @@ fn annotations_override_quoted_behavior() {
 }
 
 #[test]
+fn property_key_annotations_survive_codegen_before_mangling() {
+    let source = "const object = { _field: 1 }; const key = /* #__KEY__ */ '_field'; object[key];";
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    let rendered = Codegen::new()
+        .with_options(CodegenOptions {
+            comments: CommentOptions { normal: false, ..CommentOptions::default() },
+            ..CodegenOptions::default()
+        })
+        .build(&parsed.program)
+        .code;
+    assert!(rendered.contains("/* #__KEY__ */"));
+
+    let (actual, _) = mangle_with(&rendered, SourceType::mjs(), options("^_"));
+    assert_eq!(
+        actual,
+        codegen(
+            "const object = { e: 1 }; const key = /* #__KEY__ */ 'e'; object[key];",
+            SourceType::mjs(),
+        )
+    );
+}
+
+#[test]
 fn key_annotations_do_not_rewrite_directives() {
     let source_type = SourceType::mjs();
     let (actual, cache) =
@@ -154,7 +179,7 @@ fn key_annotations_do_not_rewrite_directives() {
 }
 
 #[test]
-fn trailing_key_annotation_does_not_annotate_offset_zero() {
+fn property_key_annotation_without_a_literal_does_not_annotate_offset_zero() {
     let source = "'_x' in obj ? yes() : no();\nwork(); /* @__KEY__ */\ndone();";
     test(source, source, options("^_"));
 }

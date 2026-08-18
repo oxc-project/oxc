@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
@@ -132,8 +132,11 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::ParenthesizedExpression(paren_expr) = expr {
-            *expr = paren_expr.expression.take_in(ctx);
+        if matches!(expr, Expression::ParenthesizedExpression(_)) {
+            expr.replace_with(|expr| {
+                let Expression::ParenthesizedExpression(paren_expr) = expr else { unreachable!() };
+                paren_expr.unbox().expression
+            });
         }
         // Handled outside the match below so the replacement can go through
         // `ctx.replace_expression`, which walks the dropped call (its

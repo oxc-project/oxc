@@ -28,10 +28,7 @@ let indentString = "\t";
  */
 const indents = [""];
 
-/**
- * The `indent` option must be made up of only spaces and tabs, and not empty string.
- * Anything else falls back to a tab.
- */
+/** The `indent` option must be a non-empty string made up of only spaces and tabs. */
 const INDENT_REGEX = /^[ \t]+$/;
 
 /** Upper bound for the process-wide indentation cache. */
@@ -105,8 +102,13 @@ export class State {
     // The `indent` option is validated here, not in the printer, and changing of it discards
     // the cache grown for the old `indentString`.
     // That should be rare - most users have an indent style they prefer, and use it consistently.
-    let { indent } = options;
-    if (typeof indent !== "string" || !INDENT_REGEX.test(indent)) indent = "\t";
+    const { indent: indentOption } = options;
+    let indent = indentOption;
+    if (indent === undefined) {
+      indent = "\t";
+    } else if (typeof indent !== "string" || !INDENT_REGEX.test(indent)) {
+      throw new TypeError("`indent` must be a non-empty string containing only spaces and tabs");
+    }
     if (indent !== indentString) {
       indentString = indent;
       indents.length = 1;

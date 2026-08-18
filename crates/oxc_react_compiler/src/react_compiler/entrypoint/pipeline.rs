@@ -17,7 +17,7 @@ use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
     ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
-    assert_terminal_successors_exist,
+    assert_terminal_successors_exist, assert_valid_block_nesting,
 };
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
@@ -290,11 +290,11 @@ fn run_pipeline<'a>(
 
     merge_overlapping_reactive_scopes_hir(&mut hir, &mut env);
 
-    // TODO: port assertValidBlockNesting
+    assert_valid_block_nesting(&hir, &env)?;
 
-    build_reactive_scope_terminals_hir(&mut hir, &mut env);
+    build_reactive_scope_terminals_hir(&mut hir, &mut env)?;
 
-    // TODO: port assertValidBlockNesting
+    assert_valid_block_nesting(&hir, &env)?;
 
     flatten_reactive_loops_hir(&mut hir);
 
