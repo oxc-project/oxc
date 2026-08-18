@@ -119,8 +119,7 @@ const IGNORE: &[&str] = &[
 
 /// Option combinations not supported yet; dropped from the test population entirely.
 fn skip_unsupported_options(spec: &OptionSet) -> bool {
-    spec.get("experimentalOperatorPosition").and_then(serde_json::Value::as_str) == Some("start")
-        || spec.get("experimentalTernaries").and_then(serde_json::Value::as_bool) == Some(true)
+    spec.get("experimentalTernaries").and_then(serde_json::Value::as_bool) == Some(true)
 }
 
 const JS: ConformanceConfig = ConformanceConfig {

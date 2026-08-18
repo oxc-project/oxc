@@ -255,6 +255,8 @@ pub struct Message {
 }
 
 impl Message {
+    #[cold]
+    #[inline(never)]
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
         let span = error
             .labels

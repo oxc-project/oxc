@@ -7,12 +7,33 @@
 //! using the shared [`wrap_options`](GraphicalReportHandler::wrap_options)
 //! helper.
 
-use std::fmt;
+use std::fmt::{self, Write as _};
 
 use owo_colors::OwoColorize;
+use smallvec::SmallVec;
 
 use super::handler::{GraphicalReportHandler, LinkStyle};
-use crate::{Diagnostic, Severity};
+use crate::{Diagnostic, Severity, source_impls::SpanScanner};
+
+struct TitleBuffer(SmallVec<[u8; 128]>);
+
+impl TitleBuffer {
+    fn new() -> Self {
+        Self(SmallVec::new())
+    }
+
+    fn as_str(&self) -> &str {
+        // SAFETY: writes only append valid UTF-8.
+        unsafe { std::str::from_utf8_unchecked(&self.0) }
+    }
+}
+
+impl fmt::Write for TitleBuffer {
+    fn write_str(&mut self, text: &str) -> fmt::Result {
+        self.0.extend_from_slice(text.as_bytes());
+        Ok(())
+    }
+}
 
 impl GraphicalReportHandler {
     /// Render a [`Diagnostic`].
@@ -25,10 +46,82 @@ impl GraphicalReportHandler {
         f: &mut impl fmt::Write,
         diagnostic: &dyn Diagnostic,
     ) -> fmt::Result {
+        let source = diagnostic.source_code();
+        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 1, 1));
+        let source_name = source.and_then(|source| source.name());
+        self.render_report_with_scanner(f, diagnostic, scanner.as_mut(), source_name)
+    }
+
+    /// Render [`Diagnostic`]s in order, reusing line indexes for shared sources.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when writing the rendered reports fails.
+    pub fn render_reports<'a>(
+        &self,
+        f: &mut impl fmt::Write,
+        diagnostics: impl IntoIterator<Item = &'a dyn Diagnostic>,
+    ) -> fmt::Result {
+        let mut scanner: Option<SpanScanner<'a>> = None;
+        for diagnostic in diagnostics {
+            let source = diagnostic.source_code();
+            match source {
+                Some(source)
+                    if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
+                None => scanner = None,
+            }
+            let source_name = source.and_then(|source| source.name());
+            self.render_report_with_scanner(f, diagnostic, scanner.as_mut(), source_name)?;
+        }
+        Ok(())
+    }
+
+    /// Render [`Diagnostic`]s until `keep` rejects a rendered report.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when writing the rendered reports fails.
+    pub fn render_reports_until<'a>(
+        &self,
+        diagnostics: impl IntoIterator<Item = &'a dyn Diagnostic>,
+        keep: &mut dyn FnMut(&dyn Diagnostic, &str) -> bool,
+    ) -> fmt::Result {
+        let mut scanner: Option<SpanScanner<'a>> = None;
+        let mut output = String::new();
+        for diagnostic in diagnostics {
+            let source = diagnostic.source_code();
+            match source {
+                Some(source)
+                    if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
+                None => scanner = None,
+            }
+            let source_name = source.and_then(|source| source.name());
+            output.clear();
+            self.render_report_with_scanner(
+                &mut output,
+                diagnostic,
+                scanner.as_mut(),
+                source_name,
+            )?;
+            if !keep(diagnostic, &output) {
+                break;
+            }
+        }
+        Ok(())
+    }
+
+    fn render_report_with_scanner(
+        &self,
+        f: &mut impl fmt::Write,
+        diagnostic: &dyn Diagnostic,
+        scanner: Option<&mut SpanScanner<'_>>,
+        source_name: Option<&str>,
+    ) -> fmt::Result {
         writeln!(f)?;
         self.render_title(f, diagnostic)?;
-        let src = diagnostic.source_code();
-        self.render_snippets(f, diagnostic, src)?;
+        self.render_snippets(f, diagnostic, scanner, source_name)?;
         self.render_footer(f, diagnostic)?;
         Ok(())
     }
@@ -42,22 +135,26 @@ impl GraphicalReportHandler {
 
         let width = self.termwidth.saturating_sub(2);
 
-        let title = match (self.links, diagnostic.url(), diagnostic.code()) {
+        let mut title = TitleBuffer::new();
+        match (self.links, diagnostic.url(), diagnostic.code()) {
             (LinkStyle::Link, Some(url), Some(code)) => {
                 // magic unicode escape sequences to make the terminal print a hyperlink
                 const CTL: &str = "\u{1b}]8;;";
                 const END: &str = "\u{1b}]8;;\u{1b}\\";
                 let code = code.style(severity_style);
-                let title = diagnostic.style(severity_style);
-                format!("{CTL}{url}\u{1b}\\{code}{END}: {title}")
+                let diagnostic = diagnostic.style(severity_style);
+                write!(title, "{CTL}{url}\u{1b}\\{code}{END}: {diagnostic}")?;
             }
-            (_, _, Some(code)) if severity_style.is_plain() => format!("{code}: {diagnostic}"),
+            (_, _, Some(code)) if severity_style.is_plain() => {
+                write!(title, "{code}: {diagnostic}")?;
+            }
             (_, _, Some(code)) => {
-                format!("{}", format_args!("{code}: {diagnostic}").style(severity_style))
+                write!(title, "{}", format_args!("{code}: {diagnostic}").style(severity_style))?;
             }
-            _ if severity_style.is_plain() => diagnostic.to_string(),
-            _ => format!("{}", diagnostic.style(severity_style)),
-        };
+            _ if severity_style.is_plain() => write!(title, "{diagnostic}")?,
+            _ => write!(title, "{}", diagnostic.style(severity_style))?,
+        }
+        let title = title.as_str();
         if !title.contains('\n')
             && severity_icon.len().saturating_add(title.len()).saturating_add(3) <= width
         {
@@ -80,7 +177,7 @@ impl GraphicalReportHandler {
                 )
             };
             let opts = Self::wrap_options(width, &initial_indent, &rest_indent);
-            Self::write_fill(f, &title, opts)?;
+            Self::write_fill(f, title, opts)?;
         }
         f.write_char('\n')?;
 
@@ -221,7 +318,50 @@ impl GraphicalReportHandler {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
+    use oxc_span::Span;
+
     use super::*;
+    use crate::{Error, GraphicalTheme, NamedSource, OxcDiagnostic};
+
+    #[test]
+    fn batch_render_matches_individual_reports() {
+        let source =
+            Arc::new(NamedSource::new("input.ts", "first();\nsecond();\nthird();\nfourth();\n"));
+        let other_source = Arc::new(NamedSource::new("other.ts", "alpha();\nbeta();\n"));
+        let diagnostics: Vec<Error> = vec![
+            OxcDiagnostic::warn("later")
+                .with_label(Span::new(29, 35))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::error("multi-label")
+                .with_labels([Span::new(0, 5), Span::new(19, 24)])
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::warn("earlier")
+                .with_label(Span::new(9, 15))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::error("without source").into(),
+            OxcDiagnostic::warn("different source")
+                .with_label(Span::new(9, 13))
+                .with_source_code(other_source),
+        ];
+        let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none()).with_links(false);
+
+        let mut expected = String::new();
+        for diagnostic in &diagnostics {
+            handler.render_report(&mut expected, diagnostic.as_ref()).unwrap();
+        }
+
+        let mut actual = String::new();
+        handler
+            .render_reports(
+                &mut actual,
+                diagnostics.iter().map(|diagnostic| diagnostic.as_ref() as &dyn Diagnostic),
+            )
+            .unwrap();
+
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     #[cfg_attr(

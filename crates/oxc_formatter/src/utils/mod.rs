@@ -14,9 +14,15 @@ pub mod tailwindcss;
 pub mod typecast;
 pub mod typescript;
 
-use oxc_ast::ast::{CallExpression, PropertyKey};
+use oxc_ast::ast::{CallExpression, PropertyKey, Statement};
 
 use crate::ast_nodes::{AstNode, AstNodes};
+
+/// Statements the formatter drops from statement lists: they produce no output,
+/// so following-span computation and emptiness checks must treat them as absent.
+pub fn is_dropped_statement(stmt: &Statement<'_>) -> bool {
+    matches!(stmt, Statement::EmptyStatement(_))
+}
 
 /// Tests if the property key is an identifier named `static`, `get` or `set`,
 /// which would parse as a modifier or accessor of the following member

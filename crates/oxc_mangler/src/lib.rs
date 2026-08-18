@@ -1,12 +1,15 @@
-use std::iter::{self, repeat_with};
+use std::{
+    collections::hash_map::Entry,
+    iter::{self, repeat_with},
+};
 
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use oxc_index::IndexVec;
 use oxc_syntax::class::ClassId;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use base54::base54;
+pub use base54::base54;
 use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
@@ -414,57 +417,44 @@ impl<'t> Mangler<'t> {
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
 
-        let private_member_count: IndexVec<ClassId, usize> = classes
-            .elements
-            .iter()
-            .map(|class_elements| {
-                class_elements.iter().filter(|element| element.is_private).count()
-            })
-            .collect();
-        let parent_private_member_count: IndexVec<ClassId, usize> = classes
-            .declarations
-            .iter_enumerated()
-            .map(|(class_id, _)| {
-                classes
-                    .ancestors(class_id)
-                    .skip(1)
-                    .map(|id| private_member_count[id])
-                    .sum::<usize>()
-            })
-            .collect();
+        let mut class_private_mappings: IndexVec<ClassId, FxHashMap<String, CompactStr>> =
+            IndexVec::with_capacity(classes.len());
+        for (class_id, class_elements) in classes.elements.iter_enumerated() {
+            // Nested classes are declared after their lexical parents, so their mappings have
+            // already been collected.
+            let parent_private_member_count = classes
+                .ancestors(class_id)
+                .skip(1)
+                .map(|id| class_private_mappings[id].len())
+                .sum::<usize>();
+            assert!(
+                u32::try_from(class_elements.len() + parent_private_member_count).is_ok(),
+                "too many class elements"
+            );
 
-        classes
-            .elements
-            .iter_enumerated()
-            .map(|(class_id, class_elements)| {
-                let parent_private_member_count = parent_private_member_count[class_id];
-                assert!(
-                    u32::try_from(class_elements.len() + parent_private_member_count).is_ok(),
-                    "too many class elements"
+            let private_member_count =
+                class_elements.iter().filter(|element| element.is_private).count();
+            let mut mappings =
+                FxHashMap::with_capacity_and_hasher(private_member_count, FxBuildHasher);
+            for element in class_elements.iter().filter(|element| element.is_private) {
+                let next_index = mappings.len();
+                let Entry::Vacant(entry) = mappings.entry(element.name.to_string()) else {
+                    continue;
+                };
+
+                #[expect(clippy::cast_possible_truncation, reason = "checked above with assert")]
+                let mangled = CompactStr::new(
+                    // Avoid reusing the same mangled name in parent classes.
+                    // We can improve this by reusing names that are not used in child classes,
+                    // but nesting a class inside another class is not common
+                    // and that would require liveness analysis.
+                    base54((parent_private_member_count + next_index) as u32).as_str(),
                 );
-                class_elements
-                    .iter()
-                    .filter_map(|element| {
-                        if element.is_private { Some(element.name.to_string()) } else { None }
-                    })
-                    .enumerate()
-                    .map(|(i, name)| {
-                        #[expect(
-                            clippy::cast_possible_truncation,
-                            reason = "checked above with assert"
-                        )]
-                        let mangled = CompactStr::new(
-                            // Avoid reusing the same mangled name in parent classes.
-                            // We can improve this by reusing names that are not used in child classes,
-                            // but nesting a class inside another class is not common
-                            // and that would require liveness analysis.
-                            base54((parent_private_member_count + i) as u32).as_str(),
-                        );
-                        (name, mangled)
-                    })
-                    .collect::<FxHashMap<_, _>>()
-            })
-            .collect()
+                entry.insert(mangled);
+            }
+            class_private_mappings.push(mappings);
+        }
+        class_private_mappings
     }
 }
 
@@ -853,9 +843,8 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
                 symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter())
             {
                 // A slot can be shared by several symbols (cross-scope reuse); rename them all.
-                for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
-                }
+                scoping
+                    .set_symbol_names(&symbol_to_rename.symbol_ids, Ident::from(new_name.as_str()));
             }
         }
     }

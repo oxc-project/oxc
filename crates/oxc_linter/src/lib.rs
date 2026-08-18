@@ -23,7 +23,7 @@ use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_estree_tokens::update_tokens_as_js;
 use oxc_parser::Token;
 use oxc_semantic::{AstNode, Semantic};
 use oxc_span::Span;
@@ -721,7 +721,7 @@ impl Linter {
         // Convert token spans to UTF-16 and update token kinds
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
         let (tokens_offset, tokens_len) = if !tokens.is_empty() {
-            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            update_tokens_as_js(tokens, program, &span_converter);
             (tokens.as_ptr() as u32, tokens.len() as u32)
         } else {
             (0, 0)

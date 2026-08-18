@@ -19,6 +19,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    utils::{ReactCompilerResults, build_react_compiler_results},
 };
 
 mod host;
@@ -84,6 +85,15 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn allocator(&self) -> &'a Allocator {
         self.parent.allocator()
+    }
+
+    /// Shared per-file result of the React Compiler lint run, for the React
+    /// Compiler family of rules. The compiler runs at most once per file, on
+    /// first access; it never runs when no rule in the family is enabled.
+    pub fn react_compiler_results(&self) -> &ReactCompilerResults {
+        self.parent
+            .react_compiler_results
+            .get_or_init(|| build_react_compiler_results(&self.parent))
     }
 
     #[inline]
@@ -274,7 +284,8 @@ impl<'a> LintContext<'a> {
     /// Report a lint rule violation.
     ///
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
-    #[inline]
+    #[cold]
+    #[inline(never)]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
     }

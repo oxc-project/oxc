@@ -71,6 +71,18 @@ NOTE: `"auto"` is not supported.
 - Overrides `.editorconfig.end_of_line`
 
 
+## experimentalOperatorPosition
+
+type: `"start" | "end"`
+
+
+When expressions wrap lines, print operators at the start of new lines (`"start"`)
+or at the end of previous lines (`"end"`).
+
+- Languages: JS, JSX, TS, TSX
+- Default: `"end"`
+
+
 ## htmlWhitespaceSensitivity
 
 type: `"css" | "strict" | "ignore"`

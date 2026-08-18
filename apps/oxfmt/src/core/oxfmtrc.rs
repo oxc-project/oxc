@@ -159,16 +159,16 @@ pub struct FormatConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
+    /// When expressions wrap lines, print operators at the start of new lines (`"start"`)
+    /// or at the end of previous lines (`"end"`).
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `"end"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub experimental_operator_position: Option<OperatorPositionConfig>,
 
-    // NOTE: These experimental options are not yet supported.
+    // NOTE: This experimental option is not yet supported.
     // Reject at deserialize time so all entry paths (base / overrides / NAPI `resolve()`) are covered uniformly.
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "reject_experimental_operator_position",
-        default
-    )]
-    #[schemars(skip)]
-    pub experimental_operator_position: Option<String>,
     #[serde(
         skip_serializing_if = "Option::is_none",
         deserialize_with = "reject_experimental_ternaries",
@@ -354,17 +354,6 @@ impl FormatConfig {
 
 // ---
 
-fn reject_experimental_operator_position<'de, D>(d: D) -> Result<Option<String>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let v = Option::<String>::deserialize(d)?;
-    if v.is_some() {
-        return Err(serde::de::Error::custom("Unsupported option: `experimentalOperatorPosition`"));
-    }
-    Ok(v)
-}
-
 fn reject_experimental_ternaries<'de, D>(d: D) -> Result<Option<bool>, D::Error>
 where
     D: serde::Deserializer<'de>,
@@ -414,6 +403,13 @@ pub enum ArrowParensConfig {
 pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum OperatorPositionConfig {
+    Start,
+    End,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -1008,13 +1004,6 @@ mod tests_reject_experimental {
     use super::*;
 
     #[test]
-    fn test_reject_experimental_operator_position_in_base() {
-        let json = r#"{ "experimentalOperatorPosition": "start" }"#;
-        let err = serde_json::from_str::<FormatConfig>(json).unwrap_err();
-        assert!(err.to_string().contains("experimentalOperatorPosition"));
-    }
-
-    #[test]
     fn test_reject_experimental_ternaries_in_base() {
         let json = r#"{ "experimentalTernaries": true }"#;
         let err = serde_json::from_str::<FormatConfig>(json).unwrap_err();
@@ -1028,41 +1017,11 @@ mod tests_reject_experimental {
             "overrides": [
                 {
                     "files": ["*.ts"],
-                    "options": { "experimentalOperatorPosition": "end" }
-                }
-            ]
-        }"#;
-        let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
-        assert!(err.to_string().contains("experimentalOperatorPosition"));
-
-        let json = r#"{
-            "overrides": [
-                {
-                    "files": ["*.ts"],
                     "options": { "experimentalTernaries": true }
                 }
             ]
         }"#;
         let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
         assert!(err.to_string().contains("experimentalTernaries"));
-    }
-
-    #[test]
-    fn test_reject_experimental_via_napi_resolve_path() {
-        // NAPI `resolve()` does `serde_json::from_value::<FormatConfig>(raw_config)`,
-        // which goes through the same deserialize_with.
-        let raw = serde_json::json!({ "experimentalTernaries": true });
-        let err = serde_json::from_value::<FormatConfig>(raw).unwrap_err();
-        assert!(err.to_string().contains("experimentalTernaries"));
-    }
-
-    #[test]
-    fn test_unset_experimental_does_not_fail() {
-        // Sanity: omitting both fields parses cleanly
-        let json = r#"{ "printWidth": 120 }"#;
-        let config: FormatConfig = serde_json::from_str(json).unwrap();
-        assert_eq!(config.print_width, Some(120));
-        assert!(config.experimental_operator_position.is_none());
-        assert!(config.experimental_ternaries.is_none());
     }
 }

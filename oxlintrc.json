@@ -34,6 +34,12 @@
   },
   "overrides": [
     {
+      "files": ["packages/codegen/**"],
+      "rules": {
+        "typescript/no-deprecated": "error"
+      }
+    },
+    {
       "files": ["tasks/e2e/test/*.test.ts"],
       "rules": {
         "vitest/valid-describe-callback": ["off"],

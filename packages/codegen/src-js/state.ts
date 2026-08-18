@@ -11,7 +11,7 @@
 import { CAT_OTHER } from "./print/write.ts";
 
 import type { Category } from "./print/write.ts";
-import type { Options, Position } from "./print/options.ts";
+import type { Options } from "./print/options.ts";
 
 /**
  * The string one level of indentation prints as. Set from the `indent` option, a tab by default.
@@ -28,10 +28,7 @@ let indentString = "\t";
  */
 const indents = [""];
 
-/**
- * The `indent` option must be made up of only spaces and tabs, and not empty string.
- * Anything else falls back to a tab.
- */
+/** The `indent` option must be a non-empty string made up of only spaces and tabs. */
 const INDENT_REGEX = /^[ \t]+$/;
 
 /** Upper bound for the process-wide indentation cache. */
@@ -70,6 +67,10 @@ export class State {
   // means for spacing.
   declare last: Category;
 
+  // Whether the last write ended in `)` or `]`. Only maps builds read this, to mirror Rust's
+  // trailing mapping for a postfix operand before chained punctuation.
+  declare lastWasPostfixClose: boolean;
+
   // `true` between a `writeNoLast` and the write which follows it,
   // i.e. while `last` describes something other than what was written last.
   // Only used in debug builds. See `debugAssertLastFresh`.
@@ -79,11 +80,13 @@ export class State {
   // Only used in debug builds. See `debugAssertCategoryMatches`.
   declare lastCharWritten: string;
 
-  // Deferred source mappings.
-  // Either all 3 are arrays, or all 3 are `null` (when the printer was given no `sourceMap`).
-  declare mapOffsets: number[] | null;
-  declare mapPositions: Position[] | null;
-  declare mapNames: (string | undefined)[] | null;
+  // Deferred source mappings. Generated/source offset pairs exist when source maps are enabled.
+  // Names are sparse, so their index/name pairs exist only if a mapping carries an original name.
+  declare mapPositions: number[] | null;
+  declare mapNames: (number | string)[] | null;
+
+  // Original source text, used to preserve names in source maps when the caller provides it.
+  declare sourceText: string | undefined;
 
   constructor(options: Options) {
     this.output = "";
@@ -105,8 +108,13 @@ export class State {
     // The `indent` option is validated here, not in the printer, and changing of it discards
     // the cache grown for the old `indentString`.
     // That should be rare - most users have an indent style they prefer, and use it consistently.
-    let { indent } = options;
-    if (typeof indent !== "string" || !INDENT_REGEX.test(indent)) indent = "\t";
+    const { indent: indentOption } = options;
+    let indent = indentOption;
+    if (indent === undefined) {
+      indent = "\t";
+    } else if (typeof indent !== "string" || !INDENT_REGEX.test(indent)) {
+      throw new TypeError("`indent` must be a non-empty string containing only spaces and tabs");
+    }
     if (indent !== indentString) {
       indentString = indent;
       indents.length = 1;
@@ -124,6 +132,8 @@ export class State {
     // directly would flatten V8's rope representation on every append-then-read (quadratic),
     // which is why the category is tracked rather than derived.
     this.last = CAT_OTHER;
+    this.lastWasPostfixClose = false;
+    this.sourceText = options.sourceText;
 
     // Debug-only fields for checking `last` is correct on both writes and reads
     if (DEBUG) {
@@ -132,15 +142,13 @@ export class State {
     }
 
     // `writeWithMap` records the output offset and original position of every mapped node,
-    // and `emitMappings` converts the offsets to generated line/column in one pass at the end
-    if (options.sourceMap == null) {
-      this.mapOffsets = null;
+    // and `generateSourceMap` encodes them in one pass at the end
+    if (options.sourcemap !== true) {
       this.mapPositions = null;
       this.mapNames = null;
     } else {
-      this.mapOffsets = [];
       this.mapPositions = [];
-      this.mapNames = [];
+      this.mapNames = null;
     }
   }
 }

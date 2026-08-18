@@ -86,22 +86,21 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|ts_type| {
                     // jf next param is not optional and current param is assignment pattern
                     // we need to add undefined to it's type
-                    if is_remaining_params_have_required || (param.optional && param.has_modifier())
+                    if (is_remaining_params_have_required
+                        || (param.optional && param.has_modifier()))
+                        && !contains_undefined(&ts_type)
                     {
-                        if matches!(ts_type, TSType::TSTypeReference(_)) {
-                            self.error(implicitly_adding_undefined_to_type(param.span));
-                        } else if !ts_type.is_maybe_undefined() {
-                            // union with `undefined`
-                            return TSTypeAnnotation::boxed(
-                                SPAN,
-                                TSType::new_ts_union_type(
-                                    SPAN,
-                                    [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
-                                    self,
-                                ),
-                                self,
-                            );
+                        if can_add_undefined(&ts_type) {
+                            let undefined = TSType::new_ts_undefined_keyword(SPAN, self);
+                            let ts_type = if let TSType::TSUnionType(mut union) = ts_type {
+                                union.types.push(undefined);
+                                TSType::TSUnionType(union)
+                            } else {
+                                TSType::new_ts_union_type(SPAN, [ts_type, undefined], self)
+                            };
+                            return TSTypeAnnotation::boxed(SPAN, ts_type, self);
                         }
+                        self.error(implicitly_adding_undefined_to_type(param.span));
                     }
 
                     TSTypeAnnotation::boxed(SPAN, ts_type, self)
@@ -187,4 +186,41 @@ impl<'a> IsolatedDeclarations<'a> {
 
 pub fn get_function_span(func: &Function<'_>) -> Span {
     func.id.as_ref().map_or_else(|| Span::empty(func.params.span.start), |id| id.span)
+}
+
+fn contains_undefined(ts_type: &TSType<'_>) -> bool {
+    match ts_type {
+        TSType::TSUndefinedKeyword(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().any(contains_undefined),
+        TSType::TSParenthesizedType(parenthesized) => {
+            contains_undefined(&parenthesized.type_annotation)
+        }
+        _ => false,
+    }
+}
+
+/// Whether TypeScript can syntactically add `undefined` without using type information.
+fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
+    if ts_type.is_keyword() {
+        return true;
+    }
+
+    match ts_type {
+        TSType::TSLiteralType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_)
+        | TSType::TSArrayType(_)
+        | TSType::TSTupleType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSTemplateLiteralType(_)
+        | TSType::TSThisType(_) => true,
+        TSType::TSParenthesizedType(parenthesized) => {
+            can_add_undefined(&parenthesized.type_annotation)
+        }
+        TSType::TSUnionType(union) => union.types.iter().all(can_add_undefined),
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.iter().all(can_add_undefined)
+        }
+        _ => false,
+    }
 }

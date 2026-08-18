@@ -11,7 +11,6 @@
 //    in a handful of places. The `*Node` aliases widen the properties where they do, and the branches
 //    which read a property Oxc's AST doesn't have at all assert its type at the point of use.
 
-import type { Position } from "./options.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /** A node whose type the printer doesn't handle. */
@@ -58,64 +57,11 @@ export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "de
 };
 
 /**
- * Oxc keeps a module's kind in `kind`, using `global: true` for `declare global`.
- * Older producers have no `kind`, and only the `global` flag distinguishes the two.
- */
-export type TSModuleDeclarationNode = Omit<
-  ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
-  "kind"
-> & {
-  kind?: ESTree.TSModuleDeclarationKind | "global" | null;
-};
-
-/**
- * Oxc puts a mapped type's parameter in `key` and `constraint`, where TS-ESLint < 6 used `typeParameter`.
- */
-export type TSMappedTypeNode = Omit<ESTree.TSMappedType, "key"> & {
-  key?: ESTree.BindingIdentifier | null;
-};
-
-/**
- * The pre-TS-ESLint-6 shape `TSMappedTypeNode` falls back to reading.
- */
-export interface TSMappedTypeLegacyParameter {
-  typeParameter: Omit<ESTree.TSTypeParameter, "constraint"> & { constraint: ESTree.TSType };
-}
-
-/**
- * Oxc's `TSImportType` names the module in `source`, where TS-ESLint < 8 used `argument`.
- */
-export type TSImportTypeNode = Omit<ESTree.TSImportType, "source"> & {
-  source?: ESTree.StringLiteral | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSImportTypeNode` falls back to reading.
- */
-export interface TSImportTypeLegacyArgument {
-  argument: ESTree.StringLiteral | ESTree.TSLiteralType | ESTree.TSType;
-}
-
-/**
- * Oxc wraps enum members in a `TSEnumBody`, where TS-ESLint < 8 put them on the declaration itself.
- */
-export type TSEnumDeclarationNode = Omit<ESTree.TSEnumDeclaration, "body"> & {
-  body?: ESTree.TSEnumBody | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSEnumDeclarationNode` falls back to reading.
- */
-export interface TSEnumDeclarationLegacyMembers {
-  members: ESTree.TSEnumMember[];
-}
-
-/**
- * A node, as passed to `write`, which only records where the node started for source maps.
- *
- * `loc` is not part of Oxc's AST - that records byte spans - but producers such as Acorn add it.
+ * A node carrying the offsets needed for source mappings.
  */
 export interface MappableNode {
   type: string;
-  loc?: { start: Position } | null;
+  name?: unknown;
+  start?: number;
+  end?: number;
 }

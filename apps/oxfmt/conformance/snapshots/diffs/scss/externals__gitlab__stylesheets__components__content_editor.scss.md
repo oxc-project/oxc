@@ -1,5 +1,7 @@
 # externals/gitlab/stylesheets/components/content_editor.scss
 
+> Allowed (layout-only): `box-shadow` with `#{}` math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
+
 ## Option 1
 
 `````json

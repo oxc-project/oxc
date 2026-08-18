@@ -68,7 +68,6 @@ The conformance suites check this on every fixture. It is what makes the two pri
 - No minify mode.
 - No support for comments.
 - No symbol mangling.
-- Source map support is implemented, but not well-tested.
 
 Many of these features can be added in future, and we should be able to do so without _much_ impact on performance.
 
@@ -261,8 +260,8 @@ only the last piece's category can possibly be read. Hence four write primitives
 | Function             | Updates `last` | Records a source mapping |
 | :------------------- | :------------- | :----------------------- |
 | `write`              | Yes            | No                       |
-| `writeNoLast`        | No             | No                       |
 | `writeWithMap`       | Yes            | Yes                      |
+| `writeNoLast`        | No             | No                       |
 | `writeWithMapNoLast` | No             | Yes                      |
 
 - The `*NoLast` pair is used at 89 sites, against 596 for the other two.
@@ -300,7 +299,7 @@ This is why the debug build is the one to run the conformance suites against - `
 | `print_ts.js`      | true  | false        | 39 KB |
 | `print_ts_maps.js` | true  | true         | 40 KB |
 
-`index.ts` picks one from the caller's `ts` and `sourceMap` options and `require`s it on first use -
+`index.ts` picks one from the caller's `ts` and `sourcemap` options and `require`s it on first use -
 `require` rather than `import()`, because `printSync` is synchronous.
 
 A caller printing only JavaScript never loads, parses or compiles the TypeScript printers at all.
@@ -505,12 +504,14 @@ Each of these produced a small perf bump individually, ~10% gain in aggregate.
 
 ### Source maps computed at the end
 
-During printing, a mapped write records only an output _offset_ and the node's original position.
+During printing, a mapped write records only an output offset and the node's original UTF-16 offset
+from `start` / `end`. Nodes without offsets are not mapped, and `sourceText` is required to convert
+source offsets to line/column positions.
 
-`emitMappings` then walks the output once at the end, counting newlines, to turn those offsets into
-generated line/column. Tracking a line and column throughout would cost every write in every build.
-
-The `Mapping` objects handed to `addMapping` are reused across calls rather than allocated per mapping.
+`generateSourceMap` then walks the output once at the end, counting ECMAScript line terminators,
+builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column,
+and encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write
+in every build.
 
 #### Potential future improvement
 
@@ -564,6 +565,7 @@ so that arm can run.
 - `import "m";` versus `import {} from "m";`
 - An absent `with` clause versus an empty `with {}`
 - `assert {...}` versus `with {...}`
+- The span of a `with {...}` clause (only its individual attributes have ESTree locations)
 
 The conformance harness normalizes the Rust AST down to what ESTree can express before printing,
 rather than expecting the JS side to reproduce information it was never given.
@@ -571,24 +573,25 @@ See `Normalize` in `tasks/codegen_conformance/src/lib.rs`.
 
 ### Positions, and other producers
 
-- **`loc`, not spans.** Oxc's AST records byte spans. Source mappings need line/column, which other
-  producers put in `loc`. Mapped writes check the node for `loc` rather than checking the build.
-- **Acorn and TS-ESLint ASTs are accepted**, and differ from Oxc's in a handful of places
-  (`TSMappedType`, `TSImportType`, `TSEnumDeclaration`, `TSModuleDeclaration`).
-  [`print/types.ts`] holds the widened node types and documents each difference.
+- **Oxc offsets only.** `start` / `end` offsets are converted to UTF-16 line/column once at the end.
+  Source maps require `sourceText`; `loc` and `range` are not supported inputs.
 
 ## How it is tested
 
 `oxc-codegen` is tested against all Test262, Acorn-JSX, and TypeScript test cases - about 62,000 fixtures.
 
-Every fixture is printed twice, and the two must agree byte for byte:
+Every fixture is printed three times:
 
-1. In Rust, via the `oxc-codegen-conformance` NAPI addon (`tasks/codegen_conformance`).
-2. In JS, by this package.
+1. In Rust, with a source map, via the `oxc-codegen-conformance` NAPI addon (`tasks/codegen_conformance`).
+2. In JS, through the no-maps build.
+3. In JS, through the separately compiled maps build.
 
-Both sides parse the same source text with the same `SourceType`, derived by the same function,
-so the only thing under test is the printing. Fixtures which do not parse cleanly are skipped,
-rather than passing quietly.
+All three generated outputs must agree byte for byte. Every decoded generated/original line, column,
+and optional original name from the maps build must also agree with Rust, including ordering and
+duplicate suppression.
+
+Both sides parse the same source text with the same `SourceType`, derived by the same function.
+Fixtures which do not parse cleanly are skipped, rather than passing quietly.
 
 Every fixture is checked in **both `preserveParens` modes**. They are different paths through the printer -
 with the wrappers present it must decide what to re-emit, without them it must re-derive every parenthesis

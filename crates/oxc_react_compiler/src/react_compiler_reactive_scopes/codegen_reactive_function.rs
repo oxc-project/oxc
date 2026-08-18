@@ -14,7 +14,7 @@ use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::ArrayPattern;
 use crate::react_compiler_hir::BlockId;
@@ -361,6 +361,19 @@ enum LvalueRef<'a> {
     Pattern(&'a Pattern<'a>),
 }
 
+struct BindingReferenceRenamer<'a, 'env> {
+    allocator: &'a oxc_allocator::Allocator,
+    renames: &'env FxHashMap<oxc_syntax::reference::ReferenceId, Ident<'env>>,
+}
+
+impl<'a> oxc_ast_visit::VisitMut<'a> for BindingReferenceRenamer<'a, '_> {
+    fn visit_identifier_reference(&mut self, reference: &mut oxc::IdentifierReference<'a>) {
+        if let Some(renamed) = reference.reference_id.get().and_then(|id| self.renames.get(&id)) {
+            reference.name = renamed.as_str().into_in(self.allocator);
+        }
+    }
+}
+
 fn ox_number<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     value: f64,
@@ -388,20 +401,26 @@ fn ox_reemit_ts_type<'a>(cx: &OxcContext<'a, '_>, ty: &oxc::TSType<'_>) -> oxc::
         return ty.clone_in_with_semantic_ids(cx.ast.allocator());
     }
 
-    struct Renamer<'a, 'env> {
-        allocator: &'a oxc_allocator::Allocator,
-        renames: &'env FxHashMap<oxc_syntax::reference::ReferenceId, Ident<'env>>,
-    }
-    impl<'a> oxc_ast_visit::VisitMut<'a> for Renamer<'a, '_> {
-        fn visit_identifier_reference(&mut self, it: &mut oxc::IdentifierReference<'a>) {
-            if let Some(renamed) = it.reference_id.get().and_then(|id| self.renames.get(&id)) {
-                it.name = renamed.as_str().into_in(self.allocator);
-            }
-        }
-    }
     let mut cloned = ty.clone_in_with_semantic_ids(cx.ast.allocator());
-    let mut renamer = Renamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
+    let mut renamer =
+        BindingReferenceRenamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
     oxc_ast_visit::VisitMut::visit_ts_type(&mut renamer, &mut cloned);
+    cloned
+}
+
+/// Re-emit an opaque TypeScript enum pass-through node. Binding renames are
+/// applied because, unlike Babel, oxc's semantic renames do not mutate the
+/// preserved source AST in place.
+fn ox_reemit_ts_enum_declaration<'a>(
+    cx: &OxcContext<'a, '_>,
+    declaration: &oxc::TSEnumDeclaration<'_>,
+) -> oxc::TSEnumDeclaration<'a> {
+    let mut cloned = declaration.clone_in_with_semantic_ids(cx.ast.allocator());
+    if !cx.env.renames.is_empty() {
+        let mut renamer =
+            BindingReferenceRenamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
+        oxc_ast_visit::VisitMut::visit_ts_enum_declaration(&mut renamer, &mut cloned);
+    }
     cloned
 }
 
@@ -600,10 +619,11 @@ fn ox_identifier_name<'a>(
     match ident.name {
         Some(crate::react_compiler_hir::IdentifierName::Named(n))
         | Some(crate::react_compiler_hir::IdentifierName::Promoted(n)) => Ok(n),
-        None => Err(invariant_err(
-            "Expected temporaries to be promoted to named identifiers in an earlier pass",
-            None,
-        )),
+        None => Err(
+            diagnostics::invariant_expected_temporaries_promoted_named_identifiers_earlier_pass(
+                None,
+            ),
+        ),
     }
 }
 
@@ -797,7 +817,7 @@ fn ox_codegen_reactive_scope<'a>(
 
     let test_condition = if change_exprs.is_empty() {
         let first_idx = first_output_index.ok_or_else(|| {
-            invariant_err("Expected scope to have at least one declaration", None)
+            diagnostics::invariant_expected_scope_have_at_least_one_declaration(None)
         })?;
         let cache_name = cx.synthesize_name("$");
         oxc_ast::ast::Expression::new_binary_expression(
@@ -875,10 +895,11 @@ fn ox_codegen_reactive_scope<'a>(
                 | crate::react_compiler_hir::IdentifierName::Promoted(n),
             ) => n.as_str(),
             None => {
-                return Err(invariant_err(
-                    "Expected early return value to be promoted to a named variable",
-                    early_return.span,
-                ));
+                return Err(
+                    diagnostics::invariant_expected_early_return_value_promoted_named_variable(
+                        early_return.span,
+                    ),
+                );
             }
         };
         let test = oxc_ast::ast::Expression::new_binary_expression(
@@ -1145,19 +1166,24 @@ fn ox_codegen_for_in<'a>(
     left_span: Option<Span>,
 ) -> Result<Option<oxc::Statement<'a>>, OxcDiagnostic> {
     let ReactiveValue::SequenceExpression { instructions, .. } = init else {
-        return Err(invariant_err("Expected a sequence expression init for for..in", None));
+        return Err(diagnostics::invariant_expected_sequence_expression_init(None));
     };
     if instructions.len() != 2 {
-        cx.record_error(
-            ErrorCategory::Todo.diagnostic("Support non-trivial for..in inits").with_labels(span),
-        )?;
+        cx.record_error(diagnostics::todo_support_non_trivial_inits(compact_for_loop_span(
+            left_span, span,
+        )))?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_collection = &instructions[0];
     let iterable_item = &instructions[1];
     let instr_value = get_instruction_value(&iterable_item.value)?;
-    let (lval, var_decl_kind) =
-        ox_extract_for_in_of_lval(cx, instr_value, "for..in", left_span, span)?;
+    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(
+        cx,
+        instr_value,
+        "for..in",
+        left_span,
+        compact_for_loop_span(left_span, span),
+    )?;
     let right = ox_codegen_instruction_value_to_expression(cx, &iterable_collection.value)?;
     let body = ox_codegen_block_statement(cx, loop_block, loop_block_span)?;
     let body = oxc::Statement::BlockStatement(body);
@@ -1186,32 +1212,36 @@ fn ox_codegen_for_of<'a>(
     left_span: Option<Span>,
 ) -> Result<Option<oxc::Statement<'a>>, OxcDiagnostic> {
     let ReactiveValue::SequenceExpression { instructions: init_instrs, .. } = init else {
-        return Err(invariant_err("Expected a sequence expression init for for..of", None));
+        return Err(diagnostics::invariant_expected_sequence_expression_init_2(None));
     };
     if init_instrs.len() != 1 {
-        return Err(invariant_err(
-            "Expected a single-expression sequence expression init for for..of",
+        return Err(diagnostics::invariant_expected_single_expression_sequence_expression_init(
             None,
         ));
     }
     let get_iter_value = get_instruction_value(&init_instrs[0].value)?;
     let InstructionValue::GetIterator { collection, .. } = get_iter_value else {
-        return Err(invariant_err("Expected GetIterator in for..of init", None));
+        return Err(diagnostics::invariant_expected_get_iterator_init(None));
     };
 
     let ReactiveValue::SequenceExpression { instructions: test_instrs, .. } = test else {
-        return Err(invariant_err("Expected a sequence expression test for for..of", None));
+        return Err(diagnostics::invariant_expected_sequence_expression_test(None));
     };
     if test_instrs.len() != 2 {
-        cx.record_error(
-            ErrorCategory::Todo.diagnostic("Support non-trivial for..of inits").with_labels(span),
-        )?;
+        cx.record_error(diagnostics::todo_support_non_trivial_inits_2(compact_for_loop_span(
+            left_span, span,
+        )))?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_item = &test_instrs[1];
     let instr_value = get_instruction_value(&iterable_item.value)?;
-    let (lval, var_decl_kind) =
-        ox_extract_for_in_of_lval(cx, instr_value, "for..of", left_span, span)?;
+    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(
+        cx,
+        instr_value,
+        "for..of",
+        left_span,
+        compact_for_loop_span(left_span, span),
+    )?;
 
     let right = ox_codegen_place_to_expression(cx, collection)?;
     let body = ox_codegen_block_statement(cx, loop_block, loop_block_span)?;
@@ -1236,6 +1266,13 @@ fn ox_codegen_for_of<'a>(
         body,
         &cx.ast,
     )))
+}
+
+/// Point at the `for` keyword instead of relying on a lowered `left_span`,
+/// which can cover the complete loop for non-trivial context-variable inits.
+fn compact_for_loop_span(left_span: Option<Span>, span: Option<Span>) -> Option<Span> {
+    let span = span.or(left_span)?;
+    Some(Span::new(span.start, span.start.saturating_add(3).min(span.end)))
 }
 
 fn ox_extract_for_in_of_lval<'a>(
@@ -1265,24 +1302,19 @@ fn ox_extract_for_in_of_lval<'a>(
             lvalue.kind,
         ),
         InstructionValue::StoreContext { .. } => {
-            cx.record_error(
-                ErrorCategory::Todo
-                    .diagnostic(format!("Support non-trivial {} inits", context_name))
-                    .with_labels(diagnostic_span),
-            )?;
+            cx.record_error(diagnostics::unsupported_non_trivial_init(
+                context_name,
+                diagnostic_span,
+            ))?;
             return Ok((
                 oxc_ast::ast::BindingPattern::new_binding_identifier(SPAN, "_", &cx.ast),
                 oxc::VariableDeclarationKind::Let,
             ));
         }
         _ => {
-            return Err(invariant_err(
-                &format!(
-                    "Expected a StoreLocal or Destructure in {} collection, found {:?}",
-                    context_name,
-                    std::mem::discriminant(instr_value)
-                ),
-                None,
+            return Err(diagnostics::unexpected_collection_instruction(
+                context_name,
+                std::mem::discriminant(instr_value),
             ));
         }
     };
@@ -1290,10 +1322,7 @@ fn ox_extract_for_in_of_lval<'a>(
         InstructionKind::Const => oxc::VariableDeclarationKind::Const,
         InstructionKind::Let => oxc::VariableDeclarationKind::Let,
         _ => {
-            return Err(invariant_err(
-                &format!("Unexpected {:?} variable in {} collection", kind, context_name),
-                None,
-            ));
+            return Err(diagnostics::unexpected_collection_variable(kind, context_name));
         }
     };
     Ok((lval, var_decl_kind))
@@ -1341,10 +1370,9 @@ fn ox_codegen_for_init<'a>(
                 match var_decl.kind {
                     oxc::VariableDeclarationKind::Let | oxc::VariableDeclarationKind::Const => {}
                     _ => {
-                        return Err(invariant_err(
-                            "Expected a let or const variable declaration",
-                            None,
-                        ));
+                        return Err(
+                            diagnostics::invariant_expected_let_or_const_variable_declaration(None),
+                        );
                     }
                 }
                 if matches!(var_decl.kind, oxc::VariableDeclarationKind::Let) {
@@ -1352,11 +1380,11 @@ fn ox_codegen_for_init<'a>(
                 }
                 declarators.extend(var_decl.declarations);
             } else {
-                return Err(invariant_err("Expected a variable declaration", None));
+                return Err(diagnostics::invariant_expected_variable_declaration(None));
             }
         }
         if declarators.is_empty() {
-            return Err(invariant_err("Expected a variable declaration in for-init", None));
+            return Err(diagnostics::invariant_expected_variable_declaration_init(None));
         }
         let span = declarators.first().unwrap().span.merge(declarators.last().unwrap().span);
         let decl =
@@ -1395,6 +1423,14 @@ fn ox_codegen_instruction_nullable<'a>(
 ) -> Result<Option<oxc::Statement<'a>>, OxcDiagnostic> {
     if let ReactiveValue::Instruction(ref value) = instr.value {
         match value {
+            InstructionValue::LoadContext { is_compound_assignment_result: true, .. }
+                if instr.lvalue.is_none() =>
+            {
+                // The assignment itself was already emitted. This synthetic load exists so
+                // analysis can track the compound assignment's result, but an expression
+                // statement does not use that result.
+                return Ok(None);
+            }
             InstructionValue::StoreLocal { .. }
             | InstructionValue::StoreContext { .. }
             | InstructionValue::Destructure { .. }
@@ -1417,12 +1453,17 @@ fn ox_codegen_instruction_nullable<'a>(
                     &cx.ast,
                 )));
             }
+            InstructionValue::TSEnumDeclaration { declaration, .. } => {
+                let declaration = ox_reemit_ts_enum_declaration(cx, declaration);
+                return Ok(Some(oxc::Statement::TSEnumDeclaration(oxc_allocator::Box::new_in(
+                    declaration,
+                    &cx.ast,
+                ))));
+            }
             InstructionValue::ObjectMethod { span, .. } => {
-                invariant(
-                    instr.lvalue.is_some(),
-                    "Expected object methods to have a temp lvalue",
-                    None,
-                )?;
+                if instr.lvalue.is_none() {
+                    return Err(diagnostics::expected_object_method_lvalue());
+                }
                 let lvalue = instr.lvalue.as_ref().unwrap();
                 cx.object_methods
                     .insert(lvalue.identifier, (value.clone_in(cx.env.allocator), *span));
@@ -1488,11 +1529,11 @@ fn ox_emit_store<'a>(
     match kind {
         InstructionKind::Const => {
             if instr.lvalue.is_some() {
-                return Err(invariant_err_with_detail_message(
-                    "Const declaration cannot be referenced as an expression",
-                    "this is Const",
-                    instr.span,
-                ));
+                return Err(
+                    diagnostics::invariant_const_declaration_cannot_referenced_as_expression(
+                        instr.span,
+                    ),
+                );
             }
             let lval = ox_codegen_lvalue(cx, lvalue, instr.span, OxLvalueContext::Binding)?;
             Ok(Some(ox_make_var_decl(
@@ -1506,14 +1547,12 @@ fn ox_emit_store<'a>(
         InstructionKind::Function => {
             let lval = ox_codegen_lvalue(cx, lvalue, instr.span, OxLvalueContext::Binding)?;
             let oxc::BindingPattern::BindingIdentifier(fn_id) = lval else {
-                return Err(invariant_err(
-                    "Expected an identifier as function declaration lvalue",
-                    None,
-                ));
+                return Err(
+                    diagnostics::invariant_expected_identifier_as_function_declaration_lvalue(None),
+                );
             };
             let Some(rhs) = value else {
-                return Err(invariant_err(
-                    "Expected a function value for function declaration",
+                return Err(diagnostics::invariant_expected_function_value_function_declaration(
                     None,
                 ));
             };
@@ -1536,19 +1575,18 @@ fn ox_emit_store<'a>(
                     );
                     Ok(Some(oxc::Statement::FunctionDeclaration(decl)))
                 }
-                _ => Err(invariant_err(
-                    "Expected a function expression for function declaration",
+                _ => Err(diagnostics::invariant_expected_function_expression_function_declaration(
                     None,
                 )),
             }
         }
         InstructionKind::Let => {
             if instr.lvalue.is_some() {
-                return Err(invariant_err_with_detail_message(
-                    "Const declaration cannot be referenced as an expression",
-                    "this is Let",
-                    instr.span,
-                ));
+                return Err(
+                    diagnostics::invariant_const_declaration_cannot_referenced_as_expression_2(
+                        instr.span,
+                    ),
+                );
             }
             let lval = ox_codegen_lvalue(cx, lvalue, instr.span, OxLvalueContext::Binding)?;
             Ok(Some(ox_make_var_decl(
@@ -1561,7 +1599,7 @@ fn ox_emit_store<'a>(
         }
         InstructionKind::Reassign => {
             let Some(rhs) = value else {
-                return Err(invariant_err("Expected a value for reassignment", None));
+                return Err(diagnostics::invariant_expected_value_reassignment(None));
             };
             let lval =
                 ox_codegen_lvalue(cx, lvalue, instr.span, OxLvalueContext::AssignmentTarget)?;
@@ -1601,10 +1639,7 @@ fn ox_emit_store<'a>(
         }
         InstructionKind::HoistedLet
         | InstructionKind::HoistedConst
-        | InstructionKind::HoistedFunction => Err(invariant_err(
-            &format!("Expected {:?} to have been pruned in PruneHoistedContexts", kind),
-            None,
-        )),
+        | InstructionKind::HoistedFunction => Err(diagnostics::unpruned_hoisted_instruction(kind)),
     }
 }
 
@@ -1725,9 +1760,7 @@ fn ox_codegen_instruction_value<'a>(
                         expressions.push(es.unbox().expression);
                     }
                     oxc::Statement::VariableDeclaration(_) => {
-                        cx.record_error(ErrorCategory::Todo.diagnostic(
-                            "(CodegenReactiveFunction::codegenInstructionValue) Cannot declare variables in a value block",
-                        ))?;
+                        cx.record_error(diagnostics::todo_codegen_reactive_function_codegen_instruction_value_cannot_declare_variables_value_block())?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             span,
                             "TODO handle declaration",
@@ -1736,9 +1769,7 @@ fn ox_codegen_instruction_value<'a>(
                         ));
                     }
                     _ => {
-                        cx.record_error(ErrorCategory::Todo.diagnostic(
-                            "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression",
-                        ))?;
+                        cx.record_error(diagnostics::todo_codegen_reactive_function_codegen_instruction_value_handle_conversion_statement_expression())?;
                         expressions.push(oxc_ast::ast::Expression::new_string_literal(
                             span,
                             "TODO handle statement",
@@ -1871,10 +1902,11 @@ fn ox_make_optional<'a>(
             ))
         }
         _ => {
-            return Err(invariant_err(
-                "Expected optional value to resolve to call or member expression",
-                None,
-            ));
+            return Err(
+                diagnostics::invariant_expected_optional_value_resolve_call_or_member_expression(
+                    None,
+                ),
+            );
         }
     };
     Ok(OxValue::Expression(oxc_ast::ast::Expression::new_chain_expression(
@@ -1926,12 +1958,10 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::MethodCall { property, args, .. } => {
             let member_expr = ox_codegen_place_to_expression(cx, property)?;
             if !ox_is_member_like(&member_expr) {
-                let msg = format!("Got: '{}'", ox_expression_type_name(&member_expr));
-                return Err(ErrorCategory::Invariant
-                    .diagnostic(
-                        "[Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression",
-                    )
-                    .with_labels(property.span.map(|s| s.label(msg))));
+                return Err(diagnostics::invalid_method_call_property(
+                    ox_expression_type_name(&member_expr),
+                    property.span,
+                ));
             }
             let arguments = ox_codegen_arguments(cx, args)?;
             let call =
@@ -2097,11 +2127,9 @@ fn ox_codegen_base_instruction_value<'a>(
             )))
         }
         InstructionValue::StoreLocal { lvalue, value, span: instruction_span } => {
-            invariant(
-                lvalue.kind == InstructionKind::Reassign,
-                "Unexpected StoreLocal in codegenInstructionValue",
-                None,
-            )?;
+            if lvalue.kind != InstructionKind::Reassign {
+                return Err(diagnostics::unexpected_store_local_codegen());
+            }
             let lval = ox_codegen_lvalue(
                 cx,
                 &LvalueRef::Place(&lvalue.place),
@@ -2237,14 +2265,14 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::DeclareLocal { .. }
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::Destructure { .. }
         | InstructionValue::ObjectMethod { .. }
-        | InstructionValue::StoreContext { .. } => Err(invariant_err(
-            &format!("Unexpected {:?} in codegenInstructionValue", std::mem::discriminant(iv)),
-            None,
-        )),
+        | InstructionValue::StoreContext { .. } => {
+            Err(diagnostics::unexpected_codegen_instruction(std::mem::discriminant(iv)))
+        }
     }
 }
 
@@ -2374,13 +2402,7 @@ fn ox_codegen_place<'a>(
             return Ok(value);
         }
     } else if ident.name.is_none() {
-        return Err(invariant_err(
-            &format!(
-                "[Codegen] No value found for temporary, identifier id={}",
-                place.identifier.index()
-            ),
-            place.span,
-        ));
+        return Err(diagnostics::missing_codegen_temporary(place.identifier.index(), place.span));
     }
     let name = ox_identifier_name(cx.env, place.identifier)?;
     Ok(OxValue::Expression(oxc_ast::ast::Expression::new_identifier(
@@ -2692,7 +2714,7 @@ fn ox_binding_pattern_to_assignment_target<'a>(
         // A top-level default (`x = 1`) is not a valid assignment target on its own;
         // defaults only appear nested and are handled by `ox_binding_pattern_to_maybe_default`.
         oxc::BindingPattern::AssignmentPattern(_) => {
-            Err(invariant_err("Unexpected default in destructuring assignment target", None))
+            Err(diagnostics::invariant_unexpected_default_destructuring_assignment_target(None))
         }
     }
 }
@@ -2734,18 +2756,20 @@ fn ox_binding_property_to_assignment_property<'a>(
             oxc::BindingPattern::AssignmentPattern(assign) => {
                 let assign = assign.unbox();
                 let oxc::BindingPattern::BindingIdentifier(id) = assign.left else {
-                    return Err(invariant_err(
-                        "Expected an identifier in shorthand destructuring property",
-                        None,
-                    ));
+                    return Err(
+                        diagnostics::invariant_expected_identifier_shorthand_destructuring_property(
+                            None,
+                        ),
+                    );
                 };
                 (id.unbox(), Some(assign.right))
             }
             _ => {
-                return Err(invariant_err(
-                    "Expected an identifier in shorthand destructuring property",
-                    None,
-                ));
+                return Err(
+                    diagnostics::invariant_expected_identifier_shorthand_destructuring_property_2(
+                        None,
+                    ),
+                );
             }
         };
         let reference = oxc_ast::ast::IdentifierReference::new(binding.span, binding.name, &cx.ast);
@@ -2797,7 +2821,7 @@ fn ox_expression_to_simple_assignment_target<'a>(
         oxc::Expression::ComputedMemberExpression(m) => Ok(oxc::SimpleAssignmentTarget::from(
             oxc::MemberExpression::ComputedMemberExpression(m),
         )),
-        _ => Err(invariant_err("Expected a simple assignment target for update expression", None)),
+        _ => Err(diagnostics::invariant_expected_simple_assignment_target_update_expression(None)),
     }
 }
 
@@ -2997,7 +3021,9 @@ fn ox_codegen_object_expression<'a>(
                         let Some((InstructionValue::ObjectMethod { lowered_func, .. }, _)) =
                             method_data
                         else {
-                            return Err(invariant_err("Expected ObjectMethod instruction", None));
+                            return Err(diagnostics::invariant_expected_object_method_instruction(
+                                None,
+                            ));
                         };
 
                         let mut reactive_fn =
@@ -3313,8 +3339,11 @@ fn ox_codegen_jsx_fbt_child_element<'a>(
     }
 }
 
-/// Build a `JSXElementName` from a tag expression, preserving the HIR distinction between
-/// component references (identifier expressions) and builtin tags (string literals).
+/// Build a `JSXElementName` from a tag expression.
+///
+/// JSX determines whether an identifier tag is intrinsic from its spelling. React Compiler may
+/// rewrite a component reference to a lowercase identifier, so reconstruct that distinction here
+/// instead of preserving the expression kind from HIR.
 fn ox_expression_to_jsx_tag<'a>(
     cx: &OxcContext<'a, '_>,
     expr: &oxc::Expression<'a>,
@@ -3322,11 +3351,12 @@ fn ox_expression_to_jsx_tag<'a>(
 ) -> Result<oxc::JSXElementName<'a>, OxcDiagnostic> {
     match expr {
         oxc::Expression::Identifier(ident) => {
-            Ok(oxc_ast::ast::JSXElementName::new_identifier_reference(
-                span,
-                ox_str(&cx.ast, &ident.name),
-                &cx.ast,
-            ))
+            let name = ox_str(&cx.ast, &ident.name);
+            if ident.name.as_bytes().first().is_some_and(u8::is_ascii_lowercase) {
+                Ok(oxc_ast::ast::JSXElementName::new_identifier(span, name, &cx.ast))
+            } else {
+                Ok(oxc_ast::ast::JSXElementName::new_identifier_reference(span, name, &cx.ast))
+            }
         }
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_) => {
@@ -3354,7 +3384,7 @@ fn ox_expression_to_jsx_tag<'a>(
                 ))
             }
         }
-        _ => Err(invariant_err("Expected JSX tag to be an identifier or string", None)),
+        _ => Err(diagnostics::invariant_expected_jsx_tag_identifier_or_string(None)),
     }
 }
 
@@ -3366,7 +3396,7 @@ fn ox_convert_member_expression_to_jsx<'a>(
     span: Span,
 ) -> Result<(oxc::JSXMemberExpressionObject<'a>, oxc::JSXIdentifier<'a>), OxcDiagnostic> {
     let oxc::Expression::StaticMemberExpression(me) = expr else {
-        return Err(invariant_err("Expected JSX member expression property to be a string", None));
+        return Err(diagnostics::invariant_expected_jsx_member_expression_property_string(None));
     };
     let property =
         oxc_ast::ast::JSXIdentifier::new(span, ox_str(&cx.ast, me.property.name.as_str()), &cx.ast);
@@ -3385,10 +3415,7 @@ fn ox_convert_member_expression_to_jsx<'a>(
             )
         }
         _ => {
-            return Err(invariant_err(
-                "Expected JSX member expression to be an identifier or nested member expression",
-                None,
-            ));
+            return Err(diagnostics::invariant_expected_jsx_member_expression_identifier_or_nested_member_expression(None));
         }
     };
     Ok((object, property))
@@ -3650,26 +3677,8 @@ fn get_instruction_value<'x, 'a>(
 ) -> Result<&'x InstructionValue<'a>, OxcDiagnostic> {
     match reactive_value {
         ReactiveValue::Instruction(iv) => Ok(iv),
-        _ => Err(invariant_err("Expected base instruction value", None)),
+        _ => Err(diagnostics::invariant_expected_base_instruction_value(None)),
     }
-}
-
-fn invariant(condition: bool, reason: &str, span: Option<Span>) -> Result<(), OxcDiagnostic> {
-    if !condition { Err(invariant_err(reason, span)) } else { Ok(()) }
-}
-
-fn invariant_err(reason: &str, span: Option<Span>) -> OxcDiagnostic {
-    invariant_err_with_detail_message(reason, reason, span)
-}
-
-fn invariant_err_with_detail_message(
-    reason: &str,
-    message: &str,
-    span: Option<Span>,
-) -> OxcDiagnostic {
-    ErrorCategory::Invariant
-        .diagnostic(reason)
-        .with_labels(span.map(|s| s.label(message.to_string())))
 }
 
 fn compare_scope_dependency(

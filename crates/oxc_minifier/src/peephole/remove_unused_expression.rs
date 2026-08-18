@@ -613,6 +613,9 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             BinaryOperator::Addition => {
+                if !e.may_have_side_effects(ctx) {
+                    return true;
+                }
                 Self::fold_string_addition_chain(e, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
