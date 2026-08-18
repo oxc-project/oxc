@@ -423,6 +423,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::ImportDeclaration(_) => {
                     Self::remove_unused_import_specifiers(stmt, ctx);
                 }
+                Statement::BreakStatement(_) | Statement::ContinueStatement(_) => {
+                    Self::try_remove_jump_statement(stmt, ctx);
+                }
                 _ => {}
             }
         } else {
@@ -460,6 +463,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::remove_unused_class_declaration(stmt, ctx);
                 }
                 Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
+                Statement::BreakStatement(_) | Statement::ContinueStatement(_) => {
+                    Self::try_remove_jump_statement(stmt, ctx);
+                }
                 _ => {}
             }
             Self::try_fold_expression_stmt(stmt, ctx);
