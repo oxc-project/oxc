@@ -37,8 +37,13 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
     printStatement(node, state);
   }
 
-  // This is removed by minifier in non-sourcemap builds
-  if (SOURCEMAPS) {
+  // This is removed by minifier in non-sourcemap builds.
+  //
+  // The `skipSourcemapGeneration` check exists only in benchmark builds -
+  // everywhere else `BENCHMARKS` is `false` and the condition folds back to `SOURCEMAPS` alone.
+  // The option is deliberately not in `Options` - types are documentation, and it is not public API.
+  // @ts-expect-error `skipSourcemapGeneration` is benchmarks-only, so is not in `Options`
+  if (SOURCEMAPS && (!BENCHMARKS || !options.skipSourcemapGeneration)) {
     debugAssert(options.sourcemap === true, "`options.sourcemap` should be true in a maps build");
     return { code: state.output, map: generateSourceMap(state, options) };
   }
