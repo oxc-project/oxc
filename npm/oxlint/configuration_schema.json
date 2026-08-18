@@ -6702,6 +6702,26 @@
             }
           ]
         },
+        "react/gating": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/GatingOptions"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/globals": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -10700,6 +10720,20 @@
       },
       "markdownDescription": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
     },
+    "DynamicGatingImport": {
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "properties": {
+        "source": {
+          "description": "Module that exports flags referenced by dynamic gating directives.",
+          "type": "string",
+          "markdownDescription": "Module that exports flags referenced by dynamic gating directives."
+        }
+      },
+      "additionalProperties": false
+    },
     "ElementOverrideOptions": {
       "description": "One entry in `elementOverrides`: the base options plus override-only fields.",
       "type": "object",
@@ -11529,6 +11563,52 @@
               "$ref": "#/definitions/UnnamedComponents"
             }
           ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "GatingImport": {
+      "type": "object",
+      "required": [
+        "importSpecifierName",
+        "source"
+      ],
+      "properties": {
+        "importSpecifierName": {
+          "description": "Name of the imported function that guards compiled functions.",
+          "type": "string",
+          "markdownDescription": "Name of the imported function that guards compiled functions."
+        },
+        "source": {
+          "description": "Module that exports the gating function.",
+          "type": "string",
+          "markdownDescription": "Module that exports the gating function."
+        }
+      },
+      "additionalProperties": false
+    },
+    "GatingOptions": {
+      "type": "object",
+      "properties": {
+        "dynamicGating": {
+          "description": "Enable validation of `\"use memo if(...)\"` directives.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/DynamicGatingImport"
+            }
+          ],
+          "markdownDescription": "Enable validation of `\"use memo if(...)\"` directives."
+        },
+        "gating": {
+          "description": "React Compiler feature-flag import configuration to validate.\nOxlint does not emit gated code.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/GatingImport"
+            }
+          ],
+          "markdownDescription": "React Compiler feature-flag import configuration to validate.\nOxlint does not emit gated code."
         }
       },
       "additionalProperties": false

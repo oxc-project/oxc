@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(gating): Dynamic gating directive is not a valid JavaScript identifier
+   ╭─[gating.tsx:3:3]
+ 2 │ function Component() {
+ 3 │   'use memo if(true)';
+   ·   ─────────┬─────────
+   ·            ╰── Invalid gating condition
+ 4 │   return <div />;
+   ╰────
+  help: Found 'use memo if(true)'
+  note: React Compiler could not continue with this configuration. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/gating
+
+  ⚠ react(gating): Dynamic gating directive is not a valid JavaScript identifier
+   ╭─[gating.tsx:3:3]
+ 2 │ const Component = () => {
+ 3 │   'use memo if(true)';
+   ·   ─────────┬─────────
+   ·            ╰── Invalid gating condition
+ 4 │   return <div />;
+   ╰────
+  help: Found 'use memo if(true)'
+  note: React Compiler could not continue with this configuration. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/gating
+
+  ⚠ react(gating): Multiple dynamic gating directives found
+   ╭─[gating.tsx:3:3]
+ 2 │ function Component() {
+ 3 │   'use memo if(isCompilerEnabled)';
+   ·   ────────────────┬───────────────
+   ·                   ╰── First gating directive
+ 4 │   'use memo if(isNewCompilerEnabled)';
+   ·   ─────────────────┬─────────────────
+   ·                    ╰── Additional gating directive
+ 5 │   return <div />;
+   ╰────
+  help: Expected a single directive but found [use memo if(isCompilerEnabled), use memo if(isNewCompilerEnabled)]
+  note: React Compiler could not continue with this configuration. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/gating
