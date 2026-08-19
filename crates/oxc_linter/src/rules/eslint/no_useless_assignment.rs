@@ -4,7 +4,10 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarationKind},
+    ast::{
+        AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
+        VariableDeclarationKind,
+    },
 };
 use oxc_cfg::{
     BasicBlockId, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph,
@@ -241,8 +244,6 @@ impl Rule for NoUselessAssignment {
                 }
 
                 if pending_destructuring_targets.is_none()
-                    && reference.is_read()
-                    && Self::is_directly_in_destructuring_target(ctx, reference)
                     && let Some(AssignmentTarget::Destructuring(assignment_node_id)) =
                         Self::get_assignment_target(ctx, reference)
                 {
@@ -250,7 +251,11 @@ impl Rule for NoUselessAssignment {
                     Self::insert_destructuring_target(
                         &mut targets,
                         reference,
-                        ctx.nodes().get_node(reference.node_id()).span().start,
+                        Self::destructuring_target_operation_position(
+                            ctx,
+                            reference,
+                            assignment_node_id,
+                        ),
                     );
                     pending_destructuring_targets = Some((assignment_node_id, targets));
                     continue;
@@ -278,31 +283,18 @@ impl Rule for NoUselessAssignment {
                             decl_node,
                             &mut tracked_symbols[compact_idx as usize],
                         );
-                    } else if reference.is_write()
-                        && matches!(
-                            Self::get_assignment_target(ctx, reference),
-                            Some(AssignmentTarget::Destructuring(node_id)) if node_id == assignment_node_id
-                        )
-                    {
+                    } else if Self::is_in_assignment_target(ctx, assignment_node_id, reference) {
                         let (_, targets) = pending_destructuring_targets
                             .as_mut()
                             .expect("destructuring targets should be pending");
                         Self::insert_destructuring_target(
                             targets,
                             reference,
-                            Self::destructuring_target_write_position(ctx, reference),
-                        );
-                        continue;
-                    } else if reference.is_read()
-                        && Self::is_in_assignment_target(ctx, assignment_node_id, reference)
-                    {
-                        let (_, targets) = pending_destructuring_targets
-                            .as_mut()
-                            .expect("destructuring targets should be pending");
-                        Self::insert_destructuring_target(
-                            targets,
-                            reference,
-                            reference_node.span().start,
+                            Self::destructuring_target_operation_position(
+                                ctx,
+                                reference,
+                                assignment_node_id,
+                            ),
                         );
                         continue;
                     } else {
@@ -672,24 +664,18 @@ impl NoUselessAssignment {
             return None;
         }
 
-        let mut is_destructuring = false;
         for ancestor in ctx.nodes().ancestors(node.id()) {
-            match ancestor.kind() {
-                AstKind::AssignmentExpression(_) => {
-                    return Some(if is_destructuring {
-                        AssignmentTarget::Destructuring(ancestor.id())
-                    } else {
-                        AssignmentTarget::Simple(ancestor.id())
-                    });
-                }
-                AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetRest(_)
-                | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::AssignmentTargetPropertyProperty(_) => is_destructuring = true,
-                _ => break,
+            let AstKind::AssignmentExpression(assignment) = ancestor.kind() else { continue };
+            if !assignment.left.span().contains_inclusive(node.span()) {
+                return None;
             }
+            return Some(match &assignment.left {
+                AstAssignmentTarget::ArrayAssignmentTarget(_)
+                | AstAssignmentTarget::ObjectAssignmentTarget(_) => {
+                    AssignmentTarget::Destructuring(ancestor.id())
+                }
+                _ => AssignmentTarget::Simple(ancestor.id()),
+            });
         }
 
         None
@@ -708,18 +694,6 @@ impl NoUselessAssignment {
         assignment.left.span().contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
     }
 
-    fn is_directly_in_destructuring_target(ctx: &LintContext, reference: &Reference) -> bool {
-        matches!(
-            ctx.nodes().parent_node(reference.node_id()).kind(),
-            AstKind::ArrayAssignmentTarget(_)
-                | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetRest(_)
-                | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::AssignmentTargetPropertyProperty(_)
-        )
-    }
-
     fn destructuring_target_write_position(ctx: &LintContext, reference: &Reference) -> u32 {
         let node = ctx.nodes().get_node(reference.node_id());
         for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -731,6 +705,30 @@ impl NoUselessAssignment {
                     }
                 }
                 AstKind::AssignmentExpression(_) => break,
+                _ => {}
+            }
+        }
+        node.span().start
+    }
+
+    fn destructuring_target_operation_position(
+        ctx: &LintContext,
+        reference: &Reference,
+        assignment_node_id: NodeId,
+    ) -> u32 {
+        let node = ctx.nodes().get_node(reference.node_id());
+        if reference.is_write() {
+            match Self::get_assignment_target(ctx, reference) {
+                Some(AssignmentTarget::Destructuring(node_id)) if node_id == assignment_node_id => {
+                    return Self::destructuring_target_write_position(ctx, reference);
+                }
+                Some(AssignmentTarget::Simple(node_id)) => {
+                    if let AstKind::AssignmentExpression(assignment) =
+                        ctx.nodes().get_node(node_id).kind()
+                    {
+                        return assignment.right.span().end;
+                    }
+                }
                 _ => {}
             }
         }
@@ -1814,6 +1812,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                     console.log(x);",
         "let x = 0;
                     ({ [x]: x } = (x = 1, {}));
+                    console.log(x);",
+        "let x = 0, y;
+                    ({ [key(x)]: y } = (x = 1, {}));
+                    console.log(y);",
+        "let x = 0, y;
+                    [x, y = (x = x + 1)] = [1];
                     console.log(x);",
     ];
 
