@@ -767,6 +767,7 @@ pub enum InstructionValue<'a> {
     PropertyStore {
         object: Place,
         property: PropertyLiteral<'a>,
+        computed: bool,
         property_span: Option<Span>,
         value: Place,
         span: Option<Span>,
@@ -774,6 +775,7 @@ pub enum InstructionValue<'a> {
     PropertyLoad {
         object: Place,
         property: PropertyLiteral<'a>,
+        computed: bool,
         property_span: Option<Span>,
         span: Option<Span>,
     },
@@ -1016,6 +1018,7 @@ pub enum ManualMemoDependencyRoot<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DependencyPathEntry<'a> {
     pub property: PropertyLiteral<'a>,
+    pub computed: bool,
     pub optional: bool,
     pub span: Option<Span>,
 }
@@ -1888,19 +1891,26 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::MetaProperty { meta, property, span } => {
                 InstructionValue::MetaProperty { meta: *meta, property: *property, span: *span }
             }
-            InstructionValue::PropertyStore { object, property, property_span, value, span } => {
-                InstructionValue::PropertyStore {
-                    object: *object,
-                    property: *property,
-                    property_span: *property_span,
-                    value: *value,
-                    span: *span,
-                }
-            }
-            InstructionValue::PropertyLoad { object, property, property_span, span } => {
+            InstructionValue::PropertyStore {
+                object,
+                property,
+                computed,
+                property_span,
+                value,
+                span,
+            } => InstructionValue::PropertyStore {
+                object: *object,
+                property: *property,
+                computed: *computed,
+                property_span: *property_span,
+                value: *value,
+                span: *span,
+            },
+            InstructionValue::PropertyLoad { object, property, computed, property_span, span } => {
                 InstructionValue::PropertyLoad {
                     object: *object,
                     property: *property,
+                    computed: *computed,
                     property_span: *property_span,
                     span: *span,
                 }

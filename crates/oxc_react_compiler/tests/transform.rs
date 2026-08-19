@@ -73,6 +73,97 @@ fn memoizes_a_component_end_to_end() {
 }
 
 #[test]
+fn preserves_quoted_computed_property_access() {
+    let source = "\
+function Component() {
+  const namespace = useParams()['namespace'];
+  return <div>{namespace}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("useParams()[\"namespace\"]"),
+        "expected quoted computed access to be preserved:\n{output}"
+    );
+}
+
+#[test]
+fn preserves_quoted_computed_property_access_in_reactive_dependencies() {
+    let source = "\
+function Component(props) {
+  return <div>{props['external']}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        !output.contains("props.external"),
+        "expected reconstructed dependencies to preserve quoted computed access:\n{output}"
+    );
+    assert!(
+        output.contains("props[\"external\"]"),
+        "expected quoted computed access in output:\n{output}"
+    );
+}
+
+#[test]
+fn preserves_quoted_computed_property_store() {
+    let source = "\
+function Component({ value }) {
+  const x = {};
+  x['external'] = value;
+  return <div>{x.external}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("x[\"external\"] = value"),
+        "expected quoted computed store to be preserved:\n{output}"
+    );
+}
+
+#[test]
+fn preserves_quoted_computed_optional_property_access() {
+    let source = "\
+function Component(props) {
+  return <div>{props?.['external']}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("props?.[\"external\"]"),
+        "expected quoted computed optional access to be preserved:\n{output}"
+    );
+}
+
+#[test]
 fn allows_ref_access_in_a_returned_event_handler() {
     let source = "\
 function Component({ onChange, onInput }) {\n\
