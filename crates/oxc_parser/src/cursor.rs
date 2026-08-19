@@ -18,6 +18,7 @@ pub struct ParserCheckpoint<'a> {
     prev_span_end: u32,
     errors_pos: usize,
     fatal_error: Option<FatalError<'a>>,
+    next_node_id: u32,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -311,6 +312,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
+            next_node_id: self.ast.next_node_id(),
         }
     }
 
@@ -321,12 +323,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
+            next_node_id: self.ast.next_node_id(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
-            checkpoint;
+        let ParserCheckpoint {
+            lexer,
+            cur_token,
+            prev_span_end,
+            errors_pos,
+            fatal_error,
+            next_node_id,
+        } = checkpoint;
+
+        let current_next_node_id = self.ast.next_node_id();
+        if current_next_node_id != next_node_id {
+            self.lexer.trivia_builder.clear_comment_owners(
+                oxc_syntax::node::NodeId::new(next_node_id as usize),
+                current_next_node_id,
+            );
+            self.ast.rewind(next_node_id);
+        }
 
         self.lexer.rewind(lexer);
         self.token = cur_token;

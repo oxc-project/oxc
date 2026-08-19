@@ -14,6 +14,7 @@ pub(crate) struct CommentAttacher<'a> {
     comments: &'a CommentStore<'a>,
     original_nodes: ArenaHashMap<'a, NodeId, NodeComments<'a>>,
     leading: FxHashMap<u32, SmallVec<[CommentId; 1]>>,
+    leading_boundaries: Vec<u32>,
     trailing: FxHashMap<u32, SmallVec<[CommentId; 1]>>,
     leading_candidates: FxHashMap<u32, NodeId>,
     trailing_candidates: FxHashMap<u32, NodeId>,
@@ -59,11 +60,14 @@ impl<'a> CommentAttacher<'a> {
             };
             target.entry(comment.attached_to).or_insert_with(SmallVec::new).push(comment_id);
         }
+        let mut leading_boundaries = leading.keys().copied().collect::<Vec<_>>();
+        leading_boundaries.sort_unstable();
 
         Self {
             comments,
             original_nodes,
             leading,
+            leading_boundaries,
             trailing,
             leading_candidates: FxHashMap::default(),
             trailing_candidates: FxHashMap::default(),
@@ -96,8 +100,10 @@ impl<'a> CommentAttacher<'a> {
         ) {
             let span = kind.span();
             let span_len = span.size();
-            for (&boundary, comment_ids) in &self.leading {
-                if boundary > span.start && boundary < span.end {
+            let start = self.leading_boundaries.partition_point(|&boundary| boundary <= span.start);
+            let end = self.leading_boundaries.partition_point(|&boundary| boundary < span.end);
+            for boundary in &self.leading_boundaries[start..end] {
+                if let Some(comment_ids) = self.leading.get(boundary) {
                     for &comment_id in comment_ids {
                         let candidate = self
                             .dangling_candidates

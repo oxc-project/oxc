@@ -54,31 +54,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             // Commit once module syntax is detected (`export` commits eagerly in
             // `parse_export_declaration`; `has_module_syntax()` excludes TS's
-            // script-compatible `import x = ns.foo`). Until committed, checkpoint each
-            // statement so an `await` identifier in it can be reparsed.
-            let checkpoint = if track_await_reparse && !self.ctx.has_await() {
+            // script-compatible `import x = ns.foo`). Until committed, track whether a statement
+            // sees an `await` identifier so the parser can restart under the Module goal.
+            let track_statement_await = if track_await_reparse && !self.ctx.has_await() {
                 if self.module_record_builder.has_module_syntax() {
                     self.ctx = self.ctx.and_await(true);
-                    None
+                    false
                 } else {
                     self.state.encountered_await_identifier = false;
-                    Some((statements.len(), self.checkpoint()))
+                    true
                 }
             } else {
-                None
+                false
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
             let stmt_node_id = stmt.node_id();
 
-            // Don't reparse a module declaration: `export` already committed to the
-            // Module goal while parsing, so reparsing would record the export twice.
+            // A module declaration commits the goal eagerly while it is parsed, so it does not
+            // require a restart solely because it contains an `await` identifier.
             // e.g. `@foo export default class C { x = await + 1 }`
-            if let Some((stmt_index, checkpoint)) = checkpoint
+            if track_statement_await
                 && self.state.encountered_await_identifier
                 && !stmt.is_module_declaration()
             {
-                self.state.potential_await_reparse.push((stmt_index, checkpoint));
+                self.state.needs_module_reparse = true;
             }
 
             // Section 11.2.1 Directive Prologue
@@ -97,7 +97,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive = Directive::new(span, string, Str::from(src), self);
-                        self.lexer.trivia_builder.rekey_comments(stmt_node_id, directive.node_id());
+                        directive.set_node_id(stmt_node_id);
                         directives.push(directive);
                         continue;
                     }
@@ -214,14 +214,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Self::set_pure_on_function_stmt(&mut stmt);
         }
 
-        let node_id = stmt.node_id();
+        let trailing_comment_range =
+            self.lexer.trivia_builder.comment_range(CommentPosition::Trailing, stmt.span().end);
+        let node_id = if leading_comment_range.is_empty() && trailing_comment_range.is_empty() {
+            stmt.node_id()
+        } else {
+            let node_id = self.ast.ensure_node_id(stmt.node_id());
+            stmt.set_node_id(node_id);
+            node_id
+        };
         self.lexer.trivia_builder.attach_comments(
             node_id,
             CommentPosition::Leading,
             leading_comment_range.map(CommentId::from_usize),
         );
-        let trailing_comment_range =
-            self.lexer.trivia_builder.comment_range(CommentPosition::Trailing, stmt.span().end);
         self.lexer.trivia_builder.attach_comments(
             node_id,
             CommentPosition::Trailing,

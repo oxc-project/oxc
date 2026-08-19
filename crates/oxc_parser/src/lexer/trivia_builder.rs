@@ -106,13 +106,9 @@ impl<'a> TriviaBuilder<'a> {
         self.comments.attach(node_id, position, comment_ids);
     }
 
-    #[inline]
-    pub fn rekey_comments(
-        &self,
-        old_node_id: oxc_syntax::node::NodeId,
-        new_node_id: oxc_syntax::node::NodeId,
-    ) {
-        self.comments.rekey_node(old_node_id, new_node_id);
+    /// Remove ownership produced for a subtree which is about to be reparsed.
+    pub fn clear_comment_owners(&self, start: oxc_syntax::node::NodeId, end: u32) {
+        self.comments.clear_node_id_range(start, end);
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {

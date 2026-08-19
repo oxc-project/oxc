@@ -227,6 +227,13 @@ impl<'a> CommentStore<'a> {
         self.attachments_cell().borrow_mut().clear();
     }
 
+    /// Remove comment ownership for parser IDs in `start..end` before reparsing that subtree.
+    pub fn clear_node_id_range(&self, start: NodeId, end: u32) {
+        self.attachments_cell().borrow_mut().retain(|node_id, _| {
+            node_id.index() < start.index() || node_id.index() >= end as usize
+        });
+    }
+
     #[inline]
     pub fn is_suppressed(&self, comment_id: CommentId) -> bool {
         self.suppressed_cell().borrow().contains(&comment_id)

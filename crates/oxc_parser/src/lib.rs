@@ -91,7 +91,7 @@ pub mod lexer;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
     CommentStore,
-    ast::{Expression, Program, Statement},
+    ast::{Expression, Program},
     builder::GetAstBuilder,
 };
 use oxc_diagnostics::Diagnostics;
@@ -101,9 +101,7 @@ use oxc_syntax::module_record::ModuleRecord;
 pub use crate::lexer::{Kind, Token};
 use crate::{
     ast_builder::ParserAstBuilder,
-    config::{
-        LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
-    },
+    config::{NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig},
     context::{Context, StatementContext},
     diagnostics::ParserDiagnostic,
     error_handler::FatalError,
@@ -331,7 +329,7 @@ mod parser_parse {
 
     impl UniquePromise {
         #[inline]
-        fn new() -> Self {
+        pub(super) fn new() -> Self {
             Self(())
         }
 
@@ -605,6 +603,8 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// Options
     options: ParseOptions,
 
+    config: C,
+
     pub(crate) lexer: Lexer<'a, C::LexerConfig>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
@@ -665,9 +665,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         config: C,
         unique: UniquePromise,
     ) -> Self {
+        let lexer_config = config.lexer_config();
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
+            config,
+            lexer: Lexer::new(allocator, source_text, source_type, lexer_config, unique),
             source_type,
             source_text,
             errors: vec![],
@@ -690,6 +692,15 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let mut program = self.parse_program();
+
+        if self.fatal_error.is_none()
+            && self.source_type.is_unambiguous()
+            && self.module_record_builder.has_module_syntax()
+            && self.state.needs_module_reparse
+        {
+            return self.restart_as_module();
+        }
+
         let mut panicked = false;
 
         if let Some(fatal_error) = self.fatal_error.take() {
@@ -773,6 +784,27 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
+    /// Restart a committed unambiguous parse under the Module goal.
+    ///
+    /// The first parser is fully dropped before constructing the second one, preserving the
+    /// parser/lexer uniqueness invariant. Arena allocations from the discarded parse remain, but
+    /// this path is limited to files whose goal can only be resolved after seeing later ESM syntax.
+    fn restart_as_module(self) -> ParserReturn<'a> {
+        let ParserImpl { options, config, lexer, source_type, source_text, ast, .. } = self;
+        let allocator = ast.allocator();
+        drop(lexer);
+        drop(ast);
+        ParserImpl::new(
+            allocator,
+            source_text,
+            source_type.with_module(true),
+            options,
+            config,
+            UniquePromise::new(),
+        )
+        .parse()
+    }
+
     pub fn parse_expression(mut self) -> Result<Expression<'a>, Diagnostics> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
@@ -805,21 +837,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
-        let (directives, mut statements) =
+        let (directives, statements) =
             self.parse_directives_and_statements(/* in_ts_namespace_body */ false);
-
-        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
-        // we need to reparse statements that were originally parsed with `await` as identifier.
-        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
-        // await expression with regex when ESM is detected.
-        // Preserve a fatal error from the initial parse instead of rewinding past it.
-        if self.fatal_error.is_none()
-            && self.source_type.is_unambiguous()
-            && self.module_record_builder.has_module_syntax()
-            && !self.state.potential_await_reparse.is_empty()
-        {
-            self.reparse_potential_top_level_awaits(&mut statements);
-        }
 
         let span = Span::new(0, self.source_text.len() as u32);
         let program = Program::new(
@@ -836,38 +855,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // `Program` is constructed after its descendants, but is always the semantic root.
         program.set_node_id(oxc_syntax::node::NodeId::ROOT);
         program
-    }
-
-    /// Reparse statements that may contain top-level await expressions.
-    ///
-    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
-    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
-    /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        // Token stream is already complete from the first parse.
-        // Reparsing here is only to patch AST nodes, so keep the original token stream.
-        let original_tokens =
-            if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
-
-        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
-        for (stmt_index, checkpoint) in checkpoints {
-            // Rewind to the checkpoint
-            self.rewind(checkpoint);
-
-            // Parse the statement with await context enabled (TopLevel context is already set)
-            let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::StatementList)
-            });
-
-            // Replace the statement if the index is valid
-            if stmt_index < statements.len() {
-                statements[stmt_index] = stmt;
-            }
-        }
-
-        if let Some(original_tokens) = original_tokens {
-            self.lexer.set_tokens(original_tokens);
-        }
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
@@ -1154,6 +1141,54 @@ mod test {
         let directive = &ret.program.directives[0];
         let comments = ret.program.comments.node_comments(directive.node_id()).unwrap();
         assert_eq!(comments.leading.as_slice(), &[oxc_ast::CommentId::from_usize(0)]);
+    }
+
+    fn assert_dense_comment_owner_ids(program: &Program<'_>) {
+        let mut ids = program
+            .comments
+            .attachments()
+            .keys()
+            .map(|node_id| node_id.index())
+            .collect::<Vec<_>>();
+        ids.sort_unstable();
+        assert_eq!(ids, (1..=ids.len()).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn speculative_comment_owner_ids_are_rolled_back() {
+        let allocator = Allocator::default();
+        let source = "a ? (x): string => { /* speculative */ foo(); } : null; /* kept */ bar();";
+        let ret =
+            Parser::new(&allocator, source, SourceType::default().with_typescript(true)).parse();
+        assert!(ret.diagnostics.is_empty());
+        assert_dense_comment_owner_ids(&ret.program);
+    }
+
+    #[test]
+    fn module_goal_restart_rebuilds_nested_comment_owner_ids() {
+        let allocator = Allocator::default();
+        let source = "/* outer */ if (true) { /* nested */ await /x/u; } export {};";
+        let ret = Parser::new(&allocator, source, SourceType::unambiguous()).parse();
+        assert!(
+            ret.diagnostics.is_empty(),
+            "{:?}",
+            ret.diagnostics.iter().map(ToString::to_string).collect::<Vec<_>>()
+        );
+        assert_dense_comment_owner_ids(&ret.program);
+        assert_eq!(ret.program.comments.attachments().len(), 2);
+    }
+
+    #[test]
+    fn module_goal_restart_does_not_duplicate_dynamic_imports() {
+        let allocator = Allocator::default();
+        let source = "/* outer */ await import('x'); export {};";
+        let ret = Parser::new(&allocator, source, SourceType::unambiguous())
+            .with_config(config::TokensParserConfig)
+            .parse();
+        assert!(ret.diagnostics.is_empty());
+        assert_dense_comment_owner_ids(&ret.program);
+        assert_eq!(ret.module_record.dynamic_imports.len(), 1);
+        assert!(!ret.tokens.is_empty());
     }
 
     #[test]
