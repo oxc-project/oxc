@@ -482,3 +482,27 @@ source: crates/oxc_linter/src/tester.rs
  3 │                         x = 1;
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:22]
+ 1 │ let x = 'a/b/c';
+ 2 │                     [x] = x.split('/');
+   ·                      ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:31]
+ 1 │ let x = { value: 'used' };
+ 2 │                     ({ value: x } = x);
+   ·                               ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:22]
+ 1 │ let x = 'used';
+ 2 │                     [x = x] = [];
+   ·                      ─
+   ╰────
+  help: Consider removing or reusing the assigned value.

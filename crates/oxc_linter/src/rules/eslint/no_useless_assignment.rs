@@ -539,14 +539,24 @@ impl NoUselessAssignment {
 
     fn get_assignment_node(ctx: &LintContext, reference: &Reference) -> Option<NodeId> {
         let node = ctx.nodes().get_node(reference.node_id());
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if matches!(node.kind(), AstKind::IdentifierReference(_))
-            && matches!(parent_node.kind(), AstKind::AssignmentExpression(_))
-        {
-            Some(parent_node.id())
-        } else {
-            None
+        if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
+            return None;
         }
+
+        for ancestor in ctx.nodes().ancestors(node.id()) {
+            match ancestor.kind() {
+                AstKind::AssignmentExpression(_) => return Some(ancestor.id()),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_)
+                | AstKind::AssignmentTargetWithDefault(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_) => {}
+                _ => break,
+            }
+        }
+
+        None
     }
 
     fn is_in_try_block(graph: &Graph, block_node_id: BlockNodeId) -> bool {
@@ -1574,6 +1584,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                         x = 2;
                         return <A prop={x} />;
                         }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+        "let x = 'a/b/c';
+                    [x] = x.split('/');",
+        "let x = { value: 'used' };
+                    ({ value: x } = x);",
+        "let x = 'used';
+                    [x = x] = [];",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
