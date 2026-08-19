@@ -1,5 +1,5 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::ast::*;
+use oxc_allocator::{ArenaBox, ArenaVec, Slot, SlotFilled};
+use oxc_ast::{ast::*, builder::builders::traits::SlotBuild};
 use oxc_span::{GetSpan, Span};
 
 use super::FunctionKind;
@@ -29,6 +29,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_function_body(&mut self) -> ArenaBox<'a, FunctionBody<'a>> {
+        FunctionBody::uninit(self).fill_with(|slot| self.parse_function_body_into(slot))
+    }
+
+    fn parse_function_body_into<'slot>(
+        &mut self,
+        slot: Slot<'slot, FunctionBody<'a>>,
+    ) -> SlotFilled<'slot> {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -39,7 +46,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
 
         self.expect_closing(Kind::RCurly, opening_span);
-        FunctionBody::boxed(self.end_span(start), directives, statements, self)
+        slot.build(self)
+            .span_start(start)
+            .directives(directives)
+            .statements(statements)
+            .span_end(self.end_span(start).end)
+            .finish()
     }
 
     pub(crate) fn parse_formal_parameters(
@@ -47,32 +59,43 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         params_kind: FormalParameterKind,
     ) -> (Option<ArenaBox<'a, TSThisParameter<'a>>>, ArenaBox<'a, FormalParameters<'a>>) {
-        let start = self.cur_start();
-        let opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
-        let this_param = if self.is_ts && self.at(Kind::This) {
-            let param = self.parse_ts_this_parameter();
-            self.bump(Kind::Comma);
-            Some(param)
-        } else {
-            None
-        };
-        let (list, rest) = self.parse_formal_parameters_list(func_kind, opening_span);
-        self.expect(Kind::RParen);
-
-        let formal_parameters =
-            FormalParameters::boxed(self.end_span(start), params_kind, list, rest, self);
+        let mut this_param = None;
+        let formal_parameters = FormalParameters::uninit(self).fill_with(|slot| {
+            self.parse_formal_parameters_into(slot, func_kind, params_kind, &mut this_param)
+        });
         (this_param, formal_parameters)
     }
 
-    fn parse_formal_parameters_list(
+    fn parse_formal_parameters_into<'slot>(
         &mut self,
+        slot: Slot<'slot, FormalParameters<'a>>,
         func_kind: FunctionKind,
-        opening_span: Span,
-    ) -> (ArenaVec<'a, FormalParameter<'a>>, Option<ArenaBox<'a, FormalParameterRest<'a>>>) {
-        let mut list = ArenaVec::new_in(self);
-        let rest = self.parse_formal_parameters_list_into(&mut list, func_kind, opening_span);
-        (list, rest)
+        params_kind: FormalParameterKind,
+        this_param: &mut Option<ArenaBox<'a, TSThisParameter<'a>>>,
+    ) -> SlotFilled<'slot> {
+        let start = self.cur_start();
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LParen);
+        if self.is_ts && self.at(Kind::This) {
+            let param = self.parse_ts_this_parameter();
+            self.bump(Kind::Comma);
+            *this_param = Some(param);
+        }
+        let mut rest = None;
+        slot.build(self)
+            .span_start(start)
+            .kind(params_kind)
+            .items_with(|slot| {
+                let mut items = ArenaVec::new_in(self);
+                rest = self.parse_formal_parameters_list_into(&mut items, func_kind, opening_span);
+                slot.fill(items)
+            })
+            .rest(rest)
+            .span_end({
+                self.expect(Kind::RParen);
+                self.end_span(start).end
+            })
+            .finish()
     }
 
     #[expect(clippy::inline_always)]
@@ -148,36 +171,39 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
 
-                rest = Some(FormalParameterRest::boxed(
-                    self.end_span(start),
-                    decorators,
-                    rest_element,
-                    type_annotation,
-                    self,
-                ));
+                rest = Some(
+                    FormalParameterRest::build(self)
+                        .span_start(start)
+                        .decorators(decorators)
+                        .rest(rest_element)
+                        .type_annotation(type_annotation)
+                        .span_end(self.end_span(start).end)
+                        .finish(),
+                );
             } else {
-                let param =
-                    self.parse_formal_parameter_with_decorators(func_kind, start, decorators);
-                if param.optional {
-                    has_optional = true;
-                } else if has_optional && param.initializer.is_none() {
-                    self.error(diagnostics::required_parameter_after_optional_parameter(
-                        param.span,
-                    ));
-                }
-                list.push(param);
+                list.push_with(|slot| {
+                    self.parse_formal_parameter_with_decorators_into(
+                        slot,
+                        func_kind,
+                        start,
+                        decorators,
+                        &mut has_optional,
+                    )
+                });
             }
         }
 
         rest
     }
 
-    fn parse_formal_parameter_with_decorators(
+    fn parse_formal_parameter_with_decorators_into<'slot>(
         &mut self,
+        slot: Slot<'slot, FormalParameter<'a>>,
         func_kind: FunctionKind,
         start: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
-    ) -> FormalParameter<'a> {
+        has_optional: &mut bool,
+    ) -> SlotFilled<'slot> {
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
             let allowed_modifiers = if func_kind == FunctionKind::Constructor {
@@ -250,18 +276,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
         }
-        FormalParameter::new(
-            self.end_span(start),
-            decorators,
-            pattern,
-            type_annotation,
-            init,
-            optional,
-            modifiers.accessibility(),
-            modifiers.contains_readonly(),
-            modifiers.contains_override(),
-            self,
-        )
+        let span = self.end_span(start);
+        if optional {
+            *has_optional = true;
+        } else if *has_optional && init.is_none() {
+            self.error(diagnostics::required_parameter_after_optional_parameter(span));
+        }
+
+        slot.build(self)
+            .span(span)
+            .decorators(decorators)
+            .pattern(pattern)
+            .type_annotation(type_annotation)
+            .initializer(init)
+            .optional(optional)
+            .accessibility(modifiers.accessibility())
+            .readonly(modifiers.contains_readonly())
+            .r#override(modifiers.contains_override())
+            .finish()
     }
 
     pub(crate) fn parse_function(
@@ -284,25 +316,48 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             .and_yield(generator.is_some())
             .and_new_target(true);
         let type_parameters = self.parse_ts_type_parameters();
-        let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
+        let mut this_param = None;
+        let function = Function::build(self)
+            .span_start(start)
+            .id(id)
+            .generator(generator.is_some())
+            .r#async(r#async)
+            .declare(modifiers.contains_declare())
+            .type_parameters(type_parameters)
+            .params_with(|slot| {
+                self.parse_formal_parameters_into(
+                    slot.into_contents(self),
+                    func_kind,
+                    param_kind,
+                    &mut this_param,
+                )
+            })
+            .this_param(this_param);
         let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
-        let body = if self.at(Kind::LCurly) || func_kind == FunctionKind::Expression {
-            Some(self.parse_function_body())
-        } else {
-            None
-        };
+        let mut body_span = None;
+        let parse_body = self.at(Kind::LCurly) || func_kind == FunctionKind::Expression;
+        let function = function.return_type(return_type).body_with(|slot| {
+            if parse_body {
+                let start = self.cur_start();
+                let filled = self.parse_function_body_into(slot.into_some().into_contents(self));
+                body_span = Some(Span::new(start, self.prev_token_end));
+                filled
+            } else {
+                slot.fill(None)
+            }
+        });
         self.ctx = self
             .ctx
             .and_in(ctx.has_in())
             .and_await(ctx.has_await())
             .and_yield(ctx.has_yield())
             .and_new_target(ctx.has_new_target());
-        if (!self.is_ts || matches!(func_kind, FunctionKind::ObjectMethod)) && body.is_none() {
+        if (!self.is_ts || matches!(func_kind, FunctionKind::ObjectMethod)) && body_span.is_none() {
             return self.fatal_error(diagnostics::expect_function_body(self.end_span(start)));
         }
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
-                if body.is_none() {
+                if body_span.is_none() {
                     FunctionType::TSDeclareFunction
                 } else {
                     FunctionType::FunctionDeclaration
@@ -312,7 +367,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | FunctionKind::ClassMethod
             | FunctionKind::Constructor
             | FunctionKind::ObjectMethod => {
-                if body.is_none() {
+                if body_span.is_none() {
                     FunctionType::TSEmptyBodyFunctionExpression
                 } else {
                     FunctionType::FunctionExpression
@@ -339,15 +394,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     | FunctionKind::DefaultExport
                     | FunctionKind::TSDeclaration
             )
-            && let Some(body) = &body
+            && let Some(body_span) = body_span
         {
-            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body_span.start)));
         }
 
         if let Some(generator) = generator {
             if ctx.has_ambient() {
                 self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
-            } else if body.is_none() {
+            } else if body_span.is_none() {
                 self.error(diagnostics::overload_signature_generator(self.end_span(start)));
             }
         }
@@ -358,20 +413,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Function::boxed(
-            self.end_span(start),
-            function_type,
-            id,
-            generator.is_some(),
-            r#async,
-            modifiers.contains_declare(),
-            type_parameters,
-            this_param,
-            params,
-            return_type,
-            body,
-            self,
-        )
+        function.r#type(function_type).defaults().span_end(self.end_span(start).end).finish()
     }
 
     /// [Function Declaration](https://tc39.es/ecma262/#prod-FunctionDeclaration)

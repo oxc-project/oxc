@@ -386,6 +386,10 @@ pub mod markers {
     pub trait HashbangIsSet: IsSet {}
     impl HashbangIsSet for Set {}
 
+    #[diagnostic::on_unimplemented(message = "`.heritage()` has not been called on this builder")]
+    pub trait HeritageIsSet: IsSet {}
+    impl HeritageIsSet for Set {}
+
     #[diagnostic::on_unimplemented(message = "`.id()` has not been called on this builder")]
     pub trait IdIsSet: IsSet {}
     impl IdIsSet for Set {}
@@ -665,18 +669,6 @@ pub mod markers {
     #[diagnostic::on_unimplemented(message = "`.r#static()` has not been called on this builder")]
     pub trait StaticIsSet: IsSet {}
     impl StaticIsSet for Set {}
-
-    #[diagnostic::on_unimplemented(
-        message = "`.super_class()` has not been called on this builder"
-    )]
-    pub trait SuperClassIsSet: IsSet {}
-    impl SuperClassIsSet for Set {}
-
-    #[diagnostic::on_unimplemented(
-        message = "`.super_type_arguments()` has not been called on this builder"
-    )]
-    pub trait SuperTypeArgumentsIsSet: IsSet {}
-    impl SuperTypeArgumentsIsSet for Set {}
 
     #[diagnostic::on_unimplemented(message = "`.symbol_id()` has not been called on this builder")]
     pub trait SymbolIdIsSet: IsSet {}
@@ -8378,22 +8370,12 @@ where
         self.transition()
     }
 
-    /// Set `kind` on the [`VariableDeclarator`] being built.
-    #[inline(always)]
-    pub fn kind(
-        mut self,
-        kind: VariableDeclarationKind,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set3> {
-        unsafe { (&raw mut (*self.target.as_mut_ptr()).kind).write(kind) };
-        self.transition()
-    }
-
     /// Set `id` on the [`VariableDeclarator`] being built.
     #[inline(always)]
     pub fn id(
         mut self,
         id: BindingPattern<'a>,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set4> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set3> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).id).write(id) };
         self.transition()
     }
@@ -8406,7 +8388,7 @@ where
     pub fn id_with(
         mut self,
         fill: impl for<'slot> FnOnce(Slot<'slot, BindingPattern<'a>>) -> SlotFilled<'slot>,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set4> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set3> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).id) };
         fill(slot);
         self.transition()
@@ -8417,7 +8399,7 @@ where
     pub fn type_annotation(
         mut self,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set5> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set4> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).type_annotation).write(type_annotation) };
         self.transition()
     }
@@ -8432,7 +8414,7 @@ where
         fill: impl for<'slot> FnOnce(
             Slot<'slot, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
         ) -> SlotFilled<'slot>,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set5> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set4> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).type_annotation) };
         fill(slot);
         self.transition()
@@ -8443,7 +8425,7 @@ where
     pub fn init(
         mut self,
         init: Option<Expression<'a>>,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set6> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set5> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).init).write(init) };
         self.transition()
     }
@@ -8456,7 +8438,7 @@ where
     pub fn init_with(
         mut self,
         fill: impl for<'slot> FnOnce(Slot<'slot, Option<Expression<'a>>>) -> SlotFilled<'slot>,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set6> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set5> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).init) };
         fill(slot);
         self.transition()
@@ -8467,7 +8449,7 @@ where
     pub fn definite(
         mut self,
         definite: bool,
-    ) -> VariableDeclaratorBuilder<'a, Target, State::Set7> {
+    ) -> VariableDeclaratorBuilder<'a, Target, State::Set6> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).definite).write(definite) };
         self.transition()
     }
@@ -8483,11 +8465,10 @@ where
     where
         State::Field1: SpanStartIsSet,
         State::Field2: SpanEndIsSet,
-        State::Field3: KindIsSet,
-        State::Field4: IdIsSet,
-        State::Field5: TypeAnnotationIsSet,
-        State::Field6: InitIsSet,
-        State::Field7: DefiniteIsSet,
+        State::Field3: IdIsSet,
+        State::Field4: TypeAnnotationIsSet,
+        State::Field5: InitIsSet,
+        State::Field6: DefiniteIsSet,
     {
         unsafe { self.target.assume_filled() }
     }
@@ -14827,54 +14808,26 @@ where
         self.transition()
     }
 
-    /// Set `super_class` on the [`Class`] being built.
+    /// Set `heritage` on the [`Class`] being built.
     #[inline(always)]
-    pub fn super_class(
+    pub fn heritage(
         mut self,
-        super_class: Option<Expression<'a>>,
+        heritage: Option<ClassHeritage<'a>>,
     ) -> ClassBuilder<'a, Target, State::Set7> {
-        unsafe { (&raw mut (*self.target.as_mut_ptr()).super_class).write(super_class) };
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).heritage).write(heritage) };
         self.transition()
     }
 
-    /// Set `super_class` on the [`Class`] being built, in place.
+    /// Set `heritage` on the [`Class`] being built, in place.
     ///
-    /// `fill` is given a [`Slot`] for the `super_class` field.
+    /// `fill` is given a [`Slot`] for the `heritage` field.
     /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
     #[inline(always)]
-    pub fn super_class_with(
+    pub fn heritage_with(
         mut self,
-        fill: impl for<'slot> FnOnce(Slot<'slot, Option<Expression<'a>>>) -> SlotFilled<'slot>,
+        fill: impl for<'slot> FnOnce(Slot<'slot, Option<ClassHeritage<'a>>>) -> SlotFilled<'slot>,
     ) -> ClassBuilder<'a, Target, State::Set7> {
-        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).super_class) };
-        fill(slot);
-        self.transition()
-    }
-
-    /// Set `super_type_arguments` on the [`Class`] being built.
-    #[inline(always)]
-    pub fn super_type_arguments(
-        mut self,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> ClassBuilder<'a, Target, State::Set8> {
-        unsafe {
-            (&raw mut (*self.target.as_mut_ptr()).super_type_arguments).write(super_type_arguments)
-        };
-        self.transition()
-    }
-
-    /// Set `super_type_arguments` on the [`Class`] being built, in place.
-    ///
-    /// `fill` is given a [`Slot`] for the `super_type_arguments` field.
-    /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
-    #[inline(always)]
-    pub fn super_type_arguments_with(
-        mut self,
-        fill: impl for<'slot> FnOnce(
-            Slot<'slot, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        ) -> SlotFilled<'slot>,
-    ) -> ClassBuilder<'a, Target, State::Set8> {
-        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).super_type_arguments) };
+        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).heritage) };
         fill(slot);
         self.transition()
     }
@@ -14884,7 +14837,7 @@ where
     pub fn implements(
         mut self,
         implements: ArenaVec<'a, TSClassImplements<'a>>,
-    ) -> ClassBuilder<'a, Target, State::Set9> {
+    ) -> ClassBuilder<'a, Target, State::Set8> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).implements).write(implements) };
         self.transition()
     }
@@ -14899,7 +14852,7 @@ where
         fill: impl for<'slot> FnOnce(
             Slot<'slot, ArenaVec<'a, TSClassImplements<'a>>>,
         ) -> SlotFilled<'slot>,
-    ) -> ClassBuilder<'a, Target, State::Set9> {
+    ) -> ClassBuilder<'a, Target, State::Set8> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).implements) };
         fill(slot);
         self.transition()
@@ -14910,7 +14863,7 @@ where
     pub fn body(
         mut self,
         body: ArenaBox<'a, ClassBody<'a>>,
-    ) -> ClassBuilder<'a, Target, State::Set10> {
+    ) -> ClassBuilder<'a, Target, State::Set9> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).body).write(body) };
         self.transition()
     }
@@ -14923,7 +14876,7 @@ where
     pub fn body_with(
         mut self,
         fill: impl for<'slot> FnOnce(Slot<'slot, ArenaBox<'a, ClassBody<'a>>>) -> SlotFilled<'slot>,
-    ) -> ClassBuilder<'a, Target, State::Set10> {
+    ) -> ClassBuilder<'a, Target, State::Set9> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).body) };
         fill(slot);
         self.transition()
@@ -14931,21 +14884,21 @@ where
 
     /// Set `abstract` on the [`Class`] being built.
     #[inline(always)]
-    pub fn r#abstract(mut self, r#abstract: bool) -> ClassBuilder<'a, Target, State::Set11> {
+    pub fn r#abstract(mut self, r#abstract: bool) -> ClassBuilder<'a, Target, State::Set10> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).r#abstract).write(r#abstract) };
         self.transition()
     }
 
     /// Set `declare` on the [`Class`] being built.
     #[inline(always)]
-    pub fn declare(mut self, declare: bool) -> ClassBuilder<'a, Target, State::Set12> {
+    pub fn declare(mut self, declare: bool) -> ClassBuilder<'a, Target, State::Set11> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).declare).write(declare) };
         self.transition()
     }
 
     /// Set `scope_id` on the [`Class`] being built.
     #[inline(always)]
-    pub fn scope_id(mut self, scope_id: ScopeId) -> ClassBuilder<'a, Target, State::Set13> {
+    pub fn scope_id(mut self, scope_id: ScopeId) -> ClassBuilder<'a, Target, State::Set12> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).scope_id).write(Cell::new(Some(scope_id))) };
         self.transition()
     }
@@ -14953,8 +14906,8 @@ where
     /// Set `scope_id` field of the [`Class`]
     /// to its default value, if it's not been set already.
     #[inline(always)]
-    pub fn defaults(mut self) -> ClassBuilder<'a, Target, State::Set13> {
-        if !State::Field13::IS_SET {
+    pub fn defaults(mut self) -> ClassBuilder<'a, Target, State::Set12> {
+        if !State::Field12::IS_SET {
             unsafe { (&raw mut (*self.target.as_mut_ptr()).scope_id).write(Default::default()) };
         }
 
@@ -14976,13 +14929,12 @@ where
         State::Field4: DecoratorsIsSet,
         State::Field5: IdIsSet,
         State::Field6: TypeParametersIsSet,
-        State::Field7: SuperClassIsSet,
-        State::Field8: SuperTypeArgumentsIsSet,
-        State::Field9: ImplementsIsSet,
-        State::Field10: BodyIsSet,
-        State::Field11: AbstractIsSet,
-        State::Field12: DeclareIsSet,
-        State::Field13: ScopeIdIsSet,
+        State::Field7: HeritageIsSet,
+        State::Field8: ImplementsIsSet,
+        State::Field9: BodyIsSet,
+        State::Field10: AbstractIsSet,
+        State::Field11: DeclareIsSet,
+        State::Field12: ScopeIdIsSet,
     {
         unsafe { self.target.assume_filled() }
     }
@@ -30233,26 +30185,26 @@ where
         self.transition()
     }
 
-    /// Set `expression` on the [`TSInterfaceHeritage`] being built.
+    /// Set `type_name` on the [`TSInterfaceHeritage`] being built.
     #[inline(always)]
-    pub fn expression(
+    pub fn type_name(
         mut self,
-        expression: Expression<'a>,
+        type_name: TSTypeName<'a>,
     ) -> TSInterfaceHeritageBuilder<'a, Target, State::Set3> {
-        unsafe { (&raw mut (*self.target.as_mut_ptr()).expression).write(expression) };
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).type_name).write(type_name) };
         self.transition()
     }
 
-    /// Set `expression` on the [`TSInterfaceHeritage`] being built, in place.
+    /// Set `type_name` on the [`TSInterfaceHeritage`] being built, in place.
     ///
-    /// `fill` is given a [`Slot`] for the `expression` field.
+    /// `fill` is given a [`Slot`] for the `type_name` field.
     /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
     #[inline(always)]
-    pub fn expression_with(
+    pub fn type_name_with(
         mut self,
-        fill: impl for<'slot> FnOnce(Slot<'slot, Expression<'a>>) -> SlotFilled<'slot>,
+        fill: impl for<'slot> FnOnce(Slot<'slot, TSTypeName<'a>>) -> SlotFilled<'slot>,
     ) -> TSInterfaceHeritageBuilder<'a, Target, State::Set3> {
-        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).expression) };
+        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).type_name) };
         fill(slot);
         self.transition()
     }
@@ -30294,7 +30246,7 @@ where
     where
         State::Field1: SpanStartIsSet,
         State::Field2: SpanEndIsSet,
-        State::Field3: ExpressionIsSet,
+        State::Field3: TypeNameIsSet,
         State::Field4: TypeArgumentsIsSet,
     {
         unsafe { self.target.assume_filled() }
@@ -30513,10 +30465,10 @@ where
     }
 }
 
-/// Builder for a [`TSModuleDeclaration`].
+/// Builder for a [`TSExternalModuleDeclaration`].
 ///
 /// Constructs the node in place in the memory arena.
-/// Created by [`TSModuleDeclaration::build`].
+/// Created by [`TSExternalModuleDeclaration::build`].
 ///
 /// `State` records which fields have been set - see [`FieldsState`].
 /// [`finish`] is only callable once they are all [`Set`].
@@ -30524,26 +30476,26 @@ where
 /// [`finish`]: Self::finish
 #[must_use]
 #[repr(transparent)]
-pub struct TSModuleDeclarationBuilder<'a, Target, State> {
+pub struct TSExternalModuleDeclarationBuilder<'a, Target, State> {
     target: Target,
     marker: PhantomData<(&'a (), State)>,
 }
 
-impl<'a> TSModuleDeclaration<'a> {
-    /// Start building a [`TSModuleDeclaration`] in the memory arena.
+impl<'a> TSExternalModuleDeclaration<'a> {
+    /// Start building a [`TSExternalModuleDeclaration`] in the memory arena.
     ///
     /// Set every field on the returned builder, then call [`finish`].
     ///
-    /// [`finish`]: TSModuleDeclarationBuilder::finish
+    /// [`finish`]: TSExternalModuleDeclarationBuilder::finish
     #[inline(always)]
     pub fn build(
         builder: &impl GetAstBuilder<'a>,
-    ) -> TSModuleDeclarationBuilder<'a, OwnedSlot<'a, Self>, NoFieldsSet> {
+    ) -> TSExternalModuleDeclarationBuilder<'a, OwnedSlot<'a, Self>, NoFieldsSet> {
         let builder = builder.builder();
-        TSModuleDeclarationBuilder::new(OwnedSlot::new_in(&builder.allocator()), builder)
+        TSExternalModuleDeclarationBuilder::new(OwnedSlot::new_in(&builder.allocator()), builder)
     }
 
-    /// Reserve memory in the arena for a [`TSModuleDeclaration`], without initializing it.
+    /// Reserve memory in the arena for a [`TSExternalModuleDeclaration`], without initializing it.
     ///
     /// Returns a [`Box`] of uninitialized memory.
     /// Write the node into it with [`fill`], or [`fill_with`].
@@ -30557,18 +30509,18 @@ impl<'a> TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> SlotBuild<'a> for Slot<'_, TSModuleDeclaration<'a>> {
-    type Builder = TSModuleDeclarationBuilder<'a, Self, NoFieldsSet>;
+impl<'a> SlotBuild<'a> for Slot<'_, TSExternalModuleDeclaration<'a>> {
+    type Builder = TSExternalModuleDeclarationBuilder<'a, Self, NoFieldsSet>;
 
-    /// Build the [`TSModuleDeclaration`] in place, in this [`Slot`].
+    /// Build the [`TSExternalModuleDeclaration`] in place, in this [`Slot`].
     #[inline(always)]
     fn build(self, builder: &impl GetAstBuilder<'a>) -> Self::Builder {
-        TSModuleDeclarationBuilder::new(self, builder.builder())
+        TSExternalModuleDeclarationBuilder::new(self, builder.builder())
     }
 }
 
-impl<'a, Target: BuilderTarget<TSModuleDeclaration<'a>>>
-    TSModuleDeclarationBuilder<'a, Target, NoFieldsSet>
+impl<'a, Target: BuilderTarget<TSExternalModuleDeclaration<'a>>>
+    TSExternalModuleDeclarationBuilder<'a, Target, NoFieldsSet>
 {
     #[inline(always)]
     fn new(mut target: Target, builder: &impl AstBuild<'a>) -> Self {
@@ -30577,73 +30529,76 @@ impl<'a, Target: BuilderTarget<TSModuleDeclaration<'a>>>
     }
 }
 
-impl<'a, Target, State> TSModuleDeclarationBuilder<'a, Target, State>
+impl<'a, Target, State> TSExternalModuleDeclarationBuilder<'a, Target, State>
 where
-    Target: BuilderTarget<TSModuleDeclaration<'a>>,
+    Target: BuilderTarget<TSExternalModuleDeclaration<'a>>,
     State: FieldsState,
 {
-    /// Set `span` start on the [`TSModuleDeclaration`] being built.
+    /// Set `span` start on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
     pub fn span_start(
         mut self,
         span_start: u32,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set1> {
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set1> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).span.start).write(span_start) };
         self.transition()
     }
 
-    /// Set `span` end on the [`TSModuleDeclaration`] being built.
+    /// Set `span` end on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
     pub fn span_end(
         mut self,
         span_end: u32,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set2> {
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set2> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).span.end).write(span_end) };
         self.transition()
     }
 
-    /// Set `span` on the [`TSModuleDeclaration`] being built.
+    /// Set `span` on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
-    pub fn span(mut self, span: Span) -> TSModuleDeclarationBuilder<'a, Target, State::Set1And2> {
+    pub fn span(
+        mut self,
+        span: Span,
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set1And2> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).span).write(span) };
         self.transition()
     }
 
-    /// Set `id` on the [`TSModuleDeclaration`] being built.
+    /// Set `id` on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
     pub fn id(
         mut self,
-        id: TSModuleDeclarationName<'a>,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set3> {
+        id: StringLiteral<'a>,
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set3> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).id).write(id) };
         self.transition()
     }
 
-    /// Set `id` on the [`TSModuleDeclaration`] being built, in place.
+    /// Set `id` on the [`TSExternalModuleDeclaration`] being built, in place.
     ///
     /// `fill` is given a [`Slot`] for the `id` field.
     /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
     #[inline(always)]
     pub fn id_with(
         mut self,
-        fill: impl for<'slot> FnOnce(Slot<'slot, TSModuleDeclarationName<'a>>) -> SlotFilled<'slot>,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set3> {
+        fill: impl for<'slot> FnOnce(Slot<'slot, StringLiteral<'a>>) -> SlotFilled<'slot>,
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set3> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).id) };
         fill(slot);
         self.transition()
     }
 
-    /// Set `body` on the [`TSModuleDeclaration`] being built.
+    /// Set `body` on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
     pub fn body(
         mut self,
-        body: Option<TSModuleDeclarationBody<'a>>,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set4> {
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set4> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).body).write(body) };
         self.transition()
     }
 
-    /// Set `body` on the [`TSModuleDeclaration`] being built, in place.
+    /// Set `body` on the [`TSExternalModuleDeclaration`] being built, in place.
     ///
     /// `fill` is given a [`Slot`] for the `body` field.
     /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
@@ -30651,45 +30606,274 @@ where
     pub fn body_with(
         mut self,
         fill: impl for<'slot> FnOnce(
-            Slot<'slot, Option<TSModuleDeclarationBody<'a>>>,
+            Slot<'slot, Option<ArenaBox<'a, TSModuleBlock<'a>>>>,
         ) -> SlotFilled<'slot>,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set4> {
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set4> {
         let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).body) };
         fill(slot);
         self.transition()
     }
 
-    /// Set `kind` on the [`TSModuleDeclaration`] being built.
+    /// Set `declare` on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
-    pub fn kind(
+    pub fn declare(
         mut self,
-        kind: TSModuleDeclarationKind,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set5> {
-        unsafe { (&raw mut (*self.target.as_mut_ptr()).kind).write(kind) };
-        self.transition()
-    }
-
-    /// Set `declare` on the [`TSModuleDeclaration`] being built.
-    #[inline(always)]
-    pub fn declare(mut self, declare: bool) -> TSModuleDeclarationBuilder<'a, Target, State::Set6> {
+        declare: bool,
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set5> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).declare).write(declare) };
         self.transition()
     }
 
-    /// Set `scope_id` on the [`TSModuleDeclaration`] being built.
+    /// Set `scope_id` on the [`TSExternalModuleDeclaration`] being built.
     #[inline(always)]
     pub fn scope_id(
         mut self,
         scope_id: ScopeId,
-    ) -> TSModuleDeclarationBuilder<'a, Target, State::Set7> {
+    ) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set6> {
         unsafe { (&raw mut (*self.target.as_mut_ptr()).scope_id).write(Cell::new(Some(scope_id))) };
         self.transition()
     }
 
-    /// Set `scope_id` field of the [`TSModuleDeclaration`]
+    /// Set `scope_id` field of the [`TSExternalModuleDeclaration`]
     /// to its default value, if it's not been set already.
     #[inline(always)]
-    pub fn defaults(mut self) -> TSModuleDeclarationBuilder<'a, Target, State::Set7> {
+    pub fn defaults(mut self) -> TSExternalModuleDeclarationBuilder<'a, Target, State::Set6> {
+        if !State::Field6::IS_SET {
+            unsafe { (&raw mut (*self.target.as_mut_ptr()).scope_id).write(Default::default()) };
+        }
+
+        self.transition()
+    }
+
+    /// Finish building the [`TSExternalModuleDeclaration`].
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the node, or - if the node is being built
+    /// into a field of its parent - a [`SlotFilled`] token.
+    ///
+    /// Only callable once every field has been set.
+    #[inline(always)]
+    pub fn finish(self) -> Target::Output
+    where
+        State::Field1: SpanStartIsSet,
+        State::Field2: SpanEndIsSet,
+        State::Field3: IdIsSet,
+        State::Field4: BodyIsSet,
+        State::Field5: DeclareIsSet,
+        State::Field6: ScopeIdIsSet,
+    {
+        unsafe { self.target.assume_filled() }
+    }
+
+    /// Build the [`TSExternalModuleDeclaration`] by handing this builder to `build`.
+    ///
+    /// `build` is given this builder, re-targeted to write into a [`Slot`].
+    /// Fields already set stay set. `build` sets whatever is left, then calls `finish`.
+    #[inline(always)]
+    pub fn with(
+        mut self,
+        build: impl for<'slot> FnOnce(
+            TSExternalModuleDeclarationBuilder<
+                'a,
+                Slot<'slot, TSExternalModuleDeclaration<'a>>,
+                State,
+            >,
+        ) -> SlotFilled<'slot>,
+    ) -> Target::Output {
+        let inner = TSExternalModuleDeclarationBuilder {
+            target: self.target.reborrow(),
+            marker: PhantomData,
+        };
+        build(inner);
+        unsafe { self.target.assume_filled() }
+    }
+
+    #[inline(always)]
+    fn transition<NewState>(self) -> TSExternalModuleDeclarationBuilder<'a, Target, NewState> {
+        TSExternalModuleDeclarationBuilder { target: self.target, marker: PhantomData }
+    }
+}
+
+/// Builder for a [`TSNamespaceDeclaration`].
+///
+/// Constructs the node in place in the memory arena.
+/// Created by [`TSNamespaceDeclaration::build`].
+///
+/// `State` records which fields have been set - see [`FieldsState`].
+/// [`finish`] is only callable once they are all [`Set`].
+///
+/// [`finish`]: Self::finish
+#[must_use]
+#[repr(transparent)]
+pub struct TSNamespaceDeclarationBuilder<'a, Target, State> {
+    target: Target,
+    marker: PhantomData<(&'a (), State)>,
+}
+
+impl<'a> TSNamespaceDeclaration<'a> {
+    /// Start building a [`TSNamespaceDeclaration`] in the memory arena.
+    ///
+    /// Set every field on the returned builder, then call [`finish`].
+    ///
+    /// [`finish`]: TSNamespaceDeclarationBuilder::finish
+    #[inline(always)]
+    pub fn build(
+        builder: &impl GetAstBuilder<'a>,
+    ) -> TSNamespaceDeclarationBuilder<'a, OwnedSlot<'a, Self>, NoFieldsSet> {
+        let builder = builder.builder();
+        TSNamespaceDeclarationBuilder::new(OwnedSlot::new_in(&builder.allocator()), builder)
+    }
+
+    /// Reserve memory in the arena for a [`TSNamespaceDeclaration`], without initializing it.
+    ///
+    /// Returns a [`Box`] of uninitialized memory.
+    /// Write the node into it with [`fill`], or [`fill_with`].
+    ///
+    /// [`Box`]: ArenaBox
+    /// [`fill`]: ArenaBox::fill
+    /// [`fill_with`]: ArenaBox::fill_with
+    #[inline(always)]
+    pub fn uninit(allocator: &impl GetAllocator<'a>) -> ArenaBox<'a, MaybeUninit<Self>> {
+        ArenaBox::new_uninit_in(&allocator.allocator())
+    }
+}
+
+impl<'a> SlotBuild<'a> for Slot<'_, TSNamespaceDeclaration<'a>> {
+    type Builder = TSNamespaceDeclarationBuilder<'a, Self, NoFieldsSet>;
+
+    /// Build the [`TSNamespaceDeclaration`] in place, in this [`Slot`].
+    #[inline(always)]
+    fn build(self, builder: &impl GetAstBuilder<'a>) -> Self::Builder {
+        TSNamespaceDeclarationBuilder::new(self, builder.builder())
+    }
+}
+
+impl<'a, Target: BuilderTarget<TSNamespaceDeclaration<'a>>>
+    TSNamespaceDeclarationBuilder<'a, Target, NoFieldsSet>
+{
+    #[inline(always)]
+    fn new(mut target: Target, builder: &impl AstBuild<'a>) -> Self {
+        unsafe { init_node_id(&raw mut (*target.as_mut_ptr()).node_id, builder) };
+        Self { target, marker: PhantomData }
+    }
+}
+
+impl<'a, Target, State> TSNamespaceDeclarationBuilder<'a, Target, State>
+where
+    Target: BuilderTarget<TSNamespaceDeclaration<'a>>,
+    State: FieldsState,
+{
+    /// Set `span` start on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn span_start(
+        mut self,
+        span_start: u32,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set1> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).span.start).write(span_start) };
+        self.transition()
+    }
+
+    /// Set `span` end on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn span_end(
+        mut self,
+        span_end: u32,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set2> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).span.end).write(span_end) };
+        self.transition()
+    }
+
+    /// Set `span` on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn span(
+        mut self,
+        span: Span,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set1And2> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).span).write(span) };
+        self.transition()
+    }
+
+    /// Set `id` on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn id(
+        mut self,
+        id: BindingIdentifier<'a>,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set3> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).id).write(id) };
+        self.transition()
+    }
+
+    /// Set `id` on the [`TSNamespaceDeclaration`] being built, in place.
+    ///
+    /// `fill` is given a [`Slot`] for the `id` field.
+    /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
+    #[inline(always)]
+    pub fn id_with(
+        mut self,
+        fill: impl for<'slot> FnOnce(Slot<'slot, BindingIdentifier<'a>>) -> SlotFilled<'slot>,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set3> {
+        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).id) };
+        fill(slot);
+        self.transition()
+    }
+
+    /// Set `body` on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn body(
+        mut self,
+        body: TSNamespaceDeclarationBody<'a>,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set4> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).body).write(body) };
+        self.transition()
+    }
+
+    /// Set `body` on the [`TSNamespaceDeclaration`] being built, in place.
+    ///
+    /// `fill` is given a [`Slot`] for the `body` field.
+    /// It must fill the slot, and return the [`SlotFilled`] token which that produces.
+    #[inline(always)]
+    pub fn body_with(
+        mut self,
+        fill: impl for<'slot> FnOnce(Slot<'slot, TSNamespaceDeclarationBody<'a>>) -> SlotFilled<'slot>,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set4> {
+        let slot = unsafe { Slot::new(&raw mut (*self.target.as_mut_ptr()).body) };
+        fill(slot);
+        self.transition()
+    }
+
+    /// Set `kind` on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn kind(
+        mut self,
+        kind: TSNamespaceDeclarationKind,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set5> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).kind).write(kind) };
+        self.transition()
+    }
+
+    /// Set `declare` on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn declare(
+        mut self,
+        declare: bool,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set6> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).declare).write(declare) };
+        self.transition()
+    }
+
+    /// Set `scope_id` on the [`TSNamespaceDeclaration`] being built.
+    #[inline(always)]
+    pub fn scope_id(
+        mut self,
+        scope_id: ScopeId,
+    ) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set7> {
+        unsafe { (&raw mut (*self.target.as_mut_ptr()).scope_id).write(Cell::new(Some(scope_id))) };
+        self.transition()
+    }
+
+    /// Set `scope_id` field of the [`TSNamespaceDeclaration`]
+    /// to its default value, if it's not been set already.
+    #[inline(always)]
+    pub fn defaults(mut self) -> TSNamespaceDeclarationBuilder<'a, Target, State::Set7> {
         if !State::Field7::IS_SET {
             unsafe { (&raw mut (*self.target.as_mut_ptr()).scope_id).write(Default::default()) };
         }
@@ -30697,7 +30881,7 @@ where
         self.transition()
     }
 
-    /// Finish building the [`TSModuleDeclaration`].
+    /// Finish building the [`TSNamespaceDeclaration`].
     ///
     /// Returns a [`Box`](ArenaBox) containing the node, or - if the node is being built
     /// into a field of its parent - a [`SlotFilled`] token.
@@ -30717,7 +30901,7 @@ where
         unsafe { self.target.assume_filled() }
     }
 
-    /// Build the [`TSModuleDeclaration`] by handing this builder to `build`.
+    /// Build the [`TSNamespaceDeclaration`] by handing this builder to `build`.
     ///
     /// `build` is given this builder, re-targeted to write into a [`Slot`].
     /// Fields already set stay set. `build` sets whatever is left, then calls `finish`.
@@ -30725,18 +30909,18 @@ where
     pub fn with(
         mut self,
         build: impl for<'slot> FnOnce(
-            TSModuleDeclarationBuilder<'a, Slot<'slot, TSModuleDeclaration<'a>>, State>,
+            TSNamespaceDeclarationBuilder<'a, Slot<'slot, TSNamespaceDeclaration<'a>>, State>,
         ) -> SlotFilled<'slot>,
     ) -> Target::Output {
         let inner =
-            TSModuleDeclarationBuilder { target: self.target.reborrow(), marker: PhantomData };
+            TSNamespaceDeclarationBuilder { target: self.target.reborrow(), marker: PhantomData };
         build(inner);
         unsafe { self.target.assume_filled() }
     }
 
     #[inline(always)]
-    fn transition<NewState>(self) -> TSModuleDeclarationBuilder<'a, Target, NewState> {
-        TSModuleDeclarationBuilder { target: self.target, marker: PhantomData }
+    fn transition<NewState>(self) -> TSNamespaceDeclarationBuilder<'a, Target, NewState> {
+        TSNamespaceDeclarationBuilder { target: self.target, marker: PhantomData }
     }
 }
 
@@ -35194,22 +35378,23 @@ pub mod builders {
         TSBigIntKeywordBuilder, TSBooleanKeywordBuilder, TSCallSignatureDeclarationBuilder,
         TSClassImplementsBuilder, TSConditionalTypeBuilder, TSConstructSignatureDeclarationBuilder,
         TSConstructorTypeBuilder, TSEnumBodyBuilder, TSEnumDeclarationBuilder, TSEnumMemberBuilder,
-        TSExportAssignmentBuilder, TSExternalModuleReferenceBuilder, TSFunctionTypeBuilder,
-        TSGlobalDeclarationBuilder, TSImportEqualsDeclarationBuilder, TSImportTypeBuilder,
-        TSImportTypeQualifiedNameBuilder, TSIndexSignatureBuilder, TSIndexSignatureNameBuilder,
-        TSIndexedAccessTypeBuilder, TSInferTypeBuilder, TSInstantiationExpressionBuilder,
-        TSInterfaceBodyBuilder, TSInterfaceDeclarationBuilder, TSInterfaceHeritageBuilder,
-        TSIntersectionTypeBuilder, TSIntrinsicKeywordBuilder, TSLiteralTypeBuilder,
-        TSMappedTypeBuilder, TSMethodSignatureBuilder, TSModuleBlockBuilder,
-        TSModuleDeclarationBuilder, TSNamedTupleMemberBuilder, TSNamespaceExportDeclarationBuilder,
-        TSNeverKeywordBuilder, TSNonNullExpressionBuilder, TSNullKeywordBuilder,
-        TSNumberKeywordBuilder, TSObjectKeywordBuilder, TSOptionalTypeBuilder,
-        TSParenthesizedTypeBuilder, TSPropertySignatureBuilder, TSQualifiedNameBuilder,
-        TSRestTypeBuilder, TSSatisfiesExpressionBuilder, TSStringKeywordBuilder,
-        TSSymbolKeywordBuilder, TSTemplateLiteralTypeBuilder, TSThisParameterBuilder,
-        TSThisTypeBuilder, TSTupleTypeBuilder, TSTypeAliasDeclarationBuilder,
-        TSTypeAnnotationBuilder, TSTypeAssertionBuilder, TSTypeLiteralBuilder,
-        TSTypeOperatorBuilder, TSTypeParameterBuilder, TSTypeParameterDeclarationBuilder,
+        TSExportAssignmentBuilder, TSExternalModuleDeclarationBuilder,
+        TSExternalModuleReferenceBuilder, TSFunctionTypeBuilder, TSGlobalDeclarationBuilder,
+        TSImportEqualsDeclarationBuilder, TSImportTypeBuilder, TSImportTypeQualifiedNameBuilder,
+        TSIndexSignatureBuilder, TSIndexSignatureNameBuilder, TSIndexedAccessTypeBuilder,
+        TSInferTypeBuilder, TSInstantiationExpressionBuilder, TSInterfaceBodyBuilder,
+        TSInterfaceDeclarationBuilder, TSInterfaceHeritageBuilder, TSIntersectionTypeBuilder,
+        TSIntrinsicKeywordBuilder, TSLiteralTypeBuilder, TSMappedTypeBuilder,
+        TSMethodSignatureBuilder, TSModuleBlockBuilder, TSNamedTupleMemberBuilder,
+        TSNamespaceDeclarationBuilder, TSNamespaceExportDeclarationBuilder, TSNeverKeywordBuilder,
+        TSNonNullExpressionBuilder, TSNullKeywordBuilder, TSNumberKeywordBuilder,
+        TSObjectKeywordBuilder, TSOptionalTypeBuilder, TSParenthesizedTypeBuilder,
+        TSPropertySignatureBuilder, TSQualifiedNameBuilder, TSRestTypeBuilder,
+        TSSatisfiesExpressionBuilder, TSStringKeywordBuilder, TSSymbolKeywordBuilder,
+        TSTemplateLiteralTypeBuilder, TSThisParameterBuilder, TSThisTypeBuilder,
+        TSTupleTypeBuilder, TSTypeAliasDeclarationBuilder, TSTypeAnnotationBuilder,
+        TSTypeAssertionBuilder, TSTypeLiteralBuilder, TSTypeOperatorBuilder,
+        TSTypeParameterBuilder, TSTypeParameterDeclarationBuilder,
         TSTypeParameterInstantiationBuilder, TSTypePredicateBuilder, TSTypeQueryBuilder,
         TSTypeReferenceBuilder, TSUndefinedKeywordBuilder, TSUnionTypeBuilder,
         TSUnknownKeywordBuilder, TSVoidKeywordBuilder, TaggedTemplateExpressionBuilder,
@@ -39509,26 +39694,53 @@ pub trait StatementSlot<'a: 'slot, 'slot>: EnumSlot<'slot, Statement<'a>> {
         self.into_ts_enum_declaration().into_contents(&builder.allocator()).build(builder)
     }
 
-    /// Narrow the [`Slot`] to one for the payload of [`Statement::TSModuleDeclaration`].
+    /// Narrow the [`Slot`] to one for the payload of [`Statement::TSExternalModuleDeclaration`].
     #[inline(always)]
-    fn into_ts_module_declaration(self) -> Slot<'slot, ArenaBox<'a, TSModuleDeclaration<'a>>> {
+    fn into_ts_external_module_declaration(
+        self,
+    ) -> Slot<'slot, ArenaBox<'a, TSExternalModuleDeclaration<'a>>> {
         unsafe { self.into_variant(38) }
     }
 
-    /// Build a [`Statement::TSModuleDeclaration`] in place in this [`Slot`].
+    /// Build a [`Statement::TSExternalModuleDeclaration`] in place in this [`Slot`].
     #[inline(always)]
-    fn build_ts_module_declaration(
+    fn build_ts_external_module_declaration(
         self,
         builder: &impl GetAstBuilder<'a>,
-    ) -> TSModuleDeclarationBuilder<'a, Slot<'slot, TSModuleDeclaration<'a>>, NoFieldsSet> {
+    ) -> TSExternalModuleDeclarationBuilder<
+        'a,
+        Slot<'slot, TSExternalModuleDeclaration<'a>>,
+        NoFieldsSet,
+    > {
         let builder = builder.builder();
-        self.into_ts_module_declaration().into_contents(&builder.allocator()).build(builder)
+        self.into_ts_external_module_declaration()
+            .into_contents(&builder.allocator())
+            .build(builder)
+    }
+
+    /// Narrow the [`Slot`] to one for the payload of [`Statement::TSNamespaceDeclaration`].
+    #[inline(always)]
+    fn into_ts_namespace_declaration(
+        self,
+    ) -> Slot<'slot, ArenaBox<'a, TSNamespaceDeclaration<'a>>> {
+        unsafe { self.into_variant(39) }
+    }
+
+    /// Build a [`Statement::TSNamespaceDeclaration`] in place in this [`Slot`].
+    #[inline(always)]
+    fn build_ts_namespace_declaration(
+        self,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> TSNamespaceDeclarationBuilder<'a, Slot<'slot, TSNamespaceDeclaration<'a>>, NoFieldsSet>
+    {
+        let builder = builder.builder();
+        self.into_ts_namespace_declaration().into_contents(&builder.allocator()).build(builder)
     }
 
     /// Narrow the [`Slot`] to one for the payload of [`Statement::TSGlobalDeclaration`].
     #[inline(always)]
     fn into_ts_global_declaration(self) -> Slot<'slot, ArenaBox<'a, TSGlobalDeclaration<'a>>> {
-        unsafe { self.into_variant(39) }
+        unsafe { self.into_variant(40) }
     }
 
     /// Build a [`Statement::TSGlobalDeclaration`] in place in this [`Slot`].
@@ -39546,7 +39758,7 @@ pub trait StatementSlot<'a: 'slot, 'slot>: EnumSlot<'slot, Statement<'a>> {
     fn into_ts_import_equals_declaration(
         self,
     ) -> Slot<'slot, ArenaBox<'a, TSImportEqualsDeclaration<'a>>> {
-        unsafe { self.into_variant(40) }
+        unsafe { self.into_variant(41) }
     }
 
     /// Build a [`Statement::TSImportEqualsDeclaration`] in place in this [`Slot`].
@@ -39813,26 +40025,53 @@ pub trait DeclarationSlot<'a: 'slot, 'slot>: EnumSlot<'slot, Declaration<'a>> {
         self.into_ts_enum_declaration().into_contents(&builder.allocator()).build(builder)
     }
 
-    /// Narrow the [`Slot`] to one for the payload of [`Declaration::TSModuleDeclaration`].
+    /// Narrow the [`Slot`] to one for the payload of [`Declaration::TSExternalModuleDeclaration`].
     #[inline(always)]
-    fn into_ts_module_declaration(self) -> Slot<'slot, ArenaBox<'a, TSModuleDeclaration<'a>>> {
+    fn into_ts_external_module_declaration(
+        self,
+    ) -> Slot<'slot, ArenaBox<'a, TSExternalModuleDeclaration<'a>>> {
         unsafe { self.into_variant(38) }
     }
 
-    /// Build a [`Declaration::TSModuleDeclaration`] in place in this [`Slot`].
+    /// Build a [`Declaration::TSExternalModuleDeclaration`] in place in this [`Slot`].
     #[inline(always)]
-    fn build_ts_module_declaration(
+    fn build_ts_external_module_declaration(
         self,
         builder: &impl GetAstBuilder<'a>,
-    ) -> TSModuleDeclarationBuilder<'a, Slot<'slot, TSModuleDeclaration<'a>>, NoFieldsSet> {
+    ) -> TSExternalModuleDeclarationBuilder<
+        'a,
+        Slot<'slot, TSExternalModuleDeclaration<'a>>,
+        NoFieldsSet,
+    > {
         let builder = builder.builder();
-        self.into_ts_module_declaration().into_contents(&builder.allocator()).build(builder)
+        self.into_ts_external_module_declaration()
+            .into_contents(&builder.allocator())
+            .build(builder)
+    }
+
+    /// Narrow the [`Slot`] to one for the payload of [`Declaration::TSNamespaceDeclaration`].
+    #[inline(always)]
+    fn into_ts_namespace_declaration(
+        self,
+    ) -> Slot<'slot, ArenaBox<'a, TSNamespaceDeclaration<'a>>> {
+        unsafe { self.into_variant(39) }
+    }
+
+    /// Build a [`Declaration::TSNamespaceDeclaration`] in place in this [`Slot`].
+    #[inline(always)]
+    fn build_ts_namespace_declaration(
+        self,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> TSNamespaceDeclarationBuilder<'a, Slot<'slot, TSNamespaceDeclaration<'a>>, NoFieldsSet>
+    {
+        let builder = builder.builder();
+        self.into_ts_namespace_declaration().into_contents(&builder.allocator()).build(builder)
     }
 
     /// Narrow the [`Slot`] to one for the payload of [`Declaration::TSGlobalDeclaration`].
     #[inline(always)]
     fn into_ts_global_declaration(self) -> Slot<'slot, ArenaBox<'a, TSGlobalDeclaration<'a>>> {
-        unsafe { self.into_variant(39) }
+        unsafe { self.into_variant(40) }
     }
 
     /// Build a [`Declaration::TSGlobalDeclaration`] in place in this [`Slot`].
@@ -39850,7 +40089,7 @@ pub trait DeclarationSlot<'a: 'slot, 'slot>: EnumSlot<'slot, Declaration<'a>> {
     fn into_ts_import_equals_declaration(
         self,
     ) -> Slot<'slot, ArenaBox<'a, TSImportEqualsDeclaration<'a>>> {
-        unsafe { self.into_variant(40) }
+        unsafe { self.into_variant(41) }
     }
 
     /// Build a [`Declaration::TSImportEqualsDeclaration`] in place in this [`Slot`].
@@ -45599,83 +45838,40 @@ pub trait TSTypePredicateNameSlot<'a: 'slot, 'slot>:
 
 impl<'a: 'slot, 'slot> TSTypePredicateNameSlot<'a, 'slot> for Slot<'slot, TSTypePredicateName<'a>> {}
 
-/// Narrow a [`Slot`] for a [`TSModuleDeclarationName`] to one for a variant's payload.
+/// Narrow a [`Slot`] for a [`TSNamespaceDeclarationBody`] to one for a variant's payload.
 ///
 /// Implemented only for [`Slot`], which belongs to `oxc_allocator`, so these cannot be
 /// inherent methods. The `EnumSlot` bound supplies `into_variant`, and pins it to
 /// this enum, which is what makes the method bodies below sound.
-pub trait TSModuleDeclarationNameSlot<'a: 'slot, 'slot>:
-    EnumSlot<'slot, TSModuleDeclarationName<'a>>
+pub trait TSNamespaceDeclarationBodySlot<'a: 'slot, 'slot>:
+    EnumSlot<'slot, TSNamespaceDeclarationBody<'a>>
 {
-    /// Narrow the [`Slot`] to one for the payload of [`TSModuleDeclarationName::Identifier`].
+    /// Narrow the [`Slot`] to one for the payload of [`TSNamespaceDeclarationBody::TSNamespaceDeclaration`].
     #[inline(always)]
-    fn into_identifier(self) -> Slot<'slot, BindingIdentifier<'a>> {
+    fn into_ts_namespace_declaration(
+        self,
+    ) -> Slot<'slot, ArenaBox<'a, TSNamespaceDeclaration<'a>>> {
         unsafe { self.into_variant(0) }
     }
 
-    /// Build a [`TSModuleDeclarationName::Identifier`] in place in this [`Slot`].
+    /// Build a [`TSNamespaceDeclarationBody::TSNamespaceDeclaration`] in place in this [`Slot`].
     #[inline(always)]
-    fn build_identifier(
+    fn build_ts_namespace_declaration(
         self,
         builder: &impl GetAstBuilder<'a>,
-    ) -> BindingIdentifierBuilder<'a, Slot<'slot, BindingIdentifier<'a>>, NoFieldsSet> {
+    ) -> TSNamespaceDeclarationBuilder<'a, Slot<'slot, TSNamespaceDeclaration<'a>>, NoFieldsSet>
+    {
         let builder = builder.builder();
-        self.into_identifier().build(builder)
+        self.into_ts_namespace_declaration().into_contents(&builder.allocator()).build(builder)
     }
 
-    /// Narrow the [`Slot`] to one for the payload of [`TSModuleDeclarationName::StringLiteral`].
-    #[inline(always)]
-    fn into_string_literal(self) -> Slot<'slot, StringLiteral<'a>> {
-        unsafe { self.into_variant(1) }
-    }
-
-    /// Build a [`TSModuleDeclarationName::StringLiteral`] in place in this [`Slot`].
-    #[inline(always)]
-    fn build_string_literal(
-        self,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> StringLiteralBuilder<'a, Slot<'slot, StringLiteral<'a>>, NoFieldsSet> {
-        let builder = builder.builder();
-        self.into_string_literal().build(builder)
-    }
-}
-
-impl<'a: 'slot, 'slot> TSModuleDeclarationNameSlot<'a, 'slot>
-    for Slot<'slot, TSModuleDeclarationName<'a>>
-{
-}
-
-/// Narrow a [`Slot`] for a [`TSModuleDeclarationBody`] to one for a variant's payload.
-///
-/// Implemented only for [`Slot`], which belongs to `oxc_allocator`, so these cannot be
-/// inherent methods. The `EnumSlot` bound supplies `into_variant`, and pins it to
-/// this enum, which is what makes the method bodies below sound.
-pub trait TSModuleDeclarationBodySlot<'a: 'slot, 'slot>:
-    EnumSlot<'slot, TSModuleDeclarationBody<'a>>
-{
-    /// Narrow the [`Slot`] to one for the payload of [`TSModuleDeclarationBody::TSModuleDeclaration`].
-    #[inline(always)]
-    fn into_ts_module_declaration(self) -> Slot<'slot, ArenaBox<'a, TSModuleDeclaration<'a>>> {
-        unsafe { self.into_variant(0) }
-    }
-
-    /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`] in place in this [`Slot`].
-    #[inline(always)]
-    fn build_ts_module_declaration(
-        self,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> TSModuleDeclarationBuilder<'a, Slot<'slot, TSModuleDeclaration<'a>>, NoFieldsSet> {
-        let builder = builder.builder();
-        self.into_ts_module_declaration().into_contents(&builder.allocator()).build(builder)
-    }
-
-    /// Narrow the [`Slot`] to one for the payload of [`TSModuleDeclarationBody::TSModuleBlock`].
+    /// Narrow the [`Slot`] to one for the payload of [`TSNamespaceDeclarationBody::TSModuleBlock`].
     #[inline(always)]
     fn into_ts_module_block(self) -> Slot<'slot, ArenaBox<'a, TSModuleBlock<'a>>> {
         unsafe { self.into_variant(1) }
     }
 
-    /// Build a [`TSModuleDeclarationBody::TSModuleBlock`] in place in this [`Slot`].
+    /// Build a [`TSNamespaceDeclarationBody::TSModuleBlock`] in place in this [`Slot`].
     #[inline(always)]
     fn build_ts_module_block(
         self,
@@ -45686,8 +45882,8 @@ pub trait TSModuleDeclarationBodySlot<'a: 'slot, 'slot>:
     }
 }
 
-impl<'a: 'slot, 'slot> TSModuleDeclarationBodySlot<'a, 'slot>
-    for Slot<'slot, TSModuleDeclarationBody<'a>>
+impl<'a: 'slot, 'slot> TSNamespaceDeclarationBodySlot<'a, 'slot>
+    for Slot<'slot, TSNamespaceDeclarationBody<'a>>
 {
 }
 
@@ -45896,8 +46092,7 @@ pub mod traits {
         JSXMemberExpressionObjectSlot, MemberExpressionSlot, ModuleDeclarationSlot,
         ModuleExportNameSlot, ObjectPropertyKindSlot, PropertyKeySlot, SimpleAssignmentTargetSlot,
         StatementSlot, TSEnumMemberNameSlot, TSImportTypeQualifierSlot, TSLiteralSlot,
-        TSModuleDeclarationBodySlot, TSModuleDeclarationNameSlot, TSModuleReferenceSlot,
-        TSSignatureSlot, TSTupleElementSlot, TSTypeNameSlot, TSTypePredicateNameSlot,
-        TSTypeQueryExprNameSlot, TSTypeSlot,
+        TSModuleReferenceSlot, TSNamespaceDeclarationBodySlot, TSSignatureSlot, TSTupleElementSlot,
+        TSTypeNameSlot, TSTypePredicateNameSlot, TSTypeQueryExprNameSlot, TSTypeSlot,
     };
 }

@@ -649,7 +649,7 @@ fn generate_builders_output(type_defs: &[StructOrEnum<'_>], schema: &Schema) -> 
         // Only structs get a builder type. An enum gets `Slot` conversions instead - one per
         // variant, narrowing a slot for the enum to a slot for that variant's payload.
         match type_def {
-            StructOrEnum::Struct(struct_def) => {
+            StructOrEnum::Struct(struct_def) if has_in_place_builder(struct_def) => {
                 let (builder, builder_state_names) =
                     generate_node_builder(struct_def, node_id_cell_type_id, span_type_id, schema);
                 builders.extend(builder);
@@ -663,7 +663,7 @@ fn generate_builders_output(type_defs: &[StructOrEnum<'_>], schema: &Schema) -> 
                 enum_slot_traits.extend(generate_enum_slot_trait(enum_def, schema));
                 enum_slot_trait_names.push(enum_slot_trait_ident(enum_def.name()));
             }
-            StructOrEnum::Enum(_) => {}
+            StructOrEnum::Struct(_) | StructOrEnum::Enum(_) => {}
         }
     }
 
@@ -1430,7 +1430,7 @@ fn generate_enum_slot_build_method(
         type_def => (type_def, false),
     };
     let TypeDef::Struct(struct_def) = inner_type else { return None };
-    if !has_builder(StructOrEnum::Struct(struct_def)) {
+    if !has_in_place_builder(struct_def) {
         return None;
     }
 
@@ -1711,6 +1711,17 @@ fn has_builder(type_def: StructOrEnum) -> bool {
         }
         StructOrEnum::Enum(enum_def) => !enum_def.builder.skip && enum_def.visit.has_visitor(),
     }
+}
+
+/// Get whether an AST struct can be built in place.
+///
+/// AST helper methods are generated for every visitable type, including inline helper structs
+/// such as `ClassHeritage`. In-place builders additionally initialize `node_id`, so only node
+/// structs which carry that field get one.
+fn has_in_place_builder(struct_def: &StructDef) -> bool {
+    !struct_def.builder.skip
+        && struct_def.visit.has_visitor()
+        && struct_def.fields.iter().any(|field| field.name() == "node_id")
 }
 
 /// Get [`TypeId`] of `Cell<NodeId>` - the type of the `node_id` field which every node has.

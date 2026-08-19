@@ -1,5 +1,5 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::ast::*;
+use oxc_allocator::{ArenaBox, ArenaVec, Slot, SlotFilled};
+use oxc_ast::{ast::*, builder::builders::traits::SlotBuild};
 use oxc_span::{GetSpan, Span};
 
 use super::VariableDeclarationParent;
@@ -83,26 +83,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         declare: bool,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
-
-        if matches!(decl_parent, VariableDeclarationParent::Statement) {
-            self.asi();
-        }
-        VariableDeclaration::boxed(self.end_span(start), kind, declarations, declare, self)
+        VariableDeclaration::build(self)
+            .span_start(start)
+            .kind(kind)
+            .declarations_with(|slot| {
+                let mut declarations = ArenaVec::new_in(self);
+                loop {
+                    declarations.push_with(|slot| {
+                        self.parse_variable_declarator_into(slot, decl_parent, kind)
+                    });
+                    if !self.eat(Kind::Comma) {
+                        break;
+                    }
+                }
+                slot.fill(declarations)
+            })
+            .declare(declare)
+            .span_end({
+                if matches!(decl_parent, VariableDeclarationParent::Statement) {
+                    self.asi();
+                }
+                self.end_span(start).end
+            })
+            .finish()
     }
 
-    fn parse_variable_declarator(
+    fn parse_variable_declarator_into<'slot>(
         &mut self,
+        slot: Slot<'slot, VariableDeclarator<'a>>,
         decl_parent: VariableDeclarationParent,
         kind: VariableDeclarationKind,
-    ) -> VariableDeclarator<'a> {
+    ) -> SlotFilled<'slot> {
         let start = self.cur_start();
 
         let id = self.parse_binding_pattern();
@@ -132,50 +143,54 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // `const foo /* #__PURE__ */ = bar()` - pure comment before `=` cannot be applied
         self.lexer.trivia_builder.mark_current_pure_comment_not_applied();
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
-        let decl = VariableDeclarator::new(
-            self.end_span(start),
-            id,
-            type_annotation,
-            init,
-            definite_start.is_some(),
-            self,
-        );
+        let span = self.end_span(start);
         if self.ctx.has_ambient()
-            && let Some(init) = &decl.init
+            && let Some(init) = &init
             && !kind.is_using()
-            && !(kind.is_const() && decl.type_annotation.is_none())
+            && !(kind.is_const() && type_annotation.is_none())
         {
             self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
         }
         if decl_parent == VariableDeclarationParent::Statement {
-            self.check_missing_initializer(&decl, kind);
+            self.check_missing_initializer(&id, init.as_ref(), kind);
         }
         if let Some(definite_start) = definite_start {
             let span = Span::sized(definite_start, 1);
-            if decl.init.is_some() {
+            if init.is_some() {
                 self.error(diagnostics::variable_declarator_definite(span));
-            } else if decl.type_annotation.is_none() {
+            } else if type_annotation.is_none() {
                 self.error(diagnostics::variable_declarator_definite_type_assertion(span));
             } else if self.ctx.has_ambient() {
                 self.error(diagnostics::definite_assignment_assertion_not_permitted(span));
             }
         }
-        decl
+        if kind.is_using() && !id.is_binding_identifier() {
+            self.error(diagnostics::invalid_identifier_in_using_declaration(id.span()));
+        }
+
+        slot.build(self)
+            .span(span)
+            .id(id)
+            .type_annotation(type_annotation)
+            .init(init)
+            .definite(definite_start.is_some())
+            .finish()
     }
 
     pub(crate) fn check_missing_initializer(
         &mut self,
-        decl: &VariableDeclarator<'a>,
+        id: &BindingPattern<'a>,
+        init: Option<&Expression<'a>>,
         kind: VariableDeclarationKind,
     ) {
-        if decl.init.is_none() && !self.ctx.has_ambient() {
-            if !matches!(decl.id, BindingPattern::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
+        if init.is_none() && !self.ctx.has_ambient() {
+            if !id.is_binding_identifier() {
+                self.error(diagnostics::invalid_destructuring_declaration(id.span()));
             } else if kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
+                self.error(diagnostics::missing_initializer_in_const(id.span()));
             } else if kind.is_using() {
-                self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
+                self.error(diagnostics::using_declarations_must_be_initialized(id.span()));
             }
         }
     }
@@ -206,28 +221,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             });
         }
 
-        // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations = ArenaVec::new_in(self);
-        loop {
-            let decl_parent = if matches!(statement_ctx, StatementContext::For) {
-                VariableDeclarationParent::For
-            } else {
-                VariableDeclarationParent::Statement
-            };
-            let declaration = self.parse_variable_declarator(decl_parent, kind);
-
-            if !matches!(declaration.id, BindingPattern::BindingIdentifier(_)) {
-                self.error(diagnostics::invalid_identifier_in_using_declaration(
-                    declaration.id.span(),
-                ));
-            }
-
-            declarations.push(declaration);
-            if !self.eat(Kind::Comma) {
-                break;
-            }
-        }
-
-        VariableDeclaration::boxed(self.end_span(start), kind, declarations, false, self)
+        let decl_parent = if matches!(statement_ctx, StatementContext::For) {
+            VariableDeclarationParent::For
+        } else {
+            VariableDeclarationParent::Statement
+        };
+        VariableDeclaration::build(self)
+            .span_start(start)
+            .kind(kind)
+            .declarations_with(|slot| {
+                let mut declarations = ArenaVec::new_in(self);
+                loop {
+                    declarations.push_with(|slot| {
+                        self.parse_variable_declarator_into(slot, decl_parent, kind)
+                    });
+                    if !self.eat(Kind::Comma) {
+                        break;
+                    }
+                }
+                slot.fill(declarations)
+            })
+            .declare(false)
+            .span_end(self.end_span(start).end)
+            .finish()
     }
 }
