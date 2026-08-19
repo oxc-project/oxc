@@ -322,47 +322,50 @@ impl Rule for NoUselessAssignment {
                     }
                 }
 
-                match Self::get_assignment_target(ctx, reference) {
-                    Some(AssignmentTarget::Destructuring(assignment_node_id))
-                        if reference.is_write() =>
-                    {
-                        let mut targets = SmallVec::new();
-                        targets.push((
-                            reference,
-                            Self::destructuring_target_write_position(ctx, reference),
-                        ));
-                        pending_destructuring_targets = Some((assignment_node_id, targets));
-                    }
-                    Some(AssignmentTarget::Simple(_)) if reference.is_write() => {
-                        if let Some((prev, previous_value_read)) = pending_assignment_lhs.take() {
-                            Self::process_reference_deferred(
-                                ctx,
-                                graph,
-                                &mut cfg_ops,
-                                prev,
-                                compact_idx,
-                                var_decl,
-                                decl_node,
-                                &mut tracked_symbols[compact_idx as usize],
-                                previous_value_read,
-                            );
+                if reference.is_write() {
+                    match Self::get_assignment_target(ctx, reference) {
+                        Some(AssignmentTarget::Destructuring(assignment_node_id)) => {
+                            let mut targets = SmallVec::new();
+                            targets.push((
+                                reference,
+                                Self::destructuring_target_write_position(ctx, reference),
+                            ));
+                            pending_destructuring_targets = Some((assignment_node_id, targets));
+                            continue;
                         }
-                        pending_assignment_lhs = Some((reference, reference.is_read()));
-                    }
-                    _ => {
-                        Self::process_reference_deferred(
-                            ctx,
-                            graph,
-                            &mut cfg_ops,
-                            reference,
-                            compact_idx,
-                            var_decl,
-                            decl_node,
-                            &mut tracked_symbols[compact_idx as usize],
-                            false,
-                        );
+                        Some(AssignmentTarget::Simple(_)) => {
+                            if let Some((prev, previous_value_read)) = pending_assignment_lhs.take()
+                            {
+                                Self::process_reference_deferred(
+                                    ctx,
+                                    graph,
+                                    &mut cfg_ops,
+                                    prev,
+                                    compact_idx,
+                                    var_decl,
+                                    decl_node,
+                                    &mut tracked_symbols[compact_idx as usize],
+                                    previous_value_read,
+                                );
+                            }
+                            pending_assignment_lhs = Some((reference, reference.is_read()));
+                            continue;
+                        }
+                        None => {}
                     }
                 }
+
+                Self::process_reference_deferred(
+                    ctx,
+                    graph,
+                    &mut cfg_ops,
+                    reference,
+                    compact_idx,
+                    var_decl,
+                    decl_node,
+                    &mut tracked_symbols[compact_idx as usize],
+                    false,
+                );
             }
 
             if let Some((_, mut targets)) = pending_destructuring_targets {
