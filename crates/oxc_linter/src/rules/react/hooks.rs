@@ -50,7 +50,7 @@ declare_react_compiler_lint!(
     Hooks,
     react,
     suspicious,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates the Rules of Hooks with the React Compiler's analysis.",
 );
 
