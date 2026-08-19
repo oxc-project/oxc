@@ -1,10 +1,12 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -93,7 +95,7 @@ declare_oxc_lint!(
 
 impl Rule for NoConsole {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -107,9 +109,8 @@ impl Rule for NoConsole {
             return;
         };
 
-        if ident.name != "console"
-            || !ctx.scoping().root_unresolved_references().contains_key("console")
-        {
+        // Not `ctx.is_reference_to_global_variable`: `globals: { console: "off" }` still reports.
+        if ident.name != "console" || !ident.is_global_reference(ctx.scoping()) {
             return;
         }
 
@@ -210,6 +211,11 @@ fn test() {
         ("console.log(foo)", Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }])), None),
         ("var console = require('myconsole'); console.log(foo)", None, None),
         ("import console from 'myconsole'; console.log(foo)", None, None),
+        (
+            "var c = console; function f(myLogger) { const console = myLogger; console.log(foo); }",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![

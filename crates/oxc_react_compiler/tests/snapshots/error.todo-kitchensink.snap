@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-kitchensink.js
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: Expected a variable declaration", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(0), length: 1034 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected a variable declaration", labels: [LabeledSpan { label: Some("Expected a variable declaration"), span: Span { start: 9, end: 12 }, primary: true }], help: Some("Please report this internal React Compiler error to Oxc with a minimal reproduction"), note: Some("This is an internal React Compiler error; the component or hook was not optimized"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Invariant") }, url: Some("https://github.com/oxc-project/oxc/issues/new/choose") } }
 
 No changes.

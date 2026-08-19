@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -73,11 +73,18 @@ declare_oxc_lint!(
 
 impl Rule for NoRedeclare {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
+        // ES modules run in their own scope, so a top-level `Object` or `self` shadows nothing.
+        // Only the globals half of the rule is skipped for them -- redeclaring a local binding is
+        // still a redeclaration.
+        let builtin_globals = if self.builtin_globals && !ctx.source_type().is_module() {
+            Some(&GLOBALS_BUILTIN)
+        } else {
+            None
+        };
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
@@ -125,11 +132,6 @@ impl Rule for NoRedeclare {
                 }
             }
         }
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ES modules run in their own scope, and don't conflict with existing globals
-        !ctx.source_type().is_module()
     }
 }
 
@@ -215,4 +217,27 @@ fn test() {
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, vec![])
         .change_rule_path_extension(".ts")
         .test();
+
+    // ES modules have their own scope, so shadowing a global is fine there -- but a redeclaration
+    // inside one is still a redeclaration. `.ts` is parsed as `ModuleKind::Unambiguous`, so these
+    // cases carry ESM syntax to actually resolve as modules.
+    // Issue: <https://github.com/oxc-project/oxc/issues/25339>
+    let pass = vec![
+        ("export {}; var Object = 0;", None),
+        ("export {}; var globalThis = 0;", None),
+        ("export {}; var a = 3; a = 10;", None),
+        ("export {}; function foo(arg: string): void; function foo(arg: number): any {}", None),
+    ];
+
+    let fail = vec![
+        ("export {}; var a = 3; var a = 10;", None),
+        ("export {}; function f() { var a; var a; }", None),
+        ("type foo = 1; export function foo(): void; export function foo() { }", None),
+        ("export {}; var Object = 0; var Object = 0;", None),
+    ];
+
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
+        .change_rule_path_extension(".ts")
+        .with_snapshot_suffix("es-modules")
+        .test_and_snapshot();
 }

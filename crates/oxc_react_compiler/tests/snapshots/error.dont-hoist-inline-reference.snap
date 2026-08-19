@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.dont-hoist-inline-reference
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: [hoisting] EnterSSA: Expected identifier to be defined before being used", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(67), length: 22 }, primary: false }]), help: Some("Identifier x$1 is undefined"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[hoisting] EnterSSA: Expected identifier to be defined before being used", labels: [LabeledSpan { label: Some("`x$1` is used before it is defined"), span: Span { start: 67, end: 89 }, primary: true }], help: Some("Identifier x$1 is undefined"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 No changes.

@@ -17,7 +17,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_str::{Ident, format_ident};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::{
     BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_MIXED_READONLY_ID,
@@ -575,7 +575,7 @@ fn generate_instruction_types<'a>(
         InstructionValue::ObjectExpression { properties, .. } => {
             for prop in properties {
                 if let ObjectPropertyOrSpread::Property(obj_prop) = prop
-                    && let ObjectPropertyKey::Computed { name } = &obj_prop.key
+                    && let ObjectPropertyKey::Computed { name, .. } = &obj_prop.key
                 {
                     let name_type = get_type(name.identifier, identifiers);
                     unifier.unify(name_type, Type::Primitive, shapes)?;
@@ -671,8 +671,8 @@ fn generate_instruction_types<'a>(
                 for prop in &object_pattern.properties {
                     if let ObjectPropertyOrSpread::Property(obj_prop) = prop {
                         match &obj_prop.key {
-                            ObjectPropertyKey::Identifier { name }
-                            | ObjectPropertyKey::String { name } => {
+                            ObjectPropertyKey::Identifier { name, .. }
+                            | ObjectPropertyKey::String { name, .. } => {
                                 let prop_place_type =
                                     get_type(obj_prop.place.identifier, identifiers);
                                 let value_type = get_type(value.identifier, identifiers);
@@ -757,7 +757,7 @@ fn generate_instruction_types<'a>(
         InstructionValue::JsxExpression { props, .. } => {
             if unifier.enable_treat_ref_like_identifiers_as_refs {
                 for prop in props {
-                    if let JsxAttribute::Attribute { name, place } = prop
+                    if let JsxAttribute::Attribute { name, place, .. } = prop
                         && name == "ref"
                     {
                         let ref_type = get_type(place.identifier, identifiers);
@@ -814,6 +814,7 @@ fn generate_instruction_types<'a>(
         | InstructionValue::GetIterator { .. }
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::FinishMemoize { .. } => {
             // No type equations for these
         }
@@ -1062,7 +1063,7 @@ fn apply_instruction_operands<'a>(
                 match prop {
                     ObjectPropertyOrSpread::Property(obj_prop) => {
                         resolve_identifier(obj_prop.place.identifier, identifiers, types, unifier);
-                        if let ObjectPropertyKey::Computed { name } = &obj_prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &obj_prop.key {
                             resolve_identifier(name.identifier, identifiers, types, unifier);
                         }
                     }
@@ -1094,7 +1095,7 @@ fn apply_instruction_operands<'a>(
                     JsxAttribute::Attribute { place, .. } => {
                         resolve_identifier(place.identifier, identifiers, types, unifier);
                     }
-                    JsxAttribute::SpreadAttribute { argument } => {
+                    JsxAttribute::SpreadAttribute { argument, .. } => {
                         resolve_identifier(argument.identifier, identifiers, types, unifier);
                     }
                 }
@@ -1157,6 +1158,7 @@ fn apply_instruction_operands<'a>(
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::Debugger { .. } => {
             // No operand places
         }
@@ -1278,9 +1280,7 @@ impl<'a> Unifier<'a> {
 
         if let Type::Phi { ref operands } = ty {
             if operands.is_empty() {
-                return Err(
-                    ErrorCategory::Invariant.diagnostic("there should be at least one operand")
-                );
+                return Err(diagnostics::invariant_there_should_at_least_one_operand());
             }
 
             let mut candidate_type: Option<Type> = None;
@@ -1317,7 +1317,7 @@ impl<'a> Unifier<'a> {
                 self.substitutions.insert(v_id, resolved);
                 return Ok(());
             }
-            return Err(ErrorCategory::Invariant.diagnostic("cycle detected"));
+            return Err(diagnostics::invariant_cycle_detected());
         }
 
         self.substitutions.insert(v_id, ty);

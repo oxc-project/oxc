@@ -13,6 +13,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::Effect;
@@ -77,7 +78,7 @@ pub fn prune_non_escaping_scopes<'a>(
     let (state, _) = visitor_state;
 
     // Then walk outward from the returned values and find all captured operands.
-    let memoized = compute_memoized_identifiers(&state);
+    let memoized = compute_memoized_identifiers(&state)?;
 
     // Prune scopes that do not declare/reassign any escaping values
     let mut transform = PruneScopesTransform {
@@ -447,6 +448,12 @@ impl<'a, 'e> CollectDependenciesVisitor<'a, 'e> {
                     vec![]
                 };
                 (lvalues, rvalues)
+            }
+            InstructionValue::TSEnumDeclaration { .. } => {
+                let lvalues = lvalue.map_or_else(Vec::new, |place_identifier| {
+                    vec![LValueMemoization { place_identifier, level: MemoizationLevel::Never }]
+                });
+                (lvalues, vec![])
             }
             InstructionValue::NextPropertyOf { .. }
             | InstructionValue::StartMemoize { .. }
@@ -951,7 +958,9 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectDependenciesVisitor<'a, 'e> 
 // computeMemoizedIdentifiers
 // =============================================================================
 
-fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId> {
+fn compute_memoized_identifiers(
+    state: &CollectState,
+) -> Result<FxHashSet<DeclarationId>, OxcDiagnostic> {
     let mut memoized = FxHashSet::default();
 
     // We need mutable access to the nodes, so we clone the state into mutable structures
@@ -984,12 +993,14 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
         identifier_nodes: &mut IdentifierMemoNodes,
         scope_nodes: &mut ScopeMemoNodes,
         memoized: &mut FxHashSet<DeclarationId>,
-    ) -> bool {
+    ) -> Result<bool, OxcDiagnostic> {
         let Some(&(level, _, _, _, seen)) = identifier_nodes.get(&id) else {
-            return false;
+            // Upstream raises an "Expected a node for all identifiers" invariant
+            // here; this port has always been lenient instead.
+            return Ok(false);
         };
         if seen {
-            return identifier_nodes.get(&id).unwrap().1;
+            return Ok(identifier_nodes.get(&id).unwrap().1);
         }
 
         // Mark as seen, temporarily mark as non-memoized
@@ -1001,7 +1012,7 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
             identifier_nodes.get(&id).unwrap().2.iter().copied().collect();
         let mut has_memoized_dependency = false;
         for dep in deps {
-            let is_dep_memoized = visit(dep, false, identifier_nodes, scope_nodes, memoized);
+            let is_dep_memoized = visit(dep, false, identifier_nodes, scope_nodes, memoized)?;
             has_memoized_dependency |= is_dep_memoized;
         }
 
@@ -1015,10 +1026,15 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
             let scopes: Vec<ScopeId> =
                 identifier_nodes.get(&id).unwrap().3.iter().copied().collect();
             for scope_id in scopes {
-                force_memoize_scope_dependencies(scope_id, identifier_nodes, scope_nodes, memoized);
+                force_memoize_scope_dependencies(
+                    scope_id,
+                    identifier_nodes,
+                    scope_nodes,
+                    memoized,
+                )?;
             }
         }
-        identifier_nodes.get(&id).unwrap().1
+        Ok(identifier_nodes.get(&id).unwrap().1)
     }
 
     fn force_memoize_scope_dependencies(
@@ -1026,26 +1042,36 @@ fn compute_memoized_identifiers(state: &CollectState) -> FxHashSet<DeclarationId
         identifier_nodes: &mut IdentifierMemoNodes,
         scope_nodes: &mut ScopeMemoNodes,
         memoized: &mut FxHashSet<DeclarationId>,
-    ) {
-        let seen = scope_nodes.get(&id).expect("Expected a node for all scopes").1;
+    ) -> Result<(), OxcDiagnostic> {
+        // A scope can be associated with an identifier (via a reassignment or a
+        // return inside the scope) without any of its own declarations having
+        // been visited as a memoization input, in which case no node was ever
+        // registered for it. Upstream hits the same invariant on such inputs
+        // (e.g. an inlined IIFE whose scope's only declarations sit in a
+        // ternary `test` inside `try`/`catch`); it must bail out the function,
+        // not abort the process.
+        let Some(&(_, seen)) = scope_nodes.get(&id) else {
+            return Err(diagnostics::invariant_expected_node_all_scopes());
+        };
         if seen {
-            return;
+            return Ok(());
         }
         scope_nodes.get_mut(&id).unwrap().1 = true; // seen = true
 
         let deps: Vec<DeclarationId> = scope_nodes.get(&id).unwrap().0.clone();
         for dep in deps {
-            visit(dep, true, identifier_nodes, scope_nodes, memoized);
+            visit(dep, true, identifier_nodes, scope_nodes, memoized)?;
         }
+        Ok(())
     }
 
     // Walk from the "roots" aka returned/escaping identifiers
     let escaping: Vec<DeclarationId> = state.escaping_values.iter().copied().collect();
     for value in escaping {
-        visit(value, false, &mut identifier_nodes, &mut scope_nodes, &mut memoized);
+        visit(value, false, &mut identifier_nodes, &mut scope_nodes, &mut memoized)?;
     }
 
-    memoized
+    Ok(memoized)
 }
 
 // =============================================================================

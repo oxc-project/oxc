@@ -8,6 +8,7 @@ pub const CONTENT_WEBPACK: u8 = 6;
 pub const CONTENT_VITE: u8 = 7;
 pub const CONTENT_COVERAGE_IGNORE: u8 = 8;
 pub const CONTENT_COVERAGE_IGNORE_FILE: u8 = 9;
+pub const CONTENT_PROPERTY_KEY: u8 = 10;
 pub const META_MULTILINE: u8 = 0x10;
 
 #[inline]
@@ -23,6 +24,7 @@ pub fn content_from_ordinal(o: u8) -> oxc_ast::ast::CommentContent {
         CONTENT_VITE => CommentContent::Vite,
         CONTENT_COVERAGE_IGNORE => CommentContent::CoverageIgnore,
         CONTENT_COVERAGE_IGNORE_FILE => CommentContent::CoverageIgnoreFile,
+        CONTENT_PROPERTY_KEY => CommentContent::PropertyKey,
         _ => CommentContent::None,
     }
 }
@@ -63,6 +65,11 @@ fn has_nl_cr(bytes: &[u8]) -> bool {
     bytes.iter().any(|&b| b == b'\n' || b == b'\r')
 }
 
+fn is_property_key_annotation(bytes: &[u8]) -> bool {
+    std::str::from_utf8(bytes)
+        .is_ok_and(|source| matches!(source.trim().strip_prefix(['@', '#']), Some("__KEY__")))
+}
+
 #[inline]
 fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
     if bytes.is_empty() {
@@ -85,6 +92,13 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
     }
     if start >= bytes.len() {
         return CONTENT_NONE;
+    }
+
+    let rest = &bytes[start..];
+    if (rest.starts_with(b"@__KEY__") || rest.starts_with(b"#__KEY__") || !rest[0].is_ascii())
+        && is_property_key_annotation(bytes)
+    {
+        return CONTENT_PROPERTY_KEY;
     }
 
     match bytes[start] {
@@ -176,7 +190,8 @@ pub fn meta_byte_exact(src: &[u8], start: u32, end: u32, is_block: bool) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::{
-        CONTENT_COVERAGE_IGNORE, CONTENT_COVERAGE_IGNORE_FILE, classify, content_from_ordinal,
+        CONTENT_COVERAGE_IGNORE, CONTENT_COVERAGE_IGNORE_FILE, CONTENT_NONE, CONTENT_PROPERTY_KEY,
+        classify, content_from_ordinal,
     };
     use oxc_ast::ast::CommentContent;
 
@@ -203,6 +218,25 @@ mod tests {
             b"istanbul ignore next",
         ] {
             assert_eq!(classify(source, true, false), CONTENT_COVERAGE_IGNORE);
+        }
+    }
+
+    #[test]
+    fn property_key_annotation() {
+        for source in [
+            b"@__KEY__".as_slice(),
+            b" #__KEY__ ",
+            b"\t@__KEY__\n",
+            "\u{a0}@__KEY__\u{a0}".as_bytes(),
+        ] {
+            assert_eq!(classify(source, true, false), CONTENT_PROPERTY_KEY);
+            assert_eq!(content_from_ordinal(CONTENT_PROPERTY_KEY), CommentContent::PropertyKey);
+        }
+
+        for source in
+            [b"__KEY__".as_slice(), b"@ __KEY__", b"@__key__", b"@__KEY___", b"@__KEY__ extra"]
+        {
+            assert_eq!(classify(source, true, false), CONTENT_NONE);
         }
     }
 }

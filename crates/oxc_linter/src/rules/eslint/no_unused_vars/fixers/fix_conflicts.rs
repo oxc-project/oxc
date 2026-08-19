@@ -39,7 +39,7 @@ impl NoUnusedVars {
         let scope_id = symbol.scope_id();
         let ignored_name: String = match ignore_pattern.as_ref() {
             // TODO: support more patterns
-            IgnorePattern::Default => {
+            IgnorePattern::Default | IgnorePattern::PrefixUnderscore => {
                 format!("_{}", symbol.name())
             }
             IgnorePattern::Some(re) if re.as_str() == "^_" => {

@@ -31,10 +31,6 @@ macro_rules! assert_ge {
             }
         }
     };
-
-    ($lhs:expr, $rhs:expr,) => {
-        assert_le!($lhs, $rhs);
-    };
 }
 
 /// Statistics about data held in [`Semantic`].

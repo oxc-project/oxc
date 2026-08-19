@@ -1,0 +1,58 @@
+{
+  "name": "oxc-codegen",
+  "version": "0.146.0",
+  "description": "Fast JavaScript code generator from an ESTree-compliant AST",
+  "keywords": [
+    "ast",
+    "code generator",
+    "codegen",
+    "estree",
+    "javascript",
+    "oxc",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "packages/codegen"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "build-dev": "cross-env DEBUG=true node scripts/build.ts",
+    "build-test": "pnpm run build-dev && pnpm --filter oxc-parser run build-test && pnpm --filter oxc-codegen-conformance run build",
+    "build-bench": "cross-env BENCHMARKS=true node scripts/build.ts",
+    "test": "vitest run --dir ./test",
+    "bench": "pnpm run build-bench && vitest bench --run bench.bench.ts"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "cross-env": "catalog:",
+    "oxc-codegen-conformance": "workspace:*",
+    "oxc-parser": "workspace:*",
+    "rolldown": "catalog:",
+    "tsdown": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

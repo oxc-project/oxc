@@ -224,7 +224,7 @@ impl WalkRunner {
             // and when colors are disabled, every style is empty and renders nothing.
             // `ListDifferent` mode output is meant for piping, keep it style-free.
             let warning_style = matches!(format_mode, OutputMode::Check)
-                .then(|| GraphicalTheme::default().styles.warning);
+                .then(|| GraphicalTheme::default().warning_style());
             let mut output = String::new();
             for (idx, (path, elapsed)) in changed_paths.into_iter().enumerate() {
                 if idx != 0 {

@@ -48,12 +48,12 @@ pub struct JsFormatOptions {
     /// When true, HTML-in-JS templates always use hard line breaks for wrapping.
     pub html_whitespace_sensitivity_ignore: bool,
 
-    /// Controls the position of operators in binary expressions. [**NOT SUPPORTED YET**]
+    /// Controls the position of operators in binary expressions.
     ///
     /// Accepted values are:
     /// - `"start"`: Places the operator at the beginning of the next line.
     /// - `"end"`: Places the operator at the end of the current line (default).
-    pub experimental_operator_position: OperatorPosition,
+    pub operator_position: OperatorPosition,
     /// Try prettier's new ternary formatting before it becomes the default behavior. [**NOT SUPPORTED YET**]
     ///
     /// Valid options:
@@ -222,7 +222,7 @@ impl fmt::Display for JsFormatOptions {
         writeln!(f, "Bracket same line: {}", self.bracket_same_line.value())?;
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
-        writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
+        writeln!(f, "Operator position: {}", self.operator_position)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
         writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
         writeln!(f, "JSDoc: {:?}", self.jsdoc)

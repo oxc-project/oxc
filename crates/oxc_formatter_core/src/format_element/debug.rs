@@ -22,12 +22,11 @@ use crate::{
     FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
     VecBuffer,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
-    format::write,
     format_element::{
         LineMode, TextWidth,
         tag::{self, DedentMode, GroupMode, Tag},
     },
-    write as w,
+    write, write as w,
 };
 
 impl<'a> Document<'a> {

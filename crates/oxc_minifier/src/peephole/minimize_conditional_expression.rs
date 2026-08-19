@@ -417,13 +417,13 @@ impl<'a> PeepholeOptimizations {
         ) {
             (Some(true), Some(false)) => {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx);
-                let test = Self::minimize_not(expr.span, test, ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 return Some(test);
             }
             (Some(false), Some(true)) => {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 return Some(test);
             }
             // "c ? false : x" => "!c && x" (exact for any `c`)
@@ -436,7 +436,7 @@ impl<'a> PeepholeOptimizations {
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 let right = expr.alternate.take_in(ctx);
                 return Some(Self::join_with_left_associative_op(
                     expr.span,
@@ -456,7 +456,7 @@ impl<'a> PeepholeOptimizations {
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx);
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 let right = expr.consequent.take_in(ctx);
                 return Some(Self::join_with_left_associative_op(
                     expr.span,
@@ -546,8 +546,8 @@ impl<'a> PeepholeOptimizations {
                 // But skip if parens would be needed (e.g., "a+b?1:0" => "+!!(a+b)" is longer)
                 if !needs_parens {
                     let test = expr.test.take_in(ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx, false);
+                    let test = Self::minimize_not(expr.span, test, ctx, false);
                     return Some(Expression::new_unary_expression(expr.span,
                     UnaryOperator::UnaryPlus,
                     test, ctx));
@@ -559,7 +559,7 @@ impl<'a> PeepholeOptimizations {
                 // The `0` must be `+0`: `a ? -0 : 1` would become `+!a`, yielding `+0`, not `-0`.
                 if !consequent.is_sign_negative() && !Self::test_needs_parens(&expr.test) => {
                     let test = expr.test.take_in(ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx);
+                    let test = Self::minimize_not(expr.span, test, ctx, false);
                     return Some(Expression::new_unary_expression(expr.span,
                     UnaryOperator::UnaryPlus,
                     test, ctx));

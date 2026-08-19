@@ -16,7 +16,7 @@ Formatting is two stages:
 
 Key IR pieces are all exported from the crate root.
 
-The semantics of each building block live in the `builders.rs` rustdocs.
+The semantics of each building block live in the `write/builders.rs` rustdocs.
 e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
 
 Prettier doc primitives are ported on demand; still missing: the `trim`.
@@ -28,7 +28,7 @@ Composite primitives translate rather than port 1:1:
   Prettier's own doesn't switch variants on inner breaks either ("the user is expected to manually handle what breaks");
   that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
   See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
-  Only the Doc→IR mechanical conversion has no mapping (oxfmt's `prettier_compat` rejects `expandedStates`).
+  Oxfmt's Doc→IR mechanical conversion maps `expandedStates` to the same `BestFitting` primitive.
 
 ### The printer never trims
 
@@ -73,7 +73,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
 
-### Embedded-language infrastructure (`embedded.rs`, `session.rs`)
+### Embedded-language infrastructure (`session/`)
 
 `FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchPayload` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
@@ -85,9 +85,9 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
 - Consumers take the doc via `DispatchPayload::into_doc(collector)`, which folds the Tailwind class merge into consumption
   - The printer's `debug_assert` backstops any hand-rolled consumption that skips the merge
-- `FormatSession` (`session.rs`) is the execution unit:
+- `FormatSession` (`session/mod.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
-  - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary while some languages only format via a string API), `tailwind_sorter` (print-time batch sort). Core only transports them
+  - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary, see domain (4)'s exit criterion), `tailwind_sorter` (print-time batch sort). Core only transports them
   - `FormatSession::dispatch_to_string(request, printer_options)` is the string-out counterpart of `dispatch` (caller supplies the printer options; `Ok(None)` = deliberate keep; see its rustdoc)
   - `FormatState` holds one (`new_with_session`; plain `new` wraps a service-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
 - A dispatch states its request as `DispatchRequest` (language, text, `InputKind`, pair-specific context) and yields `Result<DispatchResponse, String>`:
@@ -97,10 +97,13 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ## What belongs in core (the boundary)
 
-Five layers, five admission rules. A type/fn that fits none of them belongs in a consumer crate.
+Five admission domains, five rules; the numbers are reference labels, not a dependency stack (e.g. the engine's `FormatState` holds a domain-(4) `FormatSession`).
+A type/fn that fits none of them belongs in a consumer crate.
 
 - (1) engine: The IR + Printer + the option types the `Printer` actually consumes
   - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
+  - Split by pipeline stage: `write/` (IR construction), `format_element/` (the IR + the `Formatted` artifact), `printer/` (printing; knows only `PrinterOptions`)
+  - `context/` sits beside them as the consumer contract (`FormatContext` / `FormatOptions` + the core option types); its `as_print_options()` produces the printer's inputs
 
 Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own.
 
@@ -110,17 +113,17 @@ Admission: the structure makes no output decision by itself; language difference
 
 - (3) `spec/`: Shared formatter behaviors reused across language formatters
 
-Output targets Prettier compatibility, but the layer is defined by what it is, not by Prettier.
+Output targets Prettier compatibility, but the domain is defined by what it is, not by Prettier.
 
-- (4) `session.rs` / `embedded.rs`: per-run host services, transported opaquely (`SessionServices`: dispatcher / string embedder / Tailwind sorter)
+- (4) `session/`: per-run host services, transported opaquely (`SessionServices`: dispatcher / string embedder / Tailwind sorter)
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
 `string_embedder` additionally carries an exit criterion: it is removed when (a) md/html/angular gain IR-capable formatters AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
 
-- (5) `envelope.rs`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
+- (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
 
-Admission: the host opts in by CALLING, and every language difference arrives as a data parameter (`embeddable_languages`); core asserts nothing about what the names mean. Unlike `spec/`, this layer writes IR and drives the dispatcher.
+Admission: the host opts in by CALLING, and every language difference arrives as a data parameter (`embeddable_languages`); core asserts nothing about what the names mean. Unlike `spec/`, this domain writes IR and drives the dispatcher.
 
 Three gates, all required and note "shared across languages" describes what lives here but is not the admission test.
 The gates are:
@@ -135,7 +138,7 @@ A pure predicate over text shared by design (e.g. `is_suppression_marker`: all f
 Unlike option types like `QuoteStyle`, where sharing would encode a coincidental contract that breaks when languages diverge.
 
 `spec/front_matter.rs` shows the same line from the envelope side:
-core owns pure detection (`parse_front_matter`, a Prettier `front-matter/parse.js` port) and byte-preserving blanking; the IR half is layer (5).
+core owns pure detection (`parse_front_matter`, a Prettier `front-matter/parse.js` port) and byte-preserving blanking; the IR half is domain (5).
 What the header language MEANS stays host policy: a host opts in by calling and passes its embeddable set as data.
 Astro's leading `---` is a JS component script, not YAML, so its host simply never calls — a central "every `---` is YAML" rule cannot exist in core.
 
@@ -160,18 +163,11 @@ core owns the span-ordered cursor mechanics; what the items mean (comments) and 
 
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
-## Cargo features
-
-`test_harness` exposes `test_support/` (fixture test generation) to downstream crates.
-Consumers still need their own `insta` dev-dep so the recorded `source:` header points to the consumer crate.
-
 ## Verification
-
-Feature configs to check:
 
 ```sh
 cargo c -p oxc_formatter_core
-cargo c -p oxc_formatter_core --features test_harness
 ```
 
 This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.
+The fixture-test infrastructure those consumers use lives in `crates/oxc_formatter_tests`.

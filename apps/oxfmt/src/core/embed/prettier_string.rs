@@ -1,16 +1,12 @@
 //! The napi string embedder: fence routing plus the Prettier string paths of the string-out channel.
 //!
-//! Two consumers reach this channel through the session's `StringEmbedder` contract:
-//! - JSDoc fenced code blocks (` ```css `, ` ```yaml `, …)
-//! - html-in-js string recovery (`format_js_in_html_as_fallback`):
-//!   the IR channel's HTML route returned Prettier Doc that the IR converter can't represent,
-//!   so the parent re-requests the same HTML via this string channel and substitutes placeholders back to `${expr}`.
+//! JSDoc fenced code blocks (` ```css `, ` ```yaml `, …) reach this channel through the session's `StringEmbedder` contract.
 //!
 //! Fence routing follows ONE rule, the shared routing table ([`dispatcher::route`]):
 //! a `Route::Native` language formats through the dispatcher via [`super::jsdoc_fence::format_native_fence`] (the build-independent adapter);
 //! the `Route::Prettier` set (md/html/angular) stays on the Prettier string path
-//! (their Doc→IR conversion has unrepresentable cases,
-//! so forcing them through the dispatcher would regress to verbatim; the wall falls with the HTML Rust port).
+//! (their Doc→IR conversion has unrepresentable cases, so forcing them through the dispatcher would regress to verbatim;
+//! the wall falls with the HTML Rust port).
 //!
 //! Unlike the [`super::dispatcher`] contract (`PreserveOriginal` vs `Err`),
 //! this channel has one failure meaning: `Err` keeps the input verbatim.
@@ -33,14 +29,11 @@ use crate::core::{
 
 /// Build the napi build's string embedder installed on the session.
 ///
-/// Dispatches by language identifier: the native registry when available,
-/// otherwise Prettier via `format_embedded`.
-/// The JSDoc fenced consumer reaches every language;
-/// the html-in-js string recovery only ever passes `"html"` and therefore always lands on the Prettier branch.
+/// Dispatches by language identifier: the native registry when available, otherwise Prettier via `format_embedded`.
+/// The JSDoc fenced consumer reaches every language.
 ///
 /// `sort_tailwind` is the SAME pre-bound sorter as the session's Tailwind service
-/// (options JSON already applied by `services::for_root`),
-/// for the `@apply` classes a CSS fence collects.
+/// (options JSON already applied by `services::for_root`), for the `@apply` classes a CSS fence collects.
 pub fn build_string_embedder(
     format_embedded: FormatEmbeddedWithConfigCallback,
     sort_tailwind: Option<TailwindSorter>,

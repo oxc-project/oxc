@@ -759,6 +759,11 @@ parser_diagnostics! {
         .with_label(span)
     };
 
+    initializer_in_for_in_lexical_declaration(span: Span) => {
+        OxcDiagnostic::error("for-in loop variable declaration may not have an initializer")
+            .with_label(span)
+    };
+
     using_declarations_must_be_initialized(span: Span) => {
         OxcDiagnostic::error("Using declarations must have an initializer.")
             .with_label(span)
