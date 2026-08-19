@@ -531,3 +531,19 @@ source: crates/oxc_linter/src/tester.rs
  2 │                     [x, y = x] = [1];
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 0;
+   ·     ─
+ 2 │                     [x = x] = (x = 1, []);
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let x = 0;
+   ·     ─
+ 2 │                     ({ [x]: x } = (x = 1, {}));
+   ╰────
+  help: Consider removing or reusing the assigned value.

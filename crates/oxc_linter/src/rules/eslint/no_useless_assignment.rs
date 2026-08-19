@@ -240,6 +240,22 @@ impl Rule for NoUselessAssignment {
                     pending_assignment_lhs = None;
                 }
 
+                if pending_destructuring_targets.is_none()
+                    && reference.is_read()
+                    && Self::is_directly_in_destructuring_target(ctx, reference)
+                    && let Some(AssignmentTarget::Destructuring(assignment_node_id)) =
+                        Self::get_assignment_target(ctx, reference)
+                {
+                    let mut targets = SmallVec::new();
+                    Self::insert_destructuring_target(
+                        &mut targets,
+                        reference,
+                        ctx.nodes().get_node(reference.node_id()).span().start,
+                    );
+                    pending_destructuring_targets = Some((assignment_node_id, targets));
+                    continue;
+                }
+
                 if let Some((assignment_node_id, _)) = pending_destructuring_targets.as_ref() {
                     let assignment_node_id = *assignment_node_id;
                     let reference_node = ctx.nodes().get_node(reference.node_id());
@@ -257,7 +273,6 @@ impl Rule for NoUselessAssignment {
                             graph,
                             &mut cfg_ops,
                             &mut targets,
-                            None,
                             compact_idx,
                             var_decl,
                             decl_node,
@@ -272,10 +287,11 @@ impl Rule for NoUselessAssignment {
                         let (_, targets) = pending_destructuring_targets
                             .as_mut()
                             .expect("destructuring targets should be pending");
-                        targets.push((
+                        Self::insert_destructuring_target(
+                            targets,
                             reference,
                             Self::destructuring_target_write_position(ctx, reference),
-                        ));
+                        );
                         continue;
                     } else if reference.is_read()
                         && Self::is_in_assignment_target(ctx, assignment_node_id, reference)
@@ -283,27 +299,10 @@ impl Rule for NoUselessAssignment {
                         let (_, targets) = pending_destructuring_targets
                             .as_mut()
                             .expect("destructuring targets should be pending");
-                        Self::flush_destructuring_targets(
-                            ctx,
-                            graph,
-                            &mut cfg_ops,
+                        Self::insert_destructuring_target(
                             targets,
-                            Some(reference_node.span().start),
-                            compact_idx,
-                            var_decl,
-                            decl_node,
-                            &mut tracked_symbols[compact_idx as usize],
-                        );
-                        Self::process_reference_deferred(
-                            ctx,
-                            graph,
-                            &mut cfg_ops,
                             reference,
-                            compact_idx,
-                            var_decl,
-                            decl_node,
-                            &mut tracked_symbols[compact_idx as usize],
-                            false,
+                            reference_node.span().start,
                         );
                         continue;
                     } else {
@@ -326,10 +325,11 @@ impl Rule for NoUselessAssignment {
                     match Self::get_assignment_target(ctx, reference) {
                         Some(AssignmentTarget::Destructuring(assignment_node_id)) => {
                             let mut targets = SmallVec::new();
-                            targets.push((
+                            Self::insert_destructuring_target(
+                                &mut targets,
                                 reference,
                                 Self::destructuring_target_write_position(ctx, reference),
-                            ));
+                            );
                             pending_destructuring_targets = Some((assignment_node_id, targets));
                             continue;
                         }
@@ -374,7 +374,6 @@ impl Rule for NoUselessAssignment {
                     graph,
                     &mut cfg_ops,
                     &mut targets,
-                    None,
                     compact_idx,
                     var_decl,
                     decl_node,
@@ -709,6 +708,18 @@ impl NoUselessAssignment {
         assignment.left.span().contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
     }
 
+    fn is_directly_in_destructuring_target(ctx: &LintContext, reference: &Reference) -> bool {
+        matches!(
+            ctx.nodes().parent_node(reference.node_id()).kind(),
+            AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_)
+                | AstKind::AssignmentTargetWithDefault(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
+        )
+    }
+
     fn destructuring_target_write_position(ctx: &LintContext, reference: &Reference) -> u32 {
         let node = ctx.nodes().get_node(reference.node_id());
         for ancestor in ctx.nodes().ancestors(node.id()) {
@@ -726,36 +737,38 @@ impl NoUselessAssignment {
         node.span().start
     }
 
+    fn insert_destructuring_target<'a>(
+        targets: &mut SmallVec<[(&'a Reference, u32); 2]>,
+        reference: &'a Reference,
+        position: u32,
+    ) {
+        let index = targets.partition_point(|(_, target_position)| *target_position <= position);
+        targets.insert(index, (reference, position));
+    }
+
     #[expect(clippy::too_many_arguments)]
     fn flush_destructuring_targets(
         ctx: &LintContext,
         graph: &Graph,
         cfg_ops: &mut CfgOps,
         targets: &mut SmallVec<[(&Reference, u32); 2]>,
-        before: Option<u32>,
         compact_idx: u32,
         var_decl: &oxc_ast::ast::VariableDeclarator,
         decl_node: &oxc_semantic::AstNode,
         tracked_symbol: &mut TrackedSymbol,
     ) {
-        let mut index = 0;
-        while index < targets.len() {
-            if before.is_none_or(|position| targets[index].1 <= position) {
-                let (reference, _) = targets.remove(index);
-                Self::process_reference_deferred(
-                    ctx,
-                    graph,
-                    cfg_ops,
-                    reference,
-                    compact_idx,
-                    var_decl,
-                    decl_node,
-                    tracked_symbol,
-                    false,
-                );
-            } else {
-                index += 1;
-            }
+        for (reference, _) in std::mem::take(targets) {
+            Self::process_reference_deferred(
+                ctx,
+                graph,
+                cfg_ops,
+                reference,
+                compact_idx,
+                var_decl,
+                decl_node,
+                tracked_symbol,
+                false,
+            );
         }
     }
 
@@ -1796,6 +1809,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "let x = 0, y;
                     [x, y = x] = [1];
                     console.log(y);",
+        "let x = 0;
+                    [x = x] = (x = 1, []);
+                    console.log(x);",
+        "let x = 0;
+                    ({ [x]: x } = (x = 1, {}));
+                    console.log(x);",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
