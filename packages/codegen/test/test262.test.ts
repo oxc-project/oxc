@@ -14,11 +14,9 @@ const fixturePaths = (await readdir(TEST262_DIR_PATH, { recursive: true }))
   .sort();
 
 describe.concurrent("test262", () => {
-  for (const path of fixturePaths) {
-    // oxlint-disable-next-line vitest/valid-title, vitest/expect-expect
-    it(path, async (ctx) => {
-      const sourceText = await readFile(pathJoin(TEST262_DIR_PATH, path), "utf8");
-      if (!checkFixture(path, sourceText, "js", test262SourceType(sourceText))) ctx.skip();
-    });
-  }
+  // oxlint-disable-next-line vitest/expect-expect
+  it.for(fixturePaths)("%s", async (path, ctx) => {
+    const sourceText = await readFile(pathJoin(TEST262_DIR_PATH, path), "utf8");
+    if (!checkFixture(path, sourceText, "js", test262SourceType(sourceText))) ctx.skip();
+  });
 });

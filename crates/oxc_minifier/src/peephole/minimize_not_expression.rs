@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
             // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
-                ctx.replace_expression_with(expr, Self::unwrap_not);
+                ctx.replace_expression_with(expr, Self::unwrap_unary);
             }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
@@ -60,7 +60,7 @@ impl<'a> PeepholeOptimizations {
                 if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
             {
                 Self::de_morgan_invert_logical(logical_expr);
-                ctx.replace_expression_with(expr, Self::unwrap_not);
+                ctx.replace_expression_with(expr, Self::unwrap_unary);
             }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
@@ -68,15 +68,16 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_expression_with(last_expr, |old, ctx| {
                         Self::minimize_not(old.span(), old, ctx)
                     });
-                    ctx.replace_expression_with(expr, Self::unwrap_not);
+                    ctx.replace_expression_with(expr, Self::unwrap_unary);
                 }
             }
             _ => {}
         }
     }
 
-    /// Unwrap `!x` into `x`. The discarded `!` wrapper contains no references.
-    fn unwrap_not(old: Expression<'a>, _ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    /// Attempts to unwrap a `UnaryExpression` from an `Expression` enum variant, returning its argument.
+    /// E.g. `!x` into `x`. The discarded `!` wrapper contains no references.
+    pub fn unwrap_unary(old: Expression<'a>, _ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let Expression::UnaryExpression(e) = old else { unreachable!() };
         e.unbox().argument
     }

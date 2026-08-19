@@ -73,7 +73,7 @@ A-parser:
 
 A-codegen:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_codegen/**"]
+      - any-glob-to-any-file: ["crates/oxc_codegen/**", "packages/codegen/**"]
 
 A-semantic:
   - changed-files:

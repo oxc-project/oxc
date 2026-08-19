@@ -51,9 +51,13 @@ import {
 } from "./precedence.ts";
 import {
   debugAssertLastFresh,
+  markWithMap,
+  markWithMapAfter,
+  markWithMapAtStartOffset,
   write,
   writeNoLast,
   writeWithMap,
+  writeWithMapEnd,
   writeWithMapNoLast,
 } from "./write.ts";
 import { escapeScriptCloseTag } from "./string.ts";
@@ -158,6 +162,7 @@ export function printExpression(
       printTemplateLiteral(node, state);
       break;
     case "TaggedTemplateExpression":
+      markWithMap(state, node);
       printExpression(node.tag, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
       if (TS) printTypeArguments(node.typeArguments, state);
       printTemplateLiteral(node.quasi, state);
@@ -191,6 +196,18 @@ export function printExpression(
         write(state, "(", CAT_OTHER);
         printExpression(inner, state, PREC_LOWEST, CTX_NONE);
         write(state, ")", CAT_OTHER);
+        if (SOURCEMAPS && precedence === PREC_POSTFIX) {
+          markWithMapAfter(state, inner);
+          const wrappers: ESTree.ParenthesizedExpression[] = [];
+          let wrapper = expression;
+          while (wrapper.type === "ParenthesizedExpression") {
+            wrappers.push(wrapper);
+            wrapper = wrapper.expression;
+          }
+          for (let index = wrappers.length - 1; index >= 0; index--) {
+            markWithMapAfter(state, wrappers[index]);
+          }
+        }
       } else {
         printExpression(expression, state, precedence, ctx);
       }
@@ -221,6 +238,13 @@ export function printExpression(
     /* END_IF */
     default:
       throw new Error(`Unknown expression type: ${node.type}`);
+  }
+
+  // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`,
+  // so the punctuation of a following call/member/tag chain resolves to the operand,
+  // rather than one character to its left
+  if (SOURCEMAPS && precedence === PREC_POSTFIX && state.lastWasPostfixClose) {
+    markWithMapAfter(state, node);
   }
 }
 
@@ -310,7 +334,7 @@ function printCallExpression(
 
   if (TS) printTypeArguments(node.typeArguments, state);
 
-  printArguments(node.arguments, state);
+  printArguments(node, node.arguments, state);
 
   if (wrap) write(state, ")", CAT_OTHER);
 }
@@ -320,10 +344,15 @@ function printCallExpression(
  *
  * Arguments print at `PREC_COMMA`, so a sequence expression parenthesizes itself instead of reading as more arguments.
  */
-function printArguments(args: ESTree.Argument[], state: State): void {
+function printArguments(
+  node: ESTree.CallExpression | ESTree.NewExpression,
+  args: ESTree.Argument[],
+  state: State,
+): void {
   const { length } = args;
   if (length === 0) {
-    write(state, "()", CAT_OTHER);
+    writeNoLast(state, "(");
+    writeWithMapEnd(state, ")", CAT_OTHER, node);
     return;
   }
 
@@ -334,14 +363,14 @@ function printArguments(args: ESTree.Argument[], state: State): void {
 
     const arg = args[i];
     if (arg.type === "SpreadElement") {
-      write(state, "...", CAT_OTHER);
+      writeWithMap(state, "...", CAT_OTHER, arg);
       printExpression(arg.argument, state, PREC_COMMA, CTX_NONE);
     } else {
       printExpression(arg, state, PREC_COMMA, CTX_NONE);
     }
   }
 
-  write(state, ")", CAT_OTHER);
+  writeWithMapEnd(state, ")", CAT_OTHER, node);
 }
 
 /**
@@ -359,6 +388,7 @@ export function printPrivateInExpression(
   const wrap = precedence >= PREC_COMPARE;
   if (wrap) write(state, "(", CAT_OTHER);
 
+  markWithMap(state, node);
   writeWithMapNoLast(state, "#", node.left);
   write(state, node.left.name, CAT_IDENT);
   write(state, " in ", CAT_OTHER);
@@ -405,7 +435,7 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
     write(state, " ", CAT_OTHER);
   }
 
-  write(state, "}", CAT_OTHER);
+  writeWithMapEnd(state, "}", CAT_OTHER, node);
 
   if (wrap) write(state, ")", CAT_OTHER);
 }
@@ -428,6 +458,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     value.type === "FunctionExpression" ||
     (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
+    markWithMap(state, node);
+
     const { kind } = node;
     const isGetter = kind === "get";
     const isAccessor = isGetter || kind === "set";
@@ -544,7 +576,7 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
     const element = elements[i];
     if (element != null) {
       if (element.type === "SpreadElement") {
-        write(state, "...", CAT_OTHER);
+        writeWithMap(state, "...", CAT_OTHER, element);
         printExpression(element.argument, state, PREC_COMMA, CTX_NONE);
       } else {
         printExpression(element, state, PREC_COMMA, CTX_NONE);
@@ -562,7 +594,7 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
     printIndent(state);
   }
 
-  write(state, "]", CAT_OTHER);
+  writeWithMapEnd(state, "]", CAT_OTHER, node);
 }
 
 /**
@@ -588,6 +620,8 @@ function printAssignmentExpression(
   }
 
   if (wrap) write(state, "(", CAT_OTHER);
+
+  markWithMap(state, node);
 
   printAssignmentTarget(left, state);
   write(state, PADDED_ASSIGN_OPERATORS[node.operator], CAT_OTHER);
@@ -620,6 +654,7 @@ function printUpdateExpression(
     writeWithMap(state, node.operator, operatorCode, node);
     printExpression(node.argument, state, PREC_PREFIX, ctx);
   } else {
+    markWithMap(state, node);
     printExpression(node.argument, state, PREC_POSTFIX, ctx);
     printSpaceBeforeOperator(state, operatorCode);
     write(state, node.operator, operatorCode);
@@ -800,7 +835,7 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
   writeWithMap(state, "new ", CAT_OTHER, node);
   printExpression(node.callee, state, PREC_NEW, CTX_FORBID_CALL);
   if (TS) printTypeArguments(node.typeArguments, state);
-  printArguments(node.arguments, state);
+  printArguments(node, node.arguments, state);
 
   if (wrap) write(state, ")", CAT_OTHER);
 }
@@ -817,7 +852,7 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
   const { quasis, expressions } = node;
   const { length } = expressions;
   const firstQuasi = quasis[0];
-  writeWithMapNoLast(state, templateQuasiRaw(firstQuasi), firstQuasi);
+  writeNoLast(state, templateQuasiRaw(firstQuasi));
 
   for (let i = 0; i < length; i++) {
     write(state, "${", CAT_OTHER);
@@ -825,7 +860,11 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
     writeNoLast(state, "}");
 
     const quasi = quasis[i + 1];
-    writeWithMapNoLast(state, templateQuasiRaw(quasi), quasi);
+    const raw = templateQuasiRaw(quasi);
+    // A TS-shaped Oxc ESTree quasi includes the substitution's closing `}` in its span.
+    // The JS-shaped ESTree quasi and Oxc's Rust AST both start at the raw template text.
+    if (raw.length > 0) markWithMapAtStartOffset(state, quasi, TS ? 1 : 0);
+    writeNoLast(state, raw);
   }
 
   write(state, "`", CAT_OTHER);
