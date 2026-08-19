@@ -12,7 +12,7 @@ import type { Options, SourceMap } from "./options.ts";
 import type { State } from "../state.ts";
 
 const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const BASE64_CODES = /* @__PURE__ */ Buffer.from(BASE64_CHARS, "ascii");
+const BASE64_CODES = Uint8Array.from(BASE64_CHARS, (char) => char.charCodeAt(0));
 const LINE_SEARCH_ITERATIONS = 16;
 const MIN_LF_FAST_PATH_MAPPINGS = 64;
 const MAX_LF_FAST_PATH_CHARS_PER_MAPPING = 256;
