@@ -43,22 +43,19 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     "Source map positions should exist when sourcemap generation is enabled",
   );
 
-  const { output, mapPositions, mapNames } = state;
+  const { output, mapPositions, mapNames, sourceText } = state;
   const mappingCount = mapPositions.length >> 1;
-  const { sourceText } = options;
-  debugAssert(
-    sourceText !== undefined || mappingCount === 0,
-    "Mappings should only be recorded when sourceText is available",
-  );
-  if (sourceText === undefined || mappingCount === 0) {
-    const map: SourceMap = {
+
+  debugAssert(sourceText !== null, "`sourceText` should be defined when producing a source map");
+
+  if (mappingCount === 0) {
+    return {
       version: 3,
       mappings: "",
       names: [],
       sources: [options.sourceFilename ?? ""],
+      sourcesContent: [sourceText],
     };
-    if (sourceText !== undefined) map.sourcesContent = [sourceText];
-    return map;
   }
 
   let mappingBuffer: Buffer = Buffer.allocUnsafe(

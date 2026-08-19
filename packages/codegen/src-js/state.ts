@@ -9,6 +9,7 @@
 // Nothing in `print/` constructs one, and none of the 4 printer builds bundles this file.
 
 import { CAT_OTHER } from "./print/write.ts";
+import { debugAssert } from "./asserts.ts";
 
 import type { Category } from "./print/write.ts";
 import type { Options } from "./print/options.ts";
@@ -86,7 +87,7 @@ export class State {
   declare mapNames: (number | string)[] | null;
 
   // Original source text, used to preserve names in source maps when the caller provides it.
-  declare sourceText: string | undefined;
+  declare sourceText: string | null;
 
   constructor(options: Options) {
     this.output = "";
@@ -133,7 +134,6 @@ export class State {
     // which is why the category is tracked rather than derived.
     this.last = CAT_OTHER;
     this.lastWasPostfixClose = false;
-    this.sourceText = options.sourceText;
 
     // Debug-only fields for checking `last` is correct on both writes and reads
     if (DEBUG) {
@@ -144,9 +144,12 @@ export class State {
     // `writeWithMap` records the output offset and original position of every mapped node,
     // and `generateSourceMap` encodes them in one pass at the end
     if (options.sourcemap !== true) {
+      this.sourceText = null;
       this.mapPositions = null;
       this.mapNames = null;
     } else {
+      debugAssert(options.sourceText != null);
+      this.sourceText = options.sourceText;
       this.mapPositions = [];
       this.mapNames = null;
     }
