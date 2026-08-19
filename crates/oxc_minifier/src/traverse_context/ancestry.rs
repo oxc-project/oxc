@@ -141,13 +141,11 @@ impl<'a> TraverseAncestry<'a> {
         let current = self.ancestor(level - 1);
         let parent = self.ancestor(level);
 
-        let Some(last_statement_address) = (match parent {
+        let last_statement_address = match parent {
             Ancestor::ProgramBody(program) => program.last_statement_address(),
             Ancestor::FunctionBodyStatements(body) => body.last_statement_address(),
             Ancestor::BlockStatementBody(block) => block.last_statement_address(),
-            _ => None,
-        }) else {
-            return false;
+            _ => return false,
         };
 
         last_statement_address == current.address()
