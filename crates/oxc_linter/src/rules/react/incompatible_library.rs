@@ -45,7 +45,7 @@ declare_react_compiler_lint!(
     IncompatibleLibrary,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Warns on usage of libraries that are incompatible with memoization.",
 );
 

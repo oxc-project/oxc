@@ -286,8 +286,7 @@ impl<'a> PeepholeOptimizations {
         if !parent_expression_does_to_number_conversion {
             return;
         }
-        let new_value = e.argument.take_in(ctx);
-        ctx.replace_expression(expr, new_value);
+        ctx.replace_expression_with(expr, Self::unwrap_unary);
     }
 
     /// For `+a - n` => `a - n` (assuming n is a number)

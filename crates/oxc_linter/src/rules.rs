@@ -413,6 +413,27 @@ pub(crate) mod jest {
 macro_rules! declare_react_compiler_lint {
     (
         $(#[$intro:meta])*
+        unlinked_upstream = $upstream_rule:literal,
+        $(#[$rest:meta])*
+        $name:ident,
+        react,
+        $category:ident,
+        $($options:tt)*
+    ) => {
+        oxc_macros::declare_oxc_lint!(
+            $(#[$intro])*
+            #[doc = "Powered by the React Compiler, which runs once per file and is shared"]
+            #[doc = "with the other React Compiler rules. Port of"]
+            #[doc = concat!("`react-hooks/", $upstream_rule, "`.")]
+            $(#[$rest])*
+            $name,
+            react,
+            $category,
+            $($options)*
+        );
+    };
+    (
+        $(#[$intro:meta])*
         upstream = $upstream_rule:literal,
         $(#[$rest:meta])*
         $name:ident,
