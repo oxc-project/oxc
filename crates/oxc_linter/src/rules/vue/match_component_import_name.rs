@@ -16,9 +16,10 @@ use crate::{
 fn match_component_import_name_diagnostic(
     span: Span,
     alias: &str,
-    expected: &str,
+    pascal: &str,
+    kebab: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Component alias {alias} should be one of: {expected}."))
+    OxcDiagnostic::warn(format!("Component alias {alias} should be one of: {pascal}, {kebab}."))
         .with_label(span)
 }
 
@@ -75,15 +76,17 @@ impl Rule for MatchComponentImportName {
         let AstKind::ObjectExpression(obj) = node.kind() else {
             return;
         };
-        if !is_vue_component_options_object_excluding_instance(node, ctx) {
-            return;
-        }
         let Some(components) = find_property(obj, "components") else {
             return;
         };
         let Expression::ObjectExpression(components) = &components.value else {
             return;
         };
+        // Checked last: it walks the ancestor chain, so only objects that
+        // actually carry a `components: { ... }` option pay for it.
+        if !is_vue_component_options_object_excluding_instance(node, ctx) {
+            return;
+        }
 
         for prop in &components.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
@@ -98,15 +101,16 @@ impl Rule for MatchComponentImportName {
 
             let alias = prop.key.static_name().unwrap_or_default();
             let pascal = vue_casing::pascal_case(&imported.name);
+            if alias == pascal.as_str() {
+                continue;
+            }
             let kebab = vue_casing::kebab_case(&imported.name);
-            if alias == pascal.as_str() || alias == kebab.as_str() {
+            if alias == kebab.as_str() {
                 continue;
             }
 
             ctx.diagnostic(match_component_import_name_diagnostic(
-                prop.span,
-                &alias,
-                &format!("{pascal}, {kebab}"),
+                prop.span, &alias, &pascal, &kebab,
             ));
         }
     }
