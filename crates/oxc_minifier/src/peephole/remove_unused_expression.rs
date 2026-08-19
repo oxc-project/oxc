@@ -92,16 +92,14 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                let new_expr = unary_expr.argument.take_in(ctx);
-                ctx.replace_expression(e, new_expr);
+                ctx.replace_expression_with(e, Self::unwrap_unary);
                 Self::remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    let new_expr = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(e, new_expr);
+                    ctx.replace_expression_with(e, Self::unwrap_unary);
                     Self::remove_unused_expression(e, ctx)
                 }
             }
