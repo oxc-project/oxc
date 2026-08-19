@@ -783,18 +783,18 @@ fn generate_builders_output(type_defs: &[StructOrEnum<'_>], schema: &Schema) -> 
 
 /// Generate the `FieldsState` trait, and the `NoFieldsSet` alias for the state `build` starts from.
 ///
-/// A builder's `State` param is a tuple of [`Set`] / [`No`] markers, one per field. This trait is
+/// A builder's `State` param is a tuple of `Set` / `No` markers, one per field. This trait is
 /// what a builder reads it through: `Field<N>` for whether a field has been set, `Set<N>` for
 /// the state after setting one.
 ///
 /// One trait, with as many slots as the largest builder needs, shared by every builder. A builder
-/// with fewer fields leaves the slots above its own count permanently [`No`], and never names them:
+/// with fewer fields leaves the slots above its own count permanently `No`, and never names them:
 /// `finish` only bounds the ones it has. The alternative - one trait per number of fields - costs
 /// the same declarations over again for each, and they are O(n^2).
 ///
 /// `Set<N>` says only that the result is another state, not what it does to each `Field<N>`.
 /// So a chain of setters resolves by normalizing through the impl below, which needs `State` to be
-/// a concrete tuple - as it is at every call site, and inside any function which takes the [`Slot`]
+/// a concrete tuple - as it is at every call site, and inside any function which takes a `Slot`
 /// for a node and calls `build` on it.
 ///
 /// Declaring each `Set<N>`'s effect on every `Field<N>` would additionally let a function be
@@ -1403,7 +1403,7 @@ fn generate_enum_slot_trait(enum_def: &EnumDef, schema: &Schema) -> TokenStream 
     }
 }
 
-/// Generate a `build_<variant>` shortcut for a variant of an enum, which narrows the [`Slot`]
+/// Generate a `build_<variant>` shortcut for a variant of an enum, which narrows the `Slot`
 /// and starts a builder on the node in one step.
 ///
 /// `slot.into_numeric_literal().into_contents(builder).build(builder)` becomes
@@ -1488,7 +1488,7 @@ struct Setter {
 ///
 /// * `node_id`, which `build` fills in itself, so gets neither.
 /// * `span`, which gets 2 states and 3 setters, as its 2 halves are usually known at
-///   different times. Other [`Span`] fields (e.g. `TSThisParameter::this_span`) are known
+///   different times. Other `Span` fields (e.g. `TSThisParameter::this_span`) are known
 ///   all at once, so they get a single setter like any other field.
 ///
 /// Each state is named after the setter which sets that state alone.
