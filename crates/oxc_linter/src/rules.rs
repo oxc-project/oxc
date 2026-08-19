@@ -918,6 +918,7 @@ pub(crate) mod vue {
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
+    pub mod match_component_import_name;
     pub mod max_props;
     pub mod next_tick_style;
     pub mod no_arrow_functions_in_watch;

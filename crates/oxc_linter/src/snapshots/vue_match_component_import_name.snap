@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(match-component-import-name): Component alias InvalidExport should be one of: SomeRandomName, some-random-name.
+   ╭─[match_component_import_name.tsx:1:41]
+ 1 │ <script> export default { components: { InvalidExport: SomeRandomName } } </script>
+   ·                                         ─────────────────────────────
+   ╰────
+
+  ⚠ vue(match-component-import-name): Component alias invalid-export should be one of: SomeRandomName, some-random-name.
+   ╭─[match_component_import_name.tsx:1:41]
+ 1 │ <script> export default { components: { 'invalid-export': SomeRandomName } } </script>
+   ·                                         ────────────────────────────────
+   ╰────
+
+  ⚠ vue(match-component-import-name): Component alias validImport should be one of: ValidImport, valid-import.
+   ╭─[match_component_import_name.tsx:1:41]
+ 1 │ <script> export default { components: { validImport: ValidImport } } </script>
+   ·                                         ────────────────────────
+   ╰────
+
+  ⚠ vue(match-component-import-name): Component alias InvalidExport should be one of: SomeRandomName, some-random-name.
+   ╭─[match_component_import_name.tsx:1:54]
+ 1 │ <script> export default { components: { ValidImport, InvalidExport: SomeRandomName } } </script>
+   ·                                                      ─────────────────────────────
+   ╰────
+
+  ⚠ vue(match-component-import-name): Component alias InvalidExport should be one of: SomeRandomName, some-random-name.
+   ╭─[match_component_import_name.tsx:1:33]
+ 1 │ defineComponent({ components: { InvalidExport: SomeRandomName } })
+   ·                                 ─────────────────────────────
+   ╰────
+
+  ⚠ vue(match-component-import-name): Component alias InvalidExport should be one of: SomeRandomName, some-random-name.
+   ╭─[match_component_import_name.tsx:1:47]
+ 1 │ <script> Vue.component('Foo', { components: { InvalidExport: SomeRandomName } }) </script>
+   ·                                               ─────────────────────────────
+   ╰────
