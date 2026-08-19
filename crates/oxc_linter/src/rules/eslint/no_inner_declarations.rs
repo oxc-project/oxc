@@ -24,7 +24,7 @@ enum NoInnerDeclarationsConfig {
     Both,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoInnerDeclarationsOptions {
     /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
@@ -33,6 +33,15 @@ struct NoInnerDeclarationsOptions {
     /// Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.
     #[schemars(with = "Namespaces")]
     namespaces: Option<Namespaces>,
+}
+
+impl Default for NoInnerDeclarationsOptions {
+    fn default() -> Self {
+        // Mirror `from_configuration(null)`: `blockScopedFunctions` defaults to
+        // `allow` even for bare severity (`"error"` / `-D`), matching ESLint and
+        // the schema `#[default]` — see #25073.
+        Self { block_scoped_functions: Some(BlockScopedFunctions::Allow), namespaces: None }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -130,24 +139,25 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let allow_namespaces = self.1.namespaces.unwrap_or_default() == Namespaces::Allow;
-        let allow_block_scoped_functions =
-            self.1.block_scoped_functions.unwrap_or_default() == BlockScopedFunctions::Allow;
-
+        // Keep this match at the top of `run` so linter codegen still detects
+        // Function + VariableDeclaration node types (lets-before-match → NODE_TYPES=None).
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
                 if self.0 == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
 
-                check_rule(node, ctx, allow_namespaces);
+                check_rule(node, ctx, self.1.namespaces.unwrap_or_default() == Namespaces::Allow);
             }
             AstKind::Function(func) => {
                 if !func.is_function_declaration() {
                     return;
                 }
 
-                if self.0 == NoInnerDeclarationsConfig::Functions && allow_block_scoped_functions {
+                if self.0 == NoInnerDeclarationsConfig::Functions
+                    && self.1.block_scoped_functions.unwrap_or_default()
+                        == BlockScopedFunctions::Allow
+                {
                     // Modules are always strict mode.
                     // This check is redundant, because in modules, the scope will have strict mode flag set,
                     // but checking source type is cheaper than scope flags lookup, so do the quick check first.
@@ -162,7 +172,7 @@ impl Rule for NoInnerDeclarations {
                     }
                 }
 
-                check_rule(node, ctx, allow_namespaces);
+                check_rule(node, ctx, self.1.namespaces.unwrap_or_default() == Namespaces::Allow);
             }
             _ => {}
         }
