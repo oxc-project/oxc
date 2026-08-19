@@ -7,25 +7,25 @@ import type { Plugin } from "rolldown";
  *
  * ```ts
  * // Original code
- * writeWithMap(state, "declare ", CAT_OTHER, node);
+ * writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
  *
  * // After transform
  * write(state, "declare ", CAT_OTHER);
  * ```
  *
- * The mapped writes and `markMap*` exist to record a source mapping for the node they are given.
+ * The mapped writes and `markMap*` exist to record a source mapping at the offsets they are given.
  * A build without source map support has nothing to record, so the call becomes the plain write
- * it would otherwise be, and the node argument goes with it - it would still be evaluated,
- * and held live across the call, for a function which ignores it.
+ * it would otherwise be, and the offsets and the node go with it - they would still be read,
+ * for a function which ignores them.
  *
  * `remove` is how many trailing arguments are dropped from the call.
  *
  * The import is rewritten to match, which both keeps the plain name in scope and leaves the mapped functions
  * unreferenced for the minifier to remove.
  *
- * `printString` and `printNonNegativeFloat` take a node only to hand it on to their mapped writes.
- * So they are rewritten the same way, but keep their names - the argument comes off every call.
- * The parameter also comes off their declarations which, unlike the mapped writes, survive into the build.
+ * `printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to their
+ * mapped writes. So they are rewritten the same way, but keep their names - the arguments come off every call.
+ * The parameters also come off their declarations which, unlike the mapped writes, survive into the build.
  *
  * Only valid where `SOURCEMAPS` is `false`, which is where the config includes it.
  *
@@ -34,22 +34,24 @@ import type { Plugin } from "rolldown";
  * everywhere or subtly wrong everywhere, and nothing downstream names the plugin as the cause.
  */
 const REWRITES = {
-  // `write` takes the `last` category between the code and the node, `writeNoLast` does not
-  writeWithMap: { arity: 4, remove: 1, rename: "write" },
-  writeWithMapNamed: { arity: 3, remove: 1, rename: "writeIdent" },
-  writeWithMapNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
-  writeWithMapNamedNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
-  writeWithMapNamedJSXNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
+  // Every mapped write ends `..., start, end, node`, so 3 arguments come off.
+  // `write` takes the `last` category before them, `writeNoLast` does not.
+  writeWithMap: { arity: 6, remove: 3, rename: "write" },
+  writeWithMapNamed: { arity: 5, remove: 3, rename: "writeIdent" },
+  writeWithMapNoLast: { arity: 5, remove: 3, rename: "writeNoLast" },
+  writeWithMapNamedNoLast: { arity: 5, remove: 3, rename: "writeNoLast" },
+  writeWithMapNamedJSXNoLast: { arity: 5, remove: 3, rename: "writeNoLast" },
   // A private identifier writes its own `#`, so its plain form is not `write`
-  writeWithMapNamedPrivate: { arity: 3, remove: 1, rename: "writePrivate" },
-  writeWithMapEnd: { arity: 4, remove: 1, rename: "write" },
-  // `rename: null` because a standalone mark has no non-sourcemap equivalent
-  markMapStart: { arity: 2, remove: 1, rename: null },
-  markMapAfter: { arity: 2, remove: 1, rename: null },
-  markMapAtStartOffset: { arity: 3, remove: 2, rename: null },
-  // `rename: null` to transform the function declarations, removing the `node` param
-  printString: { arity: 3, remove: 1, rename: null },
-  printNonNegativeFloat: { arity: 3, remove: 1, rename: null },
+  writeWithMapNamedPrivate: { arity: 5, remove: 3, rename: "writePrivate" },
+  writeWithMapEnd: { arity: 6, remove: 3, rename: "write" },
+  // `rename: null` because a standalone mark has no non-sourcemap equivalent.
+  // Everything but `state` comes off - `markMapAtStartOffset`'s column offset included.
+  markMapStart: { arity: 4, remove: 3, rename: null },
+  markMapAfter: { arity: 4, remove: 3, rename: null },
+  markMapAtStartOffset: { arity: 5, remove: 4, rename: null },
+  // `rename: null` to transform the function declarations, removing the dropped params
+  printString: { arity: 5, remove: 3, rename: null },
+  printNonNegativeFloat: { arity: 5, remove: 3, rename: null },
 } as const;
 
 const WRITE_MODULE = "./write.ts";

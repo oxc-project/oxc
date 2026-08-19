@@ -24,8 +24,14 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * and every other form ends in, or contains, a `.`, an `e` or an `x` which separates it
  * from a following `.` already.
  */
-export function printNonNegativeFloat(state: State, value: number, node: ESTree.Node): void {
-  markMapStart(state, node);
+export function printNonNegativeFloat(
+  state: State,
+  value: number,
+  start: number,
+  end: number,
+  node: ESTree.Node,
+): void {
+  markMapStart(state, start, end, node);
 
   if (Number.isInteger(value)) {
     if (value < 1000) {
