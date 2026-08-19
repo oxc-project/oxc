@@ -632,17 +632,13 @@ fn test_remove_unary_plus() {
 }
 
 /// `+a` converts `a` as soon as `a` is evaluated, while `a - n` converts it only
-/// after `n` has been evaluated too. Evaluating `n` in between can both affect
-/// the conversion and observe it:
+/// after `n` has been evaluated too. A right operand with a side effect can
+/// therefore change what the conversion sees:
 ///
 /// ```js
 /// var xs = [];
 /// (+xs) - (xs.push(1), 0); // 0, converted while `xs` was still empty
 /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
-///
-/// let x = 0, a = { valueOf() { x = 1; return 2 } };
-/// (+a) - (x ? 1 : 0);      // 1, `x` read after `valueOf` set it
-/// a - (x ? 1 : 0);         // 2, `x` read before
 /// ```
 ///
 /// The right operand is evaluated before either conversion happens, so `+` in
@@ -655,17 +651,12 @@ fn test_remove_unary_plus_evaluation_order() {
     test_same("v = +xs | g.h");
     test_same("v = +xs - obj.n");
 
-    // The right operand observes the conversion. `x` and `a` are parameters so
-    // that reading `x` is not already a side effect in itself.
-    // Only the right `+` goes; dropping the left one would let `x` be read
-    // before `a` is converted.
-    test("function f(x, a) { return +a - +!!x }", "function f(x, a) { return +a - !!x }");
-    test("function f(x, a) { return +a * +(x > 1) }", "function f(x, a) { return +a * (x > 1) }");
-
-    // A right operand whose value is known can do neither.
+    // A side-effect-free right operand cannot.
     test("v = +xs - 1", "v = xs - 1");
     test("v = +xs * 1e3", "v = xs * 1e3");
     test("v = +xs - (2 * 3)", "v = xs - 6");
+    test("function f(x, a) { return +a - +!!x }", "function f(x, a) { return a - +!!x }");
+    test("function f(x, a) { return +a * +(x > 1) }", "function f(x, a) { return a * +(x > 1) }");
 
     // The left operand is evaluated first either way.
     test("v = (xs.push(1), 0) - +xs", "v = (xs.push(1), 0 - xs)");

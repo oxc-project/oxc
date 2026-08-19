@@ -278,9 +278,7 @@ impl<'a> PeepholeOptimizations {
                     && e.right().value_type(ctx).is_number()
                     // The right operand is evaluated between the argument of `+`
                     // and the conversion the operator performs on it, so it must
-                    // neither affect that conversion nor observe it. A value
-                    // known at compile time can do neither. See the note below.
-                    && e.right().evaluate_value(ctx).is_some()
+                    // not affect that conversion. See the note below.
                     && !e.right().may_have_side_effects(ctx)
             }
             Ancestor::BinaryExpressionRight(e) => {
@@ -322,7 +320,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// What it does change is *when* the conversion happens. Step 1 runs while
     /// evaluating `+a`, before `n` is evaluated at all; step 2 runs after. So
-    /// evaluating `n` must neither affect the conversion of `a`:
+    /// evaluating `n` must not affect the conversion of `a`:
     ///
     /// ```js
     /// var xs = [];
@@ -330,15 +328,10 @@ impl<'a> PeepholeOptimizations {
     /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
     /// ```
     ///
-    /// nor observe it:
-    ///
-    /// ```js
-    /// let x = 0, a = { valueOf() { x = 1; return 2 } };
-    /// (+a) - (x ? 1 : 0);      // 1, `x` read after `valueOf` set it
-    /// a - (x ? 1 : 0);         // 2, `x` read before
-    /// ```
-    ///
-    /// Requiring `n` to have a value known at compile time rules out both.
+    /// Requiring `n` to be free of side effects rules that out. `n` cannot
+    /// observe the conversion either, because the conversion runs no user code
+    /// under the "Coercion Methods Are Pure" assumption (see
+    /// `docs/ASSUMPTIONS.md`).
     ///
     /// For `n - +a` the ordering holds regardless: `n` is evaluated first
     /// either way, and step 3 is a no-op because `n` is already a number, so
