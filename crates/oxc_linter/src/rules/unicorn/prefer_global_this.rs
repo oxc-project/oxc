@@ -259,8 +259,6 @@ fn test() {
 
     let pass = vec![
         "globalThis",
-        // `window` is shadowed here; the global is only referenced on the next line
-        "function f(fake) { const window = fake; return window.foo }; window[key]",
         "globalThis.foo",
         "globalThis[foo]",
         "globalThis.foo()",
@@ -305,6 +303,8 @@ fn test() {
         "window[foo]",
         "window[title]",
         r#"window["foo"]"#,
+        // `window` is shadowed here; the global is only referenced on the next line
+        "function f(fake) { const window = fake; return window.foo }; window[key]",
     ];
 
     let fail = vec![

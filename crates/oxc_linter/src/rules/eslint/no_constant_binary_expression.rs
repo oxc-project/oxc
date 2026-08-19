@@ -465,7 +465,6 @@ fn test() {
         "function Boolean(n) { return n; }; Boolean(x) ?? foo",
         "function String(n) { return n; }; String(x) ?? foo",
         "function Number(n) { return n; }; Number(x) ?? foo",
-        // shadowed in the function, global only referenced on the next statement
         "function f(MyString, x, y) { const String = MyString; return String(x) ?? y; }; String(1)",
         "function Boolean(n) { return Math.random(); }; Boolean(x) === 1",
         "function Boolean(n) { return Math.random(); }; Boolean(1) == true",

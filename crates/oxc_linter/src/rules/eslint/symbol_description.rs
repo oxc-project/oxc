@@ -81,13 +81,12 @@ fn test() {
 
     let pass = vec![
         r#"Symbol("Foo");"#,
-        // `Symbol` is shadowed here; the global is only referenced on the next line
-        r#"function f(FakeSymbol) { const Symbol = FakeSymbol; Symbol(); }; Symbol("Foo");"#,
         r#"var foo = "foo"; Symbol(foo);"#,
         "var Symbol = function () {}; Symbol();",
         "Symbol(); var Symbol = function () {};",
         "function bar() { var Symbol = function () {}; Symbol(); }",
         "function bar(Symbol) { Symbol(); }",
+        r#"function f(FakeSymbol) { const Symbol = FakeSymbol; Symbol(); }; Symbol("Foo");"#,
     ];
 
     let fail = vec!["Symbol();", "Symbol(); Symbol = function () {};"];

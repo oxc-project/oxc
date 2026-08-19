@@ -79,8 +79,6 @@ fn test() {
 
     let pass = vec![
         "var foo = Symbol('foo');",
-        // `Symbol` is shadowed here; the global is only referenced on the next line
-        "function f(FakeSymbol) { const Symbol = FakeSymbol; new Symbol(); }; Symbol('foo');",
         "function bar(Symbol) { var baz = new Symbol('baz');}",
         "function Symbol() {} new Symbol();",
         "new foo(Symbol);",
@@ -90,6 +88,7 @@ fn test() {
         "function BigInt() {} new BigInt();",
         "new foo(BigInt);",
         "new foo(bar, BigInt);",
+        "function f(FakeSymbol) { const Symbol = FakeSymbol; new Symbol(); }; Symbol('foo');",
     ];
 
     let fail = vec![

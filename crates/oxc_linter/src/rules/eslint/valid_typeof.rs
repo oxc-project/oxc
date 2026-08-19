@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span, best_match};
 use oxc_syntax::operator::UnaryOperator;
-use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -184,11 +185,6 @@ fn test() {
 
     let pass = vec![
         ("typeof foo === 'string'", None),
-        // `undefined` is shadowed here; the global is only referenced on the next line
-        (
-            "function f(x, u) { const undefined = u; return typeof x === undefined; }; var y = undefined;",
-            None,
-        ),
         ("typeof foo === 'object'", None),
         ("typeof foo === 'function'", None),
         ("typeof foo === 'undefined'", None),
@@ -224,6 +220,10 @@ fn test() {
         ("typeof foo === `string`", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("`object` === typeof foo", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === `str${somethingElse}`", None), // { "ecmaVersion": 6 }
+        (
+            "function f(x, u) { const undefined = u; return typeof x === undefined; }; var y = undefined;",
+            None,
+        ),
     ];
 
     let fail = vec![

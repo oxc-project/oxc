@@ -177,8 +177,6 @@ fn test() {
 
     let pass = vec![
         "const foo = new Object()",
-        // `String` is shadowed here; the global is only referenced on the next line
-        "function f(MyString) { const String = MyString; return new String('x') }; String(1)",
         "const foo = new Array()",
         "const foo = Array?.()",
         "const foo = Map?.()",
@@ -235,6 +233,7 @@ fn test() {
         "(x) !== Object(x)",
         // r#"new Symbol("")"#, // {"globals": {"Symbol": "off"}},
         "const foo = new Date();",
+        "function f(MyString) { const String = MyString; return new String('x') }; String(1)",
     ];
 
     let fail = vec![

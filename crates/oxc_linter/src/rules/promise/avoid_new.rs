@@ -71,14 +71,13 @@ fn test() {
 
     let pass = vec![
         "Promise.resolve()",
-        // `Promise` is shadowed here; the global is only referenced on the next line
-        "function f(FakePromise) { const Promise = FakePromise; new Promise(function (r) { r() }) }; Promise.resolve()",
         "Promise.reject()",
         "Promise.all()",
         "new Horse()",
         "new PromiseLikeThing()",
         "new Promise.resolve()",
         "var Promise = a; new Promise()",
+        "function f(FakePromise) { const Promise = FakePromise; new Promise(function (r) { r() }) }; Promise.resolve()",
     ];
 
     let fail = vec![

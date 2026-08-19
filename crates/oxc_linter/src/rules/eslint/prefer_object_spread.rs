@@ -364,8 +364,6 @@ fn test() {
 
     let pass = vec![
         "Object.assign()",
-        // `Object` is shadowed here; the global is only referenced on the next line
-        "function f(MyObject, a) { const Object = MyObject; return Object.assign({}, a) }; Object.keys(x)",
         "let a = Object.assign(a, b)",
         "Object.assign(a, b)",
         "let a = Object.assign(b, { c: 1 })",
@@ -422,6 +420,7 @@ fn test() {
         "Object.assign({}, { set a(val) {} })",
         "Object.assign({}, { foo: 'bar', get a() {} }, {})",
         "Object.assign({ foo }, bar, {}, { baz: 'quux', set a(val) {}, quuux }, {})",
+        "function f(MyObject, a) { const Object = MyObject; return Object.assign({}, a) }; Object.keys(x)",
     ];
 
     let fail = vec![

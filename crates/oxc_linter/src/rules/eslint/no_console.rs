@@ -1,11 +1,12 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -190,11 +191,6 @@ fn test() {
 
     let pass = vec![
         ("Console.info(foo)", None, None),
-        (
-            "var c = console; function f(myLogger) { const console = myLogger; console.log(foo); }",
-            None,
-            None,
-        ),
         ("console.info(foo)", Some(serde_json::json!([{ "allow": ["info"] }])), None),
         (
             "console.info(foo)",
@@ -215,6 +211,11 @@ fn test() {
         ("console.log(foo)", Some(serde_json::json!([{ "allow": ["info", "log", "warn"] }])), None),
         ("var console = require('myconsole'); console.log(foo)", None, None),
         ("import console from 'myconsole'; console.log(foo)", None, None),
+        (
+            "var c = console; function f(myLogger) { const console = myLogger; console.log(foo); }",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
