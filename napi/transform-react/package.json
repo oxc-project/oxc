@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform-react",
-  "version": "0.144.0",
+  "version": "0.146.0",
   "description": "Oxc React Compiler Node API",
   "keywords": [
     "compiler",

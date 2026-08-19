@@ -15,7 +15,7 @@ declare_react_compiler_lint!(
     /// Validates that `useMemo()` callbacks return a value and that the
     /// memoized result is actually used by the component or hook.
     ///
-    upstream = "void-use-memo",
+    unlinked_upstream = "void-use-memo",
     ///
     /// ### Why is this bad?
     ///
@@ -47,7 +47,7 @@ declare_react_compiler_lint!(
     VoidUseMemo,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates that `useMemo()` callbacks return a value and the result is used.",
 );
 

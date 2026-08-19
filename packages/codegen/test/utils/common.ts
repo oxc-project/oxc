@@ -1,14 +1,15 @@
 // Shared machinery for the conformance tests.
 //
-// Each test takes one fixture's source text and prints it twice:
+// Each test takes one fixture's source text and prints it three times:
 //
 // 1. In Rust, with `oxc_parser` + `oxc_codegen`, via the `oxc_codegen_conformance` Node addon.
-// 2. In JS, by parsing with `oxc-parser` (the copy in this repo) and printing with this package.
+// 2. In JS without source maps, by parsing with `oxc-parser` and printing with this package.
+// 3. In JS with source maps, through the separately compiled maps-enabled build.
 //
-// The two must agree byte for byte. Both sides are given the same source text and the same `lang`
+// Each must agree byte for byte. Both sides are given the same source text and the same `lang`
 // and `sourceType`, and the addon derives its `SourceType` with `oxc_napi::get_source_type` -
 // the same function `oxc-parser` uses. So the two printers are handed the same AST and the only
-// thing under test is the printing.
+// things under test are printing and decoded source map positions and names.
 //
 // Fixtures which do not parse cleanly have no AST to print, so the addon returns `null` for them
 // and the test is reported as skipped rather than passing quietly.
@@ -43,6 +44,32 @@ export type SourceTypeOption = "script" | "module" | "unambiguous";
 // parenthesis from precedence. The two are different code paths through the printer,
 // so both are worth checking.
 const PRESERVE_PARENS_MODES = [false, true];
+
+/**
+ * Split source text on every ECMAScript line terminator and retain each line's UTF-16 start offset.
+ */
+export function getEcmaScriptLineTable(sourceText: string): {
+  lines: string[];
+  lineStarts: number[];
+} {
+  const lines: string[] = [];
+  const lineStarts = [0];
+  let lineStart = 0;
+
+  for (let index = 0; index < sourceText.length; index++) {
+    const char = sourceText.charCodeAt(index);
+    if (char !== 10 && char !== 13 && char !== 0x2028 && char !== 0x2029) continue;
+
+    lines.push(sourceText.slice(lineStart, index));
+    if (char === 13 && sourceText.charCodeAt(index + 1) === 10) index++;
+    lineStart = index + 1;
+    lineStarts.push(lineStart);
+  }
+
+  lines.push(sourceText.slice(lineStart));
+
+  return { lines, lineStarts };
+}
 
 /**
  * Check this package prints a fixture exactly as Rust `oxc_codegen` does.
@@ -97,8 +124,22 @@ export function checkFixture(
     // rather than a printer one, and saying so is more use than a diff of printed output.
     expect(errors, "Rust parsed this fixture cleanly but `oxc-parser` did not").toEqual([]);
 
-    const actual = printSync(program, { ts, jsx }).code;
-    expect(actual, `preserveParens: ${preserveParens}`).toBe(expected);
+    const { code: actual } = printSync(program, { ts, jsx });
+    expect(actual, `preserveParens: ${preserveParens}`).toBe(expected.code);
+
+    // Source maps use the maps-enabled build, which is compiled separately from the normal printer.
+    // Source offsets are converted at the end. Compare both its code and complete Source Map v3 output against Rust.
+    const { code: actualWithSourceMap, map } = printSync(program, {
+      ts,
+      jsx,
+      sourcemap: true,
+      sourceFilename: filename,
+      sourceText,
+    });
+    expect(actualWithSourceMap, `preserveParens: ${preserveParens}, sourceMap: code`).toBe(
+      expected.code,
+    );
+    expect(map, `preserveParens: ${preserveParens}, sourceMap`).toEqual(expected.map);
     checked = true;
   }
 

@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- c07fe7c oxfmt: Support `experimentalOperatorPosition` (#25643) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a38f7b3 oxlint,oxfmt: Apply .gitignore only to walk targets, not explicitly named files (#25531) (leaysgur)
+- 1a83a8d oxfmt: Mirror printer line suppression and restore dedent-to-root (#25573) (leaysgur)
+
+### 📚 Documentation
+
+- 223e785 oxfmt/conformance: Update notes on conformance (#25757) (Yuji Sugiura)
+- 673dc6d oxfmt: Move some docs from AGENTS.md to code comment (#25649) (leaysgur)
+- fed6681 oxfmt: Skip expanding overrides options (#25572) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 🚀 Features

@@ -1,7 +1,7 @@
 // Binary/logical expressions (port of `binary_expr_visitor.rs`).
 
 import { typeAssertIs } from "../asserts.ts";
-import { CAT_OTHER, write } from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_OTHER, write } from "./write.ts";
 import { printPrivateInExpression, printExpression } from "./expression.ts";
 import { BIN_PRECEDENCE, CTX_FORBID_IN, PADDED_BIN_OPERATORS } from "./operators.ts";
 import { withoutParens } from "./parens.ts";
@@ -181,5 +181,5 @@ function binVisitRightAndFinish(v: BinaryVisitor, state: State): void {
   write(state, PADDED_BIN_OPERATORS[v.operator], CAT_OTHER);
   // Any `ParenthesizedExpression` wrapper is kept, for the same reason as on the left operand
   printExpression(v.e.right, state, v.rightPrecedence, v.ctx);
-  if (v.wrap) write(state, ")", CAT_OTHER);
+  if (v.wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }

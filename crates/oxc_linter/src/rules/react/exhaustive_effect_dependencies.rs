@@ -15,7 +15,7 @@ declare_react_compiler_lint!(
     /// Validates that effect dependency arrays are exhaustive and contain no
     /// extraneous values.
     ///
-    upstream = "exhaustive-effect-dependencies",
+    unlinked_upstream = "exhaustive-effect-dependencies",
     ///
     /// ### Why is this bad?
     ///
@@ -23,8 +23,8 @@ declare_react_compiler_lint!(
     /// render; extraneous dependencies re-fire the effect needlessly.
     ExhaustiveEffectDependencies,
     react,
-    correctness,
-    version = "next",
+    suspicious,
+    version = "1.79.0",
     short_description = "Validates that effect dependencies are exhaustive, without extraneous values.",
 );
 

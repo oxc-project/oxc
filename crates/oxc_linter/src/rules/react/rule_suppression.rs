@@ -18,7 +18,7 @@ declare_react_compiler_lint!(
     /// suppressions, since the suppressed violation may make compilation
     /// unsafe.
     ///
-    upstream = "rule-suppression",
+    unlinked_upstream = "rule-suppression",
     ///
     /// ### Why is this bad?
     ///
@@ -47,7 +47,7 @@ declare_react_compiler_lint!(
     RuleSuppression,
     react,
     restriction,
-    version = "next",
+    version = "1.79.0",
     short_description = "Reports suppressions of React rules, which make the React Compiler skip the affected function.",
 );
 

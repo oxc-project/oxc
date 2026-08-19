@@ -88,13 +88,16 @@ pub fn build_react_compiler_results(host: &ContextHost) -> ReactCompilerResults 
     ReactCompilerResults { diagnostics: result.diagnostics }
 }
 
-/// Shared `should_run` for the React Compiler family: skip files with
-/// multiple `<script>` sections (vue/astro/svelte). Required for correctness,
-/// not just speed — the cache on [`ContextHost`] is per file, so it would
-/// replay the first script section's findings for every later section.
+/// Shared `should_run` for the React Compiler family: match the upstream
+/// `node_modules` source filter and skip files with multiple `<script>` sections
+/// (vue/astro/svelte). The latter is required for correctness, not just speed —
+/// the cache on [`ContextHost`] is per file, so it would replay the first script
+/// section's findings for every later section.
 pub fn should_run_react_compiler(ctx: &ContextHost) -> bool {
-    !ctx.file_extension()
-        .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext))
+    !ctx.file_path().to_string_lossy().contains("node_modules")
+        && !ctx
+            .file_extension()
+            .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext))
 }
 
 /// Shared `run_once` body for the React Compiler family of rules: report the

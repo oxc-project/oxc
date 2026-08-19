@@ -2,6 +2,7 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_INT_DIGIT,
   CAT_OP_UN_NEG,
@@ -126,7 +127,7 @@ function printNumericLiteral(
     }
     writeWithMap(state, "Infinity", CAT_IDENT, node);
 
-    if (wrap) write(state, ")", CAT_OTHER);
+    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   } else if (Object.is(value, 0)) {
     // +0 exactly - `Object.is` rejects `-0`, which the negative paths below print as `-0`
     printSpaceBeforeIdentifier(state);
@@ -134,7 +135,7 @@ function printNumericLiteral(
   } else if (precedence >= PREC_PREFIX) {
     writeNoLast(state, "(-");
     printNonNegativeFloat(state, -value, node);
-    write(state, ")", CAT_OTHER);
+    write(state, ")", CAT_CLOSE_BRACKET);
   } else {
     printSpaceBeforeOperator(state, CAT_OP_UN_NEG);
     writeNoLast(state, "-");
@@ -193,7 +194,7 @@ function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence
   if (value.startsWith("-") && precedence >= PREC_PREFIX) {
     writeWithMapNoLast(state, "(", node);
     writeNoLast(state, value);
-    write(state, "n)", CAT_OTHER);
+    write(state, "n)", CAT_CLOSE_BRACKET);
   } else {
     writeWithMapNoLast(state, value, node);
     write(state, "n", CAT_IDENT);

@@ -3,13 +3,17 @@
 import { typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_OTHER,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
+  markWithMapNoName,
   write,
   writeNoLast,
   writeWithMap,
+  writeWithMapEnd,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printDecorators } from "./class.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
@@ -67,7 +71,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
     write(state, ";", CAT_OTHER);
   }
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -76,13 +80,13 @@ export function printFunction(node: ESTree.Function, state: State): void {
 export function printParenParams(params: ESTree.ParamPattern[], state: State): void {
   // `(params)`, as a single write when there are none
   if (params.length === 0) {
-    write(state, "()", CAT_OTHER);
+    write(state, "()", CAT_CLOSE_BRACKET);
     return;
   }
 
   write(state, "(", CAT_OTHER);
   printParams(params, state);
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -98,8 +102,20 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
 
     const param = params[i];
 
+    // Oxc stores TypeScript's special `this` parameter separately from formal parameters
+    // and prints it without a source mapping.
+    if (TS && param.type === "Identifier" && param.name === "this") {
+      write(state, "this", CAT_IDENT);
+      if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
+      continue;
+    }
+
     const { decorators } = param;
-    if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
+    if (decorators != null && decorators.length > 0) {
+      printDecorators(decorators, state);
+    } else {
+      markWithMapNoName(state, param);
+    }
 
     if (TS && param.type === "TSParameterProperty") {
       if (param.accessibility != null) {
@@ -136,7 +152,8 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   // `body` is a BlockStatement holding directives + statements.
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMap(state, "{}", CAT_OTHER, body);
+    writeWithMapNoLast(state, "{", body);
+    writeWithMapEnd(state, "}", CAT_OTHER, body);
     return;
   }
 
@@ -146,7 +163,7 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   state.indentLevel--;
   printIndent(state);
 
-  write(state, "}", CAT_OTHER);
+  writeWithMapEnd(state, "}", CAT_OTHER, body);
 }
 
 /**
