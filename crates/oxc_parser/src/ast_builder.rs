@@ -23,10 +23,7 @@ pub(crate) struct ParserAstBuilder<'a> {
 
 impl<'a> ParserAstBuilder<'a> {
     #[inline]
-    pub fn new(
-        allocator: &'a Allocator,
-        comment_attacher: &'a ParserCommentAttacher<'a>,
-    ) -> Self {
+    pub fn new(allocator: &'a Allocator, comment_attacher: &'a ParserCommentAttacher<'a>) -> Self {
         // `0` is reserved for `Program` (`NodeId::ROOT`) and doubles as `NodeId::DUMMY`.
         Self { allocator, next_node_id: Cell::new(1), comment_attacher }
     }

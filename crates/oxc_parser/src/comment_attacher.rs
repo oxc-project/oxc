@@ -19,7 +19,6 @@ impl<'a> PendingNodeComments<'a> {
             dangling: ArenaVec::new_in(&allocator),
         }
     }
-
 }
 
 struct Inner<'a> {
@@ -81,12 +80,7 @@ impl<'a> ParserCommentAttacher<'a> {
         unsafe { &mut *self.inner.get() }
     }
 
-    pub fn record_comments(
-        &self,
-        position: CommentPosition,
-        boundary: u32,
-        range: Range<usize>,
-    ) {
+    pub fn record_comments(&self, position: CommentPosition, boundary: u32, range: Range<usize>) {
         if range.is_empty() {
             return;
         }
@@ -177,10 +171,13 @@ impl<'a> ParserCommentAttacher<'a> {
             inner.trailing_owners.insert(span.end, node_id);
         }
 
-        if matches!(ty, AstType::VariableDeclarator | AstType::CallExpression | AstType::NewExpression)
-        {
+        if matches!(
+            ty,
+            AstType::VariableDeclarator | AstType::CallExpression | AstType::NewExpression
+        ) {
             let span_len = span.size();
-            let start = inner.leading_boundaries.partition_point(|&boundary| boundary <= span.start);
+            let start =
+                inner.leading_boundaries.partition_point(|&boundary| boundary <= span.start);
             let end = inner.leading_boundaries.partition_point(|&boundary| boundary < span.end);
             for boundary_index in start..end {
                 let boundary = inner.leading_boundaries[boundary_index];
@@ -198,15 +195,13 @@ impl<'a> ParserCommentAttacher<'a> {
 
     pub fn rewind_nodes(&self, first_removed: NodeId) {
         let inner = self.inner();
-        while let Some(node_id) = inner
-            .nodes
-            .keys()
-            .find(|node_id| node_id.index() >= first_removed.index())
-            .copied()
+        while let Some(node_id) =
+            inner.nodes.keys().find(|node_id| node_id.index() >= first_removed.index()).copied()
         {
             let Some(comments) = inner.nodes.remove(&node_id) else { continue };
             for comment_id in comments.leading.into_iter().chain(comments.trailing) {
-                let Some((position, boundary)) = inner.comment_boundaries[comment_id.index()] else {
+                let Some((position, boundary)) = inner.comment_boundaries[comment_id.index()]
+                else {
                     continue;
                 };
                 let target = match position {
@@ -221,17 +216,13 @@ impl<'a> ParserCommentAttacher<'a> {
         }
         inner.leading_owners.retain(|_, node_id| node_id.index() < first_removed.index());
         inner.trailing_owners.retain(|_, node_id| node_id.index() < first_removed.index());
-        inner
-            .dangling_candidates
-            .retain(|_, (_, node_id)| node_id.index() < first_removed.index());
+        inner.dangling_candidates.retain(|_, (_, node_id)| node_id.index() < first_removed.index());
     }
 
     pub fn finish(&self, comments: &CommentStore<'_>) {
         let inner = self.inner();
-        let mut dangling = ArenaVec::with_capacity_in(
-            inner.dangling_candidates.len(),
-            &inner.allocator,
-        );
+        let mut dangling =
+            ArenaVec::with_capacity_in(inner.dangling_candidates.len(), &inner.allocator);
         dangling.extend(inner.dangling_candidates.iter().map(|(&id, &candidate)| (id, candidate)));
         for (comment_id, (_, node_id)) in dangling {
             if let Some((CommentPosition::Leading, boundary)) =
