@@ -1,12 +1,13 @@
 use memchr::memchr_iter;
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    CommentId, CommentStore,
+    CommentStore,
     ast::{Comment, CommentContent, CommentKind, CommentPosition},
 };
 use oxc_span::Span;
 
 use super::{Kind, Token};
+use crate::comment_attacher::ParserCommentAttacher;
 
 #[derive(Debug)]
 pub struct TriviaBuilder<'a> {
@@ -39,10 +40,15 @@ pub struct TriviaBuilder<'a> {
     pub(super) pure_comment: Option<usize>,
 
     pub(super) has_no_side_effects_comment: bool,
+
+    comment_attacher: &'a ParserCommentAttacher<'a>,
 }
 
 impl<'a> TriviaBuilder<'a> {
-    pub fn new_in(allocator: &'a Allocator) -> Self {
+    pub fn new_with_attacher(
+        allocator: &'a Allocator,
+        comment_attacher: &'a ParserCommentAttacher<'a>,
+    ) -> Self {
         Self {
             comments: CommentStore::new_in(allocator),
             irregular_whitespaces: vec![],
@@ -53,6 +59,7 @@ impl<'a> TriviaBuilder<'a> {
             previous_token_end: 0,
             pure_comment: None,
             has_no_side_effects_comment: false,
+            comment_attacher,
         }
     }
 
@@ -79,38 +86,6 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     /// Comments at a source boundary which are pending at a parser target boundary.
-    pub fn comment_range(
-        &self,
-        position: CommentPosition,
-        boundary: u32,
-    ) -> std::ops::Range<usize> {
-        let end = self.comments.len();
-        let mut start = end;
-        while start > 0 {
-            let comment = self.comments[start - 1];
-            if comment.position != position || comment.attached_to != boundary {
-                break;
-            }
-            start -= 1;
-        }
-        start..end
-    }
-
-    #[inline]
-    pub fn attach_comments(
-        &self,
-        node_id: oxc_syntax::node::NodeId,
-        position: CommentPosition,
-        comment_ids: impl IntoIterator<Item = CommentId>,
-    ) {
-        self.comments.attach(node_id, position, comment_ids);
-    }
-
-    /// Remove ownership produced for a subtree which is about to be reparsed.
-    pub fn clear_comment_owners(&self, start: oxc_syntax::node::NodeId, end: u32) {
-        self.comments.clear_node_id_range(start, end);
-    }
-
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
         // The irregular whitespaces array is ordered; only add if not added before, to avoid
         // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
@@ -177,10 +152,12 @@ impl<'a> TriviaBuilder<'a> {
 
     #[cold]
     fn attach_pending_comments(&mut self, position: CommentPosition, attached_to: u32, len: usize) {
+        let range = self.processed..len;
         for comment in &mut self.comments[self.processed..len] {
             comment.position = position;
             comment.attached_to = attached_to;
         }
+        self.comment_attacher.record_comments(position, attached_to, range);
         self.processed = len;
     }
 

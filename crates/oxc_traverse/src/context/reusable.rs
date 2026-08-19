@@ -1,5 +1,4 @@
 use oxc_allocator::Allocator;
-use oxc_ast::CommentStore;
 use oxc_semantic::Scoping;
 
 use super::TraverseCtx;
@@ -23,19 +22,6 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
     /// Create new [`ReusableTraverseCtx`].
     pub fn new(state: State, scoping: Scoping, allocator: &'a Allocator) -> Self {
         Self(TraverseCtx::new(state, scoping, allocator))
-    }
-
-    /// Create a traversal context which preserves node-attached comments across enum-slot
-    /// replacements performed by visitor callbacks.
-    pub fn new_with_comments(
-        state: State,
-        scoping: Scoping,
-        allocator: &'a Allocator,
-        comments: &CommentStore<'a>,
-    ) -> Self {
-        let mut ctx = TraverseCtx::new(state, scoping, allocator);
-        ctx.comments = Some(std::ptr::NonNull::from(comments).cast());
-        Self(ctx)
     }
 
     /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].

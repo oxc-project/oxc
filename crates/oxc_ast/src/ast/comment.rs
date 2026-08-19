@@ -215,26 +215,6 @@ impl<'a> CommentStore<'a> {
     }
 
     #[inline]
-    pub fn take_attachments(&self) -> ArenaHashMap<'a, NodeId, NodeComments<'a>> {
-        std::mem::replace(
-            &mut *self.attachments_cell().borrow_mut(),
-            ArenaHashMap::new_in(self.allocator()),
-        )
-    }
-
-    #[inline]
-    pub fn clear_attachments(&self) {
-        self.attachments_cell().borrow_mut().clear();
-    }
-
-    /// Remove comment ownership for parser IDs in `start..end` before reparsing that subtree.
-    pub fn clear_node_id_range(&self, start: NodeId, end: u32) {
-        self.attachments_cell().borrow_mut().retain(|node_id, _| {
-            node_id.index() < start.index() || node_id.index() >= end as usize
-        });
-    }
-
-    #[inline]
     pub fn is_suppressed(&self, comment_id: CommentId) -> bool {
         self.suppressed_cell().borrow().contains(&comment_id)
     }

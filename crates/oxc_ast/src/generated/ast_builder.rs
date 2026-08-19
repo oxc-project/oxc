@@ -20,6 +20,7 @@ use oxc_str::{Ident, Str};
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::{
+    AstType,
     ast::*,
     builder::{AstBuild, GetAstBuilder},
 };
@@ -47,7 +48,7 @@ impl<'a> Program<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Program {
+        let node = Program {
             node_id: Cell::new(builder.node_id()),
             span,
             source_type,
@@ -57,7 +58,9 @@ impl<'a> Program<'a> {
             directives: directives.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Program);
+        node
     }
 
     /// Build a [`Program`] with `scope_id`.
@@ -84,7 +87,7 @@ impl<'a> Program<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Program {
+        let node = Program {
             node_id: Cell::new(builder.node_id()),
             span,
             source_type,
@@ -94,7 +97,9 @@ impl<'a> Program<'a> {
             directives: directives.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Program);
+        node
     }
 }
 
@@ -1320,7 +1325,10 @@ impl<'a> IdentifierName<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        IdentifierName { node_id: Cell::new(builder.node_id()), span, name: name.into() }
+        let node =
+            IdentifierName { node_id: Cell::new(builder.node_id()), span, name: name.into() };
+        builder.finish_node(&node.node_id, node.span, AstType::IdentifierName);
+        node
     }
 
     /// Build an [`IdentifierName`], and store it in the memory arena.
@@ -1354,12 +1362,14 @@ impl<'a> IdentifierReference<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        IdentifierReference {
+        let node = IdentifierReference {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
             reference_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::IdentifierReference);
+        node
     }
 
     /// Build an [`IdentifierReference`], and store it in the memory arena.
@@ -1397,12 +1407,14 @@ impl<'a> IdentifierReference<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        IdentifierReference {
+        let node = IdentifierReference {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
             reference_id: Cell::new(Some(reference_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::IdentifierReference);
+        node
     }
 
     /// Build an [`IdentifierReference`] with `reference_id`, and store it in the memory arena.
@@ -1441,12 +1453,14 @@ impl<'a> BindingIdentifier<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        BindingIdentifier {
+        let node = BindingIdentifier {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
             symbol_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::BindingIdentifier);
+        node
     }
 
     /// Build a [`BindingIdentifier`], and store it in the memory arena.
@@ -1484,12 +1498,14 @@ impl<'a> BindingIdentifier<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BindingIdentifier {
+        let node = BindingIdentifier {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
             symbol_id: Cell::new(Some(symbol_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::BindingIdentifier);
+        node
     }
 
     /// Build a [`BindingIdentifier`] with `symbol_id`, and store it in the memory arena.
@@ -1525,7 +1541,10 @@ impl<'a> LabelIdentifier<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        LabelIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() }
+        let node =
+            LabelIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() };
+        builder.finish_node(&node.node_id, node.span, AstType::LabelIdentifier);
+        node
     }
 }
 
@@ -1540,7 +1559,9 @@ impl ThisExpression {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ThisExpression { node_id: Cell::new(builder.node_id()), span }
+        let node = ThisExpression { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::ThisExpression);
+        node
     }
 
     /// Build a [`ThisExpression`], and store it in the memory arena.
@@ -1573,11 +1594,13 @@ impl<'a> ArrayExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ArrayExpression {
+        let node = ArrayExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             elements: elements.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ArrayExpression);
+        node
     }
 
     /// Build an [`ArrayExpression`], and store it in the memory arena.
@@ -2847,7 +2870,9 @@ impl Elision {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Elision { node_id: Cell::new(builder.node_id()), span }
+        let node = Elision { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::Elision);
+        node
     }
 
     /// Build an [`Elision`], and store it in the memory arena.
@@ -2880,11 +2905,13 @@ impl<'a> ObjectExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ObjectExpression {
+        let node = ObjectExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             properties: properties.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ObjectExpression);
+        node
     }
 
     /// Build an [`ObjectExpression`], and store it in the memory arena.
@@ -2985,7 +3012,7 @@ impl<'a> ObjectProperty<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ObjectProperty {
+        let node = ObjectProperty {
             node_id: Cell::new(builder.node_id()),
             span,
             kind,
@@ -2994,7 +3021,9 @@ impl<'a> ObjectProperty<'a> {
             method,
             shorthand,
             computed,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ObjectProperty);
+        node
     }
 
     /// Build an [`ObjectProperty`], and store it in the memory arena.
@@ -4289,12 +4318,14 @@ impl<'a> TemplateLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TemplateLiteral {
+        let node = TemplateLiteral {
             node_id: Cell::new(builder.node_id()),
             span,
             quasis: quasis.into_in(builder.allocator()),
             expressions: expressions.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TemplateLiteral);
+        node
     }
 
     /// Build a [`TemplateLiteral`], and store it in the memory arena.
@@ -4338,13 +4369,15 @@ impl<'a> TaggedTemplateExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TaggedTemplateExpression {
+        let node = TaggedTemplateExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             tag,
             type_arguments,
             quasi,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TaggedTemplateExpression);
+        node
     }
 
     /// Build a [`TaggedTemplateExpression`], and store it in the memory arena.
@@ -4385,13 +4418,15 @@ impl<'a> TemplateElement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TemplateElement {
+        let node = TemplateElement {
             node_id: Cell::new(builder.node_id()),
             span,
             value,
             tail,
             lone_surrogates: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TemplateElement);
+        node
     }
 
     /// Build a [`TemplateElement`] with `lone_surrogates`.
@@ -4410,13 +4445,15 @@ impl<'a> TemplateElement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TemplateElement {
+        let node = TemplateElement {
             node_id: Cell::new(builder.node_id()),
             span,
             value,
             tail,
             lone_surrogates,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TemplateElement);
+        node
     }
 }
 
@@ -4520,13 +4557,15 @@ impl<'a> ComputedMemberExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ComputedMemberExpression {
+        let node = ComputedMemberExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             object,
             expression,
             optional,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ComputedMemberExpression);
+        node
     }
 
     /// Build a [`ComputedMemberExpression`], and store it in the memory arena.
@@ -4575,13 +4614,15 @@ impl<'a> StaticMemberExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        StaticMemberExpression {
+        let node = StaticMemberExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             object,
             property,
             optional,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::StaticMemberExpression);
+        node
     }
 
     /// Build a [`StaticMemberExpression`], and store it in the memory arena.
@@ -4627,13 +4668,15 @@ impl<'a> PrivateFieldExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        PrivateFieldExpression {
+        let node = PrivateFieldExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             object,
             field,
             optional,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::PrivateFieldExpression);
+        node
     }
 
     /// Build a [`PrivateFieldExpression`], and store it in the memory arena.
@@ -4681,7 +4724,7 @@ impl<'a> CallExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        CallExpression {
+        let node = CallExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
@@ -4689,7 +4732,9 @@ impl<'a> CallExpression<'a> {
             arguments: arguments.into_in(builder.allocator()),
             optional,
             pure: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::CallExpression);
+        node
     }
 
     /// Build a [`CallExpression`], and store it in the memory arena.
@@ -4742,7 +4787,7 @@ impl<'a> CallExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        CallExpression {
+        let node = CallExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
@@ -4750,7 +4795,9 @@ impl<'a> CallExpression<'a> {
             arguments: arguments.into_in(builder.allocator()),
             optional,
             pure,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::CallExpression);
+        node
     }
 
     /// Build a [`CallExpression`] with `pure`, and store it in the memory arena.
@@ -4803,14 +4850,16 @@ impl<'a> NewExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        NewExpression {
+        let node = NewExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
             type_arguments,
             arguments: arguments.into_in(builder.allocator()),
             pure: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::NewExpression);
+        node
     }
 
     /// Build a [`NewExpression`], and store it in the memory arena.
@@ -4859,14 +4908,16 @@ impl<'a> NewExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        NewExpression {
+        let node = NewExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
             type_arguments,
             arguments: arguments.into_in(builder.allocator()),
             pure,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::NewExpression);
+        node
     }
 
     /// Build a [`NewExpression`] with `pure`, and store it in the memory arena.
@@ -4908,7 +4959,9 @@ impl ImportMeta {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ImportMeta { node_id: Cell::new(builder.node_id()), span }
+        let node = ImportMeta { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportMeta);
+        node
     }
 
     /// Build an [`ImportMeta`], and store it in the memory arena.
@@ -4936,7 +4989,9 @@ impl NewTarget {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        NewTarget { node_id: Cell::new(builder.node_id()), span }
+        let node = NewTarget { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::NewTarget);
+        node
     }
 
     /// Build a [`NewTarget`], and store it in the memory arena.
@@ -4965,7 +5020,9 @@ impl<'a> SpreadElement<'a> {
     #[inline]
     pub fn new(span: Span, argument: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        SpreadElement { node_id: Cell::new(builder.node_id()), span, argument }
+        let node = SpreadElement { node_id: Cell::new(builder.node_id()), span, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::SpreadElement);
+        node
     }
 
     /// Build a [`SpreadElement`], and store it in the memory arena.
@@ -6233,7 +6290,15 @@ impl<'a> UpdateExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        UpdateExpression { node_id: Cell::new(builder.node_id()), span, operator, prefix, argument }
+        let node = UpdateExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            operator,
+            prefix,
+            argument,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::UpdateExpression);
+        node
     }
 
     /// Build an [`UpdateExpression`], and store it in the memory arena.
@@ -6277,7 +6342,10 @@ impl<'a> UnaryExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        UnaryExpression { node_id: Cell::new(builder.node_id()), span, operator, argument }
+        let node =
+            UnaryExpression { node_id: Cell::new(builder.node_id()), span, operator, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::UnaryExpression);
+        node
     }
 
     /// Build a [`UnaryExpression`], and store it in the memory arena.
@@ -6321,7 +6389,10 @@ impl<'a> BinaryExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BinaryExpression { node_id: Cell::new(builder.node_id()), span, left, operator, right }
+        let node =
+            BinaryExpression { node_id: Cell::new(builder.node_id()), span, left, operator, right };
+        builder.finish_node(&node.node_id, node.span, AstType::BinaryExpression);
+        node
     }
 
     /// Build a [`BinaryExpression`], and store it in the memory arena.
@@ -6365,7 +6436,9 @@ impl<'a> PrivateInExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        PrivateInExpression { node_id: Cell::new(builder.node_id()), span, left, right }
+        let node = PrivateInExpression { node_id: Cell::new(builder.node_id()), span, left, right };
+        builder.finish_node(&node.node_id, node.span, AstType::PrivateInExpression);
+        node
     }
 
     /// Build a [`PrivateInExpression`], and store it in the memory arena.
@@ -6409,7 +6482,15 @@ impl<'a> LogicalExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        LogicalExpression { node_id: Cell::new(builder.node_id()), span, left, operator, right }
+        let node = LogicalExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            left,
+            operator,
+            right,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::LogicalExpression);
+        node
     }
 
     /// Build a [`LogicalExpression`], and store it in the memory arena.
@@ -6455,13 +6536,15 @@ impl<'a> ConditionalExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ConditionalExpression {
+        let node = ConditionalExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             test,
             consequent,
             alternate,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ConditionalExpression);
+        node
     }
 
     /// Build a [`ConditionalExpression`], and store it in the memory arena.
@@ -6510,7 +6593,15 @@ impl<'a> AssignmentExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentExpression { node_id: Cell::new(builder.node_id()), span, operator, left, right }
+        let node = AssignmentExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            operator,
+            left,
+            right,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::AssignmentExpression);
+        node
     }
 
     /// Build an [`AssignmentExpression`], and store it in the memory arena.
@@ -7056,12 +7147,14 @@ impl<'a> ArrayAssignmentTarget<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ArrayAssignmentTarget {
+        let node = ArrayAssignmentTarget {
             node_id: Cell::new(builder.node_id()),
             span,
             elements: elements.into_in(builder.allocator()),
             rest,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ArrayAssignmentTarget);
+        node
     }
 
     /// Build an [`ArrayAssignmentTarget`], and store it in the memory arena.
@@ -7103,12 +7196,14 @@ impl<'a> ObjectAssignmentTarget<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ObjectAssignmentTarget {
+        let node = ObjectAssignmentTarget {
             node_id: Cell::new(builder.node_id()),
             span,
             properties: properties.into_in(builder.allocator()),
             rest,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ObjectAssignmentTarget);
+        node
     }
 
     /// Build an [`ObjectAssignmentTarget`], and store it in the memory arena.
@@ -7144,7 +7239,9 @@ impl<'a> AssignmentTargetRest<'a> {
     #[inline]
     pub fn new(span: Span, target: AssignmentTarget<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        AssignmentTargetRest { node_id: Cell::new(builder.node_id()), span, target }
+        let node = AssignmentTargetRest { node_id: Cell::new(builder.node_id()), span, target };
+        builder.finish_node(&node.node_id, node.span, AstType::AssignmentTargetRest);
+        node
     }
 
     /// Build an [`AssignmentTargetRest`], and store it in the memory arena.
@@ -7457,7 +7554,14 @@ impl<'a> AssignmentTargetWithDefault<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentTargetWithDefault { node_id: Cell::new(builder.node_id()), span, binding, init }
+        let node = AssignmentTargetWithDefault {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            binding,
+            init,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::AssignmentTargetWithDefault);
+        node
     }
 
     /// Build an [`AssignmentTargetWithDefault`], and store it in the memory arena.
@@ -7550,12 +7654,14 @@ impl<'a> AssignmentTargetPropertyIdentifier<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentTargetPropertyIdentifier {
+        let node = AssignmentTargetPropertyIdentifier {
             node_id: Cell::new(builder.node_id()),
             span,
             binding,
             init,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::AssignmentTargetPropertyIdentifier);
+        node
     }
 
     /// Build an [`AssignmentTargetPropertyIdentifier`], and store it in the memory arena.
@@ -7599,13 +7705,15 @@ impl<'a> AssignmentTargetPropertyProperty<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentTargetPropertyProperty {
+        let node = AssignmentTargetPropertyProperty {
             node_id: Cell::new(builder.node_id()),
             span,
             name,
             binding,
             computed,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::AssignmentTargetPropertyProperty);
+        node
     }
 
     /// Build an [`AssignmentTargetPropertyProperty`], and store it in the memory arena.
@@ -7647,11 +7755,13 @@ impl<'a> SequenceExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        SequenceExpression {
+        let node = SequenceExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             expressions: expressions.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::SequenceExpression);
+        node
     }
 
     /// Build a [`SequenceExpression`], and store it in the memory arena.
@@ -7684,7 +7794,9 @@ impl Super {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Super { node_id: Cell::new(builder.node_id()), span }
+        let node = Super { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::Super);
+        node
     }
 
     /// Build a [`Super`], and store it in the memory arena.
@@ -7713,7 +7825,9 @@ impl<'a> AwaitExpression<'a> {
     #[inline]
     pub fn new(span: Span, argument: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        AwaitExpression { node_id: Cell::new(builder.node_id()), span, argument }
+        let node = AwaitExpression { node_id: Cell::new(builder.node_id()), span, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::AwaitExpression);
+        node
     }
 
     /// Build an [`AwaitExpression`], and store it in the memory arena.
@@ -7747,7 +7861,9 @@ impl<'a> ChainExpression<'a> {
     #[inline]
     pub fn new(span: Span, expression: ChainElement<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ChainExpression { node_id: Cell::new(builder.node_id()), span, expression }
+        let node = ChainExpression { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::ChainExpression);
+        node
     }
 
     /// Build a [`ChainExpression`], and store it in the memory arena.
@@ -7938,7 +8054,10 @@ impl<'a> ParenthesizedExpression<'a> {
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ParenthesizedExpression { node_id: Cell::new(builder.node_id()), span, expression }
+        let node =
+            ParenthesizedExpression { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::ParenthesizedExpression);
+        node
     }
 
     /// Build a [`ParenthesizedExpression`], and store it in the memory arena.
@@ -9223,12 +9342,14 @@ impl<'a> Directive<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Directive {
+        let node = Directive {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
             directive: directive.into(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Directive);
+        node
     }
 }
 
@@ -9241,7 +9362,9 @@ impl<'a> Hashbang<'a> {
     #[inline]
     pub fn new(span: Span, value: impl Into<Str<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Hashbang { node_id: Cell::new(builder.node_id()), span, value: value.into() }
+        let node = Hashbang { node_id: Cell::new(builder.node_id()), span, value: value.into() };
+        builder.finish_node(&node.node_id, node.span, AstType::Hashbang);
+        node
     }
 }
 
@@ -9261,12 +9384,14 @@ impl<'a> BlockStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BlockStatement {
+        let node = BlockStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::BlockStatement);
+        node
     }
 
     /// Build a [`BlockStatement`], and store it in the memory arena.
@@ -9304,12 +9429,14 @@ impl<'a> BlockStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BlockStatement {
+        let node = BlockStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::BlockStatement);
+        node
     }
 
     /// Build a [`BlockStatement`] with `scope_id`, and store it in the memory arena.
@@ -9932,13 +10059,15 @@ impl<'a> VariableDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        VariableDeclaration {
+        let node = VariableDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             kind,
             declarations: declarations.into_in(builder.allocator()),
             declare,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::VariableDeclaration);
+        node
     }
 
     /// Build a [`VariableDeclaration`], and store it in the memory arena.
@@ -9986,14 +10115,16 @@ impl<'a> VariableDeclarator<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        VariableDeclarator {
+        let node = VariableDeclarator {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
             type_annotation,
             init,
             definite,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::VariableDeclarator);
+        node
     }
 }
 
@@ -10008,7 +10139,9 @@ impl EmptyStatement {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        EmptyStatement { node_id: Cell::new(builder.node_id()), span }
+        let node = EmptyStatement { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::EmptyStatement);
+        node
     }
 
     /// Build an [`EmptyStatement`], and store it in the memory arena.
@@ -10037,7 +10170,9 @@ impl<'a> ExpressionStatement<'a> {
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ExpressionStatement { node_id: Cell::new(builder.node_id()), span, expression }
+        let node = ExpressionStatement { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::ExpressionStatement);
+        node
     }
 
     /// Build an [`ExpressionStatement`], and store it in the memory arena.
@@ -10079,7 +10214,15 @@ impl<'a> IfStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        IfStatement { node_id: Cell::new(builder.node_id()), span, test, consequent, alternate }
+        let node = IfStatement {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            test,
+            consequent,
+            alternate,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::IfStatement);
+        node
     }
 
     /// Build an [`IfStatement`], and store it in the memory arena.
@@ -10126,7 +10269,9 @@ impl<'a> DoWhileStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        DoWhileStatement { node_id: Cell::new(builder.node_id()), span, body, test }
+        let node = DoWhileStatement { node_id: Cell::new(builder.node_id()), span, body, test };
+        builder.finish_node(&node.node_id, node.span, AstType::DoWhileStatement);
+        node
     }
 
     /// Build a [`DoWhileStatement`], and store it in the memory arena.
@@ -10168,7 +10313,9 @@ impl<'a> WhileStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        WhileStatement { node_id: Cell::new(builder.node_id()), span, test, body }
+        let node = WhileStatement { node_id: Cell::new(builder.node_id()), span, test, body };
+        builder.finish_node(&node.node_id, node.span, AstType::WhileStatement);
+        node
     }
 
     /// Build a [`WhileStatement`], and store it in the memory arena.
@@ -10214,7 +10361,7 @@ impl<'a> ForStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ForStatement {
+        let node = ForStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             init,
@@ -10222,7 +10369,9 @@ impl<'a> ForStatement<'a> {
             update,
             body,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ForStatement);
+        node
     }
 
     /// Build a [`ForStatement`], and store it in the memory arena.
@@ -10272,7 +10421,7 @@ impl<'a> ForStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ForStatement {
+        let node = ForStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             init,
@@ -10280,7 +10429,9 @@ impl<'a> ForStatement<'a> {
             update,
             body,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ForStatement);
+        node
     }
 
     /// Build a [`ForStatement`] with `scope_id`, and store it in the memory arena.
@@ -11569,14 +11720,16 @@ impl<'a> ForInStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ForInStatement {
+        let node = ForInStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             left,
             right,
             body,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ForInStatement);
+        node
     }
 
     /// Build a [`ForInStatement`], and store it in the memory arena.
@@ -11622,14 +11775,16 @@ impl<'a> ForInStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ForInStatement {
+        let node = ForInStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             left,
             right,
             body,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ForInStatement);
+        node
     }
 
     /// Build a [`ForInStatement`] with `scope_id`, and store it in the memory arena.
@@ -11958,7 +12113,7 @@ impl<'a> ForOfStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ForOfStatement {
+        let node = ForOfStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             r#await,
@@ -11966,7 +12121,9 @@ impl<'a> ForOfStatement<'a> {
             right,
             body,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ForOfStatement);
+        node
     }
 
     /// Build a [`ForOfStatement`], and store it in the memory arena.
@@ -12016,7 +12173,7 @@ impl<'a> ForOfStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ForOfStatement {
+        let node = ForOfStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             r#await,
@@ -12024,7 +12181,9 @@ impl<'a> ForOfStatement<'a> {
             right,
             body,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ForOfStatement);
+        node
     }
 
     /// Build a [`ForOfStatement`] with `scope_id`, and store it in the memory arena.
@@ -12073,7 +12232,9 @@ impl<'a> ContinueStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ContinueStatement { node_id: Cell::new(builder.node_id()), span, label }
+        let node = ContinueStatement { node_id: Cell::new(builder.node_id()), span, label };
+        builder.finish_node(&node.node_id, node.span, AstType::ContinueStatement);
+        node
     }
 
     /// Build a [`ContinueStatement`], and store it in the memory arena.
@@ -12111,7 +12272,9 @@ impl<'a> BreakStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BreakStatement { node_id: Cell::new(builder.node_id()), span, label }
+        let node = BreakStatement { node_id: Cell::new(builder.node_id()), span, label };
+        builder.finish_node(&node.node_id, node.span, AstType::BreakStatement);
+        node
     }
 
     /// Build a [`BreakStatement`], and store it in the memory arena.
@@ -12149,7 +12312,9 @@ impl<'a> ReturnStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ReturnStatement { node_id: Cell::new(builder.node_id()), span, argument }
+        let node = ReturnStatement { node_id: Cell::new(builder.node_id()), span, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::ReturnStatement);
+        node
     }
 
     /// Build a [`ReturnStatement`], and store it in the memory arena.
@@ -12189,13 +12354,15 @@ impl<'a> WithStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        WithStatement {
+        let node = WithStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             object,
             body,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::WithStatement);
+        node
     }
 
     /// Build a [`WithStatement`], and store it in the memory arena.
@@ -12237,13 +12404,15 @@ impl<'a> WithStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        WithStatement {
+        let node = WithStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             object,
             body,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::WithStatement);
+        node
     }
 
     /// Build a [`WithStatement`] with `scope_id`, and store it in the memory arena.
@@ -12290,13 +12459,15 @@ impl<'a> SwitchStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        SwitchStatement {
+        let node = SwitchStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             discriminant,
             cases: cases.into_in(builder.allocator()),
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::SwitchStatement);
+        node
     }
 
     /// Build a [`SwitchStatement`], and store it in the memory arena.
@@ -12338,13 +12509,15 @@ impl<'a> SwitchStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        SwitchStatement {
+        let node = SwitchStatement {
             node_id: Cell::new(builder.node_id()),
             span,
             discriminant,
             cases: cases.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::SwitchStatement);
+        node
     }
 
     /// Build a [`SwitchStatement`] with `scope_id`, and store it in the memory arena.
@@ -12388,12 +12561,14 @@ impl<'a> SwitchCase<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        SwitchCase {
+        let node = SwitchCase {
             node_id: Cell::new(builder.node_id()),
             span,
             test,
             consequent: consequent.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::SwitchCase);
+        node
     }
 }
 
@@ -12415,7 +12590,9 @@ impl<'a> LabeledStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        LabeledStatement { node_id: Cell::new(builder.node_id()), span, label, body }
+        let node = LabeledStatement { node_id: Cell::new(builder.node_id()), span, label, body };
+        builder.finish_node(&node.node_id, node.span, AstType::LabeledStatement);
+        node
     }
 
     /// Build a [`LabeledStatement`], and store it in the memory arena.
@@ -12451,7 +12628,9 @@ impl<'a> ThrowStatement<'a> {
     #[inline]
     pub fn new(span: Span, argument: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ThrowStatement { node_id: Cell::new(builder.node_id()), span, argument }
+        let node = ThrowStatement { node_id: Cell::new(builder.node_id()), span, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::ThrowStatement);
+        node
     }
 
     /// Build a [`ThrowStatement`], and store it in the memory arena.
@@ -12493,7 +12672,10 @@ impl<'a> TryStatement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TryStatement { node_id: Cell::new(builder.node_id()), span, block, handler, finalizer }
+        let node =
+            TryStatement { node_id: Cell::new(builder.node_id()), span, block, handler, finalizer };
+        builder.finish_node(&node.node_id, node.span, AstType::TryStatement);
+        node
     }
 
     /// Build a [`TryStatement`], and store it in the memory arena.
@@ -12537,13 +12719,15 @@ impl<'a> CatchClause<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        CatchClause {
+        let node = CatchClause {
             node_id: Cell::new(builder.node_id()),
             span,
             param,
             body,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::CatchClause);
+        node
     }
 
     /// Build a [`CatchClause`], and store it in the memory arena.
@@ -12585,13 +12769,15 @@ impl<'a> CatchClause<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        CatchClause {
+        let node = CatchClause {
             node_id: Cell::new(builder.node_id()),
             span,
             param,
             body,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::CatchClause);
+        node
     }
 
     /// Build a [`CatchClause`] with `scope_id`, and store it in the memory arena.
@@ -12635,7 +12821,14 @@ impl<'a> CatchParameter<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        CatchParameter { node_id: Cell::new(builder.node_id()), span, pattern, type_annotation }
+        let node = CatchParameter {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            pattern,
+            type_annotation,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::CatchParameter);
+        node
     }
 }
 
@@ -12650,7 +12843,9 @@ impl DebuggerStatement {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        DebuggerStatement { node_id: Cell::new(builder.node_id()), span }
+        let node = DebuggerStatement { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::DebuggerStatement);
+        node
     }
 
     /// Build a [`DebuggerStatement`], and store it in the memory arena.
@@ -12780,7 +12975,9 @@ impl<'a> AssignmentPattern<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AssignmentPattern { node_id: Cell::new(builder.node_id()), span, left, right }
+        let node = AssignmentPattern { node_id: Cell::new(builder.node_id()), span, left, right };
+        builder.finish_node(&node.node_id, node.span, AstType::AssignmentPattern);
+        node
     }
 
     /// Build an [`AssignmentPattern`], and store it in the memory arena.
@@ -12822,12 +13019,14 @@ impl<'a> ObjectPattern<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ObjectPattern {
+        let node = ObjectPattern {
             node_id: Cell::new(builder.node_id()),
             span,
             properties: properties.into_in(builder.allocator()),
             rest,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ObjectPattern);
+        node
     }
 
     /// Build an [`ObjectPattern`], and store it in the memory arena.
@@ -12870,14 +13069,16 @@ impl<'a> BindingProperty<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BindingProperty {
+        let node = BindingProperty {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
             value,
             shorthand,
             computed,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::BindingProperty);
+        node
     }
 }
 
@@ -12899,12 +13100,14 @@ impl<'a> ArrayPattern<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ArrayPattern {
+        let node = ArrayPattern {
             node_id: Cell::new(builder.node_id()),
             span,
             elements: elements.into_in(builder.allocator()),
             rest,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ArrayPattern);
+        node
     }
 
     /// Build an [`ArrayPattern`], and store it in the memory arena.
@@ -12940,7 +13143,9 @@ impl<'a> BindingRestElement<'a> {
     #[inline]
     pub fn new(span: Span, argument: BindingPattern<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        BindingRestElement { node_id: Cell::new(builder.node_id()), span, argument }
+        let node = BindingRestElement { node_id: Cell::new(builder.node_id()), span, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::BindingRestElement);
+        node
     }
 
     /// Build a [`BindingRestElement`], and store it in the memory arena.
@@ -12996,7 +13201,7 @@ impl<'a> Function<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Function {
+        let node = Function {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -13012,7 +13217,9 @@ impl<'a> Function<'a> {
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Function);
+        node
     }
 
     /// Build a [`Function`], and store it in the memory arena.
@@ -13106,7 +13313,7 @@ impl<'a> Function<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Function {
+        let node = Function {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -13122,7 +13329,9 @@ impl<'a> Function<'a> {
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Function);
+        node
     }
 
     /// Build a [`Function`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
@@ -13207,13 +13416,15 @@ impl<'a> FormalParameters<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        FormalParameters {
+        let node = FormalParameters {
             node_id: Cell::new(builder.node_id()),
             span,
             kind,
             items: items.into_in(builder.allocator()),
             rest,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::FormalParameters);
+        node
     }
 
     /// Build a [`FormalParameters`], and store it in the memory arena.
@@ -13266,7 +13477,7 @@ impl<'a> FormalParameter<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        FormalParameter {
+        let node = FormalParameter {
             node_id: Cell::new(builder.node_id()),
             span,
             decorators: decorators.into_in(builder.allocator()),
@@ -13277,7 +13488,9 @@ impl<'a> FormalParameter<'a> {
             accessibility,
             readonly,
             r#override,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::FormalParameter);
+        node
     }
 }
 
@@ -13301,13 +13514,15 @@ impl<'a> FormalParameterRest<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        FormalParameterRest {
+        let node = FormalParameterRest {
             node_id: Cell::new(builder.node_id()),
             span,
             decorators: decorators.into_in(builder.allocator()),
             rest,
             type_annotation,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::FormalParameterRest);
+        node
     }
 
     /// Build a [`FormalParameterRest`], and store it in the memory arena.
@@ -13354,12 +13569,14 @@ impl<'a> FunctionBody<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        FunctionBody {
+        let node = FunctionBody {
             node_id: Cell::new(builder.node_id()),
             span,
             directives: directives.into_in(builder.allocator()),
             statements: statements.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::FunctionBody);
+        node
     }
 
     /// Build a [`FunctionBody`], and store it in the memory arena.
@@ -14635,7 +14852,7 @@ impl<'a> ArrowFunctionExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ArrowFunctionExpression {
+        let node = ArrowFunctionExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             r#async,
@@ -14646,7 +14863,9 @@ impl<'a> ArrowFunctionExpression<'a> {
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ArrowFunctionExpression);
+        node
     }
 
     /// Build an [`ArrowFunctionExpression`], and store it in the memory arena.
@@ -14707,7 +14926,7 @@ impl<'a> ArrowFunctionExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ArrowFunctionExpression {
+        let node = ArrowFunctionExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             r#async,
@@ -14718,7 +14937,9 @@ impl<'a> ArrowFunctionExpression<'a> {
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ArrowFunctionExpression);
+        node
     }
 
     /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
@@ -14786,7 +15007,10 @@ impl<'a> YieldExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        YieldExpression { node_id: Cell::new(builder.node_id()), span, delegate, argument }
+        let node =
+            YieldExpression { node_id: Cell::new(builder.node_id()), span, delegate, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::YieldExpression);
+        node
     }
 
     /// Build a [`YieldExpression`], and store it in the memory arena.
@@ -14842,7 +15066,7 @@ impl<'a> Class<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Class {
+        let node = Class {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -14855,7 +15079,9 @@ impl<'a> Class<'a> {
             r#abstract,
             declare,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Class);
+        node
     }
 
     /// Build a [`Class`], and store it in the memory arena.
@@ -14940,7 +15166,7 @@ impl<'a> Class<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        Class {
+        let node = Class {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -14953,7 +15179,9 @@ impl<'a> Class<'a> {
             r#abstract,
             declare,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::Class);
+        node
     }
 
     /// Build a [`Class`] with `scope_id`, and store it in the memory arena.
@@ -15043,11 +15271,13 @@ impl<'a> ClassBody<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ClassBody {
+        let node = ClassBody {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ClassBody);
+        node
     }
 
     /// Build a [`ClassBody`], and store it in the memory arena.
@@ -15318,7 +15548,7 @@ impl<'a> MethodDefinition<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        MethodDefinition {
+        let node = MethodDefinition {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -15331,7 +15561,9 @@ impl<'a> MethodDefinition<'a> {
             r#override,
             optional,
             accessibility,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::MethodDefinition);
+        node
     }
 
     /// Build a [`MethodDefinition`], and store it in the memory arena.
@@ -15427,7 +15659,7 @@ impl<'a> PropertyDefinition<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        PropertyDefinition {
+        let node = PropertyDefinition {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -15443,7 +15675,9 @@ impl<'a> PropertyDefinition<'a> {
             definite,
             readonly,
             accessibility,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::PropertyDefinition);
+        node
     }
 
     /// Build a [`PropertyDefinition`], and store it in the memory arena.
@@ -15520,7 +15754,10 @@ impl<'a> PrivateIdentifier<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Ident<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        PrivateIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() }
+        let node =
+            PrivateIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() };
+        builder.finish_node(&node.node_id, node.span, AstType::PrivateIdentifier);
+        node
     }
 
     /// Build a [`PrivateIdentifier`], and store it in the memory arena.
@@ -15558,12 +15795,14 @@ impl<'a> StaticBlock<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        StaticBlock {
+        let node = StaticBlock {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::StaticBlock);
+        node
     }
 
     /// Build a [`StaticBlock`], and store it in the memory arena.
@@ -15601,12 +15840,14 @@ impl<'a> StaticBlock<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        StaticBlock {
+        let node = StaticBlock {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::StaticBlock);
+        node
     }
 
     /// Build a [`StaticBlock`] with `scope_id`, and store it in the memory arena.
@@ -15854,7 +16095,7 @@ impl<'a> AccessorProperty<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        AccessorProperty {
+        let node = AccessorProperty {
             node_id: Cell::new(builder.node_id()),
             span,
             r#type,
@@ -15867,7 +16108,9 @@ impl<'a> AccessorProperty<'a> {
             r#override,
             definite,
             accessibility,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::AccessorProperty);
+        node
     }
 
     /// Build an [`AccessorProperty`], and store it in the memory arena.
@@ -15943,7 +16186,15 @@ impl<'a> ImportExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ImportExpression { node_id: Cell::new(builder.node_id()), span, source, options, phase }
+        let node = ImportExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            source,
+            options,
+            phase,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportExpression);
+        node
     }
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
@@ -15993,7 +16244,7 @@ impl<'a> ImportDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ImportDeclaration {
+        let node = ImportDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             specifiers,
@@ -16001,7 +16252,9 @@ impl<'a> ImportDeclaration<'a> {
             phase,
             with_clause,
             import_kind,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportDeclaration);
+        node
     }
 
     /// Build an [`ImportDeclaration`], and store it in the memory arena.
@@ -16118,13 +16371,15 @@ impl<'a> ImportSpecifier<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ImportSpecifier {
+        let node = ImportSpecifier {
             node_id: Cell::new(builder.node_id()),
             span,
             imported,
             local,
             import_kind,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportSpecifier);
+        node
     }
 
     /// Build an [`ImportSpecifier`], and store it in the memory arena.
@@ -16165,7 +16420,9 @@ impl<'a> ImportDefaultSpecifier<'a> {
     #[inline]
     pub fn new(span: Span, local: BindingIdentifier<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ImportDefaultSpecifier { node_id: Cell::new(builder.node_id()), span, local }
+        let node = ImportDefaultSpecifier { node_id: Cell::new(builder.node_id()), span, local };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportDefaultSpecifier);
+        node
     }
 
     /// Build an [`ImportDefaultSpecifier`], and store it in the memory arena.
@@ -16199,7 +16456,9 @@ impl<'a> ImportNamespaceSpecifier<'a> {
     #[inline]
     pub fn new(span: Span, local: BindingIdentifier<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ImportNamespaceSpecifier { node_id: Cell::new(builder.node_id()), span, local }
+        let node = ImportNamespaceSpecifier { node_id: Cell::new(builder.node_id()), span, local };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportNamespaceSpecifier);
+        node
     }
 
     /// Build an [`ImportNamespaceSpecifier`], and store it in the memory arena.
@@ -16239,12 +16498,14 @@ impl<'a> WithClause<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        WithClause {
+        let node = WithClause {
             node_id: Cell::new(builder.node_id()),
             span,
             keyword,
             with_entries: with_entries.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::WithClause);
+        node
     }
 
     /// Build a [`WithClause`], and store it in the memory arena.
@@ -16283,7 +16544,9 @@ impl<'a> ImportAttribute<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ImportAttribute { node_id: Cell::new(builder.node_id()), span, key, value }
+        let node = ImportAttribute { node_id: Cell::new(builder.node_id()), span, key, value };
+        builder.finish_node(&node.node_id, node.span, AstType::ImportAttribute);
+        node
     }
 }
 
@@ -16355,7 +16618,9 @@ impl<'a> ExportDeclaration<'a> {
     #[inline]
     pub fn new(span: Span, declaration: Declaration<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        ExportDeclaration { node_id: Cell::new(builder.node_id()), span, declaration }
+        let node = ExportDeclaration { node_id: Cell::new(builder.node_id()), span, declaration };
+        builder.finish_node(&node.node_id, node.span, AstType::ExportDeclaration);
+        node
     }
 
     /// Build an [`ExportDeclaration`], and store it in the memory arena.
@@ -16395,12 +16660,14 @@ impl<'a> ExportNamedDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ExportNamedDeclaration {
+        let node = ExportNamedDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             specifiers: specifiers.into_in(builder.allocator()),
             export_kind,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ExportNamedDeclaration);
+        node
     }
 
     /// Build an [`ExportNamedDeclaration`], and store it in the memory arena.
@@ -16446,14 +16713,16 @@ impl<'a> ExportFromDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ExportFromDeclaration {
+        let node = ExportFromDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             specifiers: specifiers.into_in(builder.allocator()),
             source,
             export_kind,
             with_clause,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ExportFromDeclaration);
+        node
     }
 
     /// Build an [`ExportFromDeclaration`], and store it in the memory arena.
@@ -16500,7 +16769,10 @@ impl<'a> ExportDefaultDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ExportDefaultDeclaration { node_id: Cell::new(builder.node_id()), span, declaration }
+        let node =
+            ExportDefaultDeclaration { node_id: Cell::new(builder.node_id()), span, declaration };
+        builder.finish_node(&node.node_id, node.span, AstType::ExportDefaultDeclaration);
+        node
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -16544,14 +16816,16 @@ impl<'a> ExportAllDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ExportAllDeclaration {
+        let node = ExportAllDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             exported,
             source,
             with_clause,
             export_kind,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ExportAllDeclaration);
+        node
     }
 
     /// Build an [`ExportAllDeclaration`], and store it in the memory arena.
@@ -16599,13 +16873,15 @@ impl<'a> ExportSpecifier<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        ExportSpecifier {
+        let node = ExportSpecifier {
             node_id: Cell::new(builder.node_id()),
             span,
             local,
             exported,
             export_kind,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::ExportSpecifier);
+        node
     }
 }
 
@@ -18189,12 +18465,14 @@ impl<'a> V8IntrinsicExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        V8IntrinsicExpression {
+        let node = V8IntrinsicExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             name,
             arguments: arguments.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::V8IntrinsicExpression);
+        node
     }
 
     /// Build a [`V8IntrinsicExpression`], and store it in the memory arena.
@@ -18230,7 +18508,9 @@ impl BooleanLiteral {
     #[inline]
     pub fn new<'a>(span: Span, value: bool, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        BooleanLiteral { node_id: Cell::new(builder.node_id()), span, value }
+        let node = BooleanLiteral { node_id: Cell::new(builder.node_id()), span, value };
+        builder.finish_node(&node.node_id, node.span, AstType::BooleanLiteral);
+        node
     }
 
     /// Build a [`BooleanLiteral`], and store it in the memory arena.
@@ -18263,7 +18543,9 @@ impl NullLiteral {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        NullLiteral { node_id: Cell::new(builder.node_id()), span }
+        let node = NullLiteral { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::NullLiteral);
+        node
     }
 
     /// Build a [`NullLiteral`], and store it in the memory arena.
@@ -18300,7 +18582,9 @@ impl<'a> NumericLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        NumericLiteral { node_id: Cell::new(builder.node_id()), span, value, raw, base }
+        let node = NumericLiteral { node_id: Cell::new(builder.node_id()), span, value, raw, base };
+        builder.finish_node(&node.node_id, node.span, AstType::NumericLiteral);
+        node
     }
 
     /// Build a [`NumericLiteral`], and store it in the memory arena.
@@ -18344,13 +18628,15 @@ impl<'a> StringLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        StringLiteral {
+        let node = StringLiteral {
             node_id: Cell::new(builder.node_id()),
             span,
             value: value.into(),
             raw,
             lone_surrogates: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::StringLiteral);
+        node
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -18392,13 +18678,15 @@ impl<'a> StringLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        StringLiteral {
+        let node = StringLiteral {
             node_id: Cell::new(builder.node_id()),
             span,
             value: value.into(),
             raw,
             lone_surrogates,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::StringLiteral);
+        node
     }
 
     /// Build a [`StringLiteral`] with `lone_surrogates`, and store it in the memory arena.
@@ -18447,13 +18735,15 @@ impl<'a> BigIntLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        BigIntLiteral {
+        let node = BigIntLiteral {
             node_id: Cell::new(builder.node_id()),
             span,
             value: value.into(),
             raw,
             base,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::BigIntLiteral);
+        node
     }
 
     /// Build a [`BigIntLiteral`], and store it in the memory arena.
@@ -18497,7 +18787,9 @@ impl<'a> RegExpLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        RegExpLiteral { node_id: Cell::new(builder.node_id()), span, regex, raw }
+        let node = RegExpLiteral { node_id: Cell::new(builder.node_id()), span, regex, raw };
+        builder.finish_node(&node.node_id, node.span, AstType::RegExpLiteral);
+        node
     }
 
     /// Build a [`RegExpLiteral`], and store it in the memory arena.
@@ -18541,13 +18833,15 @@ impl<'a> JSXElement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXElement {
+        let node = JSXElement {
             node_id: Cell::new(builder.node_id()),
             span,
             opening_element,
             children: children.into_in(builder.allocator()),
             closing_element,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXElement);
+        node
     }
 
     /// Build a [`JSXElement`], and store it in the memory arena.
@@ -18596,13 +18890,15 @@ impl<'a> JSXOpeningElement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXOpeningElement {
+        let node = JSXOpeningElement {
             node_id: Cell::new(builder.node_id()),
             span,
             name,
             type_arguments,
             attributes: attributes.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXOpeningElement);
+        node
     }
 
     /// Build a [`JSXOpeningElement`], and store it in the memory arena.
@@ -18643,7 +18939,9 @@ impl<'a> JSXClosingElement<'a> {
     #[inline]
     pub fn new(span: Span, name: JSXElementName<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXClosingElement { node_id: Cell::new(builder.node_id()), span, name }
+        let node = JSXClosingElement { node_id: Cell::new(builder.node_id()), span, name };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXClosingElement);
+        node
     }
 
     /// Build a [`JSXClosingElement`], and store it in the memory arena.
@@ -18685,13 +18983,15 @@ impl<'a> JSXFragment<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXFragment {
+        let node = JSXFragment {
             node_id: Cell::new(builder.node_id()),
             span,
             opening_fragment,
             children: children.into_in(builder.allocator()),
             closing_fragment,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXFragment);
+        node
     }
 
     /// Build a [`JSXFragment`], and store it in the memory arena.
@@ -18728,7 +19028,9 @@ impl JSXOpeningFragment {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXOpeningFragment { node_id: Cell::new(builder.node_id()), span }
+        let node = JSXOpeningFragment { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXOpeningFragment);
+        node
     }
 }
 
@@ -18740,7 +19042,9 @@ impl JSXClosingFragment {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXClosingFragment { node_id: Cell::new(builder.node_id()), span }
+        let node = JSXClosingFragment { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXClosingFragment);
+        node
     }
 }
 
@@ -18871,7 +19175,10 @@ impl<'a> JSXNamespacedName<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXNamespacedName { node_id: Cell::new(builder.node_id()), span, namespace, name }
+        let node =
+            JSXNamespacedName { node_id: Cell::new(builder.node_id()), span, namespace, name };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXNamespacedName);
+        node
     }
 
     /// Build a [`JSXNamespacedName`], and store it in the memory arena.
@@ -18913,7 +19220,10 @@ impl<'a> JSXMemberExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXMemberExpression { node_id: Cell::new(builder.node_id()), span, object, property }
+        let node =
+            JSXMemberExpression { node_id: Cell::new(builder.node_id()), span, object, property };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXMemberExpression);
+        node
     }
 
     /// Build a [`JSXMemberExpression`], and store it in the memory arena.
@@ -19028,7 +19338,10 @@ impl<'a> JSXExpressionContainer<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXExpressionContainer { node_id: Cell::new(builder.node_id()), span, expression }
+        let node =
+            JSXExpressionContainer { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXExpressionContainer);
+        node
     }
 
     /// Build a [`JSXExpressionContainer`], and store it in the memory arena.
@@ -20282,7 +20595,9 @@ impl JSXEmptyExpression {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXEmptyExpression { node_id: Cell::new(builder.node_id()), span }
+        let node = JSXEmptyExpression { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXEmptyExpression);
+        node
     }
 
     /// Build a [`JSXEmptyExpression`], and store it in the memory arena.
@@ -20353,7 +20668,9 @@ impl<'a> JSXAttribute<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXAttribute { node_id: Cell::new(builder.node_id()), span, name, value }
+        let node = JSXAttribute { node_id: Cell::new(builder.node_id()), span, name, value };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXAttribute);
+        node
     }
 
     /// Build a [`JSXAttribute`], and store it in the memory arena.
@@ -20389,7 +20706,9 @@ impl<'a> JSXSpreadAttribute<'a> {
     #[inline]
     pub fn new(span: Span, argument: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXSpreadAttribute { node_id: Cell::new(builder.node_id()), span, argument }
+        let node = JSXSpreadAttribute { node_id: Cell::new(builder.node_id()), span, argument };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXSpreadAttribute);
+        node
     }
 
     /// Build a [`JSXSpreadAttribute`], and store it in the memory arena.
@@ -20577,7 +20896,9 @@ impl<'a> JSXIdentifier<'a> {
     #[inline]
     pub fn new(span: Span, name: impl Into<Str<'a>>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() }
+        let node = JSXIdentifier { node_id: Cell::new(builder.node_id()), span, name: name.into() };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXIdentifier);
+        node
     }
 
     /// Build a [`JSXIdentifier`], and store it in the memory arena.
@@ -20719,7 +21040,9 @@ impl<'a> JSXSpreadChild<'a> {
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSXSpreadChild { node_id: Cell::new(builder.node_id()), span, expression }
+        let node = JSXSpreadChild { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXSpreadChild);
+        node
     }
 
     /// Build a [`JSXSpreadChild`], and store it in the memory arena.
@@ -20759,7 +21082,10 @@ impl<'a> JSXText<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSXText { node_id: Cell::new(builder.node_id()), span, value: value.into(), raw }
+        let node =
+            JSXText { node_id: Cell::new(builder.node_id()), span, value: value.into(), raw };
+        builder.finish_node(&node.node_id, node.span, AstType::JSXText);
+        node
     }
 
     /// Build a [`JSXText`], and store it in the memory arena.
@@ -20801,7 +21127,14 @@ impl<'a> TSThisParameter<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSThisParameter { node_id: Cell::new(builder.node_id()), span, this_span, type_annotation }
+        let node = TSThisParameter {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            this_span,
+            type_annotation,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSThisParameter);
+        node
     }
 
     /// Build a [`TSThisParameter`], and store it in the memory arena.
@@ -20847,14 +21180,16 @@ impl<'a> TSEnumDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSEnumDeclaration {
+        let node = TSEnumDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
             body,
             r#const,
             declare,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSEnumDeclaration);
+        node
     }
 
     /// Build a [`TSEnumDeclaration`], and store it in the memory arena.
@@ -20895,12 +21230,14 @@ impl<'a> TSEnumBody<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSEnumBody {
+        let node = TSEnumBody {
             node_id: Cell::new(builder.node_id()),
             span,
             members: members.into_in(builder.allocator()),
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSEnumBody);
+        node
     }
 
     /// Build a [`TSEnumBody`] with `scope_id`.
@@ -20917,12 +21254,14 @@ impl<'a> TSEnumBody<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSEnumBody {
+        let node = TSEnumBody {
             node_id: Cell::new(builder.node_id()),
             span,
             members: members.into_in(builder.allocator()),
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSEnumBody);
+        node
     }
 }
 
@@ -20941,7 +21280,9 @@ impl<'a> TSEnumMember<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSEnumMember { node_id: Cell::new(builder.node_id()), span, id, initializer }
+        let node = TSEnumMember { node_id: Cell::new(builder.node_id()), span, id, initializer };
+        builder.finish_node(&node.node_id, node.span, AstType::TSEnumMember);
+        node
     }
 }
 
@@ -21086,7 +21427,10 @@ impl<'a> TSTypeAnnotation<'a> {
     #[inline]
     pub fn new(span: Span, type_annotation: TSType<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSTypeAnnotation { node_id: Cell::new(builder.node_id()), span, type_annotation }
+        let node =
+            TSTypeAnnotation { node_id: Cell::new(builder.node_id()), span, type_annotation };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeAnnotation);
+        node
     }
 
     /// Build a [`TSTypeAnnotation`], and store it in the memory arena.
@@ -21120,7 +21464,9 @@ impl<'a> TSLiteralType<'a> {
     #[inline]
     pub fn new(span: Span, literal: TSLiteral<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSLiteralType { node_id: Cell::new(builder.node_id()), span, literal }
+        let node = TSLiteralType { node_id: Cell::new(builder.node_id()), span, literal };
+        builder.finish_node(&node.node_id, node.span, AstType::TSLiteralType);
+        node
     }
 
     /// Build a [`TSLiteralType`], and store it in the memory arena.
@@ -22090,7 +22436,7 @@ impl<'a> TSConditionalType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSConditionalType {
+        let node = TSConditionalType {
             node_id: Cell::new(builder.node_id()),
             span,
             check_type,
@@ -22098,7 +22444,9 @@ impl<'a> TSConditionalType<'a> {
             true_type,
             false_type,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSConditionalType);
+        node
     }
 
     /// Build a [`TSConditionalType`], and store it in the memory arena.
@@ -22151,7 +22499,7 @@ impl<'a> TSConditionalType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSConditionalType {
+        let node = TSConditionalType {
             node_id: Cell::new(builder.node_id()),
             span,
             check_type,
@@ -22159,7 +22507,9 @@ impl<'a> TSConditionalType<'a> {
             true_type,
             false_type,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSConditionalType);
+        node
     }
 
     /// Build a [`TSConditionalType`] with `scope_id`, and store it in the memory arena.
@@ -22216,11 +22566,13 @@ impl<'a> TSUnionType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSUnionType {
+        let node = TSUnionType {
             node_id: Cell::new(builder.node_id()),
             span,
             types: types.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSUnionType);
+        node
     }
 
     /// Build a [`TSUnionType`], and store it in the memory arena.
@@ -22258,11 +22610,13 @@ impl<'a> TSIntersectionType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSIntersectionType {
+        let node = TSIntersectionType {
             node_id: Cell::new(builder.node_id()),
             span,
             types: types.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSIntersectionType);
+        node
     }
 
     /// Build a [`TSIntersectionType`], and store it in the memory arena.
@@ -22296,7 +22650,10 @@ impl<'a> TSParenthesizedType<'a> {
     #[inline]
     pub fn new(span: Span, type_annotation: TSType<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSParenthesizedType { node_id: Cell::new(builder.node_id()), span, type_annotation }
+        let node =
+            TSParenthesizedType { node_id: Cell::new(builder.node_id()), span, type_annotation };
+        builder.finish_node(&node.node_id, node.span, AstType::TSParenthesizedType);
+        node
     }
 
     /// Build a [`TSParenthesizedType`], and store it in the memory arena.
@@ -22336,7 +22693,14 @@ impl<'a> TSTypeOperator<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeOperator { node_id: Cell::new(builder.node_id()), span, operator, type_annotation }
+        let node = TSTypeOperator {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            operator,
+            type_annotation,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeOperator);
+        node
     }
 
     /// Build a [`TSTypeOperator`], and store it in the memory arena.
@@ -22372,7 +22736,9 @@ impl<'a> TSArrayType<'a> {
     #[inline]
     pub fn new(span: Span, element_type: TSType<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSArrayType { node_id: Cell::new(builder.node_id()), span, element_type }
+        let node = TSArrayType { node_id: Cell::new(builder.node_id()), span, element_type };
+        builder.finish_node(&node.node_id, node.span, AstType::TSArrayType);
+        node
     }
 
     /// Build a [`TSArrayType`], and store it in the memory arena.
@@ -22412,7 +22778,14 @@ impl<'a> TSIndexedAccessType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSIndexedAccessType { node_id: Cell::new(builder.node_id()), span, object_type, index_type }
+        let node = TSIndexedAccessType {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            object_type,
+            index_type,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSIndexedAccessType);
+        node
     }
 
     /// Build a [`TSIndexedAccessType`], and store it in the memory arena.
@@ -22452,11 +22825,13 @@ impl<'a> TSTupleType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTupleType {
+        let node = TSTupleType {
             node_id: Cell::new(builder.node_id()),
             span,
             element_types: element_types.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTupleType);
+        node
     }
 
     /// Build a [`TSTupleType`], and store it in the memory arena.
@@ -22498,13 +22873,15 @@ impl<'a> TSNamedTupleMember<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSNamedTupleMember {
+        let node = TSNamedTupleMember {
             node_id: Cell::new(builder.node_id()),
             span,
             label,
             element_type,
             optional,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNamedTupleMember);
+        node
     }
 
     /// Build a [`TSNamedTupleMember`], and store it in the memory arena.
@@ -22545,7 +22922,9 @@ impl<'a> TSOptionalType<'a> {
     #[inline]
     pub fn new(span: Span, type_annotation: TSType<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSOptionalType { node_id: Cell::new(builder.node_id()), span, type_annotation }
+        let node = TSOptionalType { node_id: Cell::new(builder.node_id()), span, type_annotation };
+        builder.finish_node(&node.node_id, node.span, AstType::TSOptionalType);
+        node
     }
 
     /// Build a [`TSOptionalType`], and store it in the memory arena.
@@ -22579,7 +22958,9 @@ impl<'a> TSRestType<'a> {
     #[inline]
     pub fn new(span: Span, type_annotation: TSType<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSRestType { node_id: Cell::new(builder.node_id()), span, type_annotation }
+        let node = TSRestType { node_id: Cell::new(builder.node_id()), span, type_annotation };
+        builder.finish_node(&node.node_id, node.span, AstType::TSRestType);
+        node
     }
 
     /// Build a [`TSRestType`], and store it in the memory arena.
@@ -23436,7 +23817,9 @@ impl TSAnyKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSAnyKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSAnyKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSAnyKeyword);
+        node
     }
 
     /// Build a [`TSAnyKeyword`], and store it in the memory arena.
@@ -23464,7 +23847,9 @@ impl TSStringKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSStringKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSStringKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSStringKeyword);
+        node
     }
 
     /// Build a [`TSStringKeyword`], and store it in the memory arena.
@@ -23492,7 +23877,9 @@ impl TSBooleanKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSBooleanKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSBooleanKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSBooleanKeyword);
+        node
     }
 
     /// Build a [`TSBooleanKeyword`], and store it in the memory arena.
@@ -23520,7 +23907,9 @@ impl TSNumberKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSNumberKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSNumberKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNumberKeyword);
+        node
     }
 
     /// Build a [`TSNumberKeyword`], and store it in the memory arena.
@@ -23548,7 +23937,9 @@ impl TSNeverKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSNeverKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSNeverKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNeverKeyword);
+        node
     }
 
     /// Build a [`TSNeverKeyword`], and store it in the memory arena.
@@ -23576,7 +23967,9 @@ impl TSIntrinsicKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSIntrinsicKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSIntrinsicKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSIntrinsicKeyword);
+        node
     }
 
     /// Build a [`TSIntrinsicKeyword`], and store it in the memory arena.
@@ -23604,7 +23997,9 @@ impl TSUnknownKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSUnknownKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSUnknownKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSUnknownKeyword);
+        node
     }
 
     /// Build a [`TSUnknownKeyword`], and store it in the memory arena.
@@ -23632,7 +24027,9 @@ impl TSNullKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSNullKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSNullKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNullKeyword);
+        node
     }
 
     /// Build a [`TSNullKeyword`], and store it in the memory arena.
@@ -23660,7 +24057,9 @@ impl TSUndefinedKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSUndefinedKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSUndefinedKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSUndefinedKeyword);
+        node
     }
 
     /// Build a [`TSUndefinedKeyword`], and store it in the memory arena.
@@ -23688,7 +24087,9 @@ impl TSVoidKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSVoidKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSVoidKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSVoidKeyword);
+        node
     }
 
     /// Build a [`TSVoidKeyword`], and store it in the memory arena.
@@ -23716,7 +24117,9 @@ impl TSSymbolKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSSymbolKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSSymbolKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSSymbolKeyword);
+        node
     }
 
     /// Build a [`TSSymbolKeyword`], and store it in the memory arena.
@@ -23744,7 +24147,9 @@ impl TSThisType {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSThisType { node_id: Cell::new(builder.node_id()), span }
+        let node = TSThisType { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSThisType);
+        node
     }
 
     /// Build a [`TSThisType`], and store it in the memory arena.
@@ -23772,7 +24177,9 @@ impl TSObjectKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSObjectKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSObjectKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSObjectKeyword);
+        node
     }
 
     /// Build a [`TSObjectKeyword`], and store it in the memory arena.
@@ -23800,7 +24207,9 @@ impl TSBigIntKeyword {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSBigIntKeyword { node_id: Cell::new(builder.node_id()), span }
+        let node = TSBigIntKeyword { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::TSBigIntKeyword);
+        node
     }
 
     /// Build a [`TSBigIntKeyword`], and store it in the memory arena.
@@ -23835,7 +24244,14 @@ impl<'a> TSTypeReference<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeReference { node_id: Cell::new(builder.node_id()), span, type_name, type_arguments }
+        let node = TSTypeReference {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            type_name,
+            type_arguments,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeReference);
+        node
     }
 
     /// Build a [`TSTypeReference`], and store it in the memory arena.
@@ -23947,7 +24363,9 @@ impl<'a> TSQualifiedName<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSQualifiedName { node_id: Cell::new(builder.node_id()), span, left, right }
+        let node = TSQualifiedName { node_id: Cell::new(builder.node_id()), span, left, right };
+        builder.finish_node(&node.node_id, node.span, AstType::TSQualifiedName);
+        node
     }
 
     /// Build a [`TSQualifiedName`], and store it in the memory arena.
@@ -23987,11 +24405,13 @@ impl<'a> TSTypeParameterInstantiation<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeParameterInstantiation {
+        let node = TSTypeParameterInstantiation {
             node_id: Cell::new(builder.node_id()),
             span,
             params: params.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeParameterInstantiation);
+        node
     }
 
     /// Build a [`TSTypeParameterInstantiation`], and store it in the memory arena.
@@ -24039,7 +24459,7 @@ impl<'a> TSTypeParameter<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeParameter {
+        let node = TSTypeParameter {
             node_id: Cell::new(builder.node_id()),
             span,
             name,
@@ -24048,7 +24468,9 @@ impl<'a> TSTypeParameter<'a> {
             r#in,
             out,
             r#const,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeParameter);
+        node
     }
 
     /// Build a [`TSTypeParameter`], and store it in the memory arena.
@@ -24099,11 +24521,13 @@ impl<'a> TSTypeParameterDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeParameterDeclaration {
+        let node = TSTypeParameterDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             params: params.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeParameterDeclaration);
+        node
     }
 
     /// Build a [`TSTypeParameterDeclaration`], and store it in the memory arena.
@@ -24147,7 +24571,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeAliasDeclaration {
+        let node = TSTypeAliasDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -24155,7 +24579,9 @@ impl<'a> TSTypeAliasDeclaration<'a> {
             type_annotation,
             declare,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeAliasDeclaration);
+        node
     }
 
     /// Build a [`TSTypeAliasDeclaration`], and store it in the memory arena.
@@ -24208,7 +24634,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeAliasDeclaration {
+        let node = TSTypeAliasDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -24216,7 +24642,9 @@ impl<'a> TSTypeAliasDeclaration<'a> {
             type_annotation,
             declare,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeAliasDeclaration);
+        node
     }
 
     /// Build a [`TSTypeAliasDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -24272,12 +24700,14 @@ impl<'a> TSClassImplements<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSClassImplements {
+        let node = TSClassImplements {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
             type_arguments,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSClassImplements);
+        node
     }
 }
 
@@ -24305,7 +24735,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSInterfaceDeclaration {
+        let node = TSInterfaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -24314,7 +24744,9 @@ impl<'a> TSInterfaceDeclaration<'a> {
             body,
             declare,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSInterfaceDeclaration);
+        node
     }
 
     /// Build a [`TSInterfaceDeclaration`], and store it in the memory arena.
@@ -24371,7 +24803,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSInterfaceDeclaration {
+        let node = TSInterfaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -24380,7 +24812,9 @@ impl<'a> TSInterfaceDeclaration<'a> {
             body,
             declare,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSInterfaceDeclaration);
+        node
     }
 
     /// Build a [`TSInterfaceDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -24440,11 +24874,13 @@ impl<'a> TSInterfaceBody<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSInterfaceBody {
+        let node = TSInterfaceBody {
             node_id: Cell::new(builder.node_id()),
             span,
             body: body.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSInterfaceBody);
+        node
     }
 
     /// Build a [`TSInterfaceBody`], and store it in the memory arena.
@@ -24490,7 +24926,7 @@ impl<'a> TSPropertySignature<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSPropertySignature {
+        let node = TSPropertySignature {
             node_id: Cell::new(builder.node_id()),
             span,
             computed,
@@ -24498,7 +24934,9 @@ impl<'a> TSPropertySignature<'a> {
             readonly,
             key,
             type_annotation,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSPropertySignature);
+        node
     }
 
     /// Build a [`TSPropertySignature`], and store it in the memory arena.
@@ -24817,14 +25255,16 @@ impl<'a> TSIndexSignature<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSIndexSignature {
+        let node = TSIndexSignature {
             node_id: Cell::new(builder.node_id()),
             span,
             parameter,
             type_annotation,
             readonly,
             r#static,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSIndexSignature);
+        node
     }
 
     /// Build a [`TSIndexSignature`], and store it in the memory arena.
@@ -24877,7 +25317,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSCallSignatureDeclaration {
+        let node = TSCallSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             type_parameters,
@@ -24885,7 +25325,9 @@ impl<'a> TSCallSignatureDeclaration<'a> {
             params,
             return_type,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSCallSignatureDeclaration);
+        node
     }
 
     /// Build a [`TSCallSignatureDeclaration`], and store it in the memory arena.
@@ -24938,7 +25380,7 @@ impl<'a> TSCallSignatureDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSCallSignatureDeclaration {
+        let node = TSCallSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             type_parameters,
@@ -24946,7 +25388,9 @@ impl<'a> TSCallSignatureDeclaration<'a> {
             params,
             return_type,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSCallSignatureDeclaration);
+        node
     }
 
     /// Build a [`TSCallSignatureDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -25017,7 +25461,7 @@ impl<'a> TSMethodSignature<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSMethodSignature {
+        let node = TSMethodSignature {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
@@ -25029,7 +25473,9 @@ impl<'a> TSMethodSignature<'a> {
             params,
             return_type,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSMethodSignature);
+        node
     }
 
     /// Build a [`TSMethodSignature`], and store it in the memory arena.
@@ -25109,7 +25555,7 @@ impl<'a> TSMethodSignature<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSMethodSignature {
+        let node = TSMethodSignature {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
@@ -25121,7 +25567,9 @@ impl<'a> TSMethodSignature<'a> {
             params,
             return_type,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSMethodSignature);
+        node
     }
 
     /// Build a [`TSMethodSignature`] with `scope_id`, and store it in the memory arena.
@@ -25194,14 +25642,16 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSConstructSignatureDeclaration {
+        let node = TSConstructSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             type_parameters,
             params,
             return_type,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSConstructSignatureDeclaration);
+        node
     }
 
     /// Build a [`TSConstructSignatureDeclaration`], and store it in the memory arena.
@@ -25250,14 +25700,16 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSConstructSignatureDeclaration {
+        let node = TSConstructSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             type_parameters,
             params,
             return_type,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSConstructSignatureDeclaration);
+        node
     }
 
     /// Build a [`TSConstructSignatureDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -25303,12 +25755,14 @@ impl<'a> TSIndexSignatureName<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSIndexSignatureName {
+        let node = TSIndexSignatureName {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
             type_annotation,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSIndexSignatureName);
+        node
     }
 }
 
@@ -25327,12 +25781,14 @@ impl<'a> TSInterfaceHeritage<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSInterfaceHeritage {
+        let node = TSInterfaceHeritage {
             node_id: Cell::new(builder.node_id()),
             span,
             type_name,
             type_arguments,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSInterfaceHeritage);
+        node
     }
 }
 
@@ -25356,13 +25812,15 @@ impl<'a> TSTypePredicate<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypePredicate {
+        let node = TSTypePredicate {
             node_id: Cell::new(builder.node_id()),
             span,
             parameter_name,
             asserts,
             type_annotation,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypePredicate);
+        node
     }
 
     /// Build a [`TSTypePredicate`], and store it in the memory arena.
@@ -25440,14 +25898,16 @@ impl<'a> TSExternalModuleDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSExternalModuleDeclaration {
+        let node = TSExternalModuleDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
             body,
             declare,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSExternalModuleDeclaration);
+        node
     }
 
     /// Build a [`TSExternalModuleDeclaration`], and store it in the memory arena.
@@ -25493,14 +25953,16 @@ impl<'a> TSExternalModuleDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSExternalModuleDeclaration {
+        let node = TSExternalModuleDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
             body,
             declare,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSExternalModuleDeclaration);
+        node
     }
 
     /// Build a [`TSExternalModuleDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -25553,7 +26015,7 @@ impl<'a> TSNamespaceDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSNamespaceDeclaration {
+        let node = TSNamespaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -25561,7 +26023,9 @@ impl<'a> TSNamespaceDeclaration<'a> {
             kind,
             declare,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNamespaceDeclaration);
+        node
     }
 
     /// Build a [`TSNamespaceDeclaration`], and store it in the memory arena.
@@ -25611,7 +26075,7 @@ impl<'a> TSNamespaceDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSNamespaceDeclaration {
+        let node = TSNamespaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -25619,7 +26083,9 @@ impl<'a> TSNamespaceDeclaration<'a> {
             kind,
             declare,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNamespaceDeclaration);
+        node
     }
 
     /// Build a [`TSNamespaceDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -25753,14 +26219,16 @@ impl<'a> TSGlobalDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSGlobalDeclaration {
+        let node = TSGlobalDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             global_span,
             body,
             declare,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSGlobalDeclaration);
+        node
     }
 
     /// Build a [`TSGlobalDeclaration`], and store it in the memory arena.
@@ -25806,14 +26274,16 @@ impl<'a> TSGlobalDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSGlobalDeclaration {
+        let node = TSGlobalDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             global_span,
             body,
             declare,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSGlobalDeclaration);
+        node
     }
 
     /// Build a [`TSGlobalDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -25862,12 +26332,14 @@ impl<'a> TSModuleBlock<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSModuleBlock {
+        let node = TSModuleBlock {
             node_id: Cell::new(builder.node_id()),
             span,
             directives: directives.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSModuleBlock);
+        node
     }
 
     /// Build a [`TSModuleBlock`], and store it in the memory arena.
@@ -25907,11 +26379,13 @@ impl<'a> TSTypeLiteral<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeLiteral {
+        let node = TSTypeLiteral {
             node_id: Cell::new(builder.node_id()),
             span,
             members: members.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeLiteral);
+        node
     }
 
     /// Build a [`TSTypeLiteral`], and store it in the memory arena.
@@ -25949,7 +26423,9 @@ impl<'a> TSInferType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSInferType { node_id: Cell::new(builder.node_id()), span, type_parameter }
+        let node = TSInferType { node_id: Cell::new(builder.node_id()), span, type_parameter };
+        builder.finish_node(&node.node_id, node.span, AstType::TSInferType);
+        node
     }
 
     /// Build a [`TSInferType`], and store it in the memory arena.
@@ -25989,7 +26465,10 @@ impl<'a> TSTypeQuery<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeQuery { node_id: Cell::new(builder.node_id()), span, expr_name, type_arguments }
+        let node =
+            TSTypeQuery { node_id: Cell::new(builder.node_id()), span, expr_name, type_arguments };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeQuery);
+        node
     }
 
     /// Build a [`TSTypeQuery`], and store it in the memory arena.
@@ -26134,14 +26613,16 @@ impl<'a> TSImportType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSImportType {
+        let node = TSImportType {
             node_id: Cell::new(builder.node_id()),
             span,
             source,
             options,
             qualifier,
             type_arguments,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSImportType);
+        node
     }
 
     /// Build a [`TSImportType`], and store it in the memory arena.
@@ -26226,7 +26707,10 @@ impl<'a> TSImportTypeQualifiedName<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSImportTypeQualifiedName { node_id: Cell::new(builder.node_id()), span, left, right }
+        let node =
+            TSImportTypeQualifiedName { node_id: Cell::new(builder.node_id()), span, left, right };
+        builder.finish_node(&node.node_id, node.span, AstType::TSImportTypeQualifiedName);
+        node
     }
 
     /// Build a [`TSImportTypeQualifiedName`], and store it in the memory arena.
@@ -26272,7 +26756,7 @@ impl<'a> TSFunctionType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSFunctionType {
+        let node = TSFunctionType {
             node_id: Cell::new(builder.node_id()),
             span,
             type_parameters,
@@ -26280,7 +26764,9 @@ impl<'a> TSFunctionType<'a> {
             params,
             return_type,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSFunctionType);
+        node
     }
 
     /// Build a [`TSFunctionType`], and store it in the memory arena.
@@ -26333,7 +26819,7 @@ impl<'a> TSFunctionType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSFunctionType {
+        let node = TSFunctionType {
             node_id: Cell::new(builder.node_id()),
             span,
             type_parameters,
@@ -26341,7 +26827,9 @@ impl<'a> TSFunctionType<'a> {
             params,
             return_type,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSFunctionType);
+        node
     }
 
     /// Build a [`TSFunctionType`] with `scope_id`, and store it in the memory arena.
@@ -26404,7 +26892,7 @@ impl<'a> TSConstructorType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSConstructorType {
+        let node = TSConstructorType {
             node_id: Cell::new(builder.node_id()),
             span,
             r#abstract,
@@ -26412,7 +26900,9 @@ impl<'a> TSConstructorType<'a> {
             params,
             return_type,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSConstructorType);
+        node
     }
 
     /// Build a [`TSConstructorType`], and store it in the memory arena.
@@ -26465,7 +26955,7 @@ impl<'a> TSConstructorType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSConstructorType {
+        let node = TSConstructorType {
             node_id: Cell::new(builder.node_id()),
             span,
             r#abstract,
@@ -26473,7 +26963,9 @@ impl<'a> TSConstructorType<'a> {
             params,
             return_type,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSConstructorType);
+        node
     }
 
     /// Build a [`TSConstructorType`] with `scope_id`, and store it in the memory arena.
@@ -26540,7 +27032,7 @@ impl<'a> TSMappedType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSMappedType {
+        let node = TSMappedType {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
@@ -26550,7 +27042,9 @@ impl<'a> TSMappedType<'a> {
             optional,
             readonly,
             scope_id: Default::default(),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSMappedType);
+        node
     }
 
     /// Build a [`TSMappedType`], and store it in the memory arena.
@@ -26620,7 +27114,7 @@ impl<'a> TSMappedType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSMappedType {
+        let node = TSMappedType {
             node_id: Cell::new(builder.node_id()),
             span,
             key,
@@ -26630,7 +27124,9 @@ impl<'a> TSMappedType<'a> {
             optional,
             readonly,
             scope_id: Cell::new(Some(scope_id)),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSMappedType);
+        node
     }
 
     /// Build a [`TSMappedType`] with `scope_id`, and store it in the memory arena.
@@ -26695,12 +27191,14 @@ impl<'a> TSTemplateLiteralType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTemplateLiteralType {
+        let node = TSTemplateLiteralType {
             node_id: Cell::new(builder.node_id()),
             span,
             quasis: quasis.into_in(builder.allocator()),
             types: types.into_in(builder.allocator()),
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTemplateLiteralType);
+        node
     }
 
     /// Build a [`TSTemplateLiteralType`], and store it in the memory arena.
@@ -26742,7 +27240,14 @@ impl<'a> TSAsExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSAsExpression { node_id: Cell::new(builder.node_id()), span, expression, type_annotation }
+        let node = TSAsExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            expression,
+            type_annotation,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSAsExpression);
+        node
     }
 
     /// Build a [`TSAsExpression`], and store it in the memory arena.
@@ -26787,12 +27292,14 @@ impl<'a> TSSatisfiesExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSSatisfiesExpression {
+        let node = TSSatisfiesExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
             type_annotation,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSSatisfiesExpression);
+        node
     }
 
     /// Build a [`TSSatisfiesExpression`], and store it in the memory arena.
@@ -26837,7 +27344,14 @@ impl<'a> TSTypeAssertion<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSTypeAssertion { node_id: Cell::new(builder.node_id()), span, type_annotation, expression }
+        let node = TSTypeAssertion {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            type_annotation,
+            expression,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSTypeAssertion);
+        node
     }
 
     /// Build a [`TSTypeAssertion`], and store it in the memory arena.
@@ -26884,13 +27398,15 @@ impl<'a> TSImportEqualsDeclaration<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSImportEqualsDeclaration {
+        let node = TSImportEqualsDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
             module_reference,
             import_kind,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSImportEqualsDeclaration);
+        node
     }
 
     /// Build a [`TSImportEqualsDeclaration`], and store it in the memory arena.
@@ -27014,7 +27530,10 @@ impl<'a> TSExternalModuleReference<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSExternalModuleReference { node_id: Cell::new(builder.node_id()), span, expression }
+        let node =
+            TSExternalModuleReference { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::TSExternalModuleReference);
+        node
     }
 
     /// Build a [`TSExternalModuleReference`], and store it in the memory arena.
@@ -27048,7 +27567,9 @@ impl<'a> TSNonNullExpression<'a> {
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSNonNullExpression { node_id: Cell::new(builder.node_id()), span, expression }
+        let node = TSNonNullExpression { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNonNullExpression);
+        node
     }
 
     /// Build a [`TSNonNullExpression`], and store it in the memory arena.
@@ -27079,7 +27600,9 @@ impl<'a> Decorator<'a> {
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        Decorator { node_id: Cell::new(builder.node_id()), span, expression }
+        let node = Decorator { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::Decorator);
+        node
     }
 }
 
@@ -27095,7 +27618,9 @@ impl<'a> TSExportAssignment<'a> {
     #[inline]
     pub fn new(span: Span, expression: Expression<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSExportAssignment { node_id: Cell::new(builder.node_id()), span, expression }
+        let node = TSExportAssignment { node_id: Cell::new(builder.node_id()), span, expression };
+        builder.finish_node(&node.node_id, node.span, AstType::TSExportAssignment);
+        node
     }
 
     /// Build a [`TSExportAssignment`], and store it in the memory arena.
@@ -27129,7 +27654,9 @@ impl<'a> TSNamespaceExportDeclaration<'a> {
     #[inline]
     pub fn new(span: Span, id: IdentifierName<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        TSNamespaceExportDeclaration { node_id: Cell::new(builder.node_id()), span, id }
+        let node = TSNamespaceExportDeclaration { node_id: Cell::new(builder.node_id()), span, id };
+        builder.finish_node(&node.node_id, node.span, AstType::TSNamespaceExportDeclaration);
+        node
     }
 
     /// Build a [`TSNamespaceExportDeclaration`], and store it in the memory arena.
@@ -27169,12 +27696,14 @@ impl<'a> TSInstantiationExpression<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSInstantiationExpression {
+        let node = TSInstantiationExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
             type_arguments,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::TSInstantiationExpression);
+        node
     }
 
     /// Build a [`TSInstantiationExpression`], and store it in the memory arena.
@@ -27216,7 +27745,14 @@ impl<'a> JSDocNullableType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSDocNullableType { node_id: Cell::new(builder.node_id()), span, type_annotation, postfix }
+        let node = JSDocNullableType {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            type_annotation,
+            postfix,
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::JSDocNullableType);
+        node
     }
 
     /// Build a [`JSDocNullableType`], and store it in the memory arena.
@@ -27258,12 +27794,14 @@ impl<'a> JSDocNonNullableType<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        JSDocNonNullableType {
+        let node = JSDocNonNullableType {
             node_id: Cell::new(builder.node_id()),
             span,
             type_annotation,
             postfix,
-        }
+        };
+        builder.finish_node(&node.node_id, node.span, AstType::JSDocNonNullableType);
+        node
     }
 
     /// Build a [`JSDocNonNullableType`], and store it in the memory arena.
@@ -27298,7 +27836,9 @@ impl JSDocUnknownType {
     #[inline]
     pub fn new<'a>(span: Span, builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
-        JSDocUnknownType { node_id: Cell::new(builder.node_id()), span }
+        let node = JSDocUnknownType { node_id: Cell::new(builder.node_id()), span };
+        builder.finish_node(&node.node_id, node.span, AstType::JSDocUnknownType);
+        node
     }
 
     /// Build a [`JSDocUnknownType`], and store it in the memory arena.

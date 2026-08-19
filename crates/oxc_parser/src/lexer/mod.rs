@@ -15,6 +15,7 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     UniquePromise,
+    comment_attacher::ParserCommentAttacher,
     config::LexerConfig as Config,
     diagnostics::{self, ParserDiagnostic},
 };
@@ -94,6 +95,8 @@ pub struct Lexer<'a, C: Config> {
 
     pub(crate) trivia_builder: TriviaBuilder<'a>,
 
+    comment_attacher: &'a ParserCommentAttacher<'a>,
+
     /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
     pub escaped_strings: FxHashMap<u32, &'a str>,
 
@@ -144,6 +147,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
+        let comment_attacher = allocator.alloc(ParserCommentAttacher::new(allocator));
         Self {
             allocator,
             source,
@@ -151,13 +155,19 @@ impl<'a, C: Config> Lexer<'a, C> {
             token,
             errors: vec![],
             deferred_module_errors: vec![],
-            trivia_builder: TriviaBuilder::new_in(allocator),
+            trivia_builder: TriviaBuilder::new_with_attacher(allocator, comment_attacher),
+            comment_attacher,
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
             tokens,
             config,
         }
+    }
+
+    #[inline]
+    pub(crate) fn comment_attacher(&self) -> &'a ParserCommentAttacher<'a> {
+        self.comment_attacher
     }
 
     /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.

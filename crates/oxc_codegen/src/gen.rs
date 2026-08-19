@@ -753,7 +753,7 @@ impl Gen for VariableDeclarator<'_> {
             type_annotation.print(p, ctx);
         }
         if let Some(init) = &self.init {
-            p.print_dangling_comments(self.node_id());
+            p.print_dangling_comments(self.node_id(), self.id.span().end, init.span().start);
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
@@ -1628,7 +1628,8 @@ impl GenExpr for CallExpression<'_> {
             if !cjs_module_lexer::try_print_define_property_call(p, self, ctx)
                 && !cjs_module_lexer::try_print_require_call(p, self)
             {
-                p.print_dangling_comments(self.node_id());
+                let end = self.arguments.first().map_or(self.span.end, |arg| arg.span().start);
+                p.print_dangling_comments(self.node_id(), self.callee.span().end, end);
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
         });
@@ -2458,7 +2459,8 @@ impl GenExpr for NewExpression<'_> {
             // Omit the "()" when minifying, but only when safe to do so
             if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
             {
-                p.print_dangling_comments(self.node_id());
+                let end = self.arguments.first().map_or(self.span.end, |arg| arg.span().start);
+                p.print_dangling_comments(self.node_id(), self.callee.span().end, end);
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
         });

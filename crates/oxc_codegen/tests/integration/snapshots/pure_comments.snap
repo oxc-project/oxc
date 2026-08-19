@@ -189,7 +189,9 @@ isFunction(options)
 : options
                 
 ----------
-isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+isFunction(options) ? 
+// by Rollup, so we have to wrap it in a pure-annotated IIFE.
+/*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
 
 ########## 10
 isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
@@ -403,10 +405,10 @@ let single_num_yes = /* @__PURE__ */ foo(bar);
 let single_num_no = /* @__PURE__ */ foo(bar());
 let new_single_num_yes = /* @__PURE__ */ new foo(bar);
 let new_single_num_no = /* @__PURE__ */ new foo(bar());
-let bad_no = foo(bar);
-let new_bad_no = new foo(bar);
-let parens_no = foo(bar);
-let new_parens_no = new foo(bar);
+let bad_no = /* __PURE__ */ foo(bar);
+let new_bad_no = /* __PURE__ */ new foo(bar);
+let parens_no = /* @__PURE__ */ foo(bar);
+let new_parens_no = new /* @__PURE__ */ foo(bar);
 let exp_no = /* @__PURE__ */ foo() ** foo();
 let new_exp_no = /* @__PURE__ */ new foo() ** foo();
 

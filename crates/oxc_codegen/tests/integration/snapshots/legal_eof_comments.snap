@@ -110,9 +110,7 @@ function foo() {
 /**
 * @preserve
 */
-/**
-* @preserve
-*/
+
 
 ########## 8
 /**
@@ -124,9 +122,7 @@ function foo() {
 * @preserve
 */
 
-/**
-* @preserve
-*/
+
 
 ########## 9
 /*!

@@ -96,7 +96,7 @@ impl Generator for AstBuilderGenerator {
             use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
 
             ///@@line_break
-            use crate::{ast::*, builder::{AstBuild, GetAstBuilder}};
+            use crate::{AstType, ast::*, builder::{AstBuild, GetAstBuilder}};
 
             #impls
         };
@@ -255,6 +255,14 @@ fn generate_builder_methods_for_struct_impl(
     let params_docs = generate_doc_comment_for_params(params);
     let unused_builder_attr =
         (!fields.to_string().contains("builder")).then(|| quote!(#[expect(unused_variables)]));
+    let finish_node = params.iter().any(|param| param.is_node_id).then(|| {
+        quote! {
+            let node = #struct_ident { #fields };
+            builder.finish_node(&node.node_id, node.span, AstType::#struct_ident);
+            node
+        }
+    });
+    let build_node = finish_node.unwrap_or_else(|| quote!( #struct_ident { #fields } ));
 
     let new_method = quote! {
         ///@@line_break
@@ -264,7 +272,7 @@ fn generate_builder_methods_for_struct_impl(
         #[inline]
         pub fn #new_fn_name #lifetime_param (#fn_params, builder: &impl GetAstBuilder<'a>) -> Self {
             let builder = builder.builder();
-            #struct_ident { #fields }
+            #build_node
         }
     };
 

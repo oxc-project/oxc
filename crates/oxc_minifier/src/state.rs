@@ -118,8 +118,6 @@ pub struct MinifierState<'a> {
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
 
-    /// Program-owned comment attachments, type-erased so this state can borrow it for exactly the
-    /// compressor run without constraining the AST arena lifetime.
     comments: NonNull<()>,
 }
 
@@ -150,8 +148,7 @@ impl<'a> MinifierState<'a> {
 
     #[inline]
     pub(crate) fn comments(&self) -> &CommentStore<'a> {
-        // SAFETY: `MinifierState` is created and consumed within a compressor call while the
-        // referenced `Program` remains alive and is not moved.
+        // SAFETY: State is confined to the compressor run while `Program` remains alive.
         unsafe { self.comments.cast().as_ref() }
     }
 

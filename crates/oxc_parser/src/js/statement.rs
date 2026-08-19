@@ -69,7 +69,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
-            let stmt_node_id = stmt.node_id();
 
             // A module declaration commits the goal eagerly while it is parsed, so it does not
             // require a restart solely because it contains an `await` identifier.
@@ -97,7 +96,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
                         let directive = Directive::new(span, string, Str::from(src), self);
-                        directive.set_node_id(stmt_node_id);
                         directives.push(directive);
                         continue;
                     }
@@ -135,9 +133,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
-        let statement_start = self.cur_start();
-        let leading_comment_range =
-            self.lexer.trivia_builder.comment_range(CommentPosition::Leading, statement_start);
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
@@ -213,26 +208,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if has_no_side_effects_comment {
             Self::set_pure_on_function_stmt(&mut stmt);
         }
-
-        let trailing_comment_range =
-            self.lexer.trivia_builder.comment_range(CommentPosition::Trailing, stmt.span().end);
-        let node_id = if leading_comment_range.is_empty() && trailing_comment_range.is_empty() {
-            stmt.node_id()
-        } else {
-            let node_id = self.ast.ensure_node_id(stmt.node_id());
-            stmt.set_node_id(node_id);
-            node_id
-        };
-        self.lexer.trivia_builder.attach_comments(
-            node_id,
-            CommentPosition::Leading,
-            leading_comment_range.map(CommentId::from_usize),
-        );
-        self.lexer.trivia_builder.attach_comments(
-            node_id,
-            CommentPosition::Trailing,
-            trailing_comment_range.map(CommentId::from_usize),
-        );
 
         stmt
     }

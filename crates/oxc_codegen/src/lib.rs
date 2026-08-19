@@ -21,7 +21,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 mod binary_expr_visitor;
 mod cjs_module_lexer;
@@ -132,6 +132,7 @@ pub struct Codegen<'a> {
     trailing_comments: CommentsMap,
     trailing_node_comments: FxHashMap<NodeId, Vec<Comment>>,
     dangling_node_comments: FxHashMap<NodeId, Vec<Comment>>,
+    printed_comment_spans: FxHashSet<Span>,
     has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
@@ -205,6 +206,7 @@ impl<'a> Codegen<'a> {
             trailing_comments: CommentsMap::default(),
             trailing_node_comments: FxHashMap::default(),
             dangling_node_comments: FxHashMap::default(),
+            printed_comment_spans: FxHashSet::default(),
             has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),

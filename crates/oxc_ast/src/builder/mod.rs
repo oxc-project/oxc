@@ -75,8 +75,13 @@
 //!
 //! Explanation of the motivation for this change here: <https://github.com/oxc-project/oxc/issues/23043>.
 
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, GetAllocator};
+use oxc_span::Span;
 use oxc_syntax::node::NodeId;
+
+use crate::AstType;
 
 mod custom;
 
@@ -105,6 +110,10 @@ mod custom;
 pub trait AstBuild<'a>: GetAstBuilder<'a, Builder = Self> + GetAllocator<'a> {
     /// Get [`NodeId`] to assign to an AST node.
     fn node_id(&self) -> NodeId;
+
+    /// Finish constructing an AST node.
+    #[inline]
+    fn finish_node(&self, _node_id: &Cell<NodeId>, _span: Span, _ty: AstType) {}
 }
 
 /// Trait for types which provide access to an [`AstBuild`]er.

@@ -1,8 +1,5 @@
-use std::ptr::NonNull;
-
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
-    CommentStore,
     ast::{Expression, IdentifierReference, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
@@ -10,7 +7,6 @@ use oxc_semantic::Scoping;
 use oxc_span::Span;
 use oxc_str::Ident;
 use oxc_syntax::{
-    node::NodeId,
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
@@ -122,31 +118,10 @@ pub struct TraverseCtx<'a, State> {
     pub ancestry: TraverseAncestry<'a>,
     pub scoping: TraverseScoping<'a>,
     pub ast: AstBuilder<'a>,
-    comments: Option<NonNull<()>>,
 }
 
 // Public methods
 impl<'a, State> TraverseCtx<'a, State> {
-    /// Reconcile an enum slot whose traverser callback replaced its AST node.
-    pub(crate) fn reconcile_comment_replacement(
-        &self,
-        old_node_id: NodeId,
-        new_node_id: NodeId,
-    ) -> Option<NodeId> {
-        let comments = self.comments?;
-        // SAFETY: Set only by `ReusableTraverseCtx::new_with_comments`; traversal cannot outlive
-        // the borrowed Program.
-        let comments = unsafe { comments.cast::<CommentStore<'a>>().as_ref() };
-        if old_node_id == NodeId::DUMMY || comments.node_comments(old_node_id).is_none() {
-            return None;
-        }
-        if new_node_id == NodeId::DUMMY {
-            Some(old_node_id)
-        } else {
-            comments.rekey_node(old_node_id, new_node_id);
-            None
-        }
-    }
     /// Allocate a node in the arena.
     ///
     /// Returns a [`Box<'a, T>`](ArenaBox).
@@ -698,7 +673,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         let ancestry = TraverseAncestry::new();
         let scoping = TraverseScoping::new(scoping);
         let ast = AstBuilder::new(allocator);
-        Self { state, ancestry, scoping, ast, comments: None }
+        Self { state, ancestry, scoping, ast }
     }
 
     /// Shortcut for `self.ancestry.push_stack`, to make `walk_*` methods less verbose.

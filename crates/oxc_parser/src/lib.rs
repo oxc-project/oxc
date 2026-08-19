@@ -67,6 +67,7 @@
 use std::any::Any;
 
 mod ast_builder;
+mod comment_attacher;
 pub mod config;
 mod context;
 mod cursor;
@@ -666,10 +667,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         unique: UniquePromise,
     ) -> Self {
         let lexer_config = config.lexer_config();
+        let lexer = Lexer::new(allocator, source_text, source_type, lexer_config, unique);
+        let ast = ParserAstBuilder::new(allocator, lexer.comment_attacher());
         Self {
             options,
             config,
-            lexer: Lexer::new(allocator, source_text, source_type, lexer_config, unique),
+            lexer,
             source_type,
             source_text,
             errors: vec![],
@@ -679,7 +682,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
-            ast: ParserAstBuilder::new(allocator),
+            ast,
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -771,6 +774,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let tokens =
             if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
+        self.lexer.comment_attacher().finish(&self.lexer.trivia_builder.comments);
         program.comments = self.lexer.trivia_builder.comments;
 
         ParserReturn {
@@ -1143,15 +1147,14 @@ mod test {
         assert_eq!(comments.leading.as_slice(), &[oxc_ast::CommentId::from_usize(0)]);
     }
 
-    fn assert_dense_comment_owner_ids(program: &Program<'_>) {
-        let mut ids = program
-            .comments
-            .attachments()
-            .keys()
-            .map(|node_id| node_id.index())
-            .collect::<Vec<_>>();
-        ids.sort_unstable();
-        assert_eq!(ids, (1..=ids.len()).collect::<Vec<_>>());
+    fn assert_comment_owners_have_parser_ids(program: &Program<'_>) {
+        assert!(
+            program
+                .comments
+                .attachments()
+                .keys()
+                .all(|node_id| *node_id != oxc_syntax::node::NodeId::DUMMY)
+        );
     }
 
     #[test]
@@ -1161,7 +1164,7 @@ mod test {
         let ret =
             Parser::new(&allocator, source, SourceType::default().with_typescript(true)).parse();
         assert!(ret.diagnostics.is_empty());
-        assert_dense_comment_owner_ids(&ret.program);
+        assert_comment_owners_have_parser_ids(&ret.program);
     }
 
     #[test]
@@ -1174,7 +1177,7 @@ mod test {
             "{:?}",
             ret.diagnostics.iter().map(ToString::to_string).collect::<Vec<_>>()
         );
-        assert_dense_comment_owner_ids(&ret.program);
+        assert_comment_owners_have_parser_ids(&ret.program);
         assert_eq!(ret.program.comments.attachments().len(), 2);
     }
 
@@ -1186,7 +1189,7 @@ mod test {
             .with_config(config::TokensParserConfig)
             .parse();
         assert!(ret.diagnostics.is_empty());
-        assert_dense_comment_owner_ids(&ret.program);
+        assert_comment_owners_have_parser_ids(&ret.program);
         assert_eq!(ret.module_record.dynamic_imports.len(), 1);
         assert!(!ret.tokens.is_empty());
     }

@@ -31,7 +31,6 @@ use crate::{
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
-    comment_attacher::CommentAttacher,
     diagnostics::redeclaration,
     label::UnusedLabels,
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
@@ -126,8 +125,6 @@ pub struct SemanticBuilder<'a> {
 
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
-
-    comment_attacher: Option<CommentAttacher<'a>>,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -177,7 +174,6 @@ impl<'a> SemanticBuilder<'a> {
             class_table_builder: ClassTableBuilder::new(),
             #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
-            comment_attacher: None,
         }
     }
 
@@ -315,8 +311,6 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
-        self.comment_attacher =
-            (!program.comments.is_empty()).then(|| CommentAttacher::new(&program.comments));
         #[cfg(feature = "jsdoc")]
         {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
@@ -353,9 +347,6 @@ impl<'a> SemanticBuilder<'a> {
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
-        if let Some(comment_attacher) = self.comment_attacher.take() {
-            comment_attacher.finish();
-        }
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
@@ -450,12 +441,8 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         // 1. Standalone node-id increment.
-        let old_node_id = kind.node_id();
         let node_id = self.node_store.alloc_node_id();
         kind.set_node_id(node_id);
-        if let Some(comment_attacher) = &mut self.comment_attacher {
-            comment_attacher.enter_node(kind, old_node_id, node_id);
-        }
         let parent_node_id = self.node_store.current_node_id;
         self.node_store.current_node_id = node_id;
 
@@ -853,9 +840,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             checker::check(kind, self);
-        }
-        if let Some(comment_attacher) = &mut self.comment_attacher {
-            comment_attacher.leave_node(kind);
         }
         self.pop_ast_node();
     }

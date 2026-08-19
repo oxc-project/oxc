@@ -193,15 +193,13 @@ fn test_minify_comment_glue_idempotency() {
     );
 }
 
-// Normal-comment groups must NOT be printed before a logical RHS: the minifier
-// merges statements into logical right-hand sides (`if(a)x;if(b)x;` ->
-// `if(a||(b,..))x`), which can anchor a removed statement's banner comments at
-// the RHS span start; printing them mid-expression breaks minify idempotency
-// (minifier_test262 `language/asi/S7.9_A5.8_T1.js`). Only annotation-bearing
-// groups (coverage directives etc.) are printed.
+// Parser-owned comments retain their actual logical RHS instead of being inferred from a moved
+// statement's span, so normal comments can be printed here without misplacing banner trivia.
 #[test]
-fn test_normal_comment_before_logical_rhs_not_printed() {
-    test("const value = a ?? /* plain comment */ [];", "const value = a ?? [];\n");
+fn test_normal_comment_before_logical_rhs_is_printed() {
+    test_same("const value = a ?? /* plain comment */ [];\n");
+    // Line-comment groups at this boundary remain token-boundary fallback and are not owned by the
+    // RHS expression yet.
     test("const value = a || //\n////////\n(b, c);", "const value = a || (b, c);\n");
 }
 

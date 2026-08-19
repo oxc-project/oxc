@@ -83,6 +83,7 @@ impl Codegen<'_> {
                 let comment = comments[comment_id.index()];
                 if self.should_print_comment(comment) && !self.is_html_like_comment(comment) {
                     self.trailing_node_comments.entry(node_id).or_default().push(comment);
+                    self.trailing_comments.entry(comment.attached_to).or_default().push(comment);
                 }
             }
             for &comment_id in &node_comments.dangling {
@@ -90,6 +91,7 @@ impl Codegen<'_> {
                 let comment = comments[comment_id.index()];
                 if self.should_print_comment(comment) {
                     self.dangling_node_comments.entry(node_id).or_default().push(comment);
+                    self.add_positional_comment(comment);
                 }
             }
         }
@@ -142,9 +144,28 @@ impl Codegen<'_> {
                 if let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to) {
                     self.orphan_comment_keys.insert(idx, comment.attached_to);
                 }
-                self.comments.entry(comment.attached_to).or_default().push(comment);
             }
+            self.add_positional_comment(comment);
             self.node_comments.entry(node_id).or_default().push(comment);
+        }
+    }
+
+    fn add_positional_comment(&mut self, comment: Comment) {
+        if comment.is_leading() {
+            self.comments.entry(comment.attached_to).or_default().push(comment);
+        } else if !self.is_html_like_comment(comment) {
+            self.trailing_comments.entry(comment.attached_to).or_default().push(comment);
+        }
+    }
+
+    fn remove_positional_comment(&mut self, comment: Comment) {
+        let comments =
+            if comment.is_leading() { &mut self.comments } else { &mut self.trailing_comments };
+        if let Some(boundary_comments) = comments.get_mut(&comment.attached_to) {
+            boundary_comments.retain(|candidate| candidate.span != comment.span);
+            if boundary_comments.is_empty() {
+                comments.remove(&comment.attached_to);
+            }
         }
     }
 
@@ -222,7 +243,26 @@ impl Codegen<'_> {
         if self.comments.is_empty() {
             return None;
         }
-        self.comments.remove(&start)
+        let comments = self.comments.remove(&start)?;
+        self.remove_node_comment_duplicates(&comments);
+        Some(comments)
+    }
+
+    fn remove_node_comment_duplicates(&mut self, comments: &[Comment]) {
+        let contains =
+            |candidate: &Comment| comments.iter().any(|comment| comment.span == candidate.span);
+        for node_comments in self.node_comments.values_mut() {
+            node_comments.retain(|comment| !contains(comment));
+        }
+        self.node_comments.retain(|_, comments| !comments.is_empty());
+        for node_comments in self.trailing_node_comments.values_mut() {
+            node_comments.retain(|comment| !contains(comment));
+        }
+        self.trailing_node_comments.retain(|_, comments| !comments.is_empty());
+        for node_comments in self.dangling_node_comments.values_mut() {
+            node_comments.retain(|comment| !contains(comment));
+        }
+        self.dangling_node_comments.retain(|_, comments| !comments.is_empty());
     }
 
     pub(crate) fn get_node_comments(
@@ -230,20 +270,24 @@ impl Codegen<'_> {
         node_id: NodeId,
         start: u32,
     ) -> Option<Vec<Comment>> {
-        self.take_node_comments(node_id).or_else(|| self.get_comments(start))
+        self.take_node_comments_at(node_id, start).or_else(|| self.get_comments(start))
+    }
+
+    fn take_node_comments_at(&mut self, node_id: NodeId, start: u32) -> Option<Vec<Comment>> {
+        if !self
+            .node_comments
+            .get(&node_id)
+            .is_some_and(|comments| comments.iter().any(|comment| comment.attached_to == start))
+        {
+            return None;
+        }
+        self.take_node_comments(node_id)
     }
 
     fn take_node_comments(&mut self, node_id: NodeId) -> Option<Vec<Comment>> {
         if let Some(comments) = self.node_comments.remove(&node_id) {
             for comment in &comments {
-                if preserve_when_orphaned(*comment)
-                    && let Some(boundary_comments) = self.comments.get_mut(&comment.attached_to)
-                {
-                    boundary_comments.retain(|candidate| candidate.span != comment.span);
-                    if boundary_comments.is_empty() {
-                        self.comments.remove(&comment.attached_to);
-                    }
-                }
+                self.remove_positional_comment(*comment);
             }
             Some(comments)
         } else {
@@ -265,11 +309,24 @@ impl Codegen<'_> {
 
     #[cold]
     pub(crate) fn print_trailing_comments(&mut self, node_id: NodeId, end: u32) {
-        let comments = self
+        let comments = if self
             .trailing_node_comments
-            .remove(&node_id)
-            .or_else(|| self.trailing_comments.remove(&end));
-        let Some(comments) = comments else { return };
+            .get(&node_id)
+            .is_some_and(|comments| comments.iter().any(|comment| comment.attached_to == end))
+            && let Some(comments) = self.trailing_node_comments.remove(&node_id)
+        {
+            for comment in &comments {
+                self.remove_positional_comment(*comment);
+            }
+            Some(comments)
+        } else {
+            self.trailing_comments.remove(&end)
+        };
+        let Some(mut comments) = comments else { return };
+        comments.retain(|comment| !self.printed_comment_spans.contains(&comment.span));
+        if comments.is_empty() {
+            return;
+        }
 
         self.print_semicolon_if_needed();
         self.code.trim_trailing_ascii_whitespace_and_newlines();
@@ -304,8 +361,10 @@ impl Codegen<'_> {
     }
 
     #[inline]
-    pub(crate) fn print_leading_comments_anchored_to_node(&mut self, node_id: NodeId, _start: u32) {
-        if let Some(comments) = self.take_node_comments(node_id) {
+    pub(crate) fn print_leading_comments_anchored_to_node(&mut self, node_id: NodeId, start: u32) {
+        if let Some(comments) =
+            self.take_node_comments_at(node_id, start).or_else(|| self.get_comments(start))
+        {
             self.print_comments(&comments);
             if self.last_byte() == Some(b'\n') {
                 self.print_indent();
@@ -321,11 +380,7 @@ impl Codegen<'_> {
         node_id: NodeId,
         start: u32,
     ) {
-        if self.node_comments.contains_key(&node_id) {
-            self.print_leading_comments_anchored_to_node(node_id, start);
-        } else {
-            self.print_leading_comments_anchored_to_self(start);
-        }
+        self.print_leading_comments_anchored_to_node(node_id, start);
     }
 
     /// Print a property-key annotation attached directly to a string or template literal.
@@ -447,6 +502,7 @@ impl Codegen<'_> {
         let key = self.comments.keys().find(|&&k| k > start && k < end).copied();
         if let Some(key) = key {
             let comments = self.comments.remove(&key).unwrap();
+            self.remove_node_comment_duplicates(&comments);
             self.print_comments(&comments);
             return true;
         }
@@ -454,13 +510,28 @@ impl Codegen<'_> {
     }
 
     /// Print comments owned by an interior punctuation position of `node_id`.
-    pub(crate) fn print_dangling_comments(&mut self, node_id: NodeId) -> bool {
-        if let Some(comments) = self.dangling_node_comments.remove(&node_id) {
+    pub(crate) fn print_dangling_comments(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+        end: u32,
+    ) -> bool {
+        if self.dangling_node_comments.get(&node_id).is_some_and(|comments| {
+            comments.iter().any(|comment| comment.attached_to > start && comment.attached_to < end)
+        }) && let Some(comments) = self.dangling_node_comments.remove(&node_id)
+        {
+            for comment in &comments {
+                self.remove_positional_comment(*comment);
+            }
             self.print_comments(&comments);
             self.clear_pending_indent_space();
             return true;
         }
-        false
+        let printed = self.print_comments_in_range(start, end);
+        if printed {
+            self.clear_pending_indent_space();
+        }
+        printed
     }
 
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
@@ -484,6 +555,12 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_comments(&mut self, comments: &[Comment]) {
+        let comments = comments
+            .iter()
+            .copied()
+            .filter(|comment| !self.printed_comment_spans.contains(&comment.span))
+            .collect::<Vec<_>>();
+        let comments = comments.as_slice();
         let Some((first, rest)) = comments.split_first() else {
             return;
         };
@@ -546,6 +623,9 @@ impl Codegen<'_> {
     }
 
     fn print_comment(&mut self, comment: &Comment) {
+        if !self.printed_comment_spans.insert(comment.span) {
+            return;
+        }
         let Some(source_text) = self.source_text else {
             return;
         };

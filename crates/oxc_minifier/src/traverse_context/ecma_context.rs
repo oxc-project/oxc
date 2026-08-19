@@ -11,6 +11,7 @@ use oxc_ecmascript::{
     },
 };
 use oxc_semantic::{IsGlobalReference, SymbolId};
+use oxc_span::{GetSpan, Span};
 use oxc_str::format_str;
 use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeFlags};
 
@@ -440,24 +441,47 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         DroppedSubtreeCollector::new(&mut self.state.pass_changes)
     }
 
-    /// Transfer comments from a replaced node to its semantic replacement.
-    ///
-    /// Returns the old ID when an unassigned replacement should inherit it. A replacement which
-    /// already has an identity keeps it and the comment store is rekeyed instead.
     fn transfer_replaced_node_comments(
         &self,
         old_node_id: NodeId,
+        old_span: Span,
         new_node_id: NodeId,
     ) -> Option<NodeId> {
-        if old_node_id == NodeId::DUMMY
-            || self.state.comments().node_comments(old_node_id).is_none()
-        {
+        if old_node_id == NodeId::DUMMY {
             return None;
         }
+        let comments = self.state.comments();
+        let belongs_to_node = |node_comments: &oxc_ast::NodeComments<'_>| {
+            node_comments
+                .leading
+                .iter()
+                .all(|id| comments[id.index()].attached_to == old_span.start)
+                && node_comments
+                    .trailing
+                    .iter()
+                    .all(|id| comments[id.index()].attached_to == old_span.end)
+                && node_comments.dangling.iter().all(|id| {
+                    let boundary = comments[id.index()].attached_to;
+                    boundary > old_span.start && boundary < old_span.end
+                })
+        };
+        let attachments = comments.attachments();
+        let owner_node_id = attachments
+            .get(&old_node_id)
+            .filter(|node_comments| belongs_to_node(node_comments))
+            .map(|_| old_node_id)
+            .or_else(|| {
+                attachments
+                    .iter()
+                    .find(|(_, node_comments)| belongs_to_node(node_comments))
+                    .map(|(&node_id, _)| node_id)
+            });
+        drop(attachments);
+        let owner_node_id = owner_node_id?;
         if new_node_id == NodeId::DUMMY {
-            Some(old_node_id)
+            Some(owner_node_id)
         } else {
-            self.state.comments().rekey_node(old_node_id, new_node_id);
+            comments.rekey_node(owner_node_id, new_node_id);
             None
         }
     }
@@ -469,7 +493,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// and the pass revisit request together.
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
-        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+        if let Some(node_id) =
+            self.transfer_replaced_node_comments(slot.node_id(), slot.span(), new.node_id())
+        {
             new.set_node_id(node_id);
         }
         self.dropped_subtree_collector().visit_expression(slot);
@@ -496,7 +522,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
-        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+        if let Some(node_id) =
+            self.transfer_replaced_node_comments(slot.node_id(), slot.span(), new.node_id())
+        {
             new.set_node_id(node_id);
         }
         self.dropped_subtree_collector().visit_statement(slot);
@@ -511,7 +539,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut AssignmentTargetProperty<'a>,
         new: AssignmentTargetProperty<'a>,
     ) {
-        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+        if let Some(node_id) =
+            self.transfer_replaced_node_comments(slot.node_id(), slot.span(), new.node_id())
+        {
             new.set_node_id(node_id);
         }
         self.dropped_subtree_collector().visit_assignment_target_property(slot);
@@ -522,7 +552,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
-        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+        if let Some(node_id) =
+            self.transfer_replaced_node_comments(slot.node_id(), slot.span(), new.node_id())
+        {
             new.set_node_id(node_id);
         }
         self.dropped_subtree_collector().visit_property_key(slot);
@@ -538,7 +570,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut ForStatementLeft<'a>,
         new: ForStatementLeft<'a>,
     ) {
-        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+        if let Some(node_id) =
+            self.transfer_replaced_node_comments(slot.node_id(), slot.span(), new.node_id())
+        {
             new.set_node_id(node_id);
         }
         self.dropped_subtree_collector().visit_for_statement_left(slot);

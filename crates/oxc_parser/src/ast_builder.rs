@@ -1,8 +1,14 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Allocator, GetAllocator};
-use oxc_ast::builder::{AstBuild, GetAstBuilder};
+use oxc_ast::{
+    AstType,
+    builder::{AstBuild, GetAstBuilder},
+};
+use oxc_span::Span;
 use oxc_syntax::node::NodeId;
+
+use crate::comment_attacher::ParserCommentAttacher;
 
 /// AST builder used by the parser.
 ///
@@ -12,13 +18,17 @@ use oxc_syntax::node::NodeId;
 pub(crate) struct ParserAstBuilder<'a> {
     allocator: &'a Allocator,
     next_node_id: Cell<u32>,
+    comment_attacher: &'a ParserCommentAttacher<'a>,
 }
 
 impl<'a> ParserAstBuilder<'a> {
     #[inline]
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        comment_attacher: &'a ParserCommentAttacher<'a>,
+    ) -> Self {
         // `0` is reserved for `Program` (`NodeId::ROOT`) and doubles as `NodeId::DUMMY`.
-        Self { allocator, next_node_id: Cell::new(1) }
+        Self { allocator, next_node_id: Cell::new(1), comment_attacher }
     }
 
     #[inline]
@@ -30,6 +40,7 @@ impl<'a> ParserAstBuilder<'a> {
     pub fn rewind(&self, next_node_id: u32) {
         debug_assert!(next_node_id <= self.next_node_id.get());
         self.next_node_id.set(next_node_id);
+        self.comment_attacher.rewind_nodes(NodeId::new(next_node_id as usize));
     }
 
     /// Return `node_id` if it is already real, otherwise allocate a new parser-owned ID.
@@ -48,6 +59,15 @@ impl<'a> AstBuild<'a> for ParserAstBuilder<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         NodeId::DUMMY
+    }
+
+    fn finish_node(&self, node_id: &Cell<NodeId>, span: Span, ty: AstType) {
+        if !self.comment_attacher.node_needs_id(span, ty) {
+            return;
+        }
+        let id = self.ensure_node_id(node_id.get());
+        node_id.set(id);
+        self.comment_attacher.finish_node(id, span, ty);
     }
 }
 
@@ -74,7 +94,8 @@ mod tests {
     #[test]
     fn allocates_ids_only_for_committed_comment_owners() {
         let allocator = Allocator::default();
-        let builder = ParserAstBuilder::new(&allocator);
+        let comment_attacher = ParserCommentAttacher::new(&allocator);
+        let builder = ParserAstBuilder::new(&allocator, &comment_attacher);
         assert_eq!(builder.node_id(), NodeId::DUMMY);
         assert_eq!(builder.next_node_id(), 1);
         assert_eq!(builder.ensure_node_id(NodeId::DUMMY), NodeId::new(1));

@@ -339,10 +339,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let current_next_node_id = self.ast.next_node_id();
         if current_next_node_id != next_node_id {
-            self.lexer.trivia_builder.clear_comment_owners(
-                oxc_syntax::node::NodeId::new(next_node_id as usize),
-                current_next_node_id,
-            );
             self.ast.rewind(next_node_id);
         }
 

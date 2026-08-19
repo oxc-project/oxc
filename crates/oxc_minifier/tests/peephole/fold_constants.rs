@@ -28,7 +28,7 @@ fn replacement_preserves_node_attached_comments() {
         oxc_span::SourceType::mjs(),
         Some(crate::default_options()),
     );
-    assert_eq!(output, "NOOP(/* keep */ 2);\n");
+    assert_eq!(output, "NOOP(\n\t/* keep */\n\t2\n);\n");
 }
 
 #[test]

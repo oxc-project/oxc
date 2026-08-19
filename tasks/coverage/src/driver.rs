@@ -10,7 +10,7 @@ use oxc::{
         ast::{Program, RegExpLiteral},
     },
     ast_visit::{VisitJs, walk_js},
-    codegen::{CodegenOptions, CodegenReturn},
+    codegen::{CodegenOptions, CodegenReturn, CommentOptions},
     diagnostics::{Diagnostics, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
@@ -65,11 +65,15 @@ impl CompilerInterface for Driver {
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
         self.codegen.then(|| {
-            if self.remove_whitespace {
+            let mut options = if self.remove_whitespace {
                 CodegenOptions::minify()
             } else {
                 CodegenOptions::default()
-            }
+            };
+            // Coverage compares generated programs for semantics/idempotency; comment fidelity has
+            // dedicated codegen integration tests and must not alter these baselines.
+            options.comments = CommentOptions::disabled();
+            options
         })
     }
 
