@@ -276,6 +276,10 @@ impl<'a> PeepholeOptimizations {
             Ancestor::BinaryExpressionLeft(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
                     && e.right().value_type(ctx).is_number()
+                    // The right operand is evaluated between the argument of `+`
+                    // and the conversion the operator performs on it, so it must
+                    // not affect that conversion. See the note below.
+                    && !e.right().may_have_side_effects(ctx)
             }
             Ancestor::BinaryExpressionRight(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
@@ -312,7 +316,26 @@ impl<'a> PeepholeOptimizations {
     /// - When `a` is not a object nor a BigInt, `ToNumeric(a)` and `ToNumber(a)` works the same.
     ///   Because the step 2 in `ToNumeric` is always `false`.
     ///
-    /// Thus, removing `+` is fine.
+    /// Thus, removing `+` is fine as far as the conversion itself goes.
+    ///
+    /// What it does change is *when* the conversion happens. Step 1 runs while
+    /// evaluating `+a`, before `n` is evaluated at all; step 2 runs after. So
+    /// evaluating `n` must not affect the conversion of `a`:
+    ///
+    /// ```js
+    /// var xs = [];
+    /// (+xs) - (xs.push(1), 0); // 0, converted while `xs` was still empty
+    /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
+    /// ```
+    ///
+    /// Requiring `n` to be free of side effects rules that out. `n` cannot
+    /// observe the conversion either, because the conversion runs no user code
+    /// under the "Coercion Methods Are Pure" assumption (see
+    /// `docs/ASSUMPTIONS.md`).
+    ///
+    /// For `n - +a` the ordering holds regardless: `n` is evaluated first
+    /// either way, and step 3 is a no-op because `n` is already a number, so
+    /// nothing runs between evaluating `a` and converting it.
     fn is_binary_operator_that_does_number_conversion(operator: BinaryOperator) -> bool {
         matches!(
             operator,
