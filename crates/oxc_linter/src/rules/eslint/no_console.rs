@@ -190,7 +190,6 @@ fn test() {
 
     let pass = vec![
         ("Console.info(foo)", None, None),
-        // `console` is shadowed here; the global is only referenced on the first line
         (
             "var c = console; function f(myLogger) { const console = myLogger; console.log(foo); }",
             None,
