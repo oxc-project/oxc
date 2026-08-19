@@ -47,12 +47,16 @@ const PRINTER_PATHS = [
   "./print_ts.js",
   "./print_js_maps.js",
   "./print_ts_maps.js",
+  "./print_js_comments.js",
+  "./print_ts_comments.js",
+  "./print_js_maps_comments.js",
+  "./print_ts_maps_comments.js",
 ];
 
 /**
  * The loaded builds, in the same order as `PRINTER_PATHS`, and `null` until first used.
  */
-const printers: (PrintModule["printSync"] | null)[] = [null, null, null, null];
+const printers: (PrintModule["printSync"] | null)[] = Array(8).fill(null);
 
 /**
  * Print `node`, returning an object including the generated code.
@@ -82,6 +86,7 @@ export function printSync(
       }
       index |= 2;
     }
+    if (options.comments != null && options.comments.length !== 0) index |= 4;
   }
 
   let print = printers[index];

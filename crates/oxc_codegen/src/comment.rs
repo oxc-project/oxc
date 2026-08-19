@@ -3,11 +3,11 @@ use std::borrow::Cow;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{
-    Comment, CommentKind,
+    Comment, CommentId, CommentKind, CommentStore,
     ast::{Expression, Program},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
+use oxc_syntax::{line_terminator::LineTerminatorSplitter, node::NodeId};
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
@@ -68,11 +68,37 @@ impl AnnotationKind {
 }
 
 impl Codegen<'_> {
-    pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
+    pub(crate) fn build_comments(&mut self, comments: &CommentStore<'_>) {
         if self.options.comments == CommentOptions::disabled() {
             return;
         }
-        for comment in comments {
+        let mut attached = FxHashSet::default();
+        for (&node_id, node_comments) in comments.attachments().iter() {
+            for &comment_id in &node_comments.leading {
+                attached.insert(comment_id);
+                self.add_attached_comment(node_id, comments[comment_id.index()]);
+            }
+            for &comment_id in &node_comments.trailing {
+                attached.insert(comment_id);
+                let comment = comments[comment_id.index()];
+                if self.should_print_comment(comment) && !self.is_html_like_comment(comment) {
+                    self.trailing_node_comments.entry(node_id).or_default().push(comment);
+                }
+            }
+            for &comment_id in &node_comments.dangling {
+                attached.insert(comment_id);
+                let comment = comments[comment_id.index()];
+                if self.should_print_comment(comment) {
+                    self.dangling_node_comments.entry(node_id).or_default().push(comment);
+                }
+            }
+        }
+
+        for (index, comment) in comments.iter().enumerate() {
+            let comment_id = CommentId::from_usize(index);
+            if attached.contains(&comment_id) || comments.is_suppressed(comment_id) {
+                continue;
+            }
             // Stash pure / no-side-effects comments by `attached_to` so the
             // emission site can recover the verbatim source text instead of
             // falling back to the canonical literal (rolldown#9408).
@@ -85,22 +111,7 @@ impl Codegen<'_> {
                 }
                 continue;
             }
-            let mut add = false;
-            if comment.is_leading() {
-                if comment.is_legal() && self.options.print_legal_comment() {
-                    add = true;
-                }
-                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
-                    add = true;
-                }
-                if comment.is_annotation() && self.options.print_annotation_comment() {
-                    add = true;
-                }
-                if comment.is_normal() && self.options.print_normal_comment() {
-                    add = true;
-                }
-            }
-            if add {
+            if comment.is_leading() && self.should_print_comment(*comment) {
                 self.has_property_key_annotations |= comment.is_property_key_annotation();
                 if preserve_when_orphaned(*comment)
                     && let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to)
@@ -108,12 +119,55 @@ impl Codegen<'_> {
                     self.orphan_comment_keys.insert(idx, comment.attached_to);
                 }
                 self.comments.entry(comment.attached_to).or_default().push(*comment);
+            } else if comment.is_trailing()
+                && self.should_print_comment(*comment)
+                && !self.is_html_like_comment(*comment)
+            {
+                self.trailing_comments.entry(comment.attached_to).or_default().push(*comment);
             }
         }
     }
 
+    fn add_attached_comment(&mut self, node_id: NodeId, comment: Comment) {
+        if comment.is_pure() || comment.is_no_side_effects() {
+            // Annotation-specific node lookup is added alongside the annotation emission sites.
+            if self.options.print_annotation_comment() {
+                self.annotation_comments.insert(comment.attached_to, comment);
+            }
+            return;
+        }
+        if self.should_print_comment(comment) {
+            self.has_property_key_annotations |= comment.is_property_key_annotation();
+            if preserve_when_orphaned(comment) {
+                if let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to) {
+                    self.orphan_comment_keys.insert(idx, comment.attached_to);
+                }
+                self.comments.entry(comment.attached_to).or_default().push(comment);
+            }
+            self.node_comments.entry(node_id).or_default().push(comment);
+        }
+    }
+
+    fn is_html_like_comment(&self, comment: Comment) -> bool {
+        self.source_text.is_some_and(|source_text| {
+            let text = comment.span.source_text(source_text);
+            text.starts_with("<!--") || text.starts_with("-->")
+        })
+    }
+
+    fn should_print_comment(&self, comment: Comment) -> bool {
+        (comment.is_legal() && self.options.print_legal_comment())
+            || (comment.is_jsdoc() && self.options.print_jsdoc_comment())
+            || (comment.is_annotation() && self.options.print_annotation_comment())
+            || (comment.is_normal() && self.options.print_normal_comment())
+    }
+
     pub(crate) fn has_comment(&self, start: u32) -> bool {
         self.comments.contains_key(&start)
+    }
+
+    pub(crate) fn has_node_comment(&self, node_id: NodeId, start: u32) -> bool {
+        self.node_comments.contains_key(&node_id) || self.has_comment(start)
     }
 
     /// Emit a pure / no-side-effects annotation comment for the AST node at
@@ -171,6 +225,59 @@ impl Codegen<'_> {
         self.comments.remove(&start)
     }
 
+    pub(crate) fn get_node_comments(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+    ) -> Option<Vec<Comment>> {
+        self.take_node_comments(node_id).or_else(|| self.get_comments(start))
+    }
+
+    fn take_node_comments(&mut self, node_id: NodeId) -> Option<Vec<Comment>> {
+        if let Some(comments) = self.node_comments.remove(&node_id) {
+            for comment in &comments {
+                if preserve_when_orphaned(*comment)
+                    && let Some(boundary_comments) = self.comments.get_mut(&comment.attached_to)
+                {
+                    boundary_comments.retain(|candidate| candidate.span != comment.span);
+                    if boundary_comments.is_empty() {
+                        self.comments.remove(&comment.attached_to);
+                    }
+                }
+            }
+            Some(comments)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub(crate) fn print_node_comments_at(&mut self, node_id: NodeId, start: u32) {
+        if let Some(comments) = self.get_node_comments(node_id, start) {
+            self.print_comments(&comments);
+        }
+    }
+
+    #[inline]
+    pub(crate) fn has_trailing_comments(&self) -> bool {
+        !self.trailing_node_comments.is_empty() || !self.trailing_comments.is_empty()
+    }
+
+    #[cold]
+    pub(crate) fn print_trailing_comments(&mut self, node_id: NodeId, end: u32) {
+        let comments = self
+            .trailing_node_comments
+            .remove(&node_id)
+            .or_else(|| self.trailing_comments.remove(&end));
+        let Some(comments) = comments else { return };
+
+        self.print_semicolon_if_needed();
+        self.code.trim_trailing_ascii_whitespace_and_newlines();
+        self.clear_pending_indent_space();
+        self.print_soft_space();
+        self.print_comments(&comments);
+    }
+
     #[inline]
     pub(crate) fn print_comments_at(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
@@ -193,6 +300,31 @@ impl Codegen<'_> {
             } else {
                 self.consume_pending_indent_space();
             }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn print_leading_comments_anchored_to_node(&mut self, node_id: NodeId, _start: u32) {
+        if let Some(comments) = self.take_node_comments(node_id) {
+            self.print_comments(&comments);
+            if self.last_byte() == Some(b'\n') {
+                self.print_indent();
+            } else {
+                self.consume_pending_indent_space();
+            }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn print_leading_comments_anchored_to_node_or_position(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+    ) {
+        if self.node_comments.contains_key(&node_id) {
+            self.print_leading_comments_anchored_to_node(node_id, start);
+        } else {
+            self.print_leading_comments_anchored_to_self(start);
         }
     }
 
@@ -316,6 +448,16 @@ impl Codegen<'_> {
         if let Some(key) = key {
             let comments = self.comments.remove(&key).unwrap();
             self.print_comments(&comments);
+            return true;
+        }
+        false
+    }
+
+    /// Print comments owned by an interior punctuation position of `node_id`.
+    pub(crate) fn print_dangling_comments(&mut self, node_id: NodeId) -> bool {
+        if let Some(comments) = self.dangling_node_comments.remove(&node_id) {
+            self.print_comments(&comments);
+            self.clear_pending_indent_space();
             return true;
         }
         false

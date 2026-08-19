@@ -3590,6 +3590,58 @@ impl Expression<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`Expression`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ArrayExpressionElement<'_> {
@@ -3646,6 +3698,60 @@ impl ArrayExpressionElement<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ArrayExpressionElement`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::SpreadElement(it) => it.set_node_id(node_id),
+            Self::Elision(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ObjectPropertyKind<'_> {
@@ -3656,6 +3762,16 @@ impl ObjectPropertyKind<'_> {
         match self {
             Self::ObjectProperty(it) => it.node_id(),
             Self::SpreadProperty(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`ObjectPropertyKind`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ObjectProperty(it) => it.set_node_id(node_id),
+            Self::SpreadProperty(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -3714,6 +3830,60 @@ impl PropertyKey<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`PropertyKey`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::StaticIdentifier(it) => it.set_node_id(node_id),
+            Self::PrivateIdentifier(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl MemberExpression<'_> {
@@ -3725,6 +3895,17 @@ impl MemberExpression<'_> {
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`MemberExpression`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -3782,6 +3963,59 @@ impl Argument<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`Argument`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::SpreadElement(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl AssignmentTarget<'_> {
@@ -3802,6 +4036,24 @@ impl AssignmentTarget<'_> {
             Self::ObjectAssignmentTarget(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`AssignmentTarget`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::AssignmentTargetIdentifier(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+            Self::ArrayAssignmentTarget(it) => it.set_node_id(node_id),
+            Self::ObjectAssignmentTarget(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl SimpleAssignmentTarget<'_> {
@@ -3820,6 +4072,22 @@ impl SimpleAssignmentTarget<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`SimpleAssignmentTarget`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::AssignmentTargetIdentifier(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl AssignmentTargetPattern<'_> {
@@ -3830,6 +4098,16 @@ impl AssignmentTargetPattern<'_> {
         match self {
             Self::ArrayAssignmentTarget(it) => it.node_id(),
             Self::ObjectAssignmentTarget(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`AssignmentTargetPattern`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ArrayAssignmentTarget(it) => it.set_node_id(node_id),
+            Self::ObjectAssignmentTarget(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -3853,6 +4131,25 @@ impl AssignmentTargetMaybeDefault<'_> {
             Self::ObjectAssignmentTarget(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`AssignmentTargetMaybeDefault`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::AssignmentTargetWithDefault(it) => it.set_node_id(node_id),
+            Self::AssignmentTargetIdentifier(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+            Self::ArrayAssignmentTarget(it) => it.set_node_id(node_id),
+            Self::ObjectAssignmentTarget(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl AssignmentTargetProperty<'_> {
@@ -3863,6 +4160,16 @@ impl AssignmentTargetProperty<'_> {
         match self {
             Self::AssignmentTargetPropertyIdentifier(it) => it.node_id(),
             Self::AssignmentTargetPropertyProperty(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`AssignmentTargetProperty`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::AssignmentTargetPropertyIdentifier(it) => it.set_node_id(node_id),
+            Self::AssignmentTargetPropertyProperty(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -3878,6 +4185,19 @@ impl ChainElement<'_> {
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`ChainElement`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -3926,6 +4246,50 @@ impl Statement<'_> {
             Self::TSNamespaceExportDeclaration(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`Statement`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::BlockStatement(it) => it.set_node_id(node_id),
+            Self::BreakStatement(it) => it.set_node_id(node_id),
+            Self::ContinueStatement(it) => it.set_node_id(node_id),
+            Self::DebuggerStatement(it) => it.set_node_id(node_id),
+            Self::DoWhileStatement(it) => it.set_node_id(node_id),
+            Self::EmptyStatement(it) => it.set_node_id(node_id),
+            Self::ExpressionStatement(it) => it.set_node_id(node_id),
+            Self::ForInStatement(it) => it.set_node_id(node_id),
+            Self::ForOfStatement(it) => it.set_node_id(node_id),
+            Self::ForStatement(it) => it.set_node_id(node_id),
+            Self::IfStatement(it) => it.set_node_id(node_id),
+            Self::LabeledStatement(it) => it.set_node_id(node_id),
+            Self::ReturnStatement(it) => it.set_node_id(node_id),
+            Self::SwitchStatement(it) => it.set_node_id(node_id),
+            Self::ThrowStatement(it) => it.set_node_id(node_id),
+            Self::TryStatement(it) => it.set_node_id(node_id),
+            Self::WhileStatement(it) => it.set_node_id(node_id),
+            Self::WithStatement(it) => it.set_node_id(node_id),
+            Self::VariableDeclaration(it) => it.set_node_id(node_id),
+            Self::FunctionDeclaration(it) => it.set_node_id(node_id),
+            Self::ClassDeclaration(it) => it.set_node_id(node_id),
+            Self::TSTypeAliasDeclaration(it) => it.set_node_id(node_id),
+            Self::TSInterfaceDeclaration(it) => it.set_node_id(node_id),
+            Self::TSEnumDeclaration(it) => it.set_node_id(node_id),
+            Self::TSExternalModuleDeclaration(it) => it.set_node_id(node_id),
+            Self::TSNamespaceDeclaration(it) => it.set_node_id(node_id),
+            Self::TSGlobalDeclaration(it) => it.set_node_id(node_id),
+            Self::TSImportEqualsDeclaration(it) => it.set_node_id(node_id),
+            Self::ImportDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportAllDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportDefaultDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportNamedDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportFromDeclaration(it) => it.set_node_id(node_id),
+            Self::TSExportAssignment(it) => it.set_node_id(node_id),
+            Self::TSNamespaceExportDeclaration(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl Declaration<'_> {
@@ -3944,6 +4308,24 @@ impl Declaration<'_> {
             Self::TSNamespaceDeclaration(it) => it.node_id(),
             Self::TSGlobalDeclaration(it) => it.node_id(),
             Self::TSImportEqualsDeclaration(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`Declaration`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::VariableDeclaration(it) => it.set_node_id(node_id),
+            Self::FunctionDeclaration(it) => it.set_node_id(node_id),
+            Self::ClassDeclaration(it) => it.set_node_id(node_id),
+            Self::TSTypeAliasDeclaration(it) => it.set_node_id(node_id),
+            Self::TSInterfaceDeclaration(it) => it.set_node_id(node_id),
+            Self::TSEnumDeclaration(it) => it.set_node_id(node_id),
+            Self::TSExternalModuleDeclaration(it) => it.set_node_id(node_id),
+            Self::TSNamespaceDeclaration(it) => it.set_node_id(node_id),
+            Self::TSGlobalDeclaration(it) => it.set_node_id(node_id),
+            Self::TSImportEqualsDeclaration(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4001,6 +4383,59 @@ impl ForStatementInit<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ForStatementInit`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::VariableDeclaration(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ForStatementLeft<'_> {
@@ -4022,6 +4457,25 @@ impl ForStatementLeft<'_> {
             Self::ObjectAssignmentTarget(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ForStatementLeft`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::VariableDeclaration(it) => it.set_node_id(node_id),
+            Self::AssignmentTargetIdentifier(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+            Self::ArrayAssignmentTarget(it) => it.set_node_id(node_id),
+            Self::ObjectAssignmentTarget(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl BindingPattern<'_> {
@@ -4034,6 +4488,18 @@ impl BindingPattern<'_> {
             Self::ObjectPattern(it) => it.node_id(),
             Self::ArrayPattern(it) => it.node_id(),
             Self::AssignmentPattern(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`BindingPattern`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::BindingIdentifier(it) => it.set_node_id(node_id),
+            Self::ObjectPattern(it) => it.set_node_id(node_id),
+            Self::ArrayPattern(it) => it.set_node_id(node_id),
+            Self::AssignmentPattern(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4091,6 +4557,59 @@ impl ArrowFunctionBody<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ArrowFunctionBody`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::FunctionBody(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ClassElement<'_> {
@@ -4104,6 +4623,19 @@ impl ClassElement<'_> {
             Self::PropertyDefinition(it) => it.node_id(),
             Self::AccessorProperty(it) => it.node_id(),
             Self::TSIndexSignature(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`ClassElement`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::StaticBlock(it) => it.set_node_id(node_id),
+            Self::MethodDefinition(it) => it.set_node_id(node_id),
+            Self::PropertyDefinition(it) => it.set_node_id(node_id),
+            Self::AccessorProperty(it) => it.set_node_id(node_id),
+            Self::TSIndexSignature(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4124,6 +4656,22 @@ impl ModuleDeclaration<'_> {
             Self::TSNamespaceExportDeclaration(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ModuleDeclaration`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ImportDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportAllDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportDefaultDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportNamedDeclaration(it) => it.set_node_id(node_id),
+            Self::ExportFromDeclaration(it) => it.set_node_id(node_id),
+            Self::TSExportAssignment(it) => it.set_node_id(node_id),
+            Self::TSNamespaceExportDeclaration(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ImportDeclarationSpecifier<'_> {
@@ -4137,6 +4685,17 @@ impl ImportDeclarationSpecifier<'_> {
             Self::ImportNamespaceSpecifier(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ImportDeclarationSpecifier`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ImportSpecifier(it) => it.set_node_id(node_id),
+            Self::ImportDefaultSpecifier(it) => it.set_node_id(node_id),
+            Self::ImportNamespaceSpecifier(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ImportAttributeKey<'_> {
@@ -4147,6 +4706,16 @@ impl ImportAttributeKey<'_> {
         match self {
             Self::Identifier(it) => it.node_id(),
             Self::StringLiteral(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`ImportAttributeKey`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4206,6 +4775,61 @@ impl ExportDefaultDeclarationKind<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`ExportDefaultDeclarationKind`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::FunctionDeclaration(it) => it.set_node_id(node_id),
+            Self::ClassDeclaration(it) => it.set_node_id(node_id),
+            Self::TSInterfaceDeclaration(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl ModuleExportName<'_> {
@@ -4217,6 +4841,17 @@ impl ModuleExportName<'_> {
             Self::IdentifierName(it) => it.node_id(),
             Self::IdentifierReference(it) => it.node_id(),
             Self::StringLiteral(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`ModuleExportName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::IdentifierName(it) => it.set_node_id(node_id),
+            Self::IdentifierReference(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4234,6 +4869,19 @@ impl JSXElementName<'_> {
             Self::ThisExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`JSXElementName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::IdentifierReference(it) => it.set_node_id(node_id),
+            Self::NamespacedName(it) => it.set_node_id(node_id),
+            Self::MemberExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl JSXMemberExpressionObject<'_> {
@@ -4245,6 +4893,17 @@ impl JSXMemberExpressionObject<'_> {
             Self::IdentifierReference(it) => it.node_id(),
             Self::MemberExpression(it) => it.node_id(),
             Self::ThisExpression(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`JSXMemberExpressionObject`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::IdentifierReference(it) => it.set_node_id(node_id),
+            Self::MemberExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4302,6 +4961,59 @@ impl JSXExpression<'_> {
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`JSXExpression`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::EmptyExpression(it) => it.set_node_id(node_id),
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NullLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::RegExpLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::Super(it) => it.set_node_id(node_id),
+            Self::ArrayExpression(it) => it.set_node_id(node_id),
+            Self::ArrowFunctionExpression(it) => it.set_node_id(node_id),
+            Self::AssignmentExpression(it) => it.set_node_id(node_id),
+            Self::AwaitExpression(it) => it.set_node_id(node_id),
+            Self::BinaryExpression(it) => it.set_node_id(node_id),
+            Self::CallExpression(it) => it.set_node_id(node_id),
+            Self::ChainExpression(it) => it.set_node_id(node_id),
+            Self::ClassExpression(it) => it.set_node_id(node_id),
+            Self::ConditionalExpression(it) => it.set_node_id(node_id),
+            Self::FunctionExpression(it) => it.set_node_id(node_id),
+            Self::ImportExpression(it) => it.set_node_id(node_id),
+            Self::LogicalExpression(it) => it.set_node_id(node_id),
+            Self::NewExpression(it) => it.set_node_id(node_id),
+            Self::ObjectExpression(it) => it.set_node_id(node_id),
+            Self::ParenthesizedExpression(it) => it.set_node_id(node_id),
+            Self::SequenceExpression(it) => it.set_node_id(node_id),
+            Self::TaggedTemplateExpression(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
+            Self::UpdateExpression(it) => it.set_node_id(node_id),
+            Self::YieldExpression(it) => it.set_node_id(node_id),
+            Self::PrivateInExpression(it) => it.set_node_id(node_id),
+            Self::ImportMeta(it) => it.set_node_id(node_id),
+            Self::NewTarget(it) => it.set_node_id(node_id),
+            Self::JSXElement(it) => it.set_node_id(node_id),
+            Self::JSXFragment(it) => it.set_node_id(node_id),
+            Self::TSAsExpression(it) => it.set_node_id(node_id),
+            Self::TSSatisfiesExpression(it) => it.set_node_id(node_id),
+            Self::TSTypeAssertion(it) => it.set_node_id(node_id),
+            Self::TSNonNullExpression(it) => it.set_node_id(node_id),
+            Self::TSInstantiationExpression(it) => it.set_node_id(node_id),
+            Self::V8IntrinsicExpression(it) => it.set_node_id(node_id),
+            Self::ComputedMemberExpression(it) => it.set_node_id(node_id),
+            Self::StaticMemberExpression(it) => it.set_node_id(node_id),
+            Self::PrivateFieldExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl JSXAttributeItem<'_> {
@@ -4312,6 +5024,16 @@ impl JSXAttributeItem<'_> {
         match self {
             Self::Attribute(it) => it.node_id(),
             Self::SpreadAttribute(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`JSXAttributeItem`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Attribute(it) => it.set_node_id(node_id),
+            Self::SpreadAttribute(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4326,6 +5048,16 @@ impl JSXAttributeName<'_> {
             Self::NamespacedName(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`JSXAttributeName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::NamespacedName(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl JSXAttributeValue<'_> {
@@ -4338,6 +5070,18 @@ impl JSXAttributeValue<'_> {
             Self::ExpressionContainer(it) => it.node_id(),
             Self::Element(it) => it.node_id(),
             Self::Fragment(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`JSXAttributeValue`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::ExpressionContainer(it) => it.set_node_id(node_id),
+            Self::Element(it) => it.set_node_id(node_id),
+            Self::Fragment(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4355,6 +5099,19 @@ impl JSXChild<'_> {
             Self::Spread(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`JSXChild`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Text(it) => it.set_node_id(node_id),
+            Self::Element(it) => it.set_node_id(node_id),
+            Self::Fragment(it) => it.set_node_id(node_id),
+            Self::ExpressionContainer(it) => it.set_node_id(node_id),
+            Self::Spread(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl TSEnumMemberName<'_> {
@@ -4367,6 +5124,18 @@ impl TSEnumMemberName<'_> {
             Self::String(it) => it.node_id(),
             Self::ComputedString(it) => it.node_id(),
             Self::ComputedTemplateString(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSEnumMemberName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::String(it) => it.set_node_id(node_id),
+            Self::ComputedString(it) => it.set_node_id(node_id),
+            Self::ComputedTemplateString(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4383,6 +5152,20 @@ impl TSLiteral<'_> {
             Self::StringLiteral(it) => it.node_id(),
             Self::TemplateLiteral(it) => it.node_id(),
             Self::UnaryExpression(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSLiteral`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::BooleanLiteral(it) => it.set_node_id(node_id),
+            Self::NumericLiteral(it) => it.set_node_id(node_id),
+            Self::BigIntLiteral(it) => it.set_node_id(node_id),
+            Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::TemplateLiteral(it) => it.set_node_id(node_id),
+            Self::UnaryExpression(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4430,6 +5213,51 @@ impl TSType<'_> {
             Self::JSDocNullableType(it) => it.node_id(),
             Self::JSDocNonNullableType(it) => it.node_id(),
             Self::JSDocUnknownType(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSType`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::TSAnyKeyword(it) => it.set_node_id(node_id),
+            Self::TSBigIntKeyword(it) => it.set_node_id(node_id),
+            Self::TSBooleanKeyword(it) => it.set_node_id(node_id),
+            Self::TSIntrinsicKeyword(it) => it.set_node_id(node_id),
+            Self::TSNeverKeyword(it) => it.set_node_id(node_id),
+            Self::TSNullKeyword(it) => it.set_node_id(node_id),
+            Self::TSNumberKeyword(it) => it.set_node_id(node_id),
+            Self::TSObjectKeyword(it) => it.set_node_id(node_id),
+            Self::TSStringKeyword(it) => it.set_node_id(node_id),
+            Self::TSSymbolKeyword(it) => it.set_node_id(node_id),
+            Self::TSUndefinedKeyword(it) => it.set_node_id(node_id),
+            Self::TSUnknownKeyword(it) => it.set_node_id(node_id),
+            Self::TSVoidKeyword(it) => it.set_node_id(node_id),
+            Self::TSArrayType(it) => it.set_node_id(node_id),
+            Self::TSConditionalType(it) => it.set_node_id(node_id),
+            Self::TSConstructorType(it) => it.set_node_id(node_id),
+            Self::TSFunctionType(it) => it.set_node_id(node_id),
+            Self::TSImportType(it) => it.set_node_id(node_id),
+            Self::TSIndexedAccessType(it) => it.set_node_id(node_id),
+            Self::TSInferType(it) => it.set_node_id(node_id),
+            Self::TSIntersectionType(it) => it.set_node_id(node_id),
+            Self::TSLiteralType(it) => it.set_node_id(node_id),
+            Self::TSMappedType(it) => it.set_node_id(node_id),
+            Self::TSNamedTupleMember(it) => it.set_node_id(node_id),
+            Self::TSTemplateLiteralType(it) => it.set_node_id(node_id),
+            Self::TSThisType(it) => it.set_node_id(node_id),
+            Self::TSTupleType(it) => it.set_node_id(node_id),
+            Self::TSTypeLiteral(it) => it.set_node_id(node_id),
+            Self::TSTypeOperatorType(it) => it.set_node_id(node_id),
+            Self::TSTypePredicate(it) => it.set_node_id(node_id),
+            Self::TSTypeQuery(it) => it.set_node_id(node_id),
+            Self::TSTypeReference(it) => it.set_node_id(node_id),
+            Self::TSUnionType(it) => it.set_node_id(node_id),
+            Self::TSParenthesizedType(it) => it.set_node_id(node_id),
+            Self::JSDocNullableType(it) => it.set_node_id(node_id),
+            Self::JSDocNonNullableType(it) => it.set_node_id(node_id),
+            Self::JSDocUnknownType(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4481,6 +5309,53 @@ impl TSTupleElement<'_> {
             Self::JSDocUnknownType(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`TSTupleElement`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::TSOptionalType(it) => it.set_node_id(node_id),
+            Self::TSRestType(it) => it.set_node_id(node_id),
+            Self::TSAnyKeyword(it) => it.set_node_id(node_id),
+            Self::TSBigIntKeyword(it) => it.set_node_id(node_id),
+            Self::TSBooleanKeyword(it) => it.set_node_id(node_id),
+            Self::TSIntrinsicKeyword(it) => it.set_node_id(node_id),
+            Self::TSNeverKeyword(it) => it.set_node_id(node_id),
+            Self::TSNullKeyword(it) => it.set_node_id(node_id),
+            Self::TSNumberKeyword(it) => it.set_node_id(node_id),
+            Self::TSObjectKeyword(it) => it.set_node_id(node_id),
+            Self::TSStringKeyword(it) => it.set_node_id(node_id),
+            Self::TSSymbolKeyword(it) => it.set_node_id(node_id),
+            Self::TSUndefinedKeyword(it) => it.set_node_id(node_id),
+            Self::TSUnknownKeyword(it) => it.set_node_id(node_id),
+            Self::TSVoidKeyword(it) => it.set_node_id(node_id),
+            Self::TSArrayType(it) => it.set_node_id(node_id),
+            Self::TSConditionalType(it) => it.set_node_id(node_id),
+            Self::TSConstructorType(it) => it.set_node_id(node_id),
+            Self::TSFunctionType(it) => it.set_node_id(node_id),
+            Self::TSImportType(it) => it.set_node_id(node_id),
+            Self::TSIndexedAccessType(it) => it.set_node_id(node_id),
+            Self::TSInferType(it) => it.set_node_id(node_id),
+            Self::TSIntersectionType(it) => it.set_node_id(node_id),
+            Self::TSLiteralType(it) => it.set_node_id(node_id),
+            Self::TSMappedType(it) => it.set_node_id(node_id),
+            Self::TSNamedTupleMember(it) => it.set_node_id(node_id),
+            Self::TSTemplateLiteralType(it) => it.set_node_id(node_id),
+            Self::TSThisType(it) => it.set_node_id(node_id),
+            Self::TSTupleType(it) => it.set_node_id(node_id),
+            Self::TSTypeLiteral(it) => it.set_node_id(node_id),
+            Self::TSTypeOperatorType(it) => it.set_node_id(node_id),
+            Self::TSTypePredicate(it) => it.set_node_id(node_id),
+            Self::TSTypeQuery(it) => it.set_node_id(node_id),
+            Self::TSTypeReference(it) => it.set_node_id(node_id),
+            Self::TSUnionType(it) => it.set_node_id(node_id),
+            Self::TSParenthesizedType(it) => it.set_node_id(node_id),
+            Self::JSDocNullableType(it) => it.set_node_id(node_id),
+            Self::JSDocNonNullableType(it) => it.set_node_id(node_id),
+            Self::JSDocUnknownType(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl TSTypeName<'_> {
@@ -4492,6 +5367,17 @@ impl TSTypeName<'_> {
             Self::IdentifierReference(it) => it.node_id(),
             Self::QualifiedName(it) => it.node_id(),
             Self::ThisExpression(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSTypeName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::IdentifierReference(it) => it.set_node_id(node_id),
+            Self::QualifiedName(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4509,6 +5395,19 @@ impl TSSignature<'_> {
             Self::TSMethodSignature(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`TSSignature`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::TSIndexSignature(it) => it.set_node_id(node_id),
+            Self::TSPropertySignature(it) => it.set_node_id(node_id),
+            Self::TSCallSignatureDeclaration(it) => it.set_node_id(node_id),
+            Self::TSConstructSignatureDeclaration(it) => it.set_node_id(node_id),
+            Self::TSMethodSignature(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl TSTypePredicateName<'_> {
@@ -4521,6 +5420,16 @@ impl TSTypePredicateName<'_> {
             Self::This(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`TSTypePredicateName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::This(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl TSNamespaceDeclarationBody<'_> {
@@ -4531,6 +5440,16 @@ impl TSNamespaceDeclarationBody<'_> {
         match self {
             Self::TSNamespaceDeclaration(it) => it.node_id(),
             Self::TSModuleBlock(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSNamespaceDeclarationBody`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::TSNamespaceDeclaration(it) => it.set_node_id(node_id),
+            Self::TSModuleBlock(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4547,6 +5466,18 @@ impl TSTypeQueryExprName<'_> {
             Self::ThisExpression(it) => it.node_id(),
         }
     }
+
+    /// Set [`NodeId`] of [`TSTypeQueryExprName`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::TSImportType(it) => it.set_node_id(node_id),
+            Self::IdentifierReference(it) => it.set_node_id(node_id),
+            Self::QualifiedName(it) => it.set_node_id(node_id),
+            Self::ThisExpression(it) => it.set_node_id(node_id),
+        }
+    }
 }
 
 impl TSImportTypeQualifier<'_> {
@@ -4557,6 +5488,16 @@ impl TSImportTypeQualifier<'_> {
         match self {
             Self::Identifier(it) => it.node_id(),
             Self::QualifiedName(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSImportTypeQualifier`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::Identifier(it) => it.set_node_id(node_id),
+            Self::QualifiedName(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -4570,6 +5511,17 @@ impl TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => it.node_id(),
             Self::IdentifierReference(it) => it.node_id(),
             Self::QualifiedName(it) => it.node_id(),
+        }
+    }
+
+    /// Set [`NodeId`] of [`TSModuleReference`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        match self {
+            Self::ExternalModuleReference(it) => it.set_node_id(node_id),
+            Self::IdentifierReference(it) => it.set_node_id(node_id),
+            Self::QualifiedName(it) => it.set_node_id(node_id),
         }
     }
 }

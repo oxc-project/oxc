@@ -68,7 +68,7 @@ impl Gen for Hashbang<'_> {
 
 impl Gen for Directive<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_comments_at(self.span.start);
+        p.print_node_comments_at(self.node_id(), self.span.start);
         p.print_indent();
         p.add_source_mapping(self.span);
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
@@ -99,11 +99,15 @@ impl Gen for Directive<'_> {
         quote.print(p);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
+        if p.has_trailing_comments() {
+            p.print_trailing_comments(self.node_id(), self.span.end);
+        }
     }
 }
 
 impl Gen for Statement<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_node_comments_at(self.node_id(), self.span().start);
         match self {
             // Most common statements first (based on parser order and frequency)
             Self::BlockStatement(stmt) => {
@@ -204,6 +208,9 @@ impl Gen for Statement<'_> {
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
+        }
+        if p.has_trailing_comments() {
+            p.print_trailing_comments(self.node_id(), self.span().end);
         }
     }
 }
@@ -735,6 +742,7 @@ impl Gen for VariableDeclaration<'_> {
 
 impl Gen for VariableDeclarator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_leading_comments_anchored_to_node(self.node_id(), self.span.start);
         self.id.print(p, ctx);
         if self.definite {
             p.print_ascii_byte(b'!');
@@ -745,6 +753,7 @@ impl Gen for VariableDeclarator<'_> {
             type_annotation.print(p, ctx);
         }
         if let Some(init) = &self.init {
+            p.print_dangling_comments(self.node_id());
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
@@ -763,7 +772,10 @@ impl Gen for Function<'_> {
             // `pife` wrap: emit leading comments inside the `(`, so the
             // source position `(/* c */ function …)` is preserved.
             if self.pife {
-                p.print_leading_comments_anchored_to_self(self.span.start);
+                p.print_leading_comments_anchored_to_node_or_position(
+                    self.node_id(),
+                    self.span.start,
+                );
             }
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -1288,6 +1300,15 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
 
 impl GenExpr for Expression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let prints_comments_inside_own_wrap = match self {
+            Self::ObjectExpression(_) => true,
+            Self::ArrowFunctionExpression(function) => function.pife,
+            Self::FunctionExpression(function) => function.pife,
+            _ => false,
+        };
+        if !prints_comments_inside_own_wrap {
+            p.print_leading_comments_anchored_to_node(self.node_id(), self.span().start);
+        }
         match self {
             // Most common expressions first (identifiers, member access, calls)
             Self::Identifier(ident) => ident.print(p, ctx),
@@ -1607,6 +1628,7 @@ impl GenExpr for CallExpression<'_> {
             if !cjs_module_lexer::try_print_define_property_call(p, self, ctx)
                 && !cjs_module_lexer::try_print_require_call(p, self)
             {
+                p.print_dangling_comments(self.node_id());
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
         });
@@ -1678,13 +1700,13 @@ impl GenExpr for ObjectExpression<'_> {
         let n = p.code_len();
         let len = self.properties.len();
         let is_multi_line = len > 1;
-        let has_comment = p.has_comment(self.span.start);
+        let has_comment = p.has_node_comment(self.node_id(), self.span.start);
         let wrap = has_comment || p.start_of_stmt == n || p.start_of_arrow_expr == n;
         p.wrap(wrap, |p| {
             // Print comments for lingui https://lingui.dev/ref/macro#definemessage
             // `const message = /*i18n*/ { };`
             if has_comment {
-                p.print_leading_comments(self.span.start);
+                p.print_node_comments_at(self.node_id(), self.span.start);
                 p.print_indent();
             }
             p.add_source_mapping(self.span);
@@ -1851,7 +1873,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
             // `pife` wrap: emit leading comments inside the `(`, so the
             // source position `(/* c */ arrow)` is preserved.
             if self.pife {
-                p.print_leading_comments_anchored_to_self(self.span.start);
+                p.print_leading_comments_anchored_to_node_or_position(
+                    self.node_id(),
+                    self.span.start,
+                );
             }
             if self.r#async {
                 p.print_space_before_identifier();
@@ -2433,6 +2458,7 @@ impl GenExpr for NewExpression<'_> {
             // Omit the "()" when minifying, but only when safe to do so
             if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
             {
+                p.print_dangling_comments(self.node_id());
                 p.print_arguments(self.span, &self.arguments, ctx);
             }
         });

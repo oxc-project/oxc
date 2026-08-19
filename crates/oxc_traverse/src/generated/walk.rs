@@ -84,7 +84,12 @@ unsafe fn walk_expression<'a, State, Tr: Traverse<'a, State>>(
     node: *mut Expression<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_expression(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         Expression::BooleanLiteral(node) => {
             walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
@@ -202,6 +207,9 @@ unsafe fn walk_expression<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_expression(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_identifier_name<'a, State, Tr: Traverse<'a, State>>(
@@ -272,7 +280,12 @@ unsafe fn walk_array_expression_element<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ArrayExpressionElement<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_array_expression_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ArrayExpressionElement::SpreadElement(node) => {
             walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
@@ -328,6 +341,9 @@ unsafe fn walk_array_expression_element<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_array_expression_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_elision<'a, State, Tr: Traverse<'a, State>>(
@@ -362,7 +378,12 @@ unsafe fn walk_object_property_kind<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ObjectPropertyKind<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_object_property_kind(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ObjectPropertyKind::ObjectProperty(node) => {
             walk_object_property(traverser, (&mut **node) as *mut _, ctx)
@@ -372,6 +393,9 @@ unsafe fn walk_object_property_kind<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_object_property_kind(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_object_property<'a, State, Tr: Traverse<'a, State>>(
@@ -403,7 +427,12 @@ unsafe fn walk_property_key<'a, State, Tr: Traverse<'a, State>>(
     node: *mut PropertyKey<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_property_key(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         PropertyKey::StaticIdentifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
@@ -457,6 +486,9 @@ unsafe fn walk_property_key<'a, State, Tr: Traverse<'a, State>>(
         | PropertyKey::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_property_key(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_template_literal<'a, State, Tr: Traverse<'a, State>>(
@@ -529,7 +561,12 @@ unsafe fn walk_member_expression<'a, State, Tr: Traverse<'a, State>>(
     node: *mut MemberExpression<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_member_expression(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         MemberExpression::ComputedMemberExpression(node) => {
             walk_computed_member_expression(traverser, (&mut **node) as *mut _, ctx)
@@ -542,6 +579,9 @@ unsafe fn walk_member_expression<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_member_expression(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_computed_member_expression<'a, State, Tr: Traverse<'a, State>>(
@@ -723,7 +763,12 @@ unsafe fn walk_argument<'a, State, Tr: Traverse<'a, State>>(
     node: *mut Argument<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_argument(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         Argument::SpreadElement(node) => {
             walk_spread_element(traverser, (&mut **node) as *mut _, ctx)
@@ -774,6 +819,9 @@ unsafe fn walk_argument<'a, State, Tr: Traverse<'a, State>>(
         | Argument::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
     }
     traverser.exit_argument(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_update_expression<'a, State, Tr: Traverse<'a, State>>(
@@ -946,7 +994,12 @@ unsafe fn walk_assignment_target<'a, State, Tr: Traverse<'a, State>>(
     node: *mut AssignmentTarget<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_assignment_target(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         AssignmentTarget::AssignmentTargetIdentifier(_)
         | AssignmentTarget::TSAsExpression(_)
@@ -964,6 +1017,9 @@ unsafe fn walk_assignment_target<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_assignment_target(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_simple_assignment_target<'a, State, Tr: Traverse<'a, State>>(
@@ -971,7 +1027,12 @@ unsafe fn walk_simple_assignment_target<'a, State, Tr: Traverse<'a, State>>(
     node: *mut SimpleAssignmentTarget<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_simple_assignment_target(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
@@ -995,6 +1056,9 @@ unsafe fn walk_simple_assignment_target<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_simple_assignment_target(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_assignment_target_pattern<'a, State, Tr: Traverse<'a, State>>(
@@ -1002,7 +1066,12 @@ unsafe fn walk_assignment_target_pattern<'a, State, Tr: Traverse<'a, State>>(
     node: *mut AssignmentTargetPattern<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_assignment_target_pattern(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         AssignmentTargetPattern::ArrayAssignmentTarget(node) => {
             walk_array_assignment_target(traverser, (&mut **node) as *mut _, ctx)
@@ -1012,6 +1081,9 @@ unsafe fn walk_assignment_target_pattern<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_assignment_target_pattern(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_array_assignment_target<'a, State, Tr: Traverse<'a, State>>(
@@ -1089,7 +1161,12 @@ unsafe fn walk_assignment_target_maybe_default<'a, State, Tr: Traverse<'a, State
     node: *mut AssignmentTargetMaybeDefault<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_assignment_target_maybe_default(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(node) => {
             walk_assignment_target_with_default(traverser, (&mut **node) as *mut _, ctx)
@@ -1108,6 +1185,9 @@ unsafe fn walk_assignment_target_maybe_default<'a, State, Tr: Traverse<'a, State
         }
     }
     traverser.exit_assignment_target_maybe_default(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_assignment_target_with_default<'a, State, Tr: Traverse<'a, State>>(
@@ -1141,7 +1221,12 @@ unsafe fn walk_assignment_target_property<'a, State, Tr: Traverse<'a, State>>(
     node: *mut AssignmentTargetProperty<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_assignment_target_property(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(node) => {
             walk_assignment_target_property_identifier(traverser, (&mut **node) as *mut _, ctx)
@@ -1151,6 +1236,9 @@ unsafe fn walk_assignment_target_property<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_assignment_target_property(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_assignment_target_property_identifier<'a, State, Tr: Traverse<'a, State>>(
@@ -1273,7 +1361,12 @@ unsafe fn walk_chain_element<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ChainElement<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_chain_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ChainElement::CallExpression(node) => {
             walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
@@ -1288,6 +1381,9 @@ unsafe fn walk_chain_element<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_chain_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_parenthesized_expression<'a, State, Tr: Traverse<'a, State>>(
@@ -1314,7 +1410,12 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
     node: *mut Statement<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_statement(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         Statement::BlockStatement(node) => {
             walk_block_statement(traverser, (&mut **node) as *mut _, ctx)
@@ -1392,6 +1493,9 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_statement(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_directive<'a, State, Tr: Traverse<'a, State>>(
@@ -1454,7 +1558,12 @@ unsafe fn walk_declaration<'a, State, Tr: Traverse<'a, State>>(
     node: *mut Declaration<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_declaration(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         Declaration::VariableDeclaration(node) => {
             walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -1486,6 +1595,9 @@ unsafe fn walk_declaration<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_declaration(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_variable_declaration<'a, State, Tr: Traverse<'a, State>>(
@@ -1690,7 +1802,12 @@ unsafe fn walk_for_statement_init<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ForStatementInit<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_for_statement_init(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ForStatementInit::VariableDeclaration(node) => {
             walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -1743,6 +1860,9 @@ unsafe fn walk_for_statement_init<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_for_statement_init(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_for_in_statement<'a, State, Tr: Traverse<'a, State>>(
@@ -1787,7 +1907,12 @@ unsafe fn walk_for_statement_left<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ForStatementLeft<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_for_statement_left(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ForStatementLeft::VariableDeclaration(node) => {
             walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -1806,6 +1931,9 @@ unsafe fn walk_for_statement_left<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_for_statement_left(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_for_of_statement<'a, State, Tr: Traverse<'a, State>>(
@@ -2129,7 +2257,12 @@ unsafe fn walk_binding_pattern<'a, State, Tr: Traverse<'a, State>>(
     node: *mut BindingPattern<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_binding_pattern(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         BindingPattern::BindingIdentifier(node) => {
             walk_binding_identifier(traverser, (&mut **node) as *mut _, ctx)
@@ -2145,6 +2278,9 @@ unsafe fn walk_binding_pattern<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_binding_pattern(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_assignment_pattern<'a, State, Tr: Traverse<'a, State>>(
@@ -2448,7 +2584,12 @@ unsafe fn walk_arrow_function_body<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ArrowFunctionBody<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_arrow_function_body(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ArrowFunctionBody::FunctionBody(node) => {
             walk_function_body(traverser, (&mut **node) as *mut _, ctx)
@@ -2501,6 +2642,9 @@ unsafe fn walk_arrow_function_body<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_arrow_function_body(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_arrow_function_expression<'a, State, Tr: Traverse<'a, State>>(
@@ -2677,7 +2821,12 @@ unsafe fn walk_class_element<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ClassElement<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_class_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ClassElement::StaticBlock(node) => {
             walk_static_block(traverser, (&mut **node) as *mut _, ctx)
@@ -2696,6 +2845,9 @@ unsafe fn walk_class_element<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_class_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_method_definition<'a, State, Tr: Traverse<'a, State>>(
@@ -2810,7 +2962,12 @@ unsafe fn walk_module_declaration<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ModuleDeclaration<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_module_declaration(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ModuleDeclaration::ImportDeclaration(node) => {
             walk_import_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -2838,6 +2995,9 @@ unsafe fn walk_module_declaration<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_module_declaration(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_accessor_property<'a, State, Tr: Traverse<'a, State>>(
@@ -2940,7 +3100,12 @@ unsafe fn walk_import_declaration_specifier<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ImportDeclarationSpecifier<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_import_declaration_specifier(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ImportDeclarationSpecifier::ImportSpecifier(node) => {
             walk_import_specifier(traverser, (&mut **node) as *mut _, ctx)
@@ -2953,6 +3118,9 @@ unsafe fn walk_import_declaration_specifier<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_import_declaration_specifier(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_import_specifier<'a, State, Tr: Traverse<'a, State>>(
@@ -3064,7 +3232,12 @@ unsafe fn walk_import_attribute_key<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ImportAttributeKey<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_import_attribute_key(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ImportAttributeKey::Identifier(node) => {
             walk_identifier_name(traverser, node as *mut _, ctx)
@@ -3074,6 +3247,9 @@ unsafe fn walk_import_attribute_key<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_import_attribute_key(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_export_declaration<'a, State, Tr: Traverse<'a, State>>(
@@ -3224,7 +3400,12 @@ unsafe fn walk_export_default_declaration_kind<'a, State, Tr: Traverse<'a, State
     node: *mut ExportDefaultDeclarationKind<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_export_default_declaration_kind(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ExportDefaultDeclarationKind::FunctionDeclaration(node) => {
             walk_function(traverser, (&mut **node) as *mut _, ctx)
@@ -3283,6 +3464,9 @@ unsafe fn walk_export_default_declaration_kind<'a, State, Tr: Traverse<'a, State
         }
     }
     traverser.exit_export_default_declaration_kind(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_module_export_name<'a, State, Tr: Traverse<'a, State>>(
@@ -3290,7 +3474,12 @@ unsafe fn walk_module_export_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut ModuleExportName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_module_export_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         ModuleExportName::IdentifierName(node) => {
             walk_identifier_name(traverser, node as *mut _, ctx)
@@ -3303,6 +3492,9 @@ unsafe fn walk_module_export_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_module_export_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_v8_intrinsic_expression<'a, State, Tr: Traverse<'a, State>>(
@@ -3518,7 +3710,12 @@ unsafe fn walk_jsx_element_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXElementName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_element_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXElementName::Identifier(node) => {
             walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
@@ -3537,6 +3734,9 @@ unsafe fn walk_jsx_element_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_jsx_element_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_namespaced_name<'a, State, Tr: Traverse<'a, State>>(
@@ -3594,7 +3794,12 @@ unsafe fn walk_jsx_member_expression_object<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXMemberExpressionObject<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_member_expression_object(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXMemberExpressionObject::IdentifierReference(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
@@ -3607,6 +3812,9 @@ unsafe fn walk_jsx_member_expression_object<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_jsx_member_expression_object(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_expression_container<'a, State, Tr: Traverse<'a, State>>(
@@ -3633,7 +3841,12 @@ unsafe fn walk_jsx_expression<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXExpression<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_expression(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXExpression::EmptyExpression(node) => {
             walk_jsx_empty_expression(traverser, (&mut **node) as *mut _, ctx)
@@ -3686,6 +3899,9 @@ unsafe fn walk_jsx_expression<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_jsx_expression(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_empty_expression<'a, State, Tr: Traverse<'a, State>>(
@@ -3702,7 +3918,12 @@ unsafe fn walk_jsx_attribute_item<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXAttributeItem<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_attribute_item(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXAttributeItem::Attribute(node) => {
             walk_jsx_attribute(traverser, (&mut **node) as *mut _, ctx)
@@ -3712,6 +3933,9 @@ unsafe fn walk_jsx_attribute_item<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_jsx_attribute_item(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_attribute<'a, State, Tr: Traverse<'a, State>>(
@@ -3762,7 +3986,12 @@ unsafe fn walk_jsx_attribute_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXAttributeName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_attribute_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXAttributeName::Identifier(node) => {
             walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
@@ -3772,6 +4001,9 @@ unsafe fn walk_jsx_attribute_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_jsx_attribute_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_attribute_value<'a, State, Tr: Traverse<'a, State>>(
@@ -3779,7 +4011,12 @@ unsafe fn walk_jsx_attribute_value<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXAttributeValue<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_attribute_value(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXAttributeValue::StringLiteral(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
@@ -3795,6 +4032,9 @@ unsafe fn walk_jsx_attribute_value<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_jsx_attribute_value(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_identifier<'a, State, Tr: Traverse<'a, State>>(
@@ -3811,7 +4051,12 @@ unsafe fn walk_jsx_child<'a, State, Tr: Traverse<'a, State>>(
     node: *mut JSXChild<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_jsx_child(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         JSXChild::Text(node) => walk_jsx_text(traverser, (&mut **node) as *mut _, ctx),
         JSXChild::Element(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
@@ -3822,6 +4067,9 @@ unsafe fn walk_jsx_child<'a, State, Tr: Traverse<'a, State>>(
         JSXChild::Spread(node) => walk_jsx_spread_child(traverser, (&mut **node) as *mut _, ctx),
     }
     traverser.exit_jsx_child(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_jsx_spread_child<'a, State, Tr: Traverse<'a, State>>(
@@ -3947,7 +4195,12 @@ unsafe fn walk_ts_enum_member_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSEnumMemberName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_enum_member_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSEnumMemberName::Identifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
@@ -3963,6 +4216,9 @@ unsafe fn walk_ts_enum_member_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_enum_member_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_type_annotation<'a, State, Tr: Traverse<'a, State>>(
@@ -4006,7 +4262,12 @@ unsafe fn walk_ts_literal<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSLiteral<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_literal(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSLiteral::BooleanLiteral(node) => {
             walk_boolean_literal(traverser, (&mut **node) as *mut _, ctx)
@@ -4028,6 +4289,9 @@ unsafe fn walk_ts_literal<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_literal(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_type<'a, State, Tr: Traverse<'a, State>>(
@@ -4035,7 +4299,12 @@ unsafe fn walk_ts_type<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSType<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_type(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSType::TSAnyKeyword(node) => walk_ts_any_keyword(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSBigIntKeyword(node) => {
@@ -4132,6 +4401,9 @@ unsafe fn walk_ts_type<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_type(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_conditional_type<'a, State, Tr: Traverse<'a, State>>(
@@ -4377,7 +4649,12 @@ unsafe fn walk_ts_tuple_element<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSTupleElement<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_tuple_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSTupleElement::TSOptionalType(node) => {
             walk_ts_optional_type(traverser, (&mut **node) as *mut _, ctx)
@@ -4424,6 +4701,9 @@ unsafe fn walk_ts_tuple_element<'a, State, Tr: Traverse<'a, State>>(
         | TSTupleElement::JSDocUnknownType(_) => walk_ts_type(traverser, node as *mut _, ctx),
     }
     traverser.exit_ts_tuple_element(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_any_keyword<'a, State, Tr: Traverse<'a, State>>(
@@ -4582,7 +4862,12 @@ unsafe fn walk_ts_type_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSTypeName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_type_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSTypeName::IdentifierReference(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
@@ -4595,6 +4880,9 @@ unsafe fn walk_ts_type_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_type_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_qualified_name<'a, State, Tr: Traverse<'a, State>>(
@@ -4849,7 +5137,12 @@ unsafe fn walk_ts_signature<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSSignature<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_signature(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSSignature::TSIndexSignature(node) => {
             walk_ts_index_signature(traverser, (&mut **node) as *mut _, ctx)
@@ -4868,6 +5161,9 @@ unsafe fn walk_ts_signature<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_signature(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_index_signature<'a, State, Tr: Traverse<'a, State>>(
@@ -5113,7 +5409,12 @@ unsafe fn walk_ts_type_predicate_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSTypePredicateName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_type_predicate_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSTypePredicateName::Identifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
@@ -5123,6 +5424,9 @@ unsafe fn walk_ts_type_predicate_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_type_predicate_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_external_module_declaration<'a, State, Tr: Traverse<'a, State>>(
@@ -5210,7 +5514,12 @@ unsafe fn walk_ts_namespace_declaration_body<'a, State, Tr: Traverse<'a, State>>
     node: *mut TSNamespaceDeclarationBody<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_namespace_declaration_body(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSNamespaceDeclarationBody::TSNamespaceDeclaration(node) => {
             walk_ts_namespace_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -5220,6 +5529,9 @@ unsafe fn walk_ts_namespace_declaration_body<'a, State, Tr: Traverse<'a, State>>
         }
     }
     traverser.exit_ts_namespace_declaration_body(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_global_declaration<'a, State, Tr: Traverse<'a, State>>(
@@ -5344,7 +5656,12 @@ unsafe fn walk_ts_type_query_expr_name<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSTypeQueryExprName<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_type_query_expr_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSTypeQueryExprName::TSImportType(node) => {
             walk_ts_import_type(traverser, (&mut **node) as *mut _, ctx)
@@ -5356,6 +5673,9 @@ unsafe fn walk_ts_type_query_expr_name<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_type_query_expr_name(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
@@ -5400,7 +5720,12 @@ unsafe fn walk_ts_import_type_qualifier<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSImportTypeQualifier<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_import_type_qualifier(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSImportTypeQualifier::Identifier(node) => {
             walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
@@ -5410,6 +5735,9 @@ unsafe fn walk_ts_import_type_qualifier<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_import_type_qualifier(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_import_type_qualified_name<'a, State, Tr: Traverse<'a, State>>(
@@ -5696,7 +6024,12 @@ unsafe fn walk_ts_module_reference<'a, State, Tr: Traverse<'a, State>>(
     node: *mut TSModuleReference<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
+    let original_node_id = (*node).node_id();
     traverser.enter_ts_module_reference(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
+    let original_node_id = (*node).node_id();
     match &mut *node {
         TSModuleReference::ExternalModuleReference(node) => {
             walk_ts_external_module_reference(traverser, (&mut **node) as *mut _, ctx)
@@ -5709,6 +6042,9 @@ unsafe fn walk_ts_module_reference<'a, State, Tr: Traverse<'a, State>>(
         }
     }
     traverser.exit_ts_module_reference(&mut *node, ctx);
+    if let Some(node_id) = ctx.reconcile_comment_replacement(original_node_id, (*node).node_id()) {
+        (*node).set_node_id(node_id);
+    }
 }
 
 unsafe fn walk_ts_external_module_reference<'a, State, Tr: Traverse<'a, State>>(

@@ -92,7 +92,8 @@ pub fn parse_json<'a>(
     // This is needed so neither the returned expression reference
     // nor the comments slice borrow from the local `program`.
     let comments =
-        std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
+        std::mem::replace(&mut program.comments, oxc_ast::CommentStore::new_in(&allocator))
+            .into_arena_slice();
     let body: &'a [Statement<'a>] =
         std::mem::replace(&mut program.body, ArenaVec::new_in(&allocator)).into_arena_slice();
 
@@ -152,7 +153,8 @@ fn try_parse_comments_only<'a>(
 
     let mut program = ret.program;
     let comments =
-        std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
+        std::mem::replace(&mut program.comments, oxc_ast::CommentStore::new_in(&allocator))
+            .into_arena_slice();
 
     Some(ParsedJson { expression: None, comments, wrapped_source: bare_source, source_offset: 0 })
 }

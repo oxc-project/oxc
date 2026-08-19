@@ -60,16 +60,16 @@ function deserializeProgram(pos) {
     program = (parent = {
       type: "Program",
       body: null,
-      sourceType: deserializeModuleKind(pos + 137),
+      sourceType: deserializeModuleKind(pos + 161),
       hashbang: null,
       start: 0,
       end,
       range: [0, end],
       parent: null,
     });
-  program.hashbang = deserializeOptionHashbang(pos + 56);
-  let body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
+  program.hashbang = deserializeOptionHashbang(pos + 80);
+  let body = (program.body = deserializeVecDirective(pos + 112));
+  body.push(...deserializeVecStatement(pos + 136));
   {
     let start;
     if (body.length > 0) {
@@ -6113,9 +6113,9 @@ function deserializeUpdateOperator(pos) {
 function deserializeRawTransferData(pos) {
   return {
     program: deserializeProgram(pos),
-    comments: deserializeVecComment(pos + 144),
-    module: deserializeEcmaScriptModule(pos + 168),
-    errors: deserializeVecError(pos + 272),
+    comments: deserializeVecComment(pos + 168),
+    module: deserializeEcmaScriptModule(pos + 192),
+    errors: deserializeVecError(pos + 296),
   };
 }
 
@@ -6201,9 +6201,6 @@ function deserializeStr(pos) {
     // String is all ASCII, so slice from `sourceTextLatin`
     return sourceTextLatin.substr(pos - sourceStartPos, len);
   }
-  // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
-  // Copy bytes into temp array.
-  // If any byte is non-ASCII, use `utf8Slice`.
   let arr = stringDecodeArrays[len];
   for (let i = 0; i < len; i++) {
     let b = uint8[pos + i];
@@ -6212,18 +6209,6 @@ function deserializeStr(pos) {
   }
   // Call `fromCharCode` with temp array
   return fromCharCode.apply(null, arr);
-}
-
-function deserializeVecComment(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
-  pos = int32[pos32];
-  let endPos = pos + (int32[pos32 + 2] << 4);
-  for (; pos !== endPos;) {
-    arr.push(deserializeComment(pos));
-    pos += 16;
-  }
-  return arr;
 }
 
 function deserializeOptionHashbang(pos) {
@@ -7424,6 +7409,18 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 
 function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(int32[pos >> 2]);
+}
+
+function deserializeVecComment(pos) {
+  let arr = [],
+    pos32 = pos >> 2;
+  pos = int32[pos32];
+  let endPos = pos + (int32[pos32 + 2] << 4);
+  for (; pos !== endPos;) {
+    arr.push(deserializeComment(pos));
+    pos += 16;
+  }
+  return arr;
 }
 
 function deserializeI32(pos) {

@@ -36,19 +36,19 @@ export class Program {
 
   get sourceType() {
     const internal = this.#internal;
-    return new SourceType(internal.pos + 136, internal.ast);
+    return new SourceType(internal.pos + 160, internal.ast);
   }
 
   get hashbang() {
     const internal = this.#internal;
-    return constructOptionHashbang(internal.pos + 56, internal.ast);
+    return constructOptionHashbang(internal.pos + 80, internal.ast);
   }
 
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return (internal.$body = constructVecStatement(internal.pos + 112, internal.ast));
+    return (internal.$body = constructVecStatement(internal.pos + 136, internal.ast));
   }
 
   toJSON() {
@@ -12569,19 +12569,19 @@ export class RawTransferData {
     const internal = this.#internal,
       cached = internal.$comments;
     if (cached !== void 0) return cached;
-    return (internal.$comments = constructVecComment(internal.pos + 144, internal.ast));
+    return (internal.$comments = constructVecComment(internal.pos + 168, internal.ast));
   }
 
   get module() {
     const internal = this.#internal;
-    return new EcmaScriptModule(internal.pos + 168, internal.ast);
+    return new EcmaScriptModule(internal.pos + 192, internal.ast);
   }
 
   get errors() {
     const internal = this.#internal,
       cached = internal.$errors;
     if (cached !== void 0) return cached;
-    return (internal.$errors = constructVecError(internal.pos + 272, internal.ast));
+    return (internal.$errors = constructVecError(internal.pos + 296, internal.ast));
   }
 
   toJSON() {
@@ -12931,16 +12931,6 @@ function constructStr(pos, ast) {
   } while (pos < end);
 
   return out;
-}
-
-function constructVecComment(pos, ast) {
-  const { int32 } = ast.buffer,
-    pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructComment, ast);
-}
-
-function constructComment(pos, ast) {
-  return new Comment(pos, ast);
 }
 
 function constructOptionHashbang(pos, ast) {
@@ -14033,6 +14023,16 @@ function constructOptionTSMappedTypeModifierOperator(pos, ast) {
 
 function constructBoxTSExternalModuleReference(pos, ast) {
   return new TSExternalModuleReference(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructVecComment(pos, ast) {
+  const { int32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructComment, ast);
+}
+
+function constructComment(pos, ast) {
+  return new Comment(pos, ast);
 }
 
 function constructU32(pos, ast) {

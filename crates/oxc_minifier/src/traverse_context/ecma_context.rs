@@ -12,7 +12,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::{IsGlobalReference, SymbolId};
 use oxc_str::format_str;
-use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
+use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{
     generated::ancestor::Ancestor,
@@ -440,6 +440,28 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         DroppedSubtreeCollector::new(&mut self.state.pass_changes)
     }
 
+    /// Transfer comments from a replaced node to its semantic replacement.
+    ///
+    /// Returns the old ID when an unassigned replacement should inherit it. A replacement which
+    /// already has an identity keeps it and the comment store is rekeyed instead.
+    fn transfer_replaced_node_comments(
+        &self,
+        old_node_id: NodeId,
+        new_node_id: NodeId,
+    ) -> Option<NodeId> {
+        if old_node_id == NodeId::DUMMY
+            || self.state.comments().node_comments(old_node_id).is_none()
+        {
+            return None;
+        }
+        if new_node_id == NodeId::DUMMY {
+            Some(old_node_id)
+        } else {
+            self.state.comments().rekey_node(old_node_id, new_node_id);
+            None
+        }
+    }
+
     /// Replace an expression slot. Marks the pass as having mutated the AST.
     ///
     /// Prefer this over a direct `*slot = new; ctx.notice_change();` pair —
@@ -447,6 +469,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// and the pass revisit request together.
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
+        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+            new.set_node_id(node_id);
+        }
         self.dropped_subtree_collector().visit_expression(slot);
         *slot = new;
         self.state.record_ast_change();
@@ -471,6 +496,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+            new.set_node_id(node_id);
+        }
         self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
         self.state.record_ast_change();
@@ -483,6 +511,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut AssignmentTargetProperty<'a>,
         new: AssignmentTargetProperty<'a>,
     ) {
+        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+            new.set_node_id(node_id);
+        }
         self.dropped_subtree_collector().visit_assignment_target_property(slot);
         *slot = new;
         self.state.record_ast_change();
@@ -491,6 +522,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
+        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+            new.set_node_id(node_id);
+        }
         self.dropped_subtree_collector().visit_property_key(slot);
         *slot = new;
         self.state.record_ast_change();
@@ -504,6 +538,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut ForStatementLeft<'a>,
         new: ForStatementLeft<'a>,
     ) {
+        if let Some(node_id) = self.transfer_replaced_node_comments(slot.node_id(), new.node_id()) {
+            new.set_node_id(node_id);
+        }
         self.dropped_subtree_collector().visit_for_statement_left(slot);
         *slot = new;
         self.state.record_ast_change();

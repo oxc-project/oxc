@@ -60,7 +60,7 @@ pub struct Program<'a> {
     /// Sorted comments
     #[content_eq(skip)]
     #[estree(skip)]
-    pub comments: Vec<'a, Comment>,
+    pub comments: CommentStore<'a>,
     pub hashbang: Option<Hashbang<'a>>,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,

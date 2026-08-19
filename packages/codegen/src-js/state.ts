@@ -12,7 +12,7 @@ import { CAT_OTHER } from "./print/write.ts";
 import { debugAssert } from "./asserts.ts";
 
 import type { Category } from "./print/write.ts";
-import type { Options } from "./print/options.ts";
+import type { Comment, Options } from "./print/options.ts";
 
 /**
  * The string one level of indentation prints as. Set from the `indent` option, a tab by default.
@@ -89,6 +89,9 @@ export class State {
   // Original source text, used to preserve names in source maps when the caller provides it.
   declare sourceText: string | null;
 
+  declare commentItems: readonly Comment[] | null;
+  declare commentIndex: number;
+
   constructor(options: Options) {
     this.output = "";
 
@@ -143,15 +146,18 @@ export class State {
 
     // `writeWithMap` records the output offset and original position of every mapped node,
     // and `generateSourceMap` encodes them in one pass at the end
+    this.sourceText = typeof options.sourceText === "string" ? options.sourceText : null;
     if (options.sourcemap !== true) {
-      this.sourceText = null;
       this.mapPositions = null;
       this.mapNames = null;
     } else {
       debugAssert(options.sourceText != null);
-      this.sourceText = options.sourceText;
       this.mapPositions = [];
       this.mapNames = null;
     }
+
+    const comments = options.comments;
+    this.commentItems = comments == null || comments.length === 0 ? null : comments;
+    this.commentIndex = 0;
   }
 }

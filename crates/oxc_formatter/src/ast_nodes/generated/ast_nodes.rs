@@ -844,7 +844,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn comments(&self) -> &ArenaVec<'a, Comment> {
+    pub fn comments(&self) -> &CommentStore<'a> {
         &self.inner.comments
     }
 

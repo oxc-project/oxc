@@ -73,7 +73,10 @@ const minifyConfig = DEBUG
 // In builds without source maps, nothing reads the `node` argument the mapping writes take,
 // so `unmap_writes` rewrites every `writeWithMap` / `writeWithMapNoLast` call, and the imports
 // which bring them in, into the plain `write` / `writeNoLast` they become without it.
-const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; ts: boolean }) => ({
+const printerConfig = (
+  name: string,
+  { sourcemaps, ts, comments }: { sourcemaps: boolean; ts: boolean; comments: boolean },
+) => ({
   ...commonConfig,
   minify: minifyConfig,
   // Only the entry point's types are published
@@ -83,6 +86,7 @@ const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; 
     ...definedGlobals,
     SOURCEMAPS: sourcemaps ? "true" : "false",
     TS: ts ? "true" : "false",
+    COMMENTS: comments ? "true" : "false",
   },
   plugins: [
     // `strip_ts` is a text transform, so must run before the AST-based plugins
@@ -103,13 +107,26 @@ export default defineConfig([
     define: definedGlobals,
     deps: {
       // The printer builds are loaded at runtime, so must not be bundled in
-      neverBundle: ["./print_js.js", "./print_js_maps.js", "./print_ts.js", "./print_ts_maps.js"],
+      neverBundle: [
+        "./print_js.js",
+        "./print_js_maps.js",
+        "./print_ts.js",
+        "./print_ts_maps.js",
+        "./print_js_comments.js",
+        "./print_js_maps_comments.js",
+        "./print_ts_comments.js",
+        "./print_ts_maps_comments.js",
+      ],
     },
   },
 
   // Printers
-  printerConfig("print_js", { sourcemaps: false, ts: false }),
-  printerConfig("print_js_maps", { sourcemaps: true, ts: false }),
-  printerConfig("print_ts", { sourcemaps: false, ts: true }),
-  printerConfig("print_ts_maps", { sourcemaps: true, ts: true }),
+  printerConfig("print_js", { sourcemaps: false, ts: false, comments: false }),
+  printerConfig("print_js_maps", { sourcemaps: true, ts: false, comments: false }),
+  printerConfig("print_ts", { sourcemaps: false, ts: true, comments: false }),
+  printerConfig("print_ts_maps", { sourcemaps: true, ts: true, comments: false }),
+  printerConfig("print_js_comments", { sourcemaps: false, ts: false, comments: true }),
+  printerConfig("print_js_maps_comments", { sourcemaps: true, ts: false, comments: true }),
+  printerConfig("print_ts_comments", { sourcemaps: false, ts: true, comments: true }),
+  printerConfig("print_ts_maps_comments", { sourcemaps: true, ts: true, comments: true }),
 ]);

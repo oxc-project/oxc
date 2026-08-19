@@ -26,3 +26,14 @@ fn preserve_file_coverage_comment_when_typescript_import_is_removed() {
         assert_eq!(output, expected);
     }
 }
+
+#[test]
+fn preserve_comment_on_replaced_expression() {
+    let output = test_with_source_type(
+        "const value = /* keep */ source?.property;",
+        SourceType::mjs(),
+        &TransformOptions::from(oxc_transformer::ESTarget::ES2015),
+    )
+    .expect("transform should succeed");
+    assert!(output.contains("/* keep */"), "{output}");
+}

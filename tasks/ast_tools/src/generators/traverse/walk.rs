@@ -534,6 +534,42 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
     let enum_ty = enum_def.ty(schema);
     let enum_ident = enum_def.ident();
 
+    let all_variants_have_node_ids = enum_def.all_variants(schema).all(|variant| {
+        variant
+            .field_type(schema)
+            .map(|field_type| field_type.innermost_type(schema))
+            .and_then(TypeDef::as_struct)
+            .is_some_and(|struct_def| struct_def.kind.has_kind)
+    });
+    let before_enter = if config.has_state && all_variants_have_node_ids {
+        quote!( let original_node_id = (*node).node_id(); )
+    } else {
+        quote!()
+    };
+    let after_enter = if config.has_state && all_variants_have_node_ids {
+        quote! {
+            if let Some(node_id) =
+                ctx.reconcile_comment_replacement(original_node_id, (*node).node_id())
+            {
+                (*node).set_node_id(node_id);
+            }
+            let original_node_id = (*node).node_id();
+        }
+    } else {
+        quote!()
+    };
+    let after_exit = if config.has_state && all_variants_have_node_ids {
+        quote! {
+            if let Some(node_id) =
+                ctx.reconcile_comment_replacement(original_node_id, (*node).node_id())
+            {
+                (*node).set_node_id(node_id);
+            }
+        }
+    } else {
+        quote!()
+    };
+
     let mut match_arms = quote!();
 
     // Own variants
@@ -585,11 +621,14 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
             node: *mut #enum_ty,
             ctx: &mut #ctx_ty,
         ) {
+            #before_enter
             traverser.#enter_fn_name(&mut *node, ctx);
+            #after_enter
             match &mut *node {
                 #match_arms
             }
             traverser.#exit_fn_name(&mut *node, ctx);
+            #after_exit
         }
     }
 }

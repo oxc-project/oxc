@@ -13,6 +13,7 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::{Allocator, ArenaVec, FromIn},
+    ast::CommentStore,
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
@@ -323,7 +324,8 @@ unsafe fn parse_raw_impl(
             }
         }
 
-        let comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
+        let comments =
+            mem::replace(&mut program.comments, CommentStore::new_in(&allocator)).into_vec();
 
         // Convert module record
         let module = EcmaScriptModule::from_in(module_record, allocator);

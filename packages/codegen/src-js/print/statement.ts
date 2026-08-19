@@ -20,6 +20,7 @@ import { printExpression } from "./expression.ts";
 import { printFunction } from "./function.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { printIndent } from "./indent.ts";
+import { printLeadingComments, printRemainingComments } from "./comments.ts";
 import {
   printExportAllDeclaration,
   printExportDefaultDeclaration,
@@ -55,6 +56,7 @@ export function printProgram(node: ESTree.Program, state: State): void {
   }
 
   printDirectivesAndStatements(node.body, state);
+  if (COMMENTS) printRemainingComments(state);
 }
 
 /**
@@ -108,6 +110,7 @@ export function printDirectivesAndStatements(
  * the other one.
  */
 function printDirective(stmt: ESTree.Directive, state: State): void {
+  if (COMMENTS) printLeadingComments(stmt, state);
   printIndent(state);
 
   const { directive } = stmt;
@@ -141,6 +144,7 @@ function printDirective(stmt: ESTree.Directive, state: State): void {
  * the output at the start of a fresh line for the next one.
  */
 export function printStatement(node: ESTree.Statement | UnknownNode, state: State): void {
+  if (COMMENTS) printLeadingComments(node, state);
   // Arms are ordered roughly in order of most common nodes.
   // V8 turns this into (essentially) as chain of `if ... else if ... else if...`,
   // so making common nodes short-circuit early is a large perf boost.

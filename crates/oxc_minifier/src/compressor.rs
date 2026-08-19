@@ -53,6 +53,7 @@ impl<'a> Compressor<'a> {
             options,
             CompressionMode::Full,
             &scoping,
+            &program.comments,
             self.allocator,
         );
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
@@ -90,6 +91,7 @@ impl<'a> Compressor<'a> {
             options,
             CompressionMode::TreeShakeOnly,
             &scoping,
+            &program.comments,
             self.allocator,
         );
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);

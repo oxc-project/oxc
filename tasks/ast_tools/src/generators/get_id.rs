@@ -185,9 +185,14 @@ fn generate_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<TokenStream>
         let variant_ident = variant.ident();
         quote!( Self::#variant_ident(it) => it.node_id() )
     });
+    let set_matches = enum_def.all_variants(schema).map(|variant| {
+        let variant_ident = variant.ident();
+        quote!( Self::#variant_ident(it) => it.set_node_id(node_id) )
+    });
 
     let enum_ty = enum_def.ty_anon(schema);
     let get_doc = format!(" Get [`NodeId`] of [`{}`].", enum_def.name());
+    let set_doc = format!(" Set [`NodeId`] of [`{}`].", enum_def.name());
 
     Some(quote! {
         ///@@line_break
@@ -197,6 +202,15 @@ fn generate_for_enum(enum_def: &EnumDef, schema: &Schema) -> Option<TokenStream>
             pub fn node_id(&self) -> NodeId {
                 match self {
                     #(#matches),*
+                }
+            }
+
+            ///@@line_break
+            #[doc = #set_doc]
+            #maybe_inline
+            pub fn set_node_id(&self, node_id: NodeId) {
+                match self {
+                    #(#set_matches),*
                 }
             }
         }

@@ -66,6 +66,7 @@
 
 use std::any::Any;
 
+mod ast_builder;
 pub mod config;
 mod context;
 mod cursor;
@@ -89,8 +90,9 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
+    CommentStore,
     ast::{Expression, Program, Statement},
-    builder::{AstBuilder, GetAstBuilder},
+    builder::GetAstBuilder,
 };
 use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
@@ -98,6 +100,7 @@ use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
+    ast_builder::ParserAstBuilder,
     config::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
@@ -638,7 +641,7 @@ struct ParserImpl<'a, C: ParserConfig> {
     ctx: Context,
 
     /// Ast builder for creating AST nodes
-    ast: AstBuilder<'a>,
+    ast: ParserAstBuilder<'a>,
 
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
@@ -674,7 +677,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: ParserAstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }
@@ -819,17 +822,20 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Program::new(
+        let program = Program::new(
             span,
             self.source_type,
             self.source_text,
             // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`
-            [],
+            CommentStore::new_in(self.allocator()),
             hashbang,
             directives,
             statements,
             self,
-        )
+        );
+        // `Program` is constructed after its descendants, but is always the semantic root.
+        program.set_node_id(oxc_syntax::node::NodeId::ROOT);
+        program
     }
 
     /// Reparse statements that may contain top-level await expressions.
@@ -929,10 +935,10 @@ impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
 }
 
 impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
-    type Builder = AstBuilder<'a>;
+    type Builder = ParserAstBuilder<'a>;
 
     #[inline]
-    fn builder(&self) -> &AstBuilder<'a> {
+    fn builder(&self) -> &ParserAstBuilder<'a> {
         &self.ast
     }
 }
@@ -1122,6 +1128,32 @@ mod test {
             assert_eq!(comments.len(), 1, "{source}");
             assert_eq!(comments.first().unwrap().kind, kind, "{source}");
         }
+    }
+
+    #[test]
+    fn statement_comments_are_attached_to_parser_node_ids() {
+        let allocator = Allocator::default();
+        let source = "/* leading */ foo(); // trailing\nbar();";
+        let ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        assert!(ret.diagnostics.is_empty());
+
+        let first = &ret.program.body[0];
+        assert_ne!(first.node_id(), oxc_syntax::node::NodeId::DUMMY);
+        let comments = ret.program.comments.node_comments(first.node_id()).unwrap();
+        assert_eq!(comments.leading.as_slice(), &[oxc_ast::CommentId::from_usize(0)]);
+        assert_eq!(comments.trailing.as_slice(), &[oxc_ast::CommentId::from_usize(1)]);
+    }
+
+    #[test]
+    fn directive_comment_attachment_is_rekeyed() {
+        let allocator = Allocator::default();
+        let source = "/* leading */ 'use strict';";
+        let ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        assert!(ret.diagnostics.is_empty());
+
+        let directive = &ret.program.directives[0];
+        let comments = ret.program.comments.node_comments(directive.node_id()).unwrap();
+        assert_eq!(comments.leading.as_slice(), &[oxc_ast::CommentId::from_usize(0)]);
     }
 
     #[test]

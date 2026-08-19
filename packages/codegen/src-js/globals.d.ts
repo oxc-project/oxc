@@ -18,3 +18,4 @@ declare const DEBUG: boolean;
 // `skipSourcemapGeneration` option, so a benchmark can measure the print pass without the final
 // source map generation. In normal builds the option does nothing and the check folds away.
 declare const BENCHMARKS: boolean;
+declare const COMMENTS: boolean;

@@ -24,6 +24,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 
@@ -51,6 +52,7 @@ fn main() -> std::io::Result<()> {
     // First round: parse and generate
     let printed = {
         let program = parse(&allocator, &source_text, source_type);
+        dbg!(&program.comments);
         codegen(&program, minify, sourcemap)
     };
     println!("First time:");
@@ -88,13 +90,21 @@ fn parse<'a>(
     for error in ret.diagnostics {
         println!("{}", error.render_with_source_code(source_text.to_string()));
     }
-    ret.program
+    let program = ret.program;
+    let semantic_ret = SemanticBuilder::new().build(&program);
+    for error in semantic_ret.diagnostics {
+        println!("{}", error.render_with_source_code(source_text.to_string()));
+    }
+    program
 }
 
 /// Generate JavaScript code from an AST
 fn codegen(program: &Program<'_>, minify: bool, source_map_path: Option<&Path>) -> String {
     let mut options = if minify { CodegenOptions::minify() } else { CodegenOptions::default() };
     options.source_map_path = source_map_path.map(Path::to_path_buf);
+    options.comments.annotation = true;
+    options.comments.jsdoc = true;
+    options.comments.normal = true;
 
     let CodegenReturn { code, map, .. } = Codegen::new().with_options(options).build(program);
 

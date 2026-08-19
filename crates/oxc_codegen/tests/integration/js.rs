@@ -918,7 +918,16 @@ fn template_literal_escape_when_building_ast() {
         &ast,
     );
     let stmt = Statement::new_expression_statement(SPAN, expr, &ast);
-    let program = Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
+    let program = Program::new(
+        SPAN,
+        oxc_span::SourceType::mjs(),
+        "",
+        oxc_ast::CommentStore::new_in(&allocator),
+        None,
+        [],
+        [stmt],
+        &ast,
+    );
 
     let result = Codegen::new().build(&program).code;
     // The raw value should have been escaped by template_element with escape_raw: true

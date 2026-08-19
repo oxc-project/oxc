@@ -1147,7 +1147,16 @@ fn compile_outlined_functions<'a, 'b, 'p, 's>(
             let outlined = nodes[index].outlined.as_ref().unwrap();
             body.push(outlined_function_declaration(ast, &outlined.func));
         }
-        let program = Program::new(SPAN, source_type, context.source_text, [], None, [], body, ast);
+        let program = Program::new(
+            SPAN,
+            source_type,
+            context.source_text,
+            oxc_ast::CommentStore::new_in(ast.allocator()),
+            None,
+            [],
+            body,
+            ast,
+        );
         let semantic_ret = SemanticBuilder::new().with_build_nodes(true).build(&program);
         if !semantic_ret.diagnostics.is_empty() {
             if let Some(result) = handle_error(

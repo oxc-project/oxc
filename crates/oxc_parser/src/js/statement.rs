@@ -69,6 +69,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
+            let stmt_node_id = stmt.node_id();
 
             // Don't reparse a module declaration: `export` already committed to the
             // Module goal while parsing, so reparsing would record the export twice.
@@ -95,7 +96,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let string = string.unbox();
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
+                        let directive = Directive::new(span, string, Str::from(src), self);
+                        self.lexer.trivia_builder.rekey_comments(stmt_node_id, directive.node_id());
+                        directives.push(directive);
                         continue;
                     }
                     stmt => {
@@ -132,6 +135,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        let statement_start = self.cur_start();
+        let leading_comment_ids =
+            self.lexer.trivia_builder.comment_ids(CommentPosition::Leading, statement_start);
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
@@ -207,6 +213,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if has_no_side_effects_comment {
             Self::set_pure_on_function_stmt(&mut stmt);
         }
+
+        let node_id = stmt.node_id();
+        self.lexer.trivia_builder.attach_comments(
+            node_id,
+            CommentPosition::Leading,
+            leading_comment_ids,
+        );
+        let trailing_comment_ids =
+            self.lexer.trivia_builder.comment_ids(CommentPosition::Trailing, stmt.span().end);
+        self.lexer.trivia_builder.attach_comments(
+            node_id,
+            CommentPosition::Trailing,
+            trailing_comment_ids,
+        );
 
         stmt
     }

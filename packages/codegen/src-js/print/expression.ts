@@ -24,6 +24,7 @@ import {
 } from "./function.ts";
 import { printSpaceBeforeIdentifier, printSpaceBeforeOperator } from "./space.ts";
 import { printIndent } from "./indent.ts";
+import { printLeadingComments } from "./comments.ts";
 import { printJSXElement, printJSXFragment } from "./jsx.ts";
 import { printLiteral } from "./literal.ts";
 import {
@@ -91,6 +92,7 @@ export function printExpression(
   precedence: number,
   ctx: number,
 ): void {
+  if (COMMENTS) printLeadingComments(node, state);
   // Arms are ordered roughly in order of most common nodes.
   // V8 turns this into (essentially) as chain of `if ... else if ... else if...`,
   // so making common nodes short-circuit early is a large perf boost.

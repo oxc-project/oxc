@@ -1,6 +1,9 @@
+use std::ptr::NonNull;
+
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, BitSet};
+use oxc_ast::CommentStore;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
@@ -114,6 +117,10 @@ pub struct MinifierState<'a> {
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
+
+    /// Program-owned comment attachments, type-erased so this state can borrow it for exactly the
+    /// compressor run without constraining the AST arena lifetime.
+    comments: NonNull<()>,
 }
 
 impl<'a> MinifierState<'a> {
@@ -122,6 +129,7 @@ impl<'a> MinifierState<'a> {
         options: CompressOptions,
         mode: CompressionMode,
         scoping: &Scoping,
+        comments: &CommentStore<'a>,
         allocator: &'a Allocator,
     ) -> Self {
         let symbols = SymbolState::new(source_type, &options, scoping, allocator);
@@ -136,7 +144,15 @@ impl<'a> MinifierState<'a> {
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
             concat_scratch: String::new(),
+            comments: NonNull::from(comments).cast(),
         }
+    }
+
+    #[inline]
+    pub(crate) fn comments(&self) -> &CommentStore<'a> {
+        // SAFETY: `MinifierState` is created and consumed within a compressor call while the
+        // referenced `Program` remains alive and is not moved.
+        unsafe { self.comments.cast().as_ref() }
     }
 
     /// Whether `Normalize`'s member-write scan should seed persistent metadata,

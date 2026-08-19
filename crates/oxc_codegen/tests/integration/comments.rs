@@ -242,6 +242,73 @@ fn test_comment_at_top_of_file() {
 }
 
 #[test]
+fn test_trailing_comments_after_statements() {
+    for (source, expected) in [
+        ("foo; // statement\nbar;", "foo; // statement\nbar;\n"),
+        ("if (foo) {} // statement\nbar;", "if (foo) {} // statement\nbar;\n"),
+        (
+            "function f() {\n foo; /* one */ /* two */\n bar;\n}",
+            "function f() {\n\tfoo; /* one */ /* two */\n\tbar;\n}\n",
+        ),
+    ] {
+        test(source, expected);
+        test_idempotency(source);
+    }
+}
+
+#[test]
+fn test_node_attached_expression_comment_after_semantic_build() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let ret =
+        Parser::new(&allocator, "const value = /* expression */ foo();", SourceType::default())
+            .parse();
+    assert!(ret.diagnostics.is_empty());
+    SemanticBuilder::new().build(&ret.program);
+    assert_eq!(Codegen::new().build(&ret.program).code, "const value = /* expression */ foo();\n");
+}
+
+#[test]
+fn test_semantic_node_and_punctuation_comments() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let ret =
+        Parser::new(&allocator, "const /*1*/x/*2*/ =/*3*/ foo/*4*/();", SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    SemanticBuilder::new().build(&ret.program);
+    assert_eq!(Codegen::new().build(&ret.program).code, "const /*1*/ x/*2*/ = /*3*/ foo/*4*/();\n");
+}
+
+#[test]
+fn test_semantic_rebuild_suppresses_comments_from_removed_nodes() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let ret =
+        Parser::new(&allocator, "/* removed */ removed(); survivor();", SourceType::default())
+            .parse();
+    let mut program = ret.program;
+    SemanticBuilder::new().build(&program);
+    program.body.remove(0);
+    SemanticBuilder::new().build(&program);
+    assert_eq!(Codegen::new().build(&program).code, "survivor();\n");
+}
+
+#[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
     // A comment-only JSX expression container must not leak a leading space onto

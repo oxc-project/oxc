@@ -110,15 +110,16 @@ an empty `mappings` string.
 
 ### Options
 
-| Option                | Type      | Default | Description                                                      |
-| :-------------------- | :-------- | :------ | :--------------------------------------------------------------- |
-| `indent`              | `string`  | `"\t"`  | Non-empty string of spaces and/or tabs used for one indent level |
-| `startingIndentLevel` | `number`  | `0`     | Starting indent level, from `0` to `1000`                        |
-| `jsx`                 | `boolean` | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax         |
-| `ts`                  | `boolean` | `false` | Select the printer that supports TypeScript nodes                |
-| `sourcemap`           | `boolean` | `false` | Return a Source Map v3 object in `map`                           |
-| `sourceFilename`      | `string`  | `""`    | Original source filename recorded in the source map              |
-| `sourceText`          | `string`  | -       | Original text required for source-map mappings and content       |
+| Option                | Type        | Default | Description                                                       |
+| :-------------------- | :---------- | :------ | :---------------------------------------------------------------- |
+| `indent`              | `string`    | `"\t"`  | Non-empty string of spaces and/or tabs used for one indent level  |
+| `startingIndentLevel` | `number`    | `0`     | Starting indent level, from `0` to `1000`                         |
+| `jsx`                 | `boolean`   | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax          |
+| `ts`                  | `boolean`   | `false` | Select the printer that supports TypeScript nodes                 |
+| `comments`            | `Comment[]` | —       | Source-order comment sidecar; comments stay disabled when omitted |
+| `sourcemap`           | `boolean`   | `false` | Return a Source Map v3 object in `map`                            |
+| `sourceFilename`      | `string`    | `""`    | Original source filename recorded in the source map               |
+| `sourceText`          | `string`    | —       | Original source for maps and exact comment text/spacing           |
 
 ## Why pure JavaScript?
 
@@ -132,7 +133,7 @@ implementation details and performance constraints.
 
 ## Current limitations
 
-- Comments are not printed.
+- Comments require the opt-in `comments` sidecar. Pass `sourceText` for exact source recovery.
 - Minified output is not supported.
 
 ## Benchmarks

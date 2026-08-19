@@ -10,17 +10,17 @@ use crate::ast::*;
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 4 bytes
-    assert!(size_of::<Program>() == 144);
+    assert!(size_of::<Program>() == 168);
     assert!(align_of::<Program>() == 8);
     assert!(offset_of!(Program, span) == 0);
     assert!(offset_of!(Program, node_id) == 8);
     assert!(offset_of!(Program, scope_id) == 12);
     assert!(offset_of!(Program, source_text) == 16);
     assert!(offset_of!(Program, comments) == 32);
-    assert!(offset_of!(Program, hashbang) == 56);
-    assert!(offset_of!(Program, directives) == 88);
-    assert!(offset_of!(Program, body) == 112);
-    assert!(offset_of!(Program, source_type) == 136);
+    assert!(offset_of!(Program, hashbang) == 80);
+    assert!(offset_of!(Program, directives) == 112);
+    assert!(offset_of!(Program, body) == 136);
+    assert!(offset_of!(Program, source_type) == 160);
 
     assert!(size_of::<Expression>() == 16);
     assert!(align_of::<Expression>() == 8);
@@ -1825,6 +1825,10 @@ const _: () = {
     assert!(offset_of!(JSDocUnknownType, span) == 0);
     assert!(offset_of!(JSDocUnknownType, node_id) == 8);
 
+    // Padding: 0 bytes
+    assert!(size_of::<CommentStore>() == 48);
+    assert!(align_of::<CommentStore>() == 8);
+
     assert!(size_of::<CommentKind>() == 1);
     assert!(align_of::<CommentKind>() == 1);
 
@@ -1852,17 +1856,17 @@ const _: () = {
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
-    assert!(size_of::<Program>() == 96);
+    assert!(size_of::<Program>() == 108);
     assert!(align_of::<Program>() == 4);
     assert!(offset_of!(Program, span) == 0);
     assert!(offset_of!(Program, node_id) == 8);
     assert!(offset_of!(Program, scope_id) == 12);
     assert!(offset_of!(Program, source_text) == 16);
     assert!(offset_of!(Program, comments) == 24);
-    assert!(offset_of!(Program, hashbang) == 40);
-    assert!(offset_of!(Program, directives) == 60);
-    assert!(offset_of!(Program, body) == 76);
-    assert!(offset_of!(Program, source_type) == 92);
+    assert!(offset_of!(Program, hashbang) == 52);
+    assert!(offset_of!(Program, directives) == 72);
+    assert!(offset_of!(Program, body) == 88);
+    assert!(offset_of!(Program, source_type) == 104);
 
     assert!(size_of::<Expression>() == 8);
     assert!(align_of::<Expression>() == 4);
@@ -3666,6 +3670,10 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<JSDocUnknownType>() == 4);
     assert!(offset_of!(JSDocUnknownType, span) == 0);
     assert!(offset_of!(JSDocUnknownType, node_id) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<CommentStore>() == 28);
+    assert!(align_of::<CommentStore>() == 4);
 
     assert!(size_of::<CommentKind>() == 1);
     assert!(align_of::<CommentKind>() == 1);

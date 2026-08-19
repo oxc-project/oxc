@@ -166,7 +166,10 @@ mod test {
             Span::new(0, 15),
             SourceType::default(),
             ";'🤨' // 🤨",
-            [Comment::new(8, 15, CommentKind::Line)],
+            oxc_ast::CommentStore::from_iter_in(
+                [Comment::new(8, 15, CommentKind::Line)],
+                &allocator,
+            ),
             None,
             [],
             [
@@ -182,7 +185,7 @@ mod test {
 
         let span_converter = Utf8ToUtf16::new(program.source_text);
         span_converter.convert_program(&mut program);
-        span_converter.convert_comments(&mut program.comments);
+        span_converter.convert_comments(program.comments.as_mut_slice());
 
         assert_eq!(program.span, Span::new(0, 11));
         assert_eq!(program.body[1].span(), Span::new(1, 5));

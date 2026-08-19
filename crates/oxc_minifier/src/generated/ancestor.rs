@@ -2624,10 +2624,8 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
     }
 
     #[inline]
-    pub fn comments(self) -> &'t ArenaVec<'a, Comment> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const ArenaVec<'a, Comment>)
-        }
+    pub fn comments(self) -> &'t CommentStore<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const CommentStore<'a>) }
     }
 
     #[inline]
@@ -2689,10 +2687,8 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
     }
 
     #[inline]
-    pub fn comments(self) -> &'t ArenaVec<'a, Comment> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const ArenaVec<'a, Comment>)
-        }
+    pub fn comments(self) -> &'t CommentStore<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const CommentStore<'a>) }
     }
 
     #[inline]
@@ -2753,10 +2749,8 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn comments(self) -> &'t ArenaVec<'a, Comment> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const ArenaVec<'a, Comment>)
-        }
+    pub fn comments(self) -> &'t CommentStore<'a> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const CommentStore<'a>) }
     }
 
     #[inline]

@@ -17,6 +17,7 @@ use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
+    node::NodeId,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -127,6 +128,10 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+    node_comments: FxHashMap<NodeId, Vec<Comment>>,
+    trailing_comments: CommentsMap,
+    trailing_node_comments: FxHashMap<NodeId, Vec<Comment>>,
+    dangling_node_comments: FxHashMap<NodeId, Vec<Comment>>,
     has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
@@ -196,6 +201,10 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            node_comments: FxHashMap::default(),
+            trailing_comments: CommentsMap::default(),
+            trailing_node_comments: FxHashMap::default(),
+            dangling_node_comments: FxHashMap::default(),
             has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),
@@ -728,7 +737,7 @@ impl<'a> Codegen<'a> {
             && let Expression::StringLiteral(string) = expr
         {
             // Mirror `ExpressionStatement`'s printer, which this path stands in for
-            self.print_comments_at(stmt.span.start);
+            self.print_node_comments_at(stmt.node_id(), stmt.span.start);
             if self.indent > 0 || self.print_next_indent_as_space {
                 self.print_indent();
                 self.add_source_mapping(stmt.span);

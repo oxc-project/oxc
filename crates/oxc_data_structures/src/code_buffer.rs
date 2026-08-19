@@ -249,6 +249,14 @@ impl CodeBuffer {
         self.buf.last().copied()
     }
 
+    /// Remove trailing spaces, tabs, and line breaks from the buffer.
+    #[inline]
+    pub fn trim_trailing_ascii_whitespace_and_newlines(&mut self) {
+        while self.buf.last().is_some_and(u8::is_ascii_whitespace) {
+            self.buf.pop();
+        }
+    }
+
     /// Peek the last char from the end of the buffer.
     #[inline]
     pub fn last_char(&self) -> Option<char> {

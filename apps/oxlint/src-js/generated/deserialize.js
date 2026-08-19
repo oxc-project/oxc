@@ -21,7 +21,6 @@ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
 const NodeProto = Object.create(Object.prototype, {
   loc: {
-    // Note: Not configurable
     get() {
       return getNodeLoc(this);
     },
@@ -69,7 +68,7 @@ function deserializeProgram(pos) {
       __proto__: NodeProto,
       type: "Program",
       body: null,
-      sourceType: deserializeModuleKind(pos + 137),
+      sourceType: deserializeModuleKind(pos + 161),
       get comments() {
         comments === null && initComments();
         return comments;
@@ -83,8 +82,8 @@ function deserializeProgram(pos) {
       range: [0, end],
       parent: null,
     }),
-    body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
+    body = (program.body = deserializeVecDirective(pos + 112));
+  body.push(...deserializeVecStatement(pos + 136));
   {
     let start;
     if (body.length > 0) {
@@ -6092,9 +6091,6 @@ function deserializeStr(pos) {
     // String is all ASCII, so slice from `sourceTextLatin`
     return sourceTextLatin.substr(pos - sourceStartPos, len);
   }
-  // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
-  // Copy bytes into temp array.
-  // If any byte is non-ASCII, use `utf8Slice`.
   let arr = stringDecodeArrays[len];
   for (let i = 0; i < len; i++) {
     let b = uint8[pos + i];

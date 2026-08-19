@@ -22,6 +22,16 @@ fn test_same(source_text: &str) {
 }
 
 #[test]
+fn replacement_preserves_node_attached_comments() {
+    let output = crate::run(
+        "NOOP(/* keep */ 1 + 1)",
+        oxc_span::SourceType::mjs(),
+        Some(crate::default_options()),
+    );
+    assert_eq!(output, "NOOP(/* keep */ 2);\n");
+}
+
+#[test]
 fn test_comparison() {
     fold("(1, 2) !== 2", "!1");
     fold_same("({} <= {})");

@@ -11,6 +11,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
+    CommentStore,
     ast::*,
     builder::{AstBuilder, GetAstBuilder},
 };
@@ -101,9 +102,12 @@ impl<'a> IsolatedDeclarations<'a> {
             SPAN,
             source_type,
             program.source_text,
-            ArenaVec::from_iter_in(
-                program.comments.iter().filter(|c| c.is_jsdoc()).copied(),
-                &self,
+            CommentStore::from_vec(
+                ArenaVec::from_iter_in(
+                    program.comments.iter().filter(|c| c.is_jsdoc()).copied(),
+                    &self,
+                ),
+                self.allocator(),
             ),
             None,
             [],

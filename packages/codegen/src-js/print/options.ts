@@ -19,6 +19,9 @@ export interface CodegenResult {
  * Code generator options.
  */
 export interface Options {
+  /** Source-order comments to print. Comments remain disabled when omitted or empty. */
+  comments?: readonly Comment[];
+
   /**
    * String to use for indentation, defaults to `"\t"`.
    * Must be a non-empty string consisting only of spaces and/or tabs.
@@ -49,7 +52,8 @@ export interface Options {
   sourcemap?: boolean;
 
   /**
-   * Original source text. Required when `sourcemap` is `true`.
+   * Original source text. Required when `sourcemap` is `true`; also used to recover exact comment
+   * spelling and line breaks when `comments` are supplied.
    */
   sourceText?: string;
 
@@ -57,4 +61,11 @@ export interface Options {
    * Original source filename recorded in the returned source map.
    */
   sourceFilename?: string;
+}
+
+export interface Comment {
+  type: "Line" | "Block";
+  value: string;
+  start: number;
+  end: number;
 }

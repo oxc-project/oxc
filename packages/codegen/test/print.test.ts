@@ -186,6 +186,30 @@ describe("starting indent level", () => {
   });
 });
 
+describe("comments", () => {
+  test("prints an opt-in parser sidecar", () => {
+    const sourceText = "// heading\nconst value = 1;";
+    const { program, comments } = parseSync("input.js", sourceText, PARSE_OPTIONS);
+    expect(printSync(program, { comments, sourceText }).code).toBe(
+      "// heading\nconst value = 1;\n",
+    );
+  });
+
+  test("keeps the default printer comment-free", () => {
+    const sourceText = "// heading\nconst value = 1;";
+    const { program } = parseSync("input.js", sourceText, PARSE_OPTIONS);
+    expect(printSync(program).code).toBe("const value = 1;\n");
+  });
+
+  test("does not duplicate a parser hashbang comment", () => {
+    const sourceText = "#!/usr/bin/env node\n// heading\nrun();";
+    const { program, comments } = parseSync("input.js", sourceText, PARSE_OPTIONS);
+    expect(printSync(program, { comments, sourceText }).code).toBe(
+      "#!/usr/bin/env node\n// heading\nrun();\n",
+    );
+  });
+});
+
 // A numeric literal followed by `.` needs a space when the number is plain digits, because
 // `0.toExponential()` would lex the `.` as part of the number. This is the `needSpaceBeforeDot`
 // path, and every case below is unreachable from a parsed fixture in at least one respect.

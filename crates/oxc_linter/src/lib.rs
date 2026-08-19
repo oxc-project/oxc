@@ -16,6 +16,7 @@ use std::{
 
 use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{
+    CommentStore,
     ast::{Comment, CommentContent, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,
 };
@@ -650,7 +651,7 @@ impl Linter {
 
         // If added hashbang comment, set comments to the new `Vec<Comment>` including hashbang comment
         if let Some(comments) = comments {
-            program.comments = comments;
+            program.comments = CommentStore::from_vec(comments, js_allocator);
         }
 
         // Clone tokens into fixed-size allocator
