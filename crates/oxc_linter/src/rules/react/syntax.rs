@@ -15,7 +15,7 @@ declare_react_compiler_lint!(
     /// Reports invalid JavaScript encountered by React Compiler while
     /// analyzing a component or hook, such as reassigning a `const` binding.
     ///
-    upstream = "syntax",
+    unlinked_upstream = "syntax",
     ///
     /// ### Why is this bad?
     ///
@@ -24,7 +24,7 @@ declare_react_compiler_lint!(
     Syntax,
     react,
     restriction,
-    version = "next",
+    version = "1.79.0",
     short_description = "Reports invalid JavaScript syntax encountered by the React Compiler.",
 );
 

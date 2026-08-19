@@ -16,7 +16,7 @@ declare_react_compiler_lint!(
     /// called unconditionally, in a consistent order, at the top level of a
     /// component or hook, and not be used as first-class values.
     ///
-    upstream = "hooks",
+    unlinked_upstream = "hooks",
     ///
     /// This rule overlaps with `react/rules-of-hooks`; upstream ships it
     /// disabled for that reason.
@@ -50,7 +50,7 @@ declare_react_compiler_lint!(
     Hooks,
     react,
     suspicious,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates the Rules of Hooks with the React Compiler's analysis.",
 );
 

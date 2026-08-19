@@ -16,7 +16,7 @@ declare_react_compiler_lint!(
     /// features the compiler has not implemented. These are skipped
     /// optimizations (bail-outs), not rule violations.
     ///
-    upstream = "todo",
+    unlinked_upstream = "todo",
     ///
     /// ### Why is this bad?
     ///
@@ -26,7 +26,7 @@ declare_react_compiler_lint!(
     Todo,
     react,
     restriction,
-    version = "next",
+    version = "1.79.0",
     short_description = "Reports code using features the React Compiler has not implemented yet.",
 );
 

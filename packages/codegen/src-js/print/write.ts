@@ -39,21 +39,22 @@ import type { State } from "../state.ts";
 //    1  CAT_INT_DIGIT                  Numeric literal of plain digits (`0 .toExponential()`)
 //    2  CAT_REGEX_SLASH                Regex closed with no flags
 //
-// Group 3 to 9: Checked individually
+// Group 3 to 10: Checked individually
 //    3  CAT_OTHER                      Anything else not covered by another category - punctuation, whitespace
 //    4  CAT_LT                         `<`
 //    5  CAT_QUESTION                   `?`
 //    6  CAT_START_OF_DEFAULT_EXPORT    `export default` expression is about to be printed
 //    7  CAT_START_OF_STMT              Expression statement's expression is about to be printed
 //    8  CAT_START_OF_ARROW_EXPR        Concise arrow body is about to be printed
-//    9  CAT_OP_UN_NOT                  `!`
+//    9  CAT_CLOSE_BRACKET              `)` or `]`
+//   10  CAT_OP_UN_NOT                  `!`
 //
-// Group 10 to 14: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
-//   10  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
-//   11  CAT_OP_UN_PLUS                 `+`
-//   12  CAT_OP_UPD_INC                 `++`
-//   13  CAT_OP_UN_NEG                  `-`
-//   14  CAT_OP_UPD_DEC                 `--`
+// Group 11 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
+//   11  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
+//   12  CAT_OP_UN_PLUS                 `+`
+//   13  CAT_OP_UPD_INC                 `++`
+//   14  CAT_OP_UN_NEG                  `-`
+//   15  CAT_OP_UPD_DEC                 `--`
 
 /**
  * A category code. One of the `CAT_*` constants below, and nothing else -
@@ -69,6 +70,7 @@ export type Category =
   | typeof CAT_START_OF_STMT
   | typeof CAT_START_OF_ARROW_EXPR
   | typeof CAT_START_OF_DEFAULT_EXPORT
+  | typeof CAT_CLOSE_BRACKET
   | typeof CAT_OP_UN_NOT
   | typeof CAT_OP_UN_NOT_AFTER_LT
   | typeof CAT_OP_UN_PLUS
@@ -133,13 +135,25 @@ export const CAT_START_OF_STMT = 7;
 export const CAT_START_OF_ARROW_EXPR = 8;
 
 /**
+ * `)` or `]`, the only two characters a postfix operand can end with.
+ *
+ * The one reader is the source map hook at the end of `printExpression`, which mirrors Rust's
+ * exclusive-end mapping after such an operand. It never asks which of the two was written,
+ * so one code serves for both.
+ *
+ * Neither space check cares about either character, so it sits between the marks and the operator range,
+ * where both range compares read it as "nothing to separate".
+ */
+export const CAT_CLOSE_BRACKET = 9;
+
+/**
  * `!`, written anywhere other than straight after a `<` - both the unary operator and TS's
  * postfix `!` (non-null assertion, definite assignment), which postfix position keeps off a `<`.
  *
  * An operator code, but deliberately below the range `printSpaceBeforeOperator` gates on -
  * no following operator merges with a plain `!`, so storing this never costs the slow path a call.
  */
-export const CAT_OP_UN_NOT = 9;
+export const CAT_OP_UN_NOT = 10;
 
 /**
  * `!` written immediately after a `<`, which is the `<!--` hazard.
@@ -148,19 +162,19 @@ export const CAT_OP_UN_NOT = 9;
  * The first of the operators `printSpaceBeforeOperator` gates on - writing one of these
  * is what records it, so no separate field tracks which operator came last.
  */
-export const CAT_OP_UN_NOT_AFTER_LT = 10;
+export const CAT_OP_UN_NOT_AFTER_LT = 11;
 
 /** `+`, which must not merge with a following `+` or `++`. */
-export const CAT_OP_UN_PLUS = 11;
+export const CAT_OP_UN_PLUS = 12;
 
 /** `++`, which must not follow a `+` without a space. */
-export const CAT_OP_UPD_INC = 12;
+export const CAT_OP_UPD_INC = 13;
 
 /** `-`, which must not merge with a following `-` or `--`. */
-export const CAT_OP_UN_NEG = 13;
+export const CAT_OP_UN_NEG = 14;
 
 /** `--`, which must not follow a `-`, nor the `!` of a `<!`. */
-export const CAT_OP_UPD_DEC = 14;
+export const CAT_OP_UPD_DEC = 15;
 
 /**
  * Every category, in numbering order.
@@ -178,6 +192,7 @@ export const ALL_CATEGORIES: Category[] = [
   CAT_START_OF_DEFAULT_EXPORT,
   CAT_START_OF_STMT,
   CAT_START_OF_ARROW_EXPR,
+  CAT_CLOSE_BRACKET,
   CAT_OP_UN_NOT,
   CAT_OP_UN_NOT_AFTER_LT,
   CAT_OP_UN_PLUS,
@@ -235,7 +250,6 @@ export function write(state: State, code: string, last: Category): void {
   debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
-  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -264,7 +278,6 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
   recordSourceMapping(state, node, LOCATION_NAMED);
 
   state.last = last;
-  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -286,7 +299,6 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
  * @param code - Text to append, which unlike `write` may be empty
  */
 export function writeNoLast(state: State, code: string): void {
-  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -309,7 +321,6 @@ export function writeNoLast(state: State, code: string): void {
 export function writeWithMapNoLast(state: State, code: string, node: MappableNode): void {
   recordSourceMapping(state, node, LOCATION_NAMED);
 
-  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -335,7 +346,6 @@ export function writeWithMapEnd(
 
   recordSourceMapping(state, node, LOCATION_END_MINUS_ONE);
   state.last = last;
-  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -375,9 +385,6 @@ export function markWithMapAtStartOffset(
 ): void {
   if (!SOURCEMAPS) return;
 
-  const { sourceText } = state;
-  if (sourceText === undefined) return;
-
   const { start, end } = node;
   if (
     typeof start !== "number" ||
@@ -392,12 +399,12 @@ export function markWithMapAtStartOffset(
   }
 
   debugAssert(
-    state.mapPositions !== null,
-    "Source map positions should exist when source maps are enabled",
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
   );
 
   const sourceOffset = start + columnOffset;
-  if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
+  if (!(sourceOffset >= 0 && sourceOffset <= state.sourceText.length)) return;
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
   state.mapPositions.push(state.output.length, sourceOffset);
@@ -409,9 +416,6 @@ export function markWithMapAtStartOffset(
 function recordSourceMapping(state: State, node: MappableNode, location: Location): void {
   if (!SOURCEMAPS) return;
 
-  const { sourceText } = state;
-  if (sourceText === undefined) return;
-
   const { start, end } = node;
   if (
     typeof start !== "number" ||
@@ -426,8 +430,8 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
   }
 
   debugAssert(
-    state.mapPositions !== null,
-    "Source map positions should exist when source maps are enabled",
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
   );
 
   let sourceOffset: number;
@@ -440,6 +444,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
     sourceOffset = start;
   }
 
+  const { sourceText } = state;
   if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
@@ -579,16 +584,6 @@ function isDefinitelyIdentifierBoundary(code: number): boolean {
 }
 
 /**
- * Track the final byte category Rust's postfix source-map hook checks, without reading `output`.
- */
-function updatePostfixClose(state: State, code: string): void {
-  if (SOURCEMAPS && code.length > 0) {
-    const last = code.charCodeAt(code.length - 1);
-    state.lastWasPostfixClose = last === 41 || last === 93; // `)` or `]`
-  }
-}
-
-/**
  * Assert that `state.last` still describes what was written last.
  *
  * Every reader of `last` calls this, so a `writeNoLast` whose caller broke the rule is caught by
@@ -654,6 +649,8 @@ function debugAssertCategoryMatches(state: State, code: string, last: Category):
     ok = last === CAT_QUESTION;
   } else if (ch === "/") {
     ok = last === CAT_REGEX_SLASH;
+  } else if (ch === ")" || ch === "]") {
+    ok = last === CAT_CLOSE_BRACKET;
   } else {
     // The final character, whole - for an astral character `ch` is only its low surrogate,
     // which no Unicode property matches

@@ -4,15 +4,13 @@
 // `generateSourceMap` defined here converts them to generated positions
 // and encodes a standard Source Map v3 in one pass at the end.
 
-import { Buffer } from "node:buffer";
-
 import { debugAssert } from "../asserts.ts";
 
 import type { Options, SourceMap } from "./options.ts";
 import type { State } from "../state.ts";
 
 const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const BASE64_CODES = /* @__PURE__ */ Buffer.from(BASE64_CHARS, "ascii");
+const BASE64_CODES = Uint8Array.from(BASE64_CHARS, (char) => char.charCodeAt(0));
 const LINE_SEARCH_ITERATIONS = 16;
 const MIN_LF_FAST_PATH_MAPPINGS = 64;
 const MAX_LF_FAST_PATH_CHARS_PER_MAPPING = 256;
@@ -34,6 +32,8 @@ debugAssert(
 // `\r\n` must be one line terminator, rather than two.
 const NEXT_LINE_TERMINATOR_REGEX = /\r\n|[\r\n\u2028\u2029]/g;
 
+const ASCII_DECODER = /* @__PURE__ */ new TextDecoder();
+
 /**
  * Convert deferred mapping data into a standard Source Map v3 object.
  */
@@ -43,25 +43,22 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     "Source map positions should exist when sourcemap generation is enabled",
   );
 
-  const { output, mapPositions, mapNames } = state;
+  const { output, mapPositions, mapNames, sourceText } = state;
   const mappingCount = mapPositions.length >> 1;
-  const { sourceText } = options;
-  debugAssert(
-    sourceText !== undefined || mappingCount === 0,
-    "Mappings should only be recorded when sourceText is available",
-  );
-  if (sourceText === undefined || mappingCount === 0) {
-    const map: SourceMap = {
+
+  debugAssert(sourceText !== null, "`sourceText` should be defined when producing a source map");
+
+  if (mappingCount === 0) {
+    return {
       version: 3,
       mappings: "",
       names: [],
       sources: [options.sourceFilename ?? ""],
+      sourcesContent: [sourceText],
     };
-    if (sourceText !== undefined) map.sourcesContent = [sourceText];
-    return map;
   }
 
-  let mappingBuffer: Buffer = Buffer.allocUnsafe(
+  let mappingBuffer: Uint8Array = new Uint8Array(
     Math.max(MIN_MAPPING_BUFFER_LENGTH, mappingCount * ESTIMATED_BYTES_PER_MAPPING),
   );
   let mappingLength = 0;
@@ -269,7 +266,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
 
   return {
     version: 3,
-    mappings: mappingBuffer.toString("ascii", 0, mappingLength),
+    mappings: ASCII_DECODER.decode(mappingBuffer.subarray(0, mappingLength)),
     names,
     sources: [options.sourceFilename ?? ""],
     sourcesContent: [sourceText],
@@ -323,7 +320,7 @@ function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine
 /**
  * Write one signed source-map delta as base64 VLQ, returning the next buffer position.
  */
-function writeVlq(buffer: Buffer, index: number, value: number): number {
+function writeVlq(buffer: Uint8Array, index: number, value: number): number {
   let vlq = value < 0 ? -value * 2 + 1 : value * 2;
   if (vlq <= MAX_BITWISE_VLQ) {
     do {
@@ -351,12 +348,12 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
  *
  * The returned buffer is guaranteed to have at least `MAX_MAPPING_SEGMENT_LENGTH` spare capacity.
  */
-function growMappingBuffer(buffer: Buffer, writtenLength: number): Buffer {
+function growMappingBuffer(buffer: Uint8Array, writtenLength: number): Uint8Array {
   // Buffer starts with at least `MIN_MAPPING_BUFFER_LENGTH` bytes capacity.
   // Maximum extra capacity required is `MAX_MAPPING_SEGMENT_LENGTH`, which is <= `MIN_MAPPING_BUFFER_LENGTH`,
   // so doubling capacity is always enough.
-  const newBuffer = Buffer.allocUnsafe(buffer.length * 2);
-  buffer.copy(newBuffer, 0, 0, writtenLength);
+  const newBuffer = new Uint8Array(buffer.length * 2);
+  newBuffer.set(buffer.subarray(0, writtenLength));
   return newBuffer;
 }
 

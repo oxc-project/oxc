@@ -3,6 +3,7 @@
 import { typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_OTHER,
   CAT_START_OF_STMT,
@@ -70,7 +71,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
     write(state, ";", CAT_OTHER);
   }
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -79,13 +80,13 @@ export function printFunction(node: ESTree.Function, state: State): void {
 export function printParenParams(params: ESTree.ParamPattern[], state: State): void {
   // `(params)`, as a single write when there are none
   if (params.length === 0) {
-    write(state, "()", CAT_OTHER);
+    write(state, "()", CAT_CLOSE_BRACKET);
     return;
   }
 
   write(state, "(", CAT_OTHER);
   printParams(params, state);
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
