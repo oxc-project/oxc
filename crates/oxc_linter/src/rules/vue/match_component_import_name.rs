@@ -67,7 +67,7 @@ declare_oxc_lint!(
     MatchComponentImportName,
     vue,
     style,
-    version = "1.79.0",
+    version = "next",
     short_description = "Require the registered component name to match the imported component name.",
 );
 
