@@ -145,7 +145,7 @@ impl Rule for ValidTypeof {
 
         if let Expression::Identifier(ident) = sibling
             && ident.name == "undefined"
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic_with_fix(
                 if self.require_string_literals {
@@ -184,6 +184,11 @@ fn test() {
 
     let pass = vec![
         ("typeof foo === 'string'", None),
+        // `undefined` is shadowed here; the global is only referenced on the next line
+        (
+            "function f(x, u) { const undefined = u; return typeof x === undefined; }; var y = undefined;",
+            None,
+        ),
         ("typeof foo === 'object'", None),
         ("typeof foo === 'function'", None),
         ("typeof foo === 'undefined'", None),

@@ -59,9 +59,7 @@ impl Rule for AvoidNew {
             return;
         };
 
-        if ident.name == "Promise"
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
-        {
+        if ident.name == "Promise" && ctx.is_reference_to_global_variable(ident) {
             ctx.diagnostic(avoid_new_promise_diagnostic(expr.span));
         }
     }
@@ -73,6 +71,8 @@ fn test() {
 
     let pass = vec![
         "Promise.resolve()",
+        // `Promise` is shadowed here; the global is only referenced on the next line
+        "function f(FakePromise) { const Promise = FakePromise; new Promise(function (r) { r() }) }; Promise.resolve()",
         "Promise.reject()",
         "Promise.all()",
         "new Horse()",

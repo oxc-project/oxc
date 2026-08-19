@@ -61,7 +61,7 @@ impl Rule for NoNewNativeNonconstructor {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            && ctx.is_reference_to_global_variable(ident)
         {
             let start = expr.span.start;
             let end = start + 3;
@@ -79,6 +79,8 @@ fn test() {
 
     let pass = vec![
         "var foo = Symbol('foo');",
+        // `Symbol` is shadowed here; the global is only referenced on the next line
+        "function f(FakeSymbol) { const Symbol = FakeSymbol; new Symbol(); }; Symbol('foo');",
         "function bar(Symbol) { var baz = new Symbol('baz');}",
         "function Symbol() {} new Symbol();",
         "new foo(Symbol);",

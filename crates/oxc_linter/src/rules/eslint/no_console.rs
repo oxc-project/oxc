@@ -1,6 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
@@ -107,9 +108,8 @@ impl Rule for NoConsole {
             return;
         };
 
-        if ident.name != "console"
-            || !ctx.scoping().root_unresolved_references().contains_key("console")
-        {
+        // Not `ctx.is_reference_to_global_variable`: `globals: { console: "off" }` still reports.
+        if ident.name != "console" || !ident.is_global_reference(ctx.scoping()) {
             return;
         }
 
@@ -190,6 +190,12 @@ fn test() {
 
     let pass = vec![
         ("Console.info(foo)", None, None),
+        // `console` is shadowed here; the global is only referenced on the first line
+        (
+            "var c = console; function f(myLogger) { const console = myLogger; console.log(foo); }",
+            None,
+            None,
+        ),
         ("console.info(foo)", Some(serde_json::json!([{ "allow": ["info"] }])), None),
         (
             "console.info(foo)",

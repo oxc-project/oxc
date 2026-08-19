@@ -89,19 +89,15 @@ impl Rule for PreferObjectSpread {
             return;
         };
 
-        let unresolved_references = ctx.scoping().root_unresolved_references();
-
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {
-                if ident.name != "Object" || !unresolved_references.contains_key(&ident.name) {
+                if ident.name != "Object" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
-                    if ident.name != "globalThis"
-                        || !unresolved_references.contains_key(&ident.name)
-                    {
+                    if ident.name != "globalThis" || !ctx.is_reference_to_global_variable(ident) {
                         return;
                     }
                 } else {
@@ -368,6 +364,8 @@ fn test() {
 
     let pass = vec![
         "Object.assign()",
+        // `Object` is shadowed here; the global is only referenced on the next line
+        "function f(MyObject, a) { const Object = MyObject; return Object.assign({}, a) }; Object.keys(x)",
         "let a = Object.assign(a, b)",
         "Object.assign(a, b)",
         "let a = Object.assign(b, { c: 1 })",

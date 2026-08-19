@@ -68,7 +68,7 @@ impl Rule for SymbolDescription {
 
         if ident.name == "Symbol"
             && call_expr.arguments.is_empty()
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            && ctx.is_reference_to_global_variable(ident)
         {
             ctx.diagnostic(symbol_description_diagnostic(call_expr.span));
         }
@@ -81,6 +81,8 @@ fn test() {
 
     let pass = vec![
         r#"Symbol("Foo");"#,
+        // `Symbol` is shadowed here; the global is only referenced on the next line
+        r#"function f(FakeSymbol) { const Symbol = FakeSymbol; Symbol(); }; Symbol("Foo");"#,
         r#"var foo = "foo"; Symbol(foo);"#,
         "var Symbol = function () {}; Symbol();",
         "Symbol(); var Symbol = function () {};",

@@ -235,7 +235,7 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
-                        && ctx.scoping().root_unresolved_references().contains_key(&ident.name);
+                        && ctx.is_reference_to_global_variable(ident);
                 }
                 false
             }
@@ -358,14 +358,13 @@ impl NoConstantBinaryExpression {
             },
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    let unresolved_references = ctx.scoping().root_unresolved_references();
                     if (ident.name == "String" || ident.name == "Number")
-                        && unresolved_references.contains_key(&ident.name)
+                        && ctx.is_reference_to_global_variable(ident)
                     {
                         return true;
                     }
 
-                    if ident.name == "Boolean" && unresolved_references.contains_key(&ident.name) {
+                    if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident) {
                         return call_expr
                             .arguments
                             .iter()
@@ -463,14 +462,18 @@ fn test() {
         "[n] == true",
         "delete bar.baz === true",
         "foo.Boolean(true) && foo",
-        // "function Boolean(n) { return n; }; Boolean(x) ?? foo",
-        // "function String(n) { return n; }; String(x) ?? foo",
-        // "function Number(n) { return n; }; Number(x) ?? foo",
-        // "function Boolean(n) { return Math.random(); }; Boolean(x) === 1",
-        // "function Boolean(n) { return Math.random(); }; Boolean(1) == true",
+        "function Boolean(n) { return n; }; Boolean(x) ?? foo",
+        "function String(n) { return n; }; String(x) ?? foo",
+        "function Number(n) { return n; }; Number(x) ?? foo",
+        // shadowed in the function, global only referenced on the next statement
+        "function f(MyString, x, y) { const String = MyString; return String(x) ?? y; }; String(1)",
+        "function Boolean(n) { return Math.random(); }; Boolean(x) === 1",
+        "function Boolean(n) { return Math.random(); }; Boolean(1) == true",
         "new Foo() === x",
         "x === new someObj.Promise()",
         "Boolean(foo) === true",
+        // TODO: `undefined` is matched by name, so a shadowed binding is still treated as
+        // the global. See `Expression::is_undefined` usage in this rule.
         // "function foo(undefined) { undefined ?? bar;}",
         // "function foo(undefined) { undefined == true;}",
         // "function foo(undefined) { undefined === true;}",
