@@ -61,7 +61,10 @@ const printers: (PrintModule["printSync"] | null)[] = [null, null, null, null];
  * @param options - Printing options (optional)
  * @returns Object holding the generated code
  */
-export function printSync(node: ESTree.Node, options?: Options): CodegenResult {
+export function printSync(
+  node: ESTree.Program | ESTree.Statement,
+  options?: Options,
+): CodegenResult {
   // The printer is built 4 times, over whether the AST may contain TypeScript and whether
   // source mappings are wanted. This picks the build the options call for and loads it on first use,
   // so a caller printing only JavaScript never pays for the TypeScript printers.
