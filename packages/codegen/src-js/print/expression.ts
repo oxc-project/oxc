@@ -20,6 +20,7 @@ import {
   markMapAtStartOffset,
   markMapStart,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -184,7 +185,7 @@ export function printExpression(
       printSpaceBeforeIdentifier(state);
       writeWithMapNoLast(state, node.meta.name, node);
       writeNoLast(state, ".");
-      write(state, node.property.name, CAT_IDENT);
+      writeIdent(state, node.property.name);
       break;
     case "ChainExpression":
       printChainExpression(node, state, precedence, ctx);
@@ -949,7 +950,7 @@ function printImportExpression(
 
   if (node.phase != null) {
     writeNoLast(state, ".");
-    write(state, node.phase, CAT_IDENT);
+    writeIdent(state, node.phase);
   }
 
   write(state, "(", CAT_OTHER);

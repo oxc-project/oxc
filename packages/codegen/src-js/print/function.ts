@@ -10,6 +10,7 @@ import {
   debugAssertLastFresh,
   markMapStart,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -47,7 +48,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
   const declare = TS && node.declare;
   if (declare) {
     writeWithMap(state, "declare ", CAT_OTHER, node);
-    write(state, node.async ? "async function" : "function", CAT_IDENT);
+    writeIdent(state, node.async ? "async function" : "function");
   } else {
     writeWithMap(state, node.async ? "async function" : "function", CAT_IDENT, node);
   }
@@ -106,7 +107,7 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     // Oxc stores TypeScript's special `this` parameter separately from formal parameters
     // and prints it without a source mapping.
     if (TS && param.type === "Identifier" && param.name === "this") {
-      write(state, "this", CAT_IDENT);
+      writeIdent(state, "this");
       if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
       continue;
     }
