@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// // ./bar.js
-    /// export default function bar() { return null }
+    /// export function bar() { return null }
     ///
     /// // ./foo.js
     /// import { bar } from './bar' // correct usage of named import
