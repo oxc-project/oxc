@@ -100,7 +100,9 @@ impl Rule for MatchComponentImportName {
                 continue;
             };
 
-            let alias = prop.key.static_name().unwrap_or_default();
+            let Some(alias) = prop.key.static_name() else {
+                continue;
+            };
             let pascal = vue_casing::pascal_case(&imported.name);
             if alias == pascal.as_str() {
                 continue;
