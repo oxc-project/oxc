@@ -47,7 +47,7 @@ declare_react_compiler_lint!(
     RuleSuppression,
     react,
     restriction,
-    version = "next",
+    version = "1.79.0",
     short_description = "Reports suppressions of React rules, which make the React Compiler skip the affected function.",
 );
 

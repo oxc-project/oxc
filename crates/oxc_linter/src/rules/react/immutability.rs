@@ -45,7 +45,7 @@ declare_react_compiler_lint!(
     Immutability,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Disallow mutating props, state, and other values that are immutable by the Rules of React.",
 );
 

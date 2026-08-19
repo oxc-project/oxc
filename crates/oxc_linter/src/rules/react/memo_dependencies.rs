@@ -24,7 +24,7 @@ declare_react_compiler_lint!(
     MemoDependencies,
     react,
     suspicious,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates that `useMemo()` and `useCallback()` dependencies are comprehensive, without extraneous values.",
 );
 

@@ -85,7 +85,7 @@ declare_oxc_lint!(
     eslint,
     nursery,
     config = NoUnreachableLoop,
-    version = "next",
+    version = "1.79.0",
     short_description = "Disallow loops whose body allows only one iteration.",
 );
 

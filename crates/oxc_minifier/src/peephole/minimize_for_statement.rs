@@ -42,13 +42,7 @@ impl<'a> PeepholeOptimizations {
 
             let Statement::IfStatement(if_stmt) = first else { unreachable!() };
             let IfStatement { test, alternate, .. } = if_stmt.unbox();
-
-            let expr = match test {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    unary_expr.unbox().argument
-                }
-                e => Self::minimize_not(e.span(), e, ctx),
-            };
+            let expr = Self::minimize_not(test.span(), test, ctx, true);
 
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);

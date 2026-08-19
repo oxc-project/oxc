@@ -24,7 +24,7 @@ declare_react_compiler_lint!(
     ExhaustiveEffectDependencies,
     react,
     suspicious,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates that effect dependencies are exhaustive, without extraneous values.",
 );
 

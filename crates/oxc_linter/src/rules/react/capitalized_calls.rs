@@ -44,7 +44,7 @@ declare_react_compiler_lint!(
     CapitalizedCalls,
     react,
     suspicious,
-    version = "next",
+    version = "1.79.0",
     short_description = "Disallow calling capitalized functions and methods instead of using JSX.",
 );
 

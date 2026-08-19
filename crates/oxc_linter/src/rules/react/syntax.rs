@@ -24,7 +24,7 @@ declare_react_compiler_lint!(
     Syntax,
     react,
     restriction,
-    version = "next",
+    version = "1.79.0",
     short_description = "Reports invalid JavaScript syntax encountered by the React Compiler.",
 );
 
