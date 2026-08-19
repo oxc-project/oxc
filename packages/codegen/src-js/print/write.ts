@@ -490,6 +490,9 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
 
 /**
  * Recover the original identifier spelling from validated source offsets.
+ *
+ * A private identifier's span covers the leading `#`, which is no part of the name the AST holds
+ * or a source map consumer looks up, so the name is read from after it.
  */
 function originalNameFromSource(
   sourceText: string,
@@ -527,7 +530,7 @@ function originalNameFromSource(
     index += char.length;
   }
 
-  return index === identifierStart ? undefined : sourceText.slice(start, index);
+  return index === identifierStart ? undefined : sourceText.slice(identifierStart, index);
 }
 
 /**

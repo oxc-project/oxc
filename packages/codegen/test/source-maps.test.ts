@@ -168,6 +168,34 @@ describe("Rust conformance", () => {
     expect(map?.names).toEqual(["ab"]);
   });
 
+  test("a private identifier is named without its `#`", () => {
+    const code = "class C {\n  #foo = 1;\n  m() { return this.#foo; }\n}";
+    const program = parseProgram("private.js", code);
+
+    const classDeclaration = program.body[0];
+    if (classDeclaration.type !== "ClassDeclaration") throw new Error("Expected class declaration");
+    const [property, method] = classDeclaration.body.body;
+    if (property.type !== "PropertyDefinition") throw new Error("Expected property definition");
+    if (property.key.type !== "PrivateIdentifier") throw new Error("Expected private identifier");
+    if (method.type !== "MethodDefinition") throw new Error("Expected method definition");
+    const statement = method.value.body?.body[0];
+    if (statement?.type !== "ReturnStatement") throw new Error("Expected return statement");
+    const access = statement.argument;
+    if (access?.type !== "MemberExpression") throw new Error("Expected member expression");
+    const accessedKey = access.property;
+    if (accessedKey.type !== "PrivateIdentifier") throw new Error("Expected private identifier");
+
+    const options = { sourcemap: true, sourceFilename: "private.js", sourceText: code };
+
+    // Printed as it was written, so nothing is renamed and no mapping carries a name
+    expect(printSync(program, options).map?.names).toEqual([]);
+
+    // The `#` is no part of the name, so only what follows it is recorded
+    property.key.name = "a";
+    accessedKey.name = "a";
+    expect(printSync(program, options).map?.names).toEqual(["foo"]);
+  });
+
   test("handles transformed ASTs whose source locations move backwards", () => {
     const code = `const first = 1;\n${"\n".repeat(5000)}const second = 2;`;
     const program = parseProgram("reordered.js", code);

@@ -99,6 +99,25 @@ impl<'a> SourcemapBuilder<'a> {
     }
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
+        self.add_source_mapping_for_name_at(output, span, span.start, name);
+    }
+
+    /// Add a mapping for a private identifier, whose span covers the leading `#`.
+    ///
+    /// The mapping stays on the `#`, where the printed token starts, but the name is read from
+    /// after it, so what the map records is the name the AST holds. Babel does the same.
+    pub fn add_source_mapping_for_private_name(&mut self, output: &[u8], span: Span, name: &str) {
+        self.add_source_mapping_for_name_at(output, span, span.start + 1, name);
+    }
+
+    /// Add a mapping at `span.start`, naming it after the source between `name_start` and `span.end`.
+    fn add_source_mapping_for_name_at(
+        &mut self,
+        output: &[u8],
+        span: Span,
+        name_start: u32,
+        name: &str,
+    ) {
         debug_assert!(
             (span.end as usize) <= self.original_source.len(),
             "violated {}:{} <= {} for {name}",
@@ -106,7 +125,7 @@ impl<'a> SourcemapBuilder<'a> {
             span.end,
             self.original_source.len()
         );
-        let original_name = self.original_source.get(span.start as usize..span.end as usize);
+        let original_name = self.original_source.get(name_start as usize..span.end as usize);
         // The token name should be original name.
         // If it hasn't change, name should be `None` to reduce `SourceMap` size.
         let token_name = if original_name == Some(name) { None } else { original_name };
@@ -630,6 +649,29 @@ mod test {
             None
         );
         // The name `b` -> `c`, save `b` to token.
+        assert_eq!(
+            sm.get_source_view_token(1_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            Some("b")
+        );
+    }
+
+    #[test]
+    fn add_source_mapping_for_private_name() {
+        let output = b"#a#c";
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), "#a#b");
+        builder.add_source_mapping_for_private_name(output, Span::new(0, 2), "a");
+        builder.add_source_mapping_for_private_name(output, Span::new(2, 4), "c");
+        let sm = builder.into_sourcemap();
+        // The name `a` not change.
+        assert_eq!(
+            sm.get_source_view_token(0_u32)
+                .as_ref()
+                .and_then(oxc_sourcemap::SourceViewToken::get_name),
+            None
+        );
+        // The name `b` -> `c`, save `b` to token, without the `#`.
         assert_eq!(
             sm.get_source_view_token(1_u32)
                 .as_ref()
