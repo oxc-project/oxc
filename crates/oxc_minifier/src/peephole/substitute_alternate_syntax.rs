@@ -331,14 +331,6 @@ impl<'a> PeepholeOptimizations {
     /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
     /// ```
     ///
-    /// nor observe it:
-    ///
-    /// ```js
-    /// let x = 0, a = { valueOf() { x = 1; return 2 } };
-    /// (+a) - (x ? 1 : 0);      // 1, `x` read after `valueOf` set it
-    /// a - (x ? 1 : 0);         // 2, `x` read before
-    /// ```
-    ///
     /// Requiring `n` to have a value known at compile time rules out both.
     ///
     /// For `n - +a` the ordering holds regardless: `n` is evaluated first
