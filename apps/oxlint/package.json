@@ -59,7 +59,7 @@
     "execa": "^10.0.0",
     "json-schema-to-typescript": "catalog:",
     "json-stable-stringify-without-jsonify": "^1.0.1",
-    "oxc-parser": "^0.145.0",
+    "oxc-parser": "^0.146.0",
     "rolldown": "catalog:",
     "serialize-javascript": "^7.0.4",
     "tsdown": "catalog:",
