@@ -149,14 +149,6 @@ source: crates/oxc_linter/src/tester.rs
   note: https://react.dev/reference/react/Children#alternatives
 
   ⚠ react(no-react-children): `React.Children` should not be used.
-   ╭─[no_react_children.tsx:1:40]
- 1 │ import { Children as C } from 'react'; C.toArray(x)
-   ·                                        ─────────
-   ╰────
-  help: `React.Children` is uncommon and leads to fragile React components.
-  note: https://react.dev/reference/react/Children#alternatives
-
-  ⚠ react(no-react-children): `React.Children` should not be used.
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; React.Children?.map(children, child => child)
    ·                            ───────────────────
@@ -184,6 +176,14 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_react_children.tsx:1:28]
  1 │ import React from 'react'; (React.Children as any).map(children, child => child)
    ·                            ───────────────────────────
+   ╰────
+  help: `React.Children` is uncommon and leads to fragile React components.
+  note: https://react.dev/reference/react/Children#alternatives
+
+  ⚠ react(no-react-children): `React.Children` should not be used.
+   ╭─[no_react_children.tsx:1:40]
+ 1 │ import { Children as C } from 'react'; C.toArray(x)
+   ·                                        ─────────
    ╰────
   help: `React.Children` is uncommon and leads to fragile React components.
   note: https://react.dev/reference/react/Children#alternatives

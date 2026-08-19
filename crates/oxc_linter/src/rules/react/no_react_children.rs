@@ -119,7 +119,7 @@ impl Rule for NoReactChildren {
             return;
         }
 
-        // Pattern 2: React.Children.method(), where `React` is any `react` import
+        // Pattern 2: *.Children.method(), where `*` is any `react` import
         if let Some(inner_member) = object.as_member_expression()
             && inner_member.static_property_name() == Some("Children")
             && let Some(ident) =
@@ -162,11 +162,9 @@ fn test() {
                </div>
              );
            }"#,
-        // A local binding shadowing the import is not `React.Children`.
         "import { Children } from 'react'; function f(x) { const Children = { count: () => 0 }; return Children.count(x); }",
         "import React from 'react'; function f(x) { const React = { Children: { map: () => {} } }; return React.Children.map(x); }",
         "import { Children } from 'react'; export function f(Children) { return Children.count(1); }",
-        // `Children` here is a local alias of an unrelated `react` export.
         "import { count as Children } from 'react'; Children.toArray(x)",
     ];
 
@@ -230,14 +228,13 @@ fn test() {
            });
            // ...
          }",
-        // Aliased named import of `Children`.
-        "import { Children as C } from 'react'; C.toArray(x)",
         // Optional chaining
         "import React from 'react'; React.Children?.map(children, child => child)",
         // Parenthesized expressions
         "import { Children } from 'react'; (Children).map(children, child => child)",
         "import React from 'react'; (React.Children).map(children, child => child)",
         "import React from 'react'; (React.Children as any).map(children, child => child)",
+        "import { Children as C } from 'react'; C.toArray(x)",
     ];
 
     Tester::new(NoReactChildren::NAME, NoReactChildren::PLUGIN, pass, fail).test_and_snapshot();
