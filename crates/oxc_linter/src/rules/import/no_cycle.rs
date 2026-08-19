@@ -1,26 +1,24 @@
 use std::{
     ffi::OsStr,
     path::{Component, Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use cow_utils::CowUtils;
-use indexmap::IndexSet;
-use oxc_diagnostics::{OxcDiagnostic, Severity};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use rayon::prelude::*;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    AllowWarnDeny, ConfigStore, Message, ModuleRecord, PossibleFixes,
-    context::{RuleLabel, build_diagnostic},
-    disable_directives::DisableDirectives,
+    AllowWarnDeny, ModuleRecord,
+    context::{ProjectLintContext, RuleLabel},
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
-    rule::{DefaultRuleConfig, Rule},
+    rule::{DefaultRuleConfig, ProjectRule, Rule},
     rules::RuleEnum,
 };
 
@@ -149,34 +147,20 @@ impl Rule for NoCycle {
     }
 }
 
-impl NoCycle {
-    /// analogous to [`Rule::run_once`] but for the whole project
-    pub fn run_all(
-        config: &ConfigStore,
-        paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
-        modules: &ModulesByPath<'_>,
-        disable_directives_map: &Mutex<FxHashMap<PathBuf, DisableDirectives>>,
+impl ProjectRule for NoCycle {
+    fn run_on_project(
+        &self,
+        ctx: &ProjectLintContext<'_>,
     ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
-        let target_paths: FxHashMap<_, _> = paths_set
-            .iter()
-            .filter_map(|path| {
-                let path = Path::new(path.as_ref());
-                let resolved = config.resolve(path);
-                let (config, severity) = resolved.rules.iter().find_map(|(rule, severity)| {
-                    if let RuleEnum::ImportNoCycle(config) = rule {
-                        Some((config, severity))
-                    } else {
-                        None
-                    }
-                })?;
-                Some((path.to_path_buf(), (*severity, *config)))
-            })
-            .collect();
+        let target_paths = ctx.target_paths(|rule| match rule {
+            RuleEnum::ImportNoCycle(config) => Some(config),
+            _ => None,
+        });
         if target_paths.is_empty() {
             return FxHashMap::default();
         }
 
-        collect_cycle_diagnostics(modules, &target_paths, disable_directives_map)
+        collect_cycle_diagnostics(ctx, &target_paths)
     }
 }
 
@@ -320,8 +304,6 @@ fn should_traverse_module(
     true
 }
 
-type ModulesByPath<'a> = FxHashMap<&'a Path, &'a [Arc<ModuleRecord>]>;
-
 mod graph_cycles {
     use std::path::Path;
 
@@ -329,12 +311,14 @@ mod graph_cycles {
     use rayon::prelude::*;
     use rustc_hash::FxHashMap;
 
-    use super::{ModulesByPath, should_traverse_module};
+    use crate::context::ProjectModules;
+
+    use super::should_traverse_module;
 
     type ImportGraph<'a> = DiGraphMap<&'a Path, ()>;
 
     /// Builds a directed graph in parallel so cycles can be detected
-    fn build_import_graph<'a>(ignore_types: bool, modules: &ModulesByPath<'a>) -> ImportGraph<'a> {
+    fn build_import_graph<'a>(ignore_types: bool, modules: &ProjectModules<'a>) -> ImportGraph<'a> {
         let edges: Vec<(&'a Path, &'a Path)> = modules
             .par_iter()
             .flat_map_iter(|(&path, &records)| {
@@ -390,7 +374,7 @@ mod graph_cycles {
     /// is in, if any
     pub fn cycles_by_module<'a>(
         ignore_types: bool,
-        modules: &ModulesByPath<'a>,
+        modules: &ProjectModules<'a>,
     ) -> FxHashMap<&'a Path, CycleId> {
         cycles_by_path(&build_import_graph(ignore_types, modules))
     }
@@ -399,10 +383,10 @@ mod graph_cycles {
 /// Converts the cycles found in `cycles_by_module` into diagnostics.
 /// Abides by disable directives like other rules
 fn collect_cycle_diagnostics(
-    modules: &ModulesByPath<'_>,
+    project: &ProjectLintContext<'_>,
     target_paths: &FxHashMap<PathBuf, (AllowWarnDeny, NoCycle)>,
-    disable_directives_map: &Mutex<FxHashMap<PathBuf, DisableDirectives>>,
 ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
+    let modules = project.modules();
     // types must be checked for the whole graph if any config enables them
     let include_type_edges = target_paths.values().any(|(_, config)| !config.ignore_types);
     let cycles = graph_cycles::cycles_by_module(!include_type_edges, modules);
@@ -415,12 +399,6 @@ fn collect_cycle_diagnostics(
             let cycle = cycles.get(path)?;
             let (path, &(severity, config)) = target_paths.get_key_value(path)?;
 
-            let directives = disable_directives_map
-                .lock()
-                .expect("disable_directives_map poisoned")
-                .get(path)
-                .cloned();
-
             let diagnostics: Vec<OxcDiagnostic> = records
                 .iter()
                 .flat_map(|module_record| {
@@ -432,44 +410,11 @@ fn collect_cycle_diagnostics(
                         .map(|diagnostic| (diagnostic, module_record.source_text_offset))
                 })
                 .filter_map(|(diagnostic, section_offset)| {
-                    let mut message = Message::new(diagnostic, PossibleFixes::None);
-                    if section_offset != 0 {
-                        message.move_offset(section_offset);
-                    }
-
-                    build_diagnostic(
-                        message.error,
-                        message.span,
-                        rule,
-                        Severity::from(severity),
-                        directives.as_ref(),
-                    )
+                    project.finalize_diagnostic(path, diagnostic, rule, severity, section_offset)
                 })
                 .collect();
 
             (!diagnostics.is_empty()).then(|| (path.clone(), diagnostics))
-        })
-        .collect()
-}
-
-/// attaches disable directives quick fixes to messages for the LSP when
-/// `with_ignore_fixes` is `true`
-pub fn diagnostics_to_messages(
-    diagnostics: FxHashMap<PathBuf, Vec<OxcDiagnostic>>,
-    with_ignore_fixes: bool,
-    linted_source_text: &FxHashMap<PathBuf, String>,
-) -> Vec<Message> {
-    diagnostics
-        .into_iter()
-        .flat_map(|(path, diagnostics)| {
-            let source_text = with_ignore_fixes.then(|| linted_source_text.get(&path)).flatten();
-            diagnostics.into_iter().map(move |diagnostic| {
-                let mut message = Message::new(diagnostic, PossibleFixes::None);
-                if let Some(source_text) = &source_text {
-                    message.add_ignore_fix(0, source_text);
-                }
-                message
-            })
         })
         .collect()
 }

@@ -109,9 +109,12 @@ fn generate_use_statements(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
 fn generate_imports() -> TokenStream {
     quote! {
+        use std::path::PathBuf;
+        use rustc_hash::FxHashMap;
+        use oxc_diagnostics::OxcDiagnostic;
         use crate::{
-            context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            context::{ContextHost, LintContext, ProjectLintContext},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented, ProjectRule},
             timing::RuleTimingStat,
             utils::PossibleJestNode,
             AstNode
@@ -222,6 +225,15 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(rule) => rule.run(node, ctx) }
+        })
+        .collect();
+
+    let run_on_project_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .filter(|rule| rule.is_project_rule)
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(rule) => Some(rule.run_on_project(ctx)) }
         })
         .collect();
 
@@ -384,6 +396,16 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                     timing_stat.expect("missing rule timing stat").time(|| self.run_dispatch(node, ctx));
                 } else {
                     self.run_dispatch(node, ctx);
+                }
+            }
+
+            pub(crate) fn run_on_project(
+                &self,
+                ctx: &ProjectLintContext<'_>,
+            ) -> Option<FxHashMap<PathBuf, Vec<OxcDiagnostic>>> {
+                match self {
+                    #(#run_on_project_arms,)*
+                    _ => None,
                 }
             }
 

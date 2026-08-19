@@ -6,6 +6,7 @@ use std::{
     mem::take,
     path::{Path, PathBuf},
     sync::{Arc, Mutex, mpsc},
+    time::Instant,
 };
 
 use indexmap::IndexSet;
@@ -28,12 +29,13 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use oxc_str::CompactStr;
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
-    context::{ContextSubHost, ContextSubHostOptions},
+    Fixer, Linter, Message, PossibleFixes, RuleTimingRecord, RuleTimingSource, RuleTimingStore,
+    context::{ContextSubHost, ContextSubHostOptions, ProjectLintContext, diagnostics_to_messages},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    rules::{RuleEnum, import::no_cycle},
+    rule::RuleRunFunctionsImplemented,
+    rules::RULES,
     suppression::DiffManager,
     utils::read_to_arena_str,
 };
@@ -700,7 +702,7 @@ impl Runtime {
                             )
                             .fix();
                             if fix_result.fixed {
-                                if me.path_reports_cycles(path) {
+                                if me.path_has_project_rule(path) {
                                     source_text_before_fixes
                                         .lock()
                                         .expect("source_text_before_fixes mutex poisoned")
@@ -752,10 +754,11 @@ impl Runtime {
             );
         });
 
-        self.send_no_cycle_diagnostics(
+        self.send_project_rule_diagnostics(
             &paths_set,
             source_text_before_fixes.into_inner().expect("source_text_before_fixes mutex poisoned"),
             tx_error,
+            rule_timing_store,
         );
     }
 
@@ -857,8 +860,9 @@ impl Runtime {
         });
 
         let mut messages = messages.into_inner().unwrap();
-        messages
-            .extend(self.no_cycle_messages(&paths_set, &linted_source_text.into_inner().unwrap()));
+        messages.extend(
+            self.project_rule_messages(&paths_set, &linted_source_text.into_inner().unwrap()),
+        );
         messages
     }
 
@@ -999,7 +1003,7 @@ impl Runtime {
             );
         });
         let mut messages = messages.into_inner().unwrap();
-        messages.extend(self.no_cycle_messages(&paths_set, &FxHashMap::default()));
+        messages.extend(self.project_rule_messages(&paths_set, &FxHashMap::default()));
         messages
     }
 
@@ -1227,65 +1231,84 @@ impl Runtime {
     }
 }
 
-// no-cycle
+// project rules
 impl Runtime {
-    fn send_no_cycle_diagnostics(
+    fn send_project_rule_diagnostics(
         &self,
         paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         mut source_text_before_fixes: FxHashMap<PathBuf, String>,
         tx_error: &DiagnosticSender,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
-        let diagnostics = self.run_no_cycle_pass(paths_set);
+        let diagnostics = self.run_project_rules(paths_set, rule_timing_store);
 
-        let mut by_path = diagnostics.into_iter().collect::<Vec<_>>();
-        by_path.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-        for (path, diagnostics) in by_path {
+        for (path, diagnostics) in diagnostics {
+            // files that are fixes are stored in memory. unfixed files are read from disk
             let source_text = source_text_before_fixes
                 .remove(&path)
                 .unwrap_or_else(|| fs::read_to_string(&path).unwrap_or_default());
 
             let wrapped =
                 DiagnosticService::wrap_diagnostics(&self.cwd, &path, &source_text, diagnostics);
-            tx_error.send(wrapped).expect("failed to send no-cycle diagnostics");
+            tx_error.send(wrapped).expect("failed to send project rule diagnostics");
         }
     }
 
-    fn no_cycle_messages(
+    fn project_rule_messages(
         &self,
         paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         linted_source_text: &FxHashMap<PathBuf, String>,
     ) -> Vec<Message> {
-        no_cycle::diagnostics_to_messages(
-            self.run_no_cycle_pass(paths_set),
+        diagnostics_to_messages(
+            self.run_project_rules(paths_set, None),
             self.linter.options().with_ignore_fixes,
             linted_source_text,
         )
     }
 
-    fn path_reports_cycles(&self, path: &Path) -> bool {
+    fn path_has_project_rule(&self, path: &Path) -> bool {
         self.linter
             .config
             .resolve(path)
             .rules
             .iter()
-            .any(|(rule, _)| matches!(rule, RuleEnum::ImportNoCycle(_)))
+            .any(|(rule, _)| rule.run_info() == RuleRunFunctionsImplemented::ProjectOnly)
     }
 
-    fn run_no_cycle_pass(
+    fn run_project_rules(
         &self,
         paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
         let modules_guard = self.modules_by_path.pin();
         let modules = modules_guard
             .iter()
             .map(|(path, records)| (Path::new(path.as_ref()), records.as_slice()))
             .collect();
-        no_cycle::NoCycle::run_all(
-            &self.linter.config,
-            paths_set,
+        let project_ctx = ProjectLintContext::new(
             &modules,
             &self.disable_directives_map,
-        )
+            &self.linter.config,
+            paths_set,
+        );
+
+        let mut result: FxHashMap<PathBuf, Vec<OxcDiagnostic>> = FxHashMap::default();
+        for rule in RULES.iter() {
+            let start = Instant::now();
+            let Some(diagnostics) = rule.run_on_project(&project_ctx) else { continue };
+            if let Some(store) = rule_timing_store {
+                store.merge([RuleTimingRecord {
+                    source: RuleTimingSource::Native,
+                    plugin_name: rule.plugin_name().to_string(),
+                    rule_name: rule.name().to_string(),
+                    duration: start.elapsed(),
+                    calls: 1,
+                }]);
+            }
+            for (path, mut diags) in diagnostics {
+                result.entry(path).or_default().append(&mut diags);
+            }
+        }
+        result
     }
 }

@@ -24,7 +24,9 @@ use crate::{
 };
 
 mod host;
+mod project;
 pub use host::{ContextHost, ContextSubHost, ContextSubHostOptions};
+pub use project::{ProjectLintContext, ProjectModules, diagnostics_to_messages};
 
 /// Contains all of the state and context specific to this lint rule.
 ///
