@@ -85,11 +85,12 @@ const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; 
     TS: ts ? "true" : "false",
   },
   plugins: [
-    // `strip_ts` is a text transform, so must run before the AST-based plugins
+    // `strip_ts` is a text transform, so must run before the AST-based plugins.
+    // `const_functions` runs last, so the plugins before it still see function declarations.
     ...(ts ? [] : [stripTsPlugin()]),
+    ...assertPlugins,
     ...(sourcemaps ? [] : [unmapWritesPlugin]),
     constFunctionsPlugin,
-    ...assertPlugins,
   ],
 });
 
