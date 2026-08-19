@@ -16,7 +16,7 @@ declare_react_compiler_lint!(
     /// features the compiler has not implemented. These are skipped
     /// optimizations (bail-outs), not rule violations.
     ///
-    upstream = "todo",
+    unlinked_upstream = "todo",
     ///
     /// ### Why is this bad?
     ///

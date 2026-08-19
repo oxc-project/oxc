@@ -15,7 +15,7 @@ declare_react_compiler_lint!(
     /// Validates that effect dependency arrays are exhaustive and contain no
     /// extraneous values.
     ///
-    upstream = "exhaustive-effect-dependencies",
+    unlinked_upstream = "exhaustive-effect-dependencies",
     ///
     /// ### Why is this bad?
     ///

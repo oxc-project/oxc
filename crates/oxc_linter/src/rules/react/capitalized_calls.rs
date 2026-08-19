@@ -16,7 +16,7 @@ declare_react_compiler_lint!(
     /// render instead of rendering them with JSX, since capitalized names are
     /// reserved for components.
     ///
-    upstream = "capitalized-calls",
+    unlinked_upstream = "capitalized-calls",
     ///
     /// ### Why is this bad?
     ///

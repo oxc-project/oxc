@@ -16,7 +16,7 @@ declare_react_compiler_lint!(
     /// back into state; derived values should be computed during render
     /// instead.
     ///
-    upstream = "no-deriving-state-in-effects",
+    unlinked_upstream = "no-deriving-state-in-effects",
     ///
     /// ### Why is this bad?
     ///

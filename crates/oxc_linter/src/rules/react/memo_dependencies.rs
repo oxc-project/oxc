@@ -15,7 +15,7 @@ declare_react_compiler_lint!(
     /// Validates that `useMemo()` and `useCallback()` declare comprehensive
     /// dependency lists without extraneous values.
     ///
-    upstream = "memo-dependencies",
+    unlinked_upstream = "memo-dependencies",
     ///
     /// ### Why is this bad?
     ///
