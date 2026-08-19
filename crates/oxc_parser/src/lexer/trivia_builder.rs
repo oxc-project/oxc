@@ -79,23 +79,21 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     /// Comments at a source boundary which are pending at a parser target boundary.
-    pub fn comment_ids(
+    pub fn comment_range(
         &self,
         position: CommentPosition,
         boundary: u32,
-    ) -> smallvec::SmallVec<[CommentId; 1]> {
-        self.comments
-            .iter()
-            .enumerate()
-            .rev()
-            .take_while(|(_, comment)| {
-                comment.position == position && comment.attached_to == boundary
-            })
-            .map(|(index, _)| CommentId::from_usize(index))
-            .collect::<smallvec::SmallVec<[_; 1]>>()
-            .into_iter()
-            .rev()
-            .collect()
+    ) -> std::ops::Range<usize> {
+        let end = self.comments.len();
+        let mut start = end;
+        while start > 0 {
+            let comment = self.comments[start - 1];
+            if comment.position != position || comment.attached_to != boundary {
+                break;
+            }
+            start -= 1;
+        }
+        start..end
     }
 
     #[inline]

@@ -17,6 +17,8 @@ pub(crate) struct CommentAttacher<'a> {
     trailing: FxHashMap<u32, SmallVec<[CommentId; 1]>>,
     leading_candidates: FxHashMap<u32, NodeId>,
     trailing_candidates: FxHashMap<u32, NodeId>,
+    original_leading_boundaries: FxHashSet<u32>,
+    original_trailing_boundaries: FxHashSet<u32>,
     dangling_candidates: FxHashMap<CommentId, (u32, NodeId)>,
 }
 
@@ -24,10 +26,24 @@ impl<'a> CommentAttacher<'a> {
     pub fn new(comments: &'a CommentStore<'a>) -> Self {
         let original_nodes = comments.take_attachments();
         let mut attached = FxHashSet::default();
+        let mut original_leading_boundaries = FxHashSet::default();
+        let mut original_trailing_boundaries = FxHashSet::default();
         for node_comments in original_nodes.values() {
             attached.extend(node_comments.leading.iter().copied());
             attached.extend(node_comments.trailing.iter().copied());
             attached.extend(node_comments.dangling.iter().copied());
+            original_leading_boundaries.extend(
+                node_comments
+                    .leading
+                    .iter()
+                    .map(|comment_id| comments[comment_id.index()].attached_to),
+            );
+            original_trailing_boundaries.extend(
+                node_comments
+                    .trailing
+                    .iter()
+                    .map(|comment_id| comments[comment_id.index()].attached_to),
+            );
         }
 
         let mut leading = FxHashMap::default();
@@ -51,6 +67,8 @@ impl<'a> CommentAttacher<'a> {
             trailing,
             leading_candidates: FxHashMap::default(),
             trailing_candidates: FxHashMap::default(),
+            original_leading_boundaries,
+            original_trailing_boundaries,
             dangling_candidates: FxHashMap::default(),
         }
     }
@@ -66,7 +84,9 @@ impl<'a> CommentAttacher<'a> {
         if matches!(kind, AstKind::Program(_) | AstKind::Hashbang(_)) {
             return;
         }
-        self.leading_candidates.entry(kind.span().start).or_insert(new_node_id);
+        if self.original_leading_boundaries.contains(&kind.span().start) {
+            self.leading_candidates.entry(kind.span().start).or_insert(new_node_id);
+        }
         if let Some(comment_ids) = self.leading.remove(&kind.span().start) {
             self.comments.attach(new_node_id, CommentPosition::Leading, comment_ids);
         }
@@ -97,7 +117,9 @@ impl<'a> CommentAttacher<'a> {
         if matches!(kind, AstKind::Program(_) | AstKind::Hashbang(_)) {
             return;
         }
-        self.trailing_candidates.entry(kind.span().end).or_insert(kind.node_id());
+        if self.original_trailing_boundaries.contains(&kind.span().end) {
+            self.trailing_candidates.entry(kind.span().end).or_insert(kind.node_id());
+        }
         if let Some(comment_ids) = self.trailing.remove(&kind.span().end) {
             self.comments.attach(kind.node_id(), CommentPosition::Trailing, comment_ids);
         }

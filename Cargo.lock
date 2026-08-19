@@ -2452,7 +2452,6 @@ dependencies = [
  "pico-args",
  "rustc-hash",
  "seq-macro",
- "smallvec",
 ]
 
 [[package]]

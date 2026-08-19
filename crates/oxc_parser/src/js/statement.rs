@@ -136,8 +136,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
         let statement_start = self.cur_start();
-        let leading_comment_ids =
-            self.lexer.trivia_builder.comment_ids(CommentPosition::Leading, statement_start);
+        let leading_comment_range =
+            self.lexer.trivia_builder.comment_range(CommentPosition::Leading, statement_start);
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
@@ -218,14 +218,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.lexer.trivia_builder.attach_comments(
             node_id,
             CommentPosition::Leading,
-            leading_comment_ids,
+            leading_comment_range.map(CommentId::from_usize),
         );
-        let trailing_comment_ids =
-            self.lexer.trivia_builder.comment_ids(CommentPosition::Trailing, stmt.span().end);
+        let trailing_comment_range =
+            self.lexer.trivia_builder.comment_range(CommentPosition::Trailing, stmt.span().end);
         self.lexer.trivia_builder.attach_comments(
             node_id,
             CommentPosition::Trailing,
-            trailing_comment_ids,
+            trailing_comment_range.map(CommentId::from_usize),
         );
 
         stmt
