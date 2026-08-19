@@ -3,13 +3,13 @@ use std::{iter, ops::ControlFlow};
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitJs, walk_js};
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_span::{ContentEq, GetSpan, GetSpanMut};
 
 use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
@@ -610,33 +610,6 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
-        let is_empty = if stmt.consequent.len() == 1 {
-            match stmt.consequent.last() {
-                Some(Statement::EmptyStatement(_)) => true,
-                Some(Statement::BreakStatement(break_stmt)) => {
-                    allow_break && break_stmt.label.is_none()
-                }
-                _ => false,
-            }
-        } else {
-            stmt.consequent.is_empty()
-        };
-
-        is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
-    }
-
-    /// Check if a switch case can be inlined by verifying:
-    /// - The test expression has no side effects
-    /// - All statements can be safely inlined (no unlabeled breaks)
-    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
-        if !case.test.as_ref().is_none_or(Expression::is_literal) {
-            return false;
-        }
-
-        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
-    }
-
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -658,122 +631,6 @@ impl<'a> PeepholeOptimizations {
             switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
-        }
-
-        // Remove empty case clauses that don't affect behavior.
-        // Handles fall-through semantics: remove empty cases before default or at end (if no default).
-        // e.g., `switch(x){ case 0: foo(); break; case 1: default: bar() }`
-        // => `switch(x){ case 0: foo(); break; default: bar() }`
-        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        let case_count = switch_stmt.cases.len();
-        if case_count == 1 {
-            // Remove sole case if empty and has no side-effect test
-            if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
-                ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
-            }
-        } else if case_count > 1 {
-            // Determine the range [0, end] to check for removable cases.
-            // 1. default exists and is empty: check the full switch.
-            // 2. default exists and is non-removable and last: check only cases before that default.
-            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
-            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
-            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
-            let (end, allow_break) = if let Some(default_pos) = default_pos {
-                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true) {
-                    (case_count, true)
-                } else if default_pos == case_count - 1 {
-                    (default_pos, false)
-                } else {
-                    (0, false)
-                }
-            } else {
-                (case_count, true)
-            };
-
-            if end > 0 {
-                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
-                let last_non_removable_case_before_end = switch_stmt.cases[..end]
-                    .iter()
-                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break));
-
-                // Calculate the start of the removable suffix.
-                // 1. next case after last non-removable: remove from pos + 1
-                // 2. no non-removable case: all cases are removable, start from 0
-                let start = match last_non_removable_case_before_end {
-                    Some(pos) => pos + 1,
-                    None => 0,
-                };
-
-                // Remove the removable suffix if any
-                if start < end && default_pos.is_none_or(|pos| pos >= start) {
-                    for removed_case in switch_stmt.cases.drain(start..end) {
-                        ctx.drop_switch_case(&removed_case);
-                    }
-                }
-            }
-        }
-
-        if switch_stmt.cases.is_empty() {
-            let SwitchStatement { span, discriminant, .. } = switch_stmt.unbox();
-            result.push(Statement::new_expression_statement(span, discriminant, ctx));
-            return;
-        } else if let Some(last_case) = switch_stmt.cases.last_mut()
-            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
-            && last_break.label.is_none()
-        {
-            let dropped = last_case.consequent.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
-
-        if !ctx.is_tree_shake_only()
-            && switch_stmt.cases.len() == 1
-            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
-            && let Some(case) = switch_stmt.cases.pop()
-        {
-            ctx.notice_change();
-            let switch_scope_id = switch_stmt.scope_id();
-            let SwitchStatement { span: switch_span, discriminant, .. } = switch_stmt.unbox();
-            let SwitchCase { span: case_span, test, mut consequent, .. } = case;
-
-            let block_stmt =
-                if consequent.len() == 1 && matches!(consequent[0], Statement::BlockStatement(_)) {
-                    consequent.pop().unwrap()
-                } else {
-                    Statement::new_block_statement_with_scope_id(
-                        case_span,
-                        consequent,
-                        switch_scope_id,
-                        ctx,
-                    )
-                };
-
-            if let Some(test) = test {
-                result.push(Statement::new_if_statement(
-                    switch_span,
-                    Expression::new_binary_expression(
-                        SPAN,
-                        discriminant,
-                        BinaryOperator::StrictEquality,
-                        test,
-                        ctx,
-                    ),
-                    block_stmt,
-                    None,
-                    ctx,
-                ));
-                return;
-            }
-
-            if !discriminant.is_literal() {
-                result.push(Statement::new_expression_statement(
-                    discriminant.span(),
-                    discriminant,
-                    ctx,
-                ));
-            }
-
-            result.push(block_stmt);
-            return;
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));
@@ -2044,42 +1901,6 @@ impl<'a> PeepholeOptimizations {
                 ctx.parent().is_function_body()
             }
             _ => false,
-        }
-    }
-}
-
-#[derive(Default)]
-struct FindNestedBreak {
-    found_unlabelled_break: bool,
-}
-
-impl FindNestedBreak {
-    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
-        let mut visitor = Self::default();
-        visitor.visit_switch_case(node);
-        visitor.found_unlabelled_break
-    }
-}
-
-impl<'a> VisitJs<'a> for FindNestedBreak {
-    fn visit_expression(&mut self, _it: &Expression<'a>) {
-        // do nothing
-    }
-
-    fn visit_statement(&mut self, it: &Statement<'a>) {
-        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
-            return;
-        }
-        match it {
-            Statement::ThrowStatement(_)
-            | Statement::SwitchStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::ReturnStatement(_)
-            | Statement::ExpressionStatement(_) => {}
-            Statement::BreakStatement(it) if it.label.is_none() => {
-                self.found_unlabelled_break = true;
-            }
-            _ => walk_js::walk_statement(self, it),
         }
     }
 }
