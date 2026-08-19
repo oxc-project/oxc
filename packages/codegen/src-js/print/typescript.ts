@@ -285,13 +285,13 @@ function printTSTypeName(
   if (node.type === "TSQualifiedName") {
     printTSTypeName(node.left, state);
     write(state, ".", CAT_OTHER);
-    writeWithMapNamed(state, node.right.name, CAT_IDENT, node.right);
+    writeWithMapNamed(state, node.right.name, node.right);
   } else if (node.type === "ThisExpression") {
     printSpaceBeforeIdentifier(state);
     writeWithMap(state, "this", CAT_IDENT, node);
   } else {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, node.name, CAT_IDENT, node);
+    writeWithMapNamed(state, node.name, node);
   }
 }
 
@@ -525,7 +525,7 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, key.name, CAT_IDENT, key);
+      writeWithMapNamed(state, key.name, key);
       break;
     case "PrivateIdentifier":
       writeWithMapNamedPrivate(state, key.name, key);
@@ -649,7 +649,7 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
   if (node.in) writeNoLast(state, "in ");
   if (node.out) writeNoLast(state, "out ");
 
-  writeWithMapNamed(state, node.name.name, CAT_IDENT, node.name);
+  writeWithMapNamed(state, node.name.name, node.name);
 
   if (node.constraint != null) {
     write(state, " extends ", CAT_OTHER);
@@ -694,7 +694,7 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
       printTSType(node.typeAnnotation, state);
       break;
     case "TSNamedTupleMember":
-      writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
+      writeWithMapNamed(state, node.label.name, node.label);
       if (node.optional) write(state, "?", CAT_QUESTION);
       write(state, ": ", CAT_OTHER);
       printTSType(node.elementType, state);
@@ -820,7 +820,7 @@ function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void 
     write(state, "this", CAT_IDENT);
   } else {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, parameterName.name, CAT_IDENT, parameterName);
+    writeWithMapNamed(state, parameterName.name, parameterName);
   }
 
   if (node.typeAnnotation != null) {
@@ -992,7 +992,7 @@ export function printTSInterfaceDeclaration(
 
   write(state, "interface ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id);
 
   printTypeParameters(node.typeParameters, state);
 
@@ -1046,7 +1046,7 @@ export function printTSTypeAliasDeclaration(
 
   write(state, "type ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id);
 
   printTypeParameters(node.typeParameters, state);
 
@@ -1111,7 +1111,7 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
 
   write(state, "enum ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id);
 
   write(state, " ", CAT_OTHER);
 
@@ -1148,7 +1148,7 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
   const { id } = node;
   if (id.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, id.name, CAT_IDENT, id);
+    writeWithMapNamed(state, id.name, id);
   } else if (id.type === "Literal") {
     printString(state, id.value, id);
   } else {
@@ -1184,7 +1184,7 @@ export function printTSImportEqualsDeclaration(
 
   if (node.importKind === "type") write(state, "type ", CAT_OTHER);
 
-  writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id);
 
   write(state, " = ", CAT_OTHER);
 
