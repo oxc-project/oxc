@@ -771,8 +771,7 @@ impl RuleRunner for crate::rules::eslint::no_inline_comments::NoInlineComments {
 }
 
 impl RuleRunner for crate::rules::eslint::no_inner_declarations::NoInnerDeclarations {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::Function, AstType::VariableDeclaration]));
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

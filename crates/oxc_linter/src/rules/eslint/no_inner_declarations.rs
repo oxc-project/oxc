@@ -24,7 +24,7 @@ enum NoInnerDeclarationsConfig {
     Both,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoInnerDeclarationsOptions {
     /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
@@ -33,6 +33,15 @@ struct NoInnerDeclarationsOptions {
     /// Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.
     #[schemars(with = "Namespaces")]
     namespaces: Option<Namespaces>,
+}
+
+impl Default for NoInnerDeclarationsOptions {
+    fn default() -> Self {
+        // Mirror `from_configuration(null)`: `blockScopedFunctions` defaults to
+        // `allow` even for bare severity (`"error"` / `-D`), matching ESLint and
+        // the schema `#[default]` — see #25073.
+        Self { block_scoped_functions: Some(BlockScopedFunctions::Allow), namespaces: None }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
