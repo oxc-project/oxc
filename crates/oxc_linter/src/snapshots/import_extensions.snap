@@ -756,3 +756,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────────
    ╰────
   help: Remove the file extension from this import.
+
+  ⚠ import(extensions): File extension "gen" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:15]
+ 1 │ import x from "./api.gen";
+   ·               ───────────
+   ╰────
+  help: Remove the file extension from this import.

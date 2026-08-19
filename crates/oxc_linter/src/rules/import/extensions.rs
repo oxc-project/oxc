@@ -645,8 +645,22 @@ impl Extensions {
                 if extension_is_written {
                     let diagnostic =
                         extension_should_not_be_included_in_diagnostic(span, ext_str, is_import);
-                    // The written extension can be safely removed with a pure text edit.
-                    if let Some(ext_span) = written_extension_span(ctx, span) {
+                    // Only autofix when we're confident the written segment really is a file
+                    // extension and not part of a compound filename. Without module resolution a
+                    // non-standard, unconfigured segment is ambiguous: `import x from './api.gen'`
+                    // may resolve to `api.gen.ts`, so stripping `.gen` would break the import.
+                    // In that case we still report, but withhold the fix.
+                    //
+                    // `ext_str` can carry a trailing `?query`/`#hash` (e.g. `js#section`), so match
+                    // confidence against the bare extension.
+                    let bare_ext = ext_str.split(['?', '#']).next().unwrap_or(ext_str);
+                    let extension_is_confirmed = written_is_genuine_extension
+                        || resolved_extension.is_some()
+                        || ExtensionsConfig::is_standard_extension(bare_ext)
+                        || config.has_rule(bare_ext);
+                    if extension_is_confirmed
+                        && let Some(ext_span) = written_extension_span(ctx, span)
+                    {
                         ctx.diagnostic_with_fix(diagnostic, |fixer| {
                             fixer.delete_range(ext_span).with_message("Remove the file extension.")
                         });
@@ -1888,6 +1902,10 @@ fn test() {
         (r#"import x from "./typescript.js";"#, Some(json!(["never"]))),
         (r#"import x from "./typescript.js";"#, Some(json!([{ "js": "never" }]))),
         (r#"import x from "./typescript.js";"#, Some(json!(["always", { "js": "never" }]))),
+        // A non-standard, unconfigured segment on an unresolved import is still reported under
+        // `never` (matching eslint-plugin-import), but the autofix is withheld because `./api.gen`
+        // may resolve to `api.gen.ts` — see the corresponding no-op case in the fix vector.
+        (r#"import x from "./api.gen";"#, Some(json!(["never"]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
@@ -1959,6 +1977,34 @@ fn test() {
         ),
         // Single-quoted specifiers keep their quote style.
         (r"import x from './foo.js';", r"import x from './foo';", Some(json!(["never"]))),
+        // A non-standard, unconfigured segment on an unresolved import is ambiguous: `./api.gen`
+        // may resolve to `api.gen.ts`. We still report, but must NOT strip `.gen` (no fix applied).
+        (r"import x from './api.gen';", r"import x from './api.gen';", Some(json!(["never"]))),
+        // ...but an explicitly-configured non-standard extension IS safe to strip.
+        (
+            r"import x from './api.gen';",
+            r"import x from './api';",
+            Some(json!(["never", { "gen": "never" }])),
+        ),
+        // Asset extensions (.css, .svg) aren't in the resolver's extension set, so a bare `never`
+        // can't confirm them and leaves them untouched (report only). Configure them explicitly to
+        // opt into stripping.
+        (
+            r"import s from './styles.css';",
+            r"import s from './styles.css';",
+            Some(json!(["never"])),
+        ),
+        (r"import i from './icon.svg';", r"import i from './icon.svg';", Some(json!(["never"]))),
+        (
+            r"import s from './styles.css';",
+            r"import s from './styles';",
+            Some(json!(["never", { "css": "never" }])),
+        ),
+        (
+            r"import i from './icon.svg';",
+            r"import i from './icon';",
+            Some(json!(["never", { "svg": "never" }])),
+        ),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail)
