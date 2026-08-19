@@ -29,17 +29,14 @@ pub struct MatchComponentImportName;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Requires the key a component is registered under in the `components`
-    /// option to match the name of the imported binding, either in
-    /// `PascalCase` or in `kebab-case`.
+    /// Requires the key used in the `components` option to match the name of the
+    /// imported component, either in `PascalCase` or in `kebab-case`.
     ///
     /// ### Why is this bad?
     ///
     /// Registering a component under an unrelated alias hides which import a
-    /// tag in the template actually resolves to, so a reader has to jump
-    /// between the template, the `components` option and the import list to
-    /// follow it. Keeping the two names in sync also means renaming the
-    /// import is enough to find every usage.
+    /// tag in the template actually resolves to, which makes the code more
+    /// difficult to follow for the reader.
     ///
     /// ### Examples
     ///
