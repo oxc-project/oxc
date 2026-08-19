@@ -140,9 +140,9 @@ function printImportAttributes(
   const { length } = attributes;
   if (length === 0) return;
 
-  // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor to the
-  // first attribute, which is the first location both representations carry.
-  write(state, " ", CAT_OTHER);
+  // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor
+  // to the first attribute, which is the first location both representations carry.
+  writeNoLast(state, " ");
   markWithMapAtStartOffset(state, attributes[0], 0);
   write(state, "with { ", CAT_OTHER);
 

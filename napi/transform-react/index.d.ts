@@ -237,6 +237,9 @@ export interface ReactCompilerOptions {
   /**
    * Only run the React Compiler when the filename contains one of these strings.
    *
+   * By default, files whose filename contains `node_modules` are skipped.
+   * Providing this option replaces that default filter.
+   *
    * Function-valued `sources` filters from the Babel plugin are intentionally
    * unsupported across the native boundary.
    */

@@ -1,8 +1,8 @@
 // Source map tests.
 //
 // The conformance checker compares the complete Source Map v3 object against Rust `oxc_codegen`.
-// The remaining tests here check invariants which give a more local failure than a full mapping
-// diff: positions stay in bounds and ordered, indentation is respected, identifier text agrees,
+// The remaining tests here check invariants which give a more local failure than a full mapping diff -
+// positions stay in bounds and ordered, indentation is respected, identifier text agrees,
 // and turning source maps on does not change the generated code.
 //
 // Mappings use Oxc `start` / `end` offsets.
@@ -18,8 +18,8 @@ import { checkFixture, getEcmaScriptLineTable } from "./utils/common.ts";
 import type { Program } from "oxc-parser";
 import type { SourceMap } from "../dist/index.js";
 
-// Same directory the benchmarks download their fixtures to. Whichever are already cached are used;
-// the inline fixtures below always run.
+// Same directory the benchmarks download their fixtures to. Whichever are already cached are used.
+// The inline fixtures below always run.
 const CACHE_DIR_PATH = pathJoin(import.meta.dirname, "../../../target");
 
 // `preserveParens: false` because this printer deliberately does not support the redundant
@@ -118,12 +118,12 @@ describe("Rust conformance", () => {
     const identifier = statement.declarations[0].id;
     if (identifier.type !== "Identifier") throw new Error("Expected identifier");
 
-    // Simulate a transformed AST whose old offsets are no longer valid for the source text.
+    // Simulate a transformed AST whose old offsets are no longer valid for the source text
     identifier.end = code.length + 1;
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "invalid-offset.js",
+      sourceFilename: "invalid-offset.js",
       sourceText: code,
     });
     expect(decodeSourceMap(map!)).toContainEqual(expect.objectContaining({ name: "name" }));
@@ -137,13 +137,13 @@ describe("Rust conformance", () => {
     const identifier = statement.declarations[0].id;
     if (identifier.type !== "Identifier") throw new Error("Expected identifier");
 
-    // Simulate a transformed AST whose stale offsets are in bounds but start on whitespace.
+    // Simulate a transformed AST whose stale offsets are in bounds but start on whitespace
     identifier.start = code.indexOf(" ");
     identifier.end = identifier.start + 1;
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "stale-offset.js",
+      sourceFilename: "stale-offset.js",
       sourceText: code,
     });
     const mappings = decodeSourceMap(map!);
@@ -162,7 +162,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "renamed.js",
+      sourceFilename: "renamed.js",
       sourceText: code,
     });
     expect(map?.names).toEqual(["ab"]);
@@ -175,7 +175,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "reordered.js",
+      sourceFilename: "reordered.js",
       sourceText: code,
     });
     const mappings = decodeSourceMap(map!);
@@ -186,16 +186,57 @@ describe("Rust conformance", () => {
   test("returns a source map only when requested", () => {
     const code = "const value = 1;";
     const program = parseProgram("return-map.js", code);
-    expect(printSync(program).map).toBeUndefined();
+    expect(printSync(program).map).toBeNull();
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "return-map.js",
+      sourceFilename: "return-map.js",
       sourceText: code,
     });
     expect(map).toMatchObject({
       version: 3,
       sources: ["return-map.js"],
+      sourcesContent: [code],
+    });
+  });
+});
+
+describe("source map options", () => {
+  const code = "const value = 1;";
+  const program = parseProgram("options.js", code);
+
+  test.each([
+    ["missing", undefined],
+    ["null", null],
+    ["number", 1],
+  ])("rejects %s sourceText", (_name, sourceText) => {
+    expect(() =>
+      printSync(program, { sourcemap: true, sourceText: sourceText as unknown as string }),
+    ).toThrow(new TypeError("`sourceText` must be a string when `sourcemap` is true"));
+  });
+
+  test.each([
+    ["null", null],
+    ["number", 1],
+  ])("rejects %s sourceFilename", (_name, sourceFilename) => {
+    expect(() =>
+      printSync(program, {
+        sourcemap: true,
+        sourceText: code,
+        sourceFilename: sourceFilename as unknown as string,
+      }),
+    ).toThrow(new TypeError("`sourceFilename` must be a string when supplied"));
+  });
+
+  test("accepts valid source map options", () => {
+    expect(
+      printSync(program, {
+        sourcemap: true,
+        sourceText: code,
+        sourceFilename: "options.js",
+      }).map,
+    ).toMatchObject({
+      sources: ["options.js"],
       sourcesContent: [code],
     });
   });
@@ -247,7 +288,9 @@ interface Recorded {
   source: string;
 }
 
-/** Decode a Source Map v3 mapping string for the local invariant checks below. */
+/**
+ * Decode a Source Map v3 mapping string for the local invariant checks below.
+ */
 function decodeSourceMap(map: SourceMap): Recorded[] {
   const mappings: Recorded[] = [];
   let sourceId = 0;
@@ -284,7 +327,9 @@ function decodeSourceMap(map: SourceMap): Recorded[] {
   return mappings;
 }
 
-/** Decode one comma-delimited source-map segment. */
+/**
+ * Decode one comma-delimited source-map segment.
+ */
 function decodeVlqSegment(segment: string): number[] {
   const values: number[] = [];
   let value = 0;
@@ -332,120 +377,128 @@ interface Printed {
   srcLines: string[];
 }
 
-for (const fixture of FIXTURES) {
-  // A cached fixture which has not been downloaded is reported as skipped rather than passing
-  // quietly. `pnpm run bench` downloads them.
-  const describeFixture = fixture.code === null ? describe.skip : describe;
+function addFixtureTests(fixture: Fixture) {
+  let printed!: Printed;
 
-  describeFixture(fixture.name, () => {
-    let printed!: Printed;
+  beforeAll(() => {
+    const { code } = fixture;
+    if (code === null) return;
 
-    beforeAll(() => {
-      const code = fixture.code as string;
-      const program = parseProgram(fixture.name, code);
-      const { jsx, ts } = fixture;
+    const program = parseProgram(fixture.name, code);
+    const { jsx, ts } = fixture;
 
-      // Both builds through the public API - `printSync` picks the maps build when `sourcemap`
-      // is true, and the no-maps build when it is not.
-      const { code: withMaps, map } = printSync(program, {
-        jsx,
-        ts,
-        sourcemap: true,
-        sourceFileName: fixture.name,
-        sourceText: code,
-      });
-      const { code: withoutMaps } = printSync(program, { jsx, ts });
-
-      printed = {
-        withMaps,
-        withoutMaps,
-        mappings: decodeSourceMap(map!),
-        outLines: getEcmaScriptLineTable(withMaps).lines,
-        srcLines: getEcmaScriptLineTable(code).lines,
-      };
+    // Both builds through the public API.
+    // `printSync` picks the maps build when `sourcemap` is true, and the no-maps build when it is not.
+    const { code: withMaps, map } = printSync(program, {
+      jsx,
+      ts,
+      sourcemap: true,
+      sourceFilename: fixture.name,
+      sourceText: code,
     });
+    const { code: withoutMaps } = printSync(program, { jsx, ts });
 
-    test("source maps do not change the printed code", () => {
-      expect(printed.withMaps).toBe(printed.withoutMaps);
-    });
+    printed = {
+      withMaps,
+      withoutMaps,
+      mappings: decodeSourceMap(map!),
+      outLines: getEcmaScriptLineTable(withMaps).lines,
+      srcLines: getEcmaScriptLineTable(code).lines,
+    };
+  });
 
-    test("emits mappings", () => {
-      expect(printed.mappings.length).toBeGreaterThan(0);
-    });
+  test("source maps do not change the printed code", () => {
+    expect(printed.withMaps).toBe(printed.withoutMaps);
+  });
 
-    test("generated positions never go backwards", () => {
-      let prevLine = 0,
-        prevCol = 0;
-      let outOfOrder = null;
-      for (const mapping of printed.mappings) {
-        const { generatedLine: line, generatedColumn: col } = mapping;
-        if (line < prevLine || (line === prevLine && col < prevCol)) {
-          outOfOrder = `${line}:${col} follows ${prevLine}:${prevCol}`;
-          break;
-        }
-        prevLine = line;
-        prevCol = col;
+  test("emits mappings", () => {
+    expect(printed.mappings.length).toBeGreaterThan(0);
+  });
+
+  test("generated positions never go backwards", () => {
+    let prevLine = 0,
+      prevCol = 0;
+    let outOfOrder = null;
+    for (const mapping of printed.mappings) {
+      const { generatedLine: line, generatedColumn: col } = mapping;
+      if (line < prevLine || (line === prevLine && col < prevCol)) {
+        outOfOrder = `${line}:${col} follows ${prevLine}:${prevCol}`;
+        break;
       }
-      expect(outOfOrder).toBeNull();
-    });
+      prevLine = line;
+      prevCol = col;
+    }
+    expect(outOfOrder).toBeNull();
+  });
 
-    test("generated positions are within the printed output", () => {
-      let outOfRange = null;
-      for (const { generatedLine, generatedColumn } of printed.mappings) {
-        const line = printed.outLines[generatedLine - 1];
-        if (line === undefined || generatedColumn > line.length) {
-          outOfRange = `${generatedLine}:${generatedColumn}`;
-          break;
-        }
+  test("generated positions are within the printed output", () => {
+    let outOfRange = null;
+    for (const { generatedLine, generatedColumn } of printed.mappings) {
+      const line = printed.outLines[generatedLine - 1];
+      if (line === undefined || generatedColumn > line.length) {
+        outOfRange = `${generatedLine}:${generatedColumn}`;
+        break;
       }
-      expect(outOfRange).toBeNull();
-    });
+    }
+    expect(outOfRange).toBeNull();
+  });
 
-    test("original positions are within the source", () => {
-      let outOfRange = null;
-      for (const { originalLine, originalColumn } of printed.mappings) {
-        const line = printed.srcLines[originalLine - 1];
-        if (line === undefined || originalColumn > line.length) {
-          outOfRange = `${originalLine}:${originalColumn}`;
-          break;
-        }
+  test("original positions are within the source", () => {
+    let outOfRange = null;
+    for (const { originalLine, originalColumn } of printed.mappings) {
+      const line = printed.srcLines[originalLine - 1];
+      if (line === undefined || originalColumn > line.length) {
+        outOfRange = `${originalLine}:${originalColumn}`;
+        break;
       }
-      expect(outOfRange).toBeNull();
-    });
+    }
+    expect(outOfRange).toBeNull();
+  });
 
-    test("every mapping names the source file", () => {
-      const wrong = printed.mappings.find((mapping) => mapping.source !== fixture.name);
-      expect(wrong).toBeUndefined();
-    });
+  test("every mapping names the source file", () => {
+    const wrong = printed.mappings.find((mapping) => mapping.source !== fixture.name);
+    expect(wrong).toBeUndefined();
+  });
 
-    // Where a mapping lands on an identifier in the output, the source position it points at
-    // should hold the same identifier. A handful disagree legitimately - a printed name can come
-    // from a node whose span starts at a keyword - so this is a ratio rather than an absolute.
-    test("identifier text agrees at mapped positions", () => {
-      let checked = 0,
-        mismatched = 0;
-      for (const mapping of printed.mappings) {
-        const outLine = printed.outLines[mapping.generatedLine - 1];
-        const srcLine = printed.srcLines[mapping.originalLine - 1];
-        if (outLine === undefined || srcLine === undefined) continue;
-        const generatedIdent = IDENT_RE.exec(outLine.slice(mapping.generatedColumn));
-        const originalIdent = IDENT_RE.exec(srcLine.slice(mapping.originalColumn));
-        if (generatedIdent !== null && originalIdent !== null) {
-          checked++;
-          if (generatedIdent[0] !== originalIdent[0]) mismatched++;
-        }
+  // Where a mapping lands on an identifier in the output, the source position it points at
+  // should hold the same identifier. A handful disagree legitimately - a printed name can come
+  // from a node whose span starts at a keyword - so this is a ratio rather than an absolute.
+  test("identifier text agrees at mapped positions", () => {
+    let checked = 0,
+      mismatched = 0;
+    for (const mapping of printed.mappings) {
+      const outLine = printed.outLines[mapping.generatedLine - 1];
+      const srcLine = printed.srcLines[mapping.originalLine - 1];
+      if (outLine === undefined || srcLine === undefined) continue;
+      const generatedIdent = IDENT_RE.exec(outLine.slice(mapping.generatedColumn));
+      const originalIdent = IDENT_RE.exec(srcLine.slice(mapping.originalColumn));
+      if (generatedIdent !== null && originalIdent !== null) {
+        checked++;
+        if (generatedIdent[0] !== originalIdent[0]) mismatched++;
       }
-      // Guard against the ratio passing because nothing was compared
-      expect(checked).toBeGreaterThan(0);
-      expect(1 - mismatched / checked).toBeGreaterThan(0.97);
-    });
+    }
+    // Guard against the ratio passing because nothing was compared
+    expect(checked).toBeGreaterThan(0);
+    expect(1 - mismatched / checked).toBeGreaterThan(0.97);
   });
 }
 
+// A cached fixture which has not been downloaded is reported as skipped rather than passing quietly.
+// `pnpm run bench` downloads them.
+const CACHED_FIXTURES = FIXTURES.filter((fixture) => fixture.code !== null);
+const MISSING_FIXTURES = FIXTURES.filter((fixture) => fixture.code === null);
+
+describe.for(CACHED_FIXTURES)("$name", (fixture) => {
+  addFixtureTests(fixture);
+});
+describe.for(MISSING_FIXTURES)("$name", { skip: true }, (fixture) => {
+  addFixtureTests(fixture);
+});
+
 // --- Indentation ----------------------------------------------------------------------------
 
-// `printIndent` goes through the same write path as everything else, so the `indent` option and
-// the mappings have to agree: indentation is honoured, and no mapping ever points into the middle
+// `printIndent` goes through the same write path as everything else, so the `indent` option
+// and the mappings have to agree: indentation is honoured, and no mapping ever points into the middle
 // of an indent run.
 const INDENT_CASES = [undefined, "\t", "  ", "    ", "\t\t", " \t", "\t "];
 
@@ -457,7 +510,7 @@ describe("indent option", () => {
     const { code: out, map } = printSync(program, {
       indent: indent as string | undefined,
       sourcemap: true,
-      sourceFileName: "indent.js",
+      sourceFilename: "indent.js",
       sourceText: INLINE_JS,
     });
 

@@ -1,6 +1,6 @@
 {
   "name": "oxc-codegen",
-  "version": "0.144.0",
+  "version": "0.146.0",
   "description": "Fast JavaScript code generator from an ESTree-compliant AST",
   "keywords": [
     "ast",
@@ -39,7 +39,9 @@
     "build": "node scripts/build.ts",
     "build-dev": "cross-env DEBUG=true node scripts/build.ts",
     "build-test": "pnpm run build-dev && pnpm --filter oxc-parser run build-test && pnpm --filter oxc-codegen-conformance run build",
-    "test": "vitest run --dir ./test"
+    "build-bench": "cross-env BENCHMARKS=true node scripts/build.ts",
+    "test": "vitest run --dir ./test",
+    "bench": "pnpm run build-bench && vitest bench --run bench.bench.ts"
   },
   "devDependencies": {
     "@types/node": "catalog:",

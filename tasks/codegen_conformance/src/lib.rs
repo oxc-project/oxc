@@ -2,8 +2,7 @@
 //!
 //! This is the reference the `oxc-codegen` package's conformance tests are checked against.
 //! For each fixture, the tests parse the source twice - once here in Rust, and once with `oxc-parser`
-//! on the JS side - and require both printers to produce the same output and decoded source map
-//! positions.
+//! on the JS side - and require both printers to produce the same output and decoded source map positions.
 //!
 //! Both sides are given the same source text and the same `SourceType`, via [`oxc_napi::get_source_type`],
 //! which is the same function `oxc-parser` itself uses to turn a filename and `lang` / `sourceType` options
@@ -53,8 +52,7 @@ pub struct CodegenResult {
     pub map: SourceMap,
 }
 
-/// Parse `source_text` with `oxc_parser` and print the AST with `oxc_codegen`, including a source
-/// map.
+/// Parse `source_text` with `oxc_parser` and print the AST with `oxc_codegen`, including a source map.
 ///
 /// Returns `null` if the source text could not be parsed without errors, which tells the caller
 /// there is nothing to compare for this fixture.
@@ -202,8 +200,8 @@ fn normalize_with_clause(
         inner.keyword = WithClauseKeyword::With;
 
         if let Some(first) = inner.with_entries.first() {
-            // ESTree exposes the entries but not the `WithClause` wrapper or its `{` span. Use the
-            // first location both representations can carry as the clause's mapping anchor.
+            // ESTree exposes the entries but not the `WithClause` wrapper or its `{` span.
+            // Use the first location both representations can carry as the clause's mapping anchor.
             inner.span.start = first.span.start;
         } else {
             *with_clause = None;

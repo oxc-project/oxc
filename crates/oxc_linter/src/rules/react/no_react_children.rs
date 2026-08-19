@@ -3,7 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_import_from_module, is_import_symbol},
+};
 
 fn no_react_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`React.Children` should not be used.")
@@ -106,31 +111,24 @@ impl Rule for NoReactChildren {
 
         let object = member_expr.object().get_inner_expression();
 
-        // Pattern 1: Children.method() where Children is imported from 'react'
+        // Pattern 1: Children.method(), where `Children` is the named `react` import
         if let Some(ident) = object.get_identifier_reference()
-            && ident.name == "Children"
-            && is_imported_from_react(ident.name.as_str(), ctx)
+            && is_import_symbol(ident, "react", "Children", ctx)
         {
             ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
             return;
         }
 
-        // Pattern 2: React.Children.method() where React is imported from 'react'
+        // Pattern 2: *.Children.method(), where `*` is any `react` import
         if let Some(inner_member) = object.as_member_expression()
             && inner_member.static_property_name() == Some("Children")
             && let Some(ident) =
                 inner_member.object().get_inner_expression().get_identifier_reference()
-            && is_imported_from_react(ident.name.as_str(), ctx)
+            && is_import_from_module(ident, "react", ctx)
         {
             ctx.diagnostic(no_react_children_diagnostic(member_expr.span()));
         }
     }
-}
-
-fn is_imported_from_react(local_name: &str, ctx: &LintContext) -> bool {
-    ctx.module_record().import_entries.iter().any(|entry| {
-        entry.module_request.name() == "react" && entry.local_name.name() == local_name
-    })
 }
 
 #[test]
@@ -164,6 +162,10 @@ fn test() {
                </div>
              );
            }"#,
+        "import { Children } from 'react'; function f(x) { const Children = { count: () => 0 }; return Children.count(x); }",
+        "import React from 'react'; function f(x) { const React = { Children: { map: () => {} } }; return React.Children.map(x); }",
+        "import { Children } from 'react'; export function f(Children) { return Children.count(1); }",
+        "import { count as Children } from 'react'; Children.toArray(x)",
     ];
 
     let fail = vec![
@@ -232,6 +234,7 @@ fn test() {
         "import { Children } from 'react'; (Children).map(children, child => child)",
         "import React from 'react'; (React.Children).map(children, child => child)",
         "import React from 'react'; (React.Children as any).map(children, child => child)",
+        "import { Children as C } from 'react'; C.toArray(x)",
     ];
 
     Tester::new(NoReactChildren::NAME, NoReactChildren::PLUGIN, pass, fail).test_and_snapshot();

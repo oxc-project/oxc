@@ -57,59 +57,6 @@ export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "de
 };
 
 /**
- * Oxc keeps a module's kind in `kind`, using `global: true` for `declare global`.
- * Older producers have no `kind`, and only the `global` flag distinguishes the two.
- */
-export type TSModuleDeclarationNode = Omit<
-  ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
-  "kind"
-> & {
-  kind?: ESTree.TSModuleDeclarationKind | "global" | null;
-};
-
-/**
- * Oxc puts a mapped type's parameter in `key` and `constraint`, where TS-ESLint < 6 used `typeParameter`.
- */
-export type TSMappedTypeNode = Omit<ESTree.TSMappedType, "key"> & {
-  key?: ESTree.BindingIdentifier | null;
-};
-
-/**
- * The pre-TS-ESLint-6 shape `TSMappedTypeNode` falls back to reading.
- */
-export interface TSMappedTypeLegacyParameter {
-  typeParameter: Omit<ESTree.TSTypeParameter, "constraint"> & { constraint: ESTree.TSType };
-}
-
-/**
- * Oxc's `TSImportType` names the module in `source`, where TS-ESLint < 8 used `argument`.
- */
-export type TSImportTypeNode = Omit<ESTree.TSImportType, "source"> & {
-  source?: ESTree.StringLiteral | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSImportTypeNode` falls back to reading.
- */
-export interface TSImportTypeLegacyArgument {
-  argument: ESTree.StringLiteral | ESTree.TSLiteralType | ESTree.TSType;
-}
-
-/**
- * Oxc wraps enum members in a `TSEnumBody`, where TS-ESLint < 8 put them on the declaration itself.
- */
-export type TSEnumDeclarationNode = Omit<ESTree.TSEnumDeclaration, "body"> & {
-  body?: ESTree.TSEnumBody | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSEnumDeclarationNode` falls back to reading.
- */
-export interface TSEnumDeclarationLegacyMembers {
-  members: ESTree.TSEnumMember[];
-}
-
-/**
  * A node carrying the offsets needed for source mappings.
  */
 export interface MappableNode {

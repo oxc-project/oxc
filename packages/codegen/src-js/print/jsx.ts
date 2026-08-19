@@ -38,8 +38,7 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
     writeNoLast(state, " ");
     const attribute = attributes[i];
     if (attribute.type === "JSXSpreadAttribute") {
-      writeWithMapNoLast(state, "{", attribute);
-      write(state, "...", CAT_OTHER);
+      writeWithMap(state, "{...", CAT_OTHER, attribute);
       printExpression(attribute.argument, state, PREC_COMMA, CTX_NONE);
       writeWithMapEnd(state, "}", CAT_OTHER, attribute);
     } else {
