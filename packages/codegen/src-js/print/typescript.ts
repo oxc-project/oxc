@@ -2,6 +2,7 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_LT,
   CAT_OP_UN_NOT,
@@ -56,7 +57,7 @@ export function printTSAsOrSatisfiesExpression(
   write(state, node.type === "TSAsExpression" ? " as " : " satisfies ", CAT_OTHER);
   printTSType(node.typeAnnotation, state);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -147,8 +148,8 @@ function printTSType(
       const wrap = parenthesizeTypeOfPostfixType(node.elementType);
       if (wrap) write(state, "(", CAT_OTHER);
       printTSType(node.elementType, state);
-      if (wrap) write(state, ")", CAT_OTHER);
-      write(state, "[]", CAT_OTHER);
+      if (wrap) writeNoLast(state, ")");
+      write(state, "[]", CAT_CLOSE_BRACKET);
       break;
     }
     case "TSTypeLiteral":
@@ -172,7 +173,7 @@ function printTSType(
         if (i > 0) write(state, ", ", CAT_OTHER);
         printTSTupleElement(elementTypes[i], state);
       }
-      write(state, "]", CAT_OTHER);
+      write(state, "]", CAT_CLOSE_BRACKET);
       break;
     }
     case "TSConditionalType":
@@ -186,10 +187,10 @@ function printTSType(
       const wrap = parenthesizeTypeOfPostfixType(node.objectType);
       if (wrap) write(state, "(", CAT_OTHER);
       printTSType(node.objectType, state);
-      if (wrap) write(state, ")", CAT_OTHER);
+      if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       write(state, "[", CAT_OTHER);
       printTSType(node.indexType, state);
-      write(state, "]", CAT_OTHER);
+      write(state, "]", CAT_CLOSE_BRACKET);
       break;
     }
     case "TSMappedType":
@@ -227,7 +228,7 @@ function printTSType(
     case "TSParenthesizedType":
       write(state, "(", CAT_OTHER);
       printTSType(node.typeAnnotation, state);
-      write(state, ")", CAT_OTHER);
+      write(state, ")", CAT_CLOSE_BRACKET);
       break;
     case "TSNamedTupleMember":
       printTSTupleElement(node, state);
@@ -349,7 +350,7 @@ function printTSUnionType(node: ESTree.TSUnionType, state: State): void {
     const wrap = parenthesizeTypeOfUnionType(types[i]);
     if (wrap) write(state, "(", CAT_OTHER);
     printTSType(types[i], state);
-    if (wrap) write(state, ")", CAT_OTHER);
+    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   }
 }
 
@@ -389,7 +390,7 @@ function printTSIntersectionType(node: ESTree.TSIntersectionType, state: State):
     const wrap = parenthesizeTypeOfIntersectionType(types[i]);
     if (wrap) write(state, "(", CAT_OTHER);
     printTSType(types[i], state);
-    if (wrap) write(state, ")", CAT_OTHER);
+    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   }
 }
 
@@ -465,7 +466,7 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
         write(state, "[", CAT_OTHER);
         typeAssertIs<ESTree.Expression>(node.key);
         printExpression(node.key, state, PREC_COMMA, ctx);
-        write(state, "]", CAT_OTHER);
+        write(state, "]", CAT_CLOSE_BRACKET);
       } else {
         printSignatureKey(node.key, state, ctx);
       }
@@ -486,7 +487,7 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
         write(state, "[", CAT_OTHER);
         typeAssertIs<ESTree.Expression>(node.key);
         printExpression(node.key, state, PREC_COMMA, ctx);
-        write(state, "]", CAT_OTHER);
+        write(state, "]", CAT_CLOSE_BRACKET);
       } else {
         printSignatureKey(node.key, state, ctx);
       }
@@ -682,7 +683,7 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
       const wrap = parenthesizeTypeOfPostfixType(node.typeAnnotation);
       if (wrap) write(state, "(", CAT_OTHER);
       printTSType(node.typeAnnotation, state);
-      if (wrap) write(state, ")", CAT_OTHER);
+      if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       write(state, "?", CAT_QUESTION);
       break;
     }
@@ -715,7 +716,7 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
 
   if (checkWrap) write(state, "(", CAT_OTHER);
   printTSType(checkType, state);
-  if (checkWrap) write(state, ")", CAT_OTHER);
+  if (checkWrap) write(state, ")", CAT_CLOSE_BRACKET);
 
   write(state, " extends ", CAT_OTHER);
 
@@ -723,7 +724,7 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
 
   if (extendsWrapped) write(state, "(", CAT_OTHER);
   printTSType(extendsType, state);
-  if (extendsWrapped) write(state, ")", CAT_OTHER);
+  if (extendsWrapped) write(state, ")", CAT_CLOSE_BRACKET);
 
   write(state, " ? ", CAT_OTHER);
   printTSType(node.trueType, state);
@@ -802,7 +803,7 @@ function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
 
   if (wrap) write(state, "(", CAT_OTHER);
   printTSType(ty, state);
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -857,7 +858,7 @@ function printTSImportType(node: ESTree.TSImportType, state: State): void {
     printExpression(node.options, state, PREC_LOWEST, CTX_TYPESCRIPT);
   }
 
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 
   if (node.qualifier != null) {
     write(state, ".", CAT_OTHER);
@@ -910,7 +911,7 @@ export function printTSTypeAssertion(
   write(state, ">", CAT_OTHER);
   printExpression(node.expression, state, PREC_EXPONENTIATION, ctx);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -1054,7 +1055,7 @@ export function printTSTypeAliasDeclaration(
   const needsParens = isLeftmostIntrinsicReference(node.typeAnnotation);
   if (needsParens) write(state, "(", CAT_OTHER);
   printTSType(node.typeAnnotation, state);
-  if (needsParens) write(state, ")", CAT_OTHER);
+  if (needsParens) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -1159,7 +1160,7 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
       write(state, "[", CAT_OTHER);
       printExpression(id, state, PREC_COMMA, CTX_NONE);
     }
-    write(state, "]", CAT_OTHER);
+    write(state, "]", CAT_CLOSE_BRACKET);
   }
 
   if (node.initializer != null) {
@@ -1189,7 +1190,7 @@ export function printTSImportEqualsDeclaration(
   if (ref.type === "TSExternalModuleReference") {
     write(state, "require(", CAT_OTHER);
     printString(state, ref.expression.value, ref.expression);
-    write(state, ")", CAT_OTHER);
+    write(state, ")", CAT_CLOSE_BRACKET);
   } else {
     printTSTypeName(ref, state);
   }
