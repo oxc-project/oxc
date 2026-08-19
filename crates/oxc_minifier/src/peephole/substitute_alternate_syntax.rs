@@ -1130,7 +1130,7 @@ impl<'a> PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut arg, ctx);
                     let arg =
                         Expression::new_unary_expression(span, UnaryOperator::LogicalNot, arg, ctx);
-                    Some(Self::minimize_not(span, arg, ctx))
+                    Some(Self::minimize_not(span, arg, ctx, false))
                 }
             },
             "String" => {

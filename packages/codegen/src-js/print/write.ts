@@ -375,9 +375,6 @@ export function markWithMapAtStartOffset(
 ): void {
   if (!SOURCEMAPS) return;
 
-  const { sourceText } = state;
-  if (sourceText === undefined) return;
-
   const { start, end } = node;
   if (
     typeof start !== "number" ||
@@ -392,12 +389,12 @@ export function markWithMapAtStartOffset(
   }
 
   debugAssert(
-    state.mapPositions !== null,
-    "Source map positions should exist when source maps are enabled",
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
   );
 
   const sourceOffset = start + columnOffset;
-  if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
+  if (!(sourceOffset >= 0 && sourceOffset <= state.sourceText.length)) return;
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
   state.mapPositions.push(state.output.length, sourceOffset);
@@ -409,9 +406,6 @@ export function markWithMapAtStartOffset(
 function recordSourceMapping(state: State, node: MappableNode, location: Location): void {
   if (!SOURCEMAPS) return;
 
-  const { sourceText } = state;
-  if (sourceText === undefined) return;
-
   const { start, end } = node;
   if (
     typeof start !== "number" ||
@@ -426,8 +420,8 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
   }
 
   debugAssert(
-    state.mapPositions !== null,
-    "Source map positions should exist when source maps are enabled",
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
   );
 
   let sourceOffset: number;
@@ -440,6 +434,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
     sourceOffset = start;
   }
 
+  const { sourceText } = state;
   if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
