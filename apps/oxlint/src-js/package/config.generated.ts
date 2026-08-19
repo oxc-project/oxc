@@ -1762,6 +1762,7 @@ export interface DummyRuleMap {
   "vue/define-emits-declaration"?: RuleNoConfig | [AllowWarnDeny, DeclarationStyle];
   "vue/define-props-declaration"?: RuleNoConfig | [AllowWarnDeny, DeclarationStyle2];
   "vue/define-props-destructuring"?: RuleNoConfig | [AllowWarnDeny, DefinePropsDestructuring];
+  "vue/match-component-import-name"?: RuleNoConfig;
   "vue/max-props"?: RuleNoConfig | [AllowWarnDeny, MaxProps];
   "vue/next-tick-style"?: RuleNoConfig | [AllowWarnDeny, NextTickOption];
   "vue/no-arrow-functions-in-watch"?: RuleNoConfig;
