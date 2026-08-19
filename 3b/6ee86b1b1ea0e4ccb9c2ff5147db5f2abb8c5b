@@ -1,0 +1,33 @@
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_01b0963c7995ba::t_0ea3d76774ccc2 10,21,43,54,65,76
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_01b0963c7995ba::t_d7b4c7150df3ff 3-10,14,16-21,36,38-43,47,49-54,58,60-65,69,71-76
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_01b0963c7995ba::t_f4f73c14c584b3 6,8-10,19-21,30,41-43,50,52-54,63-65,74-76
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_01b0963c7995ba::t_d4b8303f1e9236 3-10,14-21,36-43,47-54,58-65,69-76
+tasks/track_memory_allocations/allocs_transformer.yaml
+  s_01b0963c7995ba::t_0aa7be10ef93a2 10,21,43,54,65,76
+crates/oxc_parser/src/js/statement.rs
+  s_01b0963c7995ba::t_616a2979fb1702 139-140,221,223-224,228
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_01b0963c7995ba::t_b55ca920ae7fd8 82,86-96
+crates/oxc_semantic/src/comment_attacher.rs
+  s_01b0963c7995ba::t_7209f6e6be2b8b 20-21,29-30,35-46,70-71,87-89,120-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3b6ee86b1b1ea0e4ccb9c2ff5147db5f2abb8c5b",
+  "prompts": {},
+  "sessions": {
+    "s_01b0963c7995ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f47-33d2-79c2-ba3f-0c7a8fdc46bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
