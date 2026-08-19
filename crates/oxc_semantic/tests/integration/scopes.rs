@@ -209,6 +209,125 @@ fn test_enums() {
 }
 
 #[test]
+fn test_merged_enum_member_references() {
+    let tester = SemanticTester::ts(
+        "
+        const B = 0;
+        enum A { B }
+        enum A { C = B }
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+
+    let outer_b = scoping
+        .get_binding(scoping.root_scope_id(), "B".into())
+        .expect("Expected the outer `B` binding");
+    assert!(scoping.get_resolved_reference_ids(outer_b).is_empty());
+
+    let enum_member_b = scoping
+        .symbol_ids()
+        .find(|&symbol_id| {
+            scoping.symbol_name(symbol_id) == "B"
+                && scoping.symbol_flags(symbol_id).is_enum_member()
+        })
+        .expect("Expected the first enum's `B` member");
+    assert_eq!(scoping.get_resolved_reference_ids(enum_member_b).len(), 1);
+    assert!(!scoping.root_unresolved_references().contains_key("B"));
+}
+
+#[test]
+fn test_enum_member_parameter_defaults_resolve_before_function_body() {
+    let tester = SemanticTester::ts(
+        "
+        const B = 0;
+        enum A { C = (function (p = B) { var B = 1; return p; })() }
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+
+    let outer_b = scoping
+        .get_binding(scoping.root_scope_id(), "B".into())
+        .expect("Expected the outer `B` binding");
+    assert_eq!(scoping.get_resolved_reference_ids(outer_b).len(), 1);
+}
+
+#[test]
+fn test_enum_member_catch_parameters_resolve_before_function_body() {
+    let tester = SemanticTester::ts(
+        "
+        const B = 0;
+        enum A {
+            C = (() => {
+                try {} catch ({ [B]: p }) {
+                    var B = 1;
+                    return p;
+                }
+                return 0;
+            })()
+        }
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+
+    let outer_b = scoping
+        .get_binding(scoping.root_scope_id(), "B".into())
+        .expect("Expected the outer `B` binding");
+    assert_eq!(scoping.get_resolved_reference_ids(outer_b).len(), 1);
+}
+
+#[test]
+fn test_merged_enum_member_references_from_parameter_defaults() {
+    let tester = SemanticTester::ts(
+        "
+        const B = 0;
+        enum A { B }
+        enum A { C = (function (p = B) { return p; })() }
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+
+    let outer_b = scoping
+        .get_binding(scoping.root_scope_id(), "B".into())
+        .expect("Expected the outer `B` binding");
+    assert!(scoping.get_resolved_reference_ids(outer_b).is_empty());
+
+    let enum_member_b = scoping
+        .symbol_ids()
+        .find(|&symbol_id| {
+            scoping.symbol_name(symbol_id) == "B"
+                && scoping.symbol_flags(symbol_id).is_enum_member()
+        })
+        .expect("Expected the first enum's `B` member");
+    assert_eq!(scoping.get_resolved_reference_ids(enum_member_b).len(), 1);
+}
+
+#[test]
+fn test_merged_enum_member_forward_references() {
+    let tester = SemanticTester::ts(
+        "
+        enum A { C = B }
+        enum A { B }
+        ",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+
+    let enum_member_b = scoping
+        .symbol_ids()
+        .find(|&symbol_id| {
+            scoping.symbol_name(symbol_id) == "B"
+                && scoping.symbol_flags(symbol_id).is_enum_member()
+        })
+        .expect("Expected the second enum's `B` member");
+    assert_eq!(scoping.get_resolved_reference_ids(enum_member_b).len(), 1);
+    assert!(!scoping.root_unresolved_references().contains_key("B"));
+}
+
+#[test]
 fn var_hoisting() {
     SemanticTester::js(
         "
