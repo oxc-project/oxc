@@ -87,7 +87,7 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{Allocator, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
     ast::{Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
@@ -913,11 +913,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             return Some(diagnostics::overlong_source());
         }
         None
-    }
-
-    #[inline]
-    fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
-        ArenaBox::new_in(value, self)
     }
 }
 

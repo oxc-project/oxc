@@ -238,6 +238,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // Now parse the initializer if present
         let init = if self.eat(Kind::Eq) {
+            let slot = ArenaBox::<Expression<'a>>::new_uninit_in(self);
             let init =
                 self.context_add(Context::In, ParserImpl::parse_assignment_expression_or_higher);
             if optional {
@@ -245,7 +246,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     pattern.span(),
                 ));
             }
-            Some(ArenaBox::new_in(init, self))
+            Some(slot.write(init))
         } else {
             None
         };
@@ -550,6 +551,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut delegate = false;
         let mut argument = None;
+        let expression = YieldExpression::build(self).span_start(start);
 
         if !self.cur_token().is_on_new_line() {
             delegate = self.eat(Kind::Star);
@@ -570,7 +572,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        Expression::new_yield_expression(self.end_span(start), delegate, argument, self)
+        Expression::YieldExpression(
+            expression
+                .delegate(delegate)
+                .argument(argument)
+                .span_end(self.end_span(start).end)
+                .finish(),
+        )
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration

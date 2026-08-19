@@ -1,4 +1,4 @@
-use oxc_allocator::ArenaBox;
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::FileExtension;
 use oxc_syntax::precedence::Precedence;
@@ -232,15 +232,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let pattern = BindingPattern::new_binding_identifier(ident.span, ident.name, self);
-        let formal_parameter = FormalParameter::new_plain(ident.span, pattern, self);
-        let params = FormalParameters::boxed(
-            ident.span,
-            FormalParameterKind::ArrowFormalParameters,
-            [formal_parameter],
-            None,
-            self,
+        let pattern = BindingPattern::BindingIdentifier(
+            BindingIdentifier::build(self).span(ident.span).name(ident.name).defaults().finish(),
         );
+        let formal_parameter = FormalParameter::new_plain(ident.span, pattern, self);
+        let params = FormalParameters::build(self)
+            .span(ident.span)
+            .kind(FormalParameterKind::ArrowFormalParameters)
+            .items(ArenaVec::from_value_in(formal_parameter, self))
+            .rest(None)
+            .finish();
 
         if self.cur_token().is_on_new_line() {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
@@ -312,6 +313,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
 
+        let arrow = ArrowFunctionExpression::build(self)
+            .span_start(start)
+            .r#async(r#async)
+            .type_parameters(type_parameters)
+            .params(params)
+            .return_type(return_type)
+            .defaults();
+
         let body = if self.at(Kind::LCurly) {
             ArrowFunctionBody::FunctionBody(self.parse_function_body())
         } else {
@@ -324,14 +333,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Expression::new_arrow_function_expression(
-            self.end_span(start),
-            r#async,
-            type_parameters,
-            params,
-            return_type,
-            body,
-            self,
+        Expression::ArrowFunctionExpression(
+            arrow.body(body).span_end(self.end_span(start).end).finish(),
         )
     }
 

@@ -36,7 +36,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_binding_pattern_identifier(&mut self) -> BindingPattern<'a> {
         let ident = self.parse_binding_identifier();
-        BindingPattern::BindingIdentifier(self.alloc(ident))
+        BindingPattern::BindingIdentifier(
+            BindingIdentifier::build(self).span(ident.span).name(ident.name).defaults().finish(),
+        )
     }
 
     /// Section 14.3.3 Object Binding Pattern
@@ -44,6 +46,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
+        let pattern = ObjectPattern::build(self).span_start(start);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RCurly,
             opening_span,
@@ -59,7 +62,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         self.expect(Kind::RCurly);
-        BindingPattern::new_object_pattern(self.end_span(start), list, rest, self)
+        BindingPattern::ObjectPattern(
+            pattern.properties(list).rest(rest).span_end(self.end_span(start).end).finish(),
+        )
     }
 
     /// Section 14.3.3 Array Binding Pattern
@@ -67,6 +72,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
+        let pattern = ArrayPattern::build(self).span_start(start);
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RBrack,
             opening_span,
@@ -75,7 +81,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::binding_rest_element_last,
         );
         self.expect(Kind::RBrack);
-        BindingPattern::new_array_pattern(self.end_span(start), list, rest, self)
+        BindingPattern::ArrayPattern(
+            pattern.elements(list).rest(rest).span_end(self.end_span(start).end).finish(),
+        )
     }
 
     fn parse_array_binding_element(&mut self) -> Option<BindingPattern<'a>> {
@@ -90,6 +98,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_rest_element(&mut self) -> ArenaBox<'a, BindingRestElement<'a>> {
         let start = self.cur_start();
         self.bump_any(); // advance `...`
+        let rest = BindingRestElement::build(self).span_start(start);
         let init_start = self.cur_start();
 
         let pattern = self.parse_binding_pattern_kind();
@@ -116,7 +125,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
         }
 
-        BindingRestElement::boxed(self.end_span(start), argument, self)
+        rest.argument(argument).span_end(self.end_span(start).end).finish()
     }
 
     /// Parse rest element for function parameters (type annotation NOT consumed)
@@ -166,8 +175,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if let PropertyKey::StaticIdentifier(ident) = &key {
                 shorthand = true;
                 self.check_identifier_with_span(key_cur_kind, self.ctx, ident.span);
-                let identifier =
-                    BindingPattern::new_binding_identifier(ident.span, ident.name, self);
+                let identifier = BindingPattern::BindingIdentifier(
+                    BindingIdentifier::build(self)
+                        .span(ident.span)
+                        .name(ident.name)
+                        .defaults()
+                        .finish(),
+                );
                 self.context_add(Context::In, |p| p.parse_initializer(start, identifier))
             } else {
                 return self.unexpected();
@@ -186,8 +200,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   = `AssignmentExpression`[?In, ?Yield, ?Await]
     fn parse_initializer(&mut self, start: u32, left: BindingPattern<'a>) -> BindingPattern<'a> {
         if self.eat(Kind::Eq) {
+            let pattern = AssignmentPattern::build(self).span_start(start).left(left);
             let expr = self.parse_assignment_expression_or_higher();
-            BindingPattern::new_assignment_pattern(self.end_span(start), left, expr, self)
+            BindingPattern::AssignmentPattern(
+                pattern.right(expr).span_end(self.end_span(start).end).finish(),
+            )
         } else {
             left
         }

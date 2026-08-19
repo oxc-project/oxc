@@ -24,8 +24,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
+        let declaration = TSEnumDeclaration::build(self)
+            .span_start(start)
+            .r#const(modifiers.contains_const())
+            .declare(modifiers.contains_declare());
         let id = self.parse_binding_identifier();
         self.check_reserved_type_name(&id, "Enum");
+        let declaration = declaration.id(id);
         let body = self.parse_ts_enum_body();
         let span = self.end_span(start);
         self.verify_modifiers(
@@ -34,14 +39,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        Declaration::new_ts_enum_declaration(
-            span,
-            id,
-            body,
-            modifiers.contains_const(),
-            modifiers.contains_declare(),
-            self,
-        )
+        Declaration::TSEnumDeclaration(declaration.body(body).span_end(span.end).finish())
     }
 
     pub(crate) fn parse_ts_enum_body(&mut self) -> TSEnumBody<'a> {
@@ -73,7 +71,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string();
-                TSEnumMemberName::String(self.alloc(literal))
+                TSEnumMemberName::String(
+                    StringLiteral::build(self)
+                        .span(literal.span)
+                        .value(literal.value)
+                        .raw(literal.raw)
+                        .lone_surrogates(literal.lone_surrogates)
+                        .finish(),
+                )
             }
             Kind::LBrack => match self.parse_computed_property_name() {
                 Expression::StringLiteral(literal) => TSEnumMemberName::ComputedString(literal),
@@ -103,7 +108,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name();
-                TSEnumMemberName::Identifier(self.alloc(ident_name))
+                TSEnumMemberName::Identifier(
+                    IdentifierName::build(self)
+                        .span(ident_name.span)
+                        .name(ident_name.name)
+                        .finish(),
+                )
             }
         }
     }
@@ -121,8 +131,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let start = self.cur_start();
         self.bump_any(); // bump ':'
+        let annotation = TSTypeAnnotation::build(self).span_start(start);
         let type_annotation = self.parse_ts_type();
-        Some(TSTypeAnnotation::boxed(self.end_span(start), type_annotation, self))
+        Some(
+            annotation.type_annotation(type_annotation).span_end(self.end_span(start).end).finish(),
+        )
     }
 
     pub(crate) fn parse_ts_type_alias_declaration(
@@ -132,8 +145,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         self.expect(Kind::Type);
 
+        let declaration = TSTypeAliasDeclaration::build(self)
+            .span_start(start)
+            .declare(modifiers.contains_declare())
+            .defaults();
+
         let id = self.parse_binding_identifier();
         self.check_reserved_type_name(&id, "Type alias");
+        let declaration = declaration.id(id);
         let params = self.parse_ts_type_parameters_with_variance();
         // A `const` modifier is only valid on a type parameter of a function, method, or class
         // (TS1277), so reject it on a type alias, e.g. `type T<const U> = ...`.
@@ -151,23 +170,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
-                let left_name = TSTypeName::new_identifier_reference(
-                    intrinsic_token.span(),
-                    self.ident(self.token_source(&intrinsic_token)),
-                    self,
+                let reference = TSTypeReference::build(self).span_start(intrinsic_token.start());
+                let left_name = TSTypeName::IdentifierReference(
+                    IdentifierReference::build(self)
+                        .span(intrinsic_token.span())
+                        .name(self.ident(self.token_source(&intrinsic_token)))
+                        .defaults()
+                        .finish(),
                 );
                 let type_name =
                     self.parse_ts_qualified_type_name(intrinsic_token.start(), left_name);
                 let type_parameters = self.parse_type_arguments_of_type_reference();
-                TSType::new_ts_type_reference(
-                    self.end_span(intrinsic_token.start()),
-                    type_name,
-                    type_parameters,
-                    self,
+                TSType::TSTypeReference(
+                    reference
+                        .type_name(type_name)
+                        .type_arguments(type_parameters)
+                        .span_end(self.end_span(intrinsic_token.start()).end)
+                        .finish(),
                 )
             } else {
                 // `type something = intrinsic`
-                TSType::new_ts_intrinsic_keyword(intrinsic_token.span(), self)
+                TSType::TSIntrinsicKeyword(
+                    TSIntrinsicKeyword::build(self).span(intrinsic_token.span()).finish(),
+                )
             }
         } else {
             // `type something = ...`
@@ -184,13 +209,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Declaration::new_ts_type_alias_declaration(
-            span,
-            id,
-            params,
-            ty,
-            modifiers.contains_declare(),
-            self,
+        Declaration::TSTypeAliasDeclaration(
+            declaration.type_parameters(params).type_annotation(ty).span_end(span.end).finish(),
         )
     }
 
@@ -226,8 +246,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> Declaration<'a> {
+        let declaration = TSInterfaceDeclaration::build(self)
+            .span_start(start)
+            .declare(modifiers.contains_declare())
+            .defaults();
         let id = self.parse_binding_identifier();
         self.check_reserved_type_name(&id, "Interface");
+        let declaration = declaration.id(id);
         let type_parameters = self.parse_ts_type_parameters_with_variance();
         if let Some(type_parameters) = &type_parameters {
             for param in &type_parameters.params {
@@ -248,14 +273,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some((implements_kw_span, _)) = implements {
             self.error(diagnostics::interface_implements(implements_kw_span));
         }
-        Declaration::new_ts_interface_declaration(
-            self.end_span(start),
-            id,
-            type_parameters,
-            extends,
-            body,
-            modifiers.contains_declare(),
-            self,
+        Declaration::TSInterfaceDeclaration(
+            declaration
+                .type_parameters(type_parameters)
+                .extends(extends)
+                .body(body)
+                .span_end(self.end_span(start).end)
+                .finish(),
         )
     }
 
@@ -328,10 +352,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_interface_heritage_type_name(&mut self, start: u32) -> TSTypeName<'a> {
         let left = if self.at(Kind::This) {
             self.bump_any();
-            TSTypeName::new_this_expression(self.end_span(start), self)
+            TSTypeName::ThisExpression(
+                ThisExpression::build(self).span(self.end_span(start)).finish(),
+            )
         } else {
             let ident = self.parse_identifier_reference();
-            TSTypeName::new_identifier_reference(ident.span, ident.name, self)
+            TSTypeName::IdentifierReference(
+                IdentifierReference::build(self)
+                    .span(ident.span)
+                    .name(ident.name)
+                    .defaults()
+                    .finish(),
+            )
         };
         if self.at(Kind::Dot) { self.parse_ts_qualified_type_name(start, left) } else { left }
     }
@@ -345,9 +377,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
         let start = self.cur_start();
+        let body = TSInterfaceBody::build(self).span_start(start);
         let body_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
-        TSInterfaceBody::boxed(self.end_span(start), body_list, self)
+        body.body(body_list).span_end(self.end_span(start).end).finish()
     }
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
@@ -456,6 +489,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
+        let declaration = TSExternalModuleDeclaration::build(self)
+            .span_start(start)
+            .declare(modifiers.contains_declare())
+            .defaults();
         let id = self.parse_literal_string();
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
@@ -473,13 +510,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        TSExternalModuleDeclaration::boxed(
-            self.end_span(start),
-            id,
-            body,
-            modifiers.contains_declare(),
-            self,
-        )
+        declaration.id(id).body(body).span_end(self.end_span(start).end).finish()
     }
 
     /// Validate a statement that appears directly in an *internal* namespace body
@@ -539,12 +570,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, TSModuleBlock<'a>> {
         let start = self.cur_start();
         self.expect(Kind::LCurly);
+        let block = TSModuleBlock::build(self).span_start(start);
         // Remove TopLevel context for module block
         let (directives, statements) = self.context_remove(Context::TopLevel, |p| {
             p.parse_directives_and_statements(in_ts_namespace_body)
         });
         self.expect(Kind::RCurly);
-        TSModuleBlock::boxed(self.end_span(start), directives, statements, self)
+        block.directives(directives).body(statements).span_end(self.end_span(start).end).finish()
     }
 
     fn parse_module_or_namespace_declaration(
@@ -553,7 +585,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         kind: TSNamespaceDeclarationKind,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSNamespaceDeclaration<'a>> {
+        let declaration = TSNamespaceDeclaration::build(self)
+            .span_start(start)
+            .kind(kind)
+            .declare(modifiers.contains_declare())
+            .defaults();
         let id = self.parse_binding_identifier();
+        let declaration = declaration.id(id);
         let body = if self.eat(Kind::Dot) {
             let start = self.cur_start();
             let decl = self.parse_module_or_namespace_declaration(start, kind, &Modifiers::empty());
@@ -570,14 +608,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        TSNamespaceDeclaration::boxed(
-            self.end_span(start),
-            id,
-            body,
-            kind,
-            modifiers.contains_declare(),
-            self,
-        )
+        declaration.body(body).span_end(self.end_span(start).end).finish()
     }
 
     fn parse_ts_global_declaration(
@@ -589,6 +620,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_start);
 
+        let declaration = TSGlobalDeclaration::build(self)
+            .span_start(start)
+            .global_span(keyword_span)
+            .declare(modifiers.contains_declare())
+            .defaults();
+
         let body = self.parse_ts_module_block(/* in_ts_namespace_body */ false).unbox();
 
         self.verify_modifiers(
@@ -598,13 +635,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        TSGlobalDeclaration::boxed(
-            self.end_span(start),
-            keyword_span,
-            body,
-            modifiers.contains_declare(),
-            self,
-        )
+        declaration.body(body).span_end(self.end_span(start).end).finish()
     }
 
     /* ----------------------- declare --------------------- */
@@ -760,7 +791,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Expression<'a> {
         let start = self.cur_start();
         self.expect(Kind::LAngle);
+        let assertion = TSTypeAssertion::build(self).span_start(start);
         let type_annotation = self.parse_ts_type();
+        let assertion = assertion.type_annotation(type_annotation);
         self.expect(Kind::RAngle);
         let lhs_start = self.cur_start();
         let expression = self.parse_simple_unary_expression(lhs_start);
@@ -770,7 +803,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::jsx_type_assertion_in_mts_cts(span));
         }
 
-        Expression::new_ts_type_assertion(span, type_annotation, expression, self)
+        Expression::TSTypeAssertion(assertion.expression(expression).span_end(span.end).finish())
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(
@@ -781,15 +814,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         self.expect(Kind::Eq);
 
+        let declaration = TSImportEqualsDeclaration::build(self)
+            .span_start(start)
+            .id(identifier)
+            .import_kind(import_kind);
+
         let reference_start = self.cur_start();
         let module_reference = if self.eat(Kind::Require) {
             self.expect(Kind::LParen);
+            let reference = TSExternalModuleReference::build(self).span_start(reference_start);
             let expression = self.parse_literal_string();
             self.expect(Kind::RParen);
-            TSModuleReference::new_external_module_reference(
-                self.end_span(reference_start),
-                expression,
-                self,
+            TSModuleReference::ExternalModuleReference(
+                reference
+                    .expression(expression)
+                    .span_end(self.end_span(reference_start).end)
+                    .finish(),
             )
         } else {
             self.parse_ts_module_reference(reference_start)
@@ -807,12 +847,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::import_alias_cannot_use_import_type(span));
         }
 
-        Declaration::new_ts_import_equals_declaration(
-            span,
-            identifier,
-            module_reference,
-            import_kind,
-            self,
+        Declaration::TSImportEqualsDeclaration(
+            declaration.module_reference(module_reference).span_end(span.end).finish(),
         )
     }
 
@@ -828,12 +864,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Recover by creating an identifier
             let this = self.ident(this_span.source_text(self.source_text));
             debug_assert_eq!(this, "this");
-            let ident = IdentifierReference::boxed(this_span, this, self);
+            let ident =
+                IdentifierReference::build(self).span(this_span).name(this).defaults().finish();
             return TSModuleReference::IdentifierReference(ident);
         }
 
         let ident = self.parse_identifier_name();
-        let left = TSTypeName::new_identifier_reference(ident.span, ident.name, self);
+        let left = TSTypeName::IdentifierReference(
+            IdentifierReference::build(self).span(ident.span).name(ident.name).defaults().finish(),
+        );
 
         // Parse qualified name: foo.bar.baz
         let type_name =
@@ -856,8 +895,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any();
         let this_span = self.end_span(start);
 
+        let parameter = TSThisParameter::build(self).span_start(start).this_span(this_span);
+
         let type_annotation = self.parse_ts_type_annotation();
-        TSThisParameter::boxed(self.end_span(start), this_span, type_annotation, self)
+        parameter.type_annotation(type_annotation).span_end(self.end_span(start).end).finish()
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {

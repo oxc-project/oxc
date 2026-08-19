@@ -15,11 +15,23 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTarget<'a>
         match expr {
             Expression::ArrayExpression(array_expr) => {
                 let pat = ArrayAssignmentTarget::cover(array_expr.unbox(), p);
-                AssignmentTarget::ArrayAssignmentTarget(p.alloc(pat))
+                AssignmentTarget::ArrayAssignmentTarget(
+                    ArrayAssignmentTarget::build(p)
+                        .span(pat.span)
+                        .elements(pat.elements)
+                        .rest(pat.rest)
+                        .finish(),
+                )
             }
             Expression::ObjectExpression(object_expr) => {
                 let pat = ObjectAssignmentTarget::cover(object_expr.unbox(), p);
-                AssignmentTarget::ObjectAssignmentTarget(p.alloc(pat))
+                AssignmentTarget::ObjectAssignmentTarget(
+                    ObjectAssignmentTarget::build(p)
+                        .span(pat.span)
+                        .properties(pat.properties)
+                        .rest(pat.rest)
+                        .finish(),
+                )
             }
             _ => AssignmentTarget::from(SimpleAssignmentTarget::cover(expr, p)),
         }
@@ -124,7 +136,8 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(AssignmentTargetRest::boxed(span, target, p));
+                        rest =
+                            Some(AssignmentTargetRest::build(p).span(span).target(target).finish());
                         if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
                             p.error(diagnostics::rest_element_trailing_comma(span));
                         }
@@ -151,7 +164,13 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTargetMayb
                     ));
                 }
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p);
-                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target))
+                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
+                    AssignmentTargetWithDefault::build(p)
+                        .span(target.span)
+                        .binding(target.binding)
+                        .init(target.init)
+                        .finish(),
+                )
             }
             expr => {
                 let target = AssignmentTarget::cover(expr, p);
@@ -201,7 +220,8 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                             p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(AssignmentTargetRest::boxed(span, target, p));
+                        rest =
+                            Some(AssignmentTargetRest::build(p).span(span).target(target).finish());
                     } else {
                         return p.fatal_error(diagnostics::spread_last_element(spread.span));
                     }
@@ -225,20 +245,22 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTarget
             };
             // convert `CoverInitializedName`
             let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
-            AssignmentTargetProperty::new_assignment_target_property_identifier(
-                property.span,
-                binding,
-                init,
-                p,
+            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
+                AssignmentTargetPropertyIdentifier::build(p)
+                    .span(property.span)
+                    .binding(binding)
+                    .init(init)
+                    .finish(),
             )
         } else {
             let binding = AssignmentTargetMaybeDefault::cover(property.value, p);
-            AssignmentTargetProperty::new_assignment_target_property_property(
-                property.span,
-                property.key,
-                binding,
-                property.computed,
-                p,
+            AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+                AssignmentTargetPropertyProperty::build(p)
+                    .span(property.span)
+                    .name(property.key)
+                    .binding(binding)
+                    .computed(property.computed)
+                    .finish(),
             )
         }
     }
