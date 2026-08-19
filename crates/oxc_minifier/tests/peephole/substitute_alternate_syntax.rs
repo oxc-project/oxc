@@ -606,10 +606,6 @@ fn test_remove_unary_plus() {
 /// var xs = [];
 /// (+xs) - (xs.push(1), 0); // 0, converted while `xs` was still empty
 /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
-///
-/// let x = 0, a = { valueOf() { x = 1; return 2 } };
-/// (+a) - (x ? 1 : 0);      // 1, `x` read after `valueOf` set it
-/// a - (x ? 1 : 0);         // 2, `x` read before
 /// ```
 ///
 /// The right operand is evaluated before either conversion happens, so `+` in
