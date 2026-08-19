@@ -391,8 +391,11 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 
 #### `unmap_writes`
 
-Rewrites every mapped write into the plain one it becomes with no mapping to record - so
-`writeWithMap(state, code, cat, node.start, node.end, node)` turns into `write(state, code, cat)` -
+Runs in two modes, one per build flavour (sourcemaps / no sourcemaps), in both cases stripping arguments
+nothing in that build reads.
+
+**Without source maps**, rewrites every mapped write into the plain one it becomes with no mapping to record -
+so `writeWithMap(state, code, cat, node.start, node.end, node)` turns into `write(state, code, cat)` -
 and rewrites the import to match.
 `writeWithMapEnd` becomes `write` too, and every `NoLast` form becomes `writeNoLast`.
 `writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate`, which fix the category
@@ -401,6 +404,10 @@ instead of taking it. `writePrivate` exists only for the rewrite to land on.
 `printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to a mapped write.
 They keep their names, but the arguments come off every call, and the parameters off their declarations -
 which, unlike the mapped writes, survive into the build.
+
+**With source maps**, in release builds only, just the trailing `node` comes off - from every call,
+and from every declaration. The mappings are real in these builds so the offsets stay, but `node` isn't read
+except by debug asserts. Debug builds get neither mode - the `node` parameter stays for the debug asserts to read.
 
 Without it, the offsets would still be read and held live across a call which ignores them.
 
