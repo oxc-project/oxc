@@ -539,13 +539,32 @@ impl NoUselessAssignment {
 
     fn get_assignment_node(ctx: &LintContext, reference: &Reference) -> Option<NodeId> {
         let node = ctx.nodes().get_node(reference.node_id());
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if matches!(node.kind(), AstKind::IdentifierReference(_))
-            && matches!(parent_node.kind(), AstKind::AssignmentExpression(_))
-        {
-            Some(parent_node.id())
-        } else {
-            None
+        if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
+            return None;
+        }
+
+        // Walk up through assignment-target nodes (e.g. the elements of
+        // `[x] = ...` or `{ x } = ...` destructuring assignments) to find the
+        // enclosing `AssignmentExpression`, if any. Stops at the first node
+        // that is neither an assignment target nor an `AssignmentExpression`,
+        // so reads that merely sit inside the RHS never match.
+        let mut parent_node = ctx.nodes().parent_node(node.id());
+        loop {
+            match parent_node.kind() {
+                AstKind::AssignmentExpression(_) => return Some(parent_node.id()),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::AssignmentTargetWithDefault(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
+                | AstKind::AssignmentTargetRest(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_) => {
+                    parent_node = ctx.nodes().parent_node(parent_node.id());
+                }
+                _ => return None,
+            }
         }
     }
 
@@ -865,6 +884,11 @@ fn test() {
                         console.log(a);
                         a.b = 'unused like, but maybe used in setter';
                     }",
+        // <https://github.com/oxc-project/oxc/issues/25923>: init read by the
+        // RHS, and the destructured write is read afterwards - nothing to report.
+        "let x = 'a/b/c';
+        [x] = x.split('/');
+        console.log(x);",
         "function foo() {
                         let a = { b: 42 };
                         console.log(a);
@@ -1574,6 +1598,11 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                         x = 2;
                         return <A prop={x} />;
                         }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+        // <https://github.com/oxc-project/oxc/issues/25923>:
+        // the *init* of `x` is read by the RHS of the destructuring assignment,
+        // so only the (dead) write on line 2 should be reported, not the init.
+        "let x = 'a/b/c';
+        [x] = x.split('/');",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
