@@ -92,7 +92,7 @@ const e = (expression: ESTree.Expression) => program(stmt(expression));
 // --- Runner ---------------------------------------------------------------------------------
 
 /** A case: its name, the AST to print, and the output the printer must produce for it. */
-type Case = [name: string, ast: ESTree.Node, output: string];
+type Case = [name: string, ast: ESTree.Program | ESTree.Statement, output: string];
 
 /**
  * Define one test per case, checking the printer's output is exactly the expected string.

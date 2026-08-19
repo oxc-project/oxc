@@ -2,7 +2,7 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
-import { CAT_IDENT, CAT_OTHER, write, writeWithMap } from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, write, writeWithMap } from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";
@@ -97,7 +97,7 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
-      write(state, "]", CAT_OTHER);
+      write(state, "]", CAT_CLOSE_BRACKET);
     } else {
       printPropertyKey(key, state);
     }
@@ -159,5 +159,5 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
     printAssignmentTarget(rest.argument, state);
   }
 
-  write(state, "]", CAT_OTHER);
+  write(state, "]", CAT_CLOSE_BRACKET);
 }

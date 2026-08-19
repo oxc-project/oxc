@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.146.0] - 2026-08-19
+
+### 🐛 Bug Fixes
+
+- 526c2b3 codegen: Remove deprecated test APIs (#25889) (camc314)
+- 344a9b2 codegen: Align enum template sourcemaps (#25872) (camc314)
+
+### ⚡ Performance
+
+- 8783524 packages/codegen: Remove loop from `growMappingBuffer` (#25886) (overlookmotel)
+- b6b14c0 packages/codegen: Remove redundant branch (#25885) (overlookmotel)
+- be6adf0 packages/sourcemap: Make `location` passed to `recordSourceMapping` always a number (#25884) (overlookmotel)
+- f720f15 packages/codegen: Take named-mapping only code off hot path in `recordSourceMapping` (#25883) (overlookmotel)
+- a734af5 packages/codegen: Remove redundant setting of `last` in `printImportAttributes` and `printIf` (#25882) (overlookmotel)
+- c6e44c6 packages/codegen: Combine 2 writes in `printJSXElement` (#25881) (overlookmotel)
+- 8801662 packages/codegen: Remove redundant mapping from `printParams` (#25880) (overlookmotel)
+
+### 📚 Documentation
+
+- 5ad330e packages/codegen: Reformat comments (#25876) (overlookmotel)
+
 ## [0.145.0] - 2026-08-18
 
 ### 💥 BREAKING CHANGES

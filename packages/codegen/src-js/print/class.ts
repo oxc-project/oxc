@@ -3,6 +3,7 @@
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_OP_UN_NOT,
   CAT_OTHER,
@@ -107,7 +108,7 @@ export function printClass(node: ESTree.Class, state: State): void {
 
   printClassBody(node.body, state);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -124,7 +125,7 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
     const wrap = decoratorNeedsWrap(expression);
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(expression, state, PREC_LOWEST, CTX_NONE);
-    if (wrap) write(state, ")", CAT_OTHER);
+    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 
     write(state, " ", CAT_OTHER);
   }
@@ -265,7 +266,7 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
     write(state, "[", CAT_OTHER);
     typeAssertIs<ESTree.Expression>(node.key);
     printExpression(node.key, state, PREC_COMMA, CTX_NONE);
-    write(state, "]", CAT_OTHER);
+    write(state, "]", CAT_CLOSE_BRACKET);
   } else {
     printPropertyKey(node.key, state);
   }
@@ -330,7 +331,7 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
     write(state, "[", CAT_OTHER);
     typeAssertIs<ESTree.Expression>(node.key);
     printExpression(node.key, state, PREC_COMMA, CTX_NONE);
-    write(state, "]", CAT_OTHER);
+    write(state, "]", CAT_CLOSE_BRACKET);
   } else {
     printPropertyKey(node.key, state);
   }
@@ -415,7 +416,7 @@ function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
     write(state, " [", CAT_OTHER);
     typeAssertIs<ESTree.Expression>(node.key);
     printExpression(node.key, state, PREC_COMMA, CTX_NONE);
-    write(state, "]", CAT_OTHER);
+    write(state, "]", CAT_CLOSE_BRACKET);
   } else {
     write(state, " ", CAT_OTHER);
     printPropertyKey(node.key, state);

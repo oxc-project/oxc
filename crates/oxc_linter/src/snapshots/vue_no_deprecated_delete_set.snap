@@ -19,6 +19,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:6:26]
+ 5 │                   mounted () {
+ 6 │                     this.$set(obj, key, value)
+   ·                          ────
+ 7 │                     this.$delete(obj, key)
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
+   ╭─[no_deprecated_delete_set.tsx:7:26]
+ 6 │                     this.$set(obj, key, value)
+ 7 │                     this.$delete(obj, key)
+   ·                          ───────
+ 8 │                   }
+   ╰────
+
+  ⚠ vue(no-deprecated-delete-set): `$delete` and `$set` are deprecated.
    ╭─[no_deprecated_delete_set.tsx:7:24]
  6 │                     const vm = this
  7 │                     vm.$set(obj, key, value)

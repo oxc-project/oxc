@@ -4,6 +4,7 @@ import { typeAssertIs } from "../asserts.ts";
 import { printAssignmentTarget } from "./assignment_target.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_OP_UN_NOT,
   CAT_OTHER,
@@ -252,7 +253,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       printSpaceBeforeIdentifier(state);
       writeWithMap(state, "with(", CAT_OTHER, node);
       printExpression(node.object, state, PREC_LOWEST, CTX_NONE);
-      write(state, ")", CAT_OTHER);
+      write(state, ")", CAT_CLOSE_BRACKET);
       printBody(node.body, state);
       break;
     case "DebuggerStatement":
@@ -433,7 +434,7 @@ function printIf(node: ESTree.IfStatement, state: State): void {
     writeWithMapEnd(state, "}", CAT_OTHER, consequent);
     write(state, alternate != null ? " " : "\n", CAT_OTHER);
   } else {
-    write(state, ")", CAT_OTHER);
+    write(state, ")", CAT_CLOSE_BRACKET);
     printBody(consequent, state);
     if (alternate != null) printIndent(state);
   }
@@ -521,7 +522,7 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
     if (handler.param != null) {
       write(state, " (", CAT_OTHER);
       printBindingPattern(handler.param, state);
-      write(state, ")", CAT_OTHER);
+      write(state, ")", CAT_CLOSE_BRACKET);
     }
 
     write(state, " ", CAT_OTHER);
@@ -611,7 +612,7 @@ function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
 
   writeWithMap(state, "while (", CAT_OTHER, node);
   printExpression(node.test, state, PREC_LOWEST, CTX_NONE);
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 
   printBody(node.body, state);
 }
@@ -683,9 +684,9 @@ function printForStatement(node: ESTree.ForStatement, state: State): void {
   if (update != null) {
     write(state, "; ", CAT_OTHER);
     printExpression(update, state, PREC_LOWEST, CTX_NONE);
-    write(state, ")", CAT_OTHER);
+    write(state, ")", CAT_CLOSE_BRACKET);
   } else {
-    write(state, ";)", CAT_OTHER);
+    write(state, ";)", CAT_CLOSE_BRACKET);
   }
 
   printBody(node.body, state);
@@ -710,7 +711,7 @@ function printForInStatement(node: ESTree.ForInStatement, state: State): void {
 
   write(state, " in ", CAT_OTHER);
   printExpression(node.right, state, PREC_LOWEST, CTX_NONE);
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 
   printBody(node.body, state);
 }
@@ -744,12 +745,12 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
       (!node.await && bare.type === "Identifier" && bare.name === "async");
     if (wrap) write(state, "(", CAT_OTHER);
     printAssignmentTarget(left, state);
-    if (wrap) write(state, ")", CAT_OTHER);
+    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   }
 
   write(state, " of ", CAT_OTHER);
   printExpression(node.right, state, PREC_COMMA, CTX_NONE);
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 
   printBody(node.body, state);
 }
