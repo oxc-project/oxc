@@ -1,41 +1,64 @@
 // Source map generation.
 //
-// Mapped writes record output offsets and original positions while printing. This module converts
-// them to generated positions and encodes a standard Source Map v3 in one pass at the end.
-
-import { Buffer } from "node:buffer";
+// Mapped writes record output offsets and original positions while printing.
+// `generateSourceMap` defined here converts them to generated positions
+// and encodes a standard Source Map v3 in one pass at the end.
 
 import { debugAssert } from "../asserts.ts";
 
 import type { Options, SourceMap } from "./options.ts";
 import type { State } from "../state.ts";
 
-/** Convert deferred mapping data into a standard Source Map v3 object. */
+const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const BASE64_CODES = Uint8Array.from(BASE64_CHARS, (char) => char.charCodeAt(0));
+const LINE_SEARCH_ITERATIONS = 16;
+const MIN_LF_FAST_PATH_MAPPINGS = 64;
+const MAX_LF_FAST_PATH_CHARS_PER_MAPPING = 256;
+const MAX_BACKWARD_SOURCE_SCAN = 4096;
+const MAX_REPLAYED_SOURCE_SCAN = 16384;
+const MAX_BITWISE_VLQ = 0x7fffffff;
+const MIN_MAPPING_BUFFER_LENGTH = 64;
+// Real-world fixtures use 5.2–5.5 bytes per mapping. Leave some headroom and grow for outliers.
+const ESTIMATED_BYTES_PER_MAPPING = 6;
+const MAX_MAPPING_SEGMENT_LENGTH = 64;
+
+// Buffer's initial capacity must be greater than or equal to the maximum extra capacity required
+// at a `growMappingBuffer` call. See that function for more details.
+debugAssert(
+  MIN_MAPPING_BUFFER_LENGTH >= MAX_MAPPING_SEGMENT_LENGTH,
+  "`MIN_MAPPING_BUFFER_LENGTH` must be >= `MAX_MAPPING_SEGMENT_LENGTH`",
+);
+
+// `\r\n` must be one line terminator, rather than two.
+const NEXT_LINE_TERMINATOR_REGEX = /\r\n|[\r\n\u2028\u2029]/g;
+
+const ASCII_DECODER = /* @__PURE__ */ new TextDecoder();
+
+/**
+ * Convert deferred mapping data into a standard Source Map v3 object.
+ */
 export function generateSourceMap(state: State, options: Options): SourceMap {
   debugAssert(
     state.mapPositions !== null,
     "Source map positions should exist when sourcemap generation is enabled",
   );
 
-  const { output, mapPositions, mapNames } = state;
+  const { output, mapPositions, mapNames, sourceText } = state;
   const mappingCount = mapPositions.length >> 1;
-  const { sourceText } = options;
-  debugAssert(
-    sourceText !== undefined || mappingCount === 0,
-    "Mappings should only be recorded when sourceText is available",
-  );
-  if (sourceText === undefined || mappingCount === 0) {
-    const map: SourceMap = {
+
+  debugAssert(sourceText !== null, "`sourceText` should be defined when producing a source map");
+
+  if (mappingCount === 0) {
+    return {
       version: 3,
       mappings: "",
       names: [],
-      sources: [options.sourceFileName ?? ""],
+      sources: [options.sourceFilename ?? ""],
+      sourcesContent: [sourceText],
     };
-    if (sourceText !== undefined) map.sourcesContent = [sourceText];
-    return map;
   }
 
-  let mappingBuffer: Buffer = Buffer.allocUnsafe(
+  let mappingBuffer: Uint8Array = new Uint8Array(
     Math.max(MIN_MAPPING_BUFFER_LENGTH, mappingCount * ESTIMATED_BYTES_PER_MAPPING),
   );
   let mappingLength = 0;
@@ -50,14 +73,16 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
   let sourceLineStart = 0;
   let replayedSourceScanTotal = 0;
   let lineStart = 0;
-  // Proving an output contains only `\n` takes a full scan. Amortize it only when enough mappings
-  // will benefit; sparse maps and huge one-line literals stay on the single-pass regexp path.
+
+  // Proving an output contains only `\n` takes a full scan. Amortize it only when enough mappings will benefit.
+  // Sparse maps and huge one-line literals stay on the single-pass regexp path.
   const useOutputLineFeedFastPath =
     mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
     output.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
     !hasUncommonLineTerminator(output);
-  // Require mappings to cover a substantial part of the source, so looking for the first line
-  // break cannot scan a huge unmapped suffix. Reordered inputs conservatively take the slow path.
+
+  // Require mappings to cover a substantial part of the source, so looking for the first line break
+  // cannot scan a huge unmapped suffix. Reordered inputs conservatively take the slow path.
   const useSourceLineBoundaryCache =
     mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
     sourceText.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
@@ -82,15 +107,16 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
       previousGeneratedColumn = 0;
       hasSegmentOnLine = false;
       if (mappingLength === mappingBuffer.length) {
-        mappingBuffer = growMappingBuffer(mappingBuffer, mappingLength, mappingLength + 1);
+        mappingBuffer = growMappingBuffer(mappingBuffer, mappingLength);
       }
       mappingBuffer[mappingLength++] = 59; // `;`
     }
 
     const generatedColumn = offset - lineStart;
+
+    // Rust end mappings use `span.end - 1`, which may land inside a multi-byte code point.
+    // The JS equivalent can land on a low surrogate - normalize it back to the code point's start.
     let sourceOffset = mapPositions[positionIndex + 1];
-    // Rust end mappings use `span.end - 1`, which may land inside a multi-byte code point. The JS
-    // equivalent can land on a low surrogate; normalize it back to the code point's start.
     if (sourceOffset > 0) {
       const char = sourceText.charCodeAt(sourceOffset);
       if (
@@ -102,12 +128,13 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
         sourceOffset--;
       }
     }
+
     let originalLine: number;
     let originalColumn: number;
     if (sourceLineStarts === undefined) {
       if (sourceOffset >= sourceScanOffset) {
-        // Mappings almost always advance through the source. Scan only the text between this
-        // mapping and the last one instead of building a line table for the whole source.
+        // Mappings almost always advance through the source. Scan only the text between this mapping
+        // and the last one, instead of building a line table for the whole source.
         if (useSourceLineBoundaryCache) {
           while (sourceOffset >= nextSourceLineStart) {
             sourceLineStart = nextSourceLineStart;
@@ -143,14 +170,16 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
           replayedSourceScanTotal + sourceScanOffset - sourceOffset <=
             Math.max(MAX_REPLAYED_SOURCE_SCAN, sourceText.length))
       ) {
-        // Parent/end mappings and locally reordered nodes can step backwards. These moves are
-        // normally within the current line or a nearby one, so a short reverse scan is cheaper
-        // than allocating a complete line table.
-        // A same-line backtrack needs no scan and leaves the forward cursor where it is. When the
-        // mapping crosses a line, count the text a later forward step must replay; once replaying
-        // costs as much as building a line table, the fallback below becomes cheaper.
+        // Parent/end mappings and locally reordered nodes can step backwards.
+        // These moves are normally within the current line or a nearby one, so a short reverse scan
+        // is cheaper than allocating a complete line table.
+        //
+        // A same-line backtrack needs no scan and leaves the forward cursor where it is.
+        // When the mapping crosses a line, count the text a later forward step must replay.
+        // Once replaying costs as much as building a line table, the fallback below becomes cheaper.
         if (sourceOffset < sourceLineStart) {
           replayedSourceScanTotal += sourceScanOffset - sourceOffset;
+
           while (sourceOffset < sourceLineStart) {
             let index = sourceLineStart - 1;
             if (sourceText.charCodeAt(index) === 10 && sourceText.charCodeAt(index - 1) === 13) {
@@ -158,15 +187,19 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
             } else {
               index--;
             }
+
             while (index >= 0) {
               const char = sourceText.charCodeAt(index);
               if (char === 10 || char === 13 || char === 0x2028 || char === 0x2029) break;
               index--;
             }
+
             sourceLineStart = index + 1;
             sourceLine--;
           }
+
           sourceScanOffset = sourceOffset;
+
           if (useSourceLineBoundaryCache) {
             nextSourceLineStart = findNextLineStart(
               sourceText,
@@ -192,32 +225,33 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     }
 
     if (mappingLength + MAX_MAPPING_SEGMENT_LENGTH > mappingBuffer.length) {
-      mappingBuffer = growMappingBuffer(
-        mappingBuffer,
-        mappingLength,
-        mappingLength + MAX_MAPPING_SEGMENT_LENGTH,
-      );
+      mappingBuffer = growMappingBuffer(mappingBuffer, mappingLength);
     }
+
     if (hasSegmentOnLine) mappingBuffer[mappingLength++] = 44; // `,`
+
     mappingLength = writeVlq(
       mappingBuffer,
       mappingLength,
       generatedColumn - previousGeneratedColumn,
     );
-    // All mappings point into the one source file, so the source-index delta is always zero (`A`).
+
+    // All mappings point into the one source file, so the source-index delta is always zero (`A`)
     mappingBuffer[mappingLength++] = 65;
     mappingLength = writeVlq(mappingBuffer, mappingLength, originalLine - previousOriginalLine);
     mappingLength = writeVlq(mappingBuffer, mappingLength, originalColumn - previousOriginalColumn);
 
     if (index === nextNamedMappingIndex) {
-      const name = mapNames![mapNameEntryIndex + 1] as string;
       nameIds ??= new Map<string, number>();
+
+      const name = mapNames![mapNameEntryIndex + 1] as string;
       let nameId = nameIds.get(name);
       if (nameId === undefined) {
         nameId = names.length;
         names.push(name);
         nameIds.set(name, nameId);
       }
+
       mappingLength = writeVlq(mappingBuffer, mappingLength, nameId - previousNameId);
       previousNameId = nameId;
       mapNameEntryIndex += 2;
@@ -230,17 +264,18 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     previousOriginalColumn = originalColumn;
   }
 
-  const map: SourceMap = {
+  return {
     version: 3,
-    mappings: mappingBuffer.toString("ascii", 0, mappingLength),
+    mappings: ASCII_DECODER.decode(mappingBuffer.subarray(0, mappingLength)),
     names,
-    sources: [options.sourceFileName ?? ""],
+    sources: [options.sourceFilename ?? ""],
+    sourcesContent: [sourceText],
   };
-  if (sourceText !== undefined) map.sourcesContent = [sourceText];
-  return map;
 }
 
-/** Build UTF-16 offsets to the start of every ECMAScript source line. */
+/**
+ * Build UTF-16 offsets to the start of every ECMAScript source line.
+ */
 function getLineStarts(sourceText: string): number[] {
   const lineStarts = [0];
   for (let index = 0; index < sourceText.length; index++) {
@@ -252,11 +287,13 @@ function getLineStarts(sourceText: string): number[] {
   return lineStarts;
 }
 
-/** Find the source line containing `sourceOffset`, starting close to the previous result. */
+/**
+ * Find the source line containing `sourceOffset`, starting close to the previous result.
+ */
 function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine: number): number {
-  // Source mappings normally advance through the original file. Search the next few lines
-  // linearly, as V8 optimizes this small predictable loop well, then fall back for large jumps or
-  // transformed ASTs whose source locations move backwards.
+  // Source mappings normally advance through the original file. Search the next few lines linearly,
+  // as V8 optimizes this small predictable loop well, then fall back for large jumps or transformed ASTs
+  // whose source locations move backwards.
   if (sourceOffset >= lineStarts[previousLine]) {
     const end = Math.min(previousLine + LINE_SEARCH_ITERATIONS + 1, lineStarts.length);
     for (let line = previousLine + 1; line < end; line++) {
@@ -280,8 +317,10 @@ function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine
   return low - 1;
 }
 
-/** Write one signed source-map delta as base64 VLQ, returning the next buffer position. */
-function writeVlq(buffer: Buffer, index: number, value: number): number {
+/**
+ * Write one signed source-map delta as base64 VLQ, returning the next buffer position.
+ */
+function writeVlq(buffer: Uint8Array, index: number, value: number): number {
   let vlq = value < 0 ? -value * 2 + 1 : value * 2;
   if (vlq <= MAX_BITWISE_VLQ) {
     do {
@@ -290,6 +329,7 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
       if (vlq > 0) digit |= 32;
       buffer[index++] = BASE64_CODES[digit];
     } while (vlq > 0);
+
     return index;
   }
 
@@ -299,34 +339,43 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
     if (vlq > 0) digit += 32;
     buffer[index++] = BASE64_CODES[digit];
   } while (vlq > 0);
+
   return index;
 }
 
-/** Grow the mappings buffer to contain `requiredLength`, preserving its written prefix. */
-function growMappingBuffer(buffer: Buffer, writtenLength: number, requiredLength: number): Buffer {
-  let capacity = buffer.length * 2;
-  while (capacity < requiredLength) capacity *= 2;
-  const next = Buffer.allocUnsafe(capacity);
-  buffer.copy(next, 0, 0, writtenLength);
-  return next;
+/**
+ * Grow the mappings buffer by doubling, preserving its written prefix.
+ *
+ * The returned buffer is guaranteed to have at least `MAX_MAPPING_SEGMENT_LENGTH` spare capacity.
+ */
+function growMappingBuffer(buffer: Uint8Array, writtenLength: number): Uint8Array {
+  // Buffer starts with at least `MIN_MAPPING_BUFFER_LENGTH` bytes capacity.
+  // Maximum extra capacity required is `MAX_MAPPING_SEGMENT_LENGTH`, which is <= `MIN_MAPPING_BUFFER_LENGTH`,
+  // so doubling capacity is always enough.
+  const newBuffer = new Uint8Array(buffer.length * 2);
+  newBuffer.set(buffer.subarray(0, writtenLength));
+  return newBuffer;
 }
 
-/** Find the UTF-16 offset after the next ECMAScript line terminator. */
+/**
+ * Find the UTF-16 offset after the next ECMAScript line terminator.
+ */
 function findNextLineStart(output: string, from: number, useLineFeedFastPath: boolean): number {
   if (useLineFeedFastPath) {
     const index = output.indexOf("\n", from);
     return index === -1 ? Infinity : index + 1;
   }
 
-  // Let the regexp engine scan long generated lines. A JS `charCodeAt` loop is much slower for
-  // large literals, while `lastIndex` avoids allocating a substring just to start the search at
-  // `from`.
+  // Let the regexp engine scan long generated lines. A JS `charCodeAt` loop is much slower for large literals,
+  // while `lastIndex` avoids allocating a substring just to start the search at `from`.
   NEXT_LINE_TERMINATOR_REGEX.lastIndex = from;
   const match = NEXT_LINE_TERMINATOR_REGEX.exec(output);
   return match === null ? Infinity : match.index + match[0].length;
 }
 
-/** Whether output contains a line terminator other than `\n`. */
+/**
+ * Whether output contains a line terminator other than `\n`.
+ */
 function hasUncommonLineTerminator(output: string): boolean {
   // V8's specialized substring search is substantially faster than a regexp scan here, even when
   // all three searches miss. This also avoids allocating regexp match state for the common path.
@@ -337,7 +386,9 @@ function hasUncommonLineTerminator(output: string): boolean {
   );
 }
 
-/** Whether every source line terminator can be found by searching for `\n`. */
+/**
+ * Whether every source line terminator can be found by searching for `\n`.
+ */
 function hasOnlyLineFeedsAndCrLf(sourceText: string): boolean {
   if (sourceText.indexOf("\u2028") !== -1 || sourceText.indexOf("\u2029") !== -1) return false;
 
@@ -346,21 +397,6 @@ function hasOnlyLineFeedsAndCrLf(sourceText: string): boolean {
     if (sourceText.charCodeAt(carriageReturn + 1) !== 10) return false;
     carriageReturn = sourceText.indexOf("\r", carriageReturn + 1);
   }
+
   return true;
 }
-
-const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const BASE64_CODES = /* @__PURE__ */ Buffer.from(BASE64_CHARS, "ascii");
-const LINE_SEARCH_ITERATIONS = 16;
-const MIN_LF_FAST_PATH_MAPPINGS = 64;
-const MAX_LF_FAST_PATH_CHARS_PER_MAPPING = 256;
-const MAX_BACKWARD_SOURCE_SCAN = 4096;
-const MAX_REPLAYED_SOURCE_SCAN = 16384;
-const MAX_BITWISE_VLQ = 0x7fffffff;
-const MIN_MAPPING_BUFFER_LENGTH = 64;
-// Real-world fixtures use 5.2–5.5 bytes per mapping. Leave some headroom and grow for outliers.
-const ESTIMATED_BYTES_PER_MAPPING = 6;
-const MAX_MAPPING_SEGMENT_LENGTH = 64;
-
-// `\r\n` must be one line terminator, rather than two.
-const NEXT_LINE_TERMINATOR_REGEX = /\r\n|[\r\n\u2028\u2029]/g;

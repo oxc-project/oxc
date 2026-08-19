@@ -509,9 +509,9 @@ from `start` / `end`. Nodes without offsets are not mapped, and `sourceText` is 
 source offsets to line/column positions.
 
 `generateSourceMap` then walks the output once at the end, counting ECMAScript line terminators,
-builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column, and
-encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write in
-every build.
+builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column,
+and encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write
+in every build.
 
 #### Potential future improvement
 
@@ -575,9 +575,6 @@ See `Normalize` in `tasks/codegen_conformance/src/lib.rs`.
 
 - **Oxc offsets only.** `start` / `end` offsets are converted to UTF-16 line/column once at the end.
   Source maps require `sourceText`; `loc` and `range` are not supported inputs.
-- **TS-ESLint ASTs are accepted**, and differ from Oxc's in a handful of places
-  (`TSMappedType`, `TSImportType`, `TSEnumDeclaration`, `TSModuleDeclaration`).
-  [`print/types.ts`] holds the widened node types and documents each difference.
 
 ## How it is tested
 

@@ -12,7 +12,7 @@ export interface SourceMap {
 /** Result returned by `printSync`. */
 export interface CodegenResult {
   code: string;
-  map?: SourceMap;
+  map: SourceMap | null;
 }
 
 /**
@@ -43,14 +43,18 @@ export interface Options {
    */
   ts?: boolean;
 
-  /** Original source text. Required for source-map mappings. */
-  sourceText?: string;
-
   /**
    * Generate and return a source map in `CodegenResult.map`.
    */
   sourcemap?: boolean;
 
-  /** Original source filename recorded in the returned source map. */
-  sourceFileName?: string;
+  /**
+   * Original source text. Required when `sourcemap` is `true`.
+   */
+  sourceText?: string;
+
+  /**
+   * Original source filename recorded in the returned source map.
+   */
+  sourceFilename?: string;
 }

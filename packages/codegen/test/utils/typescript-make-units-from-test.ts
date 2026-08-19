@@ -98,7 +98,7 @@ function getSourceType(filePath: string, jsxOption: boolean): SourceType | null 
  */
 export function makeUnitsFromTest(filePath: string, code: string): TestCaseContent {
   const currentFileOptions = new Map<string, string>();
-  let currentFileName: string | null = null;
+  let currentFilename: string | null = null;
   const testUnitData: Omit<TestUnitData, "sourceType">[] = [];
   let currentFileContent = "";
 
@@ -116,14 +116,14 @@ export function makeUnitsFromTest(filePath: string, code: string): TestCaseConte
       const metaValue = match[2].trim();
 
       if (metaName === "filename") {
-        if (currentFileName !== null) {
+        if (currentFilename !== null) {
           testUnitData.push({
-            name: currentFileName,
+            name: currentFilename,
             content: currentFileContent,
           });
           currentFileContent = "";
         }
-        currentFileName = metaValue;
+        currentFilename = metaValue;
       } else {
         currentFileOptions.set(metaName, metaValue);
       }
@@ -136,9 +136,9 @@ export function makeUnitsFromTest(filePath: string, code: string): TestCaseConte
   }
 
   // Handle the last file (or the only file if no @filename is used)
-  const fileName = currentFileName || path.basename(filePath);
+  const filename = currentFilename || path.basename(filePath);
   testUnitData.push({
-    name: fileName,
+    name: filename,
     content: currentFileContent,
   });
 

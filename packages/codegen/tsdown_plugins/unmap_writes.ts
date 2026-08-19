@@ -13,7 +13,7 @@ import type { Plugin } from "rolldown";
  * write(state, "declare ", CAT_OTHER);
  * ```
  *
- * The mapped writes and `markWithMap` exist to record a source mapping for the node they are given.
+ * The mapped writes and `markWithMap*` exist to record a source mapping for the node they are given.
  * A build without source map support has nothing to record, so the call becomes the plain write
  * it would otherwise be, and the node argument goes with it - it would still be evaluated,
  * and held live across the call, for a function which ignores it.

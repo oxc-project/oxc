@@ -5,6 +5,7 @@ import { printAssignmentTarget } from "./assignment_target.ts";
 import { printBinaryish } from "./binary.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_INT_DIGIT,
   CAT_LT,
@@ -195,7 +196,7 @@ export function printExpression(
       if (inner.type === "FunctionExpression" || inner.type === "ArrowFunctionExpression") {
         write(state, "(", CAT_OTHER);
         printExpression(inner, state, PREC_LOWEST, CTX_NONE);
-        write(state, ")", CAT_OTHER);
+        write(state, ")", CAT_CLOSE_BRACKET);
         if (SOURCEMAPS && precedence === PREC_POSTFIX) {
           markWithMapAfter(state, inner);
           const wrappers: ESTree.ParenthesizedExpression[] = [];
@@ -240,10 +241,11 @@ export function printExpression(
       throw new Error(`Unknown expression type: ${node.type}`);
   }
 
-  // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`, so the
-  // punctuation of a following call/member/tag chain resolves to the operand rather than one
-  // character to its left.
-  if (SOURCEMAPS && precedence === PREC_POSTFIX && state.lastWasPostfixClose) {
+  // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`,
+  // so the punctuation of a following call/member/tag chain resolves to the operand,
+  // rather than one character to its left
+  debugAssertLastFresh(state);
+  if (SOURCEMAPS && precedence === PREC_POSTFIX && state.last === CAT_CLOSE_BRACKET) {
     markWithMapAfter(state, node);
   }
 }
@@ -269,13 +271,13 @@ export function printMemberExpression(
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
-    if (wrap) write(state, ")", CAT_OTHER);
+    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 
     if (node.optional) write(state, "?.", CAT_OTHER);
 
     write(state, "[", CAT_OTHER);
     printExpression(node.property, state, PREC_LOWEST, CTX_NONE);
-    write(state, "]", CAT_OTHER);
+    write(state, "]", CAT_CLOSE_BRACKET);
   } else {
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
 
@@ -336,7 +338,7 @@ function printCallExpression(
 
   printArguments(node, node.arguments, state);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -352,7 +354,7 @@ function printArguments(
   const { length } = args;
   if (length === 0) {
     writeNoLast(state, "(");
-    writeWithMapEnd(state, ")", CAT_OTHER, node);
+    writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node);
     return;
   }
 
@@ -370,7 +372,7 @@ function printArguments(
     }
   }
 
-  writeWithMapEnd(state, ")", CAT_OTHER, node);
+  writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node);
 }
 
 /**
@@ -394,7 +396,7 @@ export function printPrivateInExpression(
   write(state, " in ", CAT_OTHER);
   printExpression(node.right, state, PREC_EQUALS, CTX_FORBID_IN);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -437,7 +439,7 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
 
   writeWithMapEnd(state, "}", CAT_OTHER, node);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -459,6 +461,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
     markWithMap(state, node);
+
     const { kind } = node;
     const isGetter = kind === "get";
     const isAccessor = isGetter || kind === "set";
@@ -475,7 +478,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
         write(state, "[", CAT_OTHER);
         typeAssertIs<ESTree.Expression>(key);
         printExpression(key, state, PREC_COMMA, CTX_NONE);
-        write(state, "]", CAT_OTHER);
+        write(state, "]", CAT_CLOSE_BRACKET);
       } else {
         printPropertyKey(key, state);
       }
@@ -538,7 +541,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
-      write(state, "]", CAT_OTHER);
+      write(state, "]", CAT_CLOSE_BRACKET);
     } else {
       printPropertyKey(key, state);
     }
@@ -593,7 +596,7 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
     printIndent(state);
   }
 
-  writeWithMapEnd(state, "]", CAT_OTHER, node);
+  writeWithMapEnd(state, "]", CAT_CLOSE_BRACKET, node);
 }
 
 /**
@@ -621,11 +624,12 @@ function printAssignmentExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   markWithMap(state, node);
+
   printAssignmentTarget(left, state);
   write(state, PADDED_ASSIGN_OPERATORS[node.operator], CAT_OTHER);
   printExpression(node.right, state, PREC_COMMA, ctx);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -658,7 +662,7 @@ function printUpdateExpression(
     write(state, node.operator, operatorCode);
   }
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -699,9 +703,9 @@ function printUnaryExpression(
 
   if (isDeleteInfinity) write(state, "(0, ", CAT_OTHER);
   printExpression(node.argument, state, PREC_EXPONENTIATION, ctx);
-  if (isDeleteInfinity) write(state, ")", CAT_OTHER);
+  if (isDeleteInfinity) write(state, ")", CAT_CLOSE_BRACKET);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -745,7 +749,7 @@ function printConditionalExpression(
   write(state, " : ", CAT_OTHER);
   printExpression(node.alternate, state, PREC_YIELD, innerCtx);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -770,7 +774,7 @@ function printSequenceExpression(
     printExpression(expressions[i], state, PREC_LOWEST, innerCtx);
   }
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -816,7 +820,7 @@ function printArrowFunctionExpression(
     printExpression(body, state, PREC_COMMA, bodyCtx);
   }
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -835,7 +839,7 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
   if (TS) printTypeArguments(node.typeArguments, state);
   printArguments(node, node.arguments, state);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -859,8 +863,8 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
 
     const quasi = quasis[i + 1];
     const raw = templateQuasiRaw(quasi);
-    // A TS-shaped Oxc ESTree quasi includes the substitution's closing `}` in its span; the
-    // JS-shaped ESTree quasi and Oxc's Rust AST both start at the raw template text.
+    // A TS-shaped Oxc ESTree quasi includes the substitution's closing `}` in its span.
+    // The JS-shaped ESTree quasi and Oxc's Rust AST both start at the raw template text.
     if (raw.length > 0) markWithMapAtStartOffset(state, quasi, TS ? 1 : 0);
     writeNoLast(state, raw);
   }
@@ -899,7 +903,7 @@ function printAwaitExpression(
   writeWithMap(state, "await ", CAT_OTHER, node);
   printExpression(node.argument, state, PREC_EXPONENTIATION, ctx);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -924,7 +928,7 @@ function printYieldExpression(
     printExpression(node.argument, state, PREC_YIELD, CTX_NONE);
   }
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -956,9 +960,9 @@ function printImportExpression(
     write(state, ", ", CAT_OTHER);
     printExpression(node.options, state, PREC_COMMA, CTX_NONE);
   }
-  write(state, ")", CAT_OTHER);
+  write(state, ")", CAT_CLOSE_BRACKET);
 
-  if (wrap) write(state, ")", CAT_OTHER);
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
 
 /**
@@ -979,7 +983,7 @@ function printChainExpression(
   if (wrap) {
     write(state, "(", CAT_OTHER);
     printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
-    write(state, ")", CAT_OTHER);
+    write(state, ")", CAT_CLOSE_BRACKET);
   } else {
     printExpression(node.expression, state, precedence, ctx);
   }

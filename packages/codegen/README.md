@@ -79,11 +79,17 @@ const { code } = printSync(program, {
 ### `printSync(node, options?)`
 
 ```ts
-function printSync(node: Node, options?: Options): { code: string; map?: SourceMap };
+function printSync(
+  node: ESTree.Program | ESTree.Statement,
+  options?: Options,
+): {
+  code: string;
+  map: SourceMap | null;
+};
 ```
 
-Prints a complete `Program` or a single statement and returns the generated source code and,
-when requested, a standard Source Map v3 object.
+Prints a complete `Program` or a single statement and returns the generated source code,
+and (when requested) a standard Source Map v3 object.
 
 ```js
 import { printSync } from "oxc-codegen";
@@ -93,14 +99,14 @@ const sourceText = "const answer=6*7";
 const { program } = parseSync("input.js", sourceText);
 const { code, map } = printSync(program, {
   sourcemap: true,
-  sourceFileName: "input.js",
+  sourceFilename: "input.js",
   sourceText,
 });
 ```
 
-Source-map mappings require `sourceText` and nodes with valid Oxc `start` / `end` offsets. A
-manually constructed AST without offsets can still be printed, but its source map has an empty
-`mappings` string.
+Source-map mappings require `sourceText` and nodes with valid Oxc `start` / `end` offsets.
+A manually constructed AST without offsets can still be printed, but its source map has
+an empty `mappings` string.
 
 ### Options
 
@@ -111,7 +117,7 @@ manually constructed AST without offsets can still be printed, but its source ma
 | `jsx`                 | `boolean` | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax         |
 | `ts`                  | `boolean` | `false` | Select the printer that supports TypeScript nodes                |
 | `sourcemap`           | `boolean` | `false` | Return a Source Map v3 object in `map`                           |
-| `sourceFileName`      | `string`  | `""`    | Original source filename recorded in the source map              |
+| `sourceFilename`      | `string`  | `""`    | Original source filename recorded in the source map              |
 | `sourceText`          | `string`  | -       | Original text required for source-map mappings and content       |
 
 ## Why pure JavaScript?
