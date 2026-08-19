@@ -80,6 +80,16 @@ export interface NamedMappableNode extends MappableNode {
 }
 
 /**
+ * A named node which is not a `JSXIdentifier`.
+ *
+ * A `JSXIdentifier`'s name is recovered from the source by a different scan,
+ * so it goes to a write function of its own.
+ */
+export interface IdentMappableNode extends NamedMappableNode {
+  type: "Identifier" | "PrivateIdentifier";
+}
+
+/**
  * A node whose mapping records no name, because it has no string `name` to record.
  *
  * `name?: object` is how a node which does have one is rejected - `string` is not assignable to it.
