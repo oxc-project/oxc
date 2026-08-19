@@ -111,21 +111,29 @@ declare_oxc_lint!(
 
 impl Rule for NoMultiAssign {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             // e.g. `var a = b = c;`
             AstKind::VariableDeclarator(declarator) => {
-                let Some(Expression::AssignmentExpression(assign_expr)) = &declarator.init else {
+                let Some(init) = &declarator.init else {
+                    return;
+                };
+                let Expression::AssignmentExpression(assign_expr) = init.without_parentheses()
+                else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
             }
             // e.g. `class A { a = b = 1; }`
             AstKind::PropertyDefinition(prop_def) => {
-                let Some(Expression::AssignmentExpression(assign_expr)) = &prop_def.value else {
+                let Some(value) = &prop_def.value else {
+                    return;
+                };
+                let Expression::AssignmentExpression(assign_expr) = value.without_parentheses()
+                else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
@@ -135,7 +143,9 @@ impl Rule for NoMultiAssign {
                 if self.ignore_non_declaration {
                     return;
                 }
-                let Expression::AssignmentExpression(expr) = &parent_expr.right else {
+                let Expression::AssignmentExpression(expr) =
+                    parent_expr.right.without_parentheses()
+                else {
                     return;
                 };
                 ctx.diagnostic(no_multi_assign_diagnostic(expr.span));
@@ -183,6 +193,7 @@ fn test() {
         ), // { "ecmaVersion": 6 },
         ("let a, b;a = b = 1", Some(serde_json::json!([{ "ignoreNonDeclaration": true }]))), // { "ecmaVersion": 6 },
         ("class C { [foo = 0] = 0 }", None), // { "ecmaVersion": 2022 }
+        ("/* eslint-disable no-multi-assign */ const x = (obj.y = z);", None),
     ];
 
     let fail = vec![
@@ -220,7 +231,23 @@ fn test() {
         (
             "class C { field = foo = 0 }",
             Some(serde_json::json!([{ "ignoreNonDeclaration": true }])),
-        ), // { "ecmaVersion": 2022 }
+        ), // { "ecmaVersion": 2022 },
+        (
+            "class C {
+                hash: unknown
+                done = false
+                run() {
+                    const currentLoadHash = (this.hash = {})
+                    const loadComplete = (this.done = true)
+                    let a, b, c
+                    a = b = c = 1
+                    return [currentLoadHash, loadComplete, a, b, c]
+                }
+            }",
+            None,
+        ),
+        ("class C { field = (foo = 0) }", None), // { "ecmaVersion": 2022 },
+        ("let a, b; a = (b = 1)", None),
     ];
 
     Tester::new(NoMultiAssign::NAME, NoMultiAssign::PLUGIN, pass, fail).test_and_snapshot();

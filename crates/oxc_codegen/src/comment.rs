@@ -101,6 +101,7 @@ impl Codegen<'_> {
                 }
             }
             if add {
+                self.has_property_key_annotations |= comment.is_property_key_annotation();
                 if preserve_when_orphaned(*comment)
                     && let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to)
                 {
@@ -192,6 +193,19 @@ impl Codegen<'_> {
             } else {
                 self.consume_pending_indent_space();
             }
+        }
+    }
+
+    /// Print a property-key annotation attached directly to a string or template literal.
+    #[inline]
+    pub(crate) fn print_property_key_annotation(&mut self, start: u32) {
+        if !self.has_property_key_annotations {
+            return;
+        }
+        if self.comments.get(&start).is_some_and(|comments| {
+            comments.iter().any(|comment| comment.is_property_key_annotation())
+        }) {
+            self.print_leading_comments_anchored_to_self(start);
         }
     }
 

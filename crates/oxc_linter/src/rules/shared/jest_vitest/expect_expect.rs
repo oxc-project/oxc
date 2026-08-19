@@ -1,6 +1,7 @@
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::de::Error;
 
 use oxc_ast::{
     AstKind,
@@ -71,10 +72,12 @@ impl Default for ExpectExpectConfig {
         Self {
             assert_function_matchers_jest: compile_assert_function_matchers(
                 &assert_function_names_jest,
-            ),
+            )
+            .expect("default Jest assertion patterns should be valid"),
             assert_function_matchers_vitest: compile_assert_function_matchers(
                 &assert_function_names_vitest,
-            ),
+            )
+            .expect("default Vitest assertion patterns should be valid"),
             assert_function_names_jest,
             additional_test_block_functions: vec![],
         }
@@ -96,14 +99,13 @@ enum AssertFunctionMatcher {
 }
 
 impl AssertFunctionMatcher {
-    fn new(name: &CompactStr) -> Self {
+    fn new(name: &CompactStr) -> Result<Self, String> {
         if is_exact_assert_function_name(name) {
-            Self::Exact(name.clone())
+            Ok(Self::Exact(name.clone()))
         } else {
-            Self::Pattern(
-                Regex::new(&convert_pattern(name))
-                    .expect("failed to compile expect-expect assert function pattern"),
-            )
+            Regex::new(&convert_pattern(name))
+                .map(Self::Pattern)
+                .map_err(|error| format!("invalid assert function pattern `{name}`: {error}"))
         }
     }
 
@@ -130,12 +132,11 @@ fn is_exact_assert_function_match(name: &str, expected: &str) -> bool {
 
 fn compile_assert_function_matchers(
     assert_function_names: &[CompactStr],
-) -> Vec<AssertFunctionMatcher> {
+) -> Result<Vec<AssertFunctionMatcher>, String> {
     assert_function_names.iter().map(AssertFunctionMatcher::new).collect()
 }
 
 impl ExpectExpectConfig {
-    #[expect(clippy::unnecessary_wraps)]
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let default_assert_function_names_jest = default_assert_function_names_jest();
         let default_assert_function_names_vitest = default_assert_function_names_vitest();
@@ -156,6 +157,13 @@ impl ExpectExpectConfig {
         let assert_function_names_vitest =
             assert_function_names.unwrap_or(default_assert_function_names_vitest);
 
+        let assert_function_matchers_jest =
+            compile_assert_function_matchers(&assert_function_names_jest)
+                .map_err(serde_json::Error::custom)?;
+        let assert_function_matchers_vitest =
+            compile_assert_function_matchers(&assert_function_names_vitest)
+                .map_err(serde_json::Error::custom)?;
+
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
             .and_then(serde_json::Value::as_array)
@@ -163,13 +171,9 @@ impl ExpectExpectConfig {
             .unwrap_or_default();
 
         Ok(ExpectExpectConfig {
-            assert_function_matchers_jest: compile_assert_function_matchers(
-                &assert_function_names_jest,
-            ),
-            assert_function_matchers_vitest: compile_assert_function_matchers(
-                &assert_function_names_vitest,
-            ),
             assert_function_names_jest,
+            assert_function_matchers_jest,
+            assert_function_matchers_vitest,
             additional_test_block_functions,
         })
     }
@@ -363,7 +367,13 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        if func.is_declaration()
+            && let Some(body) = &func.body
+        {
+            self.visit_function_body(body);
+        }
+    }
 
     fn visit_formal_parameter(&mut self, _param: &FormalParameter<'a>) {}
 }

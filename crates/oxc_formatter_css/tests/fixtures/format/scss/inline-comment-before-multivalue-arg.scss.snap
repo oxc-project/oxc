@@ -1,0 +1,98 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment leading a MULTI-value argument flushes at the argument level:
+// the `//`'s forced hardline must not indent the value deeper
+// nor split the space-separated run (`#e46c2c 20%` stays together).
+// https://github.com/oxc-project/oxc/issues/25480
+.bar::after {
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		// TODO: test comments
+		#e46c2c 20%,
+		transparent 100%
+	);
+}
+// Same-line `//` and block-comment variants keep their layout too
+.a {
+	background: linear-gradient(
+		90deg, // same-line comment
+		#e46c2c 20%,
+		transparent 100%
+	);
+}
+.b {
+	background: linear-gradient(
+		90deg,
+		/* block own-line */
+		#e46c2c 20%,
+		transparent 100%
+	);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment leading a MULTI-value argument flushes at the argument level:
+// the `//`'s forced hardline must not indent the value deeper
+// nor split the space-separated run (`#e46c2c 20%` stays together).
+// https://github.com/oxc-project/oxc/issues/25480
+.bar::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    // TODO: test comments
+    #e46c2c 20%,
+    transparent 100%
+  );
+}
+// Same-line `//` and block-comment variants keep their layout too
+.a {
+  background: linear-gradient(
+    90deg,
+    // same-line comment
+    #e46c2c 20%,
+    transparent 100%
+  );
+}
+.b {
+  background: linear-gradient(
+    90deg,
+    /* block own-line */ #e46c2c 20%,
+    transparent 100%
+  );
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment leading a MULTI-value argument flushes at the argument level:
+// the `//`'s forced hardline must not indent the value deeper
+// nor split the space-separated run (`#e46c2c 20%` stays together).
+// https://github.com/oxc-project/oxc/issues/25480
+.bar::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    // TODO: test comments
+    #e46c2c 20%,
+    transparent 100%
+  );
+}
+// Same-line `//` and block-comment variants keep their layout too
+.a {
+  background: linear-gradient(
+    90deg,
+    // same-line comment
+    #e46c2c 20%,
+    transparent 100%
+  );
+}
+.b {
+  background: linear-gradient(90deg, /* block own-line */ #e46c2c 20%, transparent 100%);
+}
+
+===================== End =====================

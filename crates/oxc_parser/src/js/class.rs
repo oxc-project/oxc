@@ -829,7 +829,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.error(diagnostics::static_prototype(span));
                 }
             } else if name == "constructor" {
-                if matches!(method.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set) {
+                let is_accessor =
+                    matches!(method.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set);
+                if is_accessor {
                     self.error(diagnostics::constructor_getter_setter(span));
                 }
                 if method.value.r#async {
@@ -840,6 +842,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 if method.r#type.is_abstract() {
                     self.error(diagnostics::illegal_abstract_modifier(span));
+                }
+                if !is_accessor && let Some(type_parameters) = &method.value.type_parameters {
+                    self.error(diagnostics::ts_constructor_type_parameter(type_parameters.span));
                 }
             }
         }
@@ -880,10 +885,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(this_param) = &method.value.this_param {
             // class Foo { constructor(this: number) {} }
             self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
-        }
-        if let Some(type_sig) = &method.value.type_parameters {
-            // class Foo { constructor<T>(param: T ) {} }
-            self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
         }
         if method.value.body.is_some()
             && let Some(return_type) = &method.value.return_type

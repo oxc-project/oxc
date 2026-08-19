@@ -517,6 +517,41 @@ impl<'a> PeepholeOptimizations {
         Some(Self::number_literal_source_len(result)? <= original_len)
     }
 
+    /// Lower bound for the minified size of a string addition operand, along with
+    /// whether folding it would materialize a non-inlineable tracked constant.
+    fn string_expression_size_lower_bound(
+        expr: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<(usize, bool)> {
+        let result = match expr.get_inner_expression() {
+            Expression::StringLiteral(lit) => (lit.value.len() + 2, false),
+            Expression::NumericLiteral(lit) => (Self::number_literal_source_len(lit.value)?, false),
+            Expression::BooleanLiteral(_) => (2, false),
+            Expression::NullLiteral(_) => (4, false),
+            Expression::Identifier(ident) => (
+                ident.name.len(),
+                ident
+                    .reference_id
+                    .get()
+                    .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id())
+                    .and_then(|symbol_id| ctx.state.symbols.value(symbol_id))
+                    .is_some_and(|value| {
+                        value.initialized_constant.is_some()
+                            && !value.can_inline_initialized_constant()
+                    }),
+            ),
+            Expression::BinaryExpression(e) if e.operator == BinaryOperator::Addition => {
+                let (left_size, left_has_non_inlineable) =
+                    Self::string_expression_size_lower_bound(&e.left, ctx)?;
+                let (right_size, right_has_non_inlineable) =
+                    Self::string_expression_size_lower_bound(&e.right, ctx)?;
+                (left_size + 1 + right_size, left_has_non_inlineable || right_has_non_inlineable)
+            }
+            _ => return None,
+        };
+        Some(result)
+    }
+
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         if !e.may_have_side_effects(ctx)
@@ -524,6 +559,16 @@ impl<'a> PeepholeOptimizations {
         {
             if let ConstantValue::Number(result) = &v
                 && Self::folded_numeric_expression_is_shorter(e, *result) == Some(false)
+            {
+                return None;
+            }
+            if let ConstantValue::String(result) = &v
+                && let Some((left_size, left_has_non_inlineable)) =
+                    Self::string_expression_size_lower_bound(&e.left, ctx)
+                && let Some((right_size, right_has_non_inlineable)) =
+                    Self::string_expression_size_lower_bound(&e.right, ctx)
+                && result.len() + 2 > left_size + 1 + right_size
+                && (left_has_non_inlineable || right_has_non_inlineable)
             {
                 return None;
             }
@@ -680,17 +725,28 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR
         ));
 
-        let Expression::BinaryExpression(left) = &mut e.left else {
+        // Shape check first: `may_have_side_effects` walks the subtree, so it
+        // must not run for the common non-matching case.
+        let Expression::BinaryExpression(left) = &e.left else {
             return None;
         };
         if left.operator != op {
             return None;
         }
+        if e.right.may_have_side_effects(ctx) {
+            return None;
+        }
+
+        let Expression::BinaryExpression(left) = &mut e.left else { unreachable!() };
 
         let (v, expr_to_move);
-        if let Some(result) = ctx.eval_binary_operation(op, &left.left, &e.right) {
+        if !left.left.may_have_side_effects(ctx)
+            && let Some(result) = ctx.eval_binary_operation(op, &left.left, &e.right)
+        {
             (v, expr_to_move) = (result, &mut left.right);
-        } else if let Some(result) = ctx.eval_binary_operation(op, &left.right, &e.right) {
+        } else if !left.right.may_have_side_effects(ctx)
+            && let Some(result) = ctx.eval_binary_operation(op, &left.right, &e.right)
+        {
             (v, expr_to_move) = (result, &mut left.left);
         } else {
             return None;
@@ -973,8 +1029,22 @@ impl<'a> PeepholeOptimizations {
             let quasi = &mut t.quasis[idx];
             let escaped = Self::escape_string_for_template_literal(&str);
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw =
-                Str::from_strs_array_in([quasi.value.raw.as_str(), &escaped, next_raw], ctx);
+            let raw = quasi.value.raw.as_str();
+            let starts_with_digit = escaped
+                .as_bytes()
+                .first()
+                .or_else(|| next_raw.as_bytes().first())
+                .is_some_and(u8::is_ascii_digit);
+            let cooked_ends_with_null =
+                quasi.value.cooked.is_some_and(|cooked| cooked.as_str().ends_with('\0'));
+            quasi.value.raw = if starts_with_digit
+                && cooked_ends_with_null
+                && let Some(prefix) = raw.strip_suffix("\\0")
+            {
+                Str::from_strs_array_in([prefix, "\\x00", &escaped, next_raw], ctx)
+            } else {
+                Str::from_strs_array_in([raw, &escaped, next_raw], ctx)
+            };
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {

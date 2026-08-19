@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.79.0] - 2026-08-18
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 228e8e0 linter: Resolve inactive React compiler rules (#25830) (Boshen)
+- aa49d86 linter: Allow spread rule options in config types (#25675) (ch3rry)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- a38f7b3 oxlint,oxfmt: Apply .gitignore only to walk targets, not explicitly named files (#25531) (leaysgur)
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+- 1d22912 linter/plugins: Parse rule-less directive justifications (#25559) (camc314)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+
+### ⚡ Performance
+
+- c84ede3 estree_tokens: Share JS token update entry point (#25826) (Boshen)
+- f0121ed linter: Share config deserialization entry point (#25820) (Boshen)
+- 9ed10b7 linter: Use unstable sorts for unique keys (#25778) (Boshen)
+- 2dd7446 diagnostics: Preallocate graphical output (#25721) (Boshen)
+- 9c8abab diagnostics: Batch graphical reports (#25710) (Boshen)
+
 ## [1.78.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

@@ -1,4 +1,4 @@
-use oxc_linter::{RuleCategory, RuleMeta};
+use oxc_linter::{RuleCategory, RuleMeta, rules::RULES};
 use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;
@@ -64,4 +64,51 @@ fn test_declare_oxc_lint() {
     let mut generator =
         schemars::r#gen::SchemaGenerator::new(schemars::r#gen::SchemaSettings::default());
     assert!(TestRuleWithSharedConfig::config_schema(&mut generator).is_some());
+}
+
+#[test]
+fn test_react_compiler_rule_categories() {
+    const EXPECTED: [(&str, RuleCategory); 22] = [
+        ("capitalized-calls", RuleCategory::Suspicious),
+        ("error-boundaries", RuleCategory::Correctness),
+        ("exhaustive-effect-dependencies", RuleCategory::Suspicious),
+        ("globals", RuleCategory::Correctness),
+        ("hooks", RuleCategory::Suspicious),
+        ("immutability", RuleCategory::Correctness),
+        ("incompatible-library", RuleCategory::Correctness),
+        ("invariant", RuleCategory::Restriction),
+        ("memo-dependencies", RuleCategory::Suspicious),
+        ("no-deriving-state-in-effects", RuleCategory::Perf),
+        ("preserve-manual-memoization", RuleCategory::Correctness),
+        ("purity", RuleCategory::Correctness),
+        ("refs", RuleCategory::Correctness),
+        ("rule-suppression", RuleCategory::Restriction),
+        ("set-state-in-effect", RuleCategory::Correctness),
+        ("set-state-in-render", RuleCategory::Correctness),
+        ("static-components", RuleCategory::Correctness),
+        ("syntax", RuleCategory::Restriction),
+        ("todo", RuleCategory::Restriction),
+        ("unsupported-syntax", RuleCategory::Restriction),
+        ("use-memo", RuleCategory::Correctness),
+        ("void-use-memo", RuleCategory::Correctness),
+    ];
+
+    let names = EXPECTED.iter().map(|(name, _)| *name).collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(names.len(), EXPECTED.len(), "React Compiler rule names must be unique");
+
+    for (name, expected_category) in EXPECTED {
+        let rule = RULES
+            .iter()
+            .find(|rule| rule.plugin_name() == "react" && rule.name() == name)
+            .unwrap_or_else(|| panic!("React Compiler rule react/{name} must be registered"));
+        assert_eq!(rule.category(), expected_category, "unexpected category for react/{name}");
+
+        #[cfg(feature = "ruledocs")]
+        assert!(
+            rule.documentation().is_some_and(|docs| docs.contains(&format!(
+                "https://react.dev/reference/eslint-plugin-react-hooks/lints/{name}"
+            ))),
+            "missing upstream documentation link for react/{name}"
+        );
+    }
 }

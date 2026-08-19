@@ -30,7 +30,7 @@ Each crate's `AGENTS.md` holds only language-specific rules and the crate-local 
 - Implementation strategies legitimately differ (e.g. Prettier pre-classifies comments per context; we decide on the spot with positional cursors)
   - Compatibility is judged on bytes out, not code shape
 - Before matching a mismatch, always consider whether it is a Prettier bug or artifact (see "Known divergences")
-- The oracle version is the one pinned by the conformance submodule and `apps/oxfmt` bundles; fixtures are verified against it
+- The oracle version is the `prettier` pinned in `apps/oxfmt/package.json`: the bundle, the conformance suite (via `oxc_formatter_tests`), and fixture verification all derive from that one version
   - The LATEST Prettier is still worth consulting as a forward-looking aid: whether a bug we diverged on has been fixed upstream, or a behavior is about to change
   - When the pin catches up to an upstream fix, converge and drop the divergence entry
 
@@ -125,22 +125,20 @@ Every expected output must be verified against Prettier, except fixtures pinning
 
 ### Prettier conformance
 
-Compares output against Prettier's snapshots and tracks failures (not passes); results live in `tasks/prettier_conformance/snapshots/`.
+Compares output against Prettier's snapshots and tracks failures (not passes).
+
+Every language crate owns its conformance as a `tests/conformance.rs` target (via `oxc_formatter_tests::conformance`, report pinned with `insta`), part of the crate's regular `cargo test`:
 
 ```sh
-cargo run -p oxc_prettier_conformance
+cargo test -p <crate> --test conformance
 # Debug a specific test
-cargo run -p oxc_prettier_conformance -- --filter <path>
+PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
 ```
+
+JSDoc formatting is covered by plain fixture-pair tests in `oxc_formatter` (`--test jsdoc`, committed input/expected pairs — a mismatch is a failing test, not a tracked report entry).
 
 Failures must be either fixed or classified under "Known divergences".
 
 ### Embedded conformance (`apps/oxfmt`)
 
 The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt. Requires a dev build first.
-
-```sh
-pnpm --dir apps/oxfmt build-dev
-pnpm --dir apps/oxfmt test
-pnpm --dir apps/oxfmt conformance
-```

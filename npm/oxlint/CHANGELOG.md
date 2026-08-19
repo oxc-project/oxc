@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.79.0] - 2026-08-18
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 228e8e0 linter: Resolve inactive React compiler rules (#25830) (Boshen)
+- aa49d86 linter: Allow spread rule options in config types (#25675) (ch3rry)
+- 36f8451 linter/eslint/no-eval: Align indirect default with ESLint (#25656) (camc314)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+
 ## [1.78.0] - 2026-08-10
 
 ### 🚀 Features

@@ -15,7 +15,10 @@ pub struct ApiFormatResult {
     pub errors: Vec<OxcError>,
 }
 
-/// `format()` implementation for NAPI API.
+/// `format()` implementation for the NAPI direct-document API.
+///
+/// This path formats the caller-supplied document and options directly.
+/// It does not discover source files or search for project config or ignore files.
 ///
 /// # Panics
 /// Panics if the current working directory cannot be determined.

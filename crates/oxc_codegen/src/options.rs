@@ -116,6 +116,7 @@ pub struct CommentOptions {
     /// * pure: `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`
     /// * webpack: `/* webpackChunkName */`
     /// * vite: `/* @vite-ignore */`
+    /// * property key: `/* @__KEY__ */` and `/* #__KEY__ */`
     /// * coverage: `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
     ///
     /// Default is `true`.
