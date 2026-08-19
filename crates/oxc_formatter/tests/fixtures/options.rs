@@ -94,8 +94,7 @@ pub fn apply_js_options(options: &mut JsFormatOptions, json: &OptionSet) {
             }
             "experimentalOperatorPosition" => {
                 if let Some(s) = value.as_str() {
-                    options.experimental_operator_position =
-                        OperatorPosition::from_str(s).unwrap_or_default();
+                    options.operator_position = OperatorPosition::from_str(s).unwrap_or_default();
                 }
             }
             // NOTE: Not a Prettier option

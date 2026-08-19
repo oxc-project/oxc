@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(no-deriving-state-in-effects): Values derived from props and state should be calculated during render, not in an effect
+    ╭─[no_deriving_state_in_effects.tsx:8:5]
+  7 │   useEffect(() => {
+  8 │     setFullName(firstName + ' ' + lastName);
+    ·     ─────┬─────
+    ·          ╰── This state update stores a value that can be calculated during render
+  9 │   }, [firstName, lastName]);
+    ·       ────┬────  ────────
+    ·           ╰── These reactive values contribute to the derived state
+ 10 │   return <div>{fullName}</div>;
+    ╰────
+  help: This effect derives state from the reactive values `firstName`, `lastName`, causing an extra render and potentially showing a stale value. Calculate the derived value during render, then remove the redundant state and effect.
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect

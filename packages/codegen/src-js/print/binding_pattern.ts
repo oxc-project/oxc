@@ -85,7 +85,7 @@ function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): vo
     if (i > 0) write(state, ", ", CAT_OTHER);
     const property = properties[i];
     if (property.type === "RestElement") {
-      write(state, "...", CAT_OTHER);
+      writeWithMap(state, "...", CAT_OTHER, property);
       printBindingPattern(property.argument, state);
     } else {
       printBindingProperty(property, state);

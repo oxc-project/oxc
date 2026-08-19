@@ -693,3 +693,45 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────
    ╰────
   help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementationOnce(() => this.value);
+   ·           ──────────────────────
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => ({ get value() { return this.x; } }));
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(function () { return class { field = this.x; } });
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(function () { return class { accessor field = this.x; } });
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(function () { return class { static { this.x; } } });
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(function () { return class { method(x = this.x) {} } });
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.

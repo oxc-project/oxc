@@ -128,8 +128,9 @@ pub enum ResolveOutcome {
 
 /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
 ///
-/// This is the simplified path for the NAPI `format()` API,
-/// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
+/// This is the simplified path for the NAPI `format()` API.
+/// It resolves the caller-supplied [`FormatConfig`] directly instead of
+/// discovering or loading project configuration.
 ///
 /// Relative Tailwind paths are resolved against provided `cwd`.
 ///

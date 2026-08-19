@@ -912,7 +912,8 @@ pub fn check_for_statement_left(
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
-    // initializer is not allowed for for-in / for-of
+    // The parser checks initialized lexical declarations and multiple declarations. The
+    // remaining cases depend on strict mode or the binding form.
     if decl.declarations.len() > 1 {
         return;
     }
@@ -920,9 +921,8 @@ pub fn check_for_statement_left(
     let strict_mode = ctx.strict_mode();
     for declarator in &decl.declarations {
         if declarator.init.is_some()
-            && (strict_mode
+            && ((strict_mode && decl.kind.is_var())
                 || !is_for_in
-                || decl.kind.is_lexical()
                 || !matches!(declarator.id, BindingPattern::BindingIdentifier(_)))
         {
             ctx.error(diagnostics::unexpected_initializer_in_for_loop_head(

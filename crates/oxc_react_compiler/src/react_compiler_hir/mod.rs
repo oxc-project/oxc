@@ -1,3 +1,6 @@
+mod assert_consistent_identifiers;
+mod assert_terminal_blocks_exist;
+mod assert_valid_block_nesting;
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
@@ -9,8 +12,16 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
+use std::fmt;
+
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
+pub use assert_consistent_identifiers::assert_consistent_identifiers;
+pub use assert_terminal_blocks_exist::{
+    assert_terminal_preds_exist, assert_terminal_successors_exist,
+};
+pub use assert_valid_block_nesting::assert_valid_block_nesting;
+pub(crate) use assert_valid_block_nesting::{get_scopes, recursively_traverse_items};
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
@@ -193,6 +204,36 @@ pub struct HirFunction<'a> {
     pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
 }
 
+impl HirFunction<'_> {
+    /// A compact source location for diagnostics about the function itself.
+    /// Block-bodied functions stop at the opening brace; expression arrows use
+    /// their async prefix, parameter list, or first token.
+    pub fn diagnostic_span(&self) -> Option<Span> {
+        let function_span = self.span?;
+        if let Some(body_span) = self.body_span {
+            return Some(Span::new(
+                function_span.start,
+                body_span.start.saturating_add(1).min(function_span.end),
+            ));
+        }
+        if let Some(id_span) = self.id_span {
+            return Some(id_span);
+        }
+        if self.is_async {
+            return Some(Span::new(
+                function_span.start,
+                function_span.start.saturating_add(5).min(function_span.end),
+            ));
+        }
+        let fallback_end = function_span.start.saturating_add(2);
+        let end = self.params.first().map_or(fallback_end, |param| match param {
+            ParamPattern::Place(place) => place.span.map_or(fallback_end, |span| span.end),
+            ParamPattern::Spread(spread) => spread.place.span.map_or(fallback_end, |span| span.end),
+        });
+        Some(Span::new(function_span.start, end.min(function_span.end)))
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct FunctionDirective<'a> {
     pub value: Str<'a>,
@@ -265,7 +306,6 @@ pub struct Phi<'a> {
 // Terminal enum
 // =============================================================================
 
-#[derive(Debug)]
 pub enum Terminal<'a> {
     Unreachable {
         id: EvaluationOrder,
@@ -423,6 +463,40 @@ pub enum Terminal<'a> {
         id: EvaluationOrder,
         span: Option<Span>,
     },
+}
+
+impl fmt::Display for Terminal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Unreachable { .. } => "Unreachable",
+            Self::Throw { .. } => "Throw",
+            Self::Return { .. } => "Return",
+            Self::Goto { .. } => "Goto",
+            Self::If { .. } => "If",
+            Self::Branch { .. } => "Branch",
+            Self::Switch { .. } => "Switch",
+            Self::DoWhile { .. } => "DoWhile",
+            Self::While { .. } => "While",
+            Self::For { .. } => "For",
+            Self::ForOf { .. } => "ForOf",
+            Self::ForIn { .. } => "ForIn",
+            Self::Logical { .. } => "Logical",
+            Self::Ternary { .. } => "Ternary",
+            Self::Optional { .. } => "Optional",
+            Self::Label { .. } => "Label",
+            Self::Sequence { .. } => "Sequence",
+            Self::MaybeThrow { .. } => "MaybeThrow",
+            Self::Try { .. } => "Try",
+            Self::Scope { .. } => "Scope",
+            Self::PrunedScope { .. } => "PrunedScope",
+        })
+    }
+}
+
+impl fmt::Debug for Terminal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
 impl<'a> Terminal<'a> {
@@ -790,11 +864,21 @@ pub enum InstructionValue<'a> {
     Debugger {
         span: Option<Span>,
     },
+    /// A TypeScript enum declaration preserved as an opaque pass-through node.
+    ///
+    /// This is the oxc-specific equivalent of upstream's `UnsupportedNode`:
+    /// the compiler retains the runtime statement without modeling its binding
+    /// or initializer expressions in HIR.
+    TSEnumDeclaration {
+        declaration: &'a oxc_ast::ast::TSEnumDeclaration<'a>,
+        span: Option<Span>,
+    },
     StartMemoize {
         manual_memo_id: u32,
         deps: Option<ArenaVec<'a, ManualMemoDependency<'a>>>,
         deps_span: Option<Option<Span>>,
         has_invalid_deps: bool,
+        callee_span: Option<Span>,
         span: Option<Span>,
     },
     FinishMemoize {
@@ -859,6 +943,7 @@ impl<'a> InstructionValue<'a> {
             | InstructionValue::PrefixUpdate { span, .. }
             | InstructionValue::PostfixUpdate { span, .. }
             | InstructionValue::Debugger { span, .. }
+            | InstructionValue::TSEnumDeclaration { span, .. }
             | InstructionValue::StartMemoize { span, .. }
             | InstructionValue::FinishMemoize { span, .. } => span.as_ref(),
         }
@@ -1909,6 +1994,14 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
                 }
             }
             // --- Arena-carrying variants: recurse ---
+            InstructionValue::TSEnumDeclaration { declaration, span } => {
+                InstructionValue::TSEnumDeclaration {
+                    // Keep the preserved AST reference so semantic reference IDs
+                    // survive ordinary HIR clones, matching `TypeCast` above.
+                    declaration,
+                    span: *span,
+                }
+            }
             InstructionValue::Destructure { lvalue, value, span } => {
                 InstructionValue::Destructure {
                     lvalue: lvalue.clone_in_impl(sem, alloc),
@@ -2002,12 +2095,14 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
                 deps,
                 deps_span,
                 has_invalid_deps,
+                callee_span,
                 span,
             } => InstructionValue::StartMemoize {
                 manual_memo_id: *manual_memo_id,
                 deps: deps.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
                 deps_span: *deps_span,
                 has_invalid_deps: *has_invalid_deps,
+                callee_span: *callee_span,
                 span: *span,
             },
         }

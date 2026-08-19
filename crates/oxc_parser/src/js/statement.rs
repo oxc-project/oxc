@@ -599,6 +599,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 is_for_in,
                 declaration.span,
             ));
+            return;
+        }
+
+        // Annex B.3.5 only permits `var BindingIdentifier Initializer` in non-strict code:
+        // https://tc39.es/ecma262/#sec-initializers-in-forin-statement-heads
+        // Reject lexical declarations here; semantic analysis checks strict mode and patterns.
+        if is_for_in
+            && matches!(
+                declaration.kind,
+                VariableDeclarationKind::Let | VariableDeclarationKind::Const
+            )
+            && declaration.has_init()
+        {
+            self.error(diagnostics::initializer_in_for_in_lexical_declaration(declaration.span));
         }
     }
 

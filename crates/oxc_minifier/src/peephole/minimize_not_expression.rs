@@ -1,4 +1,3 @@
-use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::DetermineValueType;
 use oxc_span::GetSpan;
@@ -32,8 +31,14 @@ impl<'a> PeepholeOptimizations {
             Expression::UnaryExpression(e)
                 if e.operator.is_not() && e.argument.value_type(ctx).is_boolean() =>
             {
-                let new_expr = e.argument.take_in(ctx);
-                ctx.replace_expression(expr, new_expr);
+                // Both discarded `!` wrappers contain no references.
+                ctx.replace_expression_with(expr, |old, _| {
+                    let Expression::UnaryExpression(outer) = old else { unreachable!() };
+                    let Expression::UnaryExpression(inner) = outer.unbox().argument else {
+                        unreachable!()
+                    };
+                    inner.unbox().argument
+                });
             }
             // `!(a == b)` => `a != b`
             // `!(a != b)` => `a == b`
@@ -41,8 +46,7 @@ impl<'a> PeepholeOptimizations {
             // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
-                let new_expr = e.argument.take_in(ctx);
-                ctx.replace_expression(expr, new_expr);
+                ctx.replace_expression_with(expr, Self::unwrap_unary);
             }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
@@ -56,21 +60,26 @@ impl<'a> PeepholeOptimizations {
                 if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
             {
                 Self::de_morgan_invert_logical(logical_expr);
-                let new_expr = e.argument.take_in(ctx);
-                ctx.replace_expression(expr, new_expr);
+                ctx.replace_expression_with(expr, Self::unwrap_unary);
             }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
-                    let new_last =
-                        Self::minimize_not(last_expr.span(), last_expr.take_in(ctx), ctx);
-                    ctx.replace_expression(last_expr, new_last);
-                    let new_expr = e.argument.take_in(ctx);
-                    ctx.replace_expression(expr, new_expr);
+                    ctx.replace_expression_with(last_expr, |old, ctx| {
+                        Self::minimize_not(old.span(), old, ctx)
+                    });
+                    ctx.replace_expression_with(expr, Self::unwrap_unary);
                 }
             }
             _ => {}
         }
+    }
+
+    /// Attempts to unwrap a `UnaryExpression` from an `Expression` enum variant, returning its argument.
+    /// E.g. `!x` into `x`. The discarded `!` wrapper contains no references.
+    pub fn unwrap_unary(old: Expression<'a>, _ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let Expression::UnaryExpression(e) = old else { unreachable!() };
+        e.unbox().argument
     }
 
     /// Character delta from parentheses added or removed by De Morgan's law

@@ -140,7 +140,7 @@ pub struct DisplayName(Box<DisplayNameConfig>);
 
 impl Rule for DisplayName {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -505,15 +505,20 @@ fn is_react_component_node<'a>(
                 // Check if it's a HOF pattern
                 if !returns_jsx && let Some(innermost) = find_innermost_function_with_jsx(expr, ctx)
                 {
-                    let inner_has_name = match innermost {
-                        InnermostFunction::Function(func) => func.id.is_some(),
-                        InnermostFunction::ArrowFunction => false,
+                    let inner_span = match innermost {
+                        InnermostFunction::Function(func) => func
+                            .id
+                            .is_none()
+                            .then_some(Span::new(func.span.start, func.params.span.end)),
+                        InnermostFunction::ArrowFunction(func) => {
+                            Some(Span::new(func.span.start, func.params.span.end))
+                        }
                     };
 
                     // Only treat as HOF if inner function is unnamed
-                    if !inner_has_name {
+                    if let Some(span) = inner_span {
                         return Some(ReactComponentInfo {
-                            span: decl.id.span(),
+                            span,
                             is_context: false,
                             name: None, // HOF doesn't use variable name
                         });
@@ -1783,6 +1788,20 @@ fn test() {
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
+        (
+            "
+                    import React from 'react';
+
+                    type Props = { onSubmit: () => void };
+                    type HOCProps = { label: string };
+
+                    export const HOC =
+                      ({ label }: HOCProps) =>
+                      // eslint-disable-next-line react/display-name
+                      ({ onSubmit }: Props): JSX.Element => <button onClick={onSubmit}>{label}</button>;",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -2144,10 +2163,25 @@ fn test() {
         ),
         (
             "
-                    const renderer = a => listItem => (
-                      <div>{a} {listItem}</div>
-                    );
-                  ",
+                    import React from 'react';
+
+                    type Props = { onSubmit: () => void };
+                    type HOCProps = { label: string };
+
+                    export const HOC =
+                      ({ label }: HOCProps) =>
+                      ({ onSubmit }: Props): JSX.Element => <button onClick={onSubmit}>{label}</button>;",
+            None,
+            None,
+        ),
+        (
+            "
+                    const HOC = () =>
+                      (props) => {
+                        /* eslint-disable react/display-name */
+                        return <div />;
+                        /* eslint-enable react/display-name */
+                      };",
             None,
             None,
         ),

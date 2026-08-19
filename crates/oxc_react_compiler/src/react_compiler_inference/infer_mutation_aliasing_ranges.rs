@@ -18,9 +18,9 @@ use oxc_allocator::CloneIn;
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::diagnostics;
 use crate::react_compiler_utils::FxIndexMap;
 
-use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::type_config::{ValueKind, ValueReason};
 use crate::react_compiler_hir::visitors::{
@@ -879,9 +879,7 @@ pub fn infer_mutation_aliasing_ranges<'a>(
                         operand_effects.insert(value.identifier, Effect::Store);
                     }
                     AliasingEffect::Apply { .. } => {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "[AnalyzeFunctions] Expected Apply effects to be replaced with more precise effects",
-                        ));
+                        return Err(diagnostics::invariant_analyze_functions_expected_apply_effects_replaced_more_precise_effects_2());
                     }
                     AliasingEffect::MutateTransitive { value, .. }
                     | AliasingEffect::MutateConditionally { value }

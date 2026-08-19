@@ -199,14 +199,14 @@ enum LocalFromSpecifier {
 
 impl Rule for NoRestrictedExports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .map(DefaultRuleConfig::into_inner)
-            .map(|mut c| {
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner).map(
+            |mut c| {
                 // Cache if "default" is in restricted_named_exports
                 c.has_default_restricted_named_export =
                     c.restricted_named_exports.contains("default");
                 c
-            })
+            },
+        )
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

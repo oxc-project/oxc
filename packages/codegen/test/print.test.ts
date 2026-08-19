@@ -101,21 +101,75 @@ type Case = [name: string, ast: ESTree.Node, output: string];
  */
 function checkCases(cases: Case[]): void {
   test.each(cases)("%s", (_name, ast, output) => {
-    expect(printSync(ast)).toBe(output);
+    expect(printSync(ast).code).toBe(output);
   });
 }
 
 // --- Tests ----------------------------------------------------------------------------------
 
+describe("single statements", () => {
+  /** Parse one source statement for public-API tests which do not print a whole program. */
+  function parseStatement(filename: string, sourceText: string): ESTree.Statement {
+    const { program: parsed, errors } = parseSync(filename, sourceText, PARSE_OPTIONS);
+    if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
+    const [statement] = parsed.body;
+    if (statement === undefined || parsed.body.length !== 1) {
+      throw new Error(`Expected exactly one statement in ${filename}`);
+    }
+    return statement;
+  }
+
+  test("prints a JavaScript statement", () => {
+    const statement = parseStatement("statement.js", "const value=1;");
+    expect(printSync(statement).code).toBe("const value = 1;\n");
+  });
+
+  test("prints a TypeScript statement", () => {
+    const statement = parseStatement("statement.ts", "type Box<T>={value:T};");
+    expect(printSync(statement, { ts: true }).code).toBe("type Box<T> = {\n\tvalue: T;\n};\n");
+  });
+
+  test("returns a source map for a JavaScript statement", () => {
+    const sourceText = "const value=1;";
+    const statement = parseStatement("statement.js", sourceText);
+    const { code, map } = printSync(statement, {
+      sourcemap: true,
+      sourceFilename: "statement.js",
+      sourceText,
+    });
+    expect(code).toBe("const value = 1;\n");
+    expect(map).toMatchObject({
+      sources: ["statement.js"],
+      sourcesContent: [sourceText],
+    });
+  });
+});
+
+describe("indent", () => {
+  const ast = e(id("x"));
+
+  test.each(["", "x", "\n", "\r\n", " x "])("rejects %j", (indent) => {
+    expect(() => printSync(ast, { indent })).toThrow(
+      new TypeError("`indent` must be a non-empty string containing only spaces and tabs"),
+    );
+  });
+
+  test.each([4, null, {}])("rejects non-string value %j", (indent) => {
+    expect(() => printSync(ast, { indent: indent as unknown as string })).toThrow(
+      new TypeError("`indent` must be a non-empty string containing only spaces and tabs"),
+    );
+  });
+});
+
 describe("starting indent level", () => {
   const ast = e(id("x"));
 
   test("indents from a valid level", () => {
-    expect(printSync(ast, { startingIndentLevel: 1 })).toBe("\tx;\n");
+    expect(printSync(ast, { startingIndentLevel: 1 }).code).toBe("\tx;\n");
   });
 
   test("accepts the maximum level", () => {
-    expect(printSync(ast, { startingIndentLevel: 1000 })).toBe(`${"\t".repeat(1000)}x;\n`);
+    expect(printSync(ast, { startingIndentLevel: 1000 }).code).toBe(`${"\t".repeat(1000)}x;\n`);
   });
 
   test.each([
@@ -240,7 +294,7 @@ describe("strings", () => {
       PARSE_OPTIONS,
     );
     if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
-    expect(printSync(parsed)).toBe("const value = `before <\\/ScRiPt> after`;\n");
+    expect(printSync(parsed).code).toBe("const value = `before <\\/ScRiPt> after`;\n");
   });
 });
 
@@ -333,7 +387,7 @@ describe("directives", () => {
   ])("%s", (_name, source, output) => {
     const { program: parsed, errors } = parseSync("fixture.js", source, PARSE_OPTIONS);
     if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
-    expect(printSync(parsed)).toBe(output);
+    expect(printSync(parsed).code).toBe(output);
   });
 });
 
@@ -376,7 +430,7 @@ describe("export default declarations", () => {
   ])("%s", (_name, source, output) => {
     const { program: parsed, errors } = parseSync("fixture.ts", source, PARSE_OPTIONS);
     if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
-    expect(printSync(parsed, { ts: true })).toBe(output);
+    expect(printSync(parsed, { ts: true }).code).toBe(output);
   });
 });
 
@@ -416,12 +470,12 @@ describe("JSX strings", () => {
     };
 
     // From `raw`, as a parser supplies it
-    expect(printSync(parse(), { jsx: true })).toBe(output);
+    expect(printSync(parse(), { jsx: true }).code).toBe(output);
 
     // From `value`, which is where a change in the parser would show
     const fromValue = parse();
     dropJsxRaw(fromValue);
-    expect(printSync(fromValue, { jsx: true })).toBe(output);
+    expect(printSync(fromValue, { jsx: true }).code).toBe(output);
   });
 });
 

@@ -34,7 +34,7 @@ pub fn configure_walk_builder(
         .require_git(has_vcs_boundary)
 }
 
-/// Check whether walk target paths are gitignored, matching `git check-ignore`.
+/// Check whether walk target paths match the Git-derived ignore rules used by the walker.
 ///
 /// The `ignore` crate walker applies gitignore's "everything under an ignored directory is ignored" rule
 /// only by pruning ignored directories during traversal, and never filters its walk roots.
@@ -42,6 +42,9 @@ pub fn configure_walk_builder(
 /// And a bare directory pattern like `generated` matches the directory itself, not the files below it.
 /// Use an incremental matcher rooted at the VCS (or filesystem) boundary to check targets first.
 /// See also <https://github.com/BurntSushi/ripgrep/issues/2595>.
+///
+/// This is pattern-based and does not inspect Git's index.
+/// A tracked file that matches an ignore pattern therefore still matches here.
 ///
 /// NOTE: Mirrors the [`configure_walk_builder`] settings:
 /// - nested `.gitignore` files,
