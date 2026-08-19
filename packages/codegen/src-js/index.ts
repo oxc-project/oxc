@@ -73,15 +73,7 @@ export function printSync(
     options = EMPTY_OPTIONS;
   } else {
     if (options.ts === true) index = 1;
-    if (options.sourcemap === true) {
-      if (typeof options.sourceText !== "string") {
-        throw new TypeError("`sourceText` must be a string when `sourcemap` is true");
-      }
-      if (options.sourceFilename !== undefined && typeof options.sourceFilename !== "string") {
-        throw new TypeError("`sourceFilename` must be a string when supplied");
-      }
-      index |= 2;
-    }
+    if (options.sourcemap === true) index |= 2;
   }
 
   let print = printers[index];

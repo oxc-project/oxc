@@ -9,7 +9,6 @@
 // Nothing in `print/` constructs one, and none of the 4 printer builds bundles this file.
 
 import { CAT_OTHER } from "./print/write.ts";
-import { debugAssert } from "./asserts.ts";
 
 import type { Category } from "./print/write.ts";
 import type { Options } from "./print/options.ts";
@@ -143,8 +142,15 @@ export class State {
       this.mapPositions = null;
       this.mapNames = null;
     } else {
-      debugAssert(options.sourceText != null);
-      this.sourceText = options.sourceText;
+      const { sourceText } = options;
+      if (typeof sourceText !== "string") {
+        throw new TypeError("`sourceText` must be a string when `sourcemap` is true");
+      }
+      if (options.sourceFilename !== undefined && typeof options.sourceFilename !== "string") {
+        throw new TypeError("`sourceFilename` must be a string when supplied");
+      }
+
+      this.sourceText = sourceText;
       this.mapPositions = [];
       this.mapNames = null;
     }
