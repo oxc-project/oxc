@@ -1,8 +1,8 @@
-commit: c86e9e4b
+commit: 1eac4481
 
 semantic_babel Summary:
-AST Parsed     : 2235/2235 (100.00%)
-Positive Passed: 2146/2235 (96.02%)
+AST Parsed     : 2234/2234 (100.00%)
+Positive Passed: 2144/2234 (95.97%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -286,6 +286,8 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+Only ambient modules can use quoted names.
+Only ambient modules can use quoted names.
 Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
 Bindings mismatch:
@@ -442,6 +444,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Symbol reference IDs mismatch for "fooBar":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-class/input.ts
 Bindings mismatch:

@@ -8,6 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     ast_util::{get_declaration_of_variable, is_method_call},
     context::LintContext,
     fixer::Fix,
@@ -149,7 +150,7 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
         return false;
     };
 
-    if !var_decl.kind.is_const() {
+    if !variable_declaration_kind(var_decl, ctx).is_const() {
         return false;
     }
 

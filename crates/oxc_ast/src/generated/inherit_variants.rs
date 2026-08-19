@@ -2626,7 +2626,8 @@ impl<'a> Statement<'a> {
                 | Self::TSTypeAliasDeclaration(_)
                 | Self::TSInterfaceDeclaration(_)
                 | Self::TSEnumDeclaration(_)
-                | Self::TSModuleDeclaration(_)
+                | Self::TSExternalModuleDeclaration(_)
+                | Self::TSNamespaceDeclaration(_)
                 | Self::TSGlobalDeclaration(_)
                 | Self::TSImportEqualsDeclaration(_)
         )
@@ -2727,7 +2728,10 @@ impl<'a> TryFrom<Statement<'a>> for Declaration<'a> {
             Statement::TSTypeAliasDeclaration(o) => Ok(Declaration::TSTypeAliasDeclaration(o)),
             Statement::TSInterfaceDeclaration(o) => Ok(Declaration::TSInterfaceDeclaration(o)),
             Statement::TSEnumDeclaration(o) => Ok(Declaration::TSEnumDeclaration(o)),
-            Statement::TSModuleDeclaration(o) => Ok(Declaration::TSModuleDeclaration(o)),
+            Statement::TSExternalModuleDeclaration(o) => {
+                Ok(Declaration::TSExternalModuleDeclaration(o))
+            }
+            Statement::TSNamespaceDeclaration(o) => Ok(Declaration::TSNamespaceDeclaration(o)),
             Statement::TSGlobalDeclaration(o) => Ok(Declaration::TSGlobalDeclaration(o)),
             Statement::TSImportEqualsDeclaration(o) => {
                 Ok(Declaration::TSImportEqualsDeclaration(o))
@@ -2750,7 +2754,10 @@ impl<'a> From<Declaration<'a>> for Statement<'a> {
             Declaration::TSTypeAliasDeclaration(o) => Statement::TSTypeAliasDeclaration(o),
             Declaration::TSInterfaceDeclaration(o) => Statement::TSInterfaceDeclaration(o),
             Declaration::TSEnumDeclaration(o) => Statement::TSEnumDeclaration(o),
-            Declaration::TSModuleDeclaration(o) => Statement::TSModuleDeclaration(o),
+            Declaration::TSExternalModuleDeclaration(o) => {
+                Statement::TSExternalModuleDeclaration(o)
+            }
+            Declaration::TSNamespaceDeclaration(o) => Statement::TSNamespaceDeclaration(o),
             Declaration::TSGlobalDeclaration(o) => Statement::TSGlobalDeclaration(o),
             Declaration::TSImportEqualsDeclaration(o) => Statement::TSImportEqualsDeclaration(o),
         }
@@ -2766,7 +2773,9 @@ impl<'a> Statement<'a> {
             Self::ImportDeclaration(_)
                 | Self::ExportAllDeclaration(_)
                 | Self::ExportDefaultDeclaration(_)
+                | Self::ExportDeclaration(_)
                 | Self::ExportNamedDeclaration(_)
+                | Self::ExportFromDeclaration(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExportDeclaration(_)
         )
@@ -2866,9 +2875,11 @@ impl<'a> TryFrom<Statement<'a>> for ModuleDeclaration<'a> {
             Statement::ExportDefaultDeclaration(o) => {
                 Ok(ModuleDeclaration::ExportDefaultDeclaration(o))
             }
+            Statement::ExportDeclaration(o) => Ok(ModuleDeclaration::ExportDeclaration(o)),
             Statement::ExportNamedDeclaration(o) => {
                 Ok(ModuleDeclaration::ExportNamedDeclaration(o))
             }
+            Statement::ExportFromDeclaration(o) => Ok(ModuleDeclaration::ExportFromDeclaration(o)),
             Statement::TSExportAssignment(o) => Ok(ModuleDeclaration::TSExportAssignment(o)),
             Statement::TSNamespaceExportDeclaration(o) => {
                 Ok(ModuleDeclaration::TSNamespaceExportDeclaration(o))
@@ -2890,7 +2901,9 @@ impl<'a> From<ModuleDeclaration<'a>> for Statement<'a> {
             ModuleDeclaration::ExportDefaultDeclaration(o) => {
                 Statement::ExportDefaultDeclaration(o)
             }
+            ModuleDeclaration::ExportDeclaration(o) => Statement::ExportDeclaration(o),
             ModuleDeclaration::ExportNamedDeclaration(o) => Statement::ExportNamedDeclaration(o),
+            ModuleDeclaration::ExportFromDeclaration(o) => Statement::ExportFromDeclaration(o),
             ModuleDeclaration::TSExportAssignment(o) => Statement::TSExportAssignment(o),
             ModuleDeclaration::TSNamespaceExportDeclaration(o) => {
                 Statement::TSNamespaceExportDeclaration(o)
@@ -5598,7 +5611,8 @@ macro_rules! match_declaration {
             | $ty::TSTypeAliasDeclaration(_)
             | $ty::TSInterfaceDeclaration(_)
             | $ty::TSEnumDeclaration(_)
-            | $ty::TSModuleDeclaration(_)
+            | $ty::TSExternalModuleDeclaration(_)
+            | $ty::TSNamespaceDeclaration(_)
             | $ty::TSGlobalDeclaration(_)
             | $ty::TSImportEqualsDeclaration(_)
     };
@@ -5612,7 +5626,9 @@ macro_rules! match_module_declaration {
         $ty::ImportDeclaration(_)
             | $ty::ExportAllDeclaration(_)
             | $ty::ExportDefaultDeclaration(_)
+            | $ty::ExportDeclaration(_)
             | $ty::ExportNamedDeclaration(_)
+            | $ty::ExportFromDeclaration(_)
             | $ty::TSExportAssignment(_)
             | $ty::TSNamespaceExportDeclaration(_)
     };

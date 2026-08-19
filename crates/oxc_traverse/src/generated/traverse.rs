@@ -1267,6 +1267,21 @@ pub trait Traverse<'a, State> {
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a, State>) {}
 
     #[inline]
+    fn enter_class_heritage(
+        &mut self,
+        node: &mut ClassHeritage<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_class_heritage(
+        &mut self,
+        node: &mut ClassHeritage<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a, State>) {}
     #[inline]
     fn exit_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a, State>) {}
@@ -1493,6 +1508,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
@@ -1503,6 +1533,21 @@ pub trait Traverse<'a, State> {
     fn exit_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }
@@ -2695,46 +2740,46 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
-    fn enter_ts_module_declaration(
+    fn enter_ts_external_module_declaration(
         &mut self,
-        node: &mut TSModuleDeclaration<'a>,
+        node: &mut TSExternalModuleDeclaration<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }
     #[inline]
-    fn exit_ts_module_declaration(
+    fn exit_ts_external_module_declaration(
         &mut self,
-        node: &mut TSModuleDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a, State>,
-    ) {
-    }
-
-    #[inline]
-    fn enter_ts_module_declaration_name(
-        &mut self,
-        node: &mut TSModuleDeclarationName<'a>,
-        ctx: &mut TraverseCtx<'a, State>,
-    ) {
-    }
-    #[inline]
-    fn exit_ts_module_declaration_name(
-        &mut self,
-        node: &mut TSModuleDeclarationName<'a>,
+        node: &mut TSExternalModuleDeclaration<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }
 
     #[inline]
-    fn enter_ts_module_declaration_body(
+    fn enter_ts_namespace_declaration(
         &mut self,
-        node: &mut TSModuleDeclarationBody<'a>,
+        node: &mut TSNamespaceDeclaration<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }
     #[inline]
-    fn exit_ts_module_declaration_body(
+    fn exit_ts_namespace_declaration(
         &mut self,
-        node: &mut TSModuleDeclarationBody<'a>,
+        node: &mut TSNamespaceDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_namespace_declaration_body(
+        &mut self,
+        node: &mut TSNamespaceDeclarationBody<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_namespace_declaration_body(
+        &mut self,
+        node: &mut TSNamespaceDeclarationBody<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }

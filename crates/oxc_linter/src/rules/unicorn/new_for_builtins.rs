@@ -4,7 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
+    utils::call_uses_optional_chain,
+};
 
 fn enforce(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `new {fn_name}()` instead of `{fn_name}()`")).with_label(span)
@@ -14,6 +17,10 @@ fn disallow(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `{fn_name}()` instead of `new {fn_name}()`")).with_label(span)
 }
 
+fn error_date(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `String(new Date())` instead of `Date()`").with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NewForBuiltins;
 
@@ -21,7 +28,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforces the use of `new` for the following builtins: `Object`, `Array`, `ArrayBuffer`, `BigInt64Array`,
-    /// `BigUint64Array`, `DataView`, `Date`, `Error`, `Float32Array`, `Float64Array`, `Function`, `Int8Array`,
+    /// `BigUint64Array`, `DataView`, `Date`, `Error`, `Float16Array`, `Float32Array`, `Float64Array`, `Function`, `Int8Array`,
     /// `Int16Array`, `Int32Array`, `Map`, `WeakMap`, `Set`, `WeakSet`, `Promise`, `RegExp`, `Uint8Array`,
     /// `Uint16Array`, `Uint32Array`, `Uint8ClampedArray`, `SharedArrayBuffer`, `Proxy`, `WeakRef`, `FinalizationRegistry`.
     ///
@@ -39,12 +46,14 @@ declare_oxc_lint!(
     /// ```javascript
     /// const foo = new String('hello world');
     /// const bar = Array(1, 2, 3);
+    /// const now = Date();
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// const foo = String('hello world');
     /// const bar = new Array(1, 2, 3);
+    /// const now = String(new Date());
     /// ```
     NewForBuiltins,
     unicorn,
@@ -67,6 +76,11 @@ impl Rule for NewForBuiltins {
                 }
             }
             AstKind::CallExpression(call_expr) => {
+                // An optional chain can't be rewritten to a `new` expression, which can't be optional.
+                if call_uses_optional_chain(call_expr) {
+                    return;
+                }
+
                 let Some(builtin_name) = is_expr_global_builtin(&call_expr.callee, ctx) else {
                     return;
                 };
@@ -80,6 +94,13 @@ impl Rule for NewForBuiltins {
                         {
                             return;
                         }
+                    }
+
+                    // `Date()` returns a string representation of the current date and time, exactly as `new Date().toString()` does.
+                    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/Date#return_value
+                    if builtin_name == "Date" {
+                        ctx.diagnostic(error_date(call_expr.span));
+                        return;
                     }
 
                     ctx.diagnostic(enforce(call_expr.span, builtin_name));
@@ -96,16 +117,15 @@ fn is_expr_global_builtin<'a, 'b>(
 ) -> Option<&'b str> {
     let expr = expr.without_parentheses();
     if let Expression::Identifier(ident) = expr {
-        let name = ident.name.as_str();
-        if !ctx.scoping().root_unresolved_references().contains_key(name) {
+        if !ctx.is_reference_to_global_variable(ident) {
             return None;
         }
 
-        Some(name)
+        Some(ident.name.as_str())
     } else {
         let member_expr = expr.as_member_expression()?;
 
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
             return None;
         };
 
@@ -126,6 +146,7 @@ const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf::phf_set![
     "Date",
     "Error",
     "FinalizationRegistry",
+    "Float16Array",
     "Float32Array",
     "Float64Array",
     "Function",
@@ -157,6 +178,10 @@ fn test() {
     let pass = vec![
         "const foo = new Object()",
         "const foo = new Array()",
+        "const foo = Array?.()",
+        "const foo = Map?.()",
+        "const foo = Date?.()",
+        "const foo = globalThis?.Date()",
         "const foo = new ArrayBuffer()",
         "const foo = new BigInt64Array()",
         "const foo = new BigUint64Array()",
@@ -208,6 +233,7 @@ fn test() {
         "(x) !== Object(x)",
         // r#"new Symbol("")"#, // {"globals": {"Symbol": "off"}},
         "const foo = new Date();",
+        "function f(MyString) { const String = MyString; return new String('x') }; String(1)",
     ];
 
     let fail = vec![
@@ -281,7 +307,7 @@ fn test() {
         "const foo = DataView()",
         "const foo = Error()",
         "const foo = Error('Foo bar')",
-        // "const foo = Float16Array()",
+        "const foo = Float16Array()",
         "const foo = Float32Array()",
         "const foo = Float64Array()",
         "const foo = Function()",
@@ -324,14 +350,14 @@ fn test() {
                 }
                 return Map()
             }",
-        // "function foo() {
-        //         return(globalThis).Map()
-        //     }",
+        "function foo() {
+                return(globalThis).Map()
+            }",
         "const foo = Date();",
         "const foo = globalThis.Date();",
-        // "function foo() {
-        //         return(globalThis).Date();
-        //     }",
+        "function foo() {
+                return(globalThis).Date();
+            }",
         "const foo = Date(/*comment*/);",
         "const foo = globalThis/*comment*/.Date();",
         "const foo = Date(bar);",

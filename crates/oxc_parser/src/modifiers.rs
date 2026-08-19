@@ -17,19 +17,19 @@ use crate::{
 
 #[derive(Debug, Clone, Copy)]
 pub struct Modifier {
-    pub span_start: u32,
+    pub start: u32,
     pub kind: ModifierKind,
 }
 
 impl Modifier {
     #[inline]
-    pub const fn new(span_start: u32, kind: ModifierKind) -> Self {
-        Self { span_start, kind }
+    pub const fn new(start: u32, kind: ModifierKind) -> Self {
+        Self { start, kind }
     }
 
     #[inline]
     pub const fn span(self) -> Span {
-        Span::sized(self.span_start, self.kind.len())
+        Span::sized(self.start, self.kind.len())
     }
 }
 
@@ -494,10 +494,10 @@ impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         let mut modifiers = Modifiers::empty();
         while let Some(modifier_kind) = self.get_modifier() {
-            let modifier = Modifier::new(self.start_span(), modifier_kind);
+            let modifier = Modifier::new(self.cur_start(), modifier_kind);
             self.bump_any();
             self.check_modifier(modifiers.kinds(), modifier);
-            modifiers.add(modifier.kind, modifier.span_start);
+            modifiers.add(modifier.kind, modifier.start);
         }
         modifiers
     }
@@ -514,21 +514,19 @@ impl<C: Config> ParserImpl<'_, C> {
         let is_modifier = match cur_kind {
             Kind::Const => next_kind == Kind::Enum,
             // These modifiers can cross line.
-            Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                Self::can_follow_modifier(next_kind)
-            }
+            Kind::Accessor | Kind::Static => Self::can_follow_modifier(next_kind),
             // Rest modifiers cannot cross line
             _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
         };
         if is_modifier { Some(modifier_kind) } else { None }
     }
 
-    fn modifier(&mut self, kind: Kind, span_start: u32) -> Modifier {
+    fn modifier(&mut self, kind: Kind, start: u32) -> Modifier {
         let modifier_kind = ModifierKind::try_from(kind).unwrap_or_else(|()| {
             self.set_unexpected();
             ModifierKind::Abstract // Dummy value
         });
-        Modifier::new(span_start, modifier_kind)
+        Modifier::new(start, modifier_kind)
     }
 
     pub(crate) fn parse_modifiers(
@@ -544,7 +542,7 @@ impl<C: Config> ParserImpl<'_, C> {
             stop_on_start_of_class_static_block,
         ) {
             self.check_modifier(modifiers.kinds(), modifier);
-            modifiers.add(modifier.kind, modifier.span_start);
+            modifiers.add(modifier.kind, modifier.start);
         }
 
         modifiers
@@ -556,7 +554,7 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
-        let span_start = self.start_span();
+        let start = self.cur_start();
         let kind = self.cur_kind();
 
         if kind == Kind::Const {
@@ -590,7 +588,7 @@ impl<C: Config> ParserImpl<'_, C> {
             // next token is not a modifier
             return None;
         }
-        Some(self.modifier(kind, span_start))
+        Some(self.modifier(kind, start))
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
@@ -826,7 +824,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     .iter()
                     .filter(|modifier| !allowed.contains(modifier.kind))
                     .collect::<Vec<_>>();
-                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
+                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.start);
                 disallowed_modifiers
             }
 

@@ -1,8 +1,9 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Format, JsFormatter, prelude::*},
+    formatter::{JsFormatter, prelude::*},
     print::semicolon::write_trailing_comments_inside_parens,
     write,
 };

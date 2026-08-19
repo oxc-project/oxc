@@ -1,7 +1,5 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use miette::{SourceSpan, SpanContents};
-
 use crate::{Error, Severity};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
@@ -54,6 +52,32 @@ pub trait DiagnosticReporter {
     /// Machine-readable or intentionally single-line reporters should disable it.
     fn supports_minified_file_fallback(&self) -> bool {
         true
+    }
+
+    /// Render diagnostics in order, delegating to [`render_error`](Self::render_error) by default.
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        for error in errors {
+            if let Some(rendered) = self.render_error(error) {
+                emit(&rendered);
+            }
+        }
+    }
+
+    /// Render diagnostics until `keep` rejects a rendered report.
+    fn render_errors_until(
+        &mut self,
+        errors: Vec<Error>,
+        keep: &mut dyn FnMut(Option<&str>, &str) -> bool,
+    ) {
+        for error in errors {
+            let source_name =
+                error.source_code().and_then(|source| source.name()).map(ToString::to_string);
+            if let Some(rendered) = self.render_error(error)
+                && !keep(source_name.as_deref(), &rendered)
+            {
+                break;
+            }
+        }
     }
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
@@ -116,6 +140,30 @@ pub struct InfoPosition {
     pub column: usize,
 }
 
+fn line_column(data: &[u8], mut offset: usize) -> Option<InfoPosition> {
+    if offset > data.len() {
+        return None;
+    }
+    if offset > 0 && offset < data.len() && data[offset - 1] == b'\r' && data[offset] == b'\n' {
+        offset -= 1;
+    }
+
+    let mut line = 1;
+    let mut line_start = 0;
+    for index in memchr::memchr2_iter(b'\r', b'\n', &data[..offset]) {
+        if data[index] == b'\n' && index > 0 && data[index - 1] == b'\r' {
+            continue;
+        }
+        line += 1;
+        line_start = if data[index] == b'\r' && index + 1 < offset && data[index + 1] == b'\n' {
+            index + 2
+        } else {
+            index + 1
+        };
+    }
+    Some(InfoPosition { line, column: offset - line_start + 1 })
+}
+
 impl Info {
     pub fn new(diagnostic: &Error) -> Self {
         let mut start = InfoPosition { line: 0, column: 0 };
@@ -127,19 +175,18 @@ impl Info {
 
         if let Some(source) = diagnostic.source_code()
             && let Some(label) = diagnostic.labels().first()
-            && let Ok(span_content) = source.read_span(label.inner(), 0, 0)
+            && let Ok(start_offset) = usize::try_from(label.offset())
+            && let Some(end_offset) = label.offset().checked_add(label.len())
+            && let Ok(end_offset) = usize::try_from(end_offset)
+            && source.data().get(start_offset..end_offset).is_some()
+            && let Some(start_position) = line_column(source.data(), start_offset)
         {
-            start.line = span_content.line() + 1;
-            start.column = span_content.column() + 1;
-
-            let end_offset = label.inner().offset() + label.inner().len();
-
-            if let Ok(span_content) = source.read_span(&SourceSpan::from((end_offset, 0)), 0, 0) {
-                end.line = span_content.line() + 1;
-                end.column = span_content.column() + 1;
+            start = start_position;
+            if let Some(end_position) = line_column(source.data(), end_offset) {
+                end = end_position;
             }
 
-            if let Some(name) = span_content.name() {
+            if let Some(name) = source.name() {
                 filename = name.to_string();
             }
             if matches!(diagnostic.severity(), Some(Severity::Error)) {

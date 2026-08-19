@@ -11,6 +11,10 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.parent() else {
+            unreachable!();
+        };
+        let declaration_kind = *declaration.kind();
         let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
         // Evaluate the initializer's constant once; reuse it for the value-context
@@ -23,20 +27,23 @@ impl<'a> PeepholeOptimizations {
         // `SymbolValue::boolean_falsy`).
         let falsy_init = init_constant.as_ref().is_some_and(Self::is_falsy_constant);
         let declaration_in_body_statement_list =
-            !decl.kind.is_var() || Self::is_declaration_in_body_statement_list(ctx);
+            !declaration_kind.is_var() || Self::is_declaration_in_body_statement_list(ctx);
         let value = if Self::is_for_statement_init(ctx) {
             // for-statement initializers have their value set by the for statement itself.
             None
-        } else if decl.kind.is_var()
-            && !Self::is_hoisted_var_inlineable(
-                decl,
-                symbol_id,
-                declaration_in_body_statement_list,
-                ctx,
-            )
+        } else if declaration_kind.is_var()
+            && decl.init.is_some()
+            && !Self::is_hoisted_var_inlineable(symbol_id, declaration_in_body_statement_list, ctx)
         {
             // `var` is hoisted: reads before the initializer line see `undefined`.
             // Skip unless the safety predicate proves no such read exists.
+            None
+        } else if declaration_kind.is_var()
+            && decl.init.is_none()
+            && !Self::is_module_scope_symbol(symbol_id, ctx)
+        {
+            // Keep the new fact module-scoped. Script globals alias the global
+            // object, and function-scoped vars have additional runtime cases.
             None
         } else {
             // No initializer hoists to `undefined`; otherwise reuse the constant.
@@ -49,7 +56,21 @@ impl<'a> PeepholeOptimizations {
         } else {
             FreshValueKind::None
         };
-        ctx.init_value(symbol_id, value, kind, falsy_init, decl.init.is_none());
+        let implicit_undefined = decl
+            .init
+            .as_ref()
+            .is_none_or(|init| Self::is_direct_implicit_undefined_alias(init, ctx));
+        ctx.init_value(symbol_id, value, kind, falsy_init, implicit_undefined);
+    }
+
+    /// Preserve the provenance of an implicit `undefined` through direct
+    /// aliases. Materializing the value as `void 0` can be larger than keeping
+    /// the alias and can preempt statement-level single-use substitution.
+    fn is_direct_implicit_undefined_alias(init: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        init.get_identifier_reference()
+            .and_then(|ident| ctx.scoping().get_reference(ident.reference_id()).symbol_id())
+            .and_then(|symbol_id| ctx.state.symbols.value(symbol_id))
+            .is_some_and(|value| value.implicit_undefined)
     }
 
     /// A `ConstantValue` that coerces to `false` (`false`, `0`/`-0`/`NaN`, `""`,
@@ -72,7 +93,7 @@ impl<'a> PeepholeOptimizations {
         for ancestor in ctx.ancestors() {
             match ancestor {
                 Ancestor::VariableDeclarationDeclarations(_)
-                | Ancestor::ExportNamedDeclarationDeclaration(_) => {}
+                | Ancestor::ExportDeclarationDeclaration(_) => {}
                 Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_) => return true,
                 _ => return false,
             }
@@ -86,8 +107,8 @@ impl<'a> PeepholeOptimizations {
     ///   still in its declarative prelude;
     /// - the declaration is a direct body statement-list item rather than a
     ///   conditional, loop, or other nested statement position;
-    /// - it has an initializer (uninitialized `var foo;` would inline to
-    ///   `undefined`, which churns existing tests for marginal benefit);
+    /// - it has an initializer (initializer-less vars use the simpler predicate
+    ///   below because they are `undefined` both before and after the declaration);
     /// - script-mode top-level vars are excluded (they alias the global object);
     /// - at program scope, if the module loads any other module (`import`,
     ///   `export … from`, `export * from`), skip: a cyclic importer can call
@@ -106,15 +127,11 @@ impl<'a> PeepholeOptimizations {
     /// already been visited and won't be inlined. Safe but suboptimal; the
     /// common "flag declared at the top" pattern is unaffected.
     fn is_hoisted_var_inlineable(
-        decl: &VariableDeclarator<'a>,
         symbol_id: SymbolId,
         declaration_in_body_statement_list: bool,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        if decl.init.is_none()
-            || !declaration_in_body_statement_list
-            || Self::is_script_root_scope(ctx)
-        {
+        if !declaration_in_body_statement_list || Self::is_script_root_scope(ctx) {
             return false;
         }
         // `hoisted_var_inlining_unsafe` is set by a preceding non-declarative
@@ -131,6 +148,12 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), frame.scope_id, ctx))
+    }
+
+    /// Whether a symbol is declared in the root scope of a module.
+    fn is_module_scope_symbol(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.source_type().is_module()
+            && ctx.scoping().symbol_scope_id(symbol_id) == ctx.scoping().root_scope_id()
     }
 
     /// Classify the fresh value an expression creates (a value that cannot alias
@@ -183,7 +206,7 @@ impl<'a> PeepholeOptimizations {
         // Classes with `extends` may inherit static setters from the parent.
         // We can't statically determine the parent's static setters,
         // so conservatively mark as non-fresh.
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return true;
         }
         // Class-level decorators run arbitrary code during class creation and can
@@ -271,26 +294,11 @@ impl<'a> PeepholeOptimizations {
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return;
         };
-        // Skip if there are write references.
-        if symbol_value.references.has_writes() {
+        if !symbol_value.can_inline_initialized_constant() {
             return;
         }
-        let Some(cv) = &symbol_value.initialized_constant else { return };
-        // Textually inlining the implicit `undefined` of `let x;` can only grow
-        // the output; see `SymbolValue::implicit_undefined` (rolldown#10174).
-        if symbol_value.implicit_undefined {
-            return;
-        }
-        if symbol_value.references.has_single_read()
-            || match cv {
-                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
-                ConstantValue::BigInt(_) => false,
-                ConstantValue::String(s) => s.len() <= 3,
-                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
-            }
-        {
-            let new_expr = ctx.value_to_expr(expr.span(), cv.clone());
-            ctx.replace_expression(expr, new_expr);
-        }
+        let constant = symbol_value.initialized_constant.as_ref().unwrap();
+        let new_expr = ctx.value_to_expr(expr.span(), constant.clone());
+        ctx.replace_expression(expr, new_expr);
     }
 }

@@ -115,7 +115,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -178,9 +178,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 return fixer.noop();
                             }
 
-                            let key_type = sig.parameters.first().map_or("string", |p| {
-                                fixer.source_range(p.type_annotation.type_annotation.span())
-                            });
+                            let key_type = fixer
+                                .source_range(sig.parameter.type_annotation.type_annotation.span());
                             let value_type =
                                 fixer.source_range(sig.type_annotation.type_annotation.span());
                             let type_params = inf
@@ -294,9 +293,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                             sig.span,
                         ),
                         |fixer| {
-                            let key_type = sig.parameters.first().map_or("string", |p| {
-                                fixer.source_range(p.type_annotation.type_annotation.span())
-                            });
+                            let key_type = fixer
+                                .source_range(sig.parameter.type_annotation.type_annotation.span());
                             let value_type =
                                 fixer.source_range(sig.type_annotation.type_annotation.span());
 

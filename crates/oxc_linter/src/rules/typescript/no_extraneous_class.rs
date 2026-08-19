@@ -116,16 +116,14 @@ fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic 
 
 impl Rule for NoExtraneousClass {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else {
             return;
         };
-        if class.super_class.is_some()
-            || (self.allow_with_decorator && !class.decorators.is_empty())
-        {
+        if class.heritage.is_some() || (self.allow_with_decorator && !class.decorators.is_empty()) {
             return;
         }
         let span = class.id.as_ref().map_or(class.span, |id| id.span);
@@ -136,9 +134,12 @@ impl Rule for NoExtraneousClass {
                     let mut span = class.span;
                     if let Some(decorator) = class.decorators.last() {
                         span = Span::new(decorator.span.end, span.end);
-                        // NOTE: there will always be a 'c' because of 'class' keyword.
-                        let start = ctx.source_range(span).find('c').unwrap();
-                        span = span.shrink_left(u32::try_from(start).unwrap());
+                        // NOTE: the `class` keyword always follows the decorators.
+                        if let Some(start) =
+                            ctx.find_next_token_within(span.start, span.end, "class")
+                        {
+                            span = span.shrink_left(start);
+                        }
                     }
                     let has_decorators = !class.decorators.is_empty();
                     ctx.diagnostic_with_suggestion(
@@ -147,7 +148,7 @@ impl Rule for NoExtraneousClass {
                             if has_decorators {
                                 return fixer.noop();
                             }
-                            if let AstKind::ExportNamedDeclaration(decl) =
+                            if let AstKind::ExportDeclaration(decl) =
                                 ctx.nodes().parent_kind(node.id())
                             {
                                 fixer.delete(decl)
@@ -280,6 +281,8 @@ fn test() {
     ];
 
     let fail = vec![
+        // the `c` inside the comment is not the `class` keyword
+        ("@dec /* c */ class Foo {}", None),
         ("class Foo {}", None),
         (
             "

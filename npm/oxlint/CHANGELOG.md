@@ -4,6 +4,44 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.79.0] - 2026-08-18
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 228e8e0 linter: Resolve inactive React compiler rules (#25830) (Boshen)
+- aa49d86 linter: Allow spread rule options in config types (#25675) (ch3rry)
+- 36f8451 linter/eslint/no-eval: Align indirect default with ESLint (#25656) (camc314)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+
+## [1.78.0] - 2026-08-10
+
+### 🚀 Features
+
+- ccb8fe8 linter/jsdoc: Implement `no-blank-blocks` rule (#25207) (Mikhail Baev)
+- d4a897c linter/eslint: Implement `one-var` rule (#24470) (Cole Ellison)
+- 5ab9340 linter/jsx-a11y/anchor-has-content: Add options to match eslint (#24571) (Cole Ellison)
+
+### 🐛 Bug Fixes
+
+- 9573937 linter/typescript: Validate `ban-ts-comment` description_format (#25320) (Mikhail Baev)
+
+## [1.77.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- 5c0fa61 linter/eslint/no-warning-comments: Unify config structs and remove manual options docs (#25151) (Mikhail Baev)
+
+### 📚 Documentation
+
+- 9dc7756 linter/typescript/no-unnecessary-condition: Clarify options (#25110) (camc314)
+
 ## [1.76.0] - 2026-07-27
 
 ### 🚀 Features

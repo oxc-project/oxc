@@ -490,21 +490,23 @@ pub fn register_using_declaration(
     liveness.mark_bound_names(declaration);
 }
 
-/// Normalize hook: record runtime bindings exposed by a named export.
-pub fn register_named_export(declaration: &ExportNamedDeclaration<'_>, ctx: &mut TraverseCtx<'_>) {
-    let TraverseCtx { state, scoping, .. } = ctx;
+/// Normalize hook: record runtime bindings exposed by an exported declaration.
+pub fn register_export_declaration(declaration: &ExportDeclaration<'_>, ctx: &mut TraverseCtx<'_>) {
+    let TraverseCtx { state, .. } = ctx;
     let Some(liveness) = state.symbols.liveness_mut() else { return };
-
-    if !declaration.export_kind.is_type()
-        && let Some(inner) = &declaration.declaration
-    {
-        liveness.mark_bound_names(inner);
+    if !declaration.export_kind().is_type() {
+        liveness.mark_bound_names(&declaration.declaration);
     }
+}
 
-    if declaration.source.is_some() || declaration.export_kind.is_type() {
+/// Normalize hook: record runtime bindings exposed by a local named export.
+pub fn register_named_export(declaration: &ExportNamedDeclaration<'_>, ctx: &mut TraverseCtx<'_>) {
+    if declaration.export_kind.is_type() {
         return;
     }
 
+    let TraverseCtx { state, scoping, .. } = ctx;
+    let Some(liveness) = state.symbols.liveness_mut() else { return };
     for specifier in &declaration.specifiers {
         if specifier.export_kind.is_type() {
             continue;

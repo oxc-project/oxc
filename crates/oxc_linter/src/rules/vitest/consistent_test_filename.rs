@@ -1,30 +1,39 @@
 use std::ffi::OsStr;
 
-use lazy_regex::Regex;
+use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn consistent_test_filename_diagnostic(file_path: &str, pattern: &str) -> OxcDiagnostic {
-    let message = format!("The {file_path} is a test file but his name is not allowed");
+    let message = format!(
+        "The file {file_path} is a test file, but its name does not match the expected pattern."
+    );
     let help = format!("Rename the file that match the pattern {pattern}");
 
     OxcDiagnostic::warn(message).with_help(help)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ConsistentTestFilename(Box<ConsistentTestFilenameConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
-pub struct CompiledAllTestPattern(lazy_regex::Regex);
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+pub struct CompiledAllTestPattern(
+    #[serde(deserialize_with = "deserialize_matcher_pattern")] lazy_regex::Regex,
+);
 
 impl Default for CompiledAllTestPattern {
     fn default() -> Self {
-        let default_regex = Regex::new(r".*\.(test|spec)\.[tj]sx?$");
-
-        Self(default_regex.unwrap())
+        Self(
+            Regex::new(r".*\.(test|spec)\.[tj]sx?$")
+                .expect("default all-test pattern should be valid"),
+        )
     }
 }
 
@@ -36,14 +45,17 @@ impl std::ops::Deref for CompiledAllTestPattern {
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-pub struct CompiledTestPatternName(lazy_regex::Regex);
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+pub struct CompiledTestPatternName(
+    #[serde(deserialize_with = "deserialize_matcher_pattern")] lazy_regex::Regex,
+);
 
 impl Default for CompiledTestPatternName {
     fn default() -> Self {
-        let default_regex = Regex::new(r".*\.test\.[tj]sx?$");
-
-        Self(default_regex.unwrap())
+        Self(
+            Regex::new(r".*\.test\.[tj]sx?$")
+                .expect("default test filename pattern should be valid"),
+        )
     }
 }
 
@@ -55,7 +67,7 @@ impl std::ops::Deref for CompiledTestPatternName {
     }
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentTestFilenameConfig {
     /// Regex pattern to ensure we are linting only test filenames.
@@ -105,36 +117,27 @@ declare_oxc_lint!(
     short_description = "This rule triggers an error when a file is considered a test file, but its name does not match an expected filename format.",
 );
 
-fn compile_matcher_pattern(matcher_pattern: &serde_json::Value) -> Option<lazy_regex::Regex> {
-    matcher_pattern.as_str().and_then(|regex_str| {
-        if let Some(stripped) = regex_str.strip_prefix('/')
-            && let Some(end) = stripped.rfind('/')
-        {
-            let (pat, _flags) = stripped.split_at(end);
-            // For now, ignore flags and just use the pattern
-            return Regex::new(pat).ok();
-        }
+fn deserialize_matcher_pattern<'de, D>(deserializer: D) -> Result<Regex, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
 
-        let reg_str = format!("(?u){regex_str}");
-        Regex::new(&reg_str).ok()
-    })
+    let regex_str = String::deserialize(deserializer)?;
+    if let Some(stripped) = regex_str.strip_prefix('/')
+        && let Some(end) = stripped.rfind('/')
+    {
+        let (pattern, _flags) = stripped.split_at(end);
+        // For now, ignore flags and just use the pattern
+        return Regex::new(pattern).map_err(D::Error::custom);
+    }
+
+    RegexBuilder::new(&regex_str).unicode(true).build().map_err(D::Error::custom)
 }
 
 impl Rule for ConsistentTestFilename {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0);
-
-        let all_test_pattern = config
-            .and_then(|v| v.get("allTestPattern"))
-            .and_then(|value| compile_matcher_pattern(value).map(CompiledAllTestPattern))
-            .unwrap_or_default();
-
-        let pattern = config
-            .and_then(|v| v.get("pattern"))
-            .and_then(|value| compile_matcher_pattern(value).map(CompiledTestPatternName))
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(ConsistentTestFilenameConfig { all_test_pattern, pattern })))
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -165,6 +168,12 @@ fn test() {
             None,
             Some(PathBuf::from("1.spec.ts")),
         ),
+        (
+            "export {}",
+            Some(serde_json::json!([{ "pattern": r"/.*\.spec\.ts$/u" }])),
+            None,
+            Some(PathBuf::from("1.spec.ts")),
+        ),
     ];
 
     let fail = vec![
@@ -181,4 +190,16 @@ fn test() {
 
     Tester::new(ConsistentTestFilename::NAME, ConsistentTestFilename::PLUGIN, pass, fail)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_patterns_are_rejected() {
+    let configs =
+        [serde_json::json!([{ "allTestPattern": "[" }]), serde_json::json!([{ "pattern": "[" }])];
+
+    for config in configs {
+        let error = ConsistentTestFilename::from_configuration(config)
+            .expect_err("invalid filename pattern should be rejected");
+        assert_eq!(error.classify(), serde_json::error::Category::Data);
+    }
 }

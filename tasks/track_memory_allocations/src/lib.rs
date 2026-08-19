@@ -311,6 +311,7 @@ pub fn run() -> Result<(), io::Error> {
     let parse_options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
     let minifier_options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
+        mangle_properties: None,
         compress: Some(CompressOptions::smallest()),
     };
 
@@ -342,7 +343,7 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
         assert!(parsed.diagnostics.is_empty());
-        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default())
             .print()
             .unwrap()
             .into_code();
@@ -407,7 +408,7 @@ pub fn run() -> Result<(), io::Error> {
         assert!(parsed.diagnostics.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {
-            format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+            format_program(&allocator, &parsed.program, JsFormatOptions::default())
                 .print()
                 .unwrap()
                 .into_code()
@@ -564,7 +565,10 @@ fn write_snapshot(file_path: &str, entries: &[(&TestFile, StageStats)]) -> Resul
 
     let mut out = String::new();
     let committed_doc = committed_docs.first();
-    for (file, stats) in entries {
+    for (i, (file, stats)) in entries.iter().enumerate() {
+        if i > 0 {
+            out.push('\n');
+        }
         let committed_file = committed_doc.get(file.file_name.as_str());
         let metrics = stats.metrics(file.source_text.len());
         render_file_stats(&mut out, &file.file_name, &metrics, committed_file);
@@ -596,5 +600,4 @@ fn render_file_stats(
         }
         .unwrap();
     }
-    out.push('\n');
 }

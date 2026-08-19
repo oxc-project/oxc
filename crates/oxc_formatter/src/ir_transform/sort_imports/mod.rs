@@ -7,16 +7,14 @@ mod sortable_imports;
 mod source_line;
 
 use oxc_allocator::{Allocator, ArenaVec};
+use oxc_formatter_core::format_element::{
+    FormatElement, LineMode,
+    tag::{LabelId, Tag},
+};
 
 use crate::{
     Buffer, JsLabels, SortImportsOptions,
-    formatter::{
-        JsFormatter,
-        format_element::{
-            FormatElement, LineMode,
-            tag::{LabelId, Tag},
-        },
-    },
+    formatter::JsFormatter,
     ir_transform::sort_imports::{
         group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },

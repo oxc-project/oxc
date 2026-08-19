@@ -168,11 +168,18 @@ impl fmt::Display for TSAccessibility {
     }
 }
 
-impl TSModuleDeclaration<'_> {
+impl TSExternalModuleDeclaration<'_> {
     /// Returns `true` if this module's body exists and has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
+    }
+}
+
+impl TSNamespaceDeclaration<'_> {
+    /// Returns `true` if this namespace's body has a `"use strict"` directive.
     ///
-    /// Note that for a nested [`TSModuleDeclaration`], only returns `true` for the innermost `TSModuleDeclaration`.
-    /// e.g. this AST has 3 x `TSModuleDeclaration`s:
+    /// Note that for a nested [`TSNamespaceDeclaration`], only returns `true` for the innermost
+    /// declaration. e.g. this AST has 3 x `TSNamespaceDeclaration`s:
     /// ```ts
     /// namespace X.Y.Z {
     ///   "use strict";
@@ -180,11 +187,11 @@ impl TSModuleDeclaration<'_> {
     /// ```
     /// This method will only return `true` for the innermost one (`Z`).
     pub fn has_use_strict_directive(&self) -> bool {
-        self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
+        self.body.has_use_strict_directive()
     }
 }
 
-impl TSModuleDeclarationKind {
+impl TSNamespaceDeclarationKind {
     /// Declaration keyword as a string, identical to how it would appear in the
     /// source code.
     pub fn as_str(self) -> &'static str {
@@ -195,48 +202,11 @@ impl TSModuleDeclarationKind {
     }
 }
 
-impl<'a> TSModuleDeclarationName<'a> {
-    /// Returns `true` if this name is a string literal.
-    ///
-    /// ## Example
-    /// ```ts
-    /// // true
-    /// module "*.less" {
-    ///     const styles: { [key: string]: string };
-    ///     export default styles;
-    /// }
-    ///
-    /// // false
-    /// module bar {}
-    /// namespace bang {}
-    /// ```
-    pub fn is_string_literal(&self) -> bool {
-        matches!(self, Self::StringLiteral(_))
-    }
-
-    /// Get the static name of this module declaration name.
-    pub fn name(&self) -> Str<'a> {
-        match self {
-            Self::Identifier(ident) => ident.name.into(),
-            Self::StringLiteral(lit) => lit.value,
-        }
-    }
-}
-
-impl fmt::Display for TSModuleDeclarationName<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Identifier(id) => id.fmt(f),
-            Self::StringLiteral(lit) => lit.fmt(f),
-        }
-    }
-}
-
-impl<'a> TSModuleDeclarationBody<'a> {
+impl<'a> TSNamespaceDeclarationBody<'a> {
     /// Returns `true` if this module has a `"use strict"` directive.
     ///
-    /// Note that for a nested [`TSModuleDeclaration`], only returns `true` for the innermost [`TSModuleDeclarationBody`].
-    /// e.g. this AST has 3 x `TSModuleDeclarationBody`s:
+    /// Note that for a nested [`TSNamespaceDeclaration`], only returns `true` for the innermost
+    /// [`TSNamespaceDeclarationBody`]. e.g. this AST has 3 x `TSNamespaceDeclarationBody`s:
     /// ```ts
     /// namespace X.Y.Z {
     ///   "use strict";
@@ -250,8 +220,10 @@ impl<'a> TSModuleDeclarationBody<'a> {
     /// Returns `true` if this module contains no statements.
     pub fn is_empty(&self) -> bool {
         match self {
-            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => declaration.body.is_none(),
-            TSModuleDeclarationBody::TSModuleBlock(block) => block.body.len() == 0,
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(declaration) => {
+                declaration.body.is_empty()
+            }
+            TSNamespaceDeclarationBody::TSModuleBlock(block) => block.body.is_empty(),
         }
     }
 
@@ -261,9 +233,9 @@ impl<'a> TSModuleDeclarationBody<'a> {
         let mut body = self;
         loop {
             match body {
-                TSModuleDeclarationBody::TSModuleBlock(block) => return Some(block.as_mut()),
-                TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
-                    body = decl.body.as_mut()?;
+                TSNamespaceDeclarationBody::TSModuleBlock(block) => return Some(block.as_mut()),
+                TSNamespaceDeclarationBody::TSNamespaceDeclaration(decl) => {
+                    body = &mut decl.body;
                 }
             }
         }

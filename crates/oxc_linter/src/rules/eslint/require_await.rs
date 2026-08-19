@@ -104,7 +104,7 @@ impl RequireAwait {
         let mut finder = AwaitFinder { found: false };
         finder.visit_expression(expression);
         if !finder.found {
-            let need_delete_span = get_delete_span(ctx, func.span.start);
+            let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
             ctx.diagnostic_with_dangerous_fix(require_await_diagnostic(func.span), |fixer| {
                 fixer.delete_range(need_delete_span)
             });
@@ -123,7 +123,7 @@ impl RequireAwait {
                 finder.visit_function_body(body);
                 if !finder.found {
                     if matches!(func.r#type, FunctionType::FunctionDeclaration) {
-                        let need_delete_span = get_delete_span(ctx, func.span.start);
+                        let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
                         ctx.diagnostic_with_dangerous_fix(
                             require_await_diagnostic(
                                 func.id.as_ref().map_or(func.span, |ident| ident.span),
@@ -144,6 +144,7 @@ impl RequireAwait {
                                 } else {
                                     span.start
                                 },
+                                func.span.end,
                             );
                             let check_span = if matches!(key, PropertyKey::StaticIdentifier(_)) {
                                 key.span()
@@ -155,7 +156,8 @@ impl RequireAwait {
                                 |fixer| fixer.delete_range(need_delete_span),
                             );
                         } else {
-                            let need_delete_span = get_delete_span(ctx, func.span.start);
+                            let need_delete_span =
+                                get_delete_span(ctx, func.span.start, func.span.end);
                             ctx.diagnostic_with_dangerous_fix(
                                 require_await_diagnostic(
                                     func.id.as_ref().map_or(func.span, |ident| ident.span),
@@ -170,7 +172,7 @@ impl RequireAwait {
                 let mut finder = AwaitFinder { found: false };
                 finder.visit_function_body(body);
                 if !finder.found {
-                    let need_delete_span = get_delete_span(ctx, func.span.start);
+                    let need_delete_span = get_delete_span(ctx, func.span.start, func.span.end);
                     ctx.diagnostic_with_dangerous_fix(
                         require_await_diagnostic(func.span),
                         |fixer| fixer.delete_range(need_delete_span),
@@ -182,9 +184,11 @@ impl RequireAwait {
     }
 }
 
-fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
+fn get_delete_span(ctx: &LintContext, start: u32, end: u32) -> Span {
     // Find the position of "async" keyword from the start position
-    let async_pos = ctx.find_next_token_from(start, "async").unwrap_or(0);
+    let async_pos = ctx
+        .find_next_token_within(start, end, "async")
+        .expect("async function span must contain the `async` keyword");
     let async_start = start + async_pos;
     let async_end = async_start + 5;
     let async_key_span = Span::new(async_start, async_end);

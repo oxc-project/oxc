@@ -35,7 +35,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             ],
             "flags": "ScopeFlags(TsModuleBlock)",
             "id": 2,
-            "node": "TSModuleDeclaration(B)",
+            "node": "TSNamespaceDeclaration(B)",
             "symbols": [
               {
                 "flags": "SymbolFlags(TypeAlias)",
@@ -49,13 +49,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ],
         "flags": "ScopeFlags(TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration(A)",
+        "node": "TSNamespaceDeclaration(A)",
         "symbols": [
           {
             "flags": "SymbolFlags(NamespaceModule)",
             "id": 1,
             "name": "B",
-            "node": "TSModuleDeclaration(B)",
+            "node": "TSNamespaceDeclaration(B)",
             "references": []
           }
         ]
@@ -92,7 +92,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "flags": "SymbolFlags(NamespaceModule)",
         "id": 0,
         "name": "A",
-        "node": "TSModuleDeclaration(A)",
+        "node": "TSNamespaceDeclaration(A)",
         "references": [
           {
             "flags": "ReferenceFlags(Type)",

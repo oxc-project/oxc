@@ -17,7 +17,7 @@ use rustc_hash::FxHashSet;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexVec;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
     ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
@@ -370,8 +370,7 @@ impl<'a, 'e> MergeTransform<'a, 'e> {
             let mut merged_scope = match stmts.next().unwrap() {
                 ReactiveStatement::Scope(s) => s,
                 _ => {
-                    return Err(ErrorCategory::Invariant
-                        .diagnostic("MergeConsecutiveScopes: Expected scope at starting index"));
+                    return Err(diagnostics::invariant_merge_consecutive_scopes_expected_scope_at_starting_index());
                 }
             };
             index += 1;

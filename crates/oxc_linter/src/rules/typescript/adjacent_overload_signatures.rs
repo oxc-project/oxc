@@ -206,8 +206,8 @@ impl GetMethod for ModuleDeclaration<'_> {
                     _ => None,
                 }
             }
-            ModuleDeclaration::ExportNamedDeclaration(named_decl) => {
-                if let Some(Declaration::FunctionDeclaration(func_decl)) = &named_decl.declaration {
+            ModuleDeclaration::ExportDeclaration(export_decl) => {
+                if let Declaration::FunctionDeclaration(func_decl) = &export_decl.declaration {
                     return func_decl.id.as_ref().map(|id| Method {
                         name: id.name.to_compact_str(),
                         r#static: false,

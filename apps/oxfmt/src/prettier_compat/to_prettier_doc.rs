@@ -19,6 +19,10 @@ use oxc_formatter_core::{
 /// where the IR must be returned to Prettier as an unresolved Doc (rather than a printed string)
 /// so that Prettier can handle line-wrapping in the parent context.
 ///
+/// The result envelope is `{ doc, refs, hasRootDedent }`:
+/// - `refs` carries shared sub-trees (below)
+/// - `hasRootDedent` tells the JS side a `dedent-to-root` needs its `-Infinity` restored (see [StartTagInfo::Dedent])
+///
 /// # Ref-based sharing
 ///
 /// `oxc_formatter` IR uses [`FormatElement::Interned`] to share sub-trees by pointer.
@@ -38,9 +42,23 @@ pub fn format_elements_to_prettier_doc(
     sorted_tailwind_classes: &[String],
 ) -> Result<Value, String> {
     let mut state = ConvertState::new(sorted_tailwind_classes);
-    let children = convert_elements(elements, &mut state)?;
+    // The conversion starts at a line start (the printer's `line_width == 0`),
+    // so a leading `Space` is dropped, not flushed.
+    // (Fragment Docs are spliced mid-line by Prettier, but no fragment IR can start with a `Space`.)
+    let children = convert_elements(elements, &mut state, LineState::Hardline)?;
     let doc = normalize_array(children);
-    Ok(json!({ "doc": doc, "refs": Value::Array(state.refs) }))
+    // The JS side skips the restore walk entirely when `hasRootDedent` is false,
+    // so a desync would silently drop dedents; pin the contract in debug builds.
+    debug_assert_eq!(
+        state.has_root_dedent,
+        contains_root_dedent(&doc) || state.refs.iter().any(contains_root_dedent),
+        "`hasRootDedent` must be set iff an `align n: null` (dedent-to-root) is emitted"
+    );
+    Ok(json!({
+        "doc": doc,
+        "refs": Value::Array(state.refs),
+        "hasRootDedent": state.has_root_dedent,
+    }))
 }
 
 type InternedCacheKey = (usize, usize);
@@ -51,11 +69,20 @@ struct ConvertState<'a> {
     interned_to_ref: FxHashMap<InternedCacheKey, usize>,
     /// Converted content per ref id (index = id).
     refs: Vec<Value>,
+    /// Whether any `dedent-to-root` was emitted:
+    /// its `n: -Infinity` is unrepresentable in JSON (emitted as `null`),
+    /// so the JS side must restore it (see `StartTagInfo::Dedent`).
+    has_root_dedent: bool,
 }
 
 impl<'a> ConvertState<'a> {
     fn new(sorted_tailwind_classes: &'a [String]) -> Self {
-        Self { sorted_tailwind_classes, interned_to_ref: FxHashMap::default(), refs: Vec::new() }
+        Self {
+            sorted_tailwind_classes,
+            interned_to_ref: FxHashMap::default(),
+            refs: Vec::new(),
+            has_root_dedent: false,
+        }
     }
 }
 
@@ -91,7 +118,7 @@ enum StartTagInfo {
 /// otherwise the `Doc` would contain redundant spaces/lines that the printer would have suppressed.
 ///
 /// Each field corresponds to a specific printer behavior in
-/// `crates/oxc_formatter/src/formatter/printer/mod.rs`.
+/// `crates/oxc_formatter_core/src/printer/mod.rs`.
 ///
 /// NOTE: If the printer gains new runtime optimizations that affect output,
 /// this struct may need corresponding updates.
@@ -106,12 +133,13 @@ struct PrinterState {
     /// Boolean semantics naturally deduplicates consecutive spaces.
     pending_space: bool,
 
-    /// Mirrors the printer's end-of-line state for hardline collapsing:
+    /// Mirrors the printer's end-of-line state for hardline collapsing and space suppression:
     /// its `line_width > 0` guard (`Content` vs the rest) and its `has_empty_line` cap (`Blank`).
-    /// See the `Line` arm of `Printer::print_element` in `printer/mod.rs`.
+    /// See the `Line` and `Space` arms of `Printer::print_element` in `printer/mod.rs`.
     ///
-    /// NOTE: the state resets to `Content` at `Interned` / `BestFitting` boundaries,
-    /// so element sequences crossing them are approximated;
+    /// The document start is a line start (`Hardline`);
+    /// `Interned` / `BestFitting` contents convert with a `Content` (mid-line) assumption,
+    /// so element sequences crossing those boundaries are approximated;
     /// the real IR shapes (straight-line emission) are what this mirrors faithfully.
     line: LineState,
 }
@@ -130,8 +158,8 @@ enum LineState {
 }
 
 impl PrinterState {
-    fn new() -> Self {
-        Self { pending_space: false, line: LineState::Content }
+    fn new(initial_line: LineState) -> Self {
+        Self { pending_space: false, line: initial_line }
     }
 
     /// Flushes the pending space (if any) by appending `" "` to the current scope's children.
@@ -147,16 +175,19 @@ impl PrinterState {
 fn convert_elements(
     elements: &[FormatElement],
     state: &mut ConvertState,
+    initial_line: LineState,
 ) -> Result<Vec<Value>, String> {
     let mut stack: Vec<StackEntry> =
         vec![StackEntry { start_tag: None, start_info: None, children: vec![] }];
-    let mut printer = PrinterState::new();
+    let mut printer = PrinterState::new(initial_line);
 
     for element in elements {
         match element {
             FormatElement::Space => {
-                printer.pending_space = true;
-                printer.line = LineState::Content;
+                // `Space` at the start of a line is dropped, never made pending
+                if printer.line == LineState::Content {
+                    printer.pending_space = true;
+                }
             }
             FormatElement::Token { text } => {
                 printer.flush_pending_space(&mut stack)?;
@@ -170,21 +201,34 @@ fn convert_elements(
             }
             FormatElement::Line(mode) => {
                 match mode {
-                    LineMode::SoftOrSpace => {
-                        // `SoftOrSpace` produces a space in flat mode, newline in expanded.
-                        // If `pending_space` is already set,
-                        // `SoftOrSpace` subsumes it (just like the printer's boolean idempotency).
-                        printer.pending_space = false;
-                        push_line(current_children_mut(&mut stack)?, *mode);
-                        printer.line = LineState::Content;
-                    }
-                    LineMode::Soft => {
-                        // Soft produces nothing in flat mode, newline in expanded.
+                    LineMode::SoftOrSpace | LineMode::Soft => {
+                        if *mode == LineMode::SoftOrSpace {
+                            // `SoftOrSpace` produces a space in flat mode, newline in expanded.
+                            // If `pending_space` is already set,
+                            // `SoftOrSpace` subsumes it (just like the printer's boolean idempotency).
+                            printer.pending_space = false;
+                        }
+                        // else: Soft produces nothing in flat mode, newline in expanded.
                         // Keep `pending_space` as-is (mirroring the printer).
-                        push_line(current_children_mut(&mut stack)?, *mode);
-                        printer.line = LineState::Content;
+
+                        // Mirror the printer's newline suppression at a line start (its `line_width > 0` guard):
+                        // a soft(-or-space) line right after a hardline emits nothing natively,
+                        // but Prettier's printer would print a second newline
+                        // (a spurious blank line, e.g. after a dangling comment in an otherwise-empty object).
+                        // Dropping the soft line instead would leave the following content on the hardline's (deeper) indentation,
+                        // so remove the trailing hardline and let the soft line provide the break at the current indentation.
+                        // In the printer, the LAST line element decides the pending indention.
+                        // The hardline's `break-parent` stays in place, keeping the enclosing groups broken so the soft line is guaranteed to break.
+                        let children = current_children_mut(&mut stack)?;
+                        let replaced_hard_line = printer.line != LineState::Content
+                            && strip_trailing_hard_line(children);
+                        push_line(children, *mode);
+                        if !replaced_hard_line {
+                            printer.line = LineState::Content;
+                        }
+                        // else: `printer.line` stays as-is — the output is still at a line start
                     }
-                    LineMode::Hard | LineMode::Empty => {
+                    LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty => {
                         printer.flush_pending_space(&mut stack)?;
                         // Mimic the printer's `line_width > 0` guard and `has_empty_line` cap:
                         // the printer only emits a newline when the line has content,
@@ -206,7 +250,11 @@ fn convert_elements(
                                     push_line(current_children_mut(&mut stack)?, LineMode::Hard);
                                     printer.line = LineState::Blank;
                                 }
-                                // `Hard` after `Hard` → skip (line already broken)
+                                // `Hard` after `Hard` → skip (line already broken).
+                                // Known gap: when the first hardline sits behind an `EndIndent`,
+                                // the skip leaves the doc's last line on the inner indentation (the printer would re-anchor to the outer level).
+                                // `children_are_only_hardlines` patches the no-content sub-case; no real IR is known to hit the rest.
+                                // The Soft arm above handles its equivalent via `strip_trailing_hard_line`.
                             }
                             LineState::Blank => {}
                         }
@@ -221,7 +269,7 @@ fn convert_elements(
                         // A blank is left behind from the start of a line always,
                         // mid-line only when a break remains after the line-ending one.
                         // NOTE: `line != Content` approximates the printer's `line_width == 0`,
-                        // they diverge at the document start and right after a `Literal` (blank there, mid-line here).
+                        // they diverge right after a `Literal` (blank there, mid-line here).
                         // Real IR always emits `ExactLineBreaks` after content, where they agree.
                         printer.line = if printer.line != LineState::Content || count.get() > 1 {
                             LineState::Blank
@@ -268,6 +316,9 @@ fn convert_elements(
                         }
                         printer.pending_space = false;
                     }
+                    if matches!(tag, Tag::StartDedent(DedentMode::Root)) {
+                        state.has_root_dedent = true;
+                    }
                     stack.push(StackEntry {
                         start_tag: Some(tag.clone()),
                         start_info: Some(extract_start_tag_info(tag)),
@@ -303,23 +354,7 @@ fn convert_elements(
                             "Invalid formatter IR: mismatched tags (start: `{start_tag:?}`, end: `{tag:?}`)"
                         ));
                     }
-                    let is_line_suffix = matches!(entry.start_info, Some(StartTagInfo::LineSuffix));
-                    let mut doc = build_doc(entry.start_info.as_ref(), entry.children);
-
-                    // The formatter always prepends a `Space` inside `LineSuffix` for separation
-                    // from preceding code (e.g. `x = 1; // comment`).
-                    // The printer guards this with `line_width > 0`,
-                    // so the `Space` is suppressed when the line has no content yet.
-                    // When the parent scope has no preceding content (e.g. comment-only `<script>` blocks),
-                    // strip the leading space from the `lineSuffix` contents to avoid a spurious leading space.
-                    if is_line_suffix
-                        && current_children_mut(&mut stack)?.is_empty()
-                        && let Value::Object(ref mut map) = doc
-                        && let Some(contents) = map.get_mut("contents")
-                    {
-                        strip_leading_space(contents);
-                    }
-
+                    let doc = build_doc(entry.start_info.as_ref(), entry.children);
                     current_children_mut(&mut stack)?.push(doc);
                 }
             }
@@ -346,7 +381,7 @@ fn convert_elements(
                     let id = state.refs.len();
                     state.refs.push(Value::Null);
                     state.interned_to_ref.insert(key, id);
-                    let converted = convert_elements(interned, state)?;
+                    let converted = convert_shared_elements(interned, state)?;
                     state.refs[id] = normalize_array(converted);
                     id
                 };
@@ -392,6 +427,16 @@ fn convert_elements(
         || Err("Invalid formatter IR: missing root stack entry".to_string()),
         |e| Ok(e.children),
     )
+}
+
+/// Converts `Interned` / `BestFitting` contents:
+/// they are emitted once and reused at arbitrary positions,
+/// so they convert under the mid-line (`Content`) assumption.
+fn convert_shared_elements(
+    elements: &[FormatElement],
+    state: &mut ConvertState,
+) -> Result<Vec<Value>, String> {
+    convert_elements(elements, state, LineState::Content)
 }
 
 fn current_children_mut(stack: &mut [StackEntry]) -> Result<&mut Vec<Value>, String> {
@@ -461,6 +506,9 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
         LineMode::Hard => {
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
+        }
+        LineMode::HardWithoutExpand => {
+            children.push(json!({"type": "line", "hard": true}));
         }
         LineMode::Empty => {
             // hardline x2
@@ -536,11 +584,16 @@ fn build_doc(start_info: Option<&StartTagInfo>, children: Vec<Value>) -> Value {
         StartTagInfo::Dedent(mode) => {
             let n: Value = match mode {
                 DedentMode::Level => Value::from(-1),
-                // NOTE: Prettier expects `n: Number.NEGATIVE_INFINITY` for `dedent-to-root`,
+                // Prettier expects `n: Number.NEGATIVE_INFINITY` for `dedent-to-root`,
                 // but JSON cannot represent `Infinity`.
-                // It will be `null`, which makes Prettier's `makeAlign()` treat it as a no-op.
-                // If that becomes a problem, we need a JSON reviver to fix it back to `-Infinity` on the JS side.
-                DedentMode::Root => Value::from(f64::NEG_INFINITY),
+                // Emit `null` and let the JS side restore it to `Number.NEGATIVE_INFINITY`,
+                // signaled by the top-level `hasRootDedent` flag.
+                //
+                // NOTE: `null` (not a self-describing marker string) on purpose:
+                // if the restore is ever missed, Prettier's `makeAlign()` treats a falsy `n` as a no-op (a layout-only miss),
+                // while a string `n` is a valid align form (literal indent text) and would inject the marker into the output.
+                // The flag/`null` consistency is pinned by the `debug_assert_eq` in [format_elements_to_prettier_doc].
+                DedentMode::Root => Value::Null,
             };
             json!({"type": "align", "n": n, "contents": normalize_array(children)})
         }
@@ -608,7 +661,7 @@ fn convert_best_fitting(
     }
 
     if variants.len() == 1 {
-        let first_contents = normalize_array(convert_elements(variants[0], state)?);
+        let first_contents = normalize_array(convert_shared_elements(variants[0], state)?);
         return Ok(json!({"type": "group", "contents": first_contents}));
     }
 
@@ -624,14 +677,14 @@ fn convert_best_fitting(
     // get later ids; `state.refs[id]` is filled in after.
     let first_id = state.refs.len();
     state.refs.push(Value::Null);
-    let first_content = normalize_array(convert_elements(variants[0], state)?);
+    let first_content = normalize_array(convert_shared_elements(variants[0], state)?);
     state.refs[first_id] = first_content;
     let first_ref = json!({ "_REF": first_id });
 
     let mut expanded_states: Vec<Value> = Vec::with_capacity(variants.len());
     expanded_states.push(first_ref.clone());
     for v in &variants[1..] {
-        expanded_states.push(normalize_array(convert_elements(v, state)?));
+        expanded_states.push(normalize_array(convert_shared_elements(v, state)?));
     }
 
     Ok(json!({
@@ -646,35 +699,81 @@ fn group_id_string(id: GroupId) -> String {
     format!("G{}", u32::from(id))
 }
 
+/// Whether the doc is a `break-parent` (as emitted by [push_line]).
+fn is_break_parent(value: &Value) -> bool {
+    matches!(value, Value::Object(map)
+        if map.get("type").and_then(Value::as_str) == Some("break-parent"))
+}
+
+/// Whether the doc is a hardline (as emitted by [push_line]), excluding literal
+/// lines (which always print and never take part in newline collapsing).
+fn is_hard_line(value: &Value) -> bool {
+    matches!(value, Value::Object(map)
+        if map.get("type").and_then(Value::as_str) == Some("line")
+            && map.get("hard") == Some(&Value::Bool(true))
+            && !map.contains_key("literal"))
+}
+
+/// Removes the trailing hardline doc (leaving its `break-parent` in place) from the deep tail of `children`,
+/// descending through transparent wrappers (arrays, `indent` / `align` / plain `group` contents).
+/// Returns `true` on removal.
+///
+/// Only a hardline followed by its own `break-parent` (i.e. `LineMode::Hard`) is removed:
+/// a bare hardline (`HardWithoutExpand`) must stay,
+/// since replacing it with a soft line could let the enclosing group flatten and lose the break entirely.
+/// `_REF` placeholders, `expandedStates` groups, fills, if-breaks, and line-suffixes are never descended into
+/// (shared or conditionally-printed content).
+fn strip_trailing_hard_line(children: &mut Vec<Value>) -> bool {
+    fn descend(value: &mut Value) -> bool {
+        match value {
+            Value::Array(inner) => strip_trailing_hard_line(inner),
+            Value::Object(map) => {
+                let ty = map.get("type").and_then(Value::as_str);
+                if matches!(ty, Some("indent" | "align"))
+                    || (ty == Some("group") && !map.contains_key("expandedStates"))
+                {
+                    map.get_mut("contents").is_some_and(descend)
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        }
+    }
+
+    // Scan back over trailing `break-parent`s to the last significant doc
+    let Some(i) = children.iter().rposition(|child| !is_break_parent(child)) else {
+        return false;
+    };
+    if is_hard_line(&children[i]) {
+        // No `break-parent` behind it → a bare `HardWithoutExpand`, keep it
+        if i + 1 == children.len() {
+            return false;
+        }
+        children.remove(i);
+        return true;
+    }
+    descend(&mut children[i])
+}
+
 /// Returns `true` if the children consist only of hardline docs and break-parent docs
 /// (i.e., no visible content that would benefit from indentation).
 fn children_are_only_hardlines(children: &[Value]) -> bool {
-    children.iter().all(|child| {
-        if let Value::Object(map) = child {
-            let ty = map.get("type").and_then(Value::as_str);
-            ty == Some("break-parent")
-                || (ty == Some("line") && map.get("hard") == Some(&Value::Bool(true)))
-        } else {
-            false
-        }
-    })
+    children.iter().all(|child| is_break_parent(child) || is_hard_line(child))
 }
 
-/// Strips a leading space character from a `Value`.
-/// Handles both plain strings (`" foo"` → `"foo"`) and arrays whose first element is a string.
-fn strip_leading_space(value: &mut Value) {
+/// Whether the doc (sub)tree contains a dedent-to-root (`align` with `n: null`).
+/// Debug-only backstop for the `hasRootDedent` contract (see the `debug_assert_eq` in [format_elements_to_prettier_doc]).
+/// Not `#[cfg(debug_assertions)]`: `debug_assert_eq!` type-checks its args even when off.
+fn contains_root_dedent(value: &Value) -> bool {
     match value {
-        Value::String(s) if s.starts_with(' ') => {
-            s.remove(0);
+        Value::Array(items) => items.iter().any(contains_root_dedent),
+        Value::Object(map) => {
+            (map.get("type").and_then(Value::as_str) == Some("align")
+                && map.get("n") == Some(&Value::Null))
+                || map.values().any(contains_root_dedent)
         }
-        Value::Array(arr) => {
-            if let Some(Value::String(s)) = arr.first_mut()
-                && s.starts_with(' ')
-            {
-                s.remove(0);
-            }
-        }
-        _ => {}
+        _ => false,
     }
 }
 
@@ -704,22 +803,22 @@ fn normalize_array(mut arr: Vec<Value>) -> Value {
 mod tests {
     use std::num::NonZeroU32;
 
-    use oxc_formatter_core::{FormatElement, LineMode};
-    use serde_json::Value;
+    use serde_json::{Value, json};
 
-    use super::format_elements_to_prettier_doc;
+    use oxc_formatter_core::{DedentMode, FormatElement, LineMode, Tag};
+
+    use super::{format_elements_to_prettier_doc, is_hard_line};
+
+    fn to_doc(elements: &[FormatElement]) -> Value {
+        format_elements_to_prettier_doc(elements, &[]).unwrap()
+    }
 
     /// Counts `{"type": "line", "hard": true}` nodes (excluding literal lines) in the Doc.
     fn count_hardlines(doc: &Value) -> usize {
         match doc {
             Value::Array(items) => items.iter().map(count_hardlines).sum(),
             Value::Object(map) => {
-                let own = usize::from(
-                    map.get("type").and_then(Value::as_str) == Some("line")
-                        && map.get("hard").and_then(Value::as_bool) == Some(true)
-                        && !map.contains_key("literal"),
-                );
-                own + map.values().map(count_hardlines).sum::<usize>()
+                usize::from(is_hard_line(doc)) + map.values().map(count_hardlines).sum::<usize>()
             }
             _ => 0,
         }
@@ -731,35 +830,118 @@ mod tests {
     const A: FormatElement<'static> = FormatElement::Token { text: "a" };
     const HARD: FormatElement<'static> = FormatElement::Line(LineMode::Hard);
     const EMPTY: FormatElement<'static> = FormatElement::Line(LineMode::Empty);
+    const SPACE: FormatElement<'static> = FormatElement::Space;
 
     #[test]
     fn exact_line_breaks_expand_to_that_many_hardlines() {
-        let doc = format_elements_to_prettier_doc(&[A, exact(3), A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(3), A]);
         assert_eq!(count_hardlines(&doc), 3);
     }
 
     #[test]
     fn empty_after_mid_line_single_exact_break_adds_a_blank() {
         // Mid-line count=1 leaves no blank behind: the following Empty may still add one.
-        let doc = format_elements_to_prettier_doc(&[A, exact(1), EMPTY, A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(1), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
     }
 
     #[test]
     fn empty_after_blank_leaving_exact_breaks_is_capped() {
         // Mid-line count=2 leaves a blank: the following Empty adds nothing.
-        let doc = format_elements_to_prettier_doc(&[A, exact(2), EMPTY, A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(2), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
 
         // From the start of a line even count=1 leaves a blank
         // (no break is consumed as a line ending), capping the Empty too.
-        let doc = format_elements_to_prettier_doc(&[A, HARD, exact(1), EMPTY, A], &[]).unwrap();
+        let doc = to_doc(&[A, HARD, exact(1), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
     }
 
     #[test]
     fn hard_after_exact_line_breaks_is_absorbed() {
-        let doc = format_elements_to_prettier_doc(&[A, exact(2), HARD, A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(2), HARD, A]);
         assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    const SOFT: FormatElement<'static> = FormatElement::Line(LineMode::Soft);
+    const HARD_NO_EXPAND: FormatElement<'static> = FormatElement::Line(LineMode::HardWithoutExpand);
+
+    #[test]
+    fn soft_after_hard_replaces_the_hardline() {
+        // The printer suppresses the soft line's newline at a line start;
+        // in the Doc the LAST line must survive (it decides the indention).
+        let doc = to_doc(&[A, HARD, SOFT, A]);
+        assert_eq!(
+            doc["doc"],
+            json!(["a", {"type": "break-parent"}, {"type": "line", "soft": true}, "a"])
+        );
+    }
+
+    #[test]
+    fn soft_after_hard_strips_through_a_closed_indent() {
+        // Dangling comment in an otherwise-empty object:
+        // `{` indent[softline, "// x", hardline] softline `}`
+        let doc = to_doc(&[
+            FormatElement::Token { text: "{" },
+            FormatElement::Tag(Tag::StartIndent),
+            SOFT,
+            FormatElement::Token { text: "// x" },
+            HARD,
+            FormatElement::Tag(Tag::EndIndent),
+            SOFT,
+            FormatElement::Token { text: "}" },
+        ]);
+        assert_eq!(
+            doc["doc"],
+            json!([
+                "{",
+                {"type": "indent", "contents": [
+                    {"type": "line", "soft": true},
+                    "// x",
+                    {"type": "break-parent"},
+                ]},
+                {"type": "line", "soft": true},
+                "}"
+            ])
+        );
+    }
+
+    #[test]
+    fn soft_after_hard_without_expand_keeps_both() {
+        // A bare hardline (no break-parent) must stay:
+        // replacing it with a soft line could let the enclosing group flatten and lose the break.
+        let doc = to_doc(&[A, HARD_NO_EXPAND, SOFT, A]);
+        assert_eq!(count_hardlines(&doc), 1);
+    }
+
+    #[test]
+    fn root_dedent_is_null_and_flagged() {
+        let doc = to_doc(&[
+            FormatElement::Tag(Tag::StartDedent(DedentMode::Root)),
+            A,
+            FormatElement::Tag(Tag::EndDedent(DedentMode::Root)),
+        ]);
+        assert_eq!(doc["doc"], json!({"type": "align", "n": null, "contents": "a"}));
+        assert_eq!(doc["hasRootDedent"], json!(true));
+
+        let doc = to_doc(&[A]);
+        assert_eq!(doc["hasRootDedent"], json!(false));
+    }
+
+    #[test]
+    fn space_at_line_start_is_dropped() {
+        // e.g. a comment-only program: the IR starts with the trailing-comment `Space`,
+        // which the printer drops at `line_width == 0`.
+        let doc = to_doc(&[SPACE, A]);
+        assert_eq!(doc["doc"], "a");
+
+        let doc = to_doc(&[A, HARD, SPACE, A]);
+        assert_eq!(
+            doc["doc"],
+            json!(["a", {"type": "line", "hard": true}, {"type": "break-parent"}, "a"])
+        );
+        // The dropped space must not resurrect a hardline collapse either.
+        let doc = to_doc(&[A, HARD, SPACE, HARD, A]);
+        assert_eq!(count_hardlines(&doc), 1);
     }
 }

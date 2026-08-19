@@ -69,14 +69,14 @@ impl<'a> PeepholeOptimizations {
         match stmt {
             Statement::EmptyStatement(_)
             | Statement::ImportDeclaration(_)
-            | Statement::ExportAllDeclaration(_) => true,
+            | Statement::ExportAllDeclaration(_)
+            | Statement::ExportNamedDeclaration(_)
+            | Statement::ExportFromDeclaration(_) => true,
             // `export { foo }`, `export { foo } from './x'`, `export type T = …` —
             // no executable code at the statement itself. The cyclic-eval hazard
             // from a `from` source is gated separately at program scope (see
             // `enter_program`).
-            Statement::ExportNamedDeclaration(e) => {
-                e.declaration.as_ref().is_none_or(Self::is_declarative_declaration)
-            }
+            Statement::ExportDeclaration(e) => Self::is_declarative_declaration(&e.declaration),
             // `export default function() {}` is hoisted; `export default <expr>`
             // or `export default class C extends … {}` runs user code.
             Statement::ExportDefaultDeclaration(e) => {

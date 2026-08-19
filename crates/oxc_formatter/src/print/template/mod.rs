@@ -6,17 +6,15 @@ use std::cmp;
 
 use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
+use oxc_formatter_core::{Format, FormatElement, IndentWidth, RemoveSoftLinesBuffer, VecBuffer};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, TailwindContextEntry, VecBuffer,
-        buffer::RemoveSoftLinesBuffer,
+        TailwindContextEntry,
         prelude::{document::Document, *},
-        printer::Printer,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     utils::{
@@ -732,10 +730,9 @@ impl<'a> EachTemplateTable<'a> {
 
             let root = Document::new(vec_buffer.into_vec(), Vec::default());
 
-            // let range = element.range();
             let print_options = f.options().as_print_options();
             // TODO: if `unwrap()` panics here, it's a internal error
-            let printed = Printer::new(print_options, &[]).print(&root).unwrap();
+            let printed = root.print(expr.span().size() as usize, print_options).unwrap();
             let text = f.allocator().alloc_str(&printed.into_code());
             let will_break = text.contains('\n');
 

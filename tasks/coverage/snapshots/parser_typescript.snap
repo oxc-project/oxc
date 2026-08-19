@@ -1,9 +1,9 @@
-commit: 637d5746
+commit: b465fdbf
 
 parser_typescript Summary:
-AST Parsed     : 9779/9779 (100.00%)
-Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1644/2640 (62.27%)
+AST Parsed     : 9783/9783 (100.00%)
+Positive Passed: 9783/9783 (100.00%)
+Negative Passed: 1647/2636 (62.48%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -776,8 +776,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/qualifiedMod
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/quickinfoTypeAtReturnPositionsInaccurate.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reboundIdentifierOnImportAlias.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveBaseCheck3.ts
@@ -823,8 +821,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferenc
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithReturn.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyUndefined.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationLabeled.ts
 
@@ -947,8 +943,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/voidAsNonAmb
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/widenedTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts
 
@@ -1081,12 +1075,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod11.ts
 
@@ -1743,8 +1731,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts
 
@@ -9335,7 +9321,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ 
    ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1234): An ambient module declaration is only allowed at the top level in a file.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -9353,23 +9339,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-   ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
- 1 │ function blah () {
- 2 │     namespace M { }
-   ·     ───────────────
- 3 │     export namespace N {
-   ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-   ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
- 2 │         namespace M { }
- 3 │ ╭─▶     export namespace N {
- 4 │ │           export interface I { }
- 5 │ ╰─▶     }
- 6 │     
-   ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -9386,24 +9355,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ 
    ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-   ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:7:5]
- 6 │ 
- 7 │     namespace Q.K { }
-   ·     ─────────────────
- 8 │ 
-   ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
-  8 │     
-  9 │ ╭─▶     declare module "ambient" {
- 10 │ │   
- 11 │ ╰─▶     }
- 12 │     
-    ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1234): An ambient module declaration is only allowed at the top level in a file.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -9437,7 +9389,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  9 │ 
    ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1234): An ambient module declaration is only allowed at the top level in a file.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:10:9]
   9 │     
  10 │ ╭─▶         declare module "ambient" {
@@ -11011,6 +10963,48 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  150 │     }
      ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:22:12]
+ 21 │     
+ 22 │ ╭─▶     export declare module "m1_M3_public" {
+ 23 │ │           export function f1();
+ 24 │ │           export class c1 {
+ 25 │ │           }
+ 26 │ │           export var v1: { new (): c1; };
+ 27 │ │           export var v2: c1;
+ 28 │ ╰─▶     }
+ 29 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:30:5]
+ 29 │     
+ 30 │ ╭─▶     declare module "m1_M4_private" {
+ 31 │ │           export function f1();
+ 32 │ │           export class c1 {
+ 33 │ │           }
+ 34 │ │           export var v1: { new (): c1; };
+ 35 │ │           export var v2: c1;
+ 36 │ ╰─▶     }
+ 37 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:133:9]
+ 132 │         namespace m2 {
+ 133 │ ╭─▶         declare module "abc" {
+ 134 │ ╰─▶         }
+ 135 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:138:9]
+ 137 │         namespace m2 {
+ 138 │ ╭─▶         module "abc2" {
+ 139 │ ╰─▶         }
+ 140 │         }
+     ╰────
+
   × TS(1147): Import declarations in a namespace cannot reference a module.
     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:59:5]
  58 │ 
@@ -11172,6 +11166,106 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  354 │     }
      ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:22:12]
+ 21 │     
+ 22 │ ╭─▶     export declare module "m1_M3_public" {
+ 23 │ │           export function f1();
+ 24 │ │           export class c1 {
+ 25 │ │           }
+ 26 │ │           export var v1: { new (): c1; };
+ 27 │ │           export var v2: c1;
+ 28 │ ╰─▶     }
+ 29 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:30:5]
+ 29 │     
+ 30 │ ╭─▶     declare module "m1_M4_private" {
+ 31 │ │           export function f1();
+ 32 │ │           export class c1 {
+ 33 │ │           }
+ 34 │ │           export var v1: { new (): c1; };
+ 35 │ │           export var v2: c1;
+ 36 │ ╰─▶     }
+ 37 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:106:12]
+ 105 │     
+ 106 │ ╭─▶     export declare module "m2_M3_public" {
+ 107 │ │           export function f1();
+ 108 │ │           export class c1 {
+ 109 │ │           }
+ 110 │ │           export var v1: { new (): c1; };
+ 111 │ │           export var v2: c1;
+ 112 │ ╰─▶     }
+ 113 │     
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:114:5]
+ 113 │     
+ 114 │ ╭─▶     declare module "m2_M4_private" {
+ 115 │ │           export function f1();
+ 116 │ │           export class c1 {
+ 117 │ │           }
+ 118 │ │           export var v1: { new (): c1; };
+ 119 │ │           export var v2: c1;
+ 120 │ ╰─▶     }
+ 121 │     
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:314:9]
+ 313 │         namespace m2 {
+ 314 │ ╭─▶         declare module "abc" {
+ 315 │ ╰─▶         }
+ 316 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:319:9]
+ 318 │         namespace m2 {
+ 319 │ ╭─▶         module "abc2" {
+ 320 │ ╰─▶         }
+ 321 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:322:5]
+ 321 │         }
+ 322 │ ╭─▶     module "abc3" {
+ 323 │ ╰─▶     }
+ 324 │     }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:328:9]
+ 327 │         namespace m2 {
+ 328 │ ╭─▶         declare module "abc" {
+ 329 │ ╰─▶         }
+ 330 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:333:9]
+ 332 │         namespace m2 {
+ 333 │ ╭─▶         module "abc2" {
+ 334 │ ╰─▶         }
+ 335 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:336:5]
+ 335 │         }
+ 336 │ ╭─▶     module "abc3" {
+ 337 │ ╰─▶     }
+ 338 │     }
+     ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/privateNameJsx.tsx:4:22]
  3 │     render() {
@@ -11187,6 +11281,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ┬
    ·         ╰── `;` expected
  4 │ 
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts:1:8]
+ 1 │ module 'M' {}
+   ·        ───
+ 2 │ 
    ╰────
 
   × Expected `,` or `)` but found `!`
@@ -13830,14 +13931,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  85 │ }
     ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
- 83 │ 
- 84 │     namespace Baz { export const value = 1234 }
-    ·     ───────────────────────────────────────────
- 85 │ }
-    ╰────
-
   × Unterminated regular expression
    ╭─[typescript/tests/cases/compiler/unterminatedRegexAtEndOfSource1.ts:1:9]
  1 │ var a = /
@@ -14079,14 +14172,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  16 │         
     ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
- 14 │     
- 15 │     namespace M {} // error
-    ·     ──────────────
- 16 │         
-    ╰────
-
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:3:1]
  2 │ 
@@ -14184,6 +14269,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  42 │     }
     ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:47:5]
+ 46 │ namespace M2 {
+ 47 │     declare module 'nope' { }
+    ·     ─────────────────────────
+ 48 │ }
+    ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
  56 │     export var q;
@@ -14192,6 +14285,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  58 │ }
     ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts:2:12]
+ 1 │ namespace M {
+ 2 │     export declare module "M" { }
+   ·            ──────────────────────
+ 3 │ }
+   ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]
@@ -25623,9 +25724,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ }
    ╰────
 
-  × Expected `{` but found `EOF`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause6.ts:1:24]
+  × TS(1097): 'extends' list cannot be empty.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause6.ts:1:13]
  1 │ interface I extends { }
+   ·             ───────
    ╰────
 
   × Unexpected token
@@ -26706,6 +26808,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
  1 │ / b;
    · ────
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts:1:8]
+ 1 │ module "Foo" {
+   ·        ─────
+ 2 │ }
    ╰────
 
   × TS(1038): A 'declare' modifier cannot be used in an already ambient context.

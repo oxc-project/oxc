@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
 
 use super::{
     FormatWrite,
@@ -10,7 +11,7 @@ use super::{
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{Buffer, prelude::*, trivia::FormatLeadingComments},
+    formatter::{prelude::*, trivia::FormatLeadingComments},
     print::semicolon::OptionalSemicolon,
     write,
 };

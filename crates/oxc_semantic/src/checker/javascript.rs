@@ -31,9 +31,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt
-            && decl.source.is_none()
-        {
+        if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
@@ -256,7 +254,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             // * It is a Syntax Error if the BoundNames of BindingList contains "let".
             for node_kind in ctx.ancestry().ancestor_kinds() {
                 match node_kind {
-                    AstKind::VariableDeclarator(decl) => {
+                    AstKind::VariableDeclaration(decl) => {
                         if decl.kind.is_lexical() {
                             ctx.error(diagnostics::invalid_let_declaration(
                                 decl.kind.as_str(),
@@ -422,7 +420,7 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     //   legacy_octalEscapeSequence
     //   non_octal_decimal_escape_sequence
     // It is a Syntax Error if the source text matched by this production is strict mode code.
-    if !ctx.strict_mode() {
+    if !ctx.strict_mode() || matches!(ctx.ancestry().parent_kind(), AstKind::JSXAttribute(_)) {
         return;
     }
     let raw = lit.span.source_text(ctx.source_text);
@@ -522,8 +520,10 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
     let text = match decl {
         ModuleDeclarationKind::Import(_) => "import statement",
         ModuleDeclarationKind::ExportAll(_)
+        | ModuleDeclarationKind::Export(_)
         | ModuleDeclarationKind::ExportDefault(_)
         | ModuleDeclarationKind::ExportNamed(_)
+        | ModuleDeclarationKind::ExportFrom(_)
         | ModuleDeclarationKind::TSExportAssignment(_)
         | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
     };
@@ -616,7 +616,10 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var {
+    let AstKind::VariableDeclaration(declaration) = ctx.ancestry().parent_kind() else {
+        unreachable!();
+    };
+    if declaration.kind != VariableDeclarationKind::Var {
         return;
     }
 
@@ -909,20 +912,17 @@ pub fn check_for_statement_left(
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
-    // initializer is not allowed for for-in / for-of
+    // The parser checks initialized lexical declarations and multiple declarations. The
+    // remaining cases depend on strict mode or the binding form.
     if decl.declarations.len() > 1 {
-        return ctx.error(diagnostics::multiple_declaration_in_for_loop_head(
-            if is_for_in { "in" } else { "of" },
-            decl.span,
-        ));
+        return;
     }
 
     let strict_mode = ctx.strict_mode();
     for declarator in &decl.declarations {
         if declarator.init.is_some()
-            && (strict_mode
+            && ((strict_mode && decl.kind.is_var())
                 || !is_for_in
-                || decl.kind.is_lexical()
                 || !matches!(declarator.id, BindingPattern::BindingIdentifier(_)))
         {
             ctx.error(diagnostics::unexpected_initializer_in_for_loop_head(
@@ -1068,7 +1068,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                         //
                         // If it *is* possible, I'm also not sure what correct behavior should be.
                         // As best guess, treating it like class properties:
-                        // Treat `parameters` like computed key, `type_annotation` like initializer value.
+                        // Treat `parameter` like computed key, `type_annotation` like initializer value.
                         if sig.type_annotation.address() == previous_node_address {
                             // In signature's `type_annotation` - `super.foo` is legal here, `super()` is not
                             if super_call_span.is_some() {
@@ -1076,7 +1076,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                             }
                             return;
                         }
-                        // In `parameters` - treat like computed key
+                        // In `parameter` - treat like computed key
                     }
                     _ => {
                         previous_node_address = ancestor_kind.address();
@@ -1204,7 +1204,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                         let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
                         let class =
                             ctx.ancestry().find_kind_by_node_id(class_node_id).as_class().unwrap();
-                        if class.super_class.is_none() {
+                        if class.heritage.is_none() {
                             ctx.error(diagnostics::super_without_derived_class(
                                 sup.span, class.span,
                             ));

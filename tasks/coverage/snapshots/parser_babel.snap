@@ -1,9 +1,9 @@
-commit: c86e9e4b
+commit: 1eac4481
 
 parser_babel Summary:
-AST Parsed     : 2235/2235 (100.00%)
-Positive Passed: 2221/2235 (99.37%)
-Negative Passed: 1728/1743 (99.14%)
+AST Parsed     : 2234/2234 (100.00%)
+Positive Passed: 2218/2234 (99.28%)
+Negative Passed: 1728/1742 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -31,8 +31,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -246,6 +244,34 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts:3:8]
+ 2 │ namespace M.N.O {}
+ 3 │ module "m" {}
+   ·        ───
+ 4 │ module 'n' {}
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts:4:8]
+ 3 │ module "m" {}
+ 4 │ module 'n' {}
+   ·        ───
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts:3:3]
+ 2 │       import type { JSONSchema7 } from 'json-schema';
+ 3 │ ╭─▶   module 'test/sub2' {
+ 4 │ │       export { JSONSchema7 }
+ 5 │ ╰─▶   }
+ 6 │     }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
@@ -1356,7 +1382,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ [
    ╰────
 
-  × Unexpected token
+  × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/376/input.js:1:3]
  1 │ [,
    ╰────
@@ -1371,7 +1397,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 1 + { t:t
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/379/input.js:1:11]
  1 │ 1 + { t:t,
    ╰────
@@ -10835,7 +10861,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ [
    ╰────
 
-  × Unexpected token
+  × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0058/input.js:2:1]
  1 │ [,
    ╰────
@@ -10850,7 +10876,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 1 + { t:t
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0061/input.js:2:1]
  1 │ 1 + { t:t,
    ╰────
@@ -12942,8 +12968,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ──
    ╰────
 
-  × Expected `{` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:3:1]
+  × TS(1097): 'extends' list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:1:15]
+ 1 │ interface foo extends {
+   ·               ───────
  2 │ }
    ╰────
 
@@ -14176,23 +14204,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor cannot have rest parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:11]
- 1 │ interface Foo {
- 2 │   set bar(...v);
-   ·           ────
- 3 │ }
-   ╰────
-
-  × TS(1049): A 'set' accessor must have exactly one parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:10]
- 1 │ interface Foo {
- 2 │   set bar(...v);
-   ·          ──────
- 3 │ }
-   ╰────
-  help: Add a parameter here
-
   × TS(1095): A 'set' accessor cannot have a return type annotation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-return-types/input.ts:2:17]
  1 │ interface Foo {
@@ -14248,6 +14259,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ // Every extend element here is invalid
  2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
    ·                           ─────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:38]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                      ─────────
    ╰────
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
@@ -14690,6 +14708,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts:3:21]
+ 2 │ // but they are always type-checking errors.
+ 3 │ interface A extends this.B {}
+   ·                     ──────
+ 4 │ type T = typeof var.bar;
+   ╰────
 
   × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts:2:12]

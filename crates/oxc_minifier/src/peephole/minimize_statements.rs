@@ -165,7 +165,7 @@ impl<'a> PeepholeOptimizations {
                             };
                             let prev_stmt = stmts.pop().unwrap();
                             let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let mut prev_if = prev_if.unbox();
+                            let prev_if = prev_if.unbox();
                             let Statement::ReturnStatement(prev_return) = prev_if.consequent else {
                                 unreachable!()
                             };
@@ -173,47 +173,23 @@ impl<'a> PeepholeOptimizations {
                             let left_span = prev_return.span;
                             let right_span = last_return.span;
                             // "if (a) return; return b;" => "return a ? void 0 : b;"
-                            let mut left = prev_return
+                            let left = prev_return
                                 .unbox()
                                 .argument
                                 .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
                             // "if (a) return a; return;" => "return a ? b : void 0;"
-                            let mut right = last_return
+                            let right = last_return
                                 .unbox()
                                 .argument
                                 .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
-                            // "if (!a) return b; return c;" => "return a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
-                                && unary_expr.operator.is_not()
-                            {
-                                prev_if.test = unary_expr.argument.take_in(ctx);
-                                std::mem::swap(&mut left, &mut right);
-                            }
-
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
-                                // "if (a, b) return c; return d;" => "return a, b ? c : d;"
-                                let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
-                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
-                            } else {
-                                // "if (a) return b; return c;" => "return a ? b : c;"
-                                Self::minimize_conditional(
-                                    prev_if.span,
-                                    prev_if.test.take_in(ctx),
-                                    left,
-                                    right,
-                                    ctx,
-                                )
-                            };
+                            let argument = Self::minimize_conditional_after_if(
+                                prev_if.span,
+                                prev_if.test,
+                                left,
+                                right,
+                                ctx,
+                            );
                             let last_return_stmt =
                                 Statement::new_return_statement(right_span, Some(argument), ctx);
                             stmts.push(last_return_stmt);
@@ -270,46 +246,19 @@ impl<'a> PeepholeOptimizations {
                             };
                             let prev_stmt = stmts.pop().unwrap();
                             let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let mut prev_if = prev_if.unbox();
+                            let prev_if = prev_if.unbox();
                             let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
                                 unreachable!()
                             };
 
                             let right_span = last_throw.span;
-                            let mut left = prev_throw.unbox().argument;
-                            let mut right = last_throw.unbox().argument;
-
-                            // "if (!a) throw b; throw c;" => "throw a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
-                                && unary_expr.operator.is_not()
-                            {
-                                prev_if.test = unary_expr.argument.take_in(ctx);
-                                std::mem::swap(&mut left, &mut right);
-                            }
-
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
-                                // "if (a, b) throw c; throw d;" => "throw a, b ? c : d;"
-                                let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
-                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
-                            } else {
-                                // "if (a) throw b; throw c;" => "throw a ? b : c;"
-                                Self::minimize_conditional(
-                                    prev_if.span,
-                                    prev_if.test.take_in(ctx),
-                                    left,
-                                    right,
-                                    ctx,
-                                )
-                            };
+                            let argument = Self::minimize_conditional_after_if(
+                                prev_if.span,
+                                prev_if.test,
+                                prev_throw.unbox().argument,
+                                last_throw.unbox().argument,
+                                ctx,
+                            );
                             let last_throw_stmt =
                                 Statement::new_throw_statement(right_span, argument, ctx);
                             stmts.push(last_throw_stmt);
@@ -371,6 +320,36 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    fn minimize_conditional_after_if(
+        span: Span,
+        test: Expression<'a>,
+        consequent: Expression<'a>,
+        alternate: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        match test {
+            // "if (!a) return/throw b; return/throw c;" => "return/throw a ? c : b;"
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                Self::minimize_conditional(
+                    span,
+                    unary_expr.unbox().argument,
+                    alternate,
+                    consequent,
+                    ctx,
+                )
+            }
+            // "if (a, b) return/throw c; return/throw d;" => "return/throw a, b ? c : d;"
+            Expression::SequenceExpression(mut sequence_expr) => {
+                let test = sequence_expr.expressions.pop().unwrap();
+                let conditional =
+                    Self::minimize_conditional(span, test, consequent, alternate, ctx);
+                sequence_expr.expressions.push(conditional);
+                Expression::SequenceExpression(sequence_expr)
+            }
+            test => Self::minimize_conditional(span, test, consequent, alternate, ctx),
+        }
+    }
+
     fn minimize_statement(
         stmt: Statement<'a>,
         i: usize,
@@ -408,9 +387,6 @@ impl<'a> PeepholeOptimizations {
             }
             Statement::ForOfStatement(for_of_stmt) => {
                 Self::handle_for_of_statement(for_of_stmt, result, ctx);
-            }
-            Statement::LabeledStatement(label_stmt) => {
-                Self::handle_labeled_statement(label_stmt, result, ctx);
             }
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
@@ -471,7 +447,10 @@ impl<'a> PeepholeOptimizations {
 
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
-            && var_decl.declarations.iter().all(|d| !Self::should_remove_unused_declarator(d, ctx))
+            && var_decl
+                .declarations
+                .iter()
+                .all(|d| !Self::should_remove_unused_declarator(d, var_decl.kind, ctx))
         {
             result.push(Statement::VariableDeclaration(var_decl));
             return;
@@ -484,7 +463,7 @@ impl<'a> PeepholeOptimizations {
         }
         let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
-            if Self::should_remove_unused_declarator(&decl, ctx) {
+            if Self::should_remove_unused_declarator(&decl, kind, ctx) {
                 // `init` is `mut` because `remove_unused_expression` rewrites
                 // it in place (peeling pure-call wrappers, etc). It is taken
                 // out first because it may survive as an expression statement
@@ -630,13 +609,14 @@ impl<'a> PeepholeOptimizations {
         if !matches!(&var_decl.kind, VariableDeclarationKind::Var | VariableDeclarationKind::Let) {
             return false;
         }
+        let declaration_kind = var_decl.kind;
         for decl in var_decl.declarations.iter_mut().rev() {
             let BindingPattern::BindingIdentifier(kind) = &decl.id else {
                 break;
             };
             if kind.name == id.name {
                 if decl.init.is_none()
-                    && (decl.kind == VariableDeclarationKind::Var
+                    && (declaration_kind == VariableDeclarationKind::Var
                         || assign_expr.right.is_literal_value(true, ctx))
                 {
                     // "var a; a = b();" => "var a = b();"
@@ -658,7 +638,7 @@ impl<'a> PeepholeOptimizations {
             }
             // should not move assignment above other variables for let
             // this could cause TDZ errors (e.g. `let a, b; b = a;`)
-            if decl.kind == VariableDeclarationKind::Let {
+            if declaration_kind == VariableDeclarationKind::Let {
                 break;
             }
         }
@@ -769,11 +749,8 @@ impl<'a> PeepholeOptimizations {
         }
 
         if switch_stmt.cases.is_empty() {
-            result.push(Statement::new_expression_statement(
-                switch_stmt.span,
-                switch_stmt.discriminant.take_in(ctx),
-                ctx,
-            ));
+            let SwitchStatement { span, discriminant, .. } = switch_stmt.unbox();
+            result.push(Statement::new_expression_statement(span, discriminant, ctx));
             return;
         } else if let Some(last_case) = switch_stmt.cases.last_mut()
             && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
@@ -786,29 +763,31 @@ impl<'a> PeepholeOptimizations {
         if !ctx.is_tree_shake_only()
             && switch_stmt.cases.len() == 1
             && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
-            && let Some(mut case) = switch_stmt.cases.pop()
+            && let Some(case) = switch_stmt.cases.pop()
         {
             ctx.notice_change();
+            let switch_scope_id = switch_stmt.scope_id();
+            let SwitchStatement { span: switch_span, discriminant, .. } = switch_stmt.unbox();
+            let SwitchCase { span: case_span, test, mut consequent, .. } = case;
 
-            let block_stmt = if case.consequent.len() == 1
-                && matches!(case.consequent[0], Statement::BlockStatement(_))
-            {
-                case.consequent.pop().unwrap()
-            } else {
-                Statement::new_block_statement_with_scope_id(
-                    case.span,
-                    case.consequent.take_in(ctx),
-                    switch_stmt.scope_id(),
-                    ctx,
-                )
-            };
+            let block_stmt =
+                if consequent.len() == 1 && matches!(consequent[0], Statement::BlockStatement(_)) {
+                    consequent.pop().unwrap()
+                } else {
+                    Statement::new_block_statement_with_scope_id(
+                        case_span,
+                        consequent,
+                        switch_scope_id,
+                        ctx,
+                    )
+                };
 
-            if let Some(test) = case.test {
+            if let Some(test) = test {
                 result.push(Statement::new_if_statement(
-                    switch_stmt.span,
+                    switch_span,
                     Expression::new_binary_expression(
                         SPAN,
-                        switch_stmt.discriminant.take_in(ctx),
+                        discriminant,
                         BinaryOperator::StrictEquality,
                         test,
                         ctx,
@@ -820,10 +799,10 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            if !switch_stmt.discriminant.is_literal() {
+            if !discriminant.is_literal() {
                 result.push(Statement::new_expression_statement(
-                    switch_stmt.discriminant.span(),
-                    switch_stmt.discriminant.take_in(ctx),
+                    discriminant.span(),
+                    discriminant,
                     ctx,
                 ));
             }
@@ -865,15 +844,20 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
                     // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
                     // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                    if_stmt.test = Self::join_with_left_associative_op(
-                        if_stmt.test.span(),
-                        LogicalOperator::Or,
-                        prev_if_stmt.test.take_in(ctx),
-                        if_stmt.test.take_in(ctx),
-                        ctx,
-                    );
-                    let dropped = result.pop().unwrap();
-                    ctx.drop_statement(&dropped);
+                    let previous = result.pop().unwrap();
+                    let Statement::IfStatement(previous) = previous else { unreachable!() };
+                    let previous = previous.unbox();
+                    let span = if_stmt.test.span();
+                    ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                        Self::join_with_left_associative_op(
+                            span,
+                            LogicalOperator::Or,
+                            previous.test,
+                            test,
+                            ctx,
+                        )
+                    });
+                    ctx.drop_statement(&previous.consequent);
                 }
 
                 if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
@@ -890,20 +874,11 @@ impl<'a> PeepholeOptimizations {
                     //   if (a(() => b)) return; let b;
                     //   if (a(() => b)) { let b; }
                     //
-                    let mut can_move_branch_condition_outside_scope = true;
-                    if let Some(alternate) = &if_stmt.alternate
-                        && Self::statement_cares_about_scope(alternate)
-                    {
-                        can_move_branch_condition_outside_scope = false;
-                    }
-                    if let Some(stmts) = stmts.get(i + 1..) {
-                        for stmt in stmts {
-                            if Self::statement_cares_about_scope(stmt) {
-                                can_move_branch_condition_outside_scope = false;
-                                break;
-                            }
-                        }
-                    }
+                    let can_move_branch_condition_outside_scope =
+                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
+                            && !stmts.get(i + 1..).is_some_and(|stmts| {
+                                stmts.iter().any(Self::statement_cares_about_scope)
+                            });
 
                     if can_move_branch_condition_outside_scope {
                         let drained_stmts = stmts.drain(i + 1..);
@@ -919,9 +894,8 @@ impl<'a> PeepholeOptimizations {
                         } else {
                             body[0].span()
                         };
-                        let test = if_stmt.test.take_in(ctx);
-                        let mut test = Self::minimize_not(test.span(), test, ctx);
-                        Self::minimize_expression_in_boolean_context(&mut test, ctx);
+                        let test = if_stmt.unbox().test;
+                        let test = Self::minimize_not(test.span(), test, ctx, true);
                         let consequent = if body.len() == 1 {
                             body.remove(0)
                         } else {
@@ -941,11 +915,14 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
-            if if_stmt.alternate.is_some() && if_stmt.consequent.is_terminated() {
+            if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
+                && if_stmt.consequent.is_terminated()
+            {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
                 loop {
                     if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
                         && if_stmt.consequent.is_terminated()
                         && let Some(stmt) = if_stmt.alternate.take()
                     {
@@ -989,11 +966,10 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
                 } else {
-                    result.push(Statement::new_expression_statement(
-                        argument.span(),
-                        argument.take_in(ctx),
-                        ctx,
-                    ));
+                    let span = argument.span();
+                    let argument = ret_stmt.argument.take().unwrap();
+                    result.push(Statement::new_expression_statement(span, argument, ctx));
+                    ctx.notice_change();
                 }
             }
             if let Some(old) = ret_stmt.argument.take() {
@@ -1049,10 +1025,11 @@ impl<'a> PeepholeOptimizations {
         if let Some(init) = &mut for_stmt.init {
             match init {
                 ForStatementInit::VariableDeclaration(var_decl) => {
+                    let declaration_kind = var_decl.kind;
                     if let Some(first_decl) = var_decl.declarations.first_mut()
                         && let Some(first_decl_init) = first_decl.init.as_mut()
                     {
-                        let is_block_scoped_decl = !first_decl.kind.is_var();
+                        let is_block_scoped_decl = !declaration_kind.is_var();
                         Self::substitute_single_use_symbol_in_statement(
                             first_decl_init,
                             result,
@@ -1074,13 +1051,14 @@ impl<'a> PeepholeOptimizations {
         }
 
         if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
+            let declaration_kind = var_decl.kind;
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain_mut(|decl| {
-                let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| Self::has_side_effects_or_preserved_iife(init, ctx));
+                let should_keep =
+                    !Self::should_remove_unused_declarator(decl, declaration_kind, ctx)
+                        || decl.init.as_ref().is_some_and(|init| {
+                            Self::has_side_effects_or_preserved_iife(init, ctx)
+                        });
                 if !should_keep {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
@@ -1110,10 +1088,12 @@ impl<'a> PeepholeOptimizations {
                             ctx.drop_statement(&dropped);
                         }
                     } else {
-                        for_stmt.init =
-                            Some(ForStatementInit::from(prev_expr_stmt.expression.take_in(ctx)));
-                        let dropped = result.pop().unwrap();
-                        ctx.drop_statement(&dropped);
+                        let previous = result.pop().unwrap();
+                        let Statement::ExpressionStatement(previous) = previous else {
+                            unreachable!()
+                        };
+                        for_stmt.init = Some(ForStatementInit::from(previous.unbox().expression));
+                        ctx.notice_change();
                     }
                 }
                 Some(Statement::VariableDeclaration(prev_var_decl)) => {
@@ -1169,32 +1149,30 @@ impl<'a> PeepholeOptimizations {
                 Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
                     // Annex B.3.5 allows initializers in non-strict mode
                     // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
-                    // If there's a side-effectful initializer, we should not move the previous statement inside.
-                    let has_side_effectful_initializer = {
-                        if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
-                            if var_decl.declarations.len() == 1 {
-                                // only var can have a initializer
-                                var_decl.kind.is_var()
-                                    && var_decl.declarations[0]
-                                        .init
-                                        .as_ref()
-                                        .is_some_and(|init| init.may_have_side_effects(ctx))
-                            } else {
-                                // the spec does not allow multiple declarations though
-                                true
-                            }
-                        } else {
-                            false
-                        }
-                    };
-                    // Only allow inlining when the for-in variable is declared with `var`.
+                    // Only allow inlining when the for-in variable is declared with `var` and
+                    // there's not a side-effectful initializer.
                     // Block-scoped declarations (let/const) can cause variable shadowing issues
                     // where the inlined expression might reference a variable with the same name
                     // as the for-in variable, but after inlining, it would incorrectly refer to
                     // the shadowed for-in variable instead.
-                    // See: https://github.com/oxc-project/oxc/issues/18650
-                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
-                    if !has_side_effectful_initializer && !is_block_scoped {
+                    // <https://github.com/oxc-project/oxc/issues/18650>
+                    let can_inline = if let ForStatementLeft::VariableDeclaration(var_decl) =
+                        &for_in_stmt.left
+                    {
+                        match var_decl.declarations.as_slice() {
+                            [decl] => {
+                                var_decl.kind.is_var()
+                                    && !decl
+                                        .init
+                                        .as_ref()
+                                        .is_some_and(|init| init.may_have_side_effects(ctx))
+                            }
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    };
+                    if can_inline {
                         let a = &mut prev_expr_stmt.expression;
                         for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
                         let dropped = result.pop().unwrap();
@@ -1275,34 +1253,7 @@ impl<'a> PeepholeOptimizations {
         result.push(Statement::ForOfStatement(for_of_stmt));
     }
 
-    fn handle_labeled_statement(
-        mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
-        result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
-            Self::minimize_statements(&mut block_stmt.body, ctx);
-        } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
-            let mut stmts = ArenaVec::from_value_in(labeled_stmt.body.take_in(ctx), ctx);
-            Self::minimize_statements(&mut stmts, ctx);
-            labeled_stmt.body = match stmts.len() {
-                0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
-                1 => stmts[0].take_in(ctx),
-                _ => {
-                    ctx.notice_change();
-                    Statement::new_block_statement_with_scope_id(
-                        labeled_stmt.span,
-                        stmts,
-                        ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                        ctx,
-                    )
-                }
-            };
-        }
-        result.push(Statement::LabeledStatement(labeled_stmt));
-    }
-
-    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
+    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9839>
     fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
         block_stmt: ArenaBox<'a, BlockStatement<'a>>,
@@ -1317,7 +1268,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9767>
+    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9754-L9768>
     pub fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
         match stmt {
             Statement::BlockStatement(_)
@@ -1336,8 +1287,8 @@ impl<'a> PeepholeOptimizations {
             | Statement::ReturnStatement(_)
             | Statement::ThrowStatement(_)
             | Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::LabeledStatement(_) => false,
+            | Statement::ContinueStatement(_) => false,
+            Statement::LabeledStatement(label) => Self::statement_cares_about_scope(&label.body),
             Statement::VariableDeclaration(decl) => !decl.kind.is_var(),
             _ => true,
         }

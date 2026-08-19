@@ -17,10 +17,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
-        let (object_expression_properties, comma_span) = self.context_add(Context::In, |p| {
+        let (object_expression_properties, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
                 Kind::Comma,
@@ -28,11 +28,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Self::parse_object_expression_property,
             )
         });
-        if let Some(comma_span) = comma_span {
-            self.state.trailing_commas.insert(span, self.end_span(comma_span));
+        if let Some(comma_start) = comma_start
+            && matches!(
+                object_expression_properties.last(),
+                Some(ObjectPropertyKind::SpreadProperty(_))
+            )
+        {
+            self.state.trailing_commas.insert(start, self.end_span(comma_start));
         }
         self.expect(Kind::RCurly);
-        ObjectExpression::boxed(self.end_span(span), object_expression_properties, self)
+        ObjectExpression::boxed(self.end_span(start), object_expression_properties, self)
     }
 
     fn parse_object_expression_property(&mut self) -> ObjectPropertyKind<'a> {
@@ -44,7 +49,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// `PropertyDefinition`[Yield, Await]
     fn parse_object_literal_element(&mut self) -> ArenaBox<'a, ObjectProperty<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
 
         let modifiers = self.parse_modifiers(
             /* permit_const_as_modifier */ false,
@@ -52,11 +57,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         if self.parse_contextual_modifier(Kind::Get) {
-            return self.parse_method_getter_setter(span, PropertyKind::Get, &modifiers);
+            return self.parse_method_getter_setter(start, PropertyKind::Get, &modifiers);
         }
 
         if self.parse_contextual_modifier(Kind::Set) {
-            return self.parse_method_getter_setter(span, PropertyKind::Set, &modifiers);
+            return self.parse_method_getter_setter(start, PropertyKind::Set, &modifiers);
         }
 
         let asterisk_token = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
@@ -77,7 +82,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 FunctionKind::ObjectMethod,
             );
             return ObjectProperty::boxed(
-                self.end_span(span),
+                self.end_span(start),
                 PropertyKind::Init,
                 key,
                 Expression::FunctionExpression(method),
@@ -108,18 +113,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self,
                     );
                     let expr = AssignmentExpression::new(
-                        self.end_span(span),
+                        self.end_span(start),
                         AssignmentOperator::Assign,
                         left,
                         right,
                         self,
                     );
-                    self.state.cover_initialized_name.insert(span, expr);
+                    self.state.cover_initialized_name.insert(start, expr);
                 }
                 let value =
                     Expression::new_identifier(identifier_name.span, identifier_name.name, self);
                 ObjectProperty::boxed(
-                    self.end_span(span),
+                    self.end_span(start),
                     PropertyKind::Init,
                     PropertyKey::StaticIdentifier(identifier_name),
                     value,
@@ -132,31 +137,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.unexpected()
             }
         } else {
-            self.parse_property_definition_assignment(span, key, computed)
+            self.parse_property_definition_assignment(start, key, computed)
         }
     }
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
     pub(crate) fn parse_spread_element(&mut self) -> ArenaBox<'a, SpreadElement<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher();
-        SpreadElement::boxed(self.end_span(span), argument, self)
+        SpreadElement::boxed(self.end_span(start), argument, self)
     }
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   `PropertyName`[?Yield, ?Await] : `AssignmentExpression`[+In, ?Yield, ?Await]
     fn parse_property_definition_assignment(
         &mut self,
-        span: u32,
+        start: u32,
         key: PropertyKey<'a>,
         computed: bool,
     ) -> ArenaBox<'a, ObjectProperty<'a>> {
         self.expect(Kind::Colon);
         let value = self.parse_assignment_expression_or_higher();
         ObjectProperty::boxed(
-            self.end_span(span),
+            self.end_span(start),
             PropertyKind::Init,
             key,
             value,
@@ -211,7 +216,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   set `ClassElementName`[?Yield, ?Await] ( `PropertySetParameterList` ) { `FunctionBody`[~Yield, ~Await] }
     fn parse_method_getter_setter(
         &mut self,
-        span: u32,
+        start: u32,
         kind: PropertyKind,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, ObjectProperty<'a>> {
@@ -229,7 +234,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
         ObjectProperty::boxed(
-            self.end_span(span),
+            self.end_span(start),
             kind,
             key,
             Expression::FunctionExpression(function),

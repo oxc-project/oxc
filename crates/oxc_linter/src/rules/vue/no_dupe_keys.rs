@@ -88,7 +88,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeKeys {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -184,7 +184,7 @@ fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
         if matches!(
             ancestor.kind(),
             AstKind::ExportDefaultDeclaration(_)
-                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDeclaration(_)
                 | AstKind::ExpressionStatement(_)
                 | AstKind::VariableDeclaration(_)
         ) {

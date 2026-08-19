@@ -127,6 +127,7 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+    has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
     /// so the emission site can recover verbatim source text instead of a
@@ -195,6 +196,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
@@ -697,6 +699,7 @@ impl<'a> Codegen<'a> {
         for directive in directives {
             directive.print(self, ctx);
         }
+
         let Some((first, rest)) = stmts.split_first() else {
             self.print_orphan_comments_before(scope_end);
             return;
@@ -704,23 +707,41 @@ impl<'a> Codegen<'a> {
 
         self.print_orphan_comments_before(first.span().start);
 
-        // Ensure first string literal is not a directive.
-        let mut first_needs_parens = false;
-        if directives.is_empty()
-            && !self.options.minify
-            && let Statement::ExpressionStatement(s) = first
+        // If first statement is a string literal, wrap it in parentheses, to prevent it being parsed as a directive.
+        // Only a parenthesized string expression can reach here (a bare one would have been parsed as a directive),
+        // so the parentheses have to be printed back.
+        //
+        // Need to do this regardless of whether or any real directives precede it or not.
+        // Parentheses must be retained for any of:
+        // * `("use strict");`
+        // * `"use asm"; ("use strict");`
+        // * `"use server"; "use asm"; ("use strict");`
+        //
+        // The same hazard exists in minify mode.
+        // Usually strings are printed as template literals, which are not parsed as directives.
+        // But if the string contains a backtick or `${`, it's printed with `"` or `'` quotes,
+        // which *would* be re-parsed as a directive.
+        // So in minify mode, we force printing as a template literal, regardless of the string's content.
+        // In almost all cases, this is shorter than wrapping in parentheses.
+        if let Statement::ExpressionStatement(stmt) = first
+            && let expr = stmt.expression.without_parentheses()
+            && let Expression::StringLiteral(string) = expr
         {
-            let s = s.expression.without_parentheses();
-            if matches!(s, Expression::StringLiteral(_)) {
-                first_needs_parens = true;
-                self.print_ascii_byte(b'(');
-                s.print_expr(self, Precedence::Lowest, ctx);
-                self.print_ascii_byte(b')');
-                self.print_semicolon_after_statement();
+            // Mirror `ExpressionStatement`'s printer, which this path stands in for
+            self.print_comments_at(stmt.span.start);
+            if self.indent > 0 || self.print_next_indent_as_space {
+                self.print_indent();
+                self.add_source_mapping(stmt.span);
             }
-        }
-
-        if !first_needs_parens {
+            if self.options.minify {
+                self.print_string_literal_as_template(string);
+            } else {
+                self.print_ascii_byte(b'(');
+                self.print_string_literal(string, /* allow_backtick */ true);
+                self.print_ascii_byte(b')');
+            }
+            self.print_semicolon_after_statement();
+        } else {
             first.print(self, ctx);
         }
 

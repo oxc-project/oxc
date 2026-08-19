@@ -23,7 +23,7 @@ use napi_derive::napi;
 use oxc::{
     allocator::Allocator,
     codegen::{Codegen, CodegenOptions},
-    diagnostics::Diagnostics,
+    diagnostics::{Diagnostics, Severity},
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     transformer::Transformer,
@@ -98,13 +98,20 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let (react_output, react_diagnostics, react_fatal) = match react_compiler_options {
+    let (react_output, mut react_diagnostics, react_fatal) = match react_compiler_options {
         None => (None, Diagnostics::new(), false),
         Some(options) => match react_compiler_compile(&program, &semantic, &allocator, options) {
             CompileResult::Success { output, diagnostics } => (output, diagnostics, false),
             CompileResult::Fatal { diagnostics } => (None, diagnostics, true),
         },
     };
+    if !react_fatal {
+        for diagnostic in react_diagnostics.iter_mut() {
+            if diagnostic.severity == Severity::Error {
+                diagnostic.severity = Severity::Warning;
+            }
+        }
+    }
     diagnostics.extend(react_diagnostics);
     if react_fatal {
         return error_result(filename, source_text, diagnostics);
@@ -149,8 +156,8 @@ fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> 
 
 /// Compile a JavaScript or TypeScript React module synchronously.
 ///
-/// The React Compiler runs first on the pristine AST. TypeScript and JSX are
-/// lowered afterwards, matching the transform pipeline used by `oxc-transform`.
+/// The React Compiler runs first on the pristine AST. TypeScript syntax is
+/// removed and configured JSX transforms run afterwards.
 #[napi]
 pub fn transform_sync(
     filename: String,

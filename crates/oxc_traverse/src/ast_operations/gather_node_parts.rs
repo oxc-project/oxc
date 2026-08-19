@@ -136,17 +136,23 @@ impl<'a> GatherNodeParts<'a> for ExportAllDeclaration<'a> {
     }
 }
 
+impl<'a> GatherNodeParts<'a> for ExportDeclaration<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.declaration.gather(f);
+    }
+}
+
 impl<'a> GatherNodeParts<'a> for ExportNamedDeclaration<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        if let Some(source) = &self.source {
-            source.gather(f);
-        } else if let Some(declaration) = &self.declaration {
-            declaration.gather(f);
-        } else {
-            for specifier in &self.specifiers {
-                specifier.gather(f);
-            }
+        for specifier in &self.specifiers {
+            specifier.gather(f);
         }
+    }
+}
+
+impl<'a> GatherNodeParts<'a> for ExportFromDeclaration<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.source.gather(f);
     }
 }
 

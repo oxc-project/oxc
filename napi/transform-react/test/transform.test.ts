@@ -28,15 +28,37 @@ describe("transformSync", () => {
     expect(result.code).toContain("@license MIT");
   });
 
+  it("honors JSX pragmas after React Compiler adds imports", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `/** @jsxRuntime automatic */
+/** @jsxImportSource custom-runtime */
+export function Component({ value }: { value: string }) {
+  return <div>{value}</div>;
+}
+`,
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain('from "custom-runtime/jsx-runtime"');
+    expect(result.code).not.toContain('from "react/jsx-runtime"');
+  });
+
   it("forwards React Compiler options", () => {
-    const target = transformSync("Component.tsx", fixture, { target: "18" });
+    const target = transformSync("Component.tsx", fixture, {
+      reactCompiler: { target: "18" },
+    });
     expect(target.errors).toEqual([]);
     expect(target.code).toContain("react-compiler-runtime");
 
     const gated = transformSync("Component.tsx", fixture, {
-      gating: {
-        source: "feature-flags",
-        importSpecifierName: "isCompilerEnabled",
+      reactCompiler: {
+        gating: {
+          source: "feature-flags",
+          importSpecifierName: "isCompilerEnabled",
+        },
       },
     });
     expect(gated.errors).toEqual([]);
@@ -52,7 +74,9 @@ describe("transformSync", () => {
         return <div>{props.text}</div>;
       }`,
       {
-        dynamicGating: { source: "dynamic-feature-flags" },
+        reactCompiler: {
+          dynamicGating: { source: "dynamic-feature-flags" },
+        },
       },
     );
     expect(dynamic.errors).toEqual([]);
@@ -60,9 +84,11 @@ describe("transformSync", () => {
     expect(dynamic.code).toContain("isCompilerEnabled");
 
     const meta = transformSync("Component.tsx", fixture, {
-      target: {
-        kind: "donotuse_meta_internal",
-        runtimeModule: "custom-react-runtime",
+      reactCompiler: {
+        target: {
+          kind: "donotuse_meta_internal",
+          runtimeModule: "custom-react-runtime",
+        },
       },
     });
     expect(meta.errors).toEqual([]);
@@ -80,7 +106,7 @@ describe("transformSync", () => {
     expect(optedOut.code).not.toContain("_c(");
 
     const compiled = transformSync("Component.jsx", source, {
-      ignoreUseNoForget: true,
+      reactCompiler: { ignoreUseNoForget: true },
     });
     expect(compiled.errors).toEqual([]);
     expect(compiled.code).toContain("_c(");
@@ -100,7 +126,9 @@ describe("transformSync", () => {
       },
     ],
   ])("reports an invalid %s option without emitting code", (option, options) => {
-    const result = transformSync("Component.tsx", fixture, options as never);
+    const result = transformSync("Component.tsx", fixture, {
+      reactCompiler: options,
+    } as never);
     expect(result.fatal).toBe(true);
     expect(result.code).toBe("");
     expect(result.errors).toHaveLength(1);
@@ -131,13 +159,33 @@ describe("transformSync", () => {
 
   it("can filter files with sources", () => {
     const result = transformSync("vendor/Component.tsx", fixture, {
-      sources: ["src/"],
+      reactCompiler: { sources: ["src/"] },
     });
 
     expect(result.errors).toEqual([]);
     expect(result.code).not.toContain("react/compiler-runtime");
     expect(result.code).not.toContain("interface Props");
     expect(result.code).not.toContain("<button");
+  });
+
+  it("skips node_modules by default", () => {
+    for (const options of [undefined, { reactCompiler: {} }]) {
+      const result = transformSync("node_modules/package/Component.tsx", fixture, options);
+
+      expect(result.errors).toEqual([]);
+      expect(result.code).not.toContain("react/compiler-runtime");
+      expect(result.code).not.toContain("_c(");
+    }
+  });
+
+  it("allows sources to include node_modules", () => {
+    const result = transformSync("node_modules/package/Component.tsx", fixture, {
+      reactCompiler: { sources: ["node_modules/package"] },
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
   });
 
   it("keeps imports used by compiled computed keys", () => {
@@ -156,22 +204,56 @@ describe("transformSync", () => {
     expect(result.code).toContain("import { CSS_VAR }");
   });
 
-  it("ignores ESLint suppressions when internal validations are enabled", () => {
+  it("honors ESLint suppressions when internal validations are enabled", () => {
+    const result = transformSync(
+      "Counter.jsx",
+      `import { useEffect, useRef, useState } from "react";
+      export function Counter({ step }) {
+        const [count, setCount] = useState(0);
+        const ref = useRef(step);
+        useEffect(() => {
+          setCount((value) => value + ref.current);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+        return <div>{count}</div>;
+      }`,
+      {
+        reactCompiler: {
+          environment: {
+            validateExhaustiveMemoizationDependencies: true,
+          },
+        },
+      },
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      severity: "Warning",
+      message: "React rule suppression prevents optimization",
+    });
+    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).not.toContain("_c(");
+  });
+
+  it("honors ESLint suppressions by default", () => {
     const result = transformSync(
       "Component.tsx",
       `function Component({ value }: { value: number }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        const doubled: number = value * 2;
+        const doubled = value * 2;
         return <div>{doubled}</div>;
       }`,
     );
 
-    expect(result.errors).toEqual([]);
-    expect(result.code).toContain("react/compiler-runtime");
-    expect(result.code).toContain("_c(");
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].severity).toBe("Warning");
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
+    expect(result.code).not.toContain("react/compiler-runtime");
   });
 
-  it("honors ESLint suppressions when internal validations are disabled", () => {
+  it("allows ESLint suppression bailouts to be disabled", () => {
     const result = transformSync(
       "Component.tsx",
       `function Component({ value }: { value: number }) {
@@ -180,20 +262,16 @@ describe("transformSync", () => {
         return <div>{doubled}</div>;
       }`,
       {
-        environment: {
-          validateExhaustiveMemoizationDependencies: false,
+        reactCompiler: {
+          eslintSuppressionRules: [],
         },
       },
     );
 
     expect(result.fatal).toBe(false);
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toMatchObject({
-      severity: "Error",
-      message: expect.stringContaining("[ReactCompiler] Suppression:"),
-    });
-    expect(result.code).not.toBe("");
-    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
     expect(result.code).not.toContain(": number");
     expect(result.code).not.toContain("<div");
   });
@@ -215,12 +293,30 @@ describe("transformSync", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
+      message: "Use of incompatible library",
     });
     expect(result.errors.some((error) => error.message.includes("Unexpected error"))).toBe(false);
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
     expect(result.code).not.toContain("<span");
+  });
+
+  it("does not enable manual memo dependency validation by default", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `import { useMemo } from "react";
+      import { typedCapture, typedCreateFrom, typedMutate, ValidateMemoization } from "shared-runtime";
+      function Component({ a, b }: { a: number; b: number }) {
+        const x = useMemo(() => ({ a }), [a, b]);
+        const y = typedCapture(x);
+        const z = typedCreateFrom(y);
+        typedMutate(z, b);
+        return <ValidateMemoization inputs={[a, b]} output={x} />;
+      }`,
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
   });
 
   it("compiles an unsuppressed sibling after a suppression bailout", () => {
@@ -234,16 +330,12 @@ describe("transformSync", () => {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
-      {
-        environment: {
-          validateExhaustiveMemoizationDependencies: false,
-        },
-      },
     );
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    expect(result.errors[0].severity).toBe("Warning");
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
     expect(result.code).not.toContain("<span");
@@ -260,9 +352,8 @@ describe("transformSync", () => {
           return <div>{doubled}</div>;
         }`,
         {
-          panicThreshold,
-          environment: {
-            validateExhaustiveMemoizationDependencies: false,
+          reactCompiler: {
+            panicThreshold,
           },
         },
       );
@@ -270,7 +361,8 @@ describe("transformSync", () => {
       expect(result.fatal).toBe(true);
       expect(result.code).toBe("");
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+      expect(result.errors[0].severity).toBe("Error");
+      expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     },
   );
 
@@ -282,7 +374,7 @@ describe("transformSync", () => {
         const table = useReactTable({});
         return <div>{table}</div>;
       }`,
-      { panicThreshold: "all_errors" },
+      { reactCompiler: { panicThreshold: "all_errors" } },
     );
 
     expect(result.fatal).toBe(true);
@@ -290,8 +382,64 @@ describe("transformSync", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
+      message: "Use of incompatible library",
     });
+  });
+
+  it("can disable and explicitly enable React Compiler", () => {
+    const disabled = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+    });
+    expect(disabled.errors).toEqual([]);
+    expect(disabled.code).not.toContain("react/compiler-runtime");
+    expect(disabled.code).not.toContain("interface Props");
+    expect(disabled.code).not.toContain("<button");
+
+    const enabled = transformSync("Component.tsx", fixture, {
+      reactCompiler: true,
+    });
+    expect(enabled.errors).toEqual([]);
+    expect(enabled.code).toContain("react/compiler-runtime");
+  });
+
+  it("configures and preserves JSX independently of React Compiler", () => {
+    const configured = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+      jsx: { importSource: "custom-jsx" },
+    });
+    expect(configured.errors).toEqual([]);
+    expect(configured.code).toContain('from "custom-jsx/jsx-runtime"');
+    expect(configured.code).not.toContain("<button");
+
+    const preserved = transformSync("Component.tsx", fixture, {
+      jsx: "preserve",
+    });
+    expect(preserved.errors).toEqual([]);
+    expect(preserved.code).toContain("react/compiler-runtime");
+    expect(preserved.code).not.toContain("interface Props");
+    expect(preserved.code).toContain("<button");
+  });
+
+  it("reports invalid JSX modes without emitting code", () => {
+    const result = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+      jsx: "invalid",
+    } as never);
+    expect(result.fatal).toBe(true);
+    expect(result.code).toBe("");
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toContain("Invalid `jsx` option");
+  });
+
+  it("supports React Fast Refresh through JSX options", () => {
+    const result = transformSync("Component.tsx", fixture, {
+      jsx: { refresh: { emitFullSignatures: true } },
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("$RefreshSig$");
+    expect(result.code).toContain("$RefreshReg$");
+    expect(result.code).toContain("useState{[count, setCount](0)}");
   });
 });
 

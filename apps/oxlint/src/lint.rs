@@ -11,7 +11,10 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_config::GitignoreChecker;
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
+};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -111,7 +114,7 @@ impl CliRunner {
         };
 
         let handler = if cfg!(any(test, feature = "testing")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+            GraphicalReportHandler::new_themed(GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
         };
@@ -182,28 +185,35 @@ impl CliRunner {
             });
         }
 
-        if paths.is_empty() {
-            // If explicit paths were provided, but all have been
-            // filtered, return early.
-            if provided_path_count > 0 {
-                if debug_files {
-                    return crate::mode::run_debug_files(
-                        std::iter::empty::<&Path>(),
-                        &self.cwd,
-                        stdout,
-                    );
-                }
+        if paths.is_empty() && provided_path_count == 0 {
+            paths.push(self.cwd.clone());
+        }
 
-                return Self::handle_no_files_found(
+        // The walker never filters gitignored walk roots (including roots inside a gitignored directory).
+        // NOTE: Applied regardless of `--no-ignore`.
+        // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
+        // not git's. (Aligns with during walk filtering behavior)
+        let mut gitignore_checker = GitignoreChecker::new();
+        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
+
+        // If explicit paths were provided but all have been filtered,
+        // or the default cwd target is gitignored, return early.
+        if paths.is_empty() {
+            if debug_files {
+                return crate::mode::run_debug_files(
+                    std::iter::empty::<&Path>(),
+                    &self.cwd,
                     stdout,
-                    &output_formatter,
-                    now,
-                    None,
-                    misc_options.no_error_on_unmatched_pattern,
                 );
             }
 
-            paths.push(self.cwd.clone());
+            return Self::handle_no_files_found(
+                stdout,
+                &output_formatter,
+                now,
+                None,
+                misc_options.no_error_on_unmatched_pattern,
+            );
         }
 
         let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
@@ -831,6 +841,58 @@ mod test {
             "fixtures/cli/linter/nan.js",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/25107
+    fn gitignored_walk_root() {
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let repo_path = temp_dir.path().join("repo");
+        let pkg_path = repo_path.join("sub").join("generated").join("pkg");
+        fs::create_dir_all(&pkg_path).unwrap();
+        fs::create_dir(repo_path.join(".git")).unwrap();
+        fs::write(repo_path.join("sub").join(".gitignore"), "generated\n").unwrap();
+        fs::write(pkg_path.join("index.ts"), "debugger;\n").unwrap();
+
+        // Running from inside the ignored tree finds nothing.
+        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
+        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // Explicitly passed gitignored directories are skipped too.
+        let (_, result) = Tester::new().with_cwd(repo_path).test_output(&["sub/generated/pkg"]);
+        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // But an explicitly named file is linted even when gitignored;
+        // `.gitignore` only scopes discovery.
+        let (stdout, result) =
+            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn gitignore_directory_pattern_does_not_filter_explicit_symlink() {
+        use std::os::unix::fs::symlink;
+
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let repo_path = temp_dir.path().join("repo");
+        let target = repo_path.join("target");
+
+        fs::create_dir_all(repo_path.join(".git")).unwrap();
+        fs::create_dir(&target).unwrap();
+        fs::write(target.join("index.js"), "debugger;\n").unwrap();
+        fs::write(repo_path.join(".gitignore"), "link/\n").unwrap();
+        symlink("target", repo_path.join("link")).unwrap();
+
+        let (stdout, result) =
+            Tester::new().with_cwd(repo_path).test_output(&["-D", "no-debugger", "link"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
     }
 
     #[test]
@@ -2326,7 +2388,7 @@ mod suppression {
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors_prune")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)

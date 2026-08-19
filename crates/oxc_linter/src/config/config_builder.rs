@@ -243,6 +243,14 @@ impl ConfigStoreBuilder {
             }
         }
 
+        let mut external_plugins = external_plugins.into_iter().collect_vec();
+        external_plugins.sort_unstable_by(|a, b| {
+            a.specifier
+                .cmp(&b.specifier)
+                .then_with(|| a.name.cmp(&b.name))
+                .then_with(|| a.config_dir.cmp(&b.config_dir))
+        });
+
         // Only attempt to load external JS plugins when external plugins are enabled,
         // i.e., when the external JS linter is available/initialized. If the store is
         // disabled, configs that reference external plugins are accepted but the plugins
@@ -250,7 +258,7 @@ impl ConfigStoreBuilder {
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let first_plugin = external_plugins.iter().next().unwrap();
+                let first_plugin = external_plugins.first().unwrap();
                 return Err(ConfigBuilderError::NoExternalLinterConfigured {
                     plugin_specifier: first_plugin.specifier.clone(),
                 });
@@ -261,7 +269,7 @@ impl ConfigStoreBuilder {
                 ..Default::default()
             });
 
-            for entry in &external_plugins {
+            for entry in external_plugins {
                 Self::load_external_plugin(
                     &entry.config_dir,
                     &entry.specifier,
@@ -735,7 +743,7 @@ impl Debug for ConfigStoreBuilder {
 }
 
 /// An error that can occur while building a [`Config`] from an [`Oxlintrc`].
-#[derive(Eq, PartialEq, Debug, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum ConfigBuilderError {
     /// There were unknown rules that could not be matched to any known plugins/rules.
     UnknownRules {
@@ -776,6 +784,12 @@ pub enum ConfigBuilderError {
         cycle: Vec<PathBuf>,
         referenced_from: Vec<PathBuf>,
     },
+}
+
+impl Debug for ConfigBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(self, f)
+    }
 }
 
 impl Display for ConfigBuilderError {

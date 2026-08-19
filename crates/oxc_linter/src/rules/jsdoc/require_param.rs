@@ -201,7 +201,7 @@ impl Rule for RequireParam {
         }
 
         // Collected JSDoc `@param` tags
-        let tags_to_check = collect_tags(&jsdocs, settings.resolve_tag_name("param"));
+        let tags_to_check = collect_tags(jsdocs, settings.resolve_tag_name("param"));
 
         if config.ignore_when_all_params_missing && tags_to_check.is_empty() {
             return;

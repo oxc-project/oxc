@@ -22,7 +22,9 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "CatchParameter",
     "CatchClause",
     // Manually prints it because class's decorators can be appears before `export class Cls {}`.
+    "ExportDeclaration",
     "ExportNamedDeclaration",
+    "ExportFromDeclaration",
     "ExportDefaultDeclaration",
     //
     "JSXElement",
@@ -113,14 +115,15 @@ impl Generator for FormatterFormatGenerator {
         let output = quote! {
             #![expect(clippy::match_same_arms)]
             use oxc_ast::ast::*;
+            use oxc_formatter_core::Format;
             use oxc_span::GetSpan;
 
             ///@@line_break
             use crate::{
-                formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren}},
+                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
                 print::{FormatWrite #(#options)*},
             };
 
@@ -163,12 +166,22 @@ fn generate_struct_implementation(
     });
 
     let needs_parentheses_before = if needs_parentheses {
-        if do_not_print_leading_comment {
+        if do_not_print_comment {
+            // The node owns ALL its comment printing (leading and trailing) in `write`;
+            // keep the added paren bare and leave every comment to it.
             quote! {
                 let needs_parentheses = self.needs_parentheses(f);
                 if needs_parentheses {
                     "(".fmt(f);
                 }
+            }
+        } else if do_not_print_leading_comment {
+            // The node prints its own leading comments in `write`,
+            // but the ones that belong outside the formatter-added paren (source side / own-line) must
+            // print first (`X & /* c */ (A | B)` keeps `c` outside).
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
             }
         } else {
             // A leading type cast comment must stay adjacent to the `(` of its cast target inside this node;

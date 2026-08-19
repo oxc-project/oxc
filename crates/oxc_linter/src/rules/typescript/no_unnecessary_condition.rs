@@ -35,10 +35,28 @@ pub enum AllowConstantLoopConditionsMode {
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnnecessaryConditionConfig {
-    /// Whether to allow constant loop conditions.
-    /// `true` is treated as `"always"`, `false` as `"never"`.
+    /// Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.
+    ///
+    /// - `"never"` (or `false`) reports all constant loop conditions.
+    /// - `"always"` (or `true`) allows conditions whose type is the literal type `true`, such as
+    ///   `while (true)` or `while (variable)` when `variable` has type `true`.
+    /// - `"only-allowed-literals"` allows only the literal expressions `true`, `false`, `0`, and
+    ///   `1`. Variables whose types are those literal types are still reported.
     pub allow_constant_loop_conditions: AllowConstantLoopConditions,
-    /// Whether to check type predicate functions.
+    /// Whether to check arguments passed to type predicate and assertion functions.
+    ///
+    /// When enabled, the rule reports a call if the argument already satisfies the predicate or
+    /// if an assertion function receives an argument that is always truthy or always falsy.
+    ///
+    /// For example, `narrow(value)` is unnecessary because `value` already has type `true`:
+    ///
+    /// ```ts
+    /// declare const narrow: (value: unknown) => value is true;
+    /// const value = true;
+    /// if (narrow(value)) {
+    ///   // ...
+    /// }
+    /// ```
     pub check_type_predicates: bool,
 }
 
@@ -102,7 +120,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnnecessaryCondition {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

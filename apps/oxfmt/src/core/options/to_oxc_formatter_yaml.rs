@@ -1,29 +1,23 @@
+use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 use oxc_formatter_yaml::{
     BracketSpacing, ProseWrap, SingleQuote, TrailingCommas, YamlFormatOptions,
 };
 
-use super::{
-    super::oxfmtrc::{FormatConfig, ProseWrapConfig, TrailingCommaConfig},
-    to_core_options::to_core_options,
-};
+use super::super::oxfmtrc::{FormatConfig, ProseWrapConfig, TrailingCommaConfig};
 
-/// Convert `FormatConfig` into validated `YamlFormatOptions` for `oxc_formatter_yaml`.
+/// Convert `FormatConfig` into `YamlFormatOptions` for `oxc_formatter_yaml`.
 ///
 /// Prettier's `yaml` language consumes the shared layout options plus
 /// `proseWrap`, `singleQuote`, `bracketSpacing`, and `trailingComma`.
 ///
-/// # Errors
-/// Returns error if any option value is invalid.
-pub fn to_oxc_formatter_yaml(config: &FormatConfig) -> Result<YamlFormatOptions, String> {
-    let core = to_core_options(config)?;
-
-    let mut options = YamlFormatOptions {
-        indent_style: core.indent_style,
-        indent_width: core.indent_width,
-        line_width: core.line_width,
-        line_ending: core.line_ending,
-        ..YamlFormatOptions::default()
-    };
+/// NOTE: Pure field translation:
+/// `core` comes pre-validated from the config-resolution gate (`validate()`), so this cannot fail.
+pub fn to_oxc_formatter_yaml(
+    config: &FormatConfig,
+    core_options: CoreFormatOptions,
+) -> YamlFormatOptions {
+    let mut options = YamlFormatOptions::default();
+    options.apply_core(core_options);
 
     // [Prettier] proseWrap: "preserve" | "always" | "never"
     if let Some(prose_wrap) = config.prose_wrap {
@@ -50,5 +44,5 @@ pub fn to_oxc_formatter_yaml(config: &FormatConfig) -> Result<YamlFormatOptions,
         };
     }
 
-    Ok(options)
+    options
 }

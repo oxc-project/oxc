@@ -4,6 +4,85 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.79.0] - 2026-08-18
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 228e8e0 linter: Resolve inactive React compiler rules (#25830) (Boshen)
+- aa49d86 linter: Allow spread rule options in config types (#25675) (ch3rry)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- a38f7b3 oxlint,oxfmt: Apply .gitignore only to walk targets, not explicitly named files (#25531) (leaysgur)
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+- 1d22912 linter/plugins: Parse rule-less directive justifications (#25559) (camc314)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+
+### ⚡ Performance
+
+- c84ede3 estree_tokens: Share JS token update entry point (#25826) (Boshen)
+- f0121ed linter: Share config deserialization entry point (#25820) (Boshen)
+- 9ed10b7 linter: Use unstable sorts for unique keys (#25778) (Boshen)
+- 2dd7446 diagnostics: Preallocate graphical output (#25721) (Boshen)
+- 9c8abab diagnostics: Batch graphical reports (#25710) (Boshen)
+
+## [1.78.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🚀 Features
+
+- ccb8fe8 linter/jsdoc: Implement `no-blank-blocks` rule (#25207) (Mikhail Baev)
+- d4a897c linter/eslint: Implement `one-var` rule (#24470) (Cole Ellison)
+- 5ab9340 linter/jsx-a11y/anchor-has-content: Add options to match eslint (#24571) (Cole Ellison)
+
+### 🐛 Bug Fixes
+
+- a92c541 linter: Preserve source text for JS plugin ignore fixes (#25280) (Norcleeh)
+- 6b1c479 oxlint: Normalize customized rule names (#25316) (camc314)
+- 9573937 linter/typescript: Validate `ban-ts-comment` description_format (#25320) (Mikhail Baev)
+
+### ⚡ Performance
+
+- 4ec9189 oxlint/lsp: Avoid second lock for getting/removing unused directives (#25350) (Sysix)
+- 6c0d01b oxlint/lsp: Preallocate fix-content vec (#25351) (Sysix)
+- 4abff11 linter: Avoid redundant message work in the agent reporter (#25315) (Connor Shea)
+- 6bb5421 linter: Hoist `current_dir` out of the stylish reporter loop (#25313) (Connor Shea)
+- 9a7c323 linter: Compute diagnostic `Info` once per diagnostic in junit reporter (#25312) (Connor Shea)
+- 1cf7dde oxlint: Render JSON report into a single buffer (#25295) (connorshea)
+
+## [1.77.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 1fb3d70 oxlint: Show file:line:col in github format annotation messages (#25020) (Faris Tristan Fabian)
+
+### 🐛 Bug Fixes
+
+- 9d4592c linter: Reject duplicate JS plugin names (#25243) (camc314)
+- 20f68e7 oxlint,oxfmt: Respect `.gitignore` for walk targets and explicit paths (#25133) (leaysgur)
+- 5c0fa61 linter/eslint/no-warning-comments: Unify config structs and remove manual options docs (#25151) (Mikhail Baev)
+- 2b02711 oxlint: Correct --warn flag help text (#25059) (Faris Tristan Fabian)
+
+### 📚 Documentation
+
+- 9dc7756 linter/typescript/no-unnecessary-condition: Clarify options (#25110) (camc314)
+
 ## [1.76.0] - 2026-07-27
 
 ### 🚀 Features

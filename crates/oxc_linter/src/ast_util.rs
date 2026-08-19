@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 
-use rustc_hash::FxHashSet;
 use smallvec::SmallVec;
 
 use oxc_allocator::{ArenaVec, GetAddress};
@@ -21,6 +20,18 @@ use crate::{
     LintContext,
     utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
 };
+
+/// Get the declaration kind for a variable declarator from its parent declaration.
+pub fn variable_declaration_kind(
+    declarator: &VariableDeclarator<'_>,
+    ctx: &LintContext<'_>,
+) -> VariableDeclarationKind {
+    let AstKind::VariableDeclaration(declaration) = ctx.nodes().parent_kind(declarator.node_id())
+    else {
+        unreachable!();
+    };
+    declaration.kind
+}
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -512,20 +523,6 @@ pub fn leftmost_identifier_reference<'a, 'b: 'a>(
     }
 }
 
-fn is_definitely_non_error_type(ty: &TSType) -> bool {
-    match ty {
-        TSType::TSNumberKeyword(_)
-        | TSType::TSStringKeyword(_)
-        | TSType::TSBooleanKeyword(_)
-        | TSType::TSNullKeyword(_)
-        | TSType::TSUndefinedKeyword(_) => true,
-        TSType::TSUnionType(union) => union.types.iter().all(is_definitely_non_error_type),
-        TSType::TSIntersectionType(intersect) => {
-            intersect.types.iter().all(is_definitely_non_error_type)
-        }
-        _ => false,
-    }
-}
 /// Get the preceding indentation string before the start of a Span in a given source_text string slice. Useful for maintaining the format of source code when applying a linting fix.
 ///
 /// Slice into source_text until the start of given Span.
@@ -562,15 +559,7 @@ pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
     preceding_source_text.lines().last().filter(|&line| line.trim().is_empty())
 }
 
-pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
-    could_be_error_impl(ctx, expr, &mut FxHashSet::default())
-}
-
-fn could_be_error_impl(
-    ctx: &LintContext,
-    expr: &Expression,
-    visited: &mut FxHashSet<SymbolId>,
-) -> bool {
+pub fn could_be_error(expr: &Expression) -> bool {
     match expr.get_inner_expression() {
         Expression::NewExpression(_)
         | Expression::AwaitExpression(_)
@@ -580,100 +569,34 @@ fn could_be_error_impl(
         | Expression::PrivateFieldExpression(_)
         | Expression::StaticMemberExpression(_)
         | Expression::ComputedMemberExpression(_)
-        | Expression::TaggedTemplateExpression(_) => true,
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::Identifier(_) => true,
         Expression::AssignmentExpression(expr) => {
             if matches!(expr.operator, AssignmentOperator::Assign | AssignmentOperator::LogicalAnd)
             {
-                return could_be_error_impl(ctx, &expr.right, visited);
+                return could_be_error(&expr.right);
             }
 
             if matches!(
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr
-                    .left
-                    .get_expression()
-                    .is_none_or(|expr| could_be_error_impl(ctx, expr, visited))
-                    || could_be_error_impl(ctx, &expr.right, visited);
+                return expr.left.get_expression().is_none_or(could_be_error)
+                    || could_be_error(&expr.right);
             }
 
             false
         }
-        Expression::SequenceExpression(expr) => {
-            expr.expressions.last().is_some_and(|expr| could_be_error_impl(ctx, expr, visited))
-        }
+        Expression::SequenceExpression(expr) => expr.expressions.last().is_some_and(could_be_error),
         Expression::LogicalExpression(expr) => {
             if matches!(expr.operator, LogicalOperator::And) {
-                return could_be_error_impl(ctx, &expr.right, visited);
+                return could_be_error(&expr.right);
             }
 
-            could_be_error_impl(ctx, &expr.left, visited)
-                || could_be_error_impl(ctx, &expr.right, visited)
+            could_be_error(&expr.left) || could_be_error(&expr.right)
         }
         Expression::ConditionalExpression(expr) => {
-            could_be_error_impl(ctx, &expr.consequent, visited)
-                || could_be_error_impl(ctx, &expr.alternate, visited)
-        }
-        Expression::Identifier(ident) => {
-            let reference = ctx.scoping().get_reference(ident.reference_id());
-            let Some(symbol_id) = reference.symbol_id() else {
-                return true;
-            };
-
-            // Check if we've already visited this symbol to prevent infinite recursion
-            // Return true (could be error) when we encounter a circular reference since we can't determine the type
-            if !visited.insert(symbol_id) {
-                return true;
-            }
-
-            let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
-            match decl.kind() {
-                AstKind::VariableDeclarator(decl) => {
-                    if decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| could_be_error_impl(ctx, init, visited))
-                    {
-                        return true;
-                    }
-
-                    ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
-                        if !reference.is_write() {
-                            return false;
-                        }
-
-                        let reference_node = ctx.nodes().get_node(reference.node_id());
-                        if reference_node.span().end > ident.span.start {
-                            return false;
-                        }
-
-                        let AstKind::AssignmentExpression(assignment) =
-                            ctx.nodes().parent_kind(reference.node_id())
-                        else {
-                            return false;
-                        };
-
-                        assignment.operator == AssignmentOperator::Assign
-                            && matches!(
-                                &assignment.left,
-                                AssignmentTarget::AssignmentTargetIdentifier(target)
-                                    if target.span == reference_node.span()
-                            )
-                            && could_be_error_impl(ctx, &assignment.right, visited)
-                    })
-                }
-                AstKind::Function(_)
-                | AstKind::Class(_)
-                | AstKind::TSModuleDeclaration(_)
-                | AstKind::TSGlobalDeclaration(_)
-                | AstKind::TSEnumDeclaration(_) => false,
-                AstKind::FormalParameter(param) => !param
-                    .type_annotation
-                    .as_ref()
-                    .is_some_and(|annot| is_definitely_non_error_type(&annot.type_annotation)),
-                _ => true,
-            }
+            could_be_error(&expr.consequent) || could_be_error(&expr.alternate)
         }
         _ => false,
     }
@@ -1010,31 +933,20 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
     tokens.join(" ")
 }
 
-// get the top iterator
-// example: this.state.a.b.c.d => this.state
+/// Get the innermost static member expression in an assignment target.
+///
+/// For example, both `this.state.a.b.c` and `this.state.a[key].c` return `this.state`.
 pub fn get_outer_member_expression<'a, 'b>(
     assignment: &'b SimpleAssignmentTarget<'a>,
 ) -> Option<&'b StaticMemberExpression<'a>> {
-    match assignment {
-        SimpleAssignmentTarget::StaticMemberExpression(expr) => {
-            let mut node = &**expr;
-            loop {
-                if node.object.is_null() {
-                    return Some(node);
-                }
+    let mut member = assignment.as_member_expression()?;
 
-                if let Some(MemberExpression::StaticMemberExpression(object)) =
-                    node.object.as_member_expression()
-                    && !object.property.name.is_empty()
-                {
-                    node = object;
+    while let Some(object) = member.object().as_member_expression() {
+        member = object;
+    }
 
-                    continue;
-                }
-
-                return Some(node);
-            }
-        }
+    match member {
+        MemberExpression::StaticMemberExpression(expression) => Some(expression),
         _ => None,
     }
 }
@@ -1095,6 +1007,25 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
             AstKind::ExpressionStatement(expr_stmt) => {
+                // An unbraced statement body cannot continue a preceding expression:
+                // the token before it is the `)` or keyword that closes the statement
+                // head, so a semicolon is never needed. Inserting one anyway would
+                // silently empty the body, turning `if (x) [a] !== b` into
+                // `if (x) ;[a] !== b`.
+                if matches!(
+                    ctx.nodes().parent_kind(ancestor.id()),
+                    AstKind::IfStatement(_)
+                        | AstKind::WhileStatement(_)
+                        | AstKind::DoWhileStatement(_)
+                        | AstKind::ForStatement(_)
+                        | AstKind::ForInStatement(_)
+                        | AstKind::ForOfStatement(_)
+                        | AstKind::WithStatement(_)
+                        | AstKind::LabeledStatement(_)
+                ) {
+                    return false;
+                }
+
                 expr_stmt_span = Some(expr_stmt.span);
                 break;
             }

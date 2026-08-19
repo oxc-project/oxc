@@ -1,13 +1,11 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format, RemoveSoftLinesBuffer, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter, SourceText, buffer::RemoveSoftLinesBuffer,
-        prelude::*, trivia::FormatTrailingComments,
-    },
+    formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
     print::function::FormatContentWithCacheMode,
     utils::{

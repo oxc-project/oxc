@@ -6,7 +6,7 @@ use oxc_ast::ast::Expression;
 use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
-use crate::formatter::{Format, JsFormatter, prelude::*};
+use crate::formatter::{JsFormatter, prelude::*};
 
 /// Sized for the common cases: `a.b()` (3 members) and `a.b.c()` (4).
 /// Longer chains spill to the heap, same as `Vec` did before.

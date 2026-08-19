@@ -13,6 +13,36 @@ use crate::ast::*;
 
 use super::{EmptyArray, Null};
 
+/// Preserve ESTree's nullable `superClass` field while the Rust AST groups class heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "Expression | null",
+    raw_deser = "DESER[Option<Expression>](POS_OFFSET.heritage)"
+)]
+pub struct ClassSuperClass<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperClass<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_expression().serialize(serializer);
+    }
+}
+
+/// Preserve TS-ESTree's nullable `superTypeArguments` field while the Rust AST groups class
+/// heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameterInstantiation | null",
+    raw_deser = "THIS.superClass === null ? null : DESER[Option<Box<TSTypeParameterInstantiation>>](POS_OFFSET.heritage + (POS_OFFSET<ClassHeritage>.type_arguments - pos))"
+)]
+#[ts]
+pub struct ClassSuperTypeArguments<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperTypeArguments<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_type_arguments().serialize(serializer);
+    }
+}
+
 // ----------------------------------------
 // Meta properties
 // ----------------------------------------
@@ -349,6 +379,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             };
             rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
+                rest.decorators = DESER[Vec<Decorator>](POS_OFFSET<FormalParameterRest>.decorators);
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<FormalParameterRest>.type_annotation
                 );
@@ -388,7 +419,7 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);
@@ -739,7 +770,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
     }
 }
 
-// Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
+// Serializers for `with_clause` field of `ImportDeclaration`, `ExportFromDeclaration`,
 // and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
 //
 // Serialize only the `with_entries` field of `WithClause`, and serialize `None` as empty array (`[]`).
@@ -775,15 +806,30 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         withClause === null ? [] : withClause.attributes
     "
 )]
-pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
+pub struct ExportFromDeclarationWithClause<'a, 'b>(pub &'b ExportFromDeclaration<'a>);
 
-impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
+impl ESTree for ExportFromDeclarationWithClause<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
             EmptyArray(()).serialize(serializer);
         }
+    }
+}
+
+/// Serializer for the derived `exportKind` field of [`ExportDeclaration`].
+#[ast_meta]
+#[estree(
+    ts_type = "ImportOrExportKind",
+    raw_deser = "(THIS.declaration.declare === true || THIS.declaration.type === 'TSTypeAliasDeclaration' || THIS.declaration.type === 'TSInterfaceDeclaration') ? 'type' : 'value'"
+)]
+#[ts]
+pub struct ExportDeclarationExportKind<'a, 'b>(pub &'b ExportDeclaration<'a>);
+
+impl ESTree for ExportDeclarationExportKind<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.export_kind().serialize(serializer);
     }
 }
 

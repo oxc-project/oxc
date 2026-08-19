@@ -463,7 +463,8 @@ pub(super) struct ValueContext<'a> {
     pub tail_bound: Option<u32>,
     /// Inside `url(...)`: colons stay tight (`url(fbglyph:cross-outline)`).
     pub in_url: bool,
-    /// Inside function/include arguments (comment-slot rules differ).
+    /// Inside function/include arguments
+    /// (comment-slot rules differ, and the grid line-structure rule is top-level only, see `is_grid`).
     pub in_args: bool,
     /// A multi-line `raws.between` was printed before the value:
     /// Prettier's printer counts its full width, so the first trailing comment always wraps.
@@ -476,7 +477,10 @@ pub(super) struct ValueContext<'a> {
 
 impl ValueContext<'_> {
     fn is_grid(&self) -> bool {
-        self.decl_prop.is_some_and(|p| p == "grid" || p.starts_with("grid-template"))
+        // Only the declaration's TOP-LEVEL value gets the grid line-structure treatment;
+        // inside function arguments (`repeat()`, `minmax()`, `theme()`) the normal separator rules apply.
+        !self.in_args
+            && self.decl_prop.is_some_and(|p| p == "grid" || p.starts_with("grid-template"))
     }
 
     fn is_font_or_custom(&self) -> bool {
@@ -675,9 +679,6 @@ pub(super) fn write_value_groups<'a>(
                 // The declaration tail belongs to the LAST group only
                 let gctx = if is_last { ctx } else { ValueContext { tail_bound: None, ..ctx } };
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    if let Some(first) = group_values.first() {
-                        flush_value_comments(to_span(first.span()).start, f);
-                    }
                     write_comma_group(group_values, gctx, f);
                     if !is_last {
                         write_group_comma(comma, f);
@@ -794,10 +795,13 @@ pub(super) fn write_comma_group<'a>(
     if values.is_empty() {
         return;
     }
+    // Comments leading the FIRST value flush at this level, before any group/indent opens:
+    // `//` comment's forced hardline inside `indent(&body)` would drop the value one level deeper
+    // and break the fill run after it.
+    flush_value_comments(to_span(values[0].span()).start, f);
     // Prettier's `flattenGroups`:
     // a single-element comma group collapses to the element itself (no extra group/indent level).
     if values.len() == 1 && ctx.tail_bound.is_none() {
-        flush_value_comments(to_span(values[0].span()).start, f);
         // EXCEPT a sass interpolation:
         // route through a fill entry to get the chunk-isolated fit (see `is_single_sass_interpolation`).
         if is_single_sass_interpolation(values) {
@@ -936,23 +940,17 @@ pub(super) fn write_comma_group<'a>(
                     filler.entry(&soft_line_break_or_space(), &content);
                 }
             }
-            // Trailing same-line comments become their own fill items
-            // (they wrap independently when the line is too long).
+            // Block comments between runs become their own fill items, own-line ones included:
+            // keeping those own-line would freeze a previously wrapped layout (= not idempotent).
             if !is_last_run {
                 let next_start = to_span(values[run_end].span()).start;
                 for &comment in pending.iter().filter(|c| {
-                    !c.inline
-                        && c.span.start >= run_end_pos
-                        && c.span.end <= next_start
-                        && !comment_is_own_line(**c, source)
+                    !c.inline && c.span.start >= run_end_pos && c.span.end <= next_start
                 }) {
                     let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                         if f.context().comments().peek().is_some_and(|c| c.span == comment.span) {
                             f.context().comments().take_before(comment.span.end);
                             comments::write_single_comment(comment, f);
-                            if comment.inline {
-                                write!(f, expand_parent());
-                            }
                         }
                     });
                     filler.entry(&soft_line_break_or_space(), &entry);
@@ -1018,18 +1016,33 @@ fn raw_token<'b, 'a>(value: &'b ComponentValue<'a>) -> Option<&'b Token<'a>> {
 }
 
 /// Decides the separator BEFORE `values[i]` (i >= 1).
-///
-/// In Prettier's loop terms:
-/// - `iNode` = `values[i - 1]`
-/// - `iNextNode` = `values[i]`
-/// - `iPrevNode` = `values[i - 2]`
-/// - `iNextNextNode` = `values[i + 1]`
 fn separator_between(
     values: &[ComponentValue<'_>],
     i: usize,
     ctx: ValueContext<'_>,
     source: SourceText<'_>,
 ) -> Separator {
+    let sep = base_separator(values, i, ctx);
+    // Grid: preserve source line structure:
+    // Prettier emits a hardline where the source breaks and a PLAIN SPACE otherwise
+    // (never re-wraps a single-line grid value, however long).
+    // Only LAYOUT outcomes are overridden:
+    // a glued pair (`Tight`/`Word`) is part of ONE postcss word (`sandstone.10`, `1fr/2fr`)
+    // and survives verbatim in grid values too, grid never splits what other properties keep glued.
+    if ctx.is_grid() && matches!(sep, Separator::Line | Separator::Space) {
+        let prev_end = to_span(values[i - 1].span()).end;
+        let curr_start = to_span(values[i].span()).start;
+        return if source.bytes_contain(prev_end, curr_start, b'\n') {
+            Separator::Hard
+        } else {
+            Separator::Space
+        };
+    }
+    sep
+}
+
+/// The separator rules WITHOUT the grid line-structure override (`separator_between` applies that on top).
+fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>) -> Separator {
     let prev = &values[i - 1];
     let curr = &values[i];
     let prev_span = to_span(prev.span());
@@ -1038,17 +1051,6 @@ fn separator_between(
     let gap_empty = prev_span.end == curr_span.start;
     // `hasEmptyRawBefore(iNode)`
     let prev_gap_empty = i >= 2 && to_span(values[i - 2].span()).end == prev_span.start;
-
-    // Grid: preserve source line structure:
-    // Prettier emits a hardline where the source breaks and a PLAIN SPACE otherwise
-    // (never re-wraps a single-line grid value, however long).
-    if ctx.is_grid() {
-        let gap = source.bytes_range(prev_span.end, curr_span.start);
-        if gap.contains(&b'\n') || gap.contains(&b'\r') {
-            return Separator::Hard;
-        }
-        return Separator::Space;
-    }
 
     // Solidus (`/`) spacing rules
     if is_solidus(curr) || is_solidus(prev) {
@@ -1102,15 +1104,22 @@ fn separator_between(
         return Separator::Line;
     }
 
-    // Less lookups: `@var [@result]` loses the gap (`var [@lookup]` rule)
+    // Less lookups: `@var [@result]` loses the gap (`var [@lookup]` rule).
+    // A `[...]` continues a lookup chain only when the chain HEAD is a Less value (`@config[@key][@key2]`);
+    // bracket runs without one are NOT lookups (CSS grid line names: `[row1-end]` newline `[row2-start]` stays two values).
     if matches!(curr, ComponentValue::BracketBlock(_))
-        && matches!(
-            prev,
-            ComponentValue::LessVariable(_)
-                | ComponentValue::LessNamespaceValue(_)
-                | ComponentValue::BracketBlock(_)
-                | ComponentValue::LessMixinCall(_)
-        )
+        && values[..i]
+            .iter()
+            .rev()
+            .find(|v| !matches!(v, ComponentValue::BracketBlock(_)))
+            .is_some_and(|head| {
+                matches!(
+                    head,
+                    ComponentValue::LessVariable(_)
+                        | ComponentValue::LessNamespaceValue(_)
+                        | ComponentValue::LessMixinCall(_)
+                )
+            })
     {
         return Separator::Tight;
     }

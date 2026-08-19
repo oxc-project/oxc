@@ -194,7 +194,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentTypeImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -507,7 +507,7 @@ fn fix_to_type_import_declaration(options: &FixOptions<'_, '_>) -> FixerResult<R
         // import Foo, * as Type from 'foo'
         // import DefType, * as Type from 'foo'
         // import DefType, * as Type from 'foo'
-        let comma = try_find_char(ctx.source_range(import_decl.span), ',')?;
+        let comma = try_find_token(ctx, import_decl.span, ",")?;
 
         // import Def, * as Ns from 'foo'
         //           ^^^^^^^^^ remove
@@ -539,8 +539,7 @@ fn fix_to_type_import_declaration(options: &FixOptions<'_, '_>) -> FixerResult<R
         } else {
             let import_text = ctx.source_range(import_decl.span);
             // import Type, { Foo } from 'foo'
-            //let import_text = ctx.source_range(import_decl.span);
-            let comma = try_find_char(import_text, ',')?;
+            let comma = try_find_token(ctx, import_decl.span, ",")?;
             // import Type , { ... } from 'foo'
             //        ^^^^^ pick
             let default_text = ctx.source_range(Span::new(
@@ -579,14 +578,24 @@ fn fix_insert_named_specifiers_in_named_specifier_list(
     insert_text: &str,
 ) -> FixerResult<RuleFix> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
-    let import_text = ctx.source_range(import_decl.span);
-    let close_brace = try_find_char(import_text, '}')?;
+    let close_brace = import_decl.span().start + try_find_token(ctx, import_decl.span, "}")?;
 
-    let first_non_whitespace_before_close_brace =
-        import_text[..close_brace as usize].chars().rev().find(|c| !c.is_whitespace());
+    // Anchor on the last named specifier so a separator between earlier specifiers isn't
+    // mistaken for a trailing comma.
+    let last_named_specifier_end = import_decl.specifiers.as_ref().and_then(|specifiers| {
+        specifiers
+            .iter()
+            .filter_map(|specifier| match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(specifier) => Some(specifier.span.end),
+                _ => None,
+            })
+            .next_back()
+    });
 
-    let span = Span::empty(import_decl.span().start + close_brace);
-    if first_non_whitespace_before_close_brace.is_some_and(|ch| !matches!(ch, ',' | '{')) {
+    let span = Span::empty(close_brace);
+    if last_named_specifier_end
+        .is_some_and(|end| ctx.find_next_token_within(end, close_brace, ",").is_none())
+    {
         Ok(fixer.insert_text_before(&span, format!(",{insert_text}")))
     } else {
         Ok(fixer.insert_text_before(&span, insert_text.to_string()))
@@ -646,22 +655,25 @@ fn get_fixes_named_specifiers<'a>(
         // import Foo, {Type1, Type2} from 'foo'
         // import DefType, {Type1, Type2} from 'foo'
         let import_text = ctx.source_range(import_decl.span);
-        let open_brace_token = try_find_char(import_text, '{')? as usize;
-        let Some(comma_token) = import_text[..open_brace_token].rfind(',') else {
+        let open_brace_token = try_find_token(ctx, import_decl.span, "{")?;
+        let Some(comma_token) = ctx.find_prev_token_within(
+            import_decl.span.start,
+            import_decl.span.start + open_brace_token,
+            ",",
+        ) else {
             return Err(format!("Missing comma token in import declaration: {import_text}").into());
         };
-        let close_brace_token = try_find_char(import_text, '}')? as usize;
-        let open_brace_token_end = open_brace_token + 1;
-        let close_brace_token_end = close_brace_token + 1;
+        let close_brace_token = try_find_token(ctx, import_decl.span, "}")?;
 
         // import DefType, {...} from 'foo'
         //                ^^^^^^ remove
         remove_type_named_specifiers.push(fixer.delete(&Span::new(
-            import_decl.span.start + u32::try_from(comma_token).unwrap_or_default(),
-            import_decl.span.start + u32::try_from(close_brace_token_end).unwrap_or_default(),
+            import_decl.span.start + comma_token,
+            import_decl.span.start + close_brace_token + 1,
         )));
 
-        type_named_specifiers_text.push(&import_text[open_brace_token_end..close_brace_token]);
+        type_named_specifiers_text
+            .push(&import_text[open_brace_token as usize + 1..close_brace_token as usize]);
     } else {
         let mut named_specifier_groups = vec![];
         let mut group = vec![];
@@ -714,17 +726,12 @@ fn get_named_specifier_ranges(
     let mut text_range = Span::new(first.span().start, last.span().end);
 
     let import_text = ctx.source_range(import_decl.span);
-    let open_brace_token_start = try_find_char(import_text, '{')?;
-    let open_brace_token_start = open_brace_token_start as usize;
-    if let Some(comma) = import_text
-        [open_brace_token_start..(first.span().start - import_decl.span().start) as usize]
-        .rfind(',')
-    {
+    let open_brace_start = import_decl.span().start + try_find_token(ctx, import_decl.span, "{")?;
+    if let Some(comma) = ctx.find_prev_token_within(open_brace_start, first.span().start, ",") {
         // It's not the first specifier.
         // import { Foo, Bar, Baz } from 'foo'
         //             ^ start
-        remove_range.start = import_decl.span().start
-            + u32::try_from(comma + open_brace_token_start).unwrap_or_default();
+        remove_range.start = open_brace_start + comma;
 
         // Skip the comma
         text_range.start = remove_range.start + 1;
@@ -732,8 +739,7 @@ fn get_named_specifier_ranges(
         // It's the first specifier.
         // import { Foo, Bar, Baz } from 'foo'
         //         ^ start
-        remove_range.start = import_decl.span().start
-            + u32::try_from(open_brace_token_start + 1).unwrap_or_default();
+        remove_range.start = open_brace_start + 1;
         // skip `{`
         text_range.start = remove_range.start;
     }
@@ -775,16 +781,17 @@ fn find_first_non_white_space(text: &str) -> Option<(usize, char)> {
     None
 }
 
-// Find the index of the first occurrence of a character in a string.
-// When call this method, **make sure the `c` is in the text.**
+// Find the offset from `span.start` of the first occurrence of a token within `span`, skipping
+// tokens inside comments.
+// When call this method, **make sure the `token` is in the span.**
 // e.g. I know "{" is in the text when call this in ImportDeclaration which contains named
 // specifiers.
-fn try_find_char(text: &str, c: char) -> Result<u32, Box<dyn Error>> {
-    let index = text.find(c);
+fn try_find_token(ctx: &LintContext, span: Span, token: &str) -> Result<u32, Box<dyn Error>> {
+    let index = ctx.find_next_token_within(span.start, span.end, token);
     if let Some(index) = index {
-        Ok(u32::try_from(index).unwrap_or_default())
+        Ok(index)
     } else {
-        Err(format!("Missing character '{c}' in text: {text}").into())
+        Err(format!("Missing token '{token}' in text: {}", ctx.source_range(span)).into())
     }
 }
 
@@ -825,11 +832,13 @@ fn fix_insert_type_specifier_for_import_declaration(
     //                                             ^^^^ add
     rule_fixes.push(fixer.replace(Span::sized(import_decl.span.start, 6), "import type"));
 
-    if is_default_import && let Ok(_opening_brace_token) = try_find_char(import_source, '{') {
+    if is_default_import
+        && let Ok(_opening_brace_token) = try_find_token(ctx, import_specifiers_span, "{")
+    {
         // `import foo, {} from 'foo'`
         // `import foo, { bar } from 'foo'`
-        let comma_token = try_find_char(import_source, ',')?;
-        let closing_brace_token = try_find_char(import_source, '}')?;
+        let comma_token = try_find_token(ctx, import_specifiers_span, ",")?;
+        let closing_brace_token = try_find_token(ctx, import_specifiers_span, "}")?;
         let base = import_decl.span.start;
         // import foo, {} from 'foo'
         //           ^^^^ delete
@@ -2277,6 +2286,35 @@ export class Foo extends Bar {}
     ];
 
     let fix = vec![
+        // the `{` inside the comment is not the start of the named specifiers
+        (
+            "import /* { */ Foo, { Type1 } from 'foo';\nlet a: Type1;\nnew Foo();",
+            "import type { Type1 } from 'foo';\nimport /* { */ Foo from 'foo';\nlet a: Type1;\nnew Foo();",
+            None,
+        ),
+        // the `}` inside the comment is not the end of the named specifiers
+        (
+            "import Foo, { Type1 /* } */ } from 'foo';\nlet a: Type1;\nnew Foo();",
+            "import type { Type1 /* } */ } from 'foo';\nimport Foo from 'foo';\nlet a: Type1;\nnew Foo();",
+            None,
+        ),
+        // the `,` inside the comment is not the separator after the default specifier
+        (
+            "import Foo, /* , */ { Type1 } from 'foo';\nlet a: Type1;\nnew Foo();",
+            "import type { Type1 } from 'foo';\nimport Foo from 'foo';\nlet a: Type1;\nnew Foo();",
+            None,
+        ),
+        // specifiers merged into an existing type-only import whose braces contain comments
+        (
+            "import type { /* } */ A } from 'foo';\nimport { B, Type1 } from 'foo';\nlet a: A;\nlet t: Type1;\nnew B();",
+            "import type { /* } */ A , Type1 } from 'foo';\nimport { B } from 'foo';\nlet a: A;\nlet t: Type1;\nnew B();",
+            None,
+        ),
+        (
+            "import type { A, /* x */ } from 'foo';\nimport { B, Type1 } from 'foo';\nlet a: A;\nlet t: Type1;\nnew B();",
+            "import type { A, /* x */  Type1 } from 'foo';\nimport { B } from 'foo';\nlet a: A;\nlet t: Type1;\nnew B();",
+            None,
+        ),
         (
             "
             import Foo from 'foo';

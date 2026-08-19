@@ -125,7 +125,7 @@ impl Rule for NoUseBeforeDefine {
                 ..NoUseBeforeDefineConfig::default()
             }));
         }
-        serde_json::from_value::<DefaultRuleConfig<NoUseBeforeDefineConfig>>(value)
+        DefaultRuleConfig::<NoUseBeforeDefineConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(Self)
     }
@@ -439,7 +439,9 @@ where
             | AstKind::ArrowFunctionExpression(_)
             | AstKind::CatchClause(_)
             | AstKind::ImportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_) => break,
+            | AstKind::ExportDeclaration(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportFromDeclaration(_) => break,
             _ => {}
         }
     }

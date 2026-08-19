@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 74/74 (100.00%)
-Positive Passed: 74/74 (100.00%)
-Negative Passed: 155/155 (100.00%)
+AST Parsed     : 79/79 (100.00%)
+Positive Passed: 79/79 (100.00%)
+Negative Passed: 167/167 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -136,12 +136,37 @@ Negative Passed: 155/155 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = await 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[misc/fail/auto-accessor-initializer-yield.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = yield 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
  3 │     {
  4 │       await foo;
    ·       ─────
  5 │     }
+   ╰────
+
+  × Expected `;` but found `,`
+   ╭─[misc/fail/class-field-comma-expression.js:1:16]
+ 1 │ class C { x = a,b }
+   ·                ┬
+   ·                ╰── `;` expected
    ╰────
 
   × Cannot use export statement outside a module
@@ -3780,6 +3805,18 @@ Negative Passed: 155/155 (100.00%)
    ╰────
   help: Wrap this with parenthesis
 
+  × Expected `]` but found `EOF`
+   ╭─[misc/fail/oxc-23670.ts:2:1]
+ 1 │ <[m?,
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-23681.js:4:7]
+ 3 │ var prefix = 'fas';
+ 4 │ export()s.height = height;
+   ·       ─
+   ╰────
+
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]
  19 │ export type LocalInterface =
@@ -3903,6 +3940,62 @@ Negative Passed: 155/155 (100.00%)
  22 │ }
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-const-initializer.js:1:6]
+ 1 │ for (const a = 1 in b);
+   ·      ───────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-let-initializer.js:1:6]
+ 1 │ for (let a = 1 in b);
+   ·      ─────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-strict-var-initializer.cjs:3:6]
+ 2 │ "use strict";
+ 3 │ for (var a = 1 in b);
+   ·      ─────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-var-array-pattern-initializer.js:1:6]
+ 1 │ for (var [a] = [] in b);
+   ·      ────────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-var-object-pattern-initializer.js:1:6]
+ 1 │ for (var { a } = {} in b);
+   ·      ──────────────
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[misc/fail/oxc-25692.ts:2:16]
+ 1 │ class A {
+ 2 │   'constructor'<T>() {}
+   ·                ───
+ 3 │ }
+   ╰────
+  help: Instead, add type parameters to the class itself
+
+  × Constructor can't have get/set modifier
+   ╭─[misc/fail/oxc-25692.ts:6:7]
+ 5 │ class B {
+ 6 │   get 'constructor'<T>() {}
+   ·       ─────────────
+ 7 │ }
+   ╰────
+
+  × TS(1094): An accessor cannot have type parameters.
+   ╭─[misc/fail/oxc-25692.ts:6:20]
+ 5 │ class B {
+ 6 │   get 'constructor'<T>() {}
+   ·                    ───
+ 7 │ }
+   ╰────
 
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
@@ -4181,6 +4274,28 @@ Negative Passed: 155/155 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × TS(1009): Trailing comma not allowed.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]
+ 1 │ interface A extends B, {}
+   ·                      ─
+ 2 │ interface B extends this {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:2:21]
+ 1 │ interface A extends B, {}
+ 2 │ interface B extends this {}
+   ·                     ────
+ 3 │ interface C extends this.D {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:3:21]
+ 2 │ interface B extends this {}
+ 3 │ interface C extends this.D {}
+   ·                     ──────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]

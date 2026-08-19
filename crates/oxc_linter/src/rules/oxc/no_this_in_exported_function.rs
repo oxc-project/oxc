@@ -68,8 +68,8 @@ declare_oxc_lint!(
 impl Rule for NoThisInExportedFunction {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &export_decl.declaration {
+            AstKind::ExportDeclaration(export_decl) => {
+                if let Declaration::FunctionDeclaration(func) = &export_decl.declaration {
                     check_function_for_this(func, ctx);
                 }
             }

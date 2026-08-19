@@ -2,12 +2,11 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_str::CompactStr;
 
-use miette::JSONReportHandler;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
-    Error,
+    Error, JSONReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::{RuleCategory, rules::RULES};
@@ -65,7 +64,7 @@ impl InternalFormatter for JsonOutputFormatter {
             })
             .collect();
 
-        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+        rules_info.sort_unstable_by_key(|rule| (rule.scope, rule.value));
 
         Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
     }
@@ -139,16 +138,15 @@ impl JsonReporter {
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
 fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
-    let messages = diagnostics
-        .drain(..)
-        .map(|error| {
-            let mut output = String::new();
-            handler.render_report(&mut output, error.as_ref()).unwrap();
-            output
-        })
-        .collect::<Vec<_>>()
-        .join(",\n");
-    format!("[{messages}]")
+    let mut output = String::from("[");
+    for (index, error) in diagnostics.drain(..).enumerate() {
+        if index > 0 {
+            output.push_str(",\n");
+        }
+        handler.render_report(&mut output, error.as_ref()).unwrap();
+    }
+    output.push(']');
+    output
 }
 
 #[cfg(test)]
@@ -192,7 +190,7 @@ mod test {
             .unwrap();
         assert_eq!(
             &output,
-            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
+            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}]}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
         );
     }
 }

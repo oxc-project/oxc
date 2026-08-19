@@ -46,6 +46,15 @@ fn test() {
         ("it('should pass', () => somePromise().then(() => expect(true).toBeDefined()))", None),
         ("it('should pass', myTest); function myTest() { expect(true).toBeDefined() }", None),
         (
+            "test('via function declaration', async () => {
+                async function check() {
+                    expect(1 + 1).toBe(2);
+                }
+                await check();
+            });",
+            None,
+        ),
+        (
             "
             test('should pass', () => {
                 expect(true).toBeDefined();
@@ -299,4 +308,10 @@ fn test() {
     Tester::new(ExpectExpect::NAME, ExpectExpect::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_assert_function_pattern_errors_in_from_configuration() {
+    let invalid = serde_json::json!([{ "assertFunctionNames": ["["] }]);
+    assert!(ExpectExpect::from_configuration(invalid).is_err());
 }

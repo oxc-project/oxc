@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform-react",
-  "version": "0.142.0",
+  "version": "0.146.0",
   "description": "Oxc React Compiler Node API",
   "keywords": [
     "compiler",
@@ -45,7 +45,7 @@
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
-    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts transform-react.wasi.d.cts",
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {

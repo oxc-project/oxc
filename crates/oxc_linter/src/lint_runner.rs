@@ -127,6 +127,14 @@ impl DirectivesStore {
     pub fn remove(&self, path: &Path) {
         self.map.lock().expect("DirectivesStore mutex poisoned in remove").remove(path);
     }
+
+    /// Take and remove disable directives for a specific file in a single lock acquisition.
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
+    pub fn take(&self, path: &Path) -> Option<DisableDirectives> {
+        self.map.lock().expect("DirectivesStore mutex poisoned in take").remove(path)
+    }
 }
 
 impl Default for DirectivesStore {

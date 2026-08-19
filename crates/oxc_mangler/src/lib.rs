@@ -1,12 +1,15 @@
-use std::iter::{self, repeat_with};
+use std::{
+    collections::hash_map::Entry,
+    iter::{self, repeat_with},
+};
 
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
 use oxc_index::IndexVec;
 use oxc_syntax::class::ClassId;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use base54::base54;
+pub use base54::base54;
 use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
@@ -98,23 +101,29 @@ pub struct ManglerReturn {
 /// ## Example
 ///
 /// ```rust,ignore
-/// use oxc_codegen::{Codegen, CodegenOptions};
-/// use oxc_ast::ast::Program;
+/// use oxc_codegen::Codegen;
 /// use oxc_parser::Parser;
 /// use oxc_allocator::Allocator;
 /// use oxc_span::SourceType;
-/// use oxc_mangler::{MangleOptions, Mangler};
+/// use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 ///
 /// let allocator = Allocator::default();
 /// let source = "const result = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
 /// assert!(parsed.diagnostics.is_empty());
 ///
-/// let mangled_symbols = Mangler::new()
-///     .with_options(MangleOptions { top_level: true, debug: true })
+/// let ManglerReturn { scoping, class_private_mappings } = Mangler::new()
+///     .with_options(MangleOptions {
+///         top_level: Some(true),
+///         debug: true,
+///         ..MangleOptions::default()
+///     })
 ///     .build(&parsed.program);
 ///
-/// let js = Codegen::new().with_symbol_table(mangled_symbols).build(&parsed.program);
+/// let js = Codegen::new()
+///     .with_scoping(Some(scoping))
+///     .with_private_member_mappings(Some(class_private_mappings))
+///     .build(&parsed.program);
 /// // this will be `const a = 1 + 2;` if debug = false
 /// assert_eq!(js.code, "const slot_0 = 1 + 2;\n");
 /// ```
@@ -393,7 +402,7 @@ impl<'t> Mangler<'t> {
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
         let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
-        let ranking = SlotRanking::tally(allocator, scoping, &constraints, &slots);
+        let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
         let names =
             NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, generate_name);
@@ -408,57 +417,44 @@ impl<'t> Mangler<'t> {
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
 
-        let private_member_count: IndexVec<ClassId, usize> = classes
-            .elements
-            .iter()
-            .map(|class_elements| {
-                class_elements.iter().filter(|element| element.is_private).count()
-            })
-            .collect();
-        let parent_private_member_count: IndexVec<ClassId, usize> = classes
-            .declarations
-            .iter_enumerated()
-            .map(|(class_id, _)| {
-                classes
-                    .ancestors(class_id)
-                    .skip(1)
-                    .map(|id| private_member_count[id])
-                    .sum::<usize>()
-            })
-            .collect();
+        let mut class_private_mappings: IndexVec<ClassId, FxHashMap<String, CompactStr>> =
+            IndexVec::with_capacity(classes.len());
+        for (class_id, class_elements) in classes.elements.iter_enumerated() {
+            // Nested classes are declared after their lexical parents, so their mappings have
+            // already been collected.
+            let parent_private_member_count = classes
+                .ancestors(class_id)
+                .skip(1)
+                .map(|id| class_private_mappings[id].len())
+                .sum::<usize>();
+            assert!(
+                u32::try_from(class_elements.len() + parent_private_member_count).is_ok(),
+                "too many class elements"
+            );
 
-        classes
-            .elements
-            .iter_enumerated()
-            .map(|(class_id, class_elements)| {
-                let parent_private_member_count = parent_private_member_count[class_id];
-                assert!(
-                    u32::try_from(class_elements.len() + parent_private_member_count).is_ok(),
-                    "too many class elements"
+            let private_member_count =
+                class_elements.iter().filter(|element| element.is_private).count();
+            let mut mappings =
+                FxHashMap::with_capacity_and_hasher(private_member_count, FxBuildHasher);
+            for element in class_elements.iter().filter(|element| element.is_private) {
+                let next_index = mappings.len();
+                let Entry::Vacant(entry) = mappings.entry(element.name.to_string()) else {
+                    continue;
+                };
+
+                #[expect(clippy::cast_possible_truncation, reason = "checked above with assert")]
+                let mangled = CompactStr::new(
+                    // Avoid reusing the same mangled name in parent classes.
+                    // We can improve this by reusing names that are not used in child classes,
+                    // but nesting a class inside another class is not common
+                    // and that would require liveness analysis.
+                    base54((parent_private_member_count + next_index) as u32).as_str(),
                 );
-                class_elements
-                    .iter()
-                    .filter_map(|element| {
-                        if element.is_private { Some(element.name.to_string()) } else { None }
-                    })
-                    .enumerate()
-                    .map(|(i, name)| {
-                        #[expect(
-                            clippy::cast_possible_truncation,
-                            reason = "checked above with assert"
-                        )]
-                        let mangled = CompactStr::new(
-                            // Avoid reusing the same mangled name in parent classes.
-                            // We can improve this by reusing names that are not used in child classes,
-                            // but nesting a class inside another class is not common
-                            // and that would require liveness analysis.
-                            base54((parent_private_member_count + i) as u32).as_str(),
-                        );
-                        (name, mangled)
-                    })
-                    .collect::<FxHashMap<_, _>>()
-            })
-            .collect()
+                entry.insert(mangled);
+            }
+            class_private_mappings.push(mappings);
+        }
+        class_private_mappings
     }
 }
 
@@ -503,7 +499,8 @@ struct Constraints<'a, 's> {
 
 /// Phase 2 output — each symbol's slot, plus the names a direct `eval` can see.
 struct SlotAssignment<'a, 's> {
-    /// `slots[symbol] == slot`, or `SLOT_UNASSIGNED` for symbols that keep their name.
+    /// `slots[symbol] == slot` for symbols that will be renamed, or `SLOT_UNASSIGNED` for all
+    /// other symbols.
     slots: ArenaVec<'a, Slot>,
     total_slots: usize,
     /// Names of bindings in direct-`eval` scopes — they keep their names, nothing may shadow them.
@@ -549,13 +546,29 @@ impl<'a, 's> Constraints<'a, 's> {
 
     /// Whether a binding with this name must keep it.
     ///
-    /// `inline(always)`: called per symbol in `SlotRanking::tally`'s hot loop — the
+    /// `inline(always)`: called per symbol in `SlotAssignment::compute`'s hot loop — the
     /// empty-`reserved` fast path must compile down to the plain `is_special_name`
     /// check plus one predictable branch.
     #[expect(clippy::inline_always, reason = "hot path")]
     #[inline(always)]
     fn is_kept_name(&self, name: &str) -> bool {
         is_special_name(name) || (!self.reserved.is_empty() && self.reserved.contains(name))
+    }
+
+    /// Whether `symbol_id` will receive a mangled name.
+    ///
+    /// Every symbol assigned a slot is a candidate, so the slot assignment becomes the final
+    /// rename set.
+    #[inline]
+    fn is_mangle_candidate(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
+        let scope_id = scoping.symbol_scope_id(symbol_id);
+
+        !(scope_id == scoping.root_scope_id()
+            && (!self.top_level
+                || self.exported_symbols.as_ref().is_some_and(|e| e.has_bit(symbol_id.index())))
+            || scoping.scope_flags(scope_id).contains_direct_eval()
+            || self.is_kept_name(scoping.symbol_name(symbol_id))
+            || self.keep_name_symbols.as_ref().is_some_and(|keep| keep.has_bit(symbol_id.index())))
     }
 }
 
@@ -574,7 +587,6 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         ast_nodes: &AstNodes,
         constraints: &Constraints,
     ) -> Self {
-        let keep_name_symbols = constraints.keep_name_symbols.as_ref();
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
         let mut eval_reserved_names: FxHashSet<&'s str> = FxHashSet::default();
@@ -610,9 +622,12 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(bindings.values().copied().filter(|binding| {
-                !keep_name_symbols.is_some_and(|keep| keep.has_bit(binding.index()))
-            }));
+            tmp_bindings.extend(
+                bindings
+                    .values()
+                    .copied()
+                    .filter(|&binding| constraints.is_mangle_candidate(binding, scoping)),
+            );
             if tmp_bindings.is_empty() {
                 continue;
             }
@@ -658,6 +673,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
             let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
+                debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
 
                 // `var` is hoisted, so include the scope where it is declared
@@ -715,6 +731,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
                 && let Some(id) = &func.id
                 && let Some(&shadower) = bindings.get(&id.name)
                 && shadower != id.symbol_id()
+                && constraints.is_mangle_candidate(id.symbol_id(), scoping)
                 && slots[shadower.index()] != SLOT_UNASSIGNED
             {
                 slots[id.symbol_id().index()] = slots[shadower.index()];
@@ -727,17 +744,8 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 }
 
 impl<'a> SlotRanking<'a> {
-    /// Phase 3: count references per slot and sort hottest-first, skipping slots whose only
-    /// symbols are kept, exported (at top level), eval-visible, or special (`arguments`).
-    fn tally(
-        allocator: &'a Allocator,
-        scoping: &Scoping,
-        constraints: &Constraints,
-        slots: &SlotAssignment,
-    ) -> Self {
-        let exported_symbols = constraints.exported_symbols.as_ref();
-        let keep_name_symbols = constraints.keep_name_symbols.as_ref();
-        let root_scope_id = scoping.root_scope_id();
+    /// Phase 3: count references per candidate slot and sort hottest-first.
+    fn tally(allocator: &'a Allocator, scoping: &Scoping, slots: &SlotAssignment) -> Self {
         let mut frequencies = ArenaVec::from_iter_in(
             repeat_with(|| SlotFrequency::new(allocator)).take(slots.total_slots),
             &allocator,
@@ -748,22 +756,6 @@ impl<'a> SlotRanking<'a> {
                 continue;
             }
             let symbol_id = SymbolId::from_usize(symbol_id);
-            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
-            if symbol_scope_id == root_scope_id
-                && (!constraints.top_level
-                    || exported_symbols.is_some_and(|e| e.has_bit(symbol_id.index())))
-            {
-                continue;
-            }
-            if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
-                continue;
-            }
-            if constraints.is_kept_name(scoping.symbol_name(symbol_id)) {
-                continue;
-            }
-            if keep_name_symbols.is_some_and(|keep| keep.has_bit(symbol_id.index())) {
-                continue;
-            }
             let index = slot as usize;
             frequencies[index].slot = slot;
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
@@ -851,9 +843,8 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
                 symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter())
             {
                 // A slot can be shared by several symbols (cross-scope reuse); rename them all.
-                for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
-                }
+                scoping
+                    .set_symbol_names(&symbol_to_rename.symbol_ids, Ident::from(new_name.as_str()));
             }
         }
     }
@@ -875,8 +866,8 @@ fn collect_exported_symbols<'a>(
     let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
     let mut exported_names = ArenaHashSet::new_in(allocator);
     for statement in &program.body {
-        let Statement::ExportNamedDeclaration(v) = statement else { continue };
-        let Some(decl) = &v.declaration else { continue };
+        let Statement::ExportDeclaration(v) = statement else { continue };
+        let decl = &v.declaration;
         if let Declaration::VariableDeclaration(decl) = decl {
             // Use `bound_names` rather than `get_binding_identifier`: a destructuring
             // pattern (`export const { find } = x`) exports every bound name, and

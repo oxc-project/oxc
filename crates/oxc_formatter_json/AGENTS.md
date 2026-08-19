@@ -1,11 +1,16 @@
 # Coding agent guides for `crates/oxc_formatter_json`
 
+Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the JSON-specific rules and translations.
+
 ## Overview
 
 Prettier compatible JSON/JSONC/JSON5/JSON.stringify formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
+- Two entry points:
+  - `format()`: standalone files (returns a printable `Formatted`)
+  - `format_to_ir()`: embedded use via the dispatcher (e.g. a fenced block in JSDoc)
 - This crate holds only the JSON-specific layer
 - Parses with `oxc_parser`, not `serde_json`
   - For Prettier, JSON is not spec compliant JSON
@@ -37,33 +42,3 @@ Parsing always uses `SourceType::default()` (JS); `variant` only gates comment v
   - Because the lenient JS parse accepts them (also matching Prettier, which routes every variant through its JS printer)
 
 See the doc comments on `JsonVariant` in `src/options.rs` for the per-variant rules.
-
-## Verification
-
-```sh
-cargo c -p oxc_formatter_json
-```
-
-Run `clippy` and resolve all warnings.
-
-### Fixtures tests
-
-Snapshot tests driven by fixture files under `tests/fixtures/{json,jsonc,json5,json-stringify}/` (one directory per variant).
-`build.rs` auto-generates a test case from every `.{json,jsonc,json5}` file using the core `test_support` harness.
-Each directory's `options.json` sets the `variant` (and any per-case options); `json-stringify` fixtures use the `.json` extension.
-
-```sh
-cargo test -p oxc_formatter_json
-# Review / accept snapshots after intentional changes
-cargo insta review -p oxc_formatter_json
-```
-
-Add a case by dropping a new file into the matching variant directory, the build script picks it up.
-
-### Prettier conformance
-
-Compares output against Prettier's snapshots and tracks failures (not passes); results live in `tasks/prettier_conformance/snapshots/`. The `json` language is part of the shared conformance binary.
-
-```sh
-cargo run -p oxc_prettier_conformance
-```

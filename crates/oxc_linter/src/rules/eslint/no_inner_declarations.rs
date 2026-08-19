@@ -176,7 +176,7 @@ fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, allow_namespaces: b
     // A declaration may be wrapped in `export`; look through it to find the real enclosing scope.
     let enclosing = if matches!(
         parent_kind,
-        AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
+        AstKind::ExportDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
     ) {
         ctx.nodes().parent_node(parent_node.id()).kind()
     } else {
@@ -194,7 +194,7 @@ fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, allow_namespaces: b
         AstKind::Program(_)
             | AstKind::FunctionBody(_)
             | AstKind::StaticBlock(_)
-            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDeclaration(_)
             | AstKind::ExportDefaultDeclaration(_)
     ) {
         return;

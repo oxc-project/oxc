@@ -105,7 +105,12 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
         AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
-        AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
+        AstKind::TSExternalModuleDeclaration(decl) => {
+            ts::check_ts_external_module_declaration(decl, ctx);
+        }
+        AstKind::TSNamespaceDeclaration(decl) => {
+            ts::check_ts_namespace_declaration(decl, ctx);
+        }
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
         AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),

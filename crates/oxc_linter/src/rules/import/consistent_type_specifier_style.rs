@@ -125,7 +125,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentTypeSpecifierStyle {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -207,7 +207,11 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         rule_fixes.push(fixer.insert_text_before(item, "type "));
                     }
                     // find the 'type' keyword and remove it
-                    if let Some(pos) = ctx.find_next_token_from(import_decl.span.start, "type") {
+                    if let Some(pos) = ctx.find_next_token_within(
+                        import_decl.span.start,
+                        import_decl.span.end,
+                        "type",
+                    ) {
                         let type_token_span = Span::sized(import_decl.span.start + pos, 4);
                         let remove_fix = fixer.delete_range(type_token_span);
                         rule_fixes.push(remove_fix);

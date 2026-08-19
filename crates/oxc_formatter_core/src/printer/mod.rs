@@ -1,18 +1,19 @@
 mod call_stack;
+pub mod error;
 mod line_suffixes;
-mod printer_options;
+mod options;
 mod queue;
 mod stack;
 
 use std::num::NonZeroU8;
 
+pub use options::*;
 use oxc_data_structures::code_buffer::{self, CodeBuffer};
-pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
-    InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextRange, TextWidth,
+    InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
 };
 
 use self::call_stack::{
@@ -29,23 +30,11 @@ pub type PrintResult<T> = Result<T, PrintError>;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Printed {
     code: String,
-    range: Option<TextRange>,
 }
 
 impl Printed {
-    pub fn new(code: String, range: Option<TextRange>) -> Self {
-        Self { code, range }
-    }
-
-    /// Construct an empty formatter result
-    pub fn new_empty() -> Self {
-        Self { code: String::new(), range: None }
-    }
-
-    /// Range of the input source file covered by this formatted code,
-    /// or None if the entire file is covered in this instance
-    pub fn range(&self) -> Option<TextRange> {
-        self.range
+    pub fn new(code: String) -> Self {
+        Self { code }
     }
 
     /// Access the resulting code, borrowing the result
@@ -125,7 +114,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        Ok(Printed::new(self.state.buffer.into_string(), None))
+        Ok(Printed::new(self.state.buffer.into_string()))
     }
 
     /// Prints a single element and push the following elements to queue
@@ -165,6 +154,7 @@ impl<'a> Printer<'a> {
                             return Ok(());
                         }
                         LineMode::Hard
+                        | LineMode::HardWithoutExpand
                         | LineMode::Empty
                         | LineMode::ExactLineBreaks(_)
                         | LineMode::Literal => {
@@ -372,13 +362,12 @@ impl<'a> Printer<'a> {
             }
             FormatElement::TailwindClass(index) => {
                 let text = self.state.sorted_tailwind_classes.get(*index);
-                // A dangling index silently DELETES the class list from the
-                // output, so fail loudly in debug builds instead.
+                // A dangling index silently DELETES the class list from the output,
+                // so fail loudly in debug builds instead.
                 debug_assert!(
                     text.is_some(),
-                    "TailwindClass index {index} out of bounds ({} classes) — \
-                     was the embedded IR remapped into the parent's class space \
-                     (`DispatchResult::remap_tailwind_into`)?",
+                    "TailwindClass index {index} out of bounds ({} classes): \
+                     Was the embedded IR remapped into the parent's class space (`DispatchPayload::into_doc`)?",
                     self.state.sorted_tailwind_classes.len(),
                 );
                 if let Some(text) = text {
@@ -533,6 +522,11 @@ impl<'a> Printer<'a> {
 
         stack.push(TagKind::Fill, args);
 
+        // This fill may itself be printed inside another fill's item;
+        // its own decisions take over for the duration of this call
+        // (a nested fill's entries pair with the nested fill's separators, not the outer one's).
+        let saved_fill_separator_mode = self.state.fill_separator_mode.take();
+
         while matches!(queue.top(), Some(FormatElement::Tag(Tag::StartEntry))) {
             let mut measurer = FitsMeasurer::new_flat(queue, stack, indent_stack, self);
 
@@ -588,6 +582,7 @@ impl<'a> Printer<'a> {
                     stack,
                     indent_stack,
                     args.with_print_mode(PrintMode::Flat),
+                    PrintMode::Flat,
                 )?;
                 self.print_fill_separator(
                     queue,
@@ -612,18 +607,27 @@ impl<'a> Printer<'a> {
                 }
             };
 
-            self.print_fill_item(queue, stack, indent_stack, args.with_print_mode(item_mode))?;
+            let separator_mode = match last_pair_layout {
+                FillPairLayout::Flat => PrintMode::Flat,
+                FillPairLayout::ItemFlatSeparatorExpanded
+                | FillPairLayout::Expanded
+                | FillPairLayout::ItemMaybeFlat => PrintMode::Expanded,
+            };
+
+            self.print_fill_item(
+                queue,
+                stack,
+                indent_stack,
+                args.with_print_mode(item_mode),
+                separator_mode,
+            )?;
 
             if matches!(queue.top(), Some(FormatElement::Tag(Tag::StartEntry))) {
-                let separator_mode = match last_pair_layout {
-                    FillPairLayout::Flat => PrintMode::Flat,
-                    FillPairLayout::ItemFlatSeparatorExpanded
-                    | FillPairLayout::Expanded
-                    | FillPairLayout::ItemMaybeFlat => PrintMode::Expanded,
-                };
-
                 // Push a new stack frame with print mode `Flat` for the case where the separator gets printed in expanded mode
                 // but does contain a group to ensure that the group will measure "fits" with the "flat" versions of the next item/separator.
+                // (Sibling of the single-shot separator-mode hint in [Self::print_fill_item]:
+                // this one covers walks escaping the separator, optimistically flat for all following entries;
+                // the hint covers walks escaping the item, with the decided mode for exactly its separator.)
                 stack.push(TagKind::Fill, args.with_print_mode(PrintMode::Flat));
                 self.print_fill_separator(
                     queue,
@@ -635,6 +639,8 @@ impl<'a> Printer<'a> {
             }
         }
 
+        self.state.fill_separator_mode = saved_fill_separator_mode;
+
         if queue.top() == Some(&FormatElement::Tag(Tag::EndFill)) {
             Ok(())
         } else {
@@ -643,14 +649,30 @@ impl<'a> Printer<'a> {
     }
 
     /// Semantic alias for [Self::print_entry] for fill items.
+    ///
+    /// `separator_mode` is the print mode the fill has already decided for the separator following this item;
+    /// it is exposed through [PrinterState::fill_separator_mode] for the duration of the item,
+    /// so that a fits measurement escaping the item's entry measures the separator as
+    /// it will actually print instead of with the fill's own (expanded) mode.
+    ///
+    /// This mirrors Prettier, which pushes the decided separator command onto its command stack before printing the item,
+    /// where a `shouldRemeasure` fits walk finds it.
+    /// Without this, a flat-decided JSX whitespace separator (`if_group_breaks(["{\" \"}", ...])`) would materialize its expanded-only content
+    /// during the walk and over-count the width, expanding a group that the fill already measured to fit (issue #21916).
+    /// A frame-based version (like the `Fill(Flat)` wrapper around the expanded separator below) cannot express this:
+    /// a frame's mode would also apply to every entry beyond the separator, while the decided mode holds for exactly one entry.
     fn print_fill_item(
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
         indent_stack: &mut PrintIndentStack,
         args: PrintElementArgs,
+        separator_mode: PrintMode,
     ) -> PrintResult<()> {
-        self.print_entry(queue, stack, indent_stack, args)
+        self.state.fill_separator_mode = Some(separator_mode);
+        let result = self.print_entry(queue, stack, indent_stack, args);
+        self.state.fill_separator_mode = None;
+        result
     }
 
     /// Semantic alias for [Self::print_entry] for fill separators.
@@ -666,7 +688,7 @@ impl<'a> Printer<'a> {
 
     /// Fully print an element (print the element itself and all its descendants)
     ///
-    /// Unlike [print_element], this function ensures the entire element has
+    /// Unlike [`Self::print_element`], this function ensures the entire element has
     /// been printed when it returns and the queue is back to its original state
     fn print_entry(
         &mut self,
@@ -833,6 +855,16 @@ struct PrinterState<'a> {
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
+    /// The already-decided print mode of the separator following the fill item that is currently being printed,
+    /// set by [Printer::print_fill_item] so that a fits measurement escaping the item's entry measures the separator
+    /// as it will actually print (Prettier keeps the decided separator command on its command stack, where its `fits` walk finds it).
+    /// `None` outside of fill item printing.
+    ///
+    /// Known limitation: the hint is one fill level deep (`print_fill_entries` saves and clears the outer value around a nested fill).
+    /// A walk that leaves the printed fill entirely and continues into an outer fill's entries measures
+    /// that fill's separator with the fill frame's own mode again;
+    /// covering any depth would need Prettier's full command-stack shape.
+    fill_separator_mode: Option<PrintMode>,
     line_width: usize,
     has_empty_line: bool,
     line_suffixes: LineSuffixes<'a>,
@@ -924,11 +956,9 @@ impl Indention {
 
     /// Increments the level by one.
     ///
-    /// The behaviour depends on the [`indent_style`][IndentStyle] if this is an [Indent::Align]:
+    /// The behaviour depends on the [`indent_style`][IndentStyle] if this is an [`Indention::Align`]:
     /// * **Tabs**: `align` is converted into an indent. This results in `level` increasing by two: once for the align, once for the level increment
     /// * **Spaces**: Increments the `level` by one and keeps the `align` unchanged.
-    ///
-    /// Keeps any  the current value is [Indent::Align] and increments the level by one.
     fn increment_level(self, indent_style: IndentStyle) -> Self {
         match self {
             Indention::Level(count) => Indention::Level(count + 1),
@@ -944,7 +974,7 @@ impl Indention {
 
     /// Adds an `align` of `count` spaces to the current indention.
     ///
-    /// It increments the `level` value if the current value is [Indent::IndentAlign].
+    /// It increments the `level` value if the current value is [`Indention::Align`].
     fn set_align(self, count: NonZeroU8) -> Self {
         match self {
             Indention::Level(indent_count) => {
@@ -975,6 +1005,14 @@ struct FitsMeasurer<'a, 'print> {
     indent_stack: FitsIndentStack<'print>,
     printer: &'print mut Printer<'a>,
     must_be_flat: bool,
+    /// Copy of [PrinterState::fill_separator_mode]:
+    /// the decided print mode for the separator entry following the fill item the measurement starts in.
+    /// Consumed (single-shot) by the first `StartEntry` the walk sees at the printed fill's own level, see [Self::fits_element].
+    fill_separator_mode: Option<PrintMode>,
+    /// Number of `StartFill` tags entered during this measurement.
+    /// The separator mode above only applies to entries of the fill the printer is currently printing (depth 0),
+    /// not to entries of nested fills the walk enters on its own.
+    fill_depth: u32,
 }
 
 impl<'a, 'print> FitsMeasurer<'a, 'print> {
@@ -986,6 +1024,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     ) -> Self {
         let mut measurer = Self::new(print_queue, print_stack, print_indent_stack, printer);
         measurer.must_be_flat = true;
+        // Flat measurements are the fill's own pair measurements;
+        // the separator-mode hint is only for measurements started while printing a fill item.
+        measurer.fill_separator_mode = None;
         measurer
     }
 
@@ -1024,12 +1065,16 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             sorted_tailwind_classes: printer.state.sorted_tailwind_classes,
         };
 
+        let fill_separator_mode = printer.state.fill_separator_mode;
+
         Self {
             state: fits_state,
             queue: fits_queue,
             stack: fits_stack,
             indent_stack: fits_indent_stack,
             must_be_flat: false,
+            fill_separator_mode,
+            fill_depth: 0,
             printer,
         }
     }
@@ -1122,6 +1167,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                         }
                         LineMode::Soft => {}
                         LineMode::Hard
+                        | LineMode::HardWithoutExpand
                         | LineMode::Empty
                         | LineMode::ExactLineBreaks(_)
                         | LineMode::Literal => {
@@ -1295,11 +1341,42 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
+            FormatElement::Tag(tag @ StartFill) => {
+                self.fill_depth += 1;
+                self.stack.push(tag.kind(), args);
+            }
+            FormatElement::Tag(tag @ EndFill) => {
+                if self.fill_depth == 0 {
+                    // The walk left the fill whose item is currently being printed (the item was the last entry);
+                    // the printer's separator-mode hint no longer applies.
+                    self.fill_separator_mode = None;
+                } else {
+                    self.fill_depth -= 1;
+                }
+                self.stack.pop(tag.kind())?;
+            }
+            FormatElement::Tag(tag @ StartLabelled(_)) => {
+                self.stack.push(tag.kind(), args);
+            }
+            FormatElement::Tag(tag @ StartEntry) => {
+                // A `StartEntry` seen while the top frame is the printed fill's own frame
+                // (depth 0; the walk started inside the item, so its `EndEntry` has popped back to it)
+                // is the first entry after that item:
+                // its separator. Measure it with the print mode the printer has already decided for it,
+                // exactly as it is going to be printed (single-shot, see [PrinterState::fill_separator_mode]).
+                let args = if let Some(mode) = self.fill_separator_mode
+                    && self.fill_depth == 0
+                    && self.stack.top_kind() == Some(TagKind::Fill)
+                {
+                    self.fill_separator_mode = None;
+                    args.with_print_mode(mode)
+                } else {
+                    args
+                };
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent),
             ) => {
                 self.stack.pop(tag.kind())?;
             }
@@ -1483,7 +1560,7 @@ mod tests {
 
     use crate::{
         Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer,
+        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
@@ -1525,12 +1602,10 @@ mod tests {
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, allocator);
         let mut buffer = VecBuffer::new(&mut state);
-        crate::format::write(&mut buffer, Arguments::new(&[Argument::new(root)]));
+        write(&mut buffer, Arguments::new(&[Argument::new(root)]));
 
         let elements = buffer.into_vec();
-        let document = Document::new(elements, Vec::default());
-        document.propagate_expand();
-        Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
+        Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
     }
 
     #[test]
@@ -2168,6 +2243,105 @@ two lines`,
             printed.as_code(),
             "The referenced group breaks.\nThis group breaks because:\nIt measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text."
         );
+    }
+
+    #[test]
+    fn conditional_content_is_transparent_to_expand_propagation() {
+        // A hard line inside a conditional body expands the enclosing group at build time
+        // even when the body never prints (see the `if_group_breaks` docs): conditional tags are not expansion boundaries.
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            let group_id = f.state().group_id("watched");
+            write!(f, [group(&token("short")).with_group_id(Some(group_id)), space()]);
+            write!(
+                f,
+                [group(&format_args!(
+                    token("a"),
+                    soft_line_break_or_space(),
+                    if_group_breaks(&hard_line_break()).with_group_id(Some(group_id)),
+                    token("b"),
+                ))]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        // The watched group is flat, so the conditional body is skipped — yet its hard
+        // line already expanded the enclosing group: `a b` would fit, but prints broken.
+        assert_eq!(printed.as_code(), "short a\nb");
+    }
+
+    #[test]
+    fn hard_line_without_expand_parent_breaks_but_does_not_propagate() {
+        // Prettier's `hardlineWithoutBreakParent`: always prints a line break,
+        // yet the enclosing group still measures flat and its soft lines stay flat.
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [group(&format_args!(
+                    token("a"),
+                    soft_line_break_or_space(),
+                    token("b"),
+                    hard_line_break().without_expand_parent(),
+                    token("c"),
+                ))]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        assert_eq!(printed.as_code(), "a b\nc");
+    }
+
+    #[test]
+    fn best_fitting_is_an_expansion_boundary() {
+        // A hard line inside a `best_fitting` variant does not expand enclosing groups
+        // (see `Document::propagate_expand`): the group around it still measures flat
+        // and the most-flat variant is chosen.
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [group(&format_args!(
+                    token("a"),
+                    soft_line_break_or_space(),
+                    best_fitting![
+                        format_args!(token("first")),
+                        format_args!(token("expanded"), hard_line_break(), token("tail")),
+                    ],
+                ))]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        assert_eq!(printed.as_code(), "a first");
+    }
+
+    #[test]
+    fn best_fitting_selects_a_variant_whose_content_force_breaks() {
+        // Variant measurement early-exits `Yes` at the first line break: a variant
+        // holding a forced break is still selected when its first line fits, so
+        // "does this content break" cannot drive variant selection
+        // (watch a group id with `if_group_breaks` for that).
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [best_fitting![
+                    format_args!(
+                        token("first line"),
+                        group(&format_args!(token(" broken"), hard_line_break(), token("tail")))
+                    ),
+                    format_args!(token("never chosen")),
+                ]]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        assert_eq!(printed.as_code(), "first line broken\ntail");
     }
 
     #[test]

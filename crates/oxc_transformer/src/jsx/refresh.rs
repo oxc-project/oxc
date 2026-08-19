@@ -177,7 +177,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let calls = self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 binding.create_binding_pattern(ctx),
                 None,
                 None,
@@ -246,8 +245,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         // Get the address of the statement containing this `FunctionDeclaration`
         let address = match ctx.parent() {
             // For `export function Foo() {}`
-            // which is a `Statement::ExportNamedDeclaration`
-            Ancestor::ExportNamedDeclarationDeclaration(decl) => decl.address(),
+            // which is a `Statement::ExportDeclaration`
+            Ancestor::ExportDeclarationDeclaration(decl) => decl.address(),
             // For `export default function() {}`
             // which is a `Statement::ExportDefaultDeclaration`
             Ancestor::ExportDefaultDeclarationDeclaration(decl) => decl.address(),
@@ -725,21 +724,15 @@ impl<'a> ReactRefresh<'a> {
                 self.handle_variable_declaration(variable, ctx)
             }
             Statement::FunctionDeclaration(func) => self.handle_function_declaration(func, ctx),
-            Statement::ExportNamedDeclaration(export_decl) => {
-                if let Some(declaration) = &mut export_decl.declaration {
-                    match declaration {
-                        Declaration::FunctionDeclaration(func) => {
-                            self.handle_function_declaration(func, ctx)
-                        }
-                        Declaration::VariableDeclaration(variable) => {
-                            self.handle_variable_declaration(variable, ctx)
-                        }
-                        _ => None,
-                    }
-                } else {
-                    None
+            Statement::ExportDeclaration(export_decl) => match &mut export_decl.declaration {
+                Declaration::FunctionDeclaration(func) => {
+                    self.handle_function_declaration(func, ctx)
                 }
-            }
+                Declaration::VariableDeclaration(variable) => {
+                    self.handle_variable_declaration(variable, ctx)
+                }
+                _ => None,
+            },
             Statement::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
@@ -901,17 +894,16 @@ impl<'a> ReactRefresh<'a> {
         );
 
         // Get the address of the statement containing this `VariableDeclarator`
-        let address =
-            if let Ancestor::ExportNamedDeclarationDeclaration(export_decl) = ctx.ancestor(2) {
-                // For `export const Foo = () => {}`
-                // which is a `VariableDeclaration` inside a `Statement::ExportNamedDeclaration`
-                export_decl.address()
-            } else {
-                // Otherwise just a `const Foo = () => {}` which is a `Statement::VariableDeclaration`
-                let var_decl = ctx.ancestor(1);
-                debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
-                var_decl.address()
-            };
+        let address = if let Ancestor::ExportDeclarationDeclaration(export_decl) = ctx.ancestor(2) {
+            // For `export const Foo = () => {}`
+            // which is a `VariableDeclaration` inside a `Statement::ExportDeclaration`
+            export_decl.address()
+        } else {
+            // Otherwise just a `const Foo = () => {}` which is a `Statement::VariableDeclaration`
+            let var_decl = ctx.ancestor(1);
+            debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
+            var_decl.address()
+        };
         ctx.state.statement_injector.insert_after(&address, statement);
     }
 }

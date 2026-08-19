@@ -240,7 +240,7 @@ fn remove_unused_expressions_in_sequence() {
     test("typeof (0, foo);", "foo");
     test_same("v = typeof (0, foo);");
     test("var foo; typeof (0, foo);", "var foo;");
-    test("var foo; v = typeof (0, foo);", "var foo; v = typeof foo");
+    test("v = function(foo) { return typeof (0, foo) }", "v = function(foo) { return typeof foo }");
     test("typeof 0", "");
 
     test_same("delete (0, foo);");

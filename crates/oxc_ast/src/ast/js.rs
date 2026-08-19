@@ -1167,9 +1167,10 @@ pub enum Declaration<'a> {
     TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
-    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+    TSExternalModuleDeclaration(Box<'a, TSExternalModuleDeclaration<'a>>) = 38,
+    TSNamespaceDeclaration(Box<'a, TSNamespaceDeclaration<'a>>) = 39,
+    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 40,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 41,
 }
 
 /// `let a;` in `let a; a = 1;`
@@ -1215,8 +1216,6 @@ pub enum VariableDeclarationKind {
 pub struct VariableDeclarator<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(skip)]
-    pub kind: VariableDeclarationKind,
     #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
     #[ts]
@@ -1870,7 +1869,7 @@ pub enum FunctionType {
         interface FormalParameterRest extends Span {
             type: 'RestElement';
             argument: BindingPattern;
-            decorators?: [],
+            decorators?: Array<Decorator>;
             optional?: boolean;
             typeAnnotation?: TSTypeAnnotation | null;
             value?: null;
@@ -2058,6 +2057,22 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    add_fields(superClass = ClassSuperClass, superTypeArguments = ClassSuperTypeArguments),
+    field_order(
+        r#type,
+        decorators,
+        id,
+        type_parameters,
+        superClass,
+        superTypeArguments,
+        implements,
+        body,
+        r#abstract,
+        declare,
+        span,
+    ),
+)]
 pub struct Class<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2078,23 +2093,15 @@ pub struct Class<'a> {
     #[scope(enter_before)]
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    /// Super class. When present, this will usually be an [`IdentifierReference`].
-    ///
-    /// ## Example
-    /// ```ts
-    /// class Foo extends Bar {}
-    /// //                ^^^
-    /// ```
-    pub super_class: Option<Expression<'a>>,
-    /// Type parameters passed to super class.
+    /// The class heritage.
     ///
     /// ## Example
     /// ```ts
     /// class Foo<T> extends Bar<T> {}
-    /// //                       ^
+    /// //           ^^^^^^^^^^^^^^
     /// ```
-    #[ts]
-    pub super_type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    #[estree(skip)]
+    pub heritage: Option<ClassHeritage<'a>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example
@@ -2126,6 +2133,27 @@ pub struct Class<'a> {
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     pub scope_id: Cell<Option<ScopeId>>,
+}
+
+/// The expression and optional type arguments in a class heritage clause.
+///
+/// ```ts
+/// class Foo extends Bar<Baz> {}
+/// //                ^^^ ^^^^^
+/// //                |   |
+/// //                |   +-- type_arguments
+/// //                +------ expression
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree)]
+#[estree(skip, no_type, no_ts_def)]
+pub struct ClassHeritage<'a> {
+    /// Superclass expression. This will usually be an [`IdentifierReference`].
+    pub expression: Expression<'a>,
+    /// Type arguments passed to the superclass.
+    #[ts]
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 #[ast]
@@ -2401,8 +2429,7 @@ pub struct StaticBlock<'a> {
 /// import bar from 'bar';
 /// import * as baz from 'baz';
 ///
-/// // Not a ModuleDeclaration
-/// export const a = 5;
+/// export const a = 5;       // ExportDeclaration
 ///
 /// const b = 6;
 ///
@@ -2424,14 +2451,17 @@ pub enum ModuleDeclaration<'a> {
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
     /// `export default 5;`
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
-    /// `export {five} from './numbers.js';`
+    /// `export const five = 5;`
+    ExportDeclaration(Box<'a, ExportDeclaration<'a>>) = 67,
     /// `export {six, seven};`
-    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 68,
+    /// `export {five} from './numbers.js';`
+    ExportFromDeclaration(Box<'a, ExportFromDeclaration<'a>>) = 69,
 
     /// `export = 5;`
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 70,
     /// `export as namespace React;`
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 71,
 }
 
 #[ast]
@@ -2669,32 +2699,104 @@ pub enum ImportAttributeKey<'a> {
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
-/// Named Export Declaration
+/// Exported declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// export const foo = 1;
+/// export interface Bar {}
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_ts_def = "
+        interface ExportNamedDeclaration extends Span {
+            type: 'ExportNamedDeclaration';
+            declaration: Declaration | null;
+            specifiers: Array<ExportSpecifier>;
+            source: StringLiteral | null;
+            exportKind?: ImportOrExportKind;
+            attributes: Array<ImportAttribute>;
+            parent/* IF !LINTER */?/* END IF */: Node;
+        }
+    ",
+    add_fields(
+        specifiers = EmptyArray,
+        source = Null,
+        exportKind = ExportDeclarationExportKind,
+        attributes = EmptyArray,
+    ),
+    field_order(declaration, specifiers, source, exportKind, attributes, span),
+)]
+pub struct ExportDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub declaration: Declaration<'a>,
+}
+
+/// Local named export declaration.
 ///
 /// ## Example
 ///
 /// ```ts
 /// //       ________ specifiers
 /// export { Foo, Bar };
-/// export type { Baz } from 'baz';
-/// //     ^^^^              ^^^^^
-/// // export_kind           source
+/// export type { Baz };
+/// //     ^^^^
+/// // export_kind
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_fields(declaration = Null, source = Null, attributes = EmptyArray),
+    field_order(declaration, specifiers, source, export_kind, attributes, span),
+)]
 pub struct ExportNamedDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
-    pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     #[ts]
     pub export_kind: ImportOrExportKind,
+}
+
+/// Named re-export declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// export { Foo, Bar } from 'module';
+/// export type { Baz } from 'baz';
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_fields(declaration = Null),
+    field_order(declaration, specifiers, source, export_kind, with_clause, span),
+)]
+pub struct ExportFromDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    pub source: StringLiteral<'a>,
+    /// `export type { foo } from 'module'`
+    #[ts]
+    pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
+    #[estree(rename = "attributes", via = ExportFromDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 

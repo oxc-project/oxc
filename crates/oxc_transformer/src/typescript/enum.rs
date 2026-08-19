@@ -42,9 +42,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                     *stmt = new_stmt;
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) => {
+            Statement::ExportDeclaration(export_decl) => {
                 let span = export_decl.span;
-                if let Some(Declaration::TSEnumDeclaration(decl)) = &mut export_decl.declaration
+                if let Declaration::TSEnumDeclaration(decl) = &mut export_decl.declaration
                     && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), ctx)
                 {
                     *stmt = new_stmt;
@@ -295,27 +295,16 @@ impl<'a> TypeScriptEnum {
                 enum_symbol_id,
                 ctx,
             );
-            let decl = VariableDeclarator::new(
-                span,
-                kind,
-                binding,
-                None,
-                Some(call_expression),
-                false,
-                ctx,
-            );
+            let decl =
+                VariableDeclarator::new(span, binding, None, Some(call_expression), false, ctx);
             [decl]
         };
         let variable_declaration =
             Declaration::new_variable_declaration(span, kind, decls, false, ctx);
 
         let stmt = if let Some(export_span) = export_span {
-            let declaration = ExportNamedDeclaration::boxed_plain_declaration(
-                export_span,
-                variable_declaration,
-                ctx,
-            );
-            Statement::ExportNamedDeclaration(declaration)
+            let declaration = ExportDeclaration::boxed(export_span, variable_declaration, ctx);
+            Statement::ExportDeclaration(declaration)
         } else {
             Statement::from(variable_declaration)
         };

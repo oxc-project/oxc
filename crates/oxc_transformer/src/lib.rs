@@ -724,6 +724,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.x2_es2020.enter_export_all_declaration(node, ctx);
     }
 
+    fn enter_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
+        ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_export_from_declaration(node, ctx);
+        }
+    }
+
     fn enter_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,

@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
+use oxc_language_server::{ClientMessage, ToolBuildResult};
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
     CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
@@ -72,9 +73,17 @@ impl ServerLinterBuilder {
         }
     }
 
+    /// Creates a new `ServerLinter` instance based on the provided root URI and options.
+    /// Returns a tuple containing the `ServerLinter` instance and an optional message to be sent to the client.
+    /// This message will be used to inform about misconfiguration.
+    ///
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
+    pub fn build(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> (ServerLinter, Option<ClientMessage>) {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -233,16 +242,19 @@ impl ServerLinterBuilder {
             }
         };
 
-        ServerLinter::new(
-            options.run,
-            root_path.to_path_buf(),
-            LintIgnoreMatcher::new(&base_patterns, &base_ignore_root, nested_ignore_patterns),
-            Self::create_ignore_glob(&root_path),
-            extended_paths,
-            runner,
-            fix_kind,
-            lint_options.report_unused_directive,
-            options.rules_customization,
+        (
+            ServerLinter::new(
+                options.run,
+                root_path.to_path_buf(),
+                LintIgnoreMatcher::new(&base_patterns, &base_ignore_root, nested_ignore_patterns),
+                Self::create_ignore_glob(&root_path),
+                extended_paths,
+                runner,
+                fix_kind,
+                lint_options.report_unused_directive,
+                options.rules_customization,
+            ),
+            None,
         )
     }
 }
@@ -288,8 +300,9 @@ impl ToolBuilder for ServerLinterBuilder {
             };
     }
 
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(self.build(root_uri, options))
+    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
+        let (tool, client_message) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_message }
     }
 
     #[expect(unused)]
@@ -432,12 +445,13 @@ impl Tool for ServerLinter {
         };
 
         if !Self::needs_restart(&old_option, &new_options) {
-            return ToolRestartChanges { tool: None, watch_patterns: None };
+            return ToolRestartChanges { tool: None, watch_patterns: None, client_message: None };
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
         builder.shutdown(root_uri);
-        let new_linter = builder.build_boxed(root_uri, new_options_json.clone());
+        let ToolBuildResult { tool, client_message } =
+            builder.build(root_uri, new_options_json.clone());
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -446,11 +460,11 @@ impl Tool for ServerLinter {
             {
                 None
             } else {
-                Some(new_linter.get_watcher_patterns(new_options_json))
+                Some(tool.get_watcher_patterns(new_options_json))
             }
         };
 
-        ToolRestartChanges { tool: Some(new_linter), watch_patterns: patterns }
+        ToolRestartChanges { tool: Some(tool), watch_patterns: patterns, client_message }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -499,12 +513,13 @@ impl Tool for ServerLinter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
-        let new_linter = builder.build_boxed(root_uri, options);
+        let ToolBuildResult { tool, client_message } = builder.build(root_uri, options);
 
         ToolRestartChanges {
-            tool: Some(new_linter),
+            tool: Some(tool),
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
+            client_message,
         }
     }
 
@@ -834,17 +849,15 @@ impl ServerLinter {
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
+        // Take directives once to avoid separate get/remove lock acquisitions.
+        let directives = self.runner.directives_coordinator().take(path);
+
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.runner.directives_coordinator().get(path)
+            && let Some(directives) = directives
         {
             messages.extend(create_unused_directives_report(&directives, severity, source_text));
         }
-
-        // Clear any stale directives because they are no longer needed.
-        // This prevents using outdated directive spans if the new linting run fails.
-        self.runner.directives_coordinator().remove(path);
-
         Ok(messages)
     }
 
@@ -1535,12 +1548,45 @@ mod test {
     }
 
     #[test]
+    fn test_rules_customization_severity_with_eslint_prefix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "eslint/no-debugger": {
+                        "severity": "warn"
+                    },
+                    "eslint/no-console": {
+                        "severity": "off"
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
     fn test_rules_customization_autofix() {
         let tester = Tester::new(
             "fixtures/lsp/rules_customization/autofix",
             json!({
                 "rulesCustomization": {
                     "no-debugger": {
+                        "autofix": false
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_autofix_with_eslint_prefix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/autofix",
+            json!({
+                "rulesCustomization": {
+                    "eslint/no-debugger": {
                         "autofix": false
                     }
                 }

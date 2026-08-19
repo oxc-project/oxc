@@ -1129,14 +1129,10 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    Some(ident)
-                } else {
-                    None
-                }
-            }
-            Declaration::TSGlobalDeclaration(_) | Declaration::VariableDeclaration(_) => None,
+            Declaration::TSNamespaceDeclaration(decl) => Some(&decl.id),
+            Declaration::TSExternalModuleDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1148,7 +1144,8 @@ impl<'a> Declaration<'a> {
             Declaration::ClassDeclaration(decl) => decl.declare,
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
-            Declaration::TSModuleDeclaration(decl) => decl.declare,
+            Declaration::TSExternalModuleDeclaration(decl) => decl.declare,
+            Declaration::TSNamespaceDeclaration(decl) => decl.declare,
             Declaration::TSGlobalDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
             Declaration::TSImportEqualsDeclaration(_) => false,
@@ -1654,6 +1651,28 @@ impl<'a> ArrowFunctionExpression<'a> {
 }
 
 impl<'a> Class<'a> {
+    /// Returns the expression in this class's heritage clause, when present.
+    ///
+    /// ```ts
+    /// class Foo extends Bar<Baz> {}
+    /// //                ^^^
+    /// ```
+    #[inline]
+    pub fn heritage_expression(&self) -> Option<&Expression<'a>> {
+        self.heritage.as_ref().map(|heritage| &heritage.expression)
+    }
+
+    /// Returns the type arguments in this class's heritage clause, when present.
+    ///
+    /// ```ts
+    /// class Foo extends Bar<Baz> {}
+    /// //                   ^^^^^
+    /// ```
+    #[inline]
+    pub fn heritage_type_arguments(&self) -> Option<&TSTypeParameterInstantiation<'a>> {
+        self.heritage.as_ref()?.type_arguments.as_deref()
+    }
+
     /// Returns this [`Class`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Ident<'a>> {
@@ -1685,6 +1704,16 @@ impl<'a> Class<'a> {
     /// Returns `true` if this class uses `declare class` or `abstract class` syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
+    }
+}
+
+impl GetSpan for ClassHeritage<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        let expression_span = self.expression.span();
+        self.type_arguments
+            .as_ref()
+            .map_or(expression_span, |type_arguments| expression_span.merge(type_arguments.span))
     }
 }
 
@@ -1902,7 +1931,9 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             ModuleDeclaration::ImportDeclaration(_) => false,
             ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportNamedDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportFromDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportAllDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::TSNamespaceExportDeclaration(_)
             | ModuleDeclaration::TSExportAssignment(_) => true,
@@ -1920,7 +1951,9 @@ impl<'a> ModuleDeclaration<'a> {
             self,
             Self::ExportAllDeclaration(_)
                 | Self::ExportDefaultDeclaration(_)
+                | Self::ExportDeclaration(_)
                 | Self::ExportNamedDeclaration(_)
+                | Self::ExportFromDeclaration(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExportDeclaration(_)
         )
@@ -1942,8 +1975,10 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
             Self::ExportAllDeclaration(decl) => Some(&decl.source),
-            Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportFromDeclaration(decl) => Some(&decl.source),
             Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
@@ -1960,8 +1995,10 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportFromDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
@@ -2009,11 +2046,34 @@ impl<'a> ImportAttributeKey<'a> {
     }
 }
 
-impl ExportNamedDeclaration<'_> {
-    /// Returns `true` if this export declaration uses any TypeScript syntax (such as `type` or `declare`).
+impl ExportDeclaration<'_> {
+    /// Returns the export kind derived from the wrapped declaration.
+    #[inline]
+    pub fn export_kind(&self) -> ImportOrExportKind {
+        if self.declaration.declare() || self.declaration.is_type() {
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
+        }
+    }
+
+    /// Returns `true` if this export declaration uses any TypeScript syntax.
     pub fn is_typescript_syntax(&self) -> bool {
-        self.export_kind == ImportOrExportKind::Type
-            || self.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax)
+        self.declaration.is_typescript_syntax()
+    }
+}
+
+impl ExportNamedDeclaration<'_> {
+    /// Returns `true` if this is a TypeScript type-only export.
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
+    }
+}
+
+impl ExportFromDeclaration<'_> {
+    /// Returns `true` if this is a TypeScript type-only re-export.
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
     }
 }
 

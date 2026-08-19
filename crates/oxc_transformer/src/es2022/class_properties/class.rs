@@ -72,7 +72,7 @@ impl<'a> ClassProperties<'a> {
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
-        let has_super_class = class.super_class().is_some();
+        let has_super_class = class.heritage().is_some();
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -489,7 +489,7 @@ impl<'a> ClassProperties<'a> {
         // Insert statements before/after class
         let stmt_address = match ctx.parent() {
             parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
-            | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
+            | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
             // `Class` is always stored in a `Box`, so has a stable memory location
             _ => class.unstable_address(),
         };

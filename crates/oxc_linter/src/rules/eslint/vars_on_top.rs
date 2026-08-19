@@ -110,7 +110,7 @@ impl Rule for VarsOnTop {
         let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
-            AstKind::ExportNamedDeclaration(_) => {
+            AstKind::ExportDeclaration(_) => {
                 let grand_parent = ctx.nodes().parent_node(parent.id());
                 if let AstKind::Program(grand_parent) = grand_parent.kind() {
                     global_var_check(parent, grand_parent, ctx);
@@ -143,8 +143,8 @@ fn is_variable_declaration(node: &Statement) -> bool {
         return true;
     }
 
-    if let Statement::ExportNamedDeclaration(export) = node {
-        return matches!(export.declaration, Some(Declaration::VariableDeclaration(_)));
+    if let Statement::ExportDeclaration(export) = node {
+        return matches!(export.declaration, Declaration::VariableDeclaration(_));
     }
 
     false

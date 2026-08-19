@@ -188,7 +188,7 @@ impl Symbol<'_, '_> {
     fn in_export_node(&self) -> bool {
         for parent in self.nodes().ancestors(self.declaration_id()) {
             match parent.kind() {
-                AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
+                AstKind::ExportDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
                     return true;
                 }
                 AstKind::VariableDeclaration(_)

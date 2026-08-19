@@ -40,7 +40,7 @@ impl Str<'static> {
 impl<'a> Str<'a> {
     /// Allocate provided `&str` into arena, and return a [`Str<'a>`].
     #[inline]
-    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+    pub fn from_str_in(s: &str, allocator: &impl GetAllocator<'a>) -> Self {
         Self(allocator.allocator().alloc_str(s))
     }
 
@@ -93,9 +93,9 @@ impl<'a> Str<'a> {
     // are statically known. See `Allocator::alloc_concat_strs_array`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn from_strs_array_in<const N: usize, A: GetAllocator<'a>>(
+    pub fn from_strs_array_in<const N: usize>(
         strings: [&str; N],
-        allocator: &A,
+        allocator: &impl GetAllocator<'a>,
     ) -> Str<'a> {
         Self::from(allocator.allocator().alloc_concat_strs_array(strings))
     }
@@ -107,7 +107,7 @@ impl<'a> Str<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
     #[inline]
-    pub fn from_cow_in<A: GetAllocator<'a>>(value: &Cow<'a, str>, allocator: &A) -> Str<'a> {
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Str<'a> {
         match value {
             Cow::Borrowed(s) => Str::from(*s),
             Cow::Owned(s) => Str::from_str_in(s, allocator),

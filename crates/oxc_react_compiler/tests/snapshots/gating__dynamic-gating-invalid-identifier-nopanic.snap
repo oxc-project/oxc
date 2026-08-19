@@ -4,7 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/gating/dynamic-gating-invalid-ide
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Gating: Dynamic gating directive is not a valid JavaScript identifier", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(70), length: 74 }, primary: false }]), help: Some("Found 'use memo if(true)'"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Dynamic gating directive is not a valid JavaScript identifier", labels: [LabeledSpan { label: Some("Invalid gating condition"), span: Span { start: 89, end: 108 }, primary: true }], help: Some("Found 'use memo if(true)'"), note: Some("React Compiler could not continue with this configuration"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Gating") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/gating") } }
 
 // @dynamicGating:{"source":"shared-runtime"} @panicThreshold:"none"
 function Foo() {

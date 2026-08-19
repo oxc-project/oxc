@@ -107,7 +107,7 @@ impl<'a> TypeScriptModule {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Declaration<'a>> {
         if !self.only_remove_type_imports
-            && !ctx.parent().is_export_named_declaration()
+            && !ctx.parent().is_export_declaration()
             && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
@@ -177,7 +177,7 @@ impl<'a> TypeScriptModule {
                 )
             }
         };
-        let decl = VariableDeclarator::new(SPAN, kind, binding, None, Some(init), false, ctx);
+        let decl = VariableDeclarator::new(SPAN, binding, None, Some(init), false, ctx);
 
         Some(Declaration::new_variable_declaration(SPAN, kind, [decl], false, ctx))
     }

@@ -98,9 +98,8 @@
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
 use oxc_ast::{Comment, CommentContent};
+use oxc_formatter_core::SourceText;
 use oxc_span::{GetSpan, Span};
-
-use crate::formatter::SourceText;
 
 /// Snapshot of the comment processing state for speculative formatting.
 ///
@@ -373,6 +372,15 @@ impl<'a> Comments<'a> {
             .iter()
             .take_while(|comment| comment.span.end <= end)
             .any(|comment| comment.followed_by_newline())
+    }
+
+    /// Position-based variant of [`Self::has_comment_in_range`],
+    /// considering ALL comments, including already-printed ones:
+    /// whether the first comment at or after `start` ends within `end`.
+    /// Same discipline as [`Self::has_own_line_comment_in_range`].
+    pub fn has_any_comment_in_range(&self, start: u32, end: u32) -> bool {
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        self.inner.get(first).is_some_and(|comment| comment.span.end <= end)
     }
 
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {

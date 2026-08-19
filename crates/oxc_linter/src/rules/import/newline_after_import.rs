@@ -208,7 +208,7 @@ declare_oxc_lint!(
 
 impl Rule for NewlineAfterImport {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -485,14 +485,12 @@ fn first_decorator_start(stmt: &Statement<'_>) -> Option<u32> {
             }
             _ => None,
         },
-        Statement::ExportNamedDeclaration(export_named) => {
-            match export_named.declaration.as_ref() {
-                Some(Declaration::ClassDeclaration(class)) => {
-                    class.decorators.first().map(|decorator| decorator.span.start)
-                }
-                _ => None,
+        Statement::ExportDeclaration(export_decl) => match &export_decl.declaration {
+            Declaration::ClassDeclaration(class) => {
+                class.decorators.first().map(|decorator| decorator.span.start)
             }
-        }
+            _ => None,
+        },
         _ => None,
     }
 }

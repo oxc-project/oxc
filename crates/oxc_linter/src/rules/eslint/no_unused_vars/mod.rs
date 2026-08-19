@@ -302,7 +302,7 @@ impl NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
@@ -366,7 +366,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
@@ -465,13 +465,18 @@ fn remove_unused_catch_parameter<'a>(
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
     let Span { start, end, .. } = catch.span();
-
-    let (Some(paren_start), Some(paren_end_offset)) =
-        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
-    else {
+    let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_node(catch.node_id()).kind() else {
         return fixer.noop();
     };
 
+    let (Some(paren_start_offset), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(catch_clause.span.start, start, "("),
+        ctx.find_next_token_within(end, catch_clause.span.end, ")"),
+    ) else {
+        return fixer.noop();
+    };
+
+    let paren_start = catch_clause.span.start + paren_start_offset;
     let paren_end = end + paren_end_offset;
     let delete_span = Span::new(paren_start, paren_end + 1);
     fixer.delete_range(delete_span)

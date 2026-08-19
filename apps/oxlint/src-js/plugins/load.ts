@@ -84,12 +84,24 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 // May be changed when switching workspaces.
 export let registeredRules: RuleDetails[] = [];
 
+// Names of loaded plugins.
+// May be changed when switching workspaces.
+export let registeredPluginNames = new Set<string>();
+
 /**
  * Set `registeredRules`. Used when switching workspaces.
  * @param rules - Array of `RuleDetails` objects
  */
 export function setRegisteredRules(rules: RuleDetails[]) {
   registeredRules = rules;
+}
+
+/**
+ * Set `registeredPluginNames`. Used when switching workspaces.
+ * @param pluginNames - Set of registered plugin names
+ */
+export function setRegisteredPluginNames(pluginNames: Set<string>) {
+  registeredPluginNames = pluginNames;
 }
 
 // `before` hook which makes rule never run.
@@ -140,6 +152,7 @@ export async function loadPlugin(
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
+ * @throws {Error} If another plugin with the same name is already registered
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
@@ -157,6 +170,12 @@ export function registerPlugin(
   // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
   // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
   if (workspaceUri !== null) switchWorkspace(workspaceUri);
+
+  if (registeredPluginNames.has(pluginName)) {
+    throw new Error(
+      `Plugin name '${pluginName}' is already registered. Use a different name or an alias in \`jsPlugins\`.`,
+    );
+  }
 
   const offset = registeredRules.length;
   const { rules } = plugin;
@@ -303,6 +322,8 @@ export function registerPlugin(
 
     registeredRules.push(ruleDetails);
   }
+
+  registeredPluginNames.add(pluginName);
 
   return { name: pluginName, offset, ruleNames };
 }

@@ -51,6 +51,14 @@ declare_oxc_lint!(
     /// Requires `const` declarations for variables that are never
     /// reassigned after their initial declaration.
     ///
+    /// #### Ignored Files
+    /// This rule ignores `.svelte` and `.vue` files entirely. Oxlint only parses the
+    /// `<script>` blocks of these files, so a binding that the template reassigns looks
+    /// like it is never reassigned, and turning it into a `const` makes the framework
+    /// compiler fail. In Svelte the template writes through `bind:this={el}` and
+    /// `bind:value={x}`; in Vue a `<script setup>` `let` is a `setup-let` binding that
+    /// `v-model="x"` and inline handlers such as `@click="x = 1"` assign to directly.
+    ///
     /// ### Why is this bad?
     ///
     /// If a variable is never reassigned, using the `const` declaration is better.
@@ -100,7 +108,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferConst {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -191,6 +199,11 @@ impl Rule for PreferConst {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        // ignore svelte/vue: their templates can reassign a binding, which we can't see.
+        !ctx.file_extension().is_some_and(|ext| ext == "svelte" || ext == "vue")
+    }
 }
 
 impl PreferConst {
@@ -223,7 +236,8 @@ impl PreferConst {
         let decl_span = decl.span();
         let decl_text = decl_span.source_text(ctx.source_text());
 
-        if let Some(let_pos) = decl_text.find("let") {
+        if let Some(let_pos) = fixer.find_next_token_within(decl_span.start, decl_span.end, "let") {
+            let let_pos = let_pos as usize;
             let new_text = format!("{}const{}", &decl_text[..let_pos], &decl_text[let_pos + 3..]);
             fixer.replace(decl_span, new_text)
         } else {
@@ -1160,6 +1174,96 @@ fn test() {
     Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_svelte() {
+    use crate::tester::Tester;
+
+    // The markup is stripped before linting; it documents the template-side write
+    // (`bind:this`, `bind:value`) that makes these bindings reassigned in reality.
+    let pass = vec![
+        (
+            "<script lang=\"ts\">
+                let divEl: HTMLElement | null = $state(null);
+             </script>
+             <div bind:this={divEl}></div>",
+            None,
+        ),
+        (
+            "<script>
+                let value = \"\";
+             </script>
+             <input bind:value />",
+            None,
+        ),
+        // Both blocks of a two-script component are linted; neither may report.
+        (
+            "<script module>
+                let shared = 0;
+             </script>
+             <script>
+                let value = \"\";
+             </script>
+             <input bind:value />",
+            None,
+        ),
+    ];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, vec![])
+        .change_rule_path("test.svelte")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_vue() {
+    use crate::tester::Tester;
+
+    // A `<script setup>` `let` is a `setup-let` binding: `v-model` and inline handlers
+    // compile to direct assignments to it, so `const` breaks the render function.
+    let pass = vec![
+        (
+            "<script setup>
+                let msg = \"\";
+             </script>
+             <template><input v-model=\"msg\" /></template>",
+            None,
+        ),
+        (
+            "<script setup lang=\"ts\">
+                let open = false;
+             </script>
+             <template><button @click=\"open = !open\">{{ open }}</button></template>",
+            None,
+        ),
+    ];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, vec![])
+        .change_rule_path("test.vue")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_astro() {
+    use crate::tester::Tester;
+
+    // Guards against over-suppressing every partial-loader extension: Astro templates
+    // are expression-only and cannot assign, so the rule must keep reporting there.
+    let fail = vec![(
+        "---
+            let a = 1;
+            console.log(a);
+         ---
+         <p>{a}</p>",
+        None,
+    )];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, vec![], fail)
+        .change_rule_path("test.astro")
+        .intentionally_allow_no_fix_tests()
+        .test();
 }
 
 #[test]

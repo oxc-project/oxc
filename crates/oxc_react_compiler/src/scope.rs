@@ -2,10 +2,10 @@ use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
-    PropertyKind, TSModuleDeclarationName,
+    PropertyKind,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
@@ -196,6 +196,10 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         self.scoping().symbol_name(symbol_id)
     }
 
+    pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
+        self.scoping().symbol_span(symbol_id)
+    }
+
     /// The symbol's name as an arena-lifetime `Ident`, copied into the arena.
     /// The name in `Scoping` lives in the `Semantic` borrow, not the arena, so
     /// a copy decouples the compiled output from that borrow.
@@ -236,7 +240,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::CatchParameter(_) => return BindingKind::Let,
             AstKind::TSTypeAliasDeclaration(_) => return BindingKind::Local,
             AstKind::TSEnumDeclaration(_) => return BindingKind::Local,
-            AstKind::TSModuleDeclaration(_) => return BindingKind::Local,
+            AstKind::TSNamespaceDeclaration(_) => return BindingKind::Local,
             AstKind::Function(_) => {
                 if flags.contains(SymbolFlags::Function) {
                     return BindingKind::Hoisted;
@@ -317,7 +321,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::CatchClause(_) | AstKind::CatchParameter(_) => DeclKind::CatchClause,
             AstKind::TSTypeAliasDeclaration(_) => DeclKind::TSTypeAliasDeclaration,
             AstKind::TSEnumDeclaration(_) => DeclKind::TSEnumDeclaration,
-            AstKind::TSModuleDeclaration(_) => DeclKind::TSModuleDeclaration,
+            AstKind::TSNamespaceDeclaration(_) => DeclKind::TSModuleDeclaration,
             _ => DeclKind::Unknown,
         }
     }
@@ -593,10 +597,9 @@ fn find_binding_identifier<'a>(kind: AstKind<'a>, name: &str) -> Option<&'a Bind
             (decl.id.name.as_str() == name).then_some(&decl.id)
         }
         AstKind::TSEnumDeclaration(decl) => (decl.id.name.as_str() == name).then_some(&decl.id),
-        AstKind::TSModuleDeclaration(decl) => match &decl.id {
-            TSModuleDeclarationName::Identifier(id) => (id.name.as_str() == name).then_some(id),
-            _ => None,
-        },
+        AstKind::TSNamespaceDeclaration(decl) => {
+            (decl.id.name.as_str() == name).then_some(&decl.id)
+        }
         _ => None,
     }
 }

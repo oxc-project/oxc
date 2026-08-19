@@ -77,10 +77,8 @@ impl Rule for NoTypos {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ExportNamedDeclaration(en_decl) = node.kind()
-            && let Some(decl) = &en_decl.declaration
-        {
-            match decl {
+        if let AstKind::ExportDeclaration(en_decl) = node.kind() {
+            match &en_decl.declaration {
                 Declaration::VariableDeclaration(decl) => {
                     for decl in &decl.declarations {
                         if let BindingPattern::BindingIdentifier(id) = &decl.id {

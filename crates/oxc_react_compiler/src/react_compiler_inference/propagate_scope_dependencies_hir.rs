@@ -28,6 +28,7 @@ use crate::react_compiler_hir::{
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
     ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
+use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
 
 // =============================================================================
@@ -278,13 +279,16 @@ fn collect_temporaries_sidemap_impl<'a>(
             let used_outside = used_outside_declaring_scope.contains(&lvalue_decl_id);
 
             match &instr.value {
-                InstructionValue::PropertyLoad { object, property, span, .. } if !used_outside => {
+                InstructionValue::PropertyLoad { object, property, property_span, span }
+                    if !used_outside =>
+                {
                     if inner_fn_context.is_none() || temporaries[object.identifier].is_some() {
                         let prop = get_property(
                             object,
                             property,
                             false,
                             *span,
+                            *property_span,
                             temporaries,
                             env.allocator,
                         );
@@ -348,13 +352,15 @@ fn get_property<'a>(
     property_name: &PropertyLiteral<'a>,
     optional: bool,
     span: Option<Span>,
+    property_span: Option<Span>,
     temporaries: &TemporariesMap<'a>,
     alloc: &'a Allocator,
 ) -> ReactiveScopeDependency<'a> {
+    let property_span = property_span.or(span);
     let resolved = temporaries[object.identifier].as_ref();
     if let Some(resolved) = resolved {
         let mut path = resolved.path.clone_in(alloc);
-        path.push(DependencyPathEntry { property: *property_name, optional, span });
+        path.push(DependencyPathEntry { property: *property_name, optional, span: property_span });
         ReactiveScopeDependency {
             identifier: resolved.identifier,
             reactive: resolved.reactive,
@@ -366,7 +372,7 @@ fn get_property<'a>(
             identifier: object.identifier,
             reactive: object.reactive,
             path: ArenaVec::from_array_in(
-                [DependencyPathEntry { property: *property_name, optional, span }],
+                [DependencyPathEntry { property: *property_name, optional, span: property_span }],
                 &alloc,
             ),
             span,
@@ -458,6 +464,7 @@ struct MatchConsequentResult<'a> {
     store_local_lvalue_id: IdentifierId,
     consequent_goto: BlockId,
     property_load_span: Option<Span>,
+    property_span: Option<Span>,
 }
 
 fn match_optional_test_block<'a>(
@@ -477,8 +484,10 @@ fn match_optional_test_block<'a>(
     let instr0 = &func.instructions[consequent_block.instructions[0].index()];
     let instr1 = &func.instructions[consequent_block.instructions[1].index()];
 
-    let (property_load_object, property, property_load_span) = match &instr0.value {
-        InstructionValue::PropertyLoad { object, property, span } => (object, property, span),
+    let (property_load_object, property, property_load_span, property_span) = match &instr0.value {
+        InstructionValue::PropertyLoad { object, property, property_span, span } => {
+            (object, property, span, property_span)
+        }
         _ => return None,
     };
 
@@ -520,6 +529,7 @@ fn match_optional_test_block<'a>(
                 store_local_lvalue_id: instr1.lvalue.identifier,
                 consequent_goto: *goto_block,
                 property_load_span: *property_load_span,
+                property_span: *property_span,
             })
         }
         _ => None,
@@ -561,13 +571,13 @@ fn traverse_optional_block<'a>(
                 let curr_instr = &func.instructions[maybe_test_block.instructions[i].index()];
                 let prev_instr = &func.instructions[maybe_test_block.instructions[i - 1].index()];
                 match &curr_instr.value {
-                    InstructionValue::PropertyLoad { object, property, span, .. }
+                    InstructionValue::PropertyLoad { object, property, property_span, span }
                         if object.identifier == prev_instr.lvalue.identifier =>
                     {
                         path.push(DependencyPathEntry {
                             property: *property,
                             optional: false,
-                            span: *span,
+                            span: property_span.or(*span),
                         });
                     }
                     _ => return None,
@@ -669,7 +679,7 @@ fn traverse_optional_block<'a>(
             p.push(DependencyPathEntry {
                 property: match_result.property,
                 optional: is_optional,
-                span: match_result.property_load_span,
+                span: match_result.property_span.or(match_result.property_load_span),
             });
             p
         },
@@ -1737,15 +1747,42 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         self.visit_dependency(dep, env);
     }
 
+    fn visit_operand_root(&mut self, place: &Place, env: &mut Environment<'a>) {
+        let dep = self.temporaries[place.identifier]
+            .as_ref()
+            .map(|resolved| ReactiveScopeDependency {
+                identifier: resolved.identifier,
+                reactive: resolved.reactive,
+                path: ArenaVec::new_in(&env.allocator),
+                span: resolved.span,
+            })
+            .unwrap_or_else(|| ReactiveScopeDependency {
+                identifier: place.identifier,
+                reactive: place.reactive,
+                path: ArenaVec::new_in(&env.allocator),
+                span: place.span,
+            });
+        self.visit_dependency(dep, env);
+    }
+
     fn visit_property(
         &mut self,
         object: &Place,
         property: &PropertyLiteral<'a>,
         optional: bool,
         span: Option<Span>,
+        property_span: Option<Span>,
         env: &mut Environment<'a>,
     ) {
-        let dep = get_property(object, property, optional, span, self.temporaries, env.allocator);
+        let dep = get_property(
+            object,
+            property,
+            optional,
+            span,
+            property_span,
+            self.temporaries,
+            env.allocator,
+        );
         self.visit_dependency(dep, env);
     }
 
@@ -1841,6 +1878,9 @@ fn visit_inner_function_blocks<'a>(
     ctx: &mut DependencyCollectionContext<'a, '_>,
     env: &mut Environment<'a>,
 ) {
+    let semantic_only_caught_instructions =
+        find_semantic_only_caught_instructions(&env.functions[func_id], env);
+
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
     let inner_instrs = env.functions[func_id].instructions.clone_in(env.allocator);
@@ -1888,7 +1928,12 @@ fn visit_inner_function_blocks<'a>(
                     visit_inner_function_blocks(lowered_func.func, ctx, env);
                 }
                 _ => {
-                    handle_instruction(inner_instr, ctx, env);
+                    handle_instruction(
+                        inner_instr,
+                        semantic_only_caught_instructions.as_ref().is_some_and(|loads| loads[iid]),
+                        ctx,
+                        env,
+                    );
                 }
             }
         }
@@ -1904,6 +1949,7 @@ fn visit_inner_function_blocks<'a>(
 
 fn handle_instruction<'a>(
     instr: &Instruction<'a>,
+    semantic_only_caught_instruction: bool,
     ctx: &mut DependencyCollectionContext<'a, '_>,
     env: &mut Environment<'a>,
 ) {
@@ -1911,13 +1957,22 @@ fn handle_instruction<'a>(
     let scope_stack_copy = ctx.scope_stack.clone();
     ctx.declare(instr.lvalue.identifier, Decl { id, scope_stack: scope_stack_copy }, env);
 
+    if semantic_only_caught_instruction {
+        // The operation must remain inside the try/catch, so use its root operands as
+        // dependencies instead of hoisting the potentially throwing operation into a cache guard.
+        for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+            ctx.visit_operand_root(&operand, env);
+        }
+        return;
+    }
+
     if ctx.is_deferred_dependency_instr(instr) {
         return;
     }
 
     match &instr.value {
-        InstructionValue::PropertyLoad { object, property, span, .. } => {
-            ctx.visit_property(object, property, false, *span, env);
+        InstructionValue::PropertyLoad { object, property, property_span, span } => {
+            ctx.visit_property(object, property, false, *span, *property_span, env);
         }
         InstructionValue::StoreLocal { value: val, lvalue, .. } => {
             ctx.visit_operand(val, env);
@@ -1980,6 +2035,7 @@ fn collect_dependencies<'a>(
     temporaries: &TemporariesMap<'a>,
     processed_instrs_in_optional: &FxHashSet<ProcessedInstr>,
 ) -> FxIndexMap<ScopeId, Vec<ReactiveScopeDependency<'a>>> {
+    let semantic_only_caught_instructions = find_semantic_only_caught_instructions(func, env);
     let mut ctx = DependencyCollectionContext::new(
         env.identifiers.len(),
         temporaries,
@@ -2008,7 +2064,13 @@ fn collect_dependencies<'a>(
 
     let mut traversal = ScopeBlockTraversal::new();
 
-    handle_function_deps(func, env, &mut ctx, &mut traversal);
+    handle_function_deps(
+        func,
+        env,
+        semantic_only_caught_instructions.as_ref(),
+        &mut ctx,
+        &mut traversal,
+    );
 
     ctx.deps
 }
@@ -2016,6 +2078,7 @@ fn collect_dependencies<'a>(
 fn handle_function_deps<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
+    semantic_only_caught_instructions: Option<&IndexVec<InstructionId, bool>>,
     ctx: &mut DependencyCollectionContext<'a, '_>,
     traversal: &mut ScopeBlockTraversal,
 ) {
@@ -2068,7 +2131,13 @@ fn handle_function_deps<'a>(
                     ctx.inner_fn_context = prev_inner;
                 }
                 _ => {
-                    handle_instruction(instr, ctx, env);
+                    handle_instruction(
+                        instr,
+                        semantic_only_caught_instructions
+                            .is_some_and(|instructions| instructions[instr_id]),
+                        ctx,
+                        env,
+                    );
                 }
             }
         }

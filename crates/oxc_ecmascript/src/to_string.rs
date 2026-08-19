@@ -53,6 +53,13 @@ impl<'a> ToJsString<'a> for ArrayExpressionElement<'a> {
 
 impl<'a> ToJsString<'a> for StringLiteral<'a> {
     fn to_js_string(&self, _ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
+        // The value of a string with lone surrogates encodes them with
+        // `\u{FFFD}` escapes. Consumers build new string literals from the
+        // returned value without carrying the `lone_surrogates` flag over,
+        // which would print the escape encoding as literal text.
+        if self.lone_surrogates {
+            return None;
+        }
         Some(Cow::Borrowed(self.value.as_str()))
     }
 }
@@ -61,6 +68,11 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
         let mut str = String::new();
         for (i, quasi) in self.quasis.iter().enumerate() {
+            // See the `StringLiteral` impl: the cooked value encodes lone
+            // surrogates with `\u{FFFD}` escapes.
+            if quasi.lone_surrogates {
+                return None;
+            }
             str.push_str(quasi.value.cooked.as_ref()?);
 
             if i < self.expressions.len() {

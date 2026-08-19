@@ -95,15 +95,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                     let export_specifier =
                         ExportSpecifier::new(span, local, exported_name, export_kind, ctx);
 
-                    let export_named_decl = ExportNamedDeclaration::boxed(
-                        span,
-                        None,
-                        [export_specifier],
-                        None,
-                        export_kind,
-                        None,
-                        ctx,
-                    );
+                    let export_named_decl =
+                        ExportNamedDeclaration::boxed(span, [export_specifier], export_kind, ctx);
                     new_statements.push(Statement::ExportNamedDeclaration(export_named_decl));
                 }
                 _ => {

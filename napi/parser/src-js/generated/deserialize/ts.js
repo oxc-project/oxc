@@ -1243,10 +1243,12 @@ function deserializeStatement(pos) {
     case 37:
       return deserializeBoxTSEnumDeclaration(pos + 8);
     case 38:
-      return deserializeBoxTSModuleDeclaration(pos + 8);
+      return deserializeBoxTSExternalModuleDeclaration(pos + 8);
     case 39:
-      return deserializeBoxTSGlobalDeclaration(pos + 8);
+      return deserializeBoxTSNamespaceDeclaration(pos + 8);
     case 40:
+      return deserializeBoxTSGlobalDeclaration(pos + 8);
+    case 41:
       return deserializeBoxTSImportEqualsDeclaration(pos + 8);
     case 64:
       return deserializeBoxImportDeclaration(pos + 8);
@@ -1255,10 +1257,14 @@ function deserializeStatement(pos) {
     case 66:
       return deserializeBoxExportDefaultDeclaration(pos + 8);
     case 67:
-      return deserializeBoxExportNamedDeclaration(pos + 8);
+      return deserializeBoxExportDeclaration(pos + 8);
     case 68:
-      return deserializeBoxTSExportAssignment(pos + 8);
+      return deserializeBoxExportNamedDeclaration(pos + 8);
     case 69:
+      return deserializeBoxExportFromDeclaration(pos + 8);
+    case 70:
+      return deserializeBoxTSExportAssignment(pos + 8);
+    case 71:
       return deserializeBoxTSNamespaceExportDeclaration(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for Statement`);
@@ -1312,10 +1318,12 @@ function deserializeDeclaration(pos) {
     case 37:
       return deserializeBoxTSEnumDeclaration(pos + 8);
     case 38:
-      return deserializeBoxTSModuleDeclaration(pos + 8);
+      return deserializeBoxTSExternalModuleDeclaration(pos + 8);
     case 39:
-      return deserializeBoxTSGlobalDeclaration(pos + 8);
+      return deserializeBoxTSNamespaceDeclaration(pos + 8);
     case 40:
+      return deserializeBoxTSGlobalDeclaration(pos + 8);
+    case 41:
       return deserializeBoxTSImportEqualsDeclaration(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for Declaration`);
@@ -1357,7 +1365,7 @@ function deserializeVariableDeclarator(pos) {
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: deserializeBool(pos + 13),
+      definite: deserializeBool(pos + 12),
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
     },
@@ -1909,6 +1917,7 @@ function deserializeFormalParameters(pos) {
         end: (end = deserializeI32(pos + 44)),
       };
     rest.argument = deserializeBindingPattern(pos + 56);
+    rest.decorators = deserializeVecDecorator(pos + 16);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
     if (rest.typeAnnotation !== null) {
       end = rest.typeAnnotation.end;
@@ -2155,24 +2164,28 @@ function deserializeYieldExpression(pos) {
 
 function deserializeClass(pos) {
   let node = {
-    type: deserializeClassType(pos + 136),
-    decorators: null,
-    id: null,
-    typeParameters: null,
-    superClass: null,
-    superTypeArguments: null,
-    implements: null,
-    body: null,
-    abstract: deserializeBool(pos + 137),
-    declare: deserializeBool(pos + 138),
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
+      type: deserializeClassType(pos + 136),
+      decorators: null,
+      id: null,
+      typeParameters: null,
+      superClass: null,
+      superTypeArguments: null,
+      implements: null,
+      body: null,
+      abstract: deserializeBool(pos + 137),
+      declare: deserializeBool(pos + 138),
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 72);
-  node.superClass = deserializeOptionExpression(pos + 80);
-  node.superTypeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 96);
+  node.superClass = superClass;
+  node.superTypeArguments =
+    superClass === null
+      ? null
+      : deserializeOptionBoxTSTypeParameterInstantiation(pos + 80 + (pos + 16 - pos));
   node.implements = deserializeVecTSClassImplements(pos + 104);
   node.body = deserializeBoxClassBody(pos + 128);
   return node;
@@ -2478,7 +2491,44 @@ function deserializeImportAttributeKey(pos) {
   }
 }
 
+function deserializeExportDeclaration(pos) {
+  let node = {
+      type: "ExportNamedDeclaration",
+      declaration: null,
+      specifiers: [],
+      source: null,
+      exportKind: null,
+      attributes: [],
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    declaration = deserializeDeclaration(pos + 16);
+  node.declaration = declaration;
+  node.exportKind =
+    declaration.declare === true ||
+    declaration.type === "TSTypeAliasDeclaration" ||
+    declaration.type === "TSInterfaceDeclaration"
+      ? "type"
+      : "value";
+  return node;
+}
+
 function deserializeExportNamedDeclaration(pos) {
+  let node = {
+    type: "ExportNamedDeclaration",
+    declaration: null,
+    specifiers: null,
+    source: null,
+    exportKind: deserializeImportOrExportKind(pos + 12),
+    attributes: [],
+    start: deserializeI32(pos),
+    end: deserializeI32(pos + 4),
+  };
+  node.specifiers = deserializeVecExportSpecifier(pos + 16);
+  return node;
+}
+
+function deserializeExportFromDeclaration(pos) {
   let node = {
       type: "ExportNamedDeclaration",
       declaration: null,
@@ -2489,10 +2539,9 @@ function deserializeExportNamedDeclaration(pos) {
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
     },
-    withClause = deserializeOptionBoxWithClause(pos + 104);
-  node.declaration = deserializeOptionDeclaration(pos + 16);
-  node.specifiers = deserializeVecExportSpecifier(pos + 32);
-  node.source = deserializeOptionStringLiteral(pos + 56);
+    withClause = deserializeOptionBoxWithClause(pos + 88);
+  node.specifiers = deserializeVecExportSpecifier(pos + 16);
+  node.source = deserializeStringLiteral(pos + 40);
   node.attributes = withClause === null ? [] : withClause.attributes;
   return node;
 }
@@ -3935,8 +3984,8 @@ function deserializeTSIndexSignature(pos) {
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
-  node.parameters = deserializeVecTSIndexSignatureName(pos + 16);
-  node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 40);
+  node.parameters = [deserializeTSIndexSignatureName(pos + 16)];
+  node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 56);
   return node;
 }
 
@@ -4028,13 +4077,40 @@ function deserializeTSIndexSignatureName(pos) {
 
 function deserializeTSInterfaceHeritage(pos) {
   let node = {
-    type: "TSInterfaceHeritage",
-    expression: null,
-    typeArguments: null,
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
-  node.expression = deserializeExpression(pos + 16);
+      type: "TSInterfaceHeritage",
+      expression: null,
+      typeArguments: null,
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    expression = deserializeTSTypeName(pos + 16);
+  if (expression.type === "TSQualifiedName") {
+    let object = expression.left,
+      { right } = expression,
+      previous = (expression = {
+        type: "MemberExpression",
+        object,
+        property: right,
+        optional: false,
+        computed: false,
+        start: expression.start,
+        end: expression.end,
+      });
+    for (; object.type === "TSQualifiedName";) {
+      let { left, right } = object;
+      previous = previous.object = {
+        type: "MemberExpression",
+        object: left,
+        property: right,
+        optional: false,
+        computed: false,
+        start: object.start,
+        end: object.end,
+      };
+      object = left;
+    }
+  }
+  node.expression = expression;
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   return node;
 }
@@ -4064,26 +4140,31 @@ function deserializeTSTypePredicateName(pos) {
   }
 }
 
-function deserializeTSModuleDeclaration(pos) {
-  let kind = deserializeTSModuleDeclarationKind(pos + 88),
-    start = deserializeI32(pos),
+function deserializeTSExternalModuleDeclaration(pos) {
+  let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    declare = deserializeBool(pos + 89),
-    node,
-    body = deserializeOptionTSModuleDeclarationBody(pos + 72);
-  if (body === null) {
+    declare = deserializeBool(pos + 72),
+    body = deserializeOptionBoxTSModuleBlock(pos + 64),
     node = {
       type: "TSModuleDeclaration",
       id: null,
-      // No `body` field
-      kind,
+      ...(body !== null && { body }),
+      kind: "module",
       declare,
       global: false,
       start,
       end,
     };
-    node.id = deserializeTSModuleDeclarationName(pos + 16);
-  } else {
+  node.id = deserializeStringLiteral(pos + 16);
+  return node;
+}
+
+function deserializeTSNamespaceDeclaration(pos) {
+  let kind = deserializeTSNamespaceDeclarationKind(pos + 64),
+    start = deserializeI32(pos),
+    end = deserializeI32(pos + 4),
+    declare = deserializeBool(pos + 65),
+    body = deserializeTSNamespaceDeclarationBody(pos + 48),
     node = {
       type: "TSModuleDeclaration",
       id: null,
@@ -4093,77 +4174,63 @@ function deserializeTSModuleDeclaration(pos) {
       global: false,
       start,
       end,
-    };
-    let id = deserializeTSModuleDeclarationName(pos + 16);
-    if (body.type === "TSModuleBlock") node.id = id;
+    },
+    id = deserializeBindingIdentifier(pos + 16);
+  if (body.type === "TSModuleBlock") node.id = id;
+  else {
+    let innerId = body.id;
+    if (innerId.type === "Identifier")
+      node.id = {
+        type: "TSQualifiedName",
+        left: id,
+        right: innerId,
+        start: id.start,
+        end: innerId.end,
+      };
     else {
-      let innerId = body.id;
-      if (innerId.type === "Identifier")
-        node.id = {
-          type: "TSQualifiedName",
-          left: id,
-          right: innerId,
-          start: id.start,
-          end: innerId.end,
-        };
-      else {
-        // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
-        // this module on left, and previous `left` of innermost `TSQualifiedName` on right
-        node.id = innerId;
-        let { start } = id;
-        for (;;) {
-          innerId.start = start;
-          if (innerId.left.type === "Identifier") break;
-          innerId = innerId.left;
-        }
-        let right = innerId.left;
-        innerId.left = {
-          type: "TSQualifiedName",
-          left: id,
-          right,
-          start,
-          end: right.end,
-        };
+      // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with
+      // `id` of this namespace on left, and previous `left` on right.
+      node.id = innerId;
+      let { start } = id;
+      for (;;) {
+        innerId.start = start;
+        if (innerId.left.type === "Identifier") break;
+        innerId = innerId.left;
       }
-      if (Object.hasOwn(body, "body")) {
-        body = body.body;
-        node.body = body;
-      } else body = null;
+      let right = innerId.left;
+      innerId.left = {
+        type: "TSQualifiedName",
+        left: id,
+        right,
+        start,
+        end: right.end,
+      };
     }
+    body = body.body;
+    node.body = body;
   }
   return node;
 }
 
-function deserializeTSModuleDeclarationKind(pos) {
+function deserializeTSNamespaceDeclarationKind(pos) {
   switch (uint8[pos]) {
     case 0:
       return "module";
     case 1:
       return "namespace";
     default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationKind`);
+      throw Error(`Unexpected discriminant ${uint8[pos]} for TSNamespaceDeclarationKind`);
   }
 }
 
-function deserializeTSModuleDeclarationName(pos) {
+function deserializeTSNamespaceDeclarationBody(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBindingIdentifier(pos + 8);
-    case 1:
-      return deserializeStringLiteral(pos + 8);
-    default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationName`);
-  }
-}
-
-function deserializeTSModuleDeclarationBody(pos) {
-  switch (uint8[pos]) {
-    case 0:
-      return deserializeBoxTSModuleDeclaration(pos + 8);
+      return deserializeBoxTSNamespaceDeclaration(pos + 8);
     case 1:
       return deserializeBoxTSModuleBlock(pos + 8);
     default:
-      throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationBody`);
+      throw Error(`Unexpected discriminant ${uint8[pos]} for TSNamespaceDeclarationBody`);
   }
 }
 
@@ -5460,8 +5527,12 @@ function deserializeBoxTSEnumDeclaration(pos) {
   return deserializeTSEnumDeclaration(int32[pos >> 2]);
 }
 
-function deserializeBoxTSModuleDeclaration(pos) {
-  return deserializeTSModuleDeclaration(int32[pos >> 2]);
+function deserializeBoxTSExternalModuleDeclaration(pos) {
+  return deserializeTSExternalModuleDeclaration(int32[pos >> 2]);
+}
+
+function deserializeBoxTSNamespaceDeclaration(pos) {
+  return deserializeTSNamespaceDeclaration(int32[pos >> 2]);
 }
 
 function deserializeBoxTSGlobalDeclaration(pos) {
@@ -5732,8 +5803,16 @@ function deserializeBoxExportDefaultDeclaration(pos) {
   return deserializeExportDefaultDeclaration(int32[pos >> 2]);
 }
 
+function deserializeBoxExportDeclaration(pos) {
+  return deserializeExportDeclaration(int32[pos >> 2]);
+}
+
 function deserializeBoxExportNamedDeclaration(pos) {
   return deserializeExportNamedDeclaration(int32[pos >> 2]);
+}
+
+function deserializeBoxExportFromDeclaration(pos) {
+  return deserializeExportFromDeclaration(int32[pos >> 2]);
 }
 
 function deserializeBoxTSExportAssignment(pos) {
@@ -5800,10 +5879,6 @@ function deserializeVecImportAttribute(pos) {
   return arr;
 }
 
-function deserializeOptionDeclaration(pos) {
-  return uint8[pos] === 31 ? null : deserializeDeclaration(pos);
-}
-
 function deserializeVecExportSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
@@ -5814,10 +5889,6 @@ function deserializeVecExportSpecifier(pos) {
     pos += 128;
   }
   return arr;
-}
-
-function deserializeOptionStringLiteral(pos) {
-  return uint8[pos + 12] === 2 ? null : deserializeStringLiteral(pos);
 }
 
 function deserializeOptionModuleExportName(pos) {
@@ -6166,24 +6237,14 @@ function deserializeBoxTSMethodSignature(pos) {
   return deserializeTSMethodSignature(int32[pos >> 2]);
 }
 
-function deserializeVecTSIndexSignatureName(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
-  pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 40;
-  for (; pos !== endPos;) {
-    arr.push(deserializeTSIndexSignatureName(pos));
-    pos += 40;
-  }
-  return arr;
-}
-
-function deserializeOptionTSModuleDeclarationBody(pos) {
-  return uint8[pos] === 2 ? null : deserializeTSModuleDeclarationBody(pos);
-}
-
 function deserializeBoxTSModuleBlock(pos) {
   return deserializeTSModuleBlock(int32[pos >> 2]);
+}
+
+function deserializeOptionBoxTSModuleBlock(pos) {
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0
+    ? null
+    : deserializeBoxTSModuleBlock(pos);
 }
 
 function deserializeBoxTSTypeParameter(pos) {

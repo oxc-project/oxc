@@ -1,14 +1,12 @@
 use std::ops::Range;
 
 use oxc_allocator::ArenaVec;
-
-use crate::{
-    JsLabels,
-    formatter::format_element::{
-        FormatElement, LineMode,
-        tag::{LabelId, Tag},
-    },
+use oxc_formatter_core::format_element::{
+    FormatElement, LineMode,
+    tag::{LabelId, Tag},
 };
+
+use crate::JsLabels;
 
 #[derive(Debug)]
 pub enum SourceLine<'a> {

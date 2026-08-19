@@ -36,8 +36,12 @@ const NOTE_MQ_OP_SPACING =
   "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
 const NOTE_EOL_LINE_COMMENT_WIDTH =
   "Allowed: trailing `// comment` rides a line_suffix, never counts toward print width; Prettier only treats CSS-family `//` inline and breaks the value. See crates/oxc_formatter_css/AGENTS.md";
+const NOTE_CALC_VAR_FILL =
+  "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md";
 const NOTE_EMBEDDED_EXPRESSION_INDENT =
   "We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently";
+const NOTE_UNION_ANNOTATION_FLAT =
+  "Union broken out of its `:`/`as` position: Prettier retries the whole union flat on the indented next line, we expand to leading-`|` members right away. Core oxc_formatter (plain `.ts` too), not embed-specific";
 
 const categories: Category[] = [
   {
@@ -52,8 +56,10 @@ const categories: Category[] = [
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
     ],
     notes: {
+      "externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue":
+        NOTE_UNION_ANNOTATION_FLAT,
       "externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
-        "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
+        "`<T = any,>() => {}` comma removed in ts-in-vue as like plain `.ts`, intentional divergence: Prettier keeps in ts-in-xxx, but not in ts-in-md and also plain `.ts`. It is only required for `.tsx` and `.mts|cts`",
     },
   },
   {
@@ -111,13 +117,41 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
     notes: {
-      "externals/prettier/js/multiparser-html/issue-10691.js":
-        "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
-      "externals/webawesome/number-input/number-input.styles.ts":
-        "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md",
+      "externals/webawesome/number-input/number-input.styles.ts": NOTE_CALC_VAR_FILL,
       "externals/webawesome/page/page.styles.ts":
         "Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md",
       "edge-cases/html-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
+      "externals/webawesome/carousel/carousel.ts": NOTE_EMBEDDED_EXPRESSION_INDENT,
+      "externals/webawesome/color-picker/color-picker.ts": [
+        NOTE_UNION_ANNOTATION_FLAT,
+        NOTE_EMBEDDED_EXPRESSION_INDENT,
+      ].join("\n"),
+      "externals/webawesome/input/input.ts": [
+        NOTE_UNION_ANNOTATION_FLAT,
+        NOTE_EMBEDDED_EXPRESSION_INDENT,
+      ].join("\n"),
+      "externals/webawesome/badge/badge.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/button/button.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/callout/callout.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/checkbox/checkbox.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/copy-button/copy-button.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/details/details.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/dropdown/dropdown.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/dropdown-item/dropdown-item.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/format-number/format-number.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/icon/icon.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/number-input/number-input.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/page/page.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/popup/popup.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/qr-code/qr-code.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/radio/radio.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/radio-group/radio-group.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/rating/rating.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/select/select.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/slider/slider.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/switch/switch.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/tag/tag.ts": NOTE_UNION_ANNOTATION_FLAT,
+      "externals/webawesome/textarea/textarea.ts": NOTE_UNION_ANNOTATION_FLAT,
     },
   },
   {
@@ -161,7 +195,10 @@ const categories: Category[] = [
       { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {},
+    notes: {
+      "externals/prettier/js/multiparser-comments/comment-inside.js":
+        "Broken `${}` holding comments: Prettier prints the expression at root indent (drops the embed indent), we indent to the placeholder",
+    },
   },
   {
     name: "svelte",
@@ -203,7 +240,6 @@ const categories: Category[] = [
     sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      // Nested Less math: core fill fit-check semantics (biome vs Prettier).
       "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
       "externals/ng-zorro-antd/components/style/themes/default.less": [
         NOTE_LESS_MATH_FILL,
@@ -253,6 +289,9 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
+      "externals/gitlab/stylesheets/components/content_editor.scss":
+        "Allowed (layout-only): `box-shadow` with `#{}` math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md",
+      "externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss": NOTE_CALC_VAR_FILL,
       "externals/gitlab/stylesheets/framework/diffs.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/page_bundles/editor.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/page_bundles/issuable_list.scss": NOTE_MQ_OP_SPACING,

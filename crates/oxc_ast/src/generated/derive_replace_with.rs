@@ -200,6 +200,8 @@ impl<'a> ReplaceWith<'a> for YieldExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for Class<'a> {}
 
+impl<'a> ReplaceWith<'a> for ClassHeritage<'a> {}
+
 impl<'a> ReplaceWith<'a> for ClassBody<'a> {}
 
 impl<'a> ReplaceWith<'a> for ClassElement<'a> {}
@@ -234,7 +236,11 @@ impl<'a> ReplaceWith<'a> for ImportAttribute<'a> {}
 
 impl<'a> ReplaceWith<'a> for ImportAttributeKey<'a> {}
 
+impl<'a> ReplaceWith<'a> for ExportDeclaration<'a> {}
+
 impl<'a> ReplaceWith<'a> for ExportNamedDeclaration<'a> {}
+
+impl<'a> ReplaceWith<'a> for ExportFromDeclaration<'a> {}
 
 impl<'a> ReplaceWith<'a> for ExportDefaultDeclaration<'a> {}
 
@@ -418,11 +424,11 @@ impl<'a> ReplaceWith<'a> for TSTypePredicate<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSTypePredicateName<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclaration<'a> {}
+impl<'a> ReplaceWith<'a> for TSExternalModuleDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationName<'a> {}
+impl<'a> ReplaceWith<'a> for TSNamespaceDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationBody<'a> {}
+impl<'a> ReplaceWith<'a> for TSNamespaceDeclarationBody<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSGlobalDeclaration<'a> {}
 

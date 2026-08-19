@@ -209,7 +209,7 @@ declare_oxc_lint!(
 
 fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     if let Some(export_decl_ancestor) = nth_outermost_paren_parent(node, ctx, 2)
-        && let AstKind::ExportNamedDeclaration(_) = export_decl_ancestor.kind()
+        && let AstKind::ExportDeclaration(_) = export_decl_ancestor.kind()
     {
         return true;
     }
@@ -268,7 +268,7 @@ impl FuncStyle {
         if *style != Style::Declaration {
             let should_diagnostic = match parent.kind() {
                 AstKind::ExportDefaultDeclaration(_) => false,
-                AstKind::ExportNamedDeclaration(_) => config.named_exports().is_none(),
+                AstKind::ExportDeclaration(_) => config.named_exports().is_none(),
                 _ => true,
             };
             if should_diagnostic {
@@ -277,7 +277,7 @@ impl FuncStyle {
         }
 
         if config.named_exports() == Some(&NamedExports::Expression)
-            && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
+            && matches!(parent.kind(), AstKind::ExportDeclaration(_))
         {
             ctx.diagnostic(func_style_diagnostic(func.span, "expression"));
         }

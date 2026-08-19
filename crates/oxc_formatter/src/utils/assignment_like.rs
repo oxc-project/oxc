@@ -1,14 +1,18 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, BufferExtensions, Format, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, JsFormatter, ScratchBuffer,
+        Comments, JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
-    print::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
+    print::{
+        BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite,
+        alias_union_breaks_after_operator, is_trailing_own_line_jsdoc_comment, type_alias_left_end,
+    },
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
@@ -154,23 +158,6 @@ fn format_left_trailing_comments(
     };
 
     FormatTrailingComments::Comments(comments).fmt(f);
-}
-
-fn is_simple_single_member_union_or_intersection_type(type_to_check: &TSType) -> bool {
-    // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
-    // Prettier relocates the single leading comment to after the identifier,
-    // producing `type A /*1*/ = C;`. Skip complex nested cases.
-    match type_to_check {
-        TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
-            u.types.first().unwrap(),
-            TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
-        ),
-        TSType::TSIntersectionType(i) if i.types.len() == 1 => !matches!(
-            i.types.first().unwrap(),
-            TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
-        ),
-        _ => false,
-    }
 }
 
 fn should_print_as_leading(expr: &Expression) -> bool {
@@ -331,47 +318,21 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::TSTypeAliasDeclaration(declaration) => {
                 write!(f, [declaration.declare.then_some("declare "), "type "]);
 
-                let start = if let Some(type_parameters) = &declaration.type_parameters() {
+                if let Some(type_parameters) = &declaration.type_parameters() {
                     write!(
                         f,
                         [declaration.id(), FormatNodeWithoutTrailingComments(type_parameters)]
                     );
-                    type_parameters.span.end
                 } else {
                     write!(f, [FormatNodeWithoutTrailingComments(declaration.id())]);
-                    declaration.id.span.end
-                };
-
-                if is_simple_single_member_union_or_intersection_type(&declaration.type_annotation)
-                {
-                    let comments_in_span =
-                        f.context().comments().comments_in_range(start, declaration.span.end);
-                    let end_index = comments_in_span
-                        .iter()
-                        .take_while(|comment| {
-                            // Case 1: Own-line comments shouldn't be trailing
-                            !comment.preceded_by_newline()
-                                // Case 2: End-of-line comments are trailing unless
-                                // they're block comments.
-                                && (comment.followed_by_newline() && !comment.is_block()
-                                    // Case 3: Inline comments are leading when they're
-                                    // only separated by whitespace or other comments
-                                    // from the following node. Consider them trailing
-                                    // if they come before the `&` or `|` symbol, as
-                                    // they can't be leading in that case.
-                                    || (!comment.followed_by_newline()
-                                        && comment.span.end
-                                            <= declaration.type_annotation.span().start))
-                        })
-                        .count();
-                    write!(f, [FormatTrailingComments::Comments(&comments_in_span[..end_index])]);
-                } else {
-                    format_left_trailing_comments(
-                        start,
-                        matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
-                        f,
-                    );
                 }
+                let start = type_alias_left_end(declaration);
+
+                format_left_trailing_comments(
+                    start,
+                    matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
+                    f,
+                );
 
                 false
             }
@@ -481,6 +442,17 @@ impl<'a> AssignmentLike<'a, '_> {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
+        // An alias-level union owns its break and indentation (leading soft line break per member, one indent level);
+        // the fluid group would stack a second indent on top when a long left-hand side makes it break before the union does.
+        // (The end-of-line-comment case takes `BreakAfterOperator` above.)
+        if matches!(
+            self,
+            AssignmentLike::TSTypeAliasDeclaration(decl)
+                if matches!(decl.type_annotation, TSType::TSUnionType(_))
+        ) {
+            return AssignmentLikeLayout::NeverBreakAfterOperator;
+        }
+
         if !left_may_break
             && (is_left_short
                 || matches!(
@@ -513,8 +485,43 @@ impl<'a> AssignmentLike<'a, '_> {
         }
     }
 
-    /// Checks that a [AssignmentLike] consists only of the left part
-    /// usually, when a [variable declarator](VariableDeclarator) doesn't have initializer
+    /// End of the left-hand side (type annotation included), before the operator and any comments around it:
+    /// the boundary a printed comment must be past to count as operator-side.
+    /// Distinct from the comment-scan start in `write_left`, which begins at the id.
+    fn left_end(&self) -> u32 {
+        match self {
+            Self::VariableDeclarator(declarator) => declarator
+                .type_annotation
+                .as_ref()
+                .map_or(declarator.id.span().end, |annotation| annotation.span.end),
+            Self::AssignmentExpression(assignment) => assignment.left.span().end,
+            Self::ObjectProperty(property) => property.key.span().end,
+            Self::BindingProperty(property) => property.key.span().end,
+            Self::PropertyDefinition(property) => property
+                .type_annotation
+                .as_ref()
+                .map_or(property.key.span().end, |annotation| annotation.span.end),
+            Self::AccessorProperty(property) => property
+                .type_annotation
+                .as_ref()
+                .map_or(property.key.span().end, |annotation| annotation.span.end),
+            Self::TSTypeAliasDeclaration(declaration) => type_alias_left_end(declaration),
+        }
+    }
+
+    /// Whether `write_left` printed an end-of-line line comment after the left side (`const a = // c`).
+    /// Such a comment is a pending `line_suffix`:
+    /// the operator side MUST break right after it, or it flushes past the right-hand side.
+    /// Layout runs after `write_left`, hence a printed-comments check, cursor-based queries no longer see the comment.
+    fn left_printed_eol_line_comment(&self, comments: &Comments) -> bool {
+        comments
+            .printed_comments()
+            .last()
+            .is_some_and(|comment| comment.is_line() && comment.span.start > self.left_end())
+    }
+
+    /// Checks that a [AssignmentLike] consists only of the left part usually,
+    /// when a [variable declarator](VariableDeclarator) doesn't have initializer.
     fn has_only_left_hand_side(&self) -> bool {
         match self {
             Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
@@ -618,6 +625,9 @@ impl<'a> AssignmentLike<'a, '_> {
         f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
+        if self.left_printed_eol_line_comment(comments) {
+            return true;
+        }
         if let Some(right_expression) = right_expression {
             should_break_after_operator(right_expression, is_left_short, f)
         } else if let AssignmentLike::TSTypeAliasDeclaration(decl) = self {
@@ -638,13 +648,19 @@ impl<'a> AssignmentLike<'a, '_> {
                         || is_generic(&conditional_type.extends_type)
                         || comments.has_leading_own_line_comment(annotation_start)
                 }
-                // `TSUnionType` has its own indentation logic
-                TSType::TSUnionType(_) => false,
-                // For a single-member `TSIntersectionType`, we need to check for
-                // leading own-line comments before the type inside the
-                // `TSIntersectionType`. This is because Prettier treats a single-member
-                // `TSIntersectionType` as the literal type inside of it, so it checks
-                // whether there's a leading own-line comment before the start of the literal type.
+                // `TSUnionType` has its own indentation logic,
+                // EXCEPT when the union suppresses it and relies on the operator-side break + indent instead.
+                TSType::TSUnionType(_) => alias_union_breaks_after_operator(
+                    decl,
+                    comments
+                        .comments_before_iter(annotation_start)
+                        .any(is_trailing_own_line_jsdoc_comment),
+                    comments,
+                ),
+                // For a single-member `TSIntersectionType`,
+                // we need to check for leading own-line comments before the type inside the `TSIntersectionType`.
+                // This is because Prettier treats a single-member `TSIntersectionType` as the literal type inside of it,
+                // so it checks whether there's a leading own-line comment before the start of the literal type.
                 TSType::TSIntersectionType(intersection_type)
                     if intersection_type.types.len() == 1 =>
                 {
@@ -851,6 +867,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             let layout = self.layout(is_left_short, left_may_break, f);
             let right = format_with(|f| self.write_right(f, layout));
 
+            // Whether `BreakAfterOperator` must keep the comment order around the operator (`line_suffix_boundary` + no group):
+            // when the left side printed an end-of-line line comment, and for non-conditional type aliases,
+            // those also reach the arm via own-line-comment paths where nothing was printed,
+            // and their union interplay needs the ungrouped variant.
+            let keeps_comment_order = matches!(
+                self,
+                AssignmentLike::TSTypeAliasDeclaration(decl)
+                    if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+            ) || self
+                .left_printed_eol_line_comment(f.context().comments());
+
             let inner_content = format_with(|f| {
                 if matches!(&layout, AssignmentLikeLayout::BreakLeftHandSide) {
                     write!(f, [left]);
@@ -877,22 +904,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
                         );
                     }
                     AssignmentLikeLayout::BreakAfterOperator => {
-                        // Preserve the original order of trailing line comments after `=`
-                        // by flushing them via `line_suffix_boundary()`.
-                        // Otherwise the line comment gets pushed past the right-hand side,
-                        // changing which token the comment semantically attaches to.
-                        //
-                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`
-                        // and non-simple single member union/intersection types (which have
-                        // their own comment formatting logic for this case).
-                        // Expanding the condition would preserve the order in other nodes too.
-                        // (e.g. `VariableDeclarator`) But for those we follow Prettier's current behavior.
-                        // See also https://github.com/prettier/prettier/issues/14617
-                        if matches!(
-                            self,
-                            AssignmentLike::TSTypeAliasDeclaration(decl)
-                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_)) && !is_simple_single_member_union_or_intersection_type(&decl.type_annotation)
-                        ) {
+                        // NOTE: Prettier instead lets the comment flush past a fitting right-hand side (prettier#14617 family)
+                        if keeps_comment_order {
                             write!(f, [line_suffix_boundary(), soft_line_indent_or_space(&right)]);
                         } else {
                             write!(f, [group(&soft_line_indent_or_space(&right))]);

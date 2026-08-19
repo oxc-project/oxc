@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.142.0",
+  "version": "0.146.0",
   "description": "Oxc Minifier Node API",
   "keywords": [
     "javascript",
@@ -43,7 +43,7 @@
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
-    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts minify.wasi.d.cts",
     "test": "vitest run --dir ./test"
   },
   "dependencies": {},

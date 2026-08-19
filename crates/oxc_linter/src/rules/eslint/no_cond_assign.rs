@@ -75,7 +75,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCondAssign {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -127,12 +127,13 @@ impl Rule for NoCondAssign {
 impl NoCondAssign {
     #[expect(clippy::cast_possible_truncation)]
     fn emit_diagnostic(ctx: &LintContext<'_>, expr: &AssignmentExpression<'_>) {
+        let operator = expr.operator.as_str();
         let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
-        let start =
-            operator_span.source_text(ctx.source_text()).find(expr.operator.as_str()).unwrap_or(0)
-                as u32;
+        let start = ctx
+            .find_next_token_within(operator_span.start, operator_span.end, operator)
+            .expect("assignment expression operands must contain the assignment operator token");
         operator_span.start += start;
-        operator_span.end = operator_span.start + expr.operator.as_str().len() as u32;
+        operator_span.end = operator_span.start + operator.len() as u32;
 
         ctx.diagnostic(no_cond_assign_diagnostic(operator_span));
     }
@@ -254,6 +255,8 @@ fn test() {
         ("var x; var b = (x = 0) ? 1 : 0;", None),
         ("var x; var b = x && (y = 0) ? 1 : 0;", Some(serde_json::json!(["always"]))),
         ("(((3496.29)).bkufyydt = 2e308) ? foo : bar;", None),
+        // the `=` inside the comment is not the operator
+        ("while (a /* = */ = b) {}", Some(serde_json::json!(["always"]))),
     ];
 
     Tester::new(NoCondAssign::NAME, NoCondAssign::PLUGIN, pass, fail).test_and_snapshot();

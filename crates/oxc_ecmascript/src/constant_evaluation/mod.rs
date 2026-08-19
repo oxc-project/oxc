@@ -162,6 +162,13 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
             Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
             Expression::StringLiteral(lit) => {
+                // The value of a string with lone surrogates encodes them with
+                // `\u{FFFD}` escapes. Consumers materialize the returned value
+                // into new string literals without the `lone_surrogates` flag,
+                // which would print the escape encoding as literal text.
+                if lit.lone_surrogates {
+                    return None;
+                }
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
@@ -256,7 +263,22 @@ fn binary_operation_evaluate_value_to<'a>(
         BinaryOperator::Exponential => {
             let lval = left.evaluate_value_to_number(ctx)?;
             let rval = right.evaluate_value_to_number(ctx)?;
-            let result = lval.powf(rval);
+            // `Number::exponentiate` is not IEEE 754 `pow`, which `f64::powf`
+            // implements. `pow` returns `1` for a base of `1` whatever the
+            // exponent, and for an exponent of `0` whatever the base; the
+            // abstract operation instead returns `NaN` when the exponent is
+            // `NaN`, and when the base has magnitude `1` and the exponent is
+            // infinite. Only the exponent-is-zero case is shared, and `powf`
+            // already agrees there.
+            // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate>
+            #[expect(clippy::float_cmp)]
+            let base_is_one = lval.abs() == 1.0;
+            let result = if rval.is_nan() || (base_is_one && rval.is_infinite()) {
+                f64::NAN
+            } else {
+                lval.powf(rval)
+            };
             // For now, ignore the result if it large or has a decimal part
             // so that the output does not become bigger than the input.
             if result.is_finite() && (result.fract() != 0.0 || result.log10() > 4.0) {

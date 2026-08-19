@@ -172,7 +172,7 @@ static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef", "lazy"];
 
 impl Rule for OnlyExportComponents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
@@ -255,7 +255,10 @@ impl OnlyExportComponents {
         .any(|id| {
             matches!(
                 nodes.get_node(id).kind(),
-                AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_)
+                AstKind::ExportDefaultDeclaration(_)
+                    | AstKind::ExportDeclaration(_)
+                    | AstKind::ExportFromDeclaration(_)
+                    | AstKind::ExportNamedDeclaration(_)
             )
         })
     }
@@ -285,10 +288,20 @@ impl OnlyExportComponents {
                     }
                     analysis.merge(result);
                 }
+                AstKind::ExportDeclaration(export_decl) => {
+                    let result = self.analyze_export_declaration(ctx, export_decl);
+                    analysis.merge(result);
+                }
                 AstKind::ExportNamedDeclaration(export_named)
                     if export_named.export_kind.is_value() =>
                 {
-                    let result = self.analyze_export_named(ctx, export_named);
+                    let result = self.analyze_export_specifiers(&export_named.specifiers);
+                    analysis.merge(result);
+                }
+                AstKind::ExportFromDeclaration(export_from)
+                    if export_from.export_kind.is_value() =>
+                {
+                    let result = self.analyze_export_specifiers(&export_from.specifiers);
                     analysis.merge(result);
                 }
                 _ => {}
@@ -436,82 +449,77 @@ impl OnlyExportComponents {
         analysis
     }
 
-    fn analyze_export_named(
+    fn analyze_export_declaration(
         &self,
         ctx: &LintContext,
-        export_named: &ExportNamedDeclaration,
+        export_decl: &ExportDeclaration,
     ) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
-        if let Some(declaration) = &export_named.declaration {
-            let exports = match declaration {
-                Declaration::VariableDeclaration(var_decl) => var_decl
-                    .declarations
-                    .iter()
-                    .map(|declarator| match &declarator.id {
-                        BindingPattern::BindingIdentifier(binding_id) => {
-                            let is_func =
-                                self.can_be_react_function_component(declarator.init.as_ref());
-                            self.classify_export(
-                                binding_id.name.as_str(),
-                                binding_id.span,
-                                is_func,
-                                declarator.init.as_ref(),
-                            )
-                        }
-                        _ => ExportType::NonComponent(declarator.id.span()),
-                    })
-                    .collect::<Vec<_>>(),
-                Declaration::FunctionDeclaration(func) => func.id.as_ref().map_or_else(
-                    || {
-                        ctx.diagnostic(anonymous_components_diagnostic(func.span));
-                        vec![]
-                    },
-                    |id| vec![self.classify_export(id.name.as_str(), id.span, true, None)],
-                ),
-                Declaration::ClassDeclaration(class) => class.id.as_ref().map_or(vec![], |id| {
-                    vec![if is_react_component_name(&id.name)
-                        && Self::extends_react_component(class)
-                    {
-                        ExportType::ReactComponent
-                    } else {
-                        ExportType::NonComponent(id.span)
-                    }]
-                }),
-                Declaration::TSEnumDeclaration(ts_enum) => {
-                    vec![ExportType::NonComponent(ts_enum.id.span)]
-                }
-                _ => vec![],
-            };
-
-            for export in exports {
-                analysis.add_export(export);
+        let exports = match &export_decl.declaration {
+            Declaration::VariableDeclaration(var_decl) => var_decl
+                .declarations
+                .iter()
+                .map(|declarator| match &declarator.id {
+                    BindingPattern::BindingIdentifier(binding_id) => {
+                        let is_func =
+                            self.can_be_react_function_component(declarator.init.as_ref());
+                        self.classify_export(
+                            binding_id.name.as_str(),
+                            binding_id.span,
+                            is_func,
+                            declarator.init.as_ref(),
+                        )
+                    }
+                    _ => ExportType::NonComponent(declarator.id.span()),
+                })
+                .collect::<Vec<_>>(),
+            Declaration::FunctionDeclaration(func) => func.id.as_ref().map_or_else(
+                || {
+                    ctx.diagnostic(anonymous_components_diagnostic(func.span));
+                    vec![]
+                },
+                |id| vec![self.classify_export(id.name.as_str(), id.span, true, None)],
+            ),
+            Declaration::ClassDeclaration(class) => class.id.as_ref().map_or(vec![], |id| {
+                vec![if is_react_component_name(&id.name) && Self::extends_react_component(class) {
+                    ExportType::ReactComponent
+                } else {
+                    ExportType::NonComponent(id.span)
+                }]
+            }),
+            Declaration::TSEnumDeclaration(ts_enum) => {
+                vec![ExportType::NonComponent(ts_enum.id.span)]
             }
+            _ => vec![],
+        };
+
+        for export in exports {
+            analysis.add_export(export);
         }
 
-        let specifier_exports: Vec<ExportType> = export_named
-            .specifiers
-            .iter()
-            .map(|export_spec| {
-                let exported_name = match &export_spec.exported {
-                    ModuleExportName::IdentifierName(name) => Some(name.name.as_str()),
-                    ModuleExportName::IdentifierReference(ident) => Some(ident.name.as_str()),
-                    ModuleExportName::StringLiteral(_) => None,
-                };
+        analysis
+    }
 
-                let local_name = export_spec.local.name();
-                let span = export_spec.local.span();
+    fn analyze_export_specifiers(&self, specifiers: &[ExportSpecifier]) -> ExportAnalysis {
+        let mut analysis = ExportAnalysis::default();
 
-                if exported_name == Some("default") {
-                    self.classify_export(local_name.as_str(), span, false, None)
-                } else if let Some(name) = exported_name {
-                    self.classify_export(name, span, false, None)
-                } else {
-                    ExportType::NonComponent(span)
-                }
-            })
-            .collect();
+        for export_spec in specifiers {
+            let exported_name = match &export_spec.exported {
+                ModuleExportName::IdentifierName(name) => Some(name.name.as_str()),
+                ModuleExportName::IdentifierReference(ident) => Some(ident.name.as_str()),
+                ModuleExportName::StringLiteral(_) => None,
+            };
 
-        for export in specifier_exports {
+            let local_name = export_spec.local.name();
+            let span = export_spec.local.span();
+
+            let export = if exported_name == Some("default") {
+                self.classify_export(local_name.as_str(), span, false, None)
+            } else if let Some(name) = exported_name {
+                self.classify_export(name, span, false, None)
+            } else {
+                ExportType::NonComponent(span)
+            };
             analysis.add_export(export);
         }
 
@@ -617,7 +625,7 @@ impl OnlyExportComponents {
     }
 
     fn extends_react_component(class: &Class) -> bool {
-        class.super_class.as_ref().is_some_and(|super_class| {
+        class.heritage_expression().is_some_and(|super_class| {
             if let Some(member_expr) = super_class.as_member_expression()
                 && let Expression::Identifier(ident) = member_expr.object()
                 && ident.name == "React"
@@ -786,6 +794,8 @@ fn test() {
         ("function Foo() {}; export default React.memo(Foo);", None),
         ("function Foo() {}; export default React.memo(Foo) as typeof Foo;", None),
         ("export type * from './module';", None),
+        ("export { Foo } from './mod';", None),
+        ("export type { Foo, helper } from './mod';", None),
         ("type foo = string; export const Foo = () => null; export type { foo };", None),
         ("export type foo = string; export const Foo = () => null;", None),
         (
@@ -901,6 +911,7 @@ export function Button(props: PropsWithChildren): ReactNode {
         ("export const foo = 4; export const Bar = () => {};", None),
         ("export function Component() {}; export const Aa = 'a'", None),
         ("const foo = 4; const Bar = () => {}; export { foo, Bar };", None),
+        ("export { Foo, helper } from './mod';", None),
         ("export * from './foo';", None),
         ("export default () => {};", None),
         ("export default memo(() => {});", None),

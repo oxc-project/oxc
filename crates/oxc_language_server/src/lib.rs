@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use futures::future::BoxFuture;
 use rustc_hash::FxBuildHasher;
 use tower_lsp_server::ls_types::Uri;
 use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
@@ -21,7 +22,9 @@ mod worker_manager;
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
 pub use crate::position::offset_to_position;
-pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
+pub use crate::tool::{
+    ClientMessage, DiagnosticResult, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+};
 pub use crate::tool_params::CodeActionParams;
 pub use crate::worker::WorkspaceWorker;
 pub use crate::worker_manager::WorkerManager;
@@ -41,8 +44,19 @@ impl<'a> TextDocument<'a> {
     }
 }
 
-/// Run the language server
-pub async fn run_server(
+/// Run the language server.
+///
+/// The future is type-erased to reduce binary size by preventing CLI and NAPI execution paths from
+/// each generating a copy of the LSP server state machine.
+pub fn run_server(
+    server_name: String,
+    server_version: String,
+    worker_manager: WorkerManager,
+) -> BoxFuture<'static, ()> {
+    Box::pin(run_server_impl(server_name, server_version, worker_manager))
+}
+
+async fn run_server_impl(
     server_name: String,
     server_version: String,
     worker_manager: WorkerManager,
