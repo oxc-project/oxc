@@ -79,7 +79,11 @@ impl Rule for MatchComponentImportName {
         let Some(components) = find_property(obj, "components") else {
             return;
         };
-        let Expression::ObjectExpression(components) = &components.value else {
+        // `without_parentheses`, not `get_inner_expression`: ESTree has no
+        // parenthesized-expression node, so upstream sees through parens, but
+        // it does *not* see through `as` casts.
+        let Expression::ObjectExpression(components) = components.value.without_parentheses()
+        else {
             return;
         };
         // Checked last: it walks the ancestor chain, so only objects that
@@ -95,7 +99,7 @@ impl Rule for MatchComponentImportName {
             if prop.computed {
                 continue;
             }
-            let Expression::Identifier(imported) = &prop.value else {
+            let Expression::Identifier(imported) = prop.value.without_parentheses() else {
                 continue;
             };
 
@@ -166,6 +170,29 @@ fn test() {
             None,
             vue(),
         ),
+        // Upstream compares `property.value.type` without unwrapping `as`
+        // casts, so a cast value is skipped rather than reported.
+        (
+            "<script lang=\"ts\"> export default { components: { InvalidExport: SomeRandomName as any } } </script>",
+            None,
+            None,
+            vue(),
+        ),
+        // A quoted key is compared the same as a bare one.
+        (
+            "<script> export default { components: { 'ValidImport': ValidImport } } </script>",
+            None,
+            None,
+            vue(),
+        ),
+        // Parens around the value are invisible to upstream, so a name that
+        // matches through them still passes.
+        (
+            "<script> export default { components: { ValidImport: (ValidImport) } } </script>",
+            None,
+            None,
+            vue(),
+        ),
         // Not a component options object.
         (
             "<script> export default { foo: { components: { InvalidExport: SomeRandomName } } } </script>",
@@ -209,6 +236,21 @@ fn test() {
         ("defineComponent({ components: { InvalidExport: SomeRandomName } })", None, None, js()),
         (
             "<script> Vue.component('Foo', { components: { InvalidExport: SomeRandomName } }) </script>",
+            None,
+            None,
+            vue(),
+        ),
+        // A camelCase shorthand matches neither expected casing.
+        ("<script> export default { components: { someRandomName } } </script>", None, None, vue()),
+        // Parens are invisible to upstream, so these are still reported.
+        (
+            "<script> export default { components: { InvalidExport: (SomeRandomName) } } </script>",
+            None,
+            None,
+            vue(),
+        ),
+        (
+            "<script> export default { components: ({ InvalidExport: SomeRandomName }) } </script>",
             None,
             None,
             vue(),
