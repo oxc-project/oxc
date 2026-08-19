@@ -5,6 +5,7 @@ mod config_builder;
 mod config_store;
 mod env;
 mod external_plugins;
+mod language_plugins;
 mod globals;
 mod ignore_matcher;
 mod overrides;

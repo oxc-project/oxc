@@ -46,6 +46,43 @@ import type { ModuleKind, Program } from "../generated/types.d.ts";
 // When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 export let filePath: string | null = null;
 
+/**
+ * Language id for the file being linted (e.g. `"javascript"`, `"typescript"`, `"vue"`).
+ *
+ * Set when a language plugin loads the file; defaults to `"javascript"`.
+ * Exposed as `context.languageOptions.language` (RFC #21936).
+ */
+let languageId: string = "javascript";
+
+/**
+ * Set the language id for the current file.
+ * @param id - Language id (e.g. `"vue"`)
+ */
+export function setLanguageId(id: string): void {
+  languageId = id;
+}
+
+/**
+ * Infer language id for ordinary JS/TS files from the path extension.
+ * Language plugins should call {@link setLanguageId} with their own id (e.g. `"vue"`).
+ */
+function languageIdFromFilePath(filePathInput: string): string {
+  // Strip query/hash if present; take final path segment extension.
+  const base = filePathInput.split(/[?#]/, 1)[0]!;
+  const dot = base.lastIndexOf(".");
+  if (dot === -1) return "javascript";
+  const ext = base.slice(dot + 1).toLowerCase();
+  switch (ext) {
+    case "ts":
+    case "mts":
+    case "cts":
+    case "tsx":
+      return "typescript";
+    default:
+      return "javascript";
+  }
+}
+
 // Current working directory for file being linted.
 // Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
 export let cwd: string | null = null;
@@ -64,6 +101,7 @@ export function setCwd(cwdInput: string) {
  */
 export function setupFileContext(filePathInput: string): void {
   filePath = filePathInput;
+  languageId = languageIdFromFilePath(filePathInput);
 }
 
 /**
@@ -75,6 +113,7 @@ export function setupFileContext(filePathInput: string): void {
  */
 export function resetFileContext(): void {
   filePath = null;
+  languageId = "javascript";
 }
 
 // ECMAScript version. This matches ESLint's default.
@@ -220,6 +259,17 @@ const PARSER_OPTIONS = Object.freeze({
 
 // Singleton object for language options.
 const LANGUAGE_OPTIONS = {
+  /**
+   * Language id for the file being linted.
+   *
+   * For ordinary JS/TS files this is `"javascript"` / `"typescript"`.
+   * When a language plugin handles the file, it is the plugin's `languageId`
+   * (e.g. `"vue"`).
+   */
+  get language(): string {
+    return languageId;
+  },
+
   /**
    * Source type of the file being linted.
    */
