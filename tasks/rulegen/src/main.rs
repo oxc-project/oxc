@@ -15,9 +15,9 @@ use serde::Serialize;
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{
     Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
-    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
-    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
-    TaggedTemplateExpression, TemplateLiteral,
+    ExportDefaultDeclarationKind, Expression, ExpressionStatement, IdentifierName,
+    ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement,
+    StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::VisitJs;
 use oxc_parser::Parser;
@@ -1159,32 +1159,46 @@ impl<'a> VisitJs<'a> for RuleConfig<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &Statement<'a>) {
-        let Statement::ExpressionStatement(expression_statement) = stmt else {
-            return;
+        // CommonJS rules use `module.exports = { ... }`, rules ported to ESM/TS use
+        // `export default { ... }`.
+        let rule_object = match stmt {
+            Statement::ExpressionStatement(expression_statement) => {
+                let Expression::AssignmentExpression(assignment_expression) =
+                    &expression_statement.expression
+                else {
+                    return;
+                };
+                let AssignmentTarget::StaticMemberExpression(static_member_expression) =
+                    &assignment_expression.left
+                else {
+                    return;
+                };
+                let Expression::Identifier(identifier) = &static_member_expression.object else {
+                    return;
+                };
+                if identifier.name != "module" {
+                    return;
+                }
+                if static_member_expression.property.name != "exports" {
+                    return;
+                }
+                let Expression::ObjectExpression(object_expression) = &assignment_expression.right
+                else {
+                    return;
+                };
+                object_expression
+            }
+            Statement::ExportDefaultDeclaration(export_default_declaration) => {
+                let ExportDefaultDeclarationKind::ObjectExpression(object_expression) =
+                    &export_default_declaration.declaration
+                else {
+                    return;
+                };
+                object_expression
+            }
+            _ => return,
         };
-        let Expression::AssignmentExpression(assignment_expression) =
-            &expression_statement.expression
-        else {
-            return;
-        };
-        let AssignmentTarget::StaticMemberExpression(static_member_expression) =
-            &assignment_expression.left
-        else {
-            return;
-        };
-        let Expression::Identifier(identifier) = &static_member_expression.object else {
-            return;
-        };
-        if identifier.name != "module" {
-            return;
-        }
-        if static_member_expression.property.name != "exports" {
-            return;
-        }
-        let Expression::ObjectExpression(object_expression) = &assignment_expression.right else {
-            return;
-        };
-        for object_property_kind in &object_expression.properties {
+        for object_property_kind in &rule_object.properties {
             let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
                 continue;
             };
