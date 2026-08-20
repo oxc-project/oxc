@@ -32,6 +32,7 @@ mod options;
 #[cfg(feature = "sourcemap")]
 mod sourcemap_builder;
 mod str;
+mod typescript;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
@@ -109,6 +110,9 @@ pub struct Codegen<'a> {
     /// Indicates the output is JSX type, it is set in [`Program::gen`] and the result
     /// is obtained by [`oxc_span::SourceType::is_jsx`]
     is_jsx: bool,
+    /// Whether the output is TypeScript, set in [`Program::gen`] or
+    /// [`Codegen::with_source_type`] for expression fragments.
+    is_typescript: bool,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -193,6 +197,7 @@ impl<'a> Codegen<'a> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             is_jsx: false,
+            is_typescript: false,
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
@@ -224,6 +229,7 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_source_type(mut self, source_type: SourceType) -> Self {
         self.is_jsx = source_type.is_jsx();
+        self.is_typescript = source_type.is_typescript();
         self
     }
 

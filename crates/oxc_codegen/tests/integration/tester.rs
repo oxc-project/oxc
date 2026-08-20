@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Comment;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_span::SourceType;
+use oxc_span::{ContentEq, SourceType};
 
 pub fn default_options() -> CodegenOptions {
     // Ensure sourcemap do not crash.
@@ -51,6 +51,36 @@ pub fn test_options_with_source_type(
     assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
     let result = Codegen::new().with_options(options).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
+}
+
+/// Assert both the exact output and that reparsing it produces the same AST.
+#[track_caller]
+pub fn test_reparse_with_source_type(
+    source_text: &str,
+    expected: &str,
+    source_type: SourceType,
+    options: CodegenOptions,
+) {
+    let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
+
+    let result = Codegen::new().with_options(options).build(&ret.program).code;
+    assert_eq!(result, expected, "\nfor source: {source_text:?}");
+
+    let allocator2 = Allocator::default();
+    let ret2 = Parser::new(&allocator2, &result, source_type).with_options(parse_options).parse();
+    assert!(
+        ret2.diagnostics.is_empty(),
+        "Parse errors after codegen: {:?}\nfor source: {source_text:?}\ngenerated:\n{result}",
+        ret2.diagnostics
+    );
+    assert!(
+        ret.program.content_eq(&ret2.program),
+        "AST changed after codegen\nsource:\n{source_text}\ngenerated:\n{result}"
+    );
 }
 
 /// Test with unambiguous source type (like .js files)
