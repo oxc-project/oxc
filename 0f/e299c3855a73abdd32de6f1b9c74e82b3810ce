@@ -1,0 +1,27 @@
+Cargo.lock
+  s_58493bfa5324ac::t_a6248a77a654d1 1908
+crates/oxc_codegen/Cargo.toml
+  s_58493bfa5324ac::t_cea86807fbc655 37
+crates/oxc_codegen/src/comment.rs
+  s_58493bfa5324ac::t_3f3611c7d9643b 4,15-18,33-37,40-44,46,48-49,56-77,116,140-147,155-157,159-181,217-228,290-291,297-302,320-325
+crates/oxc_codegen/src/gen.rs
+  s_58493bfa5324ac::t_f0e2f763121d9c 28,32-35,40,53,58-62,73,140,144-147,155,784,788-791,798,1211,1215-1218,1229,1342,1347-1351,1373,1652,1657-1663,1667,1710,1714-1717,1725,1800,1805-1809,1812,1817,1993,1998-2002,2013,2484,2614,2619-2625,2629,2923,2927-2930,2941
+crates/oxc_codegen/src/lib.rs
+  s_58493bfa5324ac::t_1d012b79bbf1fb 20,25,131,133,194,196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0fe299c3855a73abdd32de6f1b9c74e82b3810ce",
+  "prompts": {},
+  "sessions": {
+    "s_58493bfa5324ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01ac4-4d1b-7642-b86d-6773cf13abfd",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
