@@ -2098,7 +2098,7 @@ impl<'a> PeepholeOptimizations {
         if if_stmt.alternate.is_some() {
             return;
         }
-        let (branch_test, value, dropped) = {
+        let (branch_test, value) = {
             let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
                 return;
             };
@@ -2118,14 +2118,9 @@ impl<'a> PeepholeOptimizations {
                 (
                     Self::minimize_not(conditional_test.span(), conditional_test, ctx),
                     conditional.alternate.take_in(ctx),
-                    conditional.consequent.take_in(ctx),
                 )
             } else {
-                (
-                    conditional_test,
-                    conditional.consequent.take_in(ctx),
-                    conditional.alternate.take_in(ctx),
-                )
+                (conditional_test, conditional.consequent.take_in(ctx))
             }
         };
         let outer_test = if_stmt.test.take_in(ctx);
@@ -2137,7 +2132,6 @@ impl<'a> PeepholeOptimizations {
             ctx,
         );
 
-        ctx.drop_expression(&dropped);
         ctx.replace_expression(&mut if_stmt.test, new_test);
         let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
             unreachable!()
