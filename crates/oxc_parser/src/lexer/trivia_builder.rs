@@ -544,6 +544,24 @@ token /* Trailing 1 */
     }
 
     #[test]
+    fn html_close_comments_after_irregular_line_terminators_are_leading() {
+        for line_terminator in ['\u{2028}', '\u{2029}'] {
+            let allocator = Allocator::default();
+            let source_text = format!("foo();{line_terminator}--> comment\nbar();");
+            let source_type = SourceType::default().with_script(true);
+            let ret = Parser::new(&allocator, &source_text, source_type).parse();
+            assert!(ret.diagnostics.is_empty());
+
+            let comments = &ret.program.comments;
+            assert_eq!(comments.len(), 1);
+            assert!(comments[0].is_leading());
+            assert!(comments[0].preceded_by_newline());
+            let bar_start = u32::try_from(source_text.find("bar").unwrap()).unwrap();
+            assert_eq!(comments[0].attached_to, bar_start);
+        }
+    }
+
+    #[test]
     fn comment_attachments3() {
         let source_text = "
 /*
