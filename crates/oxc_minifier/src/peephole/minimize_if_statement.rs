@@ -61,9 +61,6 @@ impl<'a> PeepholeOptimizations {
                 return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
 
-            // Normalize: move the `!` out of the test by swapping branches.
-            // Avoid swapping when alternate is an `if` — that risks a worse chain.
-            // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
             if Self::should_invert_if(&if_stmt.consequent, alternate, &if_stmt.test, ctx) {
                 ctx.replace_expression_with(&mut if_stmt.test, |old, ctx| {
                     Self::minimize_not(old.span(), old, ctx, true)
@@ -113,6 +110,7 @@ impl<'a> PeepholeOptimizations {
         let is_alternate_terminated = alternate.is_jump_statement();
         let is_consequent_terminated = consequent.is_jump_statement();
 
+        // `if (a) return; else return;` or `if (a) { if+else }`
         if is_alternate_terminated == is_consequent_terminated || ctx.parent().is_if_statement() {
             // Normalize: move the `!` out of the test by swapping branches.
             // Avoid swapping when alternate is an `if` — that risks a worse chain.
@@ -124,6 +122,8 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
         } else if is_alternate_terminated {
+            // `if (a) c(); else return;` -> `if (!a) return; else c();`
+            // `if (!a) c(); else return;` -> `if (a) return; else c();`
             return true;
         }
         false
