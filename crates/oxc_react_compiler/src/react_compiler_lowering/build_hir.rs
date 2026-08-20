@@ -916,6 +916,7 @@ enum MemberProperty<'a> {
 struct LoweredMemberExpression<'a> {
     object: Place,
     property: MemberProperty<'a>,
+    computed: bool,
     property_span: Option<Span>,
     value: InstructionValue<'a>,
 }
@@ -946,12 +947,14 @@ fn lower_member_expression_impl<'a>(
             let value = InstructionValue::PropertyLoad {
                 object,
                 property: prop_literal,
+                computed: false,
                 property_span,
                 span,
             };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
+                computed: false,
                 property_span,
                 value,
             })
@@ -969,12 +972,14 @@ fn lower_member_expression_impl<'a>(
                 let value = InstructionValue::PropertyLoad {
                     object,
                     property: prop_literal,
+                    computed: true,
                     property_span,
                     span,
                 };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
+                    computed: true,
                     property_span,
                     value,
                 });
@@ -984,6 +989,7 @@ fn lower_member_expression_impl<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
+                computed: true,
                 property_span: property.span,
                 value,
             })
@@ -1004,6 +1010,7 @@ fn lower_member_expression_impl<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
+                computed: false,
                 property_span: None,
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
@@ -1123,12 +1130,14 @@ fn lower_member_expression_for_update<'a>(
             let value = InstructionValue::PropertyLoad {
                 object,
                 property: prop_literal,
+                computed: false,
                 property_span,
                 span,
             };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
+                computed: false,
                 property_span,
                 value,
             })
@@ -1142,12 +1151,14 @@ fn lower_member_expression_for_update<'a>(
                 let value = InstructionValue::PropertyLoad {
                     object,
                     property: prop_literal,
+                    computed: true,
                     property_span,
                     span,
                 };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
+                    computed: true,
                     property_span,
                     value,
                 });
@@ -1157,6 +1168,7 @@ fn lower_member_expression_for_update<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
+                computed: true,
                 property_span: property.span,
                 value,
             })
@@ -1172,6 +1184,7 @@ fn lower_member_expression_for_update<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
+                computed: false,
                 property_span: None,
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
@@ -1848,6 +1861,7 @@ fn lower_member_assignment_target<'a>(
                 InstructionValue::PropertyStore {
                     object,
                     property: PropertyLiteral::String(member.property.name),
+                    computed: false,
                     property_span: Some(member.property.span),
                     value,
                     span: Some(span),
@@ -1865,6 +1879,7 @@ fn lower_member_assignment_target<'a>(
                     InstructionValue::PropertyStore {
                         object,
                         property: PropertyLiteral::Number(FloatValue::new(num.value)),
+                        computed: true,
                         property_span: Some(num.span),
                         value,
                         span: Some(span),
@@ -4016,6 +4031,7 @@ fn lower_expression<'a>(
                     let lowered = lower_member_expression_for_update(builder, member)?;
                     let object = lowered.object;
                     let lowered_property = lowered.property;
+                    let computed = lowered.computed;
                     let property_span = lowered.property_span;
                     let prev_value = lower_value_to_temporary(builder, lowered.value)?;
 
@@ -4045,6 +4061,7 @@ fn lower_expression<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: prop_literal,
+                                computed,
                                 property_span,
                                 value: updated,
                                 span: member_span,
@@ -4291,6 +4308,7 @@ fn lower_member_assignment_expression<'a>(
                 InstructionValue::PropertyStore {
                     object,
                     property: PropertyLiteral::String(member.property.name),
+                    computed: false,
                     property_span: Some(member.property.span),
                     value,
                     span: member_span,
@@ -4314,6 +4332,7 @@ fn lower_member_assignment_expression<'a>(
                     InstructionValue::PropertyStore {
                         object,
                         property,
+                        computed: true,
                         property_span: Some(member.expression.span()),
                         value,
                         span: member_span,
@@ -4542,6 +4561,7 @@ fn lower_assignment_expression<'a>(
                 let lowered = lower_member_expression(builder, member)?;
                 let object = lowered.object;
                 let lowered_property = lowered.property;
+                let computed = lowered.computed;
                 let property_span = lowered.property_span;
                 let current_value = lower_value_to_temporary(builder, lowered.value)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
@@ -4558,6 +4578,7 @@ fn lower_assignment_expression<'a>(
                     MemberProperty::Literal(prop_literal) => Ok(InstructionValue::PropertyStore {
                         object,
                         property: prop_literal,
+                        computed,
                         property_span,
                         value: result,
                         span: member_span,
@@ -4910,6 +4931,7 @@ fn lower_jsx_member_expression<'a>(
     let value = InstructionValue::PropertyLoad {
         object,
         property: PropertyLiteral::String(Ident::from(prop_name)),
+        computed: false,
         property_span: Some(expr.property.span),
         span: expr_span,
     };

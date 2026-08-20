@@ -108,9 +108,9 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
     if (value.type === "Identifier" && key.name === value.name) {
       shorthand = true;
     } else if (
-      value.type === "AssignmentPattern" &&
-      value.left.type === "Identifier" &&
-      key.name === value.left.name
+      value.type === "AssignmentPattern"
+      && value.left.type === "Identifier"
+      && key.name === value.left.name
     ) {
       shorthand = true;
     }

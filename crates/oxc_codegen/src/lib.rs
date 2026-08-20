@@ -366,11 +366,8 @@ impl<'a> Codegen<'a> {
         };
 
         // Search string in chunks of 16 bytes
-        let mut chunks = bytes.chunks_exact(16);
-        for (chunk_index, chunk) in chunks.by_ref().enumerate() {
-            #[expect(clippy::missing_panics_doc, reason = "infallible")]
-            let chunk: &[u8; 16] = chunk.try_into().unwrap();
-
+        let (chunks, last_chunk) = bytes.as_chunks::<16>();
+        for (chunk_index, chunk) in chunks.iter().enumerate() {
             // Compiler vectorizes this loop to a few SIMD ops
             let mut contains_lt = false;
             for &byte in chunk {
@@ -402,7 +399,6 @@ impl<'a> Codegen<'a> {
 
         // Search last chunk byte-by-byte.
         // Skip this if less than 8 bytes remaining, because less than 8 bytes can't contain `</script`.
-        let last_chunk = chunks.remainder();
         if last_chunk.len() >= 8 {
             let ptr = last_chunk.as_ptr();
             // SAFETY: `last_chunk.len() >= 8`, so `- 8` cannot wrap.

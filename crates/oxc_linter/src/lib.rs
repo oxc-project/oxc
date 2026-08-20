@@ -874,7 +874,6 @@ impl Linter {
                                 .map(|fix| fix.with_message(suggestion.message))
                         });
 
-                        #[expect(clippy::from_iter_instead_of_collect)]
                         PossibleFixes::from_iter(iter::chain(fix, suggestions))
                     } else {
                         PossibleFixes::from(fix)

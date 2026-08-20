@@ -24,6 +24,33 @@ fn test_for_variable_declaration() {
     );
 }
 
+// https://github.com/oxc-project/oxc/issues/22222
+#[test]
+fn test_for_break_preserves_block_function_scope_in_module() {
+    test(
+        "let n = 0;
+        for (; n < 2; n++) {
+            if (typeof f === 'function') break;
+            function f() {}
+        }
+        console.log(n);",
+        "let n = 0;
+        for (; n < 2; n++) {
+            if (typeof f == 'function') break;
+            function f() {}
+        }
+        console.log(n);",
+    );
+    test(
+        "for (;;) { if (x) break; var y = foo(); bar(y); bar(y); }",
+        "for (; !x;) { var y = foo(); bar(y), bar(y); }",
+    );
+    test(
+        "for (;;) { if (x) break; let y = foo(); bar(y); bar(y); }",
+        "for (; !x;) { let y = foo(); bar(y), bar(y); }",
+    );
+}
+
 #[test]
 fn test_for_continue_in_for() {
     test("for( a of b ){ if(c) { continue; } d() }", "for ( a of b ) c || d();");

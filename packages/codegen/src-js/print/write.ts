@@ -213,13 +213,13 @@ export const ALL_CATEGORIES: Category[] = [
 if (DEBUG) {
   for (const category of ALL_CATEGORIES) {
     debugAssert(
-      ((category | 1) === CAT_START_OF_STMT) ===
-        (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
+      ((category | 1) === CAT_START_OF_STMT)
+        === (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
       `Category ${category} disagrees with \`(last | 1) === CAT_START_OF_STMT\``,
     );
     debugAssert(
-      (((category - 1) | 1) === CAT_START_OF_STMT) ===
-        (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
+      (((category - 1) | 1) === CAT_START_OF_STMT)
+        === (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
       `Category ${category} disagrees with \`((last - 1) | 1) === CAT_START_OF_STMT\``,
     );
   }
@@ -387,13 +387,13 @@ export function markWithMapAtStartOffset(
 
   const { start, end } = node;
   if (
-    typeof start !== "number" ||
-    typeof end !== "number" ||
-    !Number.isSafeInteger(start) ||
-    !Number.isSafeInteger(end) ||
-    start < 0 ||
-    end < start ||
-    start === end
+    typeof start !== "number"
+    || typeof end !== "number"
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end < start
+    || start === end
   ) {
     return;
   }
@@ -418,13 +418,13 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
 
   const { start, end } = node;
   if (
-    typeof start !== "number" ||
-    typeof end !== "number" ||
-    !Number.isSafeInteger(start) ||
-    !Number.isSafeInteger(end) ||
-    start < 0 ||
-    end < start ||
-    start === end
+    typeof start !== "number"
+    || typeof end !== "number"
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end < start
+    || start === end
   ) {
     return;
   }
@@ -459,11 +459,11 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
       // with Unicode property regexps or allocating a source substring in that common case.
       const nameEnd = start + printedName.length;
       const originalName =
-        printedName.length > 0 &&
-        end <= sourceText.length &&
-        nameEnd <= end &&
-        sourceText.startsWith(printedName, start) &&
-        (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
+        printedName.length > 0
+        && end <= sourceText.length
+        && nameEnd <= end
+        && sourceText.startsWith(printedName, start)
+        && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
           ? printedName
           : originalNameFromSource(sourceText, node, start, end);
 
@@ -574,12 +574,12 @@ function isHexDigit(code: number): boolean {
  */
 function isDefinitelyIdentifierBoundary(code: number): boolean {
   return (
-    code <= 0x7f &&
-    !((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)) &&
-    code !== 36 && // `$`
-    code !== 45 && // `-` in JSX identifiers
-    code !== 92 && // `\` starting a Unicode escape
-    code !== 95 // `_`
+    code <= 0x7f
+    && !((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122))
+    && code !== 36 // `$`
+    && code !== 45 // `-` in JSX identifiers
+    && code !== 92 // `\` starting a Unicode escape
+    && code !== 95 // `_`
   );
 }
 

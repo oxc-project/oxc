@@ -62,12 +62,9 @@ impl<'a> PeepholeOptimizations {
             }
             // "!a ? b : c" => "a ? c : b"
             Expression::UnaryExpression(test_expr) if test_expr.operator.is_not() => {
-                let test = test_expr.argument.take_in(ctx);
-                let consequent = expr.alternate.take_in(ctx);
-                let alternate = expr.consequent.take_in(ctx);
-                return Some(Self::minimize_conditional(
-                    expr.span, test, consequent, alternate, ctx,
-                ));
+                std::mem::swap(&mut expr.consequent, &mut expr.alternate);
+                ctx.replace_expression_with(&mut expr.test, Self::unwrap_unary);
+                return Self::minimize_conditional_expression(expr, ctx);
             }
             Expression::Identifier(id) => {
                 // "a ? a : b" => "a || b"
@@ -96,19 +93,15 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             // `x != y ? b : c` -> `x == y ? c : b`
-            Expression::BinaryExpression(test_expr) => {
+            Expression::BinaryExpression(test_expr)
                 if matches!(
                     test_expr.operator,
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality
-                ) {
-                    test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
-                    let test = expr.test.take_in(ctx);
-                    let consequent = expr.consequent.take_in(ctx);
-                    let alternate = expr.alternate.take_in(ctx);
-                    return Some(Self::minimize_conditional(
-                        expr.span, test, alternate, consequent, ctx,
-                    ));
-                }
+                ) =>
+            {
+                test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
+                std::mem::swap(&mut expr.consequent, &mut expr.alternate);
+                return Self::minimize_conditional_expression(expr, ctx);
             }
             _ => {}
         }

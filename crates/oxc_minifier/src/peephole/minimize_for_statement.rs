@@ -22,6 +22,23 @@ impl<'a> PeepholeOptimizations {
         let Statement::IfStatement(if_stmt) = first else {
             return;
         };
+
+        // Moving the condition into the `for` test changes its scope from the
+        // loop body's block scope to the surrounding scope. Block function
+        // declarations are initialized on entry, so the condition can observe
+        // them before their declaration statement. Other lexical declarations
+        // only differ through TDZ behavior, which the minifier intentionally
+        // ignores.
+        let body_has_function_declaration = match &for_stmt.body {
+            Statement::BlockStatement(block_stmt) => {
+                block_stmt.body.iter().skip(1).any(Self::statement_has_function_declaration)
+            }
+            _ => false,
+        };
+        if body_has_function_declaration {
+            return;
+        }
+
         // "for (;;) if (x) break;" => "for (; !x;) ;"
         // "for (; a;) if (x) break;" => "for (; a && !x;) ;"
         // "for (;;) if (x) break; else y();" => "for (; !x;) y();"
@@ -97,6 +114,16 @@ impl<'a> PeepholeOptimizations {
 
             let new_body = Self::drop_first_statement(span, body, Some(consequent), ctx);
             ctx.replace_statement(&mut for_stmt.body, new_body);
+        }
+    }
+
+    fn statement_has_function_declaration(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::FunctionDeclaration(_) => true,
+            Statement::LabeledStatement(label) => {
+                Self::statement_has_function_declaration(&label.body)
+            }
+            _ => false,
         }
     }
 
