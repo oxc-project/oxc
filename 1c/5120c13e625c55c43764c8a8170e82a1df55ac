@@ -1,0 +1,19 @@
+crates/oxc_ast/src/ast/comment.rs
+  s_0134e749ece873::t_2db2176c429438 162-165,168-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1c5120c13e625c55c43764c8a8170e82a1df55ac",
+  "prompts": {},
+  "sessions": {
+    "s_0134e749ece873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f72-83db-7ed2-a2f5-b49a3dfd48a7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
