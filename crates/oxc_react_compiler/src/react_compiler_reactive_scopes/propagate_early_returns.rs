@@ -244,6 +244,7 @@ fn apply_early_return_to_scope<'a>(
                         span: None, // GeneratedSource
                     },
                     property: PropertyLiteral::String(Ident::from("for")),
+                    computed: false,
                     property_span: None,
                     span: None,
                 }),
