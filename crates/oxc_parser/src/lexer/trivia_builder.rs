@@ -26,8 +26,8 @@ pub struct TriviaBuilder<'a> {
     /// Used to set `preceded_by_newline` on comments.
     saw_newline_for_comment: bool,
 
-    /// Previous token kind, used to indicates comments are trailing from what kind
-    previous_kind: Kind,
+    /// Previous token, used to attach trailing comments to its end.
+    previous_token: Token,
 
     /// Index of the pure comment in `comments` vec, or `None` if no pure comment for the current token.
     pub(super) pure_comment: Option<usize>,
@@ -37,13 +37,15 @@ pub struct TriviaBuilder<'a> {
 
 impl<'a> TriviaBuilder<'a> {
     pub fn new_in(allocator: &'a Allocator) -> Self {
+        let mut previous_token = Token::default();
+        previous_token.set_kind(Kind::Undetermined);
         Self {
             comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
             saw_newline_for_comment: true,
-            previous_kind: Kind::Undetermined,
+            previous_token,
             pure_comment: None,
             has_no_side_effects_comment: false,
         }
@@ -103,10 +105,17 @@ impl<'a> TriviaBuilder<'a> {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
         if self.processed < len {
-            let comment = &mut self.comments[len - 1];
-            comment.set_followed_by_newline(true);
-            if !self.saw_newline && !Self::should_stay_leading(comment) {
-                self.processed = self.comments.len();
+            let becomes_trailing = {
+                let comment = &mut self.comments[len - 1];
+                comment.set_followed_by_newline(true);
+                !self.saw_newline && !Self::should_stay_leading(comment)
+            };
+            if becomes_trailing {
+                self.attach_pending_comments(
+                    CommentPosition::Trailing,
+                    self.previous_token.end(),
+                    len,
+                );
             }
         }
         self.saw_newline = true;
@@ -115,25 +124,76 @@ impl<'a> TriviaBuilder<'a> {
 
     #[inline]
     pub fn handle_token(&mut self, token: Token) {
-        self.previous_kind = token.kind();
         self.saw_newline = false;
         self.saw_newline_for_comment = false;
-        // Cold path: any unprocessed comments since the last token become leading comments
-        // of this one. For files with no comments (or once all comments are consumed)
-        // `processed == comments.len()`, so this branch is skipped.
+        // Cold path: attach any unprocessed comments between the previous token and this one.
+        // For files with no comments (or once all comments are consumed), this branch is skipped.
         let len = self.comments.len();
         if self.processed < len {
-            self.attach_pending_leading_comments(token.start(), len);
+            self.attach_pending_comments_to_token(token, len);
         }
+        self.previous_token = token;
     }
 
     #[cold]
-    fn attach_pending_leading_comments(&mut self, attached_to: u32, len: usize) {
-        for comment in &mut self.comments[self.processed..] {
-            comment.position = CommentPosition::Leading;
+    fn attach_pending_comments_to_token(&mut self, token: Token, len: usize) {
+        let previous_kind = self.previous_token.kind();
+        let can_attach_to_previous = previous_kind != Kind::Undetermined
+            && (token.kind() == Kind::Eof
+                || (Self::can_end_expression(previous_kind)
+                    && Self::continues_previous_expression(token.kind())));
+        let previous_token_end = self.previous_token.end();
+        for comment in &mut self.comments[self.processed..len] {
+            if can_attach_to_previous
+                && !comment.preceded_by_newline()
+                && !Self::should_stay_leading(comment)
+            {
+                comment.position = CommentPosition::Trailing;
+                comment.attached_to = previous_token_end;
+            } else {
+                comment.position = CommentPosition::Leading;
+                comment.attached_to = token.start();
+            }
+        }
+        self.processed = len;
+    }
+
+    #[cold]
+    fn attach_pending_comments(&mut self, position: CommentPosition, attached_to: u32, len: usize) {
+        for comment in &mut self.comments[self.processed..len] {
+            comment.position = position;
             comment.attached_to = attached_to;
         }
         self.processed = len;
+    }
+
+    /// Whether a token can form the completed left-hand side of an infix or suffix boundary.
+    #[inline]
+    fn can_end_expression(kind: Kind) -> bool {
+        kind.is_identifier()
+            || kind.is_literal()
+            || matches!(
+                kind,
+                Kind::PrivateIdentifier
+                    | Kind::This
+                    | Kind::Super
+                    | Kind::RParen
+                    | Kind::RBrack
+                    | Kind::RCurly
+                    | Kind::RAngle
+                    | Kind::Plus2
+                    | Kind::Minus2
+                    | Kind::NoSubstitutionTemplate
+                    | Kind::TemplateTail
+                    | Kind::JSXText
+            )
+    }
+
+    /// Whether trivia before `kind` belongs after a completed expression rather than before the
+    /// next operand. This only runs when comments are present; parser hot paths are unaffected.
+    #[inline]
+    fn continues_previous_expression(kind: Kind) -> bool {
+        kind.is_binary_operator() || kind.is_logical_operator() || kind.is_assignment_operator()
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -169,7 +229,8 @@ impl<'a> TriviaBuilder<'a> {
     /// previous token rather than the following operand), which breaks codegen
     /// idempotency once a transform emits `? consequent : // comment\nalternate`.
     fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
+        !self.saw_newline
+            && !matches!(self.previous_token.kind(), Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
     fn should_stay_leading(comment: &Comment) -> bool {
@@ -216,25 +277,32 @@ impl<'a> TriviaBuilder<'a> {
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
         // not just since the last token.
         comment.set_preceded_by_newline(self.saw_newline_for_comment);
-        if comment.is_line() {
+        let becomes_trailing = if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
-            if self.should_be_treated_as_trailing_comment() && !Self::should_stay_leading(&comment)
-            {
-                self.processed = self.comments.len() + 1; // +1 to include this comment.
-            }
+            let becomes_trailing = self.should_be_treated_as_trailing_comment()
+                && !Self::should_stay_leading(&comment);
             self.saw_newline = true;
             self.saw_newline_for_comment = true;
+            becomes_trailing
         } else {
             // Block comments don't end with a newline, so reset saw_newline_for_comment.
             // If there's a newline after the block comment, `handle_newline` will set it back to true.
             self.saw_newline_for_comment = false;
-        }
+            false
+        };
 
         // Set annotation flags here (not in `parse_annotation`) so the index is correct
         // even when the dedup check above skips a duplicate from parser lookahead/rewind.
         self.set_annotation_flags(&comment, self.comments.len());
         self.comments.push(comment);
+        if becomes_trailing {
+            self.attach_pending_comments(
+                CommentPosition::Trailing,
+                self.previous_token.end(),
+                self.comments.len(),
+            );
+        }
     }
 
     /// Parse Notation
@@ -487,7 +555,7 @@ mod test {
                 span: Span::new(76, 92),
                 kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
-                attached_to: 0,
+                attached_to: 75,
                 newlines: CommentNewlines::None,
                 content: CommentContent::None,
             },
@@ -495,7 +563,7 @@ mod test {
                 span: Span::new(93, 106),
                 kind: CommentKind::Line,
                 position: CommentPosition::Trailing,
-                attached_to: 0,
+                attached_to: 75,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
             },
@@ -535,7 +603,7 @@ token /* Trailing 1 */
                 span: Span::new(42, 58),
                 kind: CommentKind::SingleLineBlock,
                 position: CommentPosition::Trailing,
-                attached_to: 0,
+                attached_to: 41,
                 newlines: CommentNewlines::Trailing,
                 content: CommentContent::None,
             },
@@ -559,6 +627,51 @@ token /* Trailing 1 */
             let bar_start = u32::try_from(source_text.find("bar").unwrap()).unwrap();
             assert_eq!(comments[0].attached_to, bar_start);
         }
+    }
+
+    #[test]
+    fn comments_around_binary_operands_attach_to_their_adjacent_tokens() {
+        let source_text = "/* a leading */ a /* a trailing */ + /* b leading */ b /* b trailing */";
+        let comments = get_comments(source_text);
+        let expected = [
+            (CommentPosition::Leading, 16),
+            (CommentPosition::Trailing, 17),
+            (CommentPosition::Leading, 53),
+            (CommentPosition::Trailing, 54),
+        ];
+
+        assert_eq!(comments.len(), expected.len());
+        for (comment, (position, attached_to)) in comments.iter().zip(expected) {
+            assert_eq!(comment.position, position);
+            assert_eq!(comment.attached_to, attached_to);
+        }
+    }
+
+    #[test]
+    fn infix_comment_attachment_respects_line_and_unary_boundaries() {
+        for (source_text, position, attached_to) in [
+            ("a /* trailing */\n+ b", CommentPosition::Trailing, 1),
+            ("a\n/* leading */ +b", CommentPosition::Leading, 16),
+            ("void /* leading */ +value", CommentPosition::Leading, 19),
+            ("a /* webpackFoo: 1 */ + b", CommentPosition::Trailing, 1),
+            ("foo(); /* trailing */", CommentPosition::Trailing, 6),
+        ] {
+            let comments = get_comments(source_text);
+            assert_eq!(comments.len(), 1, "{source_text}");
+            assert_eq!(comments[0].position, position, "{source_text}");
+            assert_eq!(comments[0].attached_to, attached_to, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn trailing_comment_attachment_survives_arrow_lookahead() {
+        let source_text = "const f = (value /* trailing */\n) => value;";
+        let comments = get_comments(source_text);
+        let value_end = u32::try_from(source_text.find("value ").unwrap() + "value".len()).unwrap();
+
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].position, CommentPosition::Trailing);
+        assert_eq!(comments[0].attached_to, value_end);
     }
 
     #[test]
