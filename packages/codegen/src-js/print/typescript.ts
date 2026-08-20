@@ -525,6 +525,7 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
       writeWithMap(state, key.name, CAT_IDENT, key);
       break;
     case "PrivateIdentifier":
+      writeWithMapNoLast(state, "#", key);
       write(state, key.name, CAT_IDENT);
       break;
     case "Literal":

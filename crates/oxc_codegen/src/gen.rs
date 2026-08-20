@@ -3802,7 +3802,7 @@ impl Gen for TSSignature<'_> {
                             key.print(p, ctx);
                         }
                         PropertyKey::PrivateIdentifier(key) => {
-                            p.print_str(key.name.as_str());
+                            key.print(p, ctx);
                         }
                         PropertyKey::StringLiteral(key) => {
                             p.print_string_literal(key, false);
@@ -3853,7 +3853,7 @@ impl Gen for TSPropertySignature<'_> {
                     key.print(p, ctx);
                 }
                 PropertyKey::PrivateIdentifier(key) => {
-                    p.print_str(key.name.as_str());
+                    key.print(p, ctx);
                 }
                 PropertyKey::StringLiteral(key) => {
                     p.print_string_literal(key, false);
