@@ -13,7 +13,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 555.77 kB  | 262.77 kB  | 270.13 kB  | 87.67 kB   | 90.80 kB   |          2 | d3.js
 
-1.01 MB    | 436.09 kB  | 458.89 kB  | 121.80 kB  | 126.71 kB  |          2 | bundle.min.js
+1.01 MB    | 436.06 kB  | 458.89 kB  | 121.79 kB  | 126.71 kB  |          2 | bundle.min.js
 
 1.25 MB    | 634.41 kB  | 646.76 kB  | 158.45 kB  | 163.73 kB  |          2 | three.js
 
