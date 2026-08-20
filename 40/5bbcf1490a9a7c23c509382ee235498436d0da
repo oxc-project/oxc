@@ -1,0 +1,21 @@
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_dd501814362976::t_6983e3a770802a 546-563
+crates/oxc_parser/src/lexer/unicode.rs
+  s_dd501814362976::t_fc33fab4f82c40 70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "405bbcf1490a9a7c23c509382ee235498436d0da",
+  "prompts": {},
+  "sessions": {
+    "s_dd501814362976": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0206d-64b2-7570-9c97-2b90e447b68d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
