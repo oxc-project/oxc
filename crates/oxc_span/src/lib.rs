@@ -13,7 +13,7 @@ mod span;
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
 pub use labeled_span::LabeledSpan;
-use oxc_str::{CompactStr, Ident, Str, Wtf8Str};
+use oxc_str::{CompactStr, Ident, JSStr, Str};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,
@@ -50,7 +50,7 @@ impl ContentEq for Str<'_> {
     }
 }
 
-impl ContentEq for Wtf8Str<'_> {
+impl ContentEq for JSStr<'_> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
