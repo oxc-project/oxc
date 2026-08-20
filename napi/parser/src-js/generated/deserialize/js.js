@@ -505,9 +505,9 @@ function deserializeTemplateElement(pos) {
     start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
     value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null &&
-    deserializeBool(pos + 13) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
+  value.cooked !== null
+    && deserializeBool(pos + 13)
+    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
       String.fromCodePoint(parseInt(hex, 16)),
     ));
   return {
@@ -1021,8 +1021,8 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       end: key.end,
     },
     init = deserializeOptionExpression(pos + 48);
-  init !== null &&
-    (value = {
+  init !== null
+    && (value = {
       type: "AssignmentPattern",
       left: value,
       right: init,
@@ -2527,8 +2527,10 @@ function deserializeStringLiteral(pos) {
       end,
     },
     value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
+  deserializeBool(pos + 12)
+    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    ));
   node.value = value;
   return node;
 }

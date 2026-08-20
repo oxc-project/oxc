@@ -2,6 +2,7 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import {
+  CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_OTHER,
   CAT_QUESTION,
@@ -107,9 +108,9 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
     if (value.type === "Identifier" && key.name === value.name) {
       shorthand = true;
     } else if (
-      value.type === "AssignmentPattern" &&
-      value.left.type === "Identifier" &&
-      key.name === value.left.name
+      value.type === "AssignmentPattern"
+      && value.left.type === "Identifier"
+      && key.name === value.left.name
     ) {
       shorthand = true;
     }
@@ -120,7 +121,7 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
       write(state, "[", CAT_OTHER);
       typeAssertIs<ESTree.Expression>(key);
       printExpression(key, state, PREC_COMMA, CTX_NONE);
-      write(state, "]", CAT_OTHER);
+      write(state, "]", CAT_CLOSE_BRACKET);
     } else {
       printPropertyKey(key, state);
     }
@@ -193,5 +194,5 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
     printBindingPattern(rest, state);
   }
 
-  write(state, "]", CAT_OTHER);
+  write(state, "]", CAT_CLOSE_BRACKET);
 }

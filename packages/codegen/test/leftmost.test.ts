@@ -333,8 +333,8 @@ const CONTEXTS: Context[] = [
       if (ambiguity === "declaration") {
         return {
           skip:
-            "a statement starting `function` or `class` is a declaration, not an expression - " +
-            "the `function-parenthesized` and `class-parenthesized` cases cover this construct instead",
+            "a statement starting `function` or `class` is a declaration, not an expression - "
+            + "the `function-parenthesized` and `class-parenthesized` cases cover this construct instead",
         };
       }
       return { source: enclose(needs, `${ambiguity === "block" ? `(${expr})` : expr};`) };
@@ -362,9 +362,9 @@ const CONTEXTS: Context[] = [
       if (ambiguity === "declaration") {
         return {
           skip:
-            "`export default function () {}` is a `FunctionDeclaration` and `export default class {}` a " +
-            "`ClassDeclaration`, neither of which records an offset - the `function-parenthesized` and " +
-            "`class-parenthesized` cases cover this construct instead",
+            "`export default function () {}` is a `FunctionDeclaration` and `export default class {}` a "
+            + "`ClassDeclaration`, neither of which records an offset - the `function-parenthesized` and "
+            + "`class-parenthesized` cases cover this construct instead",
         };
       }
       // `await` needs nothing: a module allows it at the top level

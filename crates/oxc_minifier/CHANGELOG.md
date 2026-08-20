@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.146.0] - 2026-08-19
+
+### 🚀 Features
+
+- 83cb516 minifier: Improve negation of expressions in boolean context (#25755) (Armano)
+
+### ⚡ Performance
+
+- 5ef0c93 minifier: Unwrap all unary exprs without creating dummy expressions (#25891) (Armano)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🚀 Features

@@ -37,42 +37,6 @@ export {};
 
 ==================== Errors ====================
 
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[18:30]
- 17 | // Incorrect
- 18 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
-    :                              ^^^^^^^^^
- 19 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[18:41]
- 17 | // Incorrect
- 18 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
-    :                                         ^^^^^^^^^^^^^^
- 19 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[19:31]
- 18 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
- 19 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
-    :                               ^^^^^^^^^
- 20 | export function fnDeclBad3<T>(p: T = [], r2: T, rParam?: T): void { }
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[20:31]
- 19 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
- 20 | export function fnDeclBad3<T>(p: T = [], r2: T, rParam?: T): void { }
-    :                               ^^^^^^^^^
- 21 | 
-    `----
-
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
     ,-[22:24]
@@ -93,29 +57,11 @@ export {};
 
   x TS9025: Declaration emit for this parameter requires implicitly adding
   | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[36:43]
- 35 | type Foo = {};
- 36 | export function withAnyTypeReferenceUnion(a: any | Foo = {}, b: string): void { }
-    :                                           ^^^^^^^^^^^^^^^^^
- 37 | export function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined = {}, b: string): void { }
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
     ,-[38:42]
  37 | export function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined = {}, b: string): void { }
  38 | export function withAnyTypeOperatorUnion(a: any | keyof {} = 1, b: string): void { }
     :                                          ^^^^^^^^^^^^^^^^^^^^^
  39 | export function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}) = {}, b: string): void { }
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[39:55]
- 38 | export function withAnyTypeOperatorUnion(a: any | keyof {} = 1, b: string): void { }
- 39 | export function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}) = {}, b: string): void { }
-    :                                                       ^^^^^^^^^^^^^^^^^^^^^^^^
- 40 | export function withUnknown(a: unknown = 1, b: string): void { }
     `----
 
 

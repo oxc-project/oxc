@@ -245,8 +245,8 @@ function migrateMappedOptions(
 // which Oxfmt does not support. Drop them and warn.
 function filterTailwindRegex(prettierKey: string, value: unknown): unknown {
   if (
-    (prettierKey !== "tailwindFunctions" && prettierKey !== "tailwindAttributes") ||
-    !Array.isArray(value)
+    (prettierKey !== "tailwindFunctions" && prettierKey !== "tailwindAttributes")
+    || !Array.isArray(value)
   ) {
     return value;
   }

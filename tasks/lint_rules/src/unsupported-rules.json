@@ -357,6 +357,7 @@
     "vue/padding-line-between-tags": "Stylistic rule.",
     "vue/padding-lines-in-component-definition": "Stylistic rule.",
     "vue/prefer-separate-static-class": "Not currently possible, as it requires Vue template parsing.",
+    "vue/prefer-single-event-payload": "Not currently possible, as it requires Vue template parsing.",
     "vue/prefer-template": "Not currently possible, as it requires Vue template parsing.",
     "vue/prefer-true-attribute-shorthand": "Not currently possible, as it requires Vue template parsing.",
     "vue/prefer-v-model": "Not currently possible, as it requires Vue template parsing.",

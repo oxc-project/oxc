@@ -77,9 +77,9 @@ function deserializeProgram(pos) {
       if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
         let { declaration } = first;
         if (
-          declaration !== null &&
-          declaration.type === "ClassDeclaration" &&
-          declaration.decorators.length > 0
+          declaration !== null
+          && declaration.type === "ClassDeclaration"
+          && declaration.decorators.length > 0
         ) {
           let decoratorStart = declaration.decorators[0].start;
           decoratorStart < start && (start = decoratorStart);
@@ -562,9 +562,9 @@ function deserializeTemplateElement(pos) {
     start = deserializeI32(pos) - 1,
     end = deserializeI32(pos + 4) + 2 - tail,
     value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null &&
-    deserializeBool(pos + 13) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
+  value.cooked !== null
+    && deserializeBool(pos + 13)
+    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
       String.fromCodePoint(parseInt(hex, 16)),
     ));
   return {
@@ -2774,9 +2774,9 @@ function deserializeExportDeclaration(pos) {
     declaration = deserializeDeclaration(pos + 16);
   node.declaration = declaration;
   node.exportKind =
-    declaration.declare === true ||
-    declaration.type === "TSTypeAliasDeclaration" ||
-    declaration.type === "TSInterfaceDeclaration"
+    declaration.declare === true
+    || declaration.type === "TSTypeAliasDeclaration"
+    || declaration.type === "TSInterfaceDeclaration"
       ? "type"
       : "value";
   parent = previousParent;
@@ -3067,8 +3067,10 @@ function deserializeStringLiteral(pos) {
       parent,
     }),
     value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
+  deserializeBool(pos + 12)
+    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    ));
   node.value = value;
   parent = previousParent;
   return node;

@@ -69,8 +69,8 @@ const plugin: Plugin = {
           const args = node.arguments;
           if (args.length !== arity) {
             throw new Error(
-              `\`${callee.name}\` takes ${arity} arguments, found ${args.length}: ` +
-                `${path}:${node.start}`,
+              `\`${callee.name}\` takes ${arity} arguments, found ${args.length}: `
+                + `${path}:${node.start}`,
             );
           }
 
@@ -93,20 +93,20 @@ const plugin: Plugin = {
         // The one to rewrite is whichever brought the mapped names in.
         const imports = program.body.filter(
           (statement) =>
-            statement.type === "ImportDeclaration" &&
-            statement.source.value === WRITE_MODULE &&
-            statement.specifiers.some(
+            statement.type === "ImportDeclaration"
+            && statement.source.value === WRITE_MODULE
+            && statement.specifiers.some(
               (specifier) =>
-                specifier.type === "ImportSpecifier" &&
-                specifier.imported.type === "Identifier" &&
-                isMapped(specifier.imported.name),
+                specifier.type === "ImportSpecifier"
+                && specifier.imported.type === "Identifier"
+                && isMapped(specifier.imported.name),
             ),
         );
 
         if (imports.length !== 1) {
           throw new Error(
-            `Expected 1 \`${WRITE_MODULE}\` import bringing in mapped writes, found ` +
-              `${imports.length}: ${path}`,
+            `Expected 1 \`${WRITE_MODULE}\` import bringing in mapped writes, found `
+              + `${imports.length}: ${path}`,
           );
         }
 

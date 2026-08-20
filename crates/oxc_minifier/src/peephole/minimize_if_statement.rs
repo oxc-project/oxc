@@ -40,13 +40,9 @@ impl<'a> PeepholeOptimizations {
 
             // `if (!a) {} else x;` => `if (a) x;`
             // `if (a)  {} else x;` => `if (!a) x;`
-            let new_test = match &mut if_stmt.test {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    unary_expr.argument.take_in(ctx)
-                }
-                _ => Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx), ctx),
-            };
-            ctx.replace_expression(&mut if_stmt.test, new_test);
+            ctx.replace_expression_with(&mut if_stmt.test, |old, ctx| {
+                Self::minimize_not(old.span(), old, ctx, true)
+            });
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
 
@@ -71,8 +67,7 @@ impl<'a> PeepholeOptimizations {
                     && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
                     && unary_expr.operator.is_not()
                 {
-                    let new_test = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(&mut if_stmt.test, new_test);
+                    ctx.replace_expression_with(&mut if_stmt.test, Self::unwrap_unary);
                     std::mem::swap(&mut if_stmt.consequent, alternate);
                 }
             }

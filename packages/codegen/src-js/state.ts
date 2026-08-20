@@ -9,6 +9,7 @@
 // Nothing in `print/` constructs one, and none of the 4 printer builds bundles this file.
 
 import { CAT_OTHER } from "./print/write.ts";
+import { debugAssert } from "./asserts.ts";
 
 import type { Category } from "./print/write.ts";
 import type { Options } from "./print/options.ts";
@@ -67,10 +68,6 @@ export class State {
   // means for spacing.
   declare last: Category;
 
-  // Whether the last write ended in `)` or `]`. Only maps builds read this, to mirror Rust's
-  // trailing mapping for a postfix operand before chained punctuation.
-  declare lastWasPostfixClose: boolean;
-
   // `true` between a `writeNoLast` and the write which follows it,
   // i.e. while `last` describes something other than what was written last.
   // Only used in debug builds. See `debugAssertLastFresh`.
@@ -86,7 +83,7 @@ export class State {
   declare mapNames: (number | string)[] | null;
 
   // Original source text, used to preserve names in source maps when the caller provides it.
-  declare sourceText: string | undefined;
+  declare sourceText: string | null;
 
   constructor(options: Options) {
     this.output = "";
@@ -95,9 +92,9 @@ export class State {
     if (indentLevel === undefined) {
       indentLevel = 0;
     } else if (
-      !Number.isSafeInteger(indentLevel) ||
-      indentLevel < 0 ||
-      indentLevel > MAX_STARTING_INDENT_LEVEL
+      !Number.isSafeInteger(indentLevel)
+      || indentLevel < 0
+      || indentLevel > MAX_STARTING_INDENT_LEVEL
     ) {
       throw new RangeError(
         "`startingIndentLevel` must be a non-negative safe integer no greater than 1000",
@@ -132,8 +129,6 @@ export class State {
     // directly would flatten V8's rope representation on every append-then-read (quadratic),
     // which is why the category is tracked rather than derived.
     this.last = CAT_OTHER;
-    this.lastWasPostfixClose = false;
-    this.sourceText = options.sourceText;
 
     // Debug-only fields for checking `last` is correct on both writes and reads
     if (DEBUG) {
@@ -144,9 +139,12 @@ export class State {
     // `writeWithMap` records the output offset and original position of every mapped node,
     // and `generateSourceMap` encodes them in one pass at the end
     if (options.sourcemap !== true) {
+      this.sourceText = null;
       this.mapPositions = null;
       this.mapNames = null;
     } else {
+      debugAssert(options.sourceText != null);
+      this.sourceText = options.sourceText;
       this.mapPositions = [];
       this.mapNames = null;
     }
