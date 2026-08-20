@@ -77,16 +77,16 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
   // Proving an output contains only `\n` takes a full scan. Amortize it only when enough mappings will benefit.
   // Sparse maps and huge one-line literals stay on the single-pass regexp path.
   const useOutputLineFeedFastPath =
-    mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
-    output.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
-    !hasUncommonLineTerminator(output);
+    mappingCount >= MIN_LF_FAST_PATH_MAPPINGS
+    && output.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING
+    && !hasUncommonLineTerminator(output);
 
   // Require mappings to cover a substantial part of the source, so looking for the first line break
   // cannot scan a huge unmapped suffix. Reordered inputs conservatively take the slow path.
   const useSourceLineBoundaryCache =
-    mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
-    sourceText.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
-    mapPositions[mapPositions.length - 1] * 2 >= sourceText.length;
+    mappingCount >= MIN_LF_FAST_PATH_MAPPINGS
+    && sourceText.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING
+    && mapPositions[mapPositions.length - 1] * 2 >= sourceText.length;
   const useSourceLineFeedFastPath =
     useSourceLineBoundaryCache && hasOnlyLineFeedsAndCrLf(sourceText);
   let nextLineStart = findNextLineStart(output, 0, useOutputLineFeedFastPath);
@@ -120,10 +120,10 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     if (sourceOffset > 0) {
       const char = sourceText.charCodeAt(sourceOffset);
       if (
-        char >= 0xdc00 &&
-        char <= 0xdfff &&
-        sourceText.charCodeAt(sourceOffset - 1) >= 0xd800 &&
-        sourceText.charCodeAt(sourceOffset - 1) <= 0xdbff
+        char >= 0xdc00
+        && char <= 0xdfff
+        && sourceText.charCodeAt(sourceOffset - 1) >= 0xd800
+        && sourceText.charCodeAt(sourceOffset - 1) <= 0xdbff
       ) {
         sourceOffset--;
       }
@@ -165,10 +165,10 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
           }
         }
       } else if (
-        sourceOffset >= sourceLineStart ||
-        (sourceScanOffset - sourceOffset <= MAX_BACKWARD_SOURCE_SCAN &&
-          replayedSourceScanTotal + sourceScanOffset - sourceOffset <=
-            Math.max(MAX_REPLAYED_SOURCE_SCAN, sourceText.length))
+        sourceOffset >= sourceLineStart
+        || (sourceScanOffset - sourceOffset <= MAX_BACKWARD_SOURCE_SCAN
+          && replayedSourceScanTotal + sourceScanOffset - sourceOffset
+            <= Math.max(MAX_REPLAYED_SOURCE_SCAN, sourceText.length))
       ) {
         // Parent/end mappings and locally reordered nodes can step backwards.
         // These moves are normally within the current line or a nearby one, so a short reverse scan
@@ -380,9 +380,9 @@ function hasUncommonLineTerminator(output: string): boolean {
   // V8's specialized substring search is substantially faster than a regexp scan here, even when
   // all three searches miss. This also avoids allocating regexp match state for the common path.
   return (
-    output.indexOf("\r") !== -1 ||
-    output.indexOf("\u2028") !== -1 ||
-    output.indexOf("\u2029") !== -1
+    output.indexOf("\r") !== -1
+    || output.indexOf("\u2028") !== -1
+    || output.indexOf("\u2029") !== -1
   );
 }
 

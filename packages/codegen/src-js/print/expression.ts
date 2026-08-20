@@ -457,8 +457,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
 
   const { key, value } = node;
   if (
-    value.type === "FunctionExpression" ||
-    (TS && value.type === "TSEmptyBodyFunctionExpression")
+    value.type === "FunctionExpression"
+    || (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
     markWithMap(state, node);
 
@@ -520,10 +520,10 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   let { computed } = node;
   // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
   if (
-    !computed &&
-    key.type === "Literal" &&
-    typeof key.value === "number" &&
-    (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+    !computed
+    && key.type === "Literal"
+    && typeof key.value === "number"
+    && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
   ) {
     computed = true;
   }

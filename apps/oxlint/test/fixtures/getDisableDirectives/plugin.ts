@@ -61,12 +61,12 @@ const rule: Rule = {
 
     context.report({
       message:
-        `getDisableDirectives:\n` +
-        `  total: ${directives.length}\n` +
-        `  block: ${blockDirectivesCount}\n` +
-        `  line: ${lineDirectivesCount}\n` +
-        `  next-line: ${nextLineDirectivesCount}\n` +
-        `  enable: ${enableDirectivesCount}`,
+        `getDisableDirectives:\n`
+        + `  total: ${directives.length}\n`
+        + `  block: ${blockDirectivesCount}\n`
+        + `  line: ${lineDirectivesCount}\n`
+        + `  next-line: ${nextLineDirectivesCount}\n`
+        + `  enable: ${enableDirectivesCount}`,
       node: sourceCode.ast.body[0],
     });
 

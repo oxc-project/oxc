@@ -710,9 +710,9 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
 function printTSConditionalType(node: ESTree.TSConditionalType, state: State): void {
   const { checkType, extendsType } = node;
   const checkWrap =
-    checkType.type === "TSFunctionType" ||
-    checkType.type === "TSConstructorType" ||
-    checkType.type === "TSConditionalType";
+    checkType.type === "TSFunctionType"
+    || checkType.type === "TSConstructorType"
+    || checkType.type === "TSConditionalType";
 
   if (checkWrap) write(state, "(", CAT_OTHER);
   printTSType(checkType, state);
@@ -795,11 +795,11 @@ function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
   const ty = tsTypeAnnotationOf(node.typeAnnotation);
   const tyType = ty.type;
   const wrap =
-    tyType === "TSUnionType" ||
-    tyType === "TSIntersectionType" ||
-    tyType === "TSFunctionType" ||
-    tyType === "TSConstructorType" ||
-    tyType === "TSConditionalType";
+    tyType === "TSUnionType"
+    || tyType === "TSIntersectionType"
+    || tyType === "TSFunctionType"
+    || tyType === "TSConstructorType"
+    || tyType === "TSConditionalType";
 
   if (wrap) write(state, "(", CAT_OTHER);
   printTSType(ty, state);
@@ -1071,9 +1071,9 @@ function isLeftmostIntrinsicReference(ty: ESTree.TSType): boolean {
     switch (ty.type) {
       case "TSTypeReference":
         return (
-          ty.typeArguments == null &&
-          ty.typeName.type === "Identifier" &&
-          ty.typeName.name === "intrinsic"
+          ty.typeArguments == null
+          && ty.typeName.type === "Identifier"
+          && ty.typeName.name === "intrinsic"
         );
       case "TSArrayType":
         ty = ty.elementType;
