@@ -1,0 +1,19 @@
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_0134e749ece873::t_22799821ca92e6 1196,1198,1202-1205,1207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d061c922940f50448ba95e6dcdda6388b053f31c",
+  "prompts": {},
+  "sessions": {
+    "s_0134e749ece873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f72-83db-7ed2-a2f5-b49a3dfd48a7",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
