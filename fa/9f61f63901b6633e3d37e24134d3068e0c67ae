@@ -1,0 +1,23 @@
+crates/oxc_codegen/tests/integration/comments.rs
+  s_58493bfa5324ac::t_24374031783cd5 6-44
+crates/oxc_codegen/src/comment.rs
+  s_58493bfa5324ac::t_b0847e6d8b70d3 6,71-75,79-87,128-163
+crates/oxc_codegen/src/lib.rs
+  s_58493bfa5324ac::t_db808a8a80eb31 261
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fa9f61f63901b6633e3d37e24134d3068e0c67ae",
+  "prompts": {},
+  "sessions": {
+    "s_58493bfa5324ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01ac4-4d1b-7642-b86d-6773cf13abfd",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
