@@ -29,6 +29,8 @@ fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
+    test("import {} from './a\"b.mjs';", "import {} from \"./a\\\"b.mjs\";\n");
+    test("import {} from './a\\nb.mjs';", "import {} from \"./a\\nb.mjs\";\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
     test(
         "export { default } from './foo.js' with { type: 'json' }",
@@ -41,6 +43,7 @@ fn module_decl() {
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
     );
+    test_minify("import {} from './a\"b.mjs';", "import{}from'./a\"b.mjs';");
     test_minify(
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",
@@ -652,6 +655,52 @@ fn directive() {
     test_options("\"'\"", "\"'\";\n", double_quote.clone());
     test_options("'\"'", "'\"';\n", double_quote.clone());
     test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
+}
+
+#[test]
+fn directive_prologue_boundary() {
+    // A parenthesized string expression statement has to keep its parentheses while it sits at the
+    // end of the directive prologue, or it re-parses as a directive.
+
+    // No directives before it
+    test_same("(\"use strict\");\nfoo();\n");
+    // After real directives - printed bare, this would switch the program to strict mode
+    test_same("\"use asm\";\n(\"use strict\");\nfoo();\n");
+    // Indented, in a function body
+    test_same("function f() {\n\t(\"x\");\n}\n");
+    test_same("function f() {\n\t\"use strict\";\n\t(\"x\");\n}\n");
+    // A TS module block has a directive prologue too
+    test_same("module Foo {\n\t(\"x\");\n}\n");
+    // A class static block does not, so there is nothing to protect against there
+    test(
+        "class C {\n\tstatic {\n\t\t(\"x\");\n\t}\n}\n",
+        "class C {\n\tstatic {\n\t\t\"x\";\n\t}\n}\n",
+    );
+
+    // Only the statement which closes the prologue needs the parentheses - a string statement
+    // after it cannot be a directive
+    test_same("(\"a\");\n\"b\";\n");
+    test("foo();\n(\"a\");\n", "foo();\n\"a\";\n");
+    test("\"use strict\";\nfoo();\n(\"a\");\n", "\"use strict\";\nfoo();\n\"a\";\n");
+}
+
+#[test]
+fn directive_prologue_boundary_minify() {
+    // Minified output has the same hazard. A string usually prints as a template literal, which
+    // cannot be a directive, but only where that is the shortest form - one backtick in the string
+    // is enough to make quotes shorter, and then nothing else would stop it printing as a
+    // directive. So the template literal is printed whatever the contents.
+    test_minify("(\"`\");", "`\\``;");
+    // `${` costs a backtick the same as a backtick does
+    test_minify("(\"${}\");", "`\\${}`;");
+    // Strings which would have chosen a template literal anyway are unaffected
+    test_minify("(\"use strict\");", "`use strict`;");
+    // After real directives
+    test_minify("\"use asm\"; (\"`\");", "\"use asm\";`\\``;");
+    // A newline pays for a backtick, so quotes were never shorter for this one
+    test_minify("(\"\\n`\");", "`\n\\``;");
+    // Only the statement which closes the prologue is at risk
+    test_minify("foo(); (\"`\");", "foo();\"`\";");
 }
 
 #[test]

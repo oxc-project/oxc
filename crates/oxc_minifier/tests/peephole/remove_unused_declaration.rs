@@ -142,6 +142,27 @@ fn remove_unused_variable_declaration() {
     test_options("for (var x; ; );", "for (; ;);", &options);
     test_options("for (var x = 1; ; );", "for (; ;);", &options);
     test_same_options("for (var x = foo; ; );", &options); // can be improved
+
+    test_options(
+        "var MyStore = class { static { console.log(this.name) } };",
+        "(class { static { console.log(this.name) } });",
+        &options,
+    );
+    test_options(
+        "var MyStore = (class { static { console.log(this.name) } });",
+        "(class { static { console.log(this.name) } });",
+        &options,
+    );
+    test_options(
+        "var MyStore = (0, class { static { console.log(this.name) } });",
+        "(class { static { console.log(this.name) } });",
+        &options,
+    );
+    test_options(
+        "var MyStore = class { static foo = console.log(this.name) };",
+        "(class { static foo = console.log(this.name) });",
+        &options,
+    );
 }
 
 #[test]

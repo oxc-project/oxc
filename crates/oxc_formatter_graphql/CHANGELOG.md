@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.63.0] - 2026-08-10
+
+### 🐛 Bug Fixes
+
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### ⚡ Performance

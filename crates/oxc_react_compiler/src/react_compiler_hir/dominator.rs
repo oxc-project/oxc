@@ -14,8 +14,7 @@ use rustc_hash::FxHashSet;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::{IndexSlice, IndexVec};
 
-use crate::diagnostics::ErrorCategory;
-
+use crate::diagnostics;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::{BlockId, HirFunction, Terminal};
 
@@ -202,10 +201,7 @@ fn compute_immediate_dominators(
             let mut new_idom = match new_idom {
                 Some(idom) => idom,
                 None => {
-                    return Err(ErrorCategory::Invariant.diagnostic(format!(
-                        "At least one predecessor must have been visited for block {:?}",
-                        node.id
-                    )));
+                    return Err(diagnostics::unvisited_dominator_predecessor(node.id));
                 }
             };
 

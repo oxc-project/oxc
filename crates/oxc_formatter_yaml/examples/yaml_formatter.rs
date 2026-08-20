@@ -48,7 +48,7 @@ fn main() -> Result<(), String> {
     let formatted = match oxc_formatter_yaml::format(&allocator, &source_text, options) {
         Ok(formatted) => formatted,
         Err(error) => {
-            println!("{error:?}");
+            println!("{}", error.render());
             return Err("Parsed with Errors.".to_string());
         }
     };

@@ -9,7 +9,7 @@ Prettier compatible YAML formatter (`oxfmt`'s Tier 1 backend), using the `oxc_fo
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
 - Two entry points (see their docs in `src/format.rs`):
-  - `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. yaml-in-markdown)
+  - `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. CSS front matter, JSDoc fenced blocks)
 
 ### Parser
 
@@ -48,6 +48,8 @@ Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Curren
 - anchor/tag order (prettier#19524): source order is preserved, never reordered
 - EOF blank lines: the file always ends with exactly one newline, like every other formatter crate
   (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines verbatim
+- keep-chomped tail at a space-only EOF line (no final newline): the line holds no line break, so it adds nothing to the kept tail;
+  - Prettier counts it and prints one newline too many, changing the value `"\n"` → `"\n\n"` (prettier#19256 is the nearest issue)
 - `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
 - anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
 - blank lines (prettier#15528): one unified rule:

@@ -25,8 +25,8 @@ const rule: Rule = {
 
         context.report({
           message:
-            `File has ${scopeManager.scopes.length} scopes:\n- ` +
-            scopeManager.scopes
+            `File has ${scopeManager.scopes.length} scopes:\n- `
+            + scopeManager.scopes
               .map((s: any) => {
                 const name = s.block?.id?.name;
                 return name ? `${s.type}(${name})` : `${s.type}`;

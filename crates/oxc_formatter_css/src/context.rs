@@ -1,4 +1,4 @@
-use oxc_formatter_core::{FormatContext, SourceText};
+use oxc_formatter_core::{FormatContext, SourceText, TailwindCollector};
 
 use crate::{
     comments::{Comments, CssComment},
@@ -76,6 +76,14 @@ impl<'a> CssFormatContext<'a> {
     /// Returns the comment cursor.
     pub fn comments(&self) -> &Comments<'a> {
         &self.comments
+    }
+}
+
+/// Lets a dispatched child's classes remap into this host's index space (`DispatchPayload::into_doc`).
+/// A YAML front matter child returns none today, but the cross-language contract holds for any future child.
+impl TailwindCollector for CssFormatContext<'_> {
+    fn add_class(&mut self, class: String) -> usize {
+        self.add_tailwind_class(class)
     }
 }
 

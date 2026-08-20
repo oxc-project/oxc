@@ -189,7 +189,7 @@ impl<'a> Transformer<'a> {
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
-        let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let helpers_used = std::mem::take(&mut state.helper_loader.used_helpers);
         let diagnostics = state.take_errors().into();
         #[expect(deprecated)]
         TransformerReturn { diagnostics, scoping, helpers_used }

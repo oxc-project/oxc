@@ -2,8 +2,8 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ vitest(consistent-test-filename): The 1.spec.ts is a test file but his name is not allowed
+  ⚠ vitest(consistent-test-filename): The file 1.spec.ts is a test file, but its name does not match the expected pattern.
   help: Rename the file that match the pattern .*\.test\.[tj]sx?$
 
-  ⚠ vitest(consistent-test-filename): The 2.ts is a test file but his name is not allowed
-  help: Rename the file that match the pattern (?u).*\.spec\.ts$
+  ⚠ vitest(consistent-test-filename): The file 2.ts is a test file, but its name does not match the expected pattern.
+  help: Rename the file that match the pattern .*\.spec\.ts$

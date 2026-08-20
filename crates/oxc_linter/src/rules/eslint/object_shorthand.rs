@@ -836,6 +836,10 @@ fn test() {
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
+            "({ x: (): typeof this.foo => { return 1; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
             "function foo() { ({ x: () => { arguments; } }) }",
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),

@@ -10,7 +10,7 @@ use super::{
     resolve::{build_global_ignore_matchers, is_ignored, resolve_ignore_paths},
 };
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
+    ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
     ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
     resolve_file_scope_config, utils,
 };
@@ -19,7 +19,7 @@ pub struct StdinRunner {
     options: FormatCommand,
     cwd: PathBuf,
     js_config_loader: JsConfigLoaderCb,
-    external_formatter: ExternalFormatter,
+    external_services: ExternalServices,
 }
 
 impl StdinRunner {
@@ -30,13 +30,13 @@ impl StdinRunner {
     pub fn new(
         options: FormatCommand,
         js_config_loader: JsConfigLoaderCb,
-        external_formatter: ExternalFormatter,
+        external_services: ExternalServices,
     ) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             js_config_loader,
-            external_formatter,
+            external_services,
         }
     }
 
@@ -84,12 +84,9 @@ impl StdinRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         if let Err(err) =
-            tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads))
+            tokio::task::block_in_place(|| self.external_services.init(num_of_threads))
         {
-            utils::print_and_flush(
-                stderr,
-                &format!("Failed to setup external formatter.\n{err}\n"),
-            );
+            utils::print_and_flush(stderr, &format!("Failed to setup external services.\n{err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
 
@@ -119,7 +116,8 @@ impl StdinRunner {
             }
         };
 
-        // Check if the file is ignored by global ignores or config's `ignorePatterns`
+        // Check if the file is ignored by tool-ignores or config's `ignorePatterns`.
+        // `.gitignore` is deliberately not consulted, stdin is an explicitly requested document.
         let global_matchers = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
             .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
         {
@@ -154,7 +152,7 @@ impl StdinRunner {
 
         // Create formatter and format
         let source_formatter = SourceFormatter::new(num_of_threads)
-            .with_external_formatter(Some(self.external_formatter));
+            .with_external_services(Some(self.external_services));
 
         // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| source_formatter.format(&source_text, strategy)) {

@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- ae9be8f parser: Forbid type parameters on quoted constructors (#25696) (Boshen)
+- 23a7ad0 parser: Stop delimited lists at end of file (#25542) (Boshen)
+- 73acba9 parser: Preserve fatal errors during await reparse (#25541) (Boshen)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- c49f4ce parser: Preserve terminal license comments (#25400) (camc314)
+- 12937b3 parser: Reject comma expressions in class fields (#25385) (Cameron)
+- 9e93ba6 parser: Reset auto-accessor initializer context (#25384) (camc314)
+- cc2e28d parser: Reject trailing tokens in `Parser::parse_expression` (#25371) (camc314)
+- 4d723ca parser: Report TS1035 for quoted module names (#25305) (camc314)
+
+### ⚡ Performance
+
+- e420816 parser: Optimize trailing comma tracking (#25376) (camc314)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

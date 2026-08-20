@@ -169,7 +169,11 @@ impl LanguageServer for Backend {
             }
         }
 
-        self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await;
+        if let Some(client_message) =
+            self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await
+        {
+            client_messages.push(client_message);
+        }
 
         if !client_messages.is_empty() {
             let _ = self.pending_initialization_messages.set(client_messages);
@@ -696,13 +700,19 @@ impl LanguageServer for Backend {
             let diagnostic_mode =
                 capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
             let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
-            if let Some(registrations) = self
+            let (registrations, client_message) = self
                 .worker_manager
                 .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
-                .await
+                .await;
+
+            if let Some(registrations) = registrations
                 && let Err(err) = self.client.register_capability(vec![registrations]).await
             {
                 warn!("registering file watchers for single-file workspace failed: {err}");
+            }
+
+            if let Some(client_message) = client_message {
+                self.client.show_message(client_message.r#type, client_message.message).await;
             }
         }
 

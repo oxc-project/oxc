@@ -647,7 +647,6 @@ mod tests {
     #[should_panic(expected = "Cannot create a `NonEmptyStack` from an empty iterator")]
     fn from_empty_iterator() {
         let arr: [u64; 0] = [];
-        #[expect(clippy::from_iter_instead_of_collect)]
         NonEmptyStack::from_iter(arr.iter());
     }
 

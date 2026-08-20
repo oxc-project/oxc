@@ -1,0 +1,91 @@
+{
+  "name": "oxc-transform-relay",
+  "version": "0.146.0",
+  "description": "Oxc Relay Transform Node API",
+  "keywords": [
+    "graphql",
+    "javascript",
+    "oxc",
+    "relay",
+    "transform",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "napi/transform-relay"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "browser.js",
+    "index.d.ts",
+    "index.js",
+    "webcontainer-fallback.cjs"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "index.js",
+  "browser": "browser.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev --profile coverage",
+    "build": "pnpm run build-dev --features allocator --release",
+    "postbuild": "publint",
+    "postbuild-dev": "node scripts/patch.js",
+    "build-wasm": "pnpm run build-wasm-dev --release",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts transform-relay.wasi.d.cts",
+    "test": "vitest run --dir ./test"
+  },
+  "devDependencies": {
+    "@emnapi/core": "catalog:",
+    "@emnapi/runtime": "catalog:",
+    "@napi-rs/cli": "catalog:",
+    "@types/node": "catalog:",
+    "publint": "catalog:",
+    "vitest": "catalog:"
+  },
+  "napi": {
+    "binaryName": "transform-relay",
+    "packageName": "@oxc-transform-relay/binding",
+    "targets": [
+      "aarch64-apple-darwin",
+      "aarch64-linux-android",
+      "aarch64-pc-windows-msvc",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "aarch64-unknown-linux-ohos",
+      "armv7-linux-androideabi",
+      "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "i686-pc-windows-msvc",
+      "powerpc64le-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-musl",
+      "s390x-unknown-linux-gnu",
+      "wasm32-wasip1-threads",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-freebsd",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl"
+    ],
+    "wasm": {
+      "browser": {
+        "fs": false
+      }
+    }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

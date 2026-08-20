@@ -14,7 +14,7 @@ use serde_json::Value;
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder, format_element::BestFittingElement,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -187,17 +187,80 @@ fn convert_group<'a>(
     out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    if obj.contains_key("expandedStates") {
-        return Err("Unsupported: group with 'expandedStates' (conditionalGroup)".to_string());
-    }
-
     let should_break = obj.get("break").and_then(Value::as_bool).unwrap_or(false);
     let id = extract_group_id(obj, "id")?;
-
     let gid = id.map(|n| ctx.resolve_group_id(n));
+
+    let Some(expanded_states) = obj.get("expandedStates") else {
+        return convert_group_contents(obj.get("contents"), gid, should_break, out, ctx);
+    };
+    let Value::Array(expanded_states) = expanded_states else {
+        return Err("group 'expandedStates' must be an array".to_string());
+    };
+    let contents = obj
+        .get("contents")
+        .ok_or_else(|| "group with 'expandedStates' missing 'contents'".to_string())?;
+
+    // `conditionalGroup(states, options)` stores `states[0]` in `contents` as well as in `expandedStates`.
+    // The first representation is therefore `contents`, followed by `expandedStates[1..]`.
+    // A forced group skips fitting altogether and uses the final state.
+    if should_break {
+        let final_state = expanded_states.last().unwrap_or(contents);
+        return convert_group_contents(Some(final_state), gid, true, out, ctx);
+    }
+    // A single state is just a regular group. BestFitting requires at least two variants
+    if expanded_states.len() <= 1 {
+        return convert_group_contents(Some(contents), gid, false, out, ctx);
+    }
+
+    let mut variants = ArenaVec::with_capacity_in(expanded_states.len(), &ctx.allocator);
+    for (index, state) in
+        std::iter::once(contents).chain(expanded_states.iter().skip(1)).enumerate()
+    {
+        let mode =
+            if index + 1 == expanded_states.len() { GroupMode::Expand } else { GroupMode::Flat };
+        let mut variant = ArenaVec::new_in(&ctx.allocator);
+        variant.push(FormatElement::Tag(Tag::StartEntry));
+        // `BestFitting` itself supplies the selected variant's print mode.
+        // A wrapper group is only needed to publish that mode under Prettier's group ID for `if-break(groupId)` consumers.
+        // Wrapping an ID-less variant would remeasure it after selection
+        // and can incorrectly expand an intermediate state that Prettier prints flat.
+        // (No core Prettier printer passes an id to `conditionalGroup`; this branch is defensive.
+        // Note the same remeasure hazard reappears here via `propagate_expand` if a variant contains a top-level hard line,
+        // so revisit before relying on it for real inputs.)
+        if gid.is_some() {
+            variant.push(FormatElement::Tag(Tag::StartGroup(
+                Group::new().with_id(gid).with_mode(mode),
+            )));
+        }
+        convert_doc(state, &mut variant, ctx)?;
+        if gid.is_some() {
+            variant.push(FormatElement::Tag(Tag::EndGroup));
+        }
+        variant.push(FormatElement::Tag(Tag::EndEntry));
+        // The trailing `EndEntry` tag keeps postprocess's trailing-hardline strip from firing:
+        // a variant retains its trailing hardline (content may follow the `BestFitting`).
+        postprocess(&mut variant, ctx.allocator);
+        variants.push(variant.into_arena_slice());
+    }
+
+    // SAFETY: `expanded_states.len() > 1`, and the loop emits exactly that many variants.
+    out.push(FormatElement::BestFitting(unsafe {
+        BestFittingElement::from_vec_unchecked(variants)
+    }));
+    Ok(())
+}
+
+fn convert_group_contents<'a>(
+    contents: Option<&Value>,
+    gid: Option<GroupId>,
+    should_break: bool,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
+) -> Result<(), String> {
     let mode = if should_break { GroupMode::Expand } else { GroupMode::Flat };
     out.push(FormatElement::Tag(Tag::StartGroup(Group::new().with_id(gid).with_mode(mode))));
-    if let Some(contents) = obj.get("contents") {
+    if let Some(contents) = contents {
         convert_doc(contents, out, ctx)?;
     }
     out.push(FormatElement::Tag(Tag::EndGroup));
@@ -495,4 +558,111 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
         }
     }
     ir.truncate(write);
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_formatter_core::{Document, PrintWidth, PrinterOptions, UniqueGroupIdBuilder};
+    use serde_json::{Value, json};
+
+    use super::{convert_envelope, postprocess};
+
+    fn print_doc(doc: &Value, print_width: u32) -> String {
+        let allocator = Allocator::default();
+        let group_id_builder = UniqueGroupIdBuilder::default();
+        let (mut ir, _) =
+            convert_envelope(json!([doc, {}]), &allocator, &group_id_builder).unwrap();
+        postprocess(&mut ir, &allocator);
+        Document::new(ir, vec![])
+            .print(0, PrinterOptions::default().with_print_width(PrintWidth::new(print_width)))
+            .unwrap()
+            .into_code()
+    }
+
+    #[test]
+    fn conditional_group_selects_the_first_fitting_state() {
+        let group = json!({
+            "type": "group",
+            "contents": "1234567890",
+            "expandedStates": [
+                "1234567890",
+                ["12345", { "type": "line" }, "678"],
+                ["1234", { "type": "line" }, "5678"]
+            ]
+        });
+
+        assert_eq!(print_doc(&group, 10), "1234567890");
+        assert_eq!(print_doc(&group, 9), "12345 678");
+        assert_eq!(print_doc(&group, 4), "1234\n5678");
+    }
+
+    #[test]
+    fn conditional_group_with_one_state_is_a_regular_group() {
+        let group = json!({
+            "type": "group",
+            "contents": ["a", { "type": "line" }, "b"],
+            "expandedStates": [["a", { "type": "line" }, "b"]]
+        });
+
+        assert_eq!(print_doc(&group, 80), "a b");
+    }
+
+    #[test]
+    fn forced_conditional_group_uses_only_the_final_state() {
+        let group = json!({
+            "type": "group",
+            "break": true,
+            "contents": "flat",
+            "expandedStates": [
+                "flat",
+                ["final", { "type": "line" }, "state"]
+            ]
+        });
+
+        assert_eq!(print_doc(&group, 80), "final\nstate");
+    }
+
+    #[test]
+    fn conditional_group_id_exposes_the_selected_mode_to_if_break() {
+        let flat_if_break = json!({
+            "type": "if-break",
+            "breakContents": "B",
+            "flatContents": "F",
+            "groupId": 1
+        });
+        let group = json!({
+            "type": "group",
+            "id": 1,
+            "contents": ["flat", flat_if_break],
+            "expandedStates": [
+                ["flat", flat_if_break],
+                ["x", { "type": "line" }, "y", flat_if_break]
+            ]
+        });
+
+        assert_eq!(print_doc(&group, 80), "flatF");
+        assert_eq!(print_doc(&group, 1), "x\nyB");
+    }
+
+    #[test]
+    fn conditional_group_variant_keeps_its_trailing_hardline() {
+        let hardline = json!([
+            { "type": "line", "hard": true },
+            { "type": "break-parent" }
+        ]);
+        let doc = json!([
+            {
+                "type": "group",
+                "contents": ["flat", hardline],
+                "expandedStates": [
+                    ["flat", hardline],
+                    ["expanded", hardline]
+                ]
+            },
+            "after"
+        ]);
+
+        assert_eq!(print_doc(&doc, 80), "flat\nafter");
+    }
 }

@@ -4,6 +4,137 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.79.0] - 2026-08-18
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🚀 Features
+
+- 9b7394e linter/typescript/no-empty-object-type: Implement suggestion (#25833) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 345f981 react_compiler: Skip node_modules by default (#25859) (Boshen)
+- 2f40afa linter/unicorn/no-array-callback-reference: Ignore effect library imports (#25857) (Michaël Bitard)
+- 7b565a0 linter: Align React Compiler rule categories (#25840) (Boshen)
+- 228e8e0 linter: Resolve inactive React compiler rules (#25830) (Boshen)
+- f8e4884 linter/eslint/no-useless-constructor: Allow parameter properties (#25811) (camc314)
+- e4b6993 linter: Report exhaustive effect dependencies (#25829) (Boshen)
+- 742e25f linter/eslint/no-return-assign: Anchor diagnostic on return stmt (#25803) (camc314)
+- b831ca8 react-compiler: Improve derived state diagnostic (#25804) (Boshen)
+- 5908c87 linter/jest/prefer-mock-return-shorthand: Preserve implementations using this (#25802) (camc314)
+- f6b2265 linter/eslint/no-redeclare: Run in ES modules, skipping only the globals check (#25691) (Hamody We)
+- ca9f553 linter/unicorn/prefer-default-parameters: Mark fixer as a suggestion (#25801) (camc314)
+- aa49d86 linter: Allow spread rule options in config types (#25675) (ch3rry)
+- d5483f8 linter/typescript/no-useless-empty-export: Skip TS declaration files (#25789) (Evyatar Daud)
+- 57f2199 linter/typescript/no-useless-empty-export: Report after imports (#25786) (camc314)
+- 633bc19 linter/typescript/no-unnecessary-type-conversion: Mark fixer as `suggestion` (#25787) (camc314)
+- dea3339 linter/typescript/explicit-module-boundary-types: Anchor diagnostics on arrows (#25779) (camc314)
+- 5cd6f02 linter/eslint/array-callback-return: Anchor diagnostic on callback (#25780) (camc314)
+- ef8cebf linter/eslint/preserve-caught-error: Handle AggregateError options (#25775) (camc314)
+- c108d5c linter: Improve React Compiler diagnostics (#25742) (Boshen)
+- c9ec55e react-compiler: Improve diagnostic spans (#25731) (Boshen)
+- 1cbbcb7 linter/unicorn/prefer-string-replace-all: Apply fixes in one pass (#25709) (Mikhail Baev)
+- dec0a86 react-compiler: Standardize diagnostics (#25702) (Boshen)
+- 5fd77f7 linter/react/display-name: Report curried HOC inner component (#25662) (camc314)
+- 4dbb80e linter/import/no-named-as-default: Report local export conflicts (#25658) (camc314)
+- e8a7214 linter/react/rules-of-hooks: Report hooks inside try blocks (#25670) (camc314)
+- 36f8451 linter/eslint/no-eval: Align indirect default with ESLint (#25656) (camc314)
+- d901d24 linter/react/exhaustive-deps: Handle destructured object dependencies (#25669) (camc314)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- fa36f26 linter/react/no-this-in-sfc: Detect this in nested arrow callbacks (#25653) (camc314)
+- 44d1be3 linter/typescript/no-var-requires: Run rule on JavaScript (#25664) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 625401d linter/import/no-named-default: Flag type-only named defaults (#25661) (camc314)
+- 8eacb2d linter/typescript/no-non-null-asserted-optional-chain: Detect assertions after continued optional chains (#25659) (camc314)
+- d55b76c linter/react/no-direct-mutation-state: Detect computed state mutations (#25654) (camc314)
+- f92c651 linter/unicorn/no-abusive-eslint-disable: Use directive prefix in diagnostic (#25657) (camc314)
+- ee44996 linter/eslint/max-classes-per-file: Anchor diagnostic at program start (#25652) (camc314)
+- 403ec40 linter/eslint/no-multi-assign: Handle parenthesized declarator initializers (#25651) (camc314)
+- 6c9ba37 linter/jest/expect-expect: Detect assertions in nested function declarations (#25650) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- 1be1e20 linter/eslint/prefer-promise-reject-errors: Report on spread arguments (#25648) (Mikhail Baev)
+- 509931b semantic: Classify global references per identifier (#25608) (camc314)
+- eaf80d8 linter/unicorn/prefer-node-protocol: Validate exact Node.js built-in specifiers (#25558) (camc314)
+- 57b94af linter/promise/no-multiple-resolved: Ignore unresolved globals (#25530) (Tushar Singh)
+- 80e64c2 linter/expect-expect: Validate assertion regex (#25504) (Mikhail Baev)
+- 7830604 linter/react/exhaustive-deps: Treat binary expressions as a stable dependency (#25508) (Hamody We)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+- 9d49d27 react_compiler: Bail out instead of panicking on "Expected a node for all scopes" (#25506) (Boshen)
+- d43b562 linter/vitest/prefer-expect-assertions: Handle parameterized Vitest assertion suggestions (#25476) (camc314)
+
+### ⚡ Performance
+
+- e8303d6 linter: Shrink rule serialization dispatch (#25818) (Boshen)
+- c84ede3 estree_tokens: Share JS token update entry point (#25826) (Boshen)
+- 35c8eb2 linter: Compute sort keys once with sort_by_cached_key (#25821) (Boshen)
+- f0121ed linter: Share config deserialization entry point (#25820) (Boshen)
+- 2dacf7a oxlint: Reduce debug formatting code size (#25797) (Boshen)
+- 9ed10b7 linter: Use unstable sorts for unique keys (#25778) (Boshen)
+- 63ff8ef linter: Outline diagnostic construction (#25762) (Boshen)
+- 8e9b95f linter: Use table for rule names (#25458) (Boshen)
+
+## [1.78.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🚀 Features
+
+- ccb8fe8 linter/jsdoc: Implement `no-blank-blocks` rule (#25207) (Mikhail Baev)
+- d4a897c linter/eslint: Implement `one-var` rule (#24470) (Cole Ellison)
+- 5ab9340 linter/jsx-a11y/anchor-has-content: Add options to match eslint (#24571) (Cole Ellison)
+
+### 🐛 Bug Fixes
+
+- b746e00 linter/eslint/no-implicit-coercion: Preserve template coercion whitespace (#25470) (camc314)
+- a92c541 linter: Preserve source text for JS plugin ignore fixes (#25280) (Norcleeh)
+- 675c840 linter/eslint/prefer-promise-reject-errors: Handle parenthesized calls (#25378) (camc314)
+- 1703739 linter/unicorn/new-for-builtins: Ignore optional chains (#25411) (tanakalucky)
+- 95ece63 linter/unicorn/prefer-code-point: Downgrade the auto-fix to dangerous (#25412) (leemr)
+- c451a0e linter/vitest: Validate `consistent-test-filename` regex patterns (#25408) (Mikhail Baev)
+- 937825c react_compiler: Disable exhaustive memo validation by default (#25417) (Boshen)
+- f0f7dae linter/eslint/no-unused-vars: Report invalid regex options (#25380) (Cameron)
+- 44e73fd linter/unicorn/prefer-array-flat: Fix `concat.apply` suggestions (#25373) (Cameron)
+- 6846a9a linter/react/rules-of-hooks: Detect constructor callbacks (#25377) (camc314)
+- b247a9d linter/unicorn/new-for-builtins: Support `Float16Array` (#25382) (tanakalucky)
+- 19109cd linter/unicorn/error-message: Support `SuppressedError` messages (#25375) (camc314)
+- 9c13f5e linter: Assert token lookup invariants (#25368) (camc314)
+- bc35f83 linter/eslint/no-unused-vars: Bound catch parameter lookup (#25367) (camc314)
+- c159fb9 linter/unicorn/switch-case-braces: Bound token lookup (#25363) (camc314)
+- 03b2eb2 linter/unicorn/no-static-only-class: Bound token lookup (#25361) (camc314)
+- 0afc59e linter/unicorn/empty-brace-spaces: Bound token lookup (#25353) (camc314)
+- 2963d98 linter/eslint/no-unreachable-loop: Do not report loops whose body has a finally block (#25335) (Todor Andonov)
+- 589e5fb linter/eslint/no-param-reassign: Validate `ignorePropertyModificationsForRegex` property (#25346) (Mikhail Baev)
+- aae5d8b linter/eslint/no-throw-literal: False positive on variable declared without initializer (#25275) (cjnoname)
+- 6b1c479 oxlint: Normalize customized rule names (#25316) (camc314)
+- d494eb5 linter/unicorn/consistent-existence-index-check: Bound token lookup (#25325) (camc314)
+- 4266037 linter/typescript/prefer-namespace-keyword: Bound token lookup (#25322) (camc314)
+- 4745b4e linter/typescript/no-namespace: Bound token lookup (#25321) (camc314)
+- 648a481 linter/eslint/one-var: Avoid joining exported declarations (#25314) (camc314)
+- 9573937 linter/typescript: Validate `ban-ts-comment` description_format (#25320) (Mikhail Baev)
+- ebf7d18 linter/typescript/consistent-type-definitions: Bound token lookup (#25281) (camc314)
+- 1501ccf linter/typescript/consistent-generic-constructors: Bound token lookup (#25258) (camc314)
+
+### ⚡ Performance
+
+- 8f784f3 linter: Reduce rule config dispatch size (#25461) (Boshen)
+- 2de4ec2 linter: Reduce visitor code size (#25441) (Boshen)
+- 6fb7f47 linter/unicorn/prefer-export-from: Narrow `ExportFromDeclaration` lookup (#25381) (camc314)
+- e3f6263 linter/unicorn/prefer-default-parameters: Avoid reference allocation  (#25379) (camc314)
+- d863473 linter/vue/max-props: Narrow AST dispatch (#25372) (camc314)
+- 273d867 linter: Avoid diagnostic sorting after applying fixes (#25079) (Sysix)
+- 4ec9189 oxlint/lsp: Avoid second lock for getting/removing unused directives (#25350) (Sysix)
+- 3a94055 linter: Avoid per-call heap allocations in jest and unicorn helpers (#25210) (Connor Shea)
+- 8492cfd linter/typescript/ban-ts-comment: Bail early with substring guard (#25301) (Jacob Asper)
+- 7607f04 linter/typescript/ban-tslint-comment: Replace regex with manual parser (#25299) (Jacob Asper)
+
 ## [1.77.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

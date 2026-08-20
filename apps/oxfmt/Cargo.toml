@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.62.0"
+version = "0.64.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -46,7 +46,6 @@ editorconfig-parser = { workspace = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
-miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

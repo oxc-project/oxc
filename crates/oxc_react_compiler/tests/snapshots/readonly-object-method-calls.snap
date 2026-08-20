@@ -5,39 +5,32 @@ input_file: crates/oxc_react_compiler/fixtures/readonly-object-method-calls.js
 import { c as _c } from "react/compiler-runtime";
 import { useFragment } from "shared-runtime";
 function Component(props) {
-	const $ = _c(5);
-	let t0;
-	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		t0 = graphql`
+	const $ = _c(4);
+	const user = useFragment(graphql`
       fragment Component_user on User {
         name
       }
-    `;
-		$[0] = t0;
-	} else {
-		t0 = $[0];
-	}
-	const user = useFragment(t0, props.user);
+    `, props.user);
 	let posts;
-	if ($[1] !== user.timeline.posts.edges.nodes) {
+	if ($[0] !== user.timeline.posts.edges.nodes) {
 		posts = user.timeline.posts.edges.nodes.map(_temp);
 		posts.push({});
 		const count = posts.length;
 		foo(count);
-		$[1] = user.timeline.posts.edges.nodes;
+		$[0] = user.timeline.posts.edges.nodes;
+		$[1] = posts;
+	} else {
+		posts = $[1];
+	}
+	let t0;
+	if ($[2] !== posts) {
+		t0 = <>{posts}</>;
 		$[2] = posts;
+		$[3] = t0;
 	} else {
-		posts = $[2];
+		t0 = $[3];
 	}
-	let t1;
-	if ($[3] !== posts) {
-		t1 = <>{posts}</>;
-		$[3] = posts;
-		$[4] = t1;
-	} else {
-		t1 = $[4];
-	}
-	return t1;
+	return t0;
 }
 function _temp(node) {
 	return <Post post={node} />;

@@ -2085,6 +2085,49 @@ mod test_suite {
         }
 
         #[tokio::test]
+        async fn test_dynamic_workers_show_client_message_in_single_file_mode() {
+            let builder = FakeToolBuilder {
+                build_client_message: Some(ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::WARNING,
+                }),
+                ..Default::default()
+            };
+
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_workspace_manager_with_builder(builder),
+                    )
+                },
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Opening files from different parent folders creates distinct dynamic workers.
+            let file_a = "file:///path/to/dir_a/file.js";
+            let file_b = "file:///path/to/dir_b/file.js";
+
+            server.send_request(did_open(file_a, "a")).await;
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], "Fake misconfiguration message");
+            assert_eq!(params["type"], json!(MessageType::WARNING));
+
+            server.send_request(did_open(file_b, "b")).await;
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], "Fake misconfiguration message");
+            assert_eq!(params["type"], json!(MessageType::WARNING));
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
         async fn test_single_file_mode_creates_worker_on_open() {
             let mut server = TestServer::new_initialized(
                 |client| Backend::new(client, server_info(), create_workspace_manager()),
@@ -2284,6 +2327,7 @@ mod test_suite {
         use crate::tests::create_dynamic_workspace_manager;
 
         use super::*;
+
         #[tokio::test]
         async fn test_dynamic_mode_pull_diagnostics() {
             let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
