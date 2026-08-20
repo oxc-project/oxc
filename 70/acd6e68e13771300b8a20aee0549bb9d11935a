@@ -1,0 +1,21 @@
+crates/oxc_codegen/src/comment.rs
+  s_58493bfa5324ac::t_a4dcf18eaeeaff 32-36,124-128
+crates/oxc_codegen/src/gen.rs
+  s_58493bfa5324ac::t_b84fcc21de9517 28-31,48-52,129-132,768-771,1190-1193,1316-1320,1620-1624,1671-1674,1756-1760,1943-1947,2558-2562,2860-2863
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "70acd6e68e13771300b8a20aee0549bb9d11935a",
+  "prompts": {},
+  "sessions": {
+    "s_58493bfa5324ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01ac4-4d1b-7642-b86d-6773cf13abfd",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
