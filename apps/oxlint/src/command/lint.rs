@@ -276,10 +276,15 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format. Possible values:
+    /// Use a specific output format. When `--output-file` is set, this format is written to the
+    /// file and stdout keeps its default format. Possible values:
     /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+
+    /// Write the formatted lint report to a file while keeping the default format on stdout
+    #[bpaf(long("output-file"), short('o'), argument("PATH"), hide_usage)]
+    pub output_file: Option<PathBuf>,
 
     #[bpaf(
         long("debug"),
@@ -289,6 +294,12 @@ pub struct OutputOptions {
         hide_usage
     )]
     pub debug: DebugOptions,
+}
+
+impl OutputOptions {
+    pub fn stdout_format(&self) -> OutputFormat {
+        if self.output_file.is_some() { detected_output_format() } else { self.format }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -369,14 +380,18 @@ impl FromStr for DebugOptions {
 
 #[expect(clippy::unnecessary_wraps)]
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
+    Ok(detected_output_format())
+}
+
+fn detected_output_format() -> OutputFormat {
     if cfg!(debug_assertions) {
-        Ok(OutputFormat::Default)
+        OutputFormat::Default
     } else if !cfg!(test) && crate::agent_detection::is_agent() {
-        Ok(OutputFormat::Agent)
+        OutputFormat::Agent
     } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
-        Ok(OutputFormat::Github)
+        OutputFormat::Github
     } else {
-        Ok(OutputFormat::Default)
+        OutputFormat::Default
     }
 }
 
@@ -715,6 +730,19 @@ mod lint_options {
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);
+    }
+
+    #[test]
+    fn output_file() {
+        let options = get_lint_options("--format json --output-file report.json src");
+        assert_eq!(options.output_options.format, OutputFormat::Json);
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("report.json")));
+        assert_eq!(options.output_options.stdout_format(), OutputFormat::Default);
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+
+        let options = get_lint_options("-f gitlab -o gl-codequality.json src");
+        assert_eq!(options.output_options.format, OutputFormat::Gitlab);
+        assert_eq!(options.output_options.output_file, Some(PathBuf::from("gl-codequality.json")));
     }
 
     #[test]

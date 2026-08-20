@@ -75,10 +75,25 @@ impl CliRunner {
 
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
-        let format_str = self.options.output_options.format;
+        let format_str = self.options.output_options.stdout_format();
+        let output_file_format = self.options.output_options.format;
+        let output_file = self
+            .options
+            .output_options
+            .output_file
+            .as_ref()
+            .map(|path| if path.is_absolute() { path.clone() } else { self.cwd.join(path) });
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
-        let output_formatter = OutputFormatter::new(format_str);
+        let output_formatter = if output_file.is_some() {
+            OutputFormatter::new_with_additional_output(
+                format_str,
+                output_file_format,
+                self.options.misc_options.silent,
+            )
+        } else {
+            OutputFormatter::new(format_str)
+        };
 
         let LintCommand {
             paths,
@@ -458,6 +473,7 @@ impl CliRunner {
             &warning_options,
             &misc_options,
             max_warnings,
+            output_file.is_some(),
         );
 
         // Send JS plugins config to JS side
@@ -592,6 +608,19 @@ impl CliRunner {
             print_and_flush_stdout(stdout, &end);
         }
 
+        if let Some(output_file) = output_file {
+            let output = output_formatter
+                .take_additional_output()
+                .expect("output formatter should contain the requested file output");
+            if let Err(error) = std::fs::write(&output_file, output) {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to write output file '{}': {error}\n", output_file.display()),
+                );
+                return CliRunResult::OutputFileError;
+            }
+        }
+
         // When --suppress-all is used and the file was written successfully,
         // exit with success (matching ESLint behavior: suppressing is a success action).
         if suppress_all_succeeded {
@@ -633,12 +662,13 @@ impl CliRunner {
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
         max_warnings: Option<usize>,
+        has_additional_output: bool,
     ) -> (DiagnosticService, DiagnosticSender) {
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
-                .with_silent(misc_options.silent)
+                .with_silent(misc_options.silent && !has_additional_output)
                 .with_max_warnings(max_warnings),
             sender,
         )
@@ -755,10 +785,130 @@ fn render_config_builder_error(
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use std::{fs, path::Path};
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{
+        DEFAULT_OXLINTRC_NAME,
+        cli::{CliRunResult, CliRunner, lint_command},
+        tester::Tester,
+    };
     use oxc_linter::rules::RULES;
+
+    fn run_in(cwd: &Path, args: &[&str]) -> (String, CliRunResult) {
+        let options = lint_command().run_inner(args).unwrap();
+        let mut stdout = Vec::new();
+        let result = CliRunner::new(options, None).with_cwd(cwd.to_path_buf()).run(&mut stdout);
+        (String::from_utf8(stdout).unwrap(), result)
+    }
+
+    #[test]
+    fn output_file_keeps_default_stdout() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.js"), "debugger;\n").unwrap();
+
+        let (stdout, result) = run_in(
+            temp_dir.path(),
+            &["--format", "json", "--output-file", "report.json", "-D", "no-debugger", "test.js"],
+        );
+
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("eslint(no-debugger)"), "{stdout}");
+        assert!(!stdout.trim_start().starts_with('{'), "{stdout}");
+
+        let report = fs::read_to_string(temp_dir.path().join("report.json")).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&report).unwrap();
+        assert_eq!(report["diagnostics"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn output_file_supports_all_formats() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.js"), "debugger;\n").unwrap();
+
+        for format in [
+            "agent",
+            "checkstyle",
+            "default",
+            "github",
+            "gitlab",
+            "json",
+            "junit",
+            "sarif",
+            "stylish",
+            "unix",
+        ] {
+            let output_file = format!("report.{format}");
+            let (stdout, result) = run_in(
+                temp_dir.path(),
+                &[
+                    "--format",
+                    format,
+                    "--output-file",
+                    &output_file,
+                    "-D",
+                    "no-debugger",
+                    "test.js",
+                ],
+            );
+
+            assert!(matches!(result, CliRunResult::LintFoundErrors), "{format}: {result:?}");
+            assert!(stdout.contains("eslint(no-debugger)"), "{format}: {stdout}");
+            assert!(!fs::read_to_string(temp_dir.path().join(output_file)).unwrap().is_empty());
+        }
+    }
+
+    #[test]
+    fn silent_still_writes_output_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.js"), "debugger;\n").unwrap();
+
+        let (stdout, result) = run_in(
+            temp_dir.path(),
+            &[
+                "--silent",
+                "--format",
+                "json",
+                "--output-file",
+                "report.json",
+                "-D",
+                "no-debugger",
+                "test.js",
+            ],
+        );
+
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(!stdout.contains("eslint(no-debugger)"), "{stdout}");
+        let report = fs::read_to_string(temp_dir.path().join("report.json")).unwrap();
+        let report: serde_json::Value = serde_json::from_str(&report).unwrap();
+        assert_eq!(report["diagnostics"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn output_file_write_failure_is_an_error() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        fs::write(temp_dir.path().join("test.js"), "debugger;\n").unwrap();
+
+        let (stdout, result) = run_in(
+            temp_dir.path(),
+            &["--format", "json", "--output-file", "missing/report.json", "test.js"],
+        );
+
+        assert!(matches!(result, CliRunResult::OutputFileError), "{result:?}\n{stdout}");
+        assert!(stdout.contains("Failed to write output file"), "{stdout}");
+    }
+
+    #[test]
+    fn early_exit_does_not_create_output_file() {
+        let temp_dir = tempfile::tempdir().unwrap();
+
+        let (_, result) = run_in(
+            temp_dir.path(),
+            &["--format", "json", "--output-file", "report.json", "missing.js"],
+        );
+
+        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+        assert!(!temp_dir.path().join("report.json").exists());
+    }
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
