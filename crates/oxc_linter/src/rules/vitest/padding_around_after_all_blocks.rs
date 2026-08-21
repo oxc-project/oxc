@@ -35,6 +35,7 @@ fn test() {
 
     let pass = vec![
         "afterAll(() => {});",
+        "afterAll(() => {});\n\nconst thing = 123;",
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
         "// This is a comment\nafterAll(() => {});",
@@ -51,6 +52,7 @@ fn test() {
 
     let fail = vec![
         "const thing = 123;\nafterAll(() => {});",
+        "afterAll(() => {});\nconst thing = 123;",
         "const thing = 123;\n//My comment\nafterAll(() => {});",
         "import { afterAll } from 'vitest';\nafterAll(() => {});",
         "import { afterAll } from 'vitest';\nimport { helper } from './helper';\nafterAll(() => {});",
@@ -63,6 +65,7 @@ fn test() {
 
     let fix = vec![
         ("const thing = 123;\nafterAll(() => {});", "const thing = 123;\n\nafterAll(() => {});"),
+        ("afterAll(() => {});\nconst thing = 123;", "afterAll(() => {});\n\nconst thing = 123;"),
         (
             "const thing = 123;\n// This is a comment\nafterAll(() => {});",
             "const thing = 123;\n\n// This is a comment\nafterAll(() => {});",

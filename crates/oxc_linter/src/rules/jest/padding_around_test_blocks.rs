@@ -37,6 +37,8 @@ fn test() {
 
     let pass = vec![
         "test('foo', () => {});",
+        "test('foo', () => {});\n\nconst thing = 123;",
+        "test('foo', () => {}); // trailing comment\n\nconst thing = 123;",
         "test('foo', () => {});\n\ntest('bar', () => {});",
         "const thing = 123;\n\ntest('foo', () => {});",
         "{ test('foo', () => {}); }",
@@ -45,8 +47,13 @@ fn test() {
     ];
 
     let fail = vec![
+        "test('foo', () => {});\nconst thing = 123;",
+        "test('foo', () => {});\n// comment\nconst thing = 123;",
+        "test('foo', () => {}); // trailing comment\nconst thing = 123;",
         "test('foo', () => {});test('bar', () => {});",
         "test('foo', () => {});\ntest('bar', () => {});",
+        "import { test as t } from '@jest/globals';\n\nt('a', () => {});\nt('b', () => {});",
+        "import { test as t } from '@jest/globals';\n\n// attached\nt('a', () => {});\ntest('local', () => {});\nfunction test() {}",
         "it('foo', () => {});\nfit('bar', () => {});\ntest('baz', () => {});",
         "const thing = 123;\n/* one */\n/* two */\ntest('foo', () => {});",
         r"
@@ -88,12 +95,32 @@ describe('other bar', function() {
 
     let fix = vec![
         (
+            "test('foo', () => {});\nconst thing = 123;",
+            "test('foo', () => {});\n\nconst thing = 123;",
+        ),
+        (
+            "test('foo', () => {});\n// comment\nconst thing = 123;",
+            "test('foo', () => {});\n\n// comment\nconst thing = 123;",
+        ),
+        (
+            "test('foo', () => {}); // trailing comment\nconst thing = 123;",
+            "test('foo', () => {}); // trailing comment\n\nconst thing = 123;",
+        ),
+        (
             "test('foo', () => {});test('bar', () => {});",
             "test('foo', () => {});\n\ntest('bar', () => {});",
         ),
         (
             "test('foo', () => {});\ntest('bar', () => {});",
             "test('foo', () => {});\n\ntest('bar', () => {});",
+        ),
+        (
+            "import { test as t } from '@jest/globals';\n\nt('a', () => {});\nt('b', () => {});",
+            "import { test as t } from '@jest/globals';\n\nt('a', () => {});\n\nt('b', () => {});",
+        ),
+        (
+            "import { test as t } from '@jest/globals';\n\n// attached\nt('a', () => {});\ntest('local', () => {});\nfunction test() {}",
+            "import { test as t } from '@jest/globals';\n\n// attached\nt('a', () => {});\n\ntest('local', () => {});\nfunction test() {}",
         ),
         (
             "it('foo', () => {});\nfit('bar', () => {});\ntest('baz', () => {});",
