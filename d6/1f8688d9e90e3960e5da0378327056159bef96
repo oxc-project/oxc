@@ -1,0 +1,27 @@
+crates/oxc_parser/src/cursor.rs
+  s_0134e749ece873::t_229e3aca9726bc 208-215
+crates/oxc_parser/src/js/expression.rs
+  s_0134e749ece873::t_2ebcb36659d50a 49
+crates/oxc_parser/src/js/statement.rs
+  s_0134e749ece873::t_a7d87c11948084 643,660,680
+crates/oxc_parser/src/lexer/mod.rs
+  s_0134e749ece873::t_a413bc94612a70 183-186
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_0134e749ece873::t_dfb05872b690bd 32-35,53,81-84,150-152,155,205-212,682-718
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d61f8688d9e90e3960e5da0378327056159bef96",
+  "prompts": {},
+  "sessions": {
+    "s_0134e749ece873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f72-83db-7ed2-a2f5-b49a3dfd48a7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
