@@ -1,13 +1,37 @@
-use oxc_react_compiler::ErrorCategory;
+use lazy_regex::{Regex, RegexBuilder};
+use oxc_react_compiler::{ErrorCategory, LintDiagnostic};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::{ContextHost, LintContext},
-    rule::Rule,
-    utils::{run_react_compiler_rule, should_run_react_compiler},
+    rule::{DefaultRuleConfig, Rule},
+    utils::{run_react_compiler_rule_filtered, should_run_react_compiler},
 };
 
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct CapitalizedCallsConfig {
+    /// A regex pattern; capitalized functions and methods whose name matches
+    /// may be called directly.
+    #[serde(deserialize_with = "deserialize_allow_pattern")]
+    allow_pattern: Option<Regex>,
+}
+
+fn deserialize_allow_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Option::<String>::deserialize(deserializer)?
+        .map(|pattern| RegexBuilder::new(&pattern).build())
+        .transpose()
+        .map_err(D::Error::custom)
+}
+
 #[derive(Debug, Default, Clone)]
-pub struct CapitalizedCalls;
+pub struct CapitalizedCalls(Box<CapitalizedCallsConfig>);
 
 declare_react_compiler_lint!(
     /// ### What it does
@@ -41,16 +65,46 @@ declare_react_compiler_lint!(
     ///   return <div><Child /></div>;
     /// }
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### allowPattern
+    ///
+    /// `{ type: string, default: undefined }`
+    ///
+    /// A regex pattern; capitalized functions and methods whose name matches
+    /// may be called directly — the rule-level counterpart of the React
+    /// Compiler's `validateNoCapitalizedCalls` environment option. Useful when
+    /// a codebase has a naming convention for capitalized non-component
+    /// factories, such as generated event or schema builders. Anchor the
+    /// pattern to allow exact names, e.g. `"^(StyleSheet|Schema)$"`.
+    ///
+    /// Example of **correct** code for this rule with `{ "allowPattern": "Event$" }`:
+    /// ```jsx
+    /// import { ButtonClickEvent } from './events';
+    /// function Component() {
+    ///   const event = ButtonClickEvent();
+    ///   return <button onClick={() => log(event)} />;
+    /// }
+    /// ```
     CapitalizedCalls,
     react,
     suspicious,
+    config = CapitalizedCallsConfig,
     version = "1.79.0",
     short_description = "Disallow calling capitalized functions and methods instead of using JSX.",
 );
 
 impl Rule for CapitalizedCalls {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        DefaultRuleConfig::<CapitalizedCallsConfig>::from_value(value)
+            .map(|config| Self(Box::new(config.into_inner())))
+    }
+
     fn run_once(&self, ctx: &LintContext) {
-        run_react_compiler_rule(ctx, ErrorCategory::CapitalizedCalls);
+        run_react_compiler_rule_filtered(ctx, ErrorCategory::CapitalizedCalls, |finding| {
+            !self.is_allowed(finding, ctx)
+        });
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -58,22 +112,38 @@ impl Rule for CapitalizedCalls {
     }
 }
 
+impl CapitalizedCalls {
+    fn is_allowed(&self, finding: &LintDiagnostic, ctx: &LintContext) -> bool {
+        let Some(pattern) = self.0.allow_pattern.as_ref() else {
+            return false;
+        };
+        // The finding's label covers exactly the offending function or method
+        // name (see `diagnostics::capitalized_call`).
+        let Some(label) = finding.diagnostic.labels.first() else {
+            return false;
+        };
+        pattern.is_match(ctx.source_range(label.span()))
+    }
+}
+
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
-        "
+        (
+            "
 function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
-    ];
-
-    let fail = vec![
-        // ---- NoCapitalizedCallsRule-test.ts ----
-        // Simple violation
-        "
+            None,
+        ),
+        // Anchored pattern allows an exact name
+        (
+            "
 import Child from './Child';
 function Component() {
   return <>
@@ -81,8 +151,11 @@ function Component() {
   </>;
 }
 ",
-        // Method call violation
-        "
+            Some(json!([{ "allowPattern": "^Child$" }])),
+        ),
+        // The pattern applies to method calls too
+        (
+            "
 import myModule from './MyModule';
 function Component() {
   return <>
@@ -90,8 +163,50 @@ function Component() {
   </>;
 }
 ",
+            Some(json!([{ "allowPattern": "^Child$" }])),
+        ),
+        // Pattern allowed
+        (
+            "
+import { ButtonClickEvent } from './events';
+function Component() {
+  const event = ButtonClickEvent();
+  return <button onClick={() => log(event)} />;
+}
+",
+            Some(json!([{ "allowPattern": "Event$" }])),
+        ),
+    ];
+
+    let fail = vec![
+        // ---- NoCapitalizedCallsRule-test.ts ----
+        // Simple violation
+        (
+            "
+import Child from './Child';
+function Component() {
+  return <>
+    {Child()}
+  </>;
+}
+",
+            None,
+        ),
+        // Method call violation
+        (
+            "
+import myModule from './MyModule';
+function Component() {
+  return <>
+    {myModule.Child()}
+  </>;
+}
+",
+            None,
+        ),
         // Multiple diagnostics within the same function are surfaced
-        "
+        (
+            "
 import Child1 from './Child1';
 import MyModule from './MyModule';
 function Component() {
@@ -100,6 +215,43 @@ function Component() {
     {MyModule.Child2()}
   </>;
 }",
+            None,
+        ),
+        // The pattern-allowed pass case above is a violation without config
+        (
+            "
+import { ButtonClickEvent } from './events';
+function Component() {
+  const event = ButtonClickEvent();
+  return <button onClick={() => log(event)} />;
+}
+",
+            None,
+        ),
+        // Allowing one name does not allow others
+        (
+            "
+import Child1 from './Child1';
+import Child2 from './Child2';
+function Component() {
+  return <>
+    {Child1()}
+    {Child2()}
+  </>;
+}",
+            Some(json!([{ "allowPattern": "^Child1$" }])),
+        ),
+        // Pattern matches the whole name, not the suffix convention
+        (
+            "
+import { EventChild } from './EventChild';
+function Component() {
+  return <>
+    {EventChild()}
+  </>;
+}",
+            Some(json!([{ "allowPattern": "Event$" }])),
+        ),
     ];
 
     Tester::new(CapitalizedCalls::NAME, CapitalizedCalls::PLUGIN, pass, fail).test_and_snapshot();

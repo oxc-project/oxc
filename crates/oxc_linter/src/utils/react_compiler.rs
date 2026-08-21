@@ -103,7 +103,23 @@ pub fn should_run_react_compiler(ctx: &ContextHost) -> bool {
 /// Shared `run_once` body for the React Compiler family of rules: report the
 /// shared run's findings for `category` under the calling rule's name.
 pub fn run_react_compiler_rule(ctx: &LintContext, category: ErrorCategory) {
+    run_react_compiler_rule_filtered(ctx, category, |_| true);
+}
+
+/// [`run_react_compiler_rule`] with per-finding filtering for rules with
+/// allowlist options: findings for which `should_report` returns `false` are
+/// skipped. Filtering happens at report time only — the shared compiler run is
+/// unaffected, exactly as if the finding were suppressed with a disable
+/// comment.
+pub fn run_react_compiler_rule_filtered(
+    ctx: &LintContext,
+    category: ErrorCategory,
+    mut should_report: impl FnMut(&LintDiagnostic) -> bool,
+) {
     for finding in ctx.react_compiler_results().diagnostics_for(category) {
+        if !should_report(finding) {
+            continue;
+        }
         let mut diagnostic = finding.diagnostic.clone();
 
         // `LintContext` supplies the per-category Oxlint rule code and primary

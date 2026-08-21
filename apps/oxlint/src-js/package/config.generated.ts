@@ -1332,7 +1332,7 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
-  "react/capitalized-calls"?: RuleNoConfig;
+  "react/capitalized-calls"?: RuleNoConfig | [AllowWarnDeny, CapitalizedCallsConfig];
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
   "react/error-boundaries"?: RuleNoConfig;
@@ -4622,6 +4622,13 @@ export interface ButtonHasType {
    * If true, allow `type="submit"`.
    */
   submit?: boolean;
+}
+export interface CapitalizedCallsConfig {
+  /**
+   * A regex pattern; capitalized functions and methods whose name matches
+   * may be called directly.
+   */
+  allowPattern?: string;
 }
 export interface CheckedRequiresOnchangeOrReadonly {
   /**
