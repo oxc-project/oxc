@@ -269,6 +269,21 @@ describe("normalizeStdout", () => {
       );
       expect(result).toBe("Finished in Xms on 1 file with 2 rules using X threads.\n");
     });
+
+    it("normalizes rule timing tables after the execution summary", () => {
+      const result = normalizeStdout(
+        "Finished in 50ms on 1 file with 1 rules using 1 threads.\n\n" +
+          "Rule timings:\n" +
+          "timing-plugin/count-identifiers       0.003    100.0%      2  js-plugin",
+        fixtureName,
+        false,
+      );
+      expect(result).toBe(
+        "Finished in Xms on 1 file with 1 rules using X threads.\n\n" +
+          "Rule timings:\n" +
+          "timing-plugin/count-identifiers       X.XXX    X.X%      2  js-plugin\n",
+      );
+    });
   });
 
   describe("path normalization", () => {
