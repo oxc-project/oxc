@@ -15,6 +15,15 @@ import {
   CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
+  debugAssertLastFresh,
+  markWithMap,
+  markWithMapAfter,
+  markWithMapAtStartOffset,
+  write,
+  writeNoLast,
+  writeWithMap,
+  writeWithMapEnd,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import {
@@ -50,17 +59,6 @@ import {
   PREC_PREFIX,
   PREC_YIELD,
 } from "./precedence.ts";
-import {
-  debugAssertLastFresh,
-  markWithMap,
-  markWithMapAfter,
-  markWithMapAtStartOffset,
-  write,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapEnd,
-  writeWithMapNoLast,
-} from "./write.ts";
 import { escapeScriptCloseTag } from "./string.ts";
 import {
   printTSAsOrSatisfiesExpression,
