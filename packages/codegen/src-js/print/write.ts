@@ -453,8 +453,11 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
 
   if (location === LOCATION_NAMED && typeof node.name === "string") {
     // A mapping carries a name only when the identifier printed differs from the one in the source.
-    // When possible, the mapping records the source spelling; if the source range is invalid, it falls back to the printed name.
-    // Almost every identifier is printed exactly as it appeared, so we do a first quick check and only fall back to scanning with Unicode property regexps in rare cases.
+    // When possible, the mapping records the name from source, but if the source range is invalid,
+    // it falls back to the printed name.
+    //
+    // Almost every identifier is printed exactly as it was in source, so we do a quick check first,
+    // and only fall back to expensive scanning with Unicode property regexps in rare cases.
     //
     // A span can reach past the name it begins with, since a TypeScript annotation is absorbed into it,
     // so a match has to be followed by a character which cannot continue an identifier.
