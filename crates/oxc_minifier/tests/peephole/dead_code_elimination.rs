@@ -278,6 +278,35 @@ fn dce_var_hoisting() {
     );
 }
 
+// https://github.com/rolldown/rolldown/issues/10722
+#[test]
+fn preserves_function_scoped_binding_in_default_parameter() {
+    test_same(
+        "let n = 1;
+        function bump() { n += 1 }
+        function factory(get) {
+            const read = function(a = n.IS_BLOCK) { return a };
+            var n = get(81937);
+            return read;
+        }
+        globalThis.__keep = [n, bump, factory];",
+    );
+}
+
+#[test]
+fn preserves_function_scoped_binding_declared_before_default_parameter() {
+    test_same(
+        "let n = 1;
+        function bump() { n += 1 }
+        function factory(get) {
+            var n = get(81937);
+            const read = function(a = n.IS_BLOCK) { return a };
+            return read;
+        }
+        globalThis.__keep = [n, bump, factory];",
+    );
+}
+
 // Dropping a dead-after-throw statement (`module.exports = x`) removes the
 // only reference to `x`. Without recording that as a mutation, the peephole
 // loop terminates before `flush_pass_changes` prunes the dropped reference,

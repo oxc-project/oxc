@@ -641,8 +641,12 @@ impl<'a> SemanticBuilder<'a> {
     /// and reference creation is a simple Vec push instead of a hashmap insert.
     fn resolve_all_references(&mut self) {
         let refs = self.unresolved_references.take();
-        for (name, reference_id) in refs {
-            if !self.walk_up_resolve_reference(name, reference_id) {
+        for (name, reference_id, start_scope_id) in refs {
+            let resolved = match start_scope_id {
+                Some(scope_id) => self.walk_up_resolve_reference_from(name, reference_id, scope_id),
+                None => self.walk_up_resolve_reference(name, reference_id),
+            };
+            if !resolved {
                 self.scoping.add_root_unresolved_reference(name, reference_id);
             }
         }
@@ -653,7 +657,19 @@ impl<'a> SemanticBuilder<'a> {
     #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
     #[inline(always)]
     fn walk_up_resolve_reference(&mut self, name: Ident<'a>, reference_id: ReferenceId) -> bool {
-        let mut scope_id = Some(self.scoping.references[reference_id].scope_id());
+        let scope_id = self.scoping.references[reference_id].scope_id();
+        self.walk_up_resolve_reference_from(name, reference_id, scope_id)
+    }
+
+    #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
+    #[inline(always)]
+    fn walk_up_resolve_reference_from(
+        &mut self,
+        name: Ident<'a>,
+        reference_id: ReferenceId,
+        start_scope_id: ScopeId,
+    ) -> bool {
+        let mut scope_id = Some(start_scope_id);
         while let Some(sid) = scope_id {
             if let Some(symbol_id) = self.scoping.get_binding(sid, name)
                 && self.try_resolve_reference(reference_id, symbol_id)
@@ -715,19 +731,21 @@ impl<'a> SemanticBuilder<'a> {
         true
     }
 
-    /// Early-resolve references collected since the checkpoint by walking up the
-    /// full scope chain. Used for function parameters and catch parameters where
-    /// references must be resolved before entering the function body, to avoid
-    /// binding to variables declared inside the body (which share the same scope).
+    /// Early-resolve references collected since the checkpoint within the
+    /// current function parameter scope. References which do not resolve there
+    /// are deferred until all enclosing declarations have been visited, then
+    /// resolved starting from the parent scope. This avoids binding to variables
+    /// declared inside the function body (which shares the parameter scope),
+    /// while still seeing forward declarations in enclosing function bodies.
     ///
     /// Resolved references are removed. Unresolved references stay in the flat
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
         // Process in-place using a retain-style write-cursor — no temporary
-        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
-        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
-        // (which takes `&mut self`) doesn't conflict with the index read.
+        // `Vec`. Reads each entry by value out of the flat list (all fields are
+        // `Copy`), so calling `try_resolve_reference` (which takes `&mut self`)
+        // doesn't conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
         let end = self.unresolved_references.len();
         if end <= checkpoint {
@@ -735,11 +753,53 @@ impl<'a> SemanticBuilder<'a> {
         }
         let mut write_idx = checkpoint;
         for read_idx in checkpoint..end {
-            let (name, reference_id) = self.unresolved_references.get(read_idx);
-            if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations.
+            let (name, reference_id, start_scope_id) = self.unresolved_references.get(read_idx);
+            // An inner parameter scope may already have deferred this reference.
+            // Resume from its override so declarations in that inner function body
+            // stay excluded, then let each enclosing parameter scope either resolve
+            // the reference or advance the override past its own function body.
+            let resolution_scope_id =
+                start_scope_id.unwrap_or_else(|| self.scoping.references[reference_id].scope_id());
+            let is_inside_current_scope = self
+                .scoping
+                .scope_ancestors(resolution_scope_id)
+                .any(|scope_id| scope_id == self.current_scope_id);
+
+            if is_inside_current_scope {
+                let mut scope_id = Some(resolution_scope_id);
+                let mut resolved = false;
+                while let Some(sid) = scope_id {
+                    if let Some(symbol_id) = self.scoping.get_binding(sid, name)
+                        && self.try_resolve_reference(reference_id, symbol_id)
+                    {
+                        resolved = true;
+                        break;
+                    }
+                    if sid == self.current_scope_id {
+                        break;
+                    }
+                    scope_id = self.scoping.scope_parent_id(sid);
+                }
+
+                if !resolved {
+                    let parent_scope_id = self
+                        .scoping
+                        .scope_parent_id(self.current_scope_id)
+                        .expect("parameter scopes always have a parent");
+                    self.unresolved_references.set(
+                        write_idx,
+                        name,
+                        reference_id,
+                        Some(parent_scope_id),
+                    );
+                    write_idx += 1;
+                }
+            } else {
+                // Parameter decorators are intentionally visited in an outer
+                // class scope. Their recorded scope already excludes the
+                // function body, so normal end-of-program resolution is safe.
                 if write_idx != read_idx {
-                    self.unresolved_references.set(write_idx, name, reference_id);
+                    self.unresolved_references.set(write_idx, name, reference_id, start_scope_id);
                 }
                 write_idx += 1;
             }
