@@ -1655,6 +1655,79 @@ mod bigint {
         fold_same("({ a: foo(), ...{ __proto__: bar() }, b: baz() })"); // can be folded to `({ a: foo(), b: (bar(), baz()) })`
         fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
         fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
+
+        // super references inside object literal methods
+        fold_same("({ ...{ m() { return super.x; } } })");
+        fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return super.x; } } })");
+
+        // super in nested expressions is still bound to the method being moved
+        fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return ({ x: super.x }); } } })");
+        fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return ({ [super.x]: 1 }); } } })");
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return ({ x: () => super.x }); } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return class extends super.x {}; } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return class { [super.x]() {} }; } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return class { [super.x] = 1; }; } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return ({ [super.x]() { return 1; } }); } } })",
+        );
+
+        // nested classes/objects with their own home object should still be folded
+        fold(
+            "({ ...{ m() { return class A extends B { constructor() { super(); } }; } } })",
+            "({ m() { return class extends B { constructor() { super(); } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ m() { return super.x; } }); } } })",
+            "({ m() { return ({ m() { return super.x; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ get x() { return super.y; } }); } } })",
+            "({ m() { return ({ get x() { return super.y; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { x = super.y; }; } } })",
+            "({ m() { return class extends B { x = super.y; }; } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { static { super.x; } }; } } })",
+            "({ m() { return class extends B { static { super.x; } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ set x(v) { super.y = v; } }); } } })",
+            "({ m() { return ({ set x(v) { super.y = v; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ async n() { return super.x; } }); } } })",
+            "({ m() { return ({ async n() { return super.x; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ *n() { return super.x; } }); } } })",
+            "({ m() { return ({ *n() { return super.x; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ n(a = super.x) { return a; } }); } } })",
+            "({ m() { return ({ n(a = super.x) { return a; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { foo() { return super.x; } }; } } })",
+            "({ m() { return class extends B { foo() { return super.x; } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { static foo() { return super.x; } }; } } })",
+            "({ m() { return class extends B { static foo() { return super.x; } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { constructor() { super(); } foo() { return super.x; } }; } } })",
+            "({ m() { return class extends B { constructor() { super(); } foo() { return super.x; } }; } })",
+        );
     }
 }
 
