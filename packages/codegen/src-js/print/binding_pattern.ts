@@ -9,7 +9,7 @@ import {
   write,
   writeWithMap,
   writeWithMapNamed,
-  writeWithMapNamedNoLast,
+  writeWithMapNamedPrivate,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
@@ -145,8 +145,7 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
       writeWithMapNamed(state, key.name, CAT_IDENT, key);
       break;
     case "PrivateIdentifier":
-      writeWithMapNamedNoLast(state, "#", key);
-      write(state, key.name, CAT_IDENT);
+      writeWithMapNamedPrivate(state, key.name, key);
       break;
     case "Literal":
       if (typeof key.value === "string") {

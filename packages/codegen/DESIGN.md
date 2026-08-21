@@ -255,13 +255,15 @@ No operator merges with a plain `!`, so storing it must not cost `printSpaceBefo
 Not every write needs to update `last`.
 
 When one token is written in pieces - a string's opening quote, its contents, its closing quote -
-only the last piece's category can possibly be read. Hence eight write primitives in [`print/write.ts`]:
+only the last piece's category can possibly be read. Hence ten write primitives in [`print/write.ts`]:
 
 | Function                     | Updates `last` | Records a source mapping       |
 | :--------------------------- | :------------- | :----------------------------- |
 | `write`                      | Yes            | No                             |
+| `writePrivate`               | Yes            | No                             |
 | `writeWithMap`               | Yes            | At the node's start            |
 | `writeWithMapNamed`          | Yes            | At the node's start, with name |
+| `writeWithMapNamedPrivate`   | Yes            | At the node's start, with name |
 | `writeWithMapEnd`            | Yes            | At the node's last character   |
 | `writeNoLast`                | No             | No                             |
 | `writeWithMapNoLast`         | No             | At the node's start            |
@@ -269,8 +271,15 @@ only the last piece's category can possibly be read. Hence eight write primitive
 | `writeWithMapNamedJSXNoLast` | No             | At the node's start, with name |
 
 - The `*Named` functions record the name the node had in the source, and take a `NamedMappableNode`,
-  which covers nodes with a string `name`.
+  which covers nodes with a string `name`. What they record is the text they print -
+  debug builds assert the two are the same string.
 - The other `writeWithMap*` functions take an `UnnamedMappableNode` which covers nodes without a string `name`.
+- There is a `*Named` function per way of recovering the original name from the source, because the scan differs -
+  a JSX identifier may hold a `-`, and a private identifier's span covers a `#` which is not part of its name.
+  Which one applies is settled at the call site, where the node's type is known statically, rather than read back
+  off a `node` which is megamorphic by the time it arrives.
+- The two `Private` forms write the `#` themselves, so the name they are given is what follows it,
+  and `last` is always `CAT_IDENT` - the caller passes neither.
 - The three `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
 - The rule is exact: **only sound where the value of `last` is provably dead**.
   Another real write must follow before anything reads it.
@@ -372,7 +381,8 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 
 Rewrites every mapped write into the plain one it becomes with no mapping to record - so
 `writeWithMap(state, code, cat, node)` turns into `write(state, code, cat)` - and rewrites the import to match.
-`writeWithMapNamed` and `writeWithMapEnd` become `write` too, and both `NoLast` forms become `writeNoLast`.
+`writeWithMapNamed` and `writeWithMapEnd` become `write` too, every `NoLast` form becomes `writeNoLast`,
+and `writeWithMapNamedPrivate` becomes `writePrivate`, the one plain form nothing calls directly.
 
 `printString` and `printNonNegativeFloat` take a node only to hand on to a mapped write. They keep their names,
 but the argument comes off every call, and the parameter off their declarations - which, unlike the mapped writes,
