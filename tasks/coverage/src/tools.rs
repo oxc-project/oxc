@@ -902,7 +902,6 @@ static TS_SKIP_PATHS: &[&str] = &[
     "typescript/tests/cases/compiler/arrayFromAsync.ts",
     "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
     "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-    "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
     "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
     "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",

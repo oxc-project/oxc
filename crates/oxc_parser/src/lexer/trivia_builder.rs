@@ -186,6 +186,7 @@ impl<'a> TriviaBuilder<'a> {
                 | CommentContent::Pure
                 | CommentContent::PureNotApplied
                 | CommentContent::NoSideEffects
+                | CommentContent::PropertyKey
         )
     }
 
@@ -273,6 +274,14 @@ impl<'a> TriviaBuilder<'a> {
         }
 
         if start >= bytes.len() {
+            return;
+        }
+
+        let rest = &bytes[start..];
+        if (rest.starts_with(b"@__KEY__") || rest.starts_with(b"#__KEY__") || !rest[0].is_ascii())
+            && is_property_key_annotation(s)
+        {
+            comment.content = CommentContent::PropertyKey;
             return;
         }
 
@@ -367,6 +376,11 @@ impl<'a> TriviaBuilder<'a> {
             comment.content = CommentContent::Legal;
         }
     }
+}
+
+#[inline]
+fn is_property_key_annotation(source: &str) -> bool {
+    matches!(source.trim().strip_prefix(['@', '#']), Some("__KEY__"))
 }
 
 #[inline(always)]
@@ -530,6 +544,24 @@ token /* Trailing 1 */
     }
 
     #[test]
+    fn html_close_comments_after_irregular_line_terminators_are_leading() {
+        for line_terminator in ['\u{2028}', '\u{2029}'] {
+            let allocator = Allocator::default();
+            let source_text = format!("foo();{line_terminator}--> comment\nbar();");
+            let source_type = SourceType::default().with_script(true);
+            let ret = Parser::new(&allocator, &source_text, source_type).parse();
+            assert!(ret.diagnostics.is_empty());
+
+            let comments = &ret.program.comments;
+            assert_eq!(comments.len(), 1);
+            assert!(comments[0].is_leading());
+            assert!(comments[0].preceded_by_newline());
+            let bar_start = u32::try_from(source_text.find("bar").unwrap()).unwrap();
+            assert_eq!(comments[0].attached_to, bar_start);
+        }
+    }
+
+    #[test]
     fn comment_attachments3() {
         let source_text = "
 /*
@@ -632,6 +664,23 @@ function bar() {}";
         assert_eq!(comments[0].position, CommentPosition::Leading);
         assert_eq!(comments[0].attached_to, new_start);
         assert!(comments[0].is_pure());
+    }
+
+    #[test]
+    fn property_key_comment_after_code_is_attached_to_next_literal() {
+        for (source_text, literal) in [
+            ("work();/* #__KEY__ */\n\"_field\";", "\"_field\""),
+            ("work();// @__KEY__\n`_field`;", "`_field`"),
+        ] {
+            let comments = get_comments(source_text);
+            let literal_start = u32::try_from(source_text.find(literal).unwrap()).unwrap();
+
+            assert_eq!(comments.len(), 1);
+            assert_eq!(comments[0].position, CommentPosition::Leading);
+            assert_eq!(comments[0].attached_to, literal_start);
+            assert!(comments[0].is_property_key_annotation());
+            assert!(comments[0].is_annotation());
+        }
     }
 
     #[test]
@@ -816,6 +865,17 @@ function bar() {}";
             ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* #__PURE__ */", CommentContent::Pure),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* @__KEY__ */", CommentContent::PropertyKey),
+            ("/* #__KEY__ */", CommentContent::PropertyKey),
+            ("/*\u{a0}@__KEY__\u{a0}*/", CommentContent::PropertyKey),
+            ("//@__KEY__", CommentContent::PropertyKey),
+            ("// #__KEY__", CommentContent::PropertyKey),
+            ("/**\n * @__KEY__\n */", CommentContent::Jsdoc),
+            ("/* __KEY__ */", CommentContent::None),
+            ("/* @ __KEY__ */", CommentContent::None),
+            ("/* @__key__ */", CommentContent::None),
+            ("/* @__KEY___ */", CommentContent::None),
+            ("/* @__KEY__ extra */", CommentContent::None),
             ("/* turbopackOptional: true */", CommentContent::Turbopack),
             ("/* v8 ignore next */", CommentContent::CoverageIgnore),
             ("/* v8 ignore filename */", CommentContent::CoverageIgnore),

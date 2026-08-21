@@ -8,10 +8,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     context::LintContext,
+    rule::DefaultRuleConfig,
     utils::{PossibleJestNode, iter_possible_jest_call_node, parse_expect_jest_fn_call},
 };
 
@@ -102,7 +103,7 @@ line 51
 `;
 ```
 
-Examples of **incorrect** code for this rule:
+Examples of **correct** code for this rule:
 ```js
 exports[`a more manageable and readable snapshot 1`] = `
 line 1
@@ -113,50 +114,73 @@ line 4
 ```
 ";
 
+#[derive(Debug, Clone)]
+enum AllowedSnapshotMatcher {
+    Pattern(Regex),
+    Exact(CompactStr),
+}
+
+impl AllowedSnapshotMatcher {
+    fn new(pattern: CompactStr) -> Self {
+        Regex::new(&pattern).map_or(Self::Exact(pattern), Self::Pattern)
+    }
+
+    fn is_match(&self, snapshot_name: &str) -> bool {
+        match self {
+            Self::Pattern(pattern) => pattern.is_match(snapshot_name),
+            Self::Exact(name) => name == snapshot_name,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for AllowedSnapshotMatcher {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        CompactStr::deserialize(deserializer).map(Self::new)
+    }
+}
+
+impl Serialize for AllowedSnapshotMatcher {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::Pattern(pattern) => serializer.serialize_str(pattern.as_str()),
+            Self::Exact(name) => serializer.serialize_str(name),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoLargeSnapshotsConfig {
     /// Maximum number of lines allowed for external snapshot files.
     pub max_size: u32,
     /// Maximum number of lines allowed for inline snapshots.
-    pub inline_max_size: u32,
+    inline_max_size: Option<u32>,
     /// A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
-    /// Snapshot names can be specified as regular expressions.
-    pub allowed_snapshots: FxHashMap<CompactStr, Vec<CompactStr>>,
+    /// Each snapshot name is interpreted as a Rust regular expression. If it is not a valid regular
+    /// expression, it is matched as an exact literal string instead.
+    #[schemars(with = "FxHashMap<CompactStr, Vec<CompactStr>>")]
+    allowed_snapshots: FxHashMap<CompactStr, Vec<AllowedSnapshotMatcher>>,
 }
 
 impl Default for NoLargeSnapshotsConfig {
     fn default() -> Self {
-        Self { max_size: 50, inline_max_size: 50, allowed_snapshots: FxHashMap::default() }
+        Self { max_size: 50, inline_max_size: None, allowed_snapshots: FxHashMap::default() }
     }
 }
 
 impl NoLargeSnapshotsConfig {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0);
+    pub fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
+    }
 
-        let max_size = config
-            .and_then(|c| c.get("maxSize"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .and_then(|v| u32::try_from(v).ok())
-            .unwrap_or(50);
-
-        let inline_max_size = config
-            .and_then(|c| c.get("inlineMaxSize"))
-            .and_then(serde_json::Value::as_number)
-            .and_then(serde_json::Number::as_u64)
-            .and_then(|v| u32::try_from(v).ok())
-            .unwrap_or(max_size);
-
-        let allowed_snapshots = config
-            .and_then(|c| c.get("allowedSnapshots"))
-            .and_then(serde_json::Value::as_object)
-            .map(Self::compile_allowed_snapshots)
-            .unwrap_or_default();
-
-        Ok(Self { max_size, inline_max_size, allowed_snapshots })
+    fn inline_max_size(&self) -> u32 {
+        self.inline_max_size.unwrap_or(self.max_size)
     }
 
     pub fn run_once(&self, ctx: &LintContext) {
@@ -238,13 +262,14 @@ impl NoLargeSnapshotsConfig {
 
     fn report_in_span(&self, snapshot_matcher_span: Span, first_arg_span: Span, ctx: &LintContext) {
         let line_count = Self::get_line_count(first_arg_span, ctx);
+        let inline_max_size = self.inline_max_size();
 
-        if line_count > self.inline_max_size {
-            if self.inline_max_size == 0 {
+        if line_count > inline_max_size {
+            if inline_max_size == 0 {
                 ctx.diagnostic(no_snapshot(line_count, snapshot_matcher_span));
             } else {
                 ctx.diagnostic(too_long_snapshot(
-                    self.inline_max_size,
+                    inline_max_size,
                     line_count,
                     snapshot_matcher_span,
                 ));
@@ -268,12 +293,7 @@ impl NoLargeSnapshotsConfig {
             return false;
         };
 
-        allowed_snapshots_in_file.iter().any(|allowed_snapshot| {
-            match Regex::new(allowed_snapshot) {
-                Ok(regex) => regex.is_match(snapshot_name),
-                Err(_) => snapshot_name == allowed_snapshot,
-            }
-        })
+        allowed_snapshots_in_file.iter().any(|matcher| matcher.is_match(snapshot_name))
     }
 
     #[expect(clippy::cast_possible_truncation)] // the line count can't be over u32::MAX, because the source code is already limited by u32::MAX.
@@ -282,22 +302,35 @@ impl NoLargeSnapshotsConfig {
         let end = span.end as usize;
         ctx.source_text()[start..=end].lines().count() as u32 - 1
     }
+}
 
-    pub fn compile_allowed_snapshots(
-        matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> FxHashMap<CompactStr, Vec<CompactStr>> {
-        matchers
-            .iter()
-            .map(|(key, value)| {
-                let serde_json::Value::Array(configs) = value else {
-                    return (CompactStr::from(key.as_str()), vec![]);
-                };
+#[cfg(test)]
+mod test {
+    use super::NoLargeSnapshotsConfig;
 
-                let configs =
-                    configs.iter().filter_map(|c| c.as_str().map(CompactStr::from)).collect();
+    #[test]
+    fn allowed_snapshot_matchers() {
+        let config = NoLargeSnapshotsConfig::from_configuration(serde_json::json!([{
+            "allowedSnapshots": {
+                "/test.snap": [r"^snapshot \d+$", "snapshot [literal"]
+            }
+        }]))
+        .unwrap();
+        let matchers = &config.allowed_snapshots["/test.snap"];
 
-                (CompactStr::from(key.as_str()), configs)
-            })
-            .collect()
+        assert!(matchers[0].is_match("snapshot 42"));
+        assert!(!matchers[0].is_match("other snapshot 42"));
+        assert!(matchers[1].is_match("snapshot [literal"));
+        assert!(!matchers[1].is_match("snapshot literal"));
+    }
+
+    #[test]
+    fn inline_max_size_defaults_to_max_size() {
+        let config = NoLargeSnapshotsConfig::from_configuration(serde_json::json!([{
+            "maxSize": 10
+        }]))
+        .unwrap();
+
+        assert_eq!(config.inline_max_size(), 10);
     }
 }

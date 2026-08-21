@@ -376,7 +376,7 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if !cfg!(test) && crate::agent_detection::is_agent() {
         Ok(OutputFormat::Agent)
-    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+    } else if std::env::var("GITHUB_ACTIONS").is_ok_and(|value| value == "true") {
         Ok(OutputFormat::Github)
     } else {
         Ok(OutputFormat::Default)

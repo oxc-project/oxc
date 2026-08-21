@@ -514,9 +514,7 @@ impl<C: Config> ParserImpl<'_, C> {
         let is_modifier = match cur_kind {
             Kind::Const => next_kind == Kind::Enum,
             // These modifiers can cross line.
-            Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                Self::can_follow_modifier(next_kind)
-            }
+            Kind::Accessor | Kind::Static => Self::can_follow_modifier(next_kind),
             // Rest modifiers cannot cross line
             _ => Self::can_follow_modifier(next_kind) && !next.is_on_new_line(),
         };

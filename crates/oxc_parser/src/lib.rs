@@ -809,7 +809,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // we need to reparse statements that were originally parsed with `await` as identifier.
         // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
         // await expression with regex when ESM is detected.
-        if self.source_type.is_unambiguous()
+        // Preserve a fatal error from the initial parse instead of rewinding past it.
+        if self.fatal_error.is_none()
+            && self.source_type.is_unambiguous()
             && self.module_record_builder.has_module_syntax()
             && !self.state.potential_await_reparse.is_empty()
         {

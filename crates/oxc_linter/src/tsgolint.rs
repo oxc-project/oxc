@@ -13,7 +13,7 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -297,10 +297,13 @@ impl TsGoLintState {
                         && let Err(error) = file_system.write_file(&path, &fix_result.fixed_code)
                     {
                         sender_for_fixes
-                            .send(vec![Error::new(OxcDiagnostic::error(format!(
-                                "Failed to write file {} with error \"{error}\"",
-                                path.display()
-                            )))])
+                            .send(vec![
+                                OxcDiagnostic::error(format!(
+                                    "Failed to write file {} with error \"{error}\"",
+                                    path.display()
+                                ))
+                                .into(),
+                            ])
                             .expect("Failed to send diagnostics");
                     }
 
@@ -855,7 +858,6 @@ impl Message {
                 .with_message(suggestion.message.description)
         });
 
-        #[expect(clippy::from_iter_instead_of_collect)]
         let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
         Self::new(val.into(), possible_fixes)

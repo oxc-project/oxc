@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.64.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 5c0a5ff formatter_css: Fill own-line block comments inside space-separated values (#25578) (leaysgur)
+- 53debfa formatter_css: Keep trailing comma and indent after comment-preceded last map value (#25577) (leaysgur)
+- 40d38a0 formatter_css: Keep multi value function args intact after leading comment (#25518) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+- e23dccf formatter_css: Bump oxc-css-parser to accept unknown at-rule with interpolated (#25277) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### 🐛 Bug Fixes

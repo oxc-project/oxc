@@ -108,6 +108,8 @@ export interface OxcFormatterOptions {
   objectWrap?: string
   /** Put each attribute on its own line (default: false) */
   singleAttributePerLine?: boolean
+  /** Where to print operators when binary expressions wrap lines: "start" | "end" (default: "end") */
+  experimentalOperatorPosition?: string
   /** Sort imports configuration (default: None) */
   sortImports?: OxcSortImportsOptions
 }

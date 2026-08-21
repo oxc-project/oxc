@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.64.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- f405789 formatter_yaml: Consistent chomped eos behavior (#25523) (leaysgur)
+- a243311 formatter_yaml: Bump oxc-yaml-parser for contentless block scalar (#25519) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+- f3c6953 formatter_yaml: Don't rewrite overflowing key to implicit (#25274) (leaysgur)
+
+### 📚 Documentation
+
+- 51224a7 formatter_yaml: Pin EOF blank lines divergence (#25269) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### 🐛 Bug Fixes

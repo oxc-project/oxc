@@ -78,7 +78,7 @@ impl RuleTable {
 
         let total = rows.len();
 
-        rows.sort_by_key(|row| (row.plugin.clone(), row.name));
+        rows.sort_unstable_by(|a, b| a.plugin.cmp(&b.plugin).then(a.name.cmp(b.name)));
 
         let rules_with_fixes = rows.iter().filter(|r| r.autofix.has_fix()).count();
 

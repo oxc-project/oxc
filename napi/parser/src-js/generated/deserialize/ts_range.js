@@ -76,9 +76,9 @@ function deserializeProgram(pos) {
       if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
         let { declaration } = first;
         if (
-          declaration !== null &&
-          declaration.type === "ClassDeclaration" &&
-          declaration.decorators.length > 0
+          declaration !== null
+          && declaration.type === "ClassDeclaration"
+          && declaration.decorators.length > 0
         ) {
           let decoratorStart = declaration.decorators[0].start;
           decoratorStart < start && (start = decoratorStart);
@@ -565,9 +565,9 @@ function deserializeTemplateElement(pos) {
     start = deserializeI32(pos) - 1,
     end = deserializeI32(pos + 4) + 2 - tail,
     value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null &&
-    deserializeBool(pos + 13) &&
-    (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
+  value.cooked !== null
+    && deserializeBool(pos + 13)
+    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
       String.fromCodePoint(parseInt(hex, 16)),
     ));
   return {
@@ -1184,8 +1184,8 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       range: [keyStart, keyEnd],
     },
     init = deserializeOptionExpression(pos + 48);
-  init !== null &&
-    (value = {
+  init !== null
+    && (value = {
       type: "AssignmentPattern",
       decorators: [],
       left: value,
@@ -2124,6 +2124,7 @@ function deserializeFormalParameters(pos) {
         range: [start, end],
       };
     rest.argument = deserializeBindingPattern(pos + 56);
+    rest.decorators = deserializeVecDecorator(pos + 16);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
     if (rest.typeAnnotation !== null) {
       end = rest.typeAnnotation.end;
@@ -2782,9 +2783,9 @@ function deserializeExportDeclaration(pos) {
     declaration = deserializeDeclaration(pos + 16);
   node.declaration = declaration;
   node.exportKind =
-    declaration.declare === true ||
-    declaration.type === "TSTypeAliasDeclaration" ||
-    declaration.type === "TSInterfaceDeclaration"
+    declaration.declare === true
+    || declaration.type === "TSTypeAliasDeclaration"
+    || declaration.type === "TSInterfaceDeclaration"
       ? "type"
       : "value";
   return node;
@@ -3071,8 +3072,10 @@ function deserializeStringLiteral(pos) {
       range: [start, end],
     },
     value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
+  deserializeBool(pos + 12)
+    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    ));
   node.value = value;
   return node;
 }
