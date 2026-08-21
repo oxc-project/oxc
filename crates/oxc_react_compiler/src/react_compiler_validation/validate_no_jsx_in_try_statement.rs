@@ -32,9 +32,11 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> Diagnostics {
             for &instr_id in &block.instructions {
                 let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
-                    InstructionValue::JsxExpression { span, .. }
-                    | InstructionValue::JsxFragment { span, .. } => {
-                        error.push(diagnostics::jsx_in_try(*span));
+                    InstructionValue::JsxExpression { opening_name_span, span, .. } => {
+                        error.push(diagnostics::jsx_in_try(opening_name_span.or(*span)));
+                    }
+                    InstructionValue::JsxFragment { opening_span, span, .. } => {
+                        error.push(diagnostics::jsx_in_try(opening_span.or(*span)));
                     }
                     _ => {}
                 }

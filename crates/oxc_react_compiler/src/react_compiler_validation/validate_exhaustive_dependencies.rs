@@ -665,7 +665,13 @@ fn collect_dependencies<'a>(
                         }
                     }
                 }
-                InstructionValue::PropertyLoad { object, property, property_span, .. } => {
+                InstructionValue::PropertyLoad {
+                    object,
+                    property,
+                    computed,
+                    property_span,
+                    ..
+                } => {
                     // Number properties or ref.current: visit the object directly
                     let is_numeric = matches!(property, PropertyLiteral::Number(_));
                     let is_ref_current =
@@ -690,6 +696,7 @@ fn collect_dependencies<'a>(
                             new_path.push(DependencyPathEntry {
                                 optional,
                                 property: *property,
+                                computed: *computed,
                                 span: property_span.or_else(|| instr.value.span().copied()),
                             });
                             temporaries.insert(
@@ -1292,6 +1299,12 @@ fn validate_dependencies(
     }
 
     let mut diagnostic = create_diagnostic(category, &filtered_missing, &filtered_extra)?;
+
+    if !filtered_missing.is_empty() && filtered_extra.is_empty() {
+        diagnostic.labels.extend(manual_memo_span.map(|span| {
+            span.primary_label("This dependency list is missing values used by the callback")
+        }));
+    }
 
     // Add detail items for missing deps
     for dep in &filtered_missing {

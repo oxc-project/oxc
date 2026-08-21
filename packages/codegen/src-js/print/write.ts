@@ -3,7 +3,7 @@
 // These live together because the categories exist only to be stored by `write` -
 // `state.last` records what was written last by category, not the last character itself.
 
-import { debugAssert, typeAssertIs } from "../asserts.ts";
+import { debugAssert } from "../asserts.ts";
 
 import type { MappableNode } from "./types.ts";
 import type { State } from "../state.ts";
@@ -39,21 +39,22 @@ import type { State } from "../state.ts";
 //    1  CAT_INT_DIGIT                  Numeric literal of plain digits (`0 .toExponential()`)
 //    2  CAT_REGEX_SLASH                Regex closed with no flags
 //
-// Group 3 to 9: Checked individually
+// Group 3 to 10: Checked individually
 //    3  CAT_OTHER                      Anything else not covered by another category - punctuation, whitespace
 //    4  CAT_LT                         `<`
 //    5  CAT_QUESTION                   `?`
 //    6  CAT_START_OF_DEFAULT_EXPORT    `export default` expression is about to be printed
 //    7  CAT_START_OF_STMT              Expression statement's expression is about to be printed
 //    8  CAT_START_OF_ARROW_EXPR        Concise arrow body is about to be printed
-//    9  CAT_OP_UN_NOT                  `!`
+//    9  CAT_CLOSE_BRACKET              `)` or `]`
+//   10  CAT_OP_UN_NOT                  `!`
 //
-// Group 10 to 14: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
-//   10  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
-//   11  CAT_OP_UN_PLUS                 `+`
-//   12  CAT_OP_UPD_INC                 `++`
-//   13  CAT_OP_UN_NEG                  `-`
-//   14  CAT_OP_UPD_DEC                 `--`
+// Group 11 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
+//   11  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
+//   12  CAT_OP_UN_PLUS                 `+`
+//   13  CAT_OP_UPD_INC                 `++`
+//   14  CAT_OP_UN_NEG                  `-`
+//   15  CAT_OP_UPD_DEC                 `--`
 
 /**
  * A category code. One of the `CAT_*` constants below, and nothing else -
@@ -69,6 +70,7 @@ export type Category =
   | typeof CAT_START_OF_STMT
   | typeof CAT_START_OF_ARROW_EXPR
   | typeof CAT_START_OF_DEFAULT_EXPORT
+  | typeof CAT_CLOSE_BRACKET
   | typeof CAT_OP_UN_NOT
   | typeof CAT_OP_UN_NOT_AFTER_LT
   | typeof CAT_OP_UN_PLUS
@@ -133,13 +135,25 @@ export const CAT_START_OF_STMT = 7;
 export const CAT_START_OF_ARROW_EXPR = 8;
 
 /**
+ * `)` or `]`, the only two characters a postfix operand can end with.
+ *
+ * The one reader is the source map hook at the end of `printExpression`, which mirrors Rust's
+ * exclusive-end mapping after such an operand. It never asks which of the two was written,
+ * so one code serves for both.
+ *
+ * Neither space check cares about either character, so it sits between the marks and the operator range,
+ * where both range compares read it as "nothing to separate".
+ */
+export const CAT_CLOSE_BRACKET = 9;
+
+/**
  * `!`, written anywhere other than straight after a `<` - both the unary operator and TS's
  * postfix `!` (non-null assertion, definite assignment), which postfix position keeps off a `<`.
  *
  * An operator code, but deliberately below the range `printSpaceBeforeOperator` gates on -
  * no following operator merges with a plain `!`, so storing this never costs the slow path a call.
  */
-export const CAT_OP_UN_NOT = 9;
+export const CAT_OP_UN_NOT = 10;
 
 /**
  * `!` written immediately after a `<`, which is the `<!--` hazard.
@@ -148,19 +162,19 @@ export const CAT_OP_UN_NOT = 9;
  * The first of the operators `printSpaceBeforeOperator` gates on - writing one of these
  * is what records it, so no separate field tracks which operator came last.
  */
-export const CAT_OP_UN_NOT_AFTER_LT = 10;
+export const CAT_OP_UN_NOT_AFTER_LT = 11;
 
 /** `+`, which must not merge with a following `+` or `++`. */
-export const CAT_OP_UN_PLUS = 11;
+export const CAT_OP_UN_PLUS = 12;
 
 /** `++`, which must not follow a `+` without a space. */
-export const CAT_OP_UPD_INC = 12;
+export const CAT_OP_UPD_INC = 13;
 
 /** `-`, which must not merge with a following `-` or `--`. */
-export const CAT_OP_UN_NEG = 13;
+export const CAT_OP_UN_NEG = 14;
 
 /** `--`, which must not follow a `-`, nor the `!` of a `<!`. */
-export const CAT_OP_UPD_DEC = 14;
+export const CAT_OP_UPD_DEC = 15;
 
 /**
  * Every category, in numbering order.
@@ -178,6 +192,7 @@ export const ALL_CATEGORIES: Category[] = [
   CAT_START_OF_DEFAULT_EXPORT,
   CAT_START_OF_STMT,
   CAT_START_OF_ARROW_EXPR,
+  CAT_CLOSE_BRACKET,
   CAT_OP_UN_NOT,
   CAT_OP_UN_NOT_AFTER_LT,
   CAT_OP_UN_PLUS,
@@ -198,17 +213,31 @@ export const ALL_CATEGORIES: Category[] = [
 if (DEBUG) {
   for (const category of ALL_CATEGORIES) {
     debugAssert(
-      ((category | 1) === CAT_START_OF_STMT) ===
-        (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
+      ((category | 1) === CAT_START_OF_STMT)
+        === (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
       `Category ${category} disagrees with \`(last | 1) === CAT_START_OF_STMT\``,
     );
     debugAssert(
-      (((category - 1) | 1) === CAT_START_OF_STMT) ===
-        (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
+      (((category - 1) | 1) === CAT_START_OF_STMT)
+        === (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
       `Category ${category} disagrees with \`((last - 1) | 1) === CAT_START_OF_STMT\``,
     );
   }
 }
+
+/**
+ * Location of mapping to record.
+ */
+type Location =
+  | typeof LOCATION_NAMED
+  | typeof LOCATION_END_MINUS_ONE
+  | typeof LOCATION_END
+  | typeof LOCATION_START;
+
+const LOCATION_NAMED = 0;
+const LOCATION_END_MINUS_ONE = 1;
+const LOCATION_END = 2;
+const LOCATION_START = 3;
 
 /**
  * Append `code` to the output, and record what it ends with.
@@ -232,8 +261,8 @@ export function write(state: State, code: string, last: Category): void {
 /**
  * Append `code` to the output, record what it ends with, and record a source mapping for `node`.
  *
- * The mapping is only recorded where the caller asked for source maps and `node` carries a `loc` -
- * Oxc's own AST records byte spans instead, so the check is on the node, not the build.
+ * The mapping is only recorded where the caller asked for source maps, supplied `sourceText`, and
+ * `node` carries Oxc `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
  * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
@@ -246,17 +275,7 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  if (SOURCEMAPS && node.loc != null) {
-    debugAssert(
-      state.mapOffsets !== null && state.mapPositions !== null && state.mapNames !== null,
-      "Source map arrays should exist when source maps are enabled",
-    );
-
-    typeAssertIs<{ name?: string }>(node);
-    state.mapOffsets.push(state.output.length);
-    state.mapPositions.push(node.loc.start);
-    state.mapNames.push(node.name);
-  }
+  recordSourceMapping(state, node, LOCATION_NAMED);
 
   state.last = last;
   state.output += code;
@@ -300,17 +319,7 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMapNoLast(state: State, code: string, node: MappableNode): void {
-  if (SOURCEMAPS && node.loc != null) {
-    debugAssert(
-      state.mapOffsets !== null && state.mapPositions !== null && state.mapNames !== null,
-      "Source map arrays should exist when source maps are enabled",
-    );
-
-    typeAssertIs<{ name?: string }>(node);
-    state.mapOffsets.push(state.output.length);
-    state.mapPositions.push(node.loc.start);
-    state.mapNames.push(node.name);
-  }
+  recordSourceMapping(state, node, LOCATION_NAMED);
 
   state.output += code;
 
@@ -318,6 +327,289 @@ export function writeWithMapNoLast(state: State, code: string, node: MappableNod
     state.lastIsStale = true;
     if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
+}
+
+/**
+ * Append `code`, recording a mapping for the last source character in `node` immediately before it.
+ *
+ * Rust uses this for emitted closing delimiters, including synthesized ones. The node end offset is
+ * exclusive, so move back by one source code point to match Rust's byte-span lookup.
+ */
+export function writeWithMapEnd(
+  state: State,
+  code: string,
+  last: Category,
+  node: MappableNode,
+): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, last);
+
+  recordSourceMapping(state, node, LOCATION_END_MINUS_ONE);
+  state.last = last;
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Record a start mapping at the current output position without writing anything.
+ */
+export function markWithMap(state: State, node: MappableNode): void {
+  recordSourceMapping(state, node, LOCATION_NAMED);
+}
+
+/**
+ * Record a start mapping without attaching an identifier name.
+ */
+export function markWithMapNoName(state: State, node: MappableNode): void {
+  recordSourceMapping(state, node, LOCATION_START);
+}
+
+/**
+ * Record a mapping for `node`'s end offset at the current output position.
+ */
+export function markWithMapAfter(state: State, node: MappableNode): void {
+  recordSourceMapping(state, node, LOCATION_END);
+}
+
+/**
+ * Record a mapping a fixed number of columns after `node`'s start offset.
+ */
+export function markWithMapAtStartOffset(
+  state: State,
+  node: MappableNode,
+  columnOffset: number,
+): void {
+  if (!SOURCEMAPS) return;
+
+  const { start, end } = node;
+  if (
+    typeof start !== "number"
+    || typeof end !== "number"
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end < start
+    || start === end
+  ) {
+    return;
+  }
+
+  debugAssert(
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
+  );
+
+  const sourceOffset = start + columnOffset;
+  if (!(sourceOffset >= 0 && sourceOffset <= state.sourceText.length)) return;
+  if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
+
+  state.mapPositions.push(state.output.length, sourceOffset);
+}
+
+/**
+ * Record one mapping, if source maps and a non-empty location are available.
+ */
+function recordSourceMapping(state: State, node: MappableNode, location: Location): void {
+  if (!SOURCEMAPS) return;
+
+  const { start, end } = node;
+  if (
+    typeof start !== "number"
+    || typeof end !== "number"
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end < start
+    || start === end
+  ) {
+    return;
+  }
+
+  debugAssert(
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
+  );
+
+  let sourceOffset: number;
+  if (location === LOCATION_END_MINUS_ONE) {
+    sourceOffset = end - 1;
+  } else if (location === LOCATION_END) {
+    sourceOffset = end;
+  } else {
+    debugAssert(location === LOCATION_START || location === LOCATION_NAMED);
+    sourceOffset = start;
+  }
+
+  const { sourceText } = state;
+  if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
+
+  // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
+  // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
+  if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
+
+  if (location === LOCATION_NAMED && typeof node.name === "string") {
+    // A mapping carries a name only when the identifier printed differs from the one in the source.
+    // When possible, the mapping records the name from source, but if the source range is invalid,
+    // it falls back to the printed name.
+    //
+    // Almost every identifier is printed exactly as it was in source, so we do a quick check first,
+    // and only fall back to expensive scanning with Unicode property regexps in rare cases.
+    //
+    // A span can reach past the name it begins with, since a TypeScript annotation is absorbed into it,
+    // so a match has to be followed by a character which cannot continue an identifier.
+    //
+    // This check is one-sided.
+    // * When `matchesSource === true`, the source definitely has the same name that was printed,
+    //   and the mapping needs no name recorded.
+    // * When `matchesSource === false`, nothing is settled yet.
+    //   It could be a genuine rename, or could be a Unicode escape (`\u0061` printed as `a`),
+    //   or a non-ASCII character after the name, which `isDefinitelyIdentifierBoundary` will not classify.
+    //
+    // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
+    // That is what the source is compared against, and what gets recorded as the name.
+    const printedName = node.name;
+    const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
+    const nameStart = start + hashLength;
+    const nameEnd = nameStart + printedName.length;
+    const matchesSource =
+      printedName.length > 0
+      && end <= sourceText.length
+      && nameEnd <= end
+      && (hashLength === 0 || sourceText.charCodeAt(start) === 35) /* # */
+      && sourceText.startsWith(printedName, nameStart)
+      && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)));
+
+    if (!matchesSource) {
+      // Read the name out of the source.
+      // We can use it for a definitive comparison, which the quick check above couldn't.
+      const originalName = originalNameFromSource(sourceText, node, start, end);
+
+      // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
+      // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
+      if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
+        (state.mapNames ??= []).push(
+          state.mapPositions.length >> 1,
+          originalName === undefined ? printedName : originalName,
+        );
+      }
+    }
+  }
+
+  state.mapPositions.push(state.output.length, sourceOffset);
+}
+
+/**
+ * Is `originalName` the same token as `printedName`, taking into account leading `#` if `hashLength === 1`.
+ */
+function isSameToken(originalName: string, printedName: string, hashLength: 0 | 1): boolean {
+  if (hashLength === 0) return originalName === printedName;
+
+  // Compare with 2 operations rather than `originalName === "#" + printedName`
+  // to avoid allocating a temporary string
+  return (
+    originalName.length === printedName.length + 1
+    && originalName.charCodeAt(0) === 35 /* # */
+    && originalName.endsWith(printedName)
+  );
+}
+
+/**
+ * Recover the original identifier spelling from validated source offsets.
+ */
+function originalNameFromSource(
+  sourceText: string,
+  node: MappableNode,
+  start: number,
+  end: number,
+): string | undefined {
+  if (end > sourceText.length) return undefined;
+
+  // JSX identifiers admit `-`, which is not an ECMAScript identifier character. Their spans do
+  // not absorb TypeScript annotations, so the ESTree end offset is already exact.
+  if (node.type === "JSXIdentifier") {
+    const originalName = sourceText.slice(start, end);
+    return JSX_IDENTIFIER_REGEX.test(originalName) ? originalName : undefined;
+  }
+
+  let index = start;
+  if (index < end && sourceText.charCodeAt(index) === 35) index++; // `#` in a private identifier
+  const identifierStart = index;
+
+  while (index < end) {
+    const matcher = index === identifierStart ? IDENT_START_REGEX : IDENT_CONTINUE_REGEX;
+    if (sourceText.charCodeAt(index) === 92) {
+      const length = unicodeEscapeLength(sourceText, index, end);
+      if (length === 0) break;
+      const codePoint = unicodeEscapeCodePoint(sourceText, index, length);
+      if (codePoint > 0x10ffff || !matcher.test(String.fromCodePoint(codePoint))) break;
+      index += length;
+      continue;
+    }
+
+    const codePoint = sourceText.codePointAt(index) as number;
+    const char = String.fromCodePoint(codePoint);
+    if (!matcher.test(char)) break;
+    index += char.length;
+  }
+
+  return index === identifierStart ? undefined : sourceText.slice(start, index);
+}
+
+/**
+ * Return the UTF-16 length of a `\\u` identifier escape within `end`, or `0` if invalid.
+ */
+function unicodeEscapeLength(sourceText: string, index: number, end: number): number {
+  if (sourceText.charCodeAt(index + 1) !== 117) return 0; // `u`
+
+  const firstHex = index + 2;
+  if (sourceText.charCodeAt(firstHex) === 123) {
+    let cursor = firstHex + 1;
+    const firstDigit = cursor;
+    while (cursor < end && isHexDigit(sourceText.charCodeAt(cursor))) cursor++;
+    return cursor > firstDigit && sourceText.charCodeAt(cursor) === 125 ? cursor - index + 1 : 0;
+  }
+
+  const escapeEnd = firstHex + 4;
+  if (escapeEnd > end) return 0;
+  for (let cursor = firstHex; cursor < escapeEnd; cursor++) {
+    if (!isHexDigit(sourceText.charCodeAt(cursor))) return 0;
+  }
+  return escapeEnd - index;
+}
+
+/**
+ * Decode the code point in a syntactically valid identifier escape.
+ */
+function unicodeEscapeCodePoint(sourceText: string, index: number, length: number): number {
+  const braced = sourceText.charCodeAt(index + 2) === 123;
+  const digitsStart = index + (braced ? 3 : 2);
+  const digitsEnd = index + length - (braced ? 1 : 0);
+  return Number.parseInt(sourceText.slice(digitsStart, digitsEnd), 16);
+}
+
+/**
+ * Whether `code` is an ASCII hexadecimal digit.
+ */
+function isHexDigit(code: number): boolean {
+  return (code >= 48 && code <= 57) || (code >= 65 && code <= 70) || (code >= 97 && code <= 102);
+}
+
+/**
+ * Whether an ASCII character definitely cannot continue any supported identifier spelling.
+ */
+function isDefinitelyIdentifierBoundary(code: number): boolean {
+  return (
+    code <= 0x7f
+    && !((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122))
+    && code !== 36 // `$`
+    && code !== 45 // `-` in JSX identifiers
+    && code !== 92 // `\` starting a Unicode escape
+    && code !== 95 // `_`
+  );
 }
 
 /**
@@ -334,6 +626,8 @@ export function debugAssertLastFresh(state: State): void {
 
 /** Matches a character which can continue an identifier. */
 const IDENT_CONTINUE_REGEX = /[\p{ID_Continue}$\u200C\u200D]/u;
+const IDENT_START_REGEX = /[\p{ID_Start}$_]/u;
+const JSX_IDENTIFIER_REGEX = /^[\p{ID_Start}$_](?:[\p{ID_Continue}$-]|\u200C|\u200D)*$/u;
 
 /**
  * Assert that `last` truthfully describes the end of `code`.
@@ -384,6 +678,8 @@ function debugAssertCategoryMatches(state: State, code: string, last: Category):
     ok = last === CAT_QUESTION;
   } else if (ch === "/") {
     ok = last === CAT_REGEX_SLASH;
+  } else if (ch === ")" || ch === "]") {
+    ok = last === CAT_CLOSE_BRACKET;
   } else {
     // The final character, whole - for an astral character `ch` is only its low surrogate,
     // which no Unicode property matches

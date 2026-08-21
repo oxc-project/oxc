@@ -39,6 +39,7 @@ enum Kind {
 
 /// Value classification per identifier, indexed densely by identifier id.
 type ValueKinds = IndexVec<IdentifierId, Option<Kind>>;
+type ValueOrigins = IndexVec<IdentifierId, Option<Span>>;
 
 fn join_kinds(a: Kind, b: Kind) -> Kind {
     if a == Kind::Error || b == Kind::Error {
@@ -137,15 +138,16 @@ fn record_invalid_hook_usage_error(
 
 fn record_dynamic_hook_usage_error(
     place: &Place,
+    origin_span: Option<Span>,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     if let Some(span) = place.span {
         if !errors_by_span.contains_key(&span) {
-            errors_by_span.insert(span, diagnostics::dynamic_hook(Some(span)));
+            errors_by_span.insert(span, diagnostics::dynamic_hook(Some(span), origin_span));
         }
     } else {
-        env.record_error(diagnostics::dynamic_hook(None))?;
+        env.record_error(diagnostics::dynamic_hook(None, origin_span))?;
     }
     Ok(())
 }
@@ -154,6 +156,7 @@ fn validate_hook_call(
     callee: &Place,
     is_unconditional: bool,
     value_kinds: &mut ValueKinds,
+    value_origins: &ValueOrigins,
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
@@ -162,7 +165,12 @@ fn validate_hook_call(
     if is_hook_callee && !is_unconditional {
         record_conditional_hook_error(callee, value_kinds, errors_by_span, env)?;
     } else if callee_kind == Kind::PotentialHook {
-        record_dynamic_hook_usage_error(callee, errors_by_span, env)?;
+        record_dynamic_hook_usage_error(
+            callee,
+            value_origins[callee.identifier],
+            errors_by_span,
+            env,
+        )?;
     }
     Ok(())
 }
@@ -176,6 +184,7 @@ pub fn validate_hooks_usage(
         compute_unconditional_blocks(func, env.next_block_id().index() as u32)?;
     let mut errors_by_span: FxIndexMap<Span, OxcDiagnostic> = FxIndexMap::default();
     let mut value_kinds: ValueKinds = IndexVec::from_vec(vec![None; env.identifiers.len()]);
+    let mut value_origins: ValueOrigins = IndexVec::from_vec(vec![None; env.identifiers.len()]);
 
     // Process params
     for param in &func.params {
@@ -185,6 +194,7 @@ pub fn validate_hooks_usage(
         };
         let kind = get_kind_for_place(place, &value_kinds, &env.identifiers);
         value_kinds[place.identifier] = Some(kind);
+        value_origins[place.identifier] = place.span.or(env.identifiers[place.identifier].span);
     }
 
     // Process blocks
@@ -202,6 +212,11 @@ pub fn validate_hooks_usage(
                 }
             }
             value_kinds[phi.place.identifier] = Some(kind);
+            value_origins[phi.place.identifier] = phi
+                .operands
+                .iter()
+                .find_map(|(_, operand)| value_origins[operand.identifier].or(operand.span))
+                .or(phi.place.span);
         }
 
         // Process instructions
@@ -223,6 +238,9 @@ pub fn validate_hooks_usage(
                     visit_place(place, &value_kinds, &mut errors_by_span, env)?;
                     let kind = get_kind_for_place(place, &value_kinds, &env.identifiers);
                     value_kinds[lvalue_id] = Some(kind);
+                    value_origins[lvalue_id] = value_origins[place.identifier]
+                        .or(place.span)
+                        .or(env.identifiers[place.identifier].span);
                 }
                 InstructionValue::StoreLocal { lvalue, value, .. }
                 | InstructionValue::StoreContext { lvalue, value, .. } => {
@@ -233,6 +251,12 @@ pub fn validate_hooks_usage(
                     );
                     value_kinds[lvalue.place.identifier] = Some(kind);
                     value_kinds[lvalue_id] = Some(kind);
+                    let origin_span = env.identifiers[lvalue.place.identifier]
+                        .span
+                        .or(lvalue.place.span)
+                        .or(value_origins[value.identifier]);
+                    value_origins[lvalue.place.identifier] = origin_span;
+                    value_origins[lvalue_id] = origin_span;
                 }
                 InstructionValue::ComputedLoad { object, .. } => {
                     visit_place(object, &value_kinds, &mut errors_by_span, env)?;
@@ -240,6 +264,7 @@ pub fn validate_hooks_usage(
                     let lvalue_kind =
                         get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
                     value_kinds[lvalue_id] = Some(join_kinds(lvalue_kind, kind));
+                    value_origins[lvalue_id] = object.span.or(value_origins[object.identifier]);
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
                     let object_kind = get_kind_for_place(object, &value_kinds, &env.identifiers);
@@ -273,12 +298,15 @@ pub fn validate_hooks_usage(
                         }
                     };
                     value_kinds[lvalue_id] = Some(kind);
+                    value_origins[lvalue_id] =
+                        instr.lvalue.span.or(object.span).or(value_origins[object.identifier]);
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
                     validate_hook_call(
                         callee,
                         unconditional_blocks.contains(&block.id),
                         &mut value_kinds,
+                        &value_origins,
                         &mut errors_by_span,
                         env,
                     )?;
@@ -296,6 +324,7 @@ pub fn validate_hooks_usage(
                         property,
                         unconditional_blocks.contains(&block.id),
                         &mut value_kinds,
+                        &value_origins,
                         &mut errors_by_span,
                         env,
                     )?;
@@ -314,6 +343,7 @@ pub fn validate_hooks_usage(
                         tag,
                         unconditional_blocks.contains(&block.id),
                         &mut value_kinds,
+                        &value_origins,
                         &mut errors_by_span,
                         env,
                     )?;
@@ -352,6 +382,8 @@ pub fn validate_hooks_usage(
                             }
                         };
                         value_kinds[place.identifier] = Some(kind);
+                        value_origins[place.identifier] =
+                            place.span.or(value_origins[value.identifier]);
                     }
                 }
                 InstructionValue::ObjectMethod { lowered_func, .. }
@@ -365,10 +397,12 @@ pub fn validate_hooks_usage(
                     // Set kind for instr.lvalue
                     let kind = get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
                     value_kinds[lvalue_id] = Some(kind);
+                    value_origins[lvalue_id] = instr.lvalue.span;
                     // Also set kind for value-level lvalues (e.g. DeclareLocal, PrefixUpdate, PostfixUpdate)
                     for lv in visitors::each_instruction_value_lvalue(&instr.value) {
                         let lv_kind = get_kind_for_place(&lv, &value_kinds, &env.identifiers);
                         value_kinds[lv.identifier] = Some(lv_kind);
+                        value_origins[lv.identifier] = lv.span;
                     }
                 }
             }
@@ -402,6 +436,7 @@ fn visit_function_expression(
     }
 
     let func = &env.functions[func_id];
+    let function_span = func.diagnostic_span();
     let mut items: Vec<Item> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
@@ -443,7 +478,11 @@ fn visit_function_expression(
                             hook_kind_display(&hook_kind)
                         }
                     );
-                    env.record_error(diagnostics::hook_in_function_expression(description, span))?;
+                    env.record_error(diagnostics::hook_in_function_expression(
+                        description,
+                        span,
+                        function_span,
+                    ))?;
                 }
             }
             Item::NestedFunc(nested_func_id) => {

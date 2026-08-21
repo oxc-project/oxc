@@ -1169,14 +1169,21 @@ fn ox_codegen_for_in<'a>(
         return Err(diagnostics::invariant_expected_sequence_expression_init(None));
     };
     if instructions.len() != 2 {
-        cx.record_error(diagnostics::todo_support_non_trivial_inits(span))?;
+        cx.record_error(diagnostics::todo_support_non_trivial_inits(compact_for_loop_span(
+            left_span, span,
+        )))?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_collection = &instructions[0];
     let iterable_item = &instructions[1];
     let instr_value = get_instruction_value(&iterable_item.value)?;
-    let (lval, var_decl_kind) =
-        ox_extract_for_in_of_lval(cx, instr_value, "for..in", left_span, span)?;
+    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(
+        cx,
+        instr_value,
+        "for..in",
+        left_span,
+        compact_for_loop_span(left_span, span),
+    )?;
     let right = ox_codegen_instruction_value_to_expression(cx, &iterable_collection.value)?;
     let body = ox_codegen_block_statement(cx, loop_block, loop_block_span)?;
     let body = oxc::Statement::BlockStatement(body);
@@ -1221,13 +1228,20 @@ fn ox_codegen_for_of<'a>(
         return Err(diagnostics::invariant_expected_sequence_expression_test(None));
     };
     if test_instrs.len() != 2 {
-        cx.record_error(diagnostics::todo_support_non_trivial_inits_2(span))?;
+        cx.record_error(diagnostics::todo_support_non_trivial_inits_2(compact_for_loop_span(
+            left_span, span,
+        )))?;
         return Ok(Some(oxc_ast::ast::Statement::new_empty_statement(SPAN, &cx.ast)));
     }
     let iterable_item = &test_instrs[1];
     let instr_value = get_instruction_value(&iterable_item.value)?;
-    let (lval, var_decl_kind) =
-        ox_extract_for_in_of_lval(cx, instr_value, "for..of", left_span, span)?;
+    let (lval, var_decl_kind) = ox_extract_for_in_of_lval(
+        cx,
+        instr_value,
+        "for..of",
+        left_span,
+        compact_for_loop_span(left_span, span),
+    )?;
 
     let right = ox_codegen_place_to_expression(cx, collection)?;
     let body = ox_codegen_block_statement(cx, loop_block, loop_block_span)?;
@@ -1252,6 +1266,13 @@ fn ox_codegen_for_of<'a>(
         body,
         &cx.ast,
     )))
+}
+
+/// Point at the `for` keyword instead of relying on a lowered `left_span`,
+/// which can cover the complete loop for non-trivial context-variable inits.
+fn compact_for_loop_span(left_span: Option<Span>, span: Option<Span>) -> Option<Span> {
+    let span = span.or(left_span)?;
+    Some(Span::new(span.start, span.start.saturating_add(3).min(span.end)))
 }
 
 fn ox_extract_for_in_of_lval<'a>(
@@ -1990,14 +2011,21 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::ObjectExpression { properties, .. } => {
             ox_codegen_object_expression(cx, properties, span)
         }
-        InstructionValue::PropertyLoad { object, property, property_span, .. } => {
+        InstructionValue::PropertyLoad { object, property, computed, property_span, .. } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, *computed, span, *property_span);
             Ok(OxValue::Expression(oxc::Expression::from(member)))
         }
-        InstructionValue::PropertyStore { object, property, property_span, value, .. } => {
+        InstructionValue::PropertyStore {
+            object,
+            property,
+            computed,
+            property_span,
+            value,
+            ..
+        } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, *computed, span, *property_span);
             let val = ox_codegen_place_to_expression(cx, value)?;
             let target = oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(member));
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
@@ -2010,7 +2038,7 @@ fn ox_codegen_base_instruction_value<'a>(
         }
         InstructionValue::PropertyDelete { object, property, property_span, .. } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, false, span, *property_span);
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_unary_expression(
                 span,
                 oxc::UnaryOperator::Delete,
@@ -2260,11 +2288,26 @@ fn ox_property_member<'a>(
     cx: &OxcContext<'a, '_>,
     object: oxc::Expression<'a>,
     property: &PropertyLiteral,
+    computed: bool,
     span: Span,
     property_span: Option<Span>,
 ) -> oxc::MemberExpression<'a> {
     let property_span = property_span.unwrap_or(span);
     match property {
+        PropertyLiteral::String(s) if computed => {
+            oxc_ast::ast::MemberExpression::new_computed_member_expression(
+                span,
+                object,
+                oxc_ast::ast::Expression::new_string_literal(
+                    property_span,
+                    ox_str(&cx.ast, s),
+                    None,
+                    &cx.ast,
+                ),
+                false,
+                &cx.ast,
+            )
+        }
         PropertyLiteral::String(s) => oxc_ast::ast::MemberExpression::new_static_member_expression(
             span,
             object,
@@ -2593,8 +2636,14 @@ fn ox_codegen_dependency<'a>(
         // plain members whose `optional` flags are preserved. Wrapping each step in
         // its own `ChainExpression` would force spurious parens such as `(((a.b)?.c).d)?.e`.
         for path_entry in &dep.path {
-            let member =
-                ox_property_member(cx, object, &path_entry.property, span, path_entry.span);
+            let member = ox_property_member(
+                cx,
+                object,
+                &path_entry.property,
+                path_entry.computed,
+                span,
+                path_entry.span,
+            );
             object = match member {
                 oxc::MemberExpression::StaticMemberExpression(m) => {
                     let m = m.unbox();

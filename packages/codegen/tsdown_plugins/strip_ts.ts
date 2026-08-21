@@ -43,19 +43,23 @@ const stripTsPlugin = (): Plugin => {
       // Only process TS files in `src-js/print` directory
       filter: { id: /\/src-js\/print\/.+\.ts$/ },
 
-      handler(code) {
-        code = code.replace(REGION, () => {
+      handler(code, _path, meta) {
+        const magicString = meta.magicString!;
+        for (const match of code.matchAll(REGION)) {
           strippedRegions++;
-          return "";
-        });
+          const start = match.index!;
+          magicString.remove(start, start + match[0].length);
+        }
+
+        const transformed = magicString.toString();
 
         // Unbalanced or nested fences leave a marker behind.
         // Most files have no fences at all, so the "did this plugin do anything" check is per build, in `buildEnd`.
-        if (code.includes("IF TS") || code.includes("END_IF")) {
+        if (transformed.includes("IF TS") || transformed.includes("END_IF")) {
           throw new Error("strip-ts: unbalanced or nested `/* IF TS */` / `/* END_IF */` fences");
         }
 
-        return code;
+        return { code: magicString };
       },
     },
 

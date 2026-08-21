@@ -274,6 +274,74 @@ pub fn invariant_unexpected_error() -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn terminal_successor_references_unknown_block(
+    successor: impl Display,
+    terminal: impl Display,
+    span: Option<Span>,
+) -> OxcDiagnostic {
+    const REASON: &str = "Terminal successor references unknown block";
+    diagnostic(ErrorCategory::Invariant, REASON)
+        .with_help(format!("Block bb{successor} does not exist for terminal '{terminal}'"))
+        .with_labels(span.map(|span| span.primary_label(REASON)))
+}
+
+#[cold]
+pub fn invalid_block_nesting(
+    parent_start: impl Display,
+    parent_end: impl Display,
+    current_start: impl Display,
+    current_end: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Invariant, "Invalid nesting in program blocks or scopes").with_help(
+        format!(
+            "Items overlap but are not nested: {parent_start}:{parent_end}({current_start}:{current_end})"
+        ),
+    )
+}
+
+#[cold]
+pub fn expected_predecessor_block_to_exist(
+    block: impl Display,
+    predecessor: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Invariant, "Expected predecessor block to exist")
+        .with_help(format!("Block {block} references non-existent {predecessor}"))
+}
+
+#[cold]
+pub fn terminal_successor_does_not_reference_correct_predecessor(
+    block: impl Display,
+    predecessor: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        "Terminal successor does not reference correct predecessor",
+    )
+    .with_help(format!(
+        "Block bb{block} has bb{predecessor} as a predecessor, but bb{predecessor}'s successors do not include bb{block}"
+    ))
+}
+
+#[cold]
+pub fn expected_all_lvalues_to_be_temporaries(name: &str, span: Option<Span>) -> OxcDiagnostic {
+    const REASON: &str = "Expected all lvalues to be temporaries";
+    diagnostic(ErrorCategory::Invariant, REASON)
+        .with_help(format!("Found named lvalue `{name}`"))
+        .with_labels(span.map(|span| span.primary_label(REASON)))
+}
+
+#[cold]
+pub fn expected_lvalues_to_be_assigned_exactly_once(
+    place: impl Display,
+    span: Option<Span>,
+) -> OxcDiagnostic {
+    const REASON: &str = "Expected lvalues to be assigned exactly once";
+    diagnostic(ErrorCategory::Invariant, REASON)
+        .with_help(format!("Found duplicate assignment of '{place}'"))
+        .with_labels(span.map(|span| span.primary_label(REASON)))
+}
+
+#[cold]
 pub fn invariant_analyze_functions_expected_apply_effects_replaced_more_precise_effects()
 -> OxcDiagnostic {
     diagnostic(
@@ -448,20 +516,6 @@ pub fn todo_codegen_reactive_function_codegen_instruction_value_handle_conversio
         ErrorCategory::Todo,
         "(CodegenReactiveFunction::codegenInstructionValue) Handle conversion of statement to expression",
     )
-}
-
-#[cold]
-pub fn effect_derivations_of_state_values_derived_from_props_and_state_should_calculated_during_render_not(
-    label: impl Into<oxc_diagnostics::LabeledSpan>,
-) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::EffectDerivationsOfState,
-        "Values derived from props and state should be calculated during render, not in an effect",
-    )
-    .with_help(
-        "Calculate the derived value while rendering instead of storing it in state from an effect",
-    )
-    .with_label(primary_label(label))
 }
 
 #[cold]
@@ -814,20 +868,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_expression_handle_tagged_template_where_cooked_value_different_from_raw_value<
-    L,
-    T,
->(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(ErrorCategory::Todo, "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value").with_labels(labels)
-}
-
-#[cold]
 pub fn todo_build_hir_lower_expression_handle_yield_expression_expressions<L, T>(
     labels: T,
 ) -> OxcDiagnostic
@@ -1048,18 +1088,24 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_statement_handle_try_statement_without_catch_clause<L, T>(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
+pub fn todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(
+    try_span: Option<Span>,
+    finally_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
         ErrorCategory::Todo,
-        "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause",
+        "`try`/`finally` without `catch` is not supported by React Compiler",
     )
-    .with_labels(labels)
+    .with_help(
+        "React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled",
+    )
+    .with_labels(try_span.map(|span| span.primary_label("Unsupported `try` starts here")));
+    diagnostic.labels.extend(
+        finally_span
+            .filter(|finally_span| Some(*finally_span) != try_span)
+            .map(|span| span.label("This `finally` clause requires unsupported control flow")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -1415,18 +1461,29 @@ pub fn blocklisted_import(module: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_gating_directive(directive: &str) -> OxcDiagnostic {
+pub fn invalid_gating_directive(directive: &str, span: Span) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Gating,
         "Dynamic gating directive is not a valid JavaScript identifier",
     )
     .with_help(format!("Found '{directive}'"))
+    .with_label(span.primary_label("Invalid gating condition"))
 }
 
 #[cold]
-pub fn multiple_gating_directives(names: &[&str]) -> OxcDiagnostic {
+pub fn multiple_gating_directives<I>(names: &[&str], spans: I) -> OxcDiagnostic
+where
+    I: IntoIterator<Item = Span>,
+{
     diagnostic(ErrorCategory::Gating, "Multiple dynamic gating directives found")
         .with_help(format!("Expected a single directive but found [{}]", names.join(", ")))
+        .with_labels(spans.into_iter().enumerate().map(|(index, span)| {
+            if index == 0 {
+                span.primary_label("First gating directive")
+            } else {
+                span.label("Additional gating directive")
+            }
+        }))
 }
 
 #[cold]
@@ -1481,10 +1538,18 @@ pub fn unsupported_eval(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn const_reassignment(name: &str, span: Span) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::Syntax, "Cannot reassign a `const` variable")
+pub fn const_reassignment(
+    name: &str,
+    reassignment_span: Span,
+    declaration_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(ErrorCategory::Syntax, "Cannot reassign a `const` variable")
         .with_help(format!("`{name}` is declared as const"))
-        .with_label(span.primary_label(format!("Cannot reassign `{name}`")))
+        .with_label(reassignment_span.primary_label(format!("Cannot reassign `{name}`")));
+    diagnostic
+        .labels
+        .extend(declaration_span.map(|span| span.label(format!("`{name}` is declared here"))));
+    diagnostic
 }
 
 #[cold]
@@ -1735,22 +1800,6 @@ pub fn enter_ssa_cycle(block: impl Display) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unsupported_object_destructuring_assignment_target(
-    type_name: &str,
-    span: Option<Span>,
-) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!(
-            "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ),
-    )
-    .with_labels(span.map(|span| {
-        span.primary_label(format!("Unsupported destructuring assignment target `{type_name}`"))
-    }))
-}
-
-#[cold]
 pub fn expected_scope_terminal(block: impl Display) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Invariant,
@@ -1872,25 +1921,41 @@ pub fn hook_used_as_value(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn dynamic_hook(span: Option<Span>) -> OxcDiagnostic {
-    diagnostic(
+pub fn dynamic_hook(span: Option<Span>, origin_span: Option<Span>) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
         ErrorCategory::Hooks,
         "Hooks must be the same function on every render, but this value may change over time",
     )
     .with_help("Call a statically known Hook instead of selecting a Hook dynamically")
-    .with_labels(span.map(|span| span.primary_label("This Hook may change between renders")))
+    .with_labels(span.map(|span| span.primary_label("This Hook may change between renders")));
+    diagnostic.labels.extend(
+        origin_span
+            .filter(|origin_span| Some(*origin_span) != span)
+            .map(|span| span.label("This dynamic Hook value originates here")),
+    );
+    diagnostic
 }
 
 #[cold]
-pub fn hook_in_function_expression(description: String, span: Option<Span>) -> OxcDiagnostic {
-    diagnostic(
+pub fn hook_in_function_expression(
+    description: String,
+    span: Option<Span>,
+    function_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
         ErrorCategory::Hooks,
         "Hooks must be called at the top level of a function component or custom Hook",
     )
     .with_help(description)
     .with_labels(
         span.map(|span| span.primary_label("This Hook is called inside a nested function")),
-    )
+    );
+    diagnostic.labels.extend(
+        function_span
+            .filter(|function_span| Some(*function_span) != span)
+            .map(|span| span.label("This is the nested function")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -1965,15 +2030,6 @@ pub fn missing_function_declaration_binding(name: &str, span: Span) -> OxcDiagno
 }
 
 #[cold]
-pub fn jsx_attribute_colon(name: &str, span: Span) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!("(BuildHIR::lowerExpression) Unexpected colon in attribute name `{name}`"),
-    )
-    .with_label(span.primary_label(format!("`{name}` contains an unsupported colon")))
-}
-
-#[cold]
 pub fn local_fbt_tag(tag_name: &str, span: Option<Span>) -> OxcDiagnostic {
     let reason = format!("<{tag_name}> tags should be module-level imports");
     diagnostic(ErrorCategory::Invariant, &reason)
@@ -2041,7 +2097,7 @@ pub fn known_mutable_function(
     function_span: Option<Span>,
     value_span: Option<Span>,
 ) -> OxcDiagnostic {
-    diagnostic(
+    let mut diagnostic = diagnostic(
         ErrorCategory::Immutability,
         "Cannot modify local variables after render completes",
     )
@@ -2049,13 +2105,32 @@ pub fn known_mutable_function(
         "This argument is a function which may reassign or mutate {variable_name} after render, \
          which can cause inconsistent behavior on subsequent renders. \
          Consider using state instead",
-    ))
-    .with_labels(function_span.map(|span| {
-        span.primary_label(format!(
-            "This function may (indirectly) reassign or modify {variable_name} after render"
-        ))
-    }))
-    .and_labels(value_span.map(|span| span.label(format!("This modifies {variable_name}"))))
+    ));
+    diagnostic.labels.extend(
+        value_span.map(|span| span.primary_label(format!("This modifies {variable_name}"))),
+    );
+    // Do not add an enclosing callback as a second label: it can cover a large
+    // function body without identifying anything beyond the mutation above.
+    diagnostic.labels.extend(
+        function_span
+            .filter(|function_span| {
+                value_span.is_none_or(|value_span| {
+                    function_span.start > value_span.start || function_span.end < value_span.end
+                })
+            })
+            .map(|span| {
+                if value_span.is_some() {
+                    span.label(format!(
+                        "This function may (indirectly) reassign or modify {variable_name} after render"
+                    ))
+                } else {
+                    span.primary_label(format!(
+                        "This function may (indirectly) reassign or modify {variable_name} after render"
+                    ))
+                }
+            }),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2151,14 +2226,23 @@ pub fn use_memo_no_return(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn use_memo_reassigns_outer_variable(span: Option<Span>) -> OxcDiagnostic {
-    diagnostic_with_help_and_label(
+pub fn use_memo_reassigns_outer_variable(
+    span: Option<Span>,
+    origin_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic_with_help_and_label(
         ErrorCategory::UseMemo,
         "useMemo() callbacks may not reassign variables declared outside of the callback",
         "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function",
         span,
         "Cannot reassign variable",
-    )
+    );
+    diagnostic.labels.extend(
+        origin_span
+            .filter(|origin_span| Some(*origin_span) != span)
+            .map(|span| span.label("This variable is captured from outside the callback")),
+    );
+    diagnostic
 }
 
 const REF_ACCESS_HELP: &str = "React refs are values that are not needed for rendering. \
@@ -2184,17 +2268,43 @@ pub fn ref_passed_to_function(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn ref_update(span: Option<Span>) -> OxcDiagnostic {
-    ref_access(span, "Cannot update ref during render")
+pub fn ref_update(span: Option<Span>, ref_span: Option<Span>) -> OxcDiagnostic {
+    let ref_value_span = match (span, ref_span) {
+        (Some(span), Some(ref_span)) if span.start == ref_span.start && ref_span.end < span.end => {
+            Some(Span::new(ref_span.end, span.end))
+        }
+        _ => span,
+    };
+    let mut diagnostic = ref_access(ref_value_span, "Cannot update ref value during render");
+    diagnostic.labels.extend(
+        ref_span
+            .filter(|ref_span| {
+                ref_value_span.is_none_or(|value_span| {
+                    ref_span.end <= value_span.start || ref_span.start >= value_span.end
+                })
+            })
+            .map(|span| span.label("This value is a ref")),
+    );
+    diagnostic
 }
 
 #[cold]
-pub fn function_accesses_ref(span: Option<Span>) -> OxcDiagnostic {
-    ref_access(span, "This function accesses a ref value")
+pub fn function_accesses_ref(span: Option<Span>, ref_access_span: Option<Span>) -> OxcDiagnostic {
+    let mut diagnostic = ref_access(span, "This function accesses a ref value");
+    diagnostic.labels.extend(
+        ref_access_span
+            .filter(|ref_access_span| Some(*ref_access_span) != span)
+            .map(|span| span.label("The ref is accessed here")),
+    );
+    diagnostic
 }
 
 #[cold]
-pub fn set_state_in_effect(span: Option<Span>, verbose: bool) -> OxcDiagnostic {
+pub fn set_state_in_effect(
+    span: Option<Span>,
+    effect_span: Option<Span>,
+    verbose: bool,
+) -> OxcDiagnostic {
     let help = if verbose {
         "Effects are intended to synchronize state between React and external systems. \
          Calling setState synchronously causes cascading renders that hurt performance.\n\n\
@@ -2209,19 +2319,22 @@ pub fn set_state_in_effect(span: Option<Span>, verbose: bool) -> OxcDiagnostic {
          data source (mutable values outside React), use `useSyncExternalStore` to properly subscribe \
          to external state changes."
     } else {
-        "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. \
-         In general, the body of an effect should do one or both of the following:\n\
-         * Update external systems with the latest state from React.\n\
-         * Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\n\
-         Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended."
+        "Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. \
+         Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system."
     };
-    diagnostic_with_help_and_label(
+    let mut diagnostic = diagnostic_with_help_and_label(
         ErrorCategory::EffectSetState,
         "Calling setState synchronously within an effect can trigger cascading renders",
         help,
         span,
         "Avoid calling setState() directly within an effect",
-    )
+    );
+    diagnostic.labels.extend(
+        effect_span
+            .filter(|effect_span| Some(*effect_span) != span)
+            .map(|span| span.label("This is the containing effect")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2235,24 +2348,55 @@ pub fn preserve_memo_mutated_dependency(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn preserve_memo_unmemoized(span: Option<Span>) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::PreserveManualMemo, "Existing memoization could not be preserved")
+pub fn preserve_memo_unmemoized(
+    span: Option<Span>,
+    callback_start_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic =
+        diagnostic(ErrorCategory::PreserveManualMemo, "Existing memoization could not be preserved")
         .with_help(
-            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output",
+            "React Compiler could not prove that this useMemo/useCallback remains memoized. Fix related React Compiler errors inside the callback first. If manual memoization is not required for semantics, remove it; otherwise restructure the callback to avoid values that invalidate memoization",
         )
-        .with_labels(span.map(|span| span.primary_label("Could not preserve existing memoization")))
+        .with_labels(span.map(|span| span.primary_label("Manual memoization is not preserved here")));
+    diagnostic.labels.extend(
+        callback_start_span
+            .filter(|callback_start_span| {
+                span.is_none_or(|primary_span| {
+                    callback_start_span.end <= primary_span.start
+                        || callback_start_span.start >= primary_span.end
+                })
+            })
+            .map(|span| span.label("Manual memoization callback starts here")),
+    );
+    diagnostic
 }
 
 #[cold]
 pub fn preserve_memo_inferred_dependencies(
     description: String,
-    span: Option<Span>,
+    dependency_list_span: Option<Span>,
+    inferred_dependency_span: Option<Span>,
+    fallback_span: Option<Span>,
 ) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::PreserveManualMemo, "Existing memoization could not be preserved")
-        .with_help(description)
-        .with_labels(
-            span.map(|span| span.primary_label("Could not preserve existing manual memoization")),
-        )
+    let mut diagnostic = diagnostic(
+        ErrorCategory::PreserveManualMemo,
+        "Existing memoization could not be preserved",
+    )
+    .with_help(description);
+    let primary_span = dependency_list_span.or(inferred_dependency_span).or(fallback_span);
+    diagnostic.labels.extend(primary_span.map(|span| {
+        span.primary_label(if dependency_list_span.is_some() {
+            "This dependency list does not match the dependencies inferred from the callback"
+        } else {
+            "Could not preserve existing manual memoization"
+        })
+    }));
+    diagnostic.labels.extend(
+        inferred_dependency_span
+            .filter(|span| Some(*span) != primary_span)
+            .map(|span| span.label("This dependency is inferred here")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2282,26 +2426,51 @@ pub fn inconsistent_context_variable(
 }
 
 #[cold]
-pub fn reassigned_after_render(variable: &str, span: Option<Span>) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::Immutability, "Cannot reassign variable after render completes")
-        .with_help(format!(
-            "Reassigning {variable} after render has completed can cause inconsistent \
+pub fn reassigned_after_render(
+    variable: &str,
+    reassignment_span: Option<Span>,
+    declaration_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic =
+        diagnostic(ErrorCategory::Immutability, "Cannot reassign variable after render completes")
+            .with_help(format!(
+                "Reassigning {variable} after render has completed can cause inconsistent \
              behavior on subsequent renders. Consider using state instead"
-        ))
-        .with_labels(span.map(|span| {
-            span.primary_label(format!("Cannot reassign {variable} after render completes"))
-        }))
+            ))
+            .with_labels(reassignment_span.map(|span| {
+                span.primary_label(format!("Cannot reassign {variable} after render completes"))
+            }));
+    diagnostic.labels.extend(
+        declaration_span
+            .filter(|span| Some(*span) != reassignment_span)
+            .map(|span| span.label(format!("{variable} is declared here"))),
+    );
+    diagnostic
 }
 
 #[cold]
-pub fn reassigned_in_async_function(variable: &str, span: Option<Span>) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::Immutability, "Cannot reassign variable in async function")
-        .with_help(
-            "Reassigning a variable in an async function can cause \
+pub fn reassigned_in_async_function(
+    variable: &str,
+    reassignment_span: Option<Span>,
+    declaration_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic =
+        diagnostic(ErrorCategory::Immutability, "Cannot reassign variable in async function")
+            .with_help(
+                "Reassigning a variable in an async function can cause \
              inconsistent behavior on subsequent renders. \
              Consider using state instead",
-        )
-        .with_labels(span.map(|span| span.primary_label(format!("Cannot reassign {variable}"))))
+            )
+            .with_labels(
+                reassignment_span
+                    .map(|span| span.primary_label(format!("Cannot reassign {variable}"))),
+            );
+    diagnostic.labels.extend(
+        declaration_span
+            .filter(|span| Some(*span) != reassignment_span)
+            .map(|span| span.label(format!("{variable} is declared here"))),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2319,6 +2488,33 @@ pub fn derived_state_in_effect(description: String, span: Option<Span>) -> OxcDi
 }
 
 #[cold]
+pub fn derived_state_in_effect_from_dependencies(
+    description: String,
+    span: Option<Span>,
+    dependency_spans: impl IntoIterator<Item = Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
+        ErrorCategory::EffectDerivationsOfState,
+        "Values derived from props and state should be calculated during render, not in an effect",
+    )
+    .with_help(description)
+    .with_labels(span.map(|span| {
+        span.primary_label("This state update stores a value that can be calculated during render")
+    }));
+    let mut dependency_spans = dependency_spans.into_iter().peekable();
+    if let Some(span) = dependency_spans.next() {
+        let label = if dependency_spans.peek().is_some() {
+            "These reactive values contribute to the derived state"
+        } else {
+            "This reactive value contributes to the derived state"
+        };
+        diagnostic.labels.push(span.label(label));
+        diagnostic.labels.extend(dependency_spans.map(Into::into));
+    }
+    diagnostic
+}
+
+#[cold]
 pub fn uninitialized_value(description: String, span: Option<Span>) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Invariant,
@@ -2332,11 +2528,20 @@ pub fn uninitialized_value(description: String, span: Option<Span>) -> OxcDiagno
 pub fn immutable_value(
     reason: impl AsRef<str>,
     variable: &str,
-    span: Option<Span>,
+    mutation_span: Option<Span>,
+    declaration_span: Option<Span>,
 ) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::Immutability, "This value cannot be modified")
+    let mut diagnostic = diagnostic(ErrorCategory::Immutability, "This value cannot be modified")
         .with_help(reason.as_ref().to_string())
-        .with_labels(span.map(|span| span.primary_label(format!("{variable} cannot be modified"))))
+        .with_labels(
+            mutation_span.map(|span| span.primary_label(format!("{variable} cannot be modified"))),
+        );
+    diagnostic.labels.extend(
+        declaration_span
+            .filter(|span| Some(*span) != mutation_span)
+            .map(|span| span.label(format!("{variable} originates here"))),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2361,19 +2566,17 @@ pub fn variable_accessed_before_declaration(
     let label_name = variable.unwrap_or("variable");
     let mut diagnostic = diagnostic(
         ErrorCategory::Immutability,
-        "Cannot access variable before it is declared",
+        "Cannot access variable while it is being initialized",
     )
     .with_help(format!(
-        "{help_name} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time"
+        "{help_name} is read while its declaration is still being initialized. Move the access after initialization. For a recursive callback, use a named function expression or restructure the callback so it does not capture itself during initialization"
     ));
-    diagnostic
-        .labels
-        .extend(access_span.map(|span| {
-            span.primary_label(format!("{label_name} accessed before it is declared"))
-        }));
-    diagnostic
-        .labels
-        .extend(declaration_span.map(|span| span.label(format!("{label_name} is declared here"))));
+    diagnostic.labels.extend(access_span.map(|span| {
+        span.primary_label(format!("{label_name} is read during its own initialization"))
+    }));
+    diagnostic.labels.extend(
+        declaration_span.map(|span| span.label(format!("{label_name} is initialized here"))),
+    );
     diagnostic
 }
 
@@ -2459,17 +2662,28 @@ pub fn should_panic(diagnostics: &[OxcDiagnostic], panic_threshold: PanicThresho
         }
 }
 
-/// Owned copy of a diagnostic for the log accumulator, labelling the enclosing
-/// function (`fn_span`) when the diagnostic carries no location of its own.
+/// Owned copy of a diagnostic for the log accumulator. Promote the first
+/// existing location to primary, or use `fallback_span` when the diagnostic has
+/// no source location of its own.
 #[cold]
-pub fn with_fallback_label(diagnostic: &OxcDiagnostic, fn_span: Option<Span>) -> OxcDiagnostic {
-    let diagnostic = diagnostic.clone();
-    match fn_span {
-        Some(span) if diagnostic.labels.is_empty() => {
-            let label = diagnostic.message.to_string();
-            diagnostic.with_label(span.primary_label(label))
+pub fn with_fallback_label(
+    diagnostic: &OxcDiagnostic,
+    fallback_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic.clone();
+    if diagnostic.labels.is_empty() {
+        match fallback_span {
+            Some(span) => {
+                let label = diagnostic.message.to_string();
+                diagnostic.with_label(span.primary_label(label))
+            }
+            None => diagnostic,
         }
-        _ => diagnostic,
+    } else {
+        if !diagnostic.labels.iter().any(LabeledSpan::primary) {
+            diagnostic.labels[0] = primary_label(diagnostic.labels[0].clone());
+        }
+        diagnostic
     }
 }
 
@@ -2541,7 +2755,7 @@ mod tests {
 
         assert!(diagnostic.labels[0].primary());
         assert!(!diagnostic.labels[1].primary());
-        assert_eq!(diagnostic.labels[1].label(), Some("value is declared here"));
+        assert_eq!(diagnostic.labels[1].label(), Some("value is initialized here"));
     }
 
     #[test]
@@ -2552,6 +2766,32 @@ mod tests {
         assert_eq!(diagnostic.labels.len(), 1);
         assert!(diagnostic.labels[0].primary());
         assert_eq!(diagnostic.labels[0].label(), Some(diagnostic.message.as_ref()));
+    }
+
+    #[test]
+    fn existing_location_is_promoted_to_primary() {
+        let diagnostic = todo_support_destructuring_context_variables([Span::new(4, 9)]);
+        assert!(!diagnostic.labels[0].primary());
+
+        let diagnostic = with_fallback_label(&diagnostic, Some(Span::new(20, 30)));
+        assert_eq!(diagnostic.labels.len(), 1);
+        assert!(diagnostic.labels[0].primary());
+        assert_eq!(diagnostic.labels[0].span(), Span::new(4, 9));
+    }
+
+    #[test]
+    fn memo_dependency_mismatch_labels_both_locations() {
+        let diagnostic = preserve_memo_inferred_dependencies(
+            "dependency mismatch".to_string(),
+            Some(Span::new(20, 25)),
+            Some(Span::new(4, 9)),
+            Some(Span::new(1, 30)),
+        );
+
+        assert!(diagnostic.labels[0].primary());
+        assert_eq!(diagnostic.labels[0].span(), Span::new(20, 25));
+        assert!(!diagnostic.labels[1].primary());
+        assert_eq!(diagnostic.labels[1].span(), Span::new(4, 9));
     }
 
     #[test]

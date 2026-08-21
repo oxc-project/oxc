@@ -6,8 +6,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[static_components.tsx:4:11]
  2 │ function Example(props) {
  3 │   const Component = createComponent();
-   ·                     ────────┬────────
-   ·                             ╰── The component is created during render here
+   ·                     ───────┬───────
+   ·                            ╰── The component is created during render here
  4 │   return <Component />;
    ·           ────┬────
    ·               ╰── This component is created during render

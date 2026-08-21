@@ -1017,7 +1017,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
             Terminal::Goto { .. } => {
                 if instructions.is_empty() {
-                    return Err(diagnostics::empty_goto(block_id.index(), span));
+                    // There is no source instruction to point at. Let the
+                    // program-level compact function fallback supply the label
+                    // instead of highlighting the enclosing loop/body span.
+                    return Err(diagnostics::empty_goto(block_id.index(), None));
                 }
                 Ok(self.extract_value_block_result(&instructions, block_id_val))
             }

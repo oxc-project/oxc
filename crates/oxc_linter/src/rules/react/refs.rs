@@ -49,7 +49,7 @@ declare_react_compiler_lint!(
     Refs,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates correct usage of refs: not reading or writing `ref.current` during render.",
 );
 
@@ -86,6 +86,22 @@ function Component(props) {
   const ref = useRef(null);
   const value = ref.current;
   return value;
+}
+",
+        // Updating a ref should distinguish the ref object from its current value.
+        "
+function Component() {
+  const ref = useRef(null);
+  ref.current = 1;
+  return null;
+}
+",
+        // Nested writes should retain the base ref location through ref.current.
+        "
+function Component() {
+  const ref = useRef({inner: null});
+  ref.current.inner = 1;
+  return null;
 }
 ",
     ];

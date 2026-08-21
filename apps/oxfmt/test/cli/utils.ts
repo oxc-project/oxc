@@ -290,9 +290,9 @@ function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
       const isDir = child.children.size > 0;
       const currentPath = [...pathFromFixtures, name];
       const isCwd =
-        cwdParts.length > 0 &&
-        currentPath.length === cwdParts.length &&
-        currentPath.every((p, i) => p === cwdParts[i]);
+        cwdParts.length > 0
+        && currentPath.length === cwdParts.length
+        && currentPath.every((p, i) => p === cwdParts[i]);
       const indent = "  ".repeat(depth);
       const suffix = isDir ? "/" : "";
       const marker = isCwd ? " <CWD>" : "";

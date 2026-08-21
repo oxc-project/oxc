@@ -16,12 +16,19 @@ const isEnabled = (env: string | undefined) => env === "true" || env === "1";
 // It replaces the release build in `dist`, so rebuild with `pnpm run build` before benchmarking.
 const DEBUG = isEnabled(process.env.DEBUG);
 
+// When run with `pnpm run bench`, generate a build which honors the `skipSourcemapGeneration` option,
+// so the benchmarks can measure the print pass without source map generation.
+const BENCHMARKS = isEnabled(process.env.BENCHMARKS);
+
 // Only remove assertions in release build. Debug builds keep `debugAssert` calls live.
 const assertPlugins = DEBUG ? [] : [removeAssertsPlugin];
 
 // Global constants defined at build time. See `src-js/globals.d.ts`.
 // `DEBUG: false` lets the minifier remove the body of `debugAssert` and any other debug-only code.
-const definedGlobals = { DEBUG: DEBUG ? "true" : "false" };
+const definedGlobals = {
+  DEBUG: DEBUG ? "true" : "false",
+  BENCHMARKS: BENCHMARKS ? "true" : "false",
+};
 
 // Base config.
 // `platform: "node"` because the entry point loads the printer with `createRequire`.

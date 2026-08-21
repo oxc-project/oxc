@@ -56,6 +56,9 @@ fn check_no_freezing_known_mutable_functions(
 ) -> Vec<OxcDiagnostic> {
     // Maps an identifier to the mutation effect that makes it "known mutable"
     let mut context_mutation_effects: FxHashMap<IdentifierId, MutationInfo> = FxHashMap::default();
+    // Compact source locations for function values, propagated through local
+    // loads/stores alongside the mutation information.
+    let mut function_spans: FxHashMap<IdentifierId, Span> = FxHashMap::default();
     let mut diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
@@ -69,6 +72,9 @@ fn check_no_freezing_known_mutable_functions(
                         context_mutation_effects
                             .insert(instr.lvalue.identifier, mutation_info.clone());
                     }
+                    if let Some(span) = function_spans.get(&place.identifier) {
+                        function_spans.insert(instr.lvalue.identifier, *span);
+                    }
                 }
 
                 InstructionValue::StoreLocal { lvalue, value, .. } => {
@@ -80,10 +86,17 @@ fn check_no_freezing_known_mutable_functions(
                             .insert(instr.lvalue.identifier, mutation_info.clone());
                         context_mutation_effects.insert(lvalue.place.identifier, mutation_info);
                     }
+                    if let Some(span) = function_spans.get(&value.identifier).copied() {
+                        function_spans.insert(instr.lvalue.identifier, span);
+                        function_spans.insert(lvalue.place.identifier, span);
+                    }
                 }
 
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     let inner_function = &functions[lowered_func.func];
+                    if let Some(span) = inner_function.diagnostic_span() {
+                        function_spans.insert(instr.lvalue.identifier, span);
+                    }
                     if let Some(ref aliasing_effects) = inner_function.aliasing_effects {
                         let context_ids: FxHashSet<IdentifierId> =
                             inner_function.context.iter().map(|place| place.identifier).collect();
@@ -144,6 +157,7 @@ fn check_no_freezing_known_mutable_functions(
                         check_operand_for_freeze_violation(
                             &operand,
                             &context_mutation_effects,
+                            &function_spans,
                             identifiers,
                             &mut diagnostics,
                         );
@@ -157,6 +171,7 @@ fn check_no_freezing_known_mutable_functions(
             check_operand_for_freeze_violation(
                 &operand,
                 &context_mutation_effects,
+                &function_spans,
                 identifiers,
                 &mut diagnostics,
             );
@@ -170,6 +185,7 @@ fn check_no_freezing_known_mutable_functions(
 fn check_operand_for_freeze_violation(
     operand: &Place,
     context_mutation_effects: &FxHashMap<IdentifierId, MutationInfo>,
+    function_spans: &FxHashMap<IdentifierId, Span>,
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     diagnostics: &mut Vec<OxcDiagnostic>,
 ) {
@@ -184,7 +200,7 @@ fn check_operand_for_freeze_violation(
 
         diagnostics.push(diagnostics::known_mutable_function(
             &variable_name,
-            operand.span,
+            function_spans.get(&operand.identifier).copied().or(operand.span),
             mutation_info.value_span,
         ));
     }

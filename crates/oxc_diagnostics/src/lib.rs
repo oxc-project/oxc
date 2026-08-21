@@ -291,11 +291,15 @@ impl Diagnostic for OxcDiagnostic {
 
 impl OxcDiagnostic {
     /// Create new an error-level [`OxcDiagnostic`].
+    #[cold]
+    #[inline(never)]
     pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self::new(Severity::Error, message.into())
     }
 
     /// Create new a warning-level [`OxcDiagnostic`].
+    #[cold]
+    #[inline(never)]
     pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self::new(Severity::Warning, message.into())
     }
@@ -307,6 +311,7 @@ impl OxcDiagnostic {
 
     // Outlined so the `Box` allocation + field initialization exists once in the binary
     // instead of being inlined into every diagnostic construction site.
+    #[cold]
     #[inline(never)]
     fn new(severity: Severity, message: Cow<'static, str>) -> Self {
         Self {
@@ -384,6 +389,8 @@ impl OxcDiagnostic {
     ///         .with_help("Run my_tool --init to set up a new config file"));
     /// }
     /// ```
+    #[cold]
+    #[inline(never)]
     pub fn with_help<T: Into<Cow<'static, str>>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
         self
@@ -403,6 +410,8 @@ impl OxcDiagnostic {
     ///         .with_note("Some useful information or suggestion"));
     /// }
     /// ```
+    #[cold]
+    #[inline(never)]
     pub fn with_note<T: Into<Cow<'static, str>>>(mut self, note: T) -> Self {
         self.inner.note = Some(note.into());
         self

@@ -17,8 +17,9 @@ use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics;
 use crate::react_compiler_hir::{
-    ArrayElement, BlockId, FunctionId, HirFunction, InstructionValue, ObjectPropertyKey,
-    ObjectPropertyOrSpread, Terminal,
+    ArrayElement, BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue,
+    ObjectPropertyKey, ObjectPropertyOrSpread, Terminal, assert_consistent_identifiers,
+    assert_terminal_successors_exist,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
@@ -31,6 +32,7 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 pub fn prune_maybe_throws<'a>(
     func: &mut HirFunction<'a>,
     functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
     alloc: &'a Allocator,
 ) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
@@ -77,6 +79,9 @@ pub fn prune_maybe_throws<'a>(
                 }
             }
         }
+
+        assert_consistent_identifiers(func, identifiers)?;
+        assert_terminal_successors_exist(func)?;
     }
     Ok(())
 }

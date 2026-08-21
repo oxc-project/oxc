@@ -45,7 +45,7 @@ declare_react_compiler_lint!(
     Immutability,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Disallow mutating props, state, and other values that are immutable by the Rules of React.",
 );
 
@@ -84,6 +84,27 @@ function Component(props) {
           const [state, setState] = useState({a: 0});
           state.a = 1;
           return <div>{props.foo}</div>;
+        }
+      ",
+        // A recursive callback should point at the access, not the entire
+        // callback initializer.
+        "
+        import { useCallback } from 'react';
+        function Component() {
+          const applyFilter = useCallback(() => {
+            setTimeout(() => {
+              applyFilter();
+            });
+          }, []);
+          return null;
+        }
+      ",
+        // Mutating an argument should recommend updating its owner rather than
+        // suggesting a local copy that would not update the UI.
+        "
+        function Component({model}) {
+          model.value = 'next';
+          return <div>{model.value}</div>;
         }
       ",
     ];

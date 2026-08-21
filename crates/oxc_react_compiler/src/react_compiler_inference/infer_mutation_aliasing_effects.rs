@@ -1329,8 +1329,12 @@ fn apply_signature<'a>(
                             }
                             _ => "value".to_string(),
                         };
-                        let diagnostic =
-                            diagnostics::immutable_value(reason_str, &variable, mutate_value.span);
+                        let diagnostic = diagnostics::immutable_value(
+                            reason_str,
+                            &variable,
+                            mutate_value.span,
+                            ident.span,
+                        );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
                         effects.push(AliasingEffect::MutateFrozen { place: *mutate_value, error });
@@ -1935,7 +1939,7 @@ fn apply_effect<'a>(
                     let diagnostic = diagnostics::variable_accessed_before_declaration(
                         variable.as_deref(),
                         access_span,
-                        value.span,
+                        None,
                     );
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     apply_effect(
@@ -1955,7 +1959,7 @@ fn apply_effect<'a>(
                         _ => "value".to_string(),
                     };
                     let diagnostic =
-                        diagnostics::immutable_value(reason_str, &variable, value.span);
+                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
@@ -2424,9 +2428,6 @@ fn compute_effects_for_legacy_signature<'a>(
         let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);
         effects.push(AliasingEffect::Impure { place: *receiver, error });
     }
-
-    // TODO: check signature.known_incompatible and throw (TS line 2351-2370)
-    // This requires threading Result through apply_effect/apply_signature.
 
     // If the function is mutable only if operands are mutable, and all
     // arguments are immutable/non-mutating, short-circuit with simple aliasing.
@@ -3115,7 +3116,7 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> String {
         "Modifying a value returned from a function whose return value should not be mutated"
             .to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReactiveFunctionArgument) {
-        "Modifying component props or hook arguments is not allowed. Consider using a local variable instead".to_string()
+        "Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state".to_string()
     } else if abstract_value.reason.contains(&ValueReason::State) {
         "Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead".to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReducerState) {

@@ -10,9 +10,13 @@
 //! helpers translate byte offsets into terminal columns, accounting for tabs,
 //! ANSI escapes, and wide/combining Unicode graphemes.
 
-use std::str::{CharIndices, from_utf8};
+use std::{
+    iter::Peekable,
+    str::{CharIndices, from_utf8},
+};
 
-use unicode_segmentation::UnicodeSegmentation;
+use smallvec::SmallVec;
+use unicode_segmentation::{GraphemeIndices, UnicodeSegmentation};
 use unicode_width::UnicodeWidthStr;
 
 use super::{handler::GraphicalReportHandler, span::FancySpan};
@@ -86,13 +90,12 @@ impl Line<'_> {
 /// Iterator over the visual (terminal-column) width of each `char` in a line.
 ///
 /// ASCII text takes a fast path where every printable char is width 1. For
-/// non-ASCII text we pre-compute grapheme boundaries and only charge the
-/// grapheme's width to its first `char`, so combining marks contribute 0.
+/// non-ASCII text we lazily visit graphemes and only charge the grapheme's
+/// width to its first `char`, so combining marks contribute 0.
 /// ANSI escape sequences (`\x1b … m`) are consumed at zero width.
 struct CharWidthIterator<'a> {
     chars: CharIndices<'a>,
-    grapheme_boundaries: Option<Vec<(usize, usize)>>, // (byte_pos, width) - None for ASCII
-    current_grapheme_idx: usize,
+    graphemes: Option<Peekable<GraphemeIndices<'a>>>,
     column: usize,
     escaped: bool,
 }
@@ -110,17 +113,10 @@ impl Iterator for CharWidthIterator<'_> {
                 0
             }
             (false, _) => {
-                if let Some(ref boundaries) = self.grapheme_boundaries {
-                    // Unicode path: check if we're at a grapheme boundary
-                    if self.current_grapheme_idx < boundaries.len()
-                        && boundaries[self.current_grapheme_idx].0 == byte_pos
-                    {
-                        let width = boundaries[self.current_grapheme_idx].1;
-                        self.current_grapheme_idx += 1;
-                        width
-                    } else {
-                        0 // Not at a grapheme boundary
-                    }
+                if let Some(graphemes) = &mut self.graphemes {
+                    graphemes
+                        .next_if(|(pos, _)| *pos == byte_pos)
+                        .map_or(0, |(_, grapheme)| grapheme.width())
                 } else {
                     // ASCII path: all non-control chars are width 1
                     1
@@ -141,25 +137,9 @@ impl Iterator for CharWidthIterator<'_> {
 impl GraphicalReportHandler {
     /// Returns an iterator over the visual width of each character in a line.
     pub(super) fn line_visual_char_width(text: &str) -> impl Iterator<Item = usize> + '_ + use<'_> {
-        // Only compute grapheme boundaries for non-ASCII text
-        let grapheme_boundaries = if text.is_ascii() {
-            None
-        } else {
-            // Collect grapheme boundaries with their widths
-            Some(
-                text.grapheme_indices(true)
-                    .map(|(pos, grapheme)| (pos, grapheme.width()))
-                    .collect(),
-            )
-        };
+        let graphemes = (!text.is_ascii()).then(|| text.grapheme_indices(true).peekable());
 
-        CharWidthIterator {
-            chars: text.char_indices(),
-            grapheme_boundaries,
-            current_grapheme_idx: 0,
-            column: 0,
-            escaped: false,
-        }
+        CharWidthIterator { chars: text.char_indices(), graphemes, column: 0, escaped: false }
     }
 
     /// Returns the visual column position of a byte offset on a specific line.
@@ -203,7 +183,7 @@ impl GraphicalReportHandler {
     }
 
     /// Splits already-scanned span contents into [`Line`]s.
-    pub(super) fn get_lines<'a>(context_data: &SpanContents<'a>) -> Vec<Line<'a>> {
+    pub(super) fn get_lines<'a>(context_data: &SpanContents<'a>) -> SmallVec<[Line<'a>; 3]> {
         let context = from_utf8(context_data.data()).expect("Bad utf8 detected");
         let mut line = context_data.line();
         let base = context_data.span().start as usize;
@@ -213,7 +193,7 @@ impl GraphicalReportHandler {
         // Cap the hint by byte length because custom sources own this metadata.
         let capacity =
             context_data.line_count().saturating_sub(context_data.line()).max(1).min(bytes.len());
-        let mut lines = Vec::with_capacity(capacity);
+        let mut lines = SmallVec::with_capacity(capacity);
         let mut start = 0;
         for newline in memchr::memchr_iter(b'\n', bytes) {
             let end = newline + 1;
@@ -257,6 +237,13 @@ mod tests {
     use oxc_span::Span;
 
     type ExpectedLine<'a> = (usize, usize, usize, &'a str);
+
+    #[test]
+    fn visual_widths_preserve_grapheme_geometry() {
+        let widths =
+            GraphicalReportHandler::line_visual_char_width("e\u{301}火").collect::<Vec<_>>();
+        assert_eq!(widths, [1, 0, 2]);
+    }
 
     #[test]
     fn get_lines_preserves_line_geometry() {

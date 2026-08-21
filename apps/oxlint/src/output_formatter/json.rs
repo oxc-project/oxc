@@ -64,7 +64,7 @@ impl InternalFormatter for JsonOutputFormatter {
             })
             .collect();
 
-        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+        rules_info.sort_unstable_by_key(|rule| (rule.scope, rule.value));
 
         Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
     }

@@ -661,6 +661,7 @@ fn lower_inner<'a>(
     let self_binding = if let Some(name) = id
         && let Some(symbol_id) = scope.get_binding(function_scope, name.as_str())
         && scope.decl_kind(symbol_id) == DeclKind::FunctionExpression
+        && !scope.reference_ids(symbol_id).is_empty()
     {
         let identifier = builder.resolve_binding_with_span(name, symbol_id, id_span)?;
         Some(Place { identifier, effect: Effect::Unknown, reactive: false, span: id_span })
@@ -740,7 +741,7 @@ fn lower_inner<'a>(
             InstructionKind::Let,
             &param.pattern,
             value,
-            AssignmentStyle::Assignment,
+            AssignmentStyle::for_binding_pattern(&param.pattern),
         )?;
     }
 
@@ -757,7 +758,7 @@ fn lower_inner<'a>(
             InstructionKind::Let,
             &rest.rest.argument,
             place,
-            AssignmentStyle::Assignment,
+            AssignmentStyle::for_binding_pattern(&rest.rest.argument),
         )?;
     }
 
@@ -915,6 +916,7 @@ enum MemberProperty<'a> {
 struct LoweredMemberExpression<'a> {
     object: Place,
     property: MemberProperty<'a>,
+    computed: bool,
     property_span: Option<Span>,
     value: InstructionValue<'a>,
 }
@@ -945,12 +947,14 @@ fn lower_member_expression_impl<'a>(
             let value = InstructionValue::PropertyLoad {
                 object,
                 property: prop_literal,
+                computed: false,
                 property_span,
                 span,
             };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
+                computed: false,
                 property_span,
                 value,
             })
@@ -968,12 +972,14 @@ fn lower_member_expression_impl<'a>(
                 let value = InstructionValue::PropertyLoad {
                     object,
                     property: prop_literal,
+                    computed: true,
                     property_span,
                     span,
                 };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
+                    computed: true,
                     property_span,
                     value,
                 });
@@ -983,6 +989,7 @@ fn lower_member_expression_impl<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
+                computed: true,
                 property_span: property.span,
                 value,
             })
@@ -1003,6 +1010,7 @@ fn lower_member_expression_impl<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
+                computed: false,
                 property_span: None,
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
@@ -1107,15 +1115,14 @@ fn lower_type_cast_expression<'a>(
     Ok(InstructionValue::TypeCastExpression { value, cast: cast(type_annotation), span })
 }
 
-/// Lower a member-expression update target (oxc's member variants of
-/// `SimpleAssignmentTarget`) into a receiver place + property + load value,
-/// mirroring `lower_member_expression_impl`.
-fn lower_member_expression_from_simple_target<'a>(
+/// Lower a member-expression update target into a receiver place + property +
+/// load value, mirroring `lower_member_expression_impl`.
+fn lower_member_expression_for_update<'a>(
     builder: &mut HirBuilder<'a, '_>,
-    target: &oxc::SimpleAssignmentTarget<'a>,
+    target: &oxc::MemberExpression<'a>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
     match target {
-        oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
+        oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
@@ -1123,17 +1130,19 @@ fn lower_member_expression_from_simple_target<'a>(
             let value = InstructionValue::PropertyLoad {
                 object,
                 property: prop_literal,
+                computed: false,
                 property_span,
                 span,
             };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
+                computed: false,
                 property_span,
                 value,
             })
         }
-        oxc::SimpleAssignmentTarget::ComputedMemberExpression(m) => {
+        oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
@@ -1142,12 +1151,14 @@ fn lower_member_expression_from_simple_target<'a>(
                 let value = InstructionValue::PropertyLoad {
                     object,
                     property: prop_literal,
+                    computed: true,
                     property_span,
                     span,
                 };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
+                    computed: true,
                     property_span,
                     value,
                 });
@@ -1157,11 +1168,12 @@ fn lower_member_expression_from_simple_target<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
+                computed: true,
                 property_span: property.span,
                 value,
             })
         }
-        oxc::SimpleAssignmentTarget::PrivateFieldExpression(m) => {
+        oxc::MemberExpression::PrivateFieldExpression(m) => {
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             builder.record_error(
@@ -1172,12 +1184,10 @@ fn lower_member_expression_from_simple_target<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
+                computed: false,
                 property_span: None,
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
-        }
-        _ => {
-            unreachable!("lower_member_expression_from_simple_target called on a non-member target")
         }
     }
 }
@@ -1239,7 +1249,13 @@ fn lower_identifier_for_assignment<'a>(
                 builder.set_identifier_declaration_span(identifier, ident_span);
             }
             if binding_kind == BindingKind::Const && kind == InstructionKind::Reassign {
-                builder.record_error(diagnostics::const_reassignment(name.as_str(), span))?;
+                let declaration_span =
+                    symbol.and_then(|symbol_id| builder.declaration_span(symbol_id));
+                builder.record_error(diagnostics::const_reassignment(
+                    name.as_str(),
+                    span,
+                    declaration_span,
+                ))?;
                 return Ok(None);
             }
             Ok(Some(IdentifierForAssignment::Place(Place {
@@ -1280,6 +1296,17 @@ enum AssignmentStyle {
     Assignment,
     /// Destructuring assignment
     Destructure,
+}
+
+impl AssignmentStyle {
+    fn for_binding_pattern(pattern: &oxc::BindingPattern<'_>) -> Self {
+        match pattern {
+            oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
+                Self::Destructure
+            }
+            _ => Self::Assignment,
+        }
+    }
 }
 
 /// Assign `value` to a binding pattern (variable declaration / destructuring param).
@@ -1749,15 +1776,74 @@ fn lower_default_to_temp<'a>(
     Ok(temp)
 }
 
-/// Resolve a member-expression assignment target (oxc's member variants of
-/// `SimpleAssignmentTarget`) and store `value` into it, returning the store
-/// temporary. Mirrors the `PatternLike::MemberExpression` arm of the original
-/// `lower_assignment`.
+fn lower_identifier_assignment_target<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    span: Span,
+    kind: InstructionKind,
+    id: &oxc::IdentifierReference<'a>,
+    value: Place,
+) -> Result<Option<Place>, OxcDiagnostic> {
+    let result = lower_identifier_for_assignment(
+        builder,
+        span,
+        id.span,
+        kind,
+        id.name,
+        builder.scope().resolve_reference(id),
+    )?;
+    match result {
+        None => Ok(None),
+        Some(IdentifierForAssignment::Global { name }) => {
+            let temp = lower_value_to_temporary(
+                builder,
+                InstructionValue::StoreGlobal { name, value, span: Some(span) },
+            )?;
+            Ok(Some(temp))
+        }
+        Some(IdentifierForAssignment::Place(place)) => {
+            if builder.is_context_identifier(builder.scope().resolve_reference(id)) {
+                let is_hoisted = builder
+                    .scope()
+                    .resolve_reference(id)
+                    .map(|s| builder.environment().is_hoisted_identifier(s))
+                    .unwrap_or(false);
+                if kind == InstructionKind::Const && !is_hoisted {
+                    builder.record_error(
+                        diagnostics::syntax_expected_const_declaration_not_reassigned_2(span),
+                    )?;
+                }
+                let temp = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreContext {
+                        lvalue: LValue { place, kind },
+                        value,
+                        span: Some(span),
+                    },
+                )?;
+                Ok(Some(temp))
+            } else {
+                let temp = lower_value_to_temporary(
+                    builder,
+                    InstructionValue::StoreLocal {
+                        lvalue: LValue { place, kind },
+                        value,
+                        span: Some(span),
+                    },
+                )?;
+                Ok(Some(temp))
+            }
+        }
+    }
+}
+
+/// Resolve a member-expression assignment target and store `value` into it,
+/// returning the store temporary. Mirrors the `PatternLike::MemberExpression`
+/// arm of the original `lower_assignment`.
 fn lower_member_assignment_target<'a>(
     builder: &mut HirBuilder<'a, '_>,
     span: Span,
     kind: InstructionKind,
-    target: &oxc::SimpleAssignmentTarget<'a>,
+    target: &oxc::MemberExpression<'a>,
     value: Place,
 ) -> Result<Option<Place>, OxcDiagnostic> {
     // MemberExpression may only appear in an assignment expression (Reassign).
@@ -1768,13 +1854,14 @@ fn lower_member_assignment_target<'a>(
         return Ok(None);
     }
     match target {
-        oxc::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+        oxc::MemberExpression::StaticMemberExpression(member) => {
             let object = lower_expression_to_temporary(builder, &member.object)?;
             let temp = lower_value_to_temporary(
                 builder,
                 InstructionValue::PropertyStore {
                     object,
                     property: PropertyLiteral::String(member.property.name),
+                    computed: false,
                     property_span: Some(member.property.span),
                     value,
                     span: Some(span),
@@ -1782,7 +1869,7 @@ fn lower_member_assignment_target<'a>(
             )?;
             Ok(Some(temp))
         }
-        oxc::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+        oxc::MemberExpression::ComputedMemberExpression(member) => {
             let object = lower_expression_to_temporary(builder, &member.object)?;
             // A numeric computed index is treated as a PropertyStore (matches the
             // original `member.computed && NumericLiteral` branch).
@@ -1792,6 +1879,7 @@ fn lower_member_assignment_target<'a>(
                     InstructionValue::PropertyStore {
                         object,
                         property: PropertyLiteral::Number(FloatValue::new(num.value)),
+                        computed: true,
                         property_span: Some(num.span),
                         value,
                         span: Some(span),
@@ -1811,7 +1899,7 @@ fn lower_member_assignment_target<'a>(
             )?;
             Ok(Some(temp))
         }
-        oxc::SimpleAssignmentTarget::PrivateFieldExpression(member) => {
+        oxc::MemberExpression::PrivateFieldExpression(member) => {
             // Babel modeled `a.#b = v` as a non-computed MemberExpression with a
             // PrivateName property; the original `lower_assignment` member arm hit
             // the generic property `_` branch and bailed with this Todo.
@@ -1825,7 +1913,6 @@ fn lower_member_assignment_target<'a>(
             )?;
             Ok(Some(temp))
         }
-        _ => unreachable!("lower_member_assignment_target called on a non-member target"),
     }
 }
 
@@ -1850,6 +1937,76 @@ fn assignment_target_is_local_identifier<'a>(
     }
 }
 
+fn lower_typed_assignment_target_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    span: Span,
+    kind: InstructionKind,
+    expression: &oxc::Expression<'a>,
+    value: Place,
+) -> Result<Option<Place>, OxcDiagnostic> {
+    let expression = expression.get_inner_expression();
+    if let Some(member) = expression.as_member_expression() {
+        return lower_member_assignment_target(builder, span, kind, member, value);
+    }
+
+    match expression {
+        oxc::Expression::Identifier(id) => {
+            lower_identifier_assignment_target(builder, span, kind, id, value)
+        }
+        _ => unreachable!("TypeScript wrapper contains a non-assignable expression"),
+    }
+}
+
+enum SimpleAssignmentTargetRef<'b, 'a> {
+    Identifier(&'b oxc::IdentifierReference<'a>),
+    Member(&'b oxc::MemberExpression<'a>),
+}
+
+/// Unwrap TypeScript-only assignment-target wrappers while retaining the
+/// underlying identifier or member reference used at runtime.
+fn simple_assignment_target_ref<'b, 'a>(
+    target: &'b oxc::AssignmentTarget<'a>,
+) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
+    target.as_simple_assignment_target().and_then(simple_assignment_target_ref_from_simple)
+}
+
+fn simple_assignment_target_ref_from_simple<'b, 'a>(
+    target: &'b oxc::SimpleAssignmentTarget<'a>,
+) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
+    match target {
+        oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
+            Some(SimpleAssignmentTargetRef::Identifier(id))
+        }
+        oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
+        | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
+        | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+            Some(SimpleAssignmentTargetRef::Member(target.to_member_expression()))
+        }
+        oxc::SimpleAssignmentTarget::TSAsExpression(node) => {
+            simple_assignment_target_expression_ref(&node.expression)
+        }
+        oxc::SimpleAssignmentTarget::TSSatisfiesExpression(node) => {
+            simple_assignment_target_expression_ref(&node.expression)
+        }
+        oxc::SimpleAssignmentTarget::TSNonNullExpression(node) => {
+            simple_assignment_target_expression_ref(&node.expression)
+        }
+        oxc::SimpleAssignmentTarget::TSTypeAssertion(node) => {
+            simple_assignment_target_expression_ref(&node.expression)
+        }
+    }
+}
+
+fn simple_assignment_target_expression_ref<'b, 'a>(
+    expression: &'b oxc::Expression<'a>,
+) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
+    let expression = expression.get_inner_expression();
+    match expression {
+        oxc::Expression::Identifier(id) => Some(SimpleAssignmentTargetRef::Identifier(id)),
+        _ => expression.as_member_expression().map(SimpleAssignmentTargetRef::Member),
+    }
+}
+
 /// Assign `value` to an assignment-expression target (`x`, `a.b`, `[a, b]`,
 /// `{a, b}`). Faithful translation of the original `lower_assignment` for the
 /// `PatternLike` cases that came from `AssignmentExpression.left` / destructuring
@@ -1864,65 +2021,19 @@ fn lower_assignment_target<'a>(
 ) -> Result<Option<Place>, OxcDiagnostic> {
     match target {
         oxc::AssignmentTarget::AssignmentTargetIdentifier(id) => {
-            let result = lower_identifier_for_assignment(
-                builder,
-                span,
-                id.span,
-                kind,
-                id.name,
-                builder.scope().resolve_reference(id),
-            )?;
-            match result {
-                None => Ok(None),
-                Some(IdentifierForAssignment::Global { name }) => {
-                    let temp = lower_value_to_temporary(
-                        builder,
-                        InstructionValue::StoreGlobal { name, value, span: Some(span) },
-                    )?;
-                    Ok(Some(temp))
-                }
-                Some(IdentifierForAssignment::Place(place)) => {
-                    if builder.is_context_identifier(builder.scope().resolve_reference(id)) {
-                        let is_hoisted = builder
-                            .scope()
-                            .resolve_reference(id)
-                            .map(|s| builder.environment().is_hoisted_identifier(s))
-                            .unwrap_or(false);
-                        if kind == InstructionKind::Const && !is_hoisted {
-                            builder.record_error(
-                                diagnostics::syntax_expected_const_declaration_not_reassigned_2(
-                                    span,
-                                ),
-                            )?;
-                        }
-                        let temp = lower_value_to_temporary(
-                            builder,
-                            InstructionValue::StoreContext {
-                                lvalue: LValue { place, kind },
-                                value,
-                                span: Some(span),
-                            },
-                        )?;
-                        Ok(Some(temp))
-                    } else {
-                        let temp = lower_value_to_temporary(
-                            builder,
-                            InstructionValue::StoreLocal {
-                                lvalue: LValue { place, kind },
-                                value,
-                                span: Some(span),
-                            },
-                        )?;
-                        Ok(Some(temp))
-                    }
-                }
-            }
+            lower_identifier_assignment_target(builder, span, kind, id, value)
         }
         oxc::AssignmentTarget::StaticMemberExpression(_)
         | oxc::AssignmentTarget::ComputedMemberExpression(_)
         | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
             let simple = target.as_simple_assignment_target().unwrap();
-            lower_member_assignment_target(builder, span, kind, simple, value)
+            lower_member_assignment_target(
+                builder,
+                span,
+                kind,
+                simple.to_member_expression(),
+                value,
+            )
         }
         oxc::AssignmentTarget::ArrayAssignmentTarget(pattern) => {
             let alloc = builder.environment().allocator;
@@ -2356,13 +2467,18 @@ fn lower_assignment_target<'a>(
             }
             Ok(Some(temporary))
         }
-        // TS assignment-target wrappers (e.g. `(x as T) = ...`). The original
-        // recorded the TS-faithful Todo once in find_context_identifiers and
-        // returned None here.
-        oxc::AssignmentTarget::TSAsExpression(_)
-        | oxc::AssignmentTarget::TSSatisfiesExpression(_)
-        | oxc::AssignmentTarget::TSNonNullExpression(_)
-        | oxc::AssignmentTarget::TSTypeAssertion(_) => Ok(None),
+        oxc::AssignmentTarget::TSAsExpression(node) => {
+            lower_typed_assignment_target_expression(builder, span, kind, &node.expression, value)
+        }
+        oxc::AssignmentTarget::TSSatisfiesExpression(node) => {
+            lower_typed_assignment_target_expression(builder, span, kind, &node.expression, value)
+        }
+        oxc::AssignmentTarget::TSNonNullExpression(node) => {
+            lower_typed_assignment_target_expression(builder, span, kind, &node.expression, value)
+        }
+        oxc::AssignmentTarget::TSTypeAssertion(node) => {
+            lower_typed_assignment_target_expression(builder, span, kind, &node.expression, value)
+        }
     }
 }
 
@@ -3788,18 +3904,6 @@ fn lower_expression<'a>(
             // instead lowers the tag plus every quasi and every `${...}`
             // subexpression (mirroring `TemplateLiteral`). This is a deliberate
             // divergence from the TS reference.
-            //
-            // We still bail when any quasi's cooked value differs from its raw value
-            // (e.g. escape sequences or graphql templates), matching upstream's
-            // single-quasi behavior — the HIR only round-trips raw==cooked quasis.
-            if tagged.quasi.quasis.iter().any(|q| {
-                q.value.raw.as_str() != q.value.cooked.map(|c| c.to_string()).unwrap_or_default()
-            }) {
-                builder.record_error(
-                    diagnostics::todo_build_hir_lower_expression_handle_tagged_template_where_cooked_value_different_from_raw_value(span),
-                )?;
-                return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
-            }
             // Evaluation order: the tag is evaluated first, then each interpolated
             // subexpression left-to-right.
             let tag = lower_expression_to_temporary(builder, &tagged.tag)?;
@@ -3851,9 +3955,13 @@ fn lower_expression<'a>(
         }
         oxc::Expression::ClassExpression(cls) => {
             let span = Some(cls.span);
+            let diagnostic_span = Some(cls.id.as_ref().map_or_else(
+                || Span::new(cls.span.start, cls.span.start.saturating_add(5).min(cls.span.end)),
+                |id| Span::new(cls.span.start, id.span.end),
+            ));
             builder.record_error(
                 diagnostics::todo_build_hir_lower_expression_handle_class_expression_expressions(
-                    span,
+                    diagnostic_span,
                 ),
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
@@ -3911,21 +4019,19 @@ fn lower_expression<'a>(
         }
         oxc::Expression::UpdateExpression(update) => {
             let span = Some(update.span);
-            match &update.argument {
-                oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
-                | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
-                | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
+            match simple_assignment_target_ref_from_simple(&update.argument) {
+                Some(SimpleAssignmentTargetRef::Member(member)) => {
                     let binary_op = match update.operator {
                         oxc::UpdateOperator::Increment => BinaryOperator::Addition,
                         oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
                     };
                     // Use the member expression's span (not the update expression's)
                     // to match TS behavior where the inner operations use leftExpr.node.span
-                    let member_span = Some(update.argument.span());
-                    let lowered =
-                        lower_member_expression_from_simple_target(builder, &update.argument)?;
+                    let member_span = Some(member.span());
+                    let lowered = lower_member_expression_for_update(builder, member)?;
                     let object = lowered.object;
                     let lowered_property = lowered.property;
+                    let computed = lowered.computed;
                     let property_span = lowered.property_span;
                     let prev_value = lower_value_to_temporary(builder, lowered.value)?;
 
@@ -3955,6 +4061,7 @@ fn lower_expression<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: prop_literal,
+                                computed,
                                 property_span,
                                 value: updated,
                                 span: member_span,
@@ -3975,7 +4082,7 @@ fn lower_expression<'a>(
                     let result_place = if update.prefix { new_value_place } else { prev_value };
                     Ok(InstructionValue::LoadLocal { place: result_place, span: result_place.span })
                 }
-                oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
                     let symbol = builder.scope().resolve_reference(ident);
                     if builder.is_context_identifier(symbol) {
                         builder.record_error(
@@ -4043,7 +4150,7 @@ fn lower_expression<'a>(
                         })
                     }
                 }
-                _ => {
+                None => {
                     builder.record_error(
                         diagnostics::todo_update_expression_unsupported_argument_type(span),
                     )?;
@@ -4184,6 +4291,72 @@ fn lower_expression<'a>(
     }
 }
 
+/// Lower a member assignment while preserving JavaScript's evaluation order:
+/// receiver, computed key, then right-hand side.
+fn lower_member_assignment_expression<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    member: &oxc::MemberExpression<'a>,
+    right: &oxc::Expression<'a>,
+) -> Result<InstructionValue<'a>, OxcDiagnostic> {
+    let member_span = Some(member.span());
+    let temp = match member {
+        oxc::MemberExpression::StaticMemberExpression(member) => {
+            let object = lower_expression_to_temporary(builder, &member.object)?;
+            let value = lower_expression_to_temporary(builder, right)?;
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::PropertyStore {
+                    object,
+                    property: PropertyLiteral::String(member.property.name),
+                    computed: false,
+                    property_span: Some(member.property.span),
+                    value,
+                    span: member_span,
+                },
+            )?
+        }
+        oxc::MemberExpression::ComputedMemberExpression(member) => {
+            let object = lower_expression_to_temporary(builder, &member.object)?;
+            let property = match &member.expression {
+                oxc::Expression::NumericLiteral(num) => {
+                    MemberProperty::Literal(PropertyLiteral::Number(FloatValue::new(num.value)))
+                }
+                expression => {
+                    MemberProperty::Computed(lower_expression_to_temporary(builder, expression)?)
+                }
+            };
+            let value = lower_expression_to_temporary(builder, right)?;
+            match property {
+                MemberProperty::Literal(property) => lower_value_to_temporary(
+                    builder,
+                    InstructionValue::PropertyStore {
+                        object,
+                        property,
+                        computed: true,
+                        property_span: Some(member.expression.span()),
+                        value,
+                        span: member_span,
+                    },
+                )?,
+                MemberProperty::Computed(property) => lower_value_to_temporary(
+                    builder,
+                    InstructionValue::ComputedStore { object, property, value, span: member_span },
+                )?,
+            }
+        }
+        oxc::MemberExpression::PrivateFieldExpression(member) => {
+            let object = lower_expression_to_temporary(builder, &member.object)?;
+            let property = lower_private_name_to_temporary(builder, member.field.span)?;
+            let value = lower_expression_to_temporary(builder, right)?;
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::ComputedStore { object, property, value, span: member_span },
+            )?
+        }
+    };
+    Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
+}
+
 /// Lower an `AssignmentExpression`. Faithful translation of the original
 /// `Expression::AssignmentExpression` arm, adapted to oxc's `AssignmentTarget`
 /// split. `=` handles identifier / member / destructuring targets; compound
@@ -4195,6 +4368,11 @@ fn lower_assignment_expression<'a>(
     let span = Some(assign.span);
 
     if matches!(assign.operator, oxc::AssignmentOperator::Assign) {
+        if let Some(SimpleAssignmentTargetRef::Member(member)) =
+            simple_assignment_target_ref(&assign.left)
+        {
+            return lower_member_assignment_expression(builder, member, &assign.right);
+        }
         match &assign.left {
             oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 let symbol = builder.scope().resolve_reference(ident);
@@ -4207,6 +4385,7 @@ fn lower_assignment_expression<'a>(
                             builder.record_error(diagnostics::const_reassignment(
                                 ident.name.as_str(),
                                 ident_span,
+                                symbol.and_then(|symbol_id| builder.declaration_span(symbol_id)),
                             ))?;
                             return Ok(InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
@@ -4254,73 +4433,6 @@ fn lower_assignment_expression<'a>(
                         Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
                     }
                 }
-            }
-            oxc::AssignmentTarget::StaticMemberExpression(_)
-            | oxc::AssignmentTarget::ComputedMemberExpression(_)
-            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
-                let simple = assign.left.as_simple_assignment_target().unwrap();
-                let right = lower_expression_to_temporary(builder, &assign.right)?;
-                let left_span = Some(simple.span());
-                let temp = match simple {
-                    oxc::SimpleAssignmentTarget::StaticMemberExpression(member) => {
-                        let object = lower_expression_to_temporary(builder, &member.object)?;
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::PropertyStore {
-                                object,
-                                property: PropertyLiteral::String(member.property.name),
-                                property_span: Some(member.property.span),
-                                value: right,
-                                span: left_span,
-                            },
-                        )?
-                    }
-                    oxc::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
-                        let object = lower_expression_to_temporary(builder, &member.object)?;
-                        if let oxc::Expression::NumericLiteral(num) = &member.expression {
-                            lower_value_to_temporary(
-                                builder,
-                                InstructionValue::PropertyStore {
-                                    object,
-                                    property: PropertyLiteral::Number(FloatValue::new(num.value)),
-                                    property_span: Some(num.span),
-                                    value: right,
-                                    span: left_span,
-                                },
-                            )?
-                        } else {
-                            let prop = lower_expression_to_temporary(builder, &member.expression)?;
-                            lower_value_to_temporary(
-                                builder,
-                                InstructionValue::ComputedStore {
-                                    object,
-                                    property: prop,
-                                    value: right,
-                                    span: left_span,
-                                },
-                            )?
-                        }
-                    }
-                    oxc::SimpleAssignmentTarget::PrivateFieldExpression(member) => {
-                        // Babel modeled `a.#b = x` as a non-computed MemberExpression
-                        // whose property is a PrivateName; the original fell to the
-                        // generic property arm, lowering the PrivateName (which bails
-                        // to an undefined temp) and emitting a ComputedStore.
-                        let object = lower_expression_to_temporary(builder, &member.object)?;
-                        let prop = lower_private_name_to_temporary(builder, member.field.span)?;
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::ComputedStore {
-                                object,
-                                property: prop,
-                                value: right,
-                                span: left_span,
-                            },
-                        )?
-                    }
-                    _ => unreachable!(),
-                };
-                Ok(InstructionValue::LoadLocal { place: temp, span: temp.span })
             }
             _ => {
                 // Destructuring assignment
@@ -4371,8 +4483,8 @@ fn lower_assignment_expression<'a>(
             }
         };
 
-        match &assign.left {
-            oxc::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+        match simple_assignment_target_ref(&assign.left) {
+            Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
                 let ident_span = ident.span;
                 let symbol = builder.scope().resolve_reference(ident);
                 let left_place = lower_identifier(builder, ident.name, ident_span, symbol)?;
@@ -4444,14 +4556,12 @@ fn lower_assignment_expression<'a>(
                     }
                 }
             }
-            oxc::AssignmentTarget::StaticMemberExpression(_)
-            | oxc::AssignmentTarget::ComputedMemberExpression(_)
-            | oxc::AssignmentTarget::PrivateFieldExpression(_) => {
-                let simple = assign.left.as_simple_assignment_target().unwrap();
-                let member_span = Some(simple.span());
-                let lowered = lower_member_expression_from_simple_target(builder, simple)?;
+            Some(SimpleAssignmentTargetRef::Member(member)) => {
+                let member_span = Some(member.span());
+                let lowered = lower_member_expression(builder, member)?;
                 let object = lowered.object;
                 let lowered_property = lowered.property;
+                let computed = lowered.computed;
                 let property_span = lowered.property_span;
                 let current_value = lower_value_to_temporary(builder, lowered.value)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
@@ -4468,6 +4578,7 @@ fn lower_assignment_expression<'a>(
                     MemberProperty::Literal(prop_literal) => Ok(InstructionValue::PropertyStore {
                         object,
                         property: prop_literal,
+                        computed,
                         property_span,
                         value: result,
                         span: member_span,
@@ -4480,7 +4591,7 @@ fn lower_assignment_expression<'a>(
                     }),
                 }
             }
-            _ => {
+            None => {
                 builder.record_error(
                     diagnostics::todo_compound_assignment_complex_pattern_not_yet_supported(span),
                 )?;
@@ -4522,14 +4633,7 @@ fn lower_jsx_element_expr<'a>(
             oxc::JSXAttributeItem::Attribute(attr) => {
                 // Get the attribute name
                 let prop_name = match &attr.name {
-                    oxc::JSXAttributeName::Identifier(id) => {
-                        let name = id.name.as_str();
-                        if name.contains(':') {
-                            builder
-                                .record_error(diagnostics::jsx_attribute_colon(name, id.span))?;
-                        }
-                        Ident::from(name)
-                    }
+                    oxc::JSXAttributeName::Identifier(id) => Ident::from(id.name.as_str()),
                     oxc::JSXAttributeName::NamespacedName(ns) => format_ident!(
                         builder.environment().allocator,
                         "{}:{}",
@@ -4827,6 +4931,7 @@ fn lower_jsx_member_expression<'a>(
     let value = InstructionValue::PropertyLoad {
         object,
         property: PropertyLiteral::String(Ident::from(prop_name)),
+        computed: false,
         property_span: Some(expr.property.span),
         span: expr_span,
     };
@@ -5429,7 +5534,11 @@ fn lower_object_method<'a>(
             oxc::PropertyKind::Set => "set",
             oxc::PropertyKind::Init => "method",
         };
-        builder.record_error(diagnostics::unsupported_object_method(kind_str, method.span))?;
+        let kind_span = Span::new(
+            method.span.start,
+            method.span.start.saturating_add(kind_str.len() as u32).min(method.span.end),
+        );
+        builder.record_error(diagnostics::unsupported_object_method(kind_str, kind_span))?;
         return Ok(None);
     }
 
@@ -5481,6 +5590,13 @@ fn lower_object_property_key<'a>(
                 span: Some(lit.span),
             }))
         }
+        // BigInt property keys are coerced to their canonical decimal string at
+        // runtime. Preserve that value rather than the source spelling so keys
+        // such as `0x10n` and `16n` remain equivalent.
+        oxc::PropertyKey::BigIntLiteral(lit) if !computed => Ok(Some(ObjectPropertyKey::String {
+            name: Ident::from(lit.value.as_str()),
+            span: Some(lit.span),
+        })),
         _ if computed => {
             let place = lower_expression_to_temporary(builder, key.to_expression())?;
             Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
@@ -5510,9 +5626,18 @@ fn lower_reorderable_expression<'a>(
     expr: &oxc::Expression<'a>,
 ) -> Result<Place, OxcDiagnostic> {
     if !is_reorderable_expression(builder, expr, true) {
+        let diagnostic_span = match expr {
+            oxc::Expression::FunctionExpression(function) => {
+                FunctionNode::Function(function).diagnostic_span()
+            }
+            oxc::Expression::ArrowFunctionExpression(arrow) => {
+                FunctionNode::Arrow(arrow).diagnostic_span()
+            }
+            _ => expr.span(),
+        };
         builder.record_error(diagnostics::unsafe_reorderable_expression(
             expression_type_name(expr),
-            expr.span(),
+            diagnostic_span,
         ))?;
     }
     lower_expression_to_temporary(builder, expr)
@@ -6083,8 +6208,9 @@ fn lower_statement<'a>(
             let test_block_id = test_block.id;
 
             if for_of.r#await {
+                let for_await_span = Some(Span::new(for_of.span.start, left_span.start));
                 builder.record_error(
-                    diagnostics::todo_build_hir_lower_statement_handle_await_loops(span),
+                    diagnostics::todo_build_hir_lower_statement_handle_await_loops(for_await_span),
                 )?;
                 return Ok(());
             }
@@ -6235,6 +6361,14 @@ fn lower_statement<'a>(
         }
         oxc::Statement::TryStatement(try_stmt) => {
             let span = Some(try_stmt.span);
+            let try_keyword_span = Some(Span::new(
+                try_stmt.span.start,
+                try_stmt.span.start.saturating_add(3).min(try_stmt.span.end),
+            ));
+            let finally_keyword_span = try_stmt
+                .finalizer
+                .as_ref()
+                .map(|finalizer| Span::new(try_stmt.block.span.end, finalizer.span.start));
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
 
@@ -6242,15 +6376,20 @@ fn lower_statement<'a>(
                 Some(h) => h,
                 None => {
                     builder.record_error(
-                        diagnostics::todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(span),
+                        diagnostics::todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(
+                            try_keyword_span,
+                            finally_keyword_span,
+                        ),
                     )?;
                     return Ok(());
                 }
             };
 
-            if try_stmt.finalizer.is_some() {
+            if let Some(finalizer) = &try_stmt.finalizer {
+                let finalizer_clause_span =
+                    Some(Span::new(handler_clause.span.end, finalizer.span.start));
                 builder.record_error(
-                    diagnostics::todo_build_hir_lower_statement_handle_try_statement_finalizer_finally_clause(span),
+                    diagnostics::todo_build_hir_lower_statement_handle_try_statement_finalizer_finally_clause(finalizer_clause_span),
                 )?;
             }
 
@@ -6536,19 +6675,13 @@ fn lower_variable_declaration<'a>(
     for declarator in &var_decl.declarations {
         if let Some(init) = &declarator.init {
             let value = lower_expression_to_temporary(builder, init)?;
-            let assign_style = match &declarator.id {
-                oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
-                    AssignmentStyle::Destructure
-                }
-                _ => AssignmentStyle::Assignment,
-            };
             lower_binding_assignment(
                 builder,
                 var_decl.span,
                 kind,
                 &declarator.id,
                 value,
-                assign_style,
+                AssignmentStyle::for_binding_pattern(&declarator.id),
             )?;
         } else if let oxc::BindingPattern::BindingIdentifier(id) = &declarator.id {
             // No init: emit DeclareLocal or DeclareContext

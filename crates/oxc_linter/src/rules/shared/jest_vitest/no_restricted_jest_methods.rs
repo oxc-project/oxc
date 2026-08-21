@@ -69,8 +69,7 @@ pub struct NoRestrictedTestMethodsConfig {
 
 impl NoRestrictedTestMethodsConfig {
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value.clone())
-            .map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value.clone()).map(DefaultRuleConfig::into_inner)
     }
 
     pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {

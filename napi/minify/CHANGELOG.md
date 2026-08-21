@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-18
+
+### 🚀 Features
+
+- a169e4a napi/minify: Expose property name mangling options (#24741) (Dunqing)
+- 2f5cdb1 minifier: Add property name mangling (#24740) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 241c559 napi/minify: Accept RegExp for property filters (#25827) (Dunqing)
+- db44651 napi: Disable reuseWorker in browser bindings (#25640) (leaysgur)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

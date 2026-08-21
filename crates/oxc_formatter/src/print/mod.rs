@@ -40,6 +40,9 @@ pub use arrow_function_expression::{
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use function::FormatFunctionOptions;
+pub use union_type::{
+    alias_union_breaks_after_operator, is_trailing_own_line_jsdoc_comment, type_alias_left_end,
+};
 
 use cow_utils::CowUtils;
 
@@ -2174,5 +2177,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSDocUnknownType> {
-    fn write(&self, _f: &mut JsFormatter<'_, 'a>) {}
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, "?");
+    }
 }

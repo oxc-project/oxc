@@ -412,6 +412,27 @@ pub(crate) mod jest {
 macro_rules! declare_react_compiler_lint {
     (
         $(#[$intro:meta])*
+        unlinked_upstream = $upstream_rule:literal,
+        $(#[$rest:meta])*
+        $name:ident,
+        react,
+        $category:ident,
+        $($options:tt)*
+    ) => {
+        oxc_macros::declare_oxc_lint!(
+            $(#[$intro])*
+            #[doc = "Powered by the React Compiler, which runs once per file and is shared"]
+            #[doc = "with the other React Compiler rules. Port of"]
+            #[doc = concat!("`react-hooks/", $upstream_rule, "`.")]
+            $(#[$rest])*
+            $name,
+            react,
+            $category,
+            $($options)*
+        );
+    };
+    (
+        $(#[$intro:meta])*
         upstream = $upstream_rule:literal,
         $(#[$rest:meta])*
         $name:ident,
@@ -444,7 +465,6 @@ pub(crate) mod react {
     pub mod button_has_type;
     pub mod capitalized_calls;
     pub mod checked_requires_onchange_or_readonly;
-    pub mod config;
     pub mod display_name;
     pub mod error_boundaries;
     pub mod exhaustive_deps;
@@ -454,7 +474,6 @@ pub(crate) mod react {
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
     pub mod function_component_definition;
-    pub mod gating;
     pub mod globals;
     pub mod hook_use_state;
     pub mod hooks;

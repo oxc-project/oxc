@@ -47,9 +47,11 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
     // Then record the top-level reassignment error if any
     if let Some(reassignment_place) = reassignment {
         let variable_name = format_variable_name(&reassignment_place, &env.identifiers);
+        let declaration_span = env.identifiers[reassignment_place.identifier].span;
         env.record_diagnostic(diagnostics::reassigned_after_render(
             &variable_name,
             reassignment_place.span,
+            declaration_span,
         ));
     }
 }
@@ -129,6 +131,7 @@ fn get_context_reassignment(
                             diagnostics.push(diagnostics::reassigned_in_async_function(
                                 &variable_name,
                                 reassignment_place.span,
+                                identifiers[reassignment_place.identifier].span,
                             ));
                             // Return null (don't propagate further) — matches TS behavior
                             return None;
