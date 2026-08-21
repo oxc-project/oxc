@@ -451,37 +451,42 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
-  if (location === LOCATION_NAMED) {
-    let name: string | undefined;
-    const printedName = typeof node.name === "string" ? node.name : undefined;
-    if (printedName !== undefined) {
-      // Almost every identifier is printed exactly as it appeared in the source. Avoid scanning it
-      // with Unicode property regexps or allocating a source substring in that common case.
-      const nameEnd = start + printedName.length;
-      const originalName =
-        printedName.length > 0
-        && end <= sourceText.length
-        && nameEnd <= end
-        && sourceText.startsWith(printedName, start)
-        && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
-          ? printedName
-          : originalNameFromSource(sourceText, node, start, end);
+  if (location === LOCATION_NAMED && typeof node.name === "string") {
+    // A mapping carries a name only when the identifier printed differs from the one in the source.
+    // When possible, the mapping records the source spelling; if the source range is invalid, it falls back to the printed name.
+    // Almost every identifier is printed exactly as it appeared, so we do a first quick check and only fall back to scanning with Unicode property regexps in rare cases.
+    //
+    // A span can reach past the name it begins with, since a TypeScript annotation is absorbed into it,
+    // so a match has to be followed by a character which cannot continue an identifier.
+    //
+    // This check is one-sided.
+    // * When `matchesSource === true`, the source definitely has the same name that was printed,
+    //   and the mapping needs no name recorded.
+    // * When `matchesSource === false`, nothing is settled yet.
+    //   It could be a genuine rename, or could be a Unicode escape (`\u0061` printed as `a`),
+    //   or a non-ASCII character after the name, which `isDefinitelyIdentifierBoundary` will not classify.
+    const printedName = node.name;
+    const nameEnd = start + printedName.length;
+    const matchesSource =
+      printedName.length > 0
+      && end <= sourceText.length
+      && nameEnd <= end
+      && sourceText.startsWith(printedName, start)
+      && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)));
+
+    if (!matchesSource) {
+      // Read the name out of the source.
+      // We can use it for a definitive comparison, which the quick check above couldn't.
+      const originalName = originalNameFromSource(sourceText, node, start, end);
 
       // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
       // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
-      name =
-        originalName === undefined
-          ? printedName
-          : originalName === printedName
-            ? undefined
-            : originalName;
-    } else {
-      name = printedName;
-    }
-
-    if (name !== undefined) {
-      const mappingIndex = state.mapPositions.length >> 1;
-      (state.mapNames ??= []).push(mappingIndex, name);
+      if (originalName !== printedName) {
+        (state.mapNames ??= []).push(
+          state.mapPositions.length >> 1,
+          originalName === undefined ? printedName : originalName,
+        );
+      }
     }
   }
 
