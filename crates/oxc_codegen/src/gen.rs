@@ -14,6 +14,7 @@ use crate::{
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     cjs_module_lexer,
     comment::AnnotationKind,
+    typescript,
 };
 
 /// Generate source code for an AST node.
@@ -45,6 +46,7 @@ pub trait GenExpr: GetSpan {
 impl Gen for Program<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.is_jsx = self.source_type.is_jsx();
+        p.is_typescript = self.source_type.is_typescript();
 
         // Allow for inserting comments to the top of the file.
         p.print_comments_at(0);
@@ -1641,8 +1643,15 @@ impl Gen for SpreadElement<'_> {
 }
 
 impl Gen for ArrayExpression<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         let is_multi_line = self.elements.len() > 2;
+        let type_argument_list = typescript::TypeArgumentList::new(
+            p.is_typescript,
+            &self.elements,
+            ArrayExpressionElement::as_expression,
+            Precedence::Comma,
+            Context::empty(),
+        );
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         if is_multi_line {
@@ -1658,7 +1667,13 @@ impl Gen for ArrayExpression<'_> {
             } else if i != 0 {
                 p.print_soft_space();
             }
-            item.print(p, ctx);
+            let expression = match item {
+                ArrayExpressionElement::SpreadElement(element) => Some(&element.argument),
+                ArrayExpressionElement::Elision(_) => None,
+                _ => Some(item.to_expression()),
+            };
+            let precedence = type_argument_list.precedence_for(i, expression);
+            p.print_array_element(item, precedence);
             if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
                 p.print_comma();
             }
@@ -2279,7 +2294,22 @@ impl Gen for AssignmentTargetRest<'_> {
 impl GenExpr for SequenceExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
-            p.print_expressions(&self.expressions, Precedence::Lowest, ctx.and_forbid_call(false));
+            let expression_ctx = ctx.and_forbid_call(false);
+            let type_argument_list = typescript::TypeArgumentList::new(
+                p.is_typescript,
+                &self.expressions,
+                |expression| Some(expression),
+                Precedence::Lowest,
+                expression_ctx,
+            );
+            for (index, expression) in self.expressions.iter().enumerate() {
+                if index > 0 {
+                    p.print_comma();
+                    p.print_soft_space();
+                }
+                let precedence = type_argument_list.precedence_for(index, Some(expression));
+                expression.print_expr(p, precedence, expression_ctx);
+            }
         });
     }
 }
@@ -2287,6 +2317,15 @@ impl GenExpr for SequenceExpression<'_> {
 impl GenExpr for ImportExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
+        let expressions = [Some(&self.source), self.options.as_ref()];
+        let expressions = &expressions[..if self.options.is_some() { 2 } else { 1 }];
+        let type_argument_list = typescript::TypeArgumentList::new(
+            p.is_typescript,
+            expressions,
+            |expression| *expression,
+            Precedence::Comma,
+            Context::empty(),
+        );
 
         let has_comment_before_right_paren = p.options.print_annotation_comment()
             && self.span.end > 0
@@ -2317,7 +2356,11 @@ impl GenExpr for ImportExpression<'_> {
                 p.print_soft_newline();
                 p.print_indent();
             }
-            self.source.print_expr(p, Precedence::Comma, Context::empty());
+            self.source.print_expr(
+                p,
+                type_argument_list.precedence_for(0, Some(&self.source)),
+                Context::empty(),
+            );
             if let Some(options) = &self.options {
                 p.print_comma();
                 if has_comment {
@@ -2326,7 +2369,11 @@ impl GenExpr for ImportExpression<'_> {
                 } else {
                     p.print_soft_space();
                 }
-                options.gen_expr(p, Precedence::Comma, Context::empty());
+                options.gen_expr(
+                    p,
+                    type_argument_list.precedence_for(1, Some(options)),
+                    Context::empty(),
+                );
             }
             if has_comment {
                 // Handle `/* comment */);`
