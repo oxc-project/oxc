@@ -27,8 +27,8 @@ pub struct WorkerToolChangeResult {
     pub new_watchers: Vec<Registration>,
     /// Watchers that need to be unregistered
     pub removed_watchers: Vec<Unregistration>,
-    /// Optional message to be sent to the client, e.g., for misconfiguration
-    pub client_message: Option<ClientMessage>,
+    /// Optional messages to be sent to the client, e.g., for misconfiguration
+    pub client_messages: Vec<ClientMessage>,
 }
 
 /// A worker that manages the individual tool for a specific workspace
@@ -78,13 +78,13 @@ impl WorkspaceWorker {
     /// This should be called after the client has sent the workspace configuration.
     ///
     /// Returns an optional message to be sent to the client.
-    pub async fn start_worker(&self, options: serde_json::Value) -> Option<ClientMessage> {
+    pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
         let result = self.builder.build(&self.root_uri, options.clone());
         *self.tool.write().await = Some(result.tool);
 
         *self.options.lock().await = Some(options);
 
-        result.client_message
+        result.client_messages
     }
 
     /// Initialize file system watchers for the workspace.
@@ -332,7 +332,7 @@ impl WorkspaceWorker {
                 diagnostics: None,
                 new_watchers: registrations,
                 removed_watchers: unregistrations,
-                client_message: None, // TODO: Should we return a message to the client if the tool is not initialized?
+                client_messages: Vec::new(), // TODO: Should we return a message to the client if the tool is not initialized?
             };
         };
         let change = change_handler(tool, self.builder.as_ref());
@@ -352,7 +352,7 @@ impl WorkspaceWorker {
                     diagnostics: None,
                     new_watchers: registrations,
                     removed_watchers: unregistrations,
-                    client_message: change.client_message,
+                    client_messages: change.client_messages,
                 };
             };
 
@@ -377,7 +377,7 @@ impl WorkspaceWorker {
             diagnostics,
             new_watchers: registrations,
             removed_watchers: unregistrations,
-            client_message: change.client_message,
+            client_messages: change.client_messages,
         }
     }
 
@@ -724,11 +724,11 @@ mod tests {
         assert_eq!(result.removed_watchers.len(), 0);
         assert!(!needs_diagnostic_refresh);
         assert_eq!(
-            result.client_message,
-            Some(ClientMessage {
+            result.client_messages,
+            vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            })
+            }]
         );
     }
 
@@ -758,11 +758,11 @@ mod tests {
         assert_eq!(result.removed_watchers.len(), 0);
         assert!(!needs_diagnostic_refresh);
         assert_eq!(
-            result.client_message,
-            Some(ClientMessage {
+            result.client_messages,
+            vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            })
+            }]
         );
     }
 

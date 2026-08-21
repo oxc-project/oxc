@@ -163,17 +163,14 @@ impl LanguageServer for Backend {
                     .unwrap_or_default();
 
                 debug!("starting worker in initialize with options: {option:?}");
-                if let Some(message) = worker.start_worker(option).await {
-                    client_messages.push(message);
-                }
+
+                client_messages.extend(worker.start_worker(option).await);
             }
         }
 
-        if let Some(client_message) =
-            self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await
-        {
-            client_messages.push(client_message);
-        }
+        client_messages.extend(
+            self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await,
+        );
 
         if !client_messages.is_empty() {
             let _ = self.pending_initialization_messages.set(client_messages);
@@ -239,9 +236,7 @@ impl LanguageServer for Backend {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 debug!("starting worker in initialize with options: {configuration:?}");
-                if let Some(message) = worker.start_worker(configuration.clone()).await {
-                    client_messages.push(message);
-                }
+                client_messages.extend(worker.start_worker(configuration.clone()).await);
 
                 // run diagnostics for all known files in the workspace of the worker.
                 // This is necessary because the worker was not started before.
@@ -427,9 +422,7 @@ impl LanguageServer for Backend {
 
             removing_registrations.extend(result.removed_watchers);
             adding_registrations.extend(result.new_watchers);
-            if let Some(client_message) = result.client_message {
-                client_messages.push(client_message);
-            }
+            client_messages.extend(result.client_messages);
         }
 
         if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
@@ -496,9 +489,7 @@ impl LanguageServer for Backend {
                 }
                 removing_registrations.extend(result.removed_watchers);
                 adding_registrations.extend(result.new_watchers);
-                if let Some(client_message) = result.client_message {
-                    client_messages.push(client_message);
-                }
+                client_messages.extend(result.client_messages);
             }
         }
 
@@ -580,9 +571,7 @@ impl LanguageServer for Backend {
             let worker = self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone());
             let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
-            if let Some(message) = worker.start_worker(options.clone()).await {
-                client_messages.push(message);
-            }
+            client_messages.extend(worker.start_worker(options.clone()).await);
             added_registrations.extend(worker.init_watchers().await);
             new_workers.push(worker);
         }
@@ -706,7 +695,7 @@ impl LanguageServer for Backend {
             let diagnostic_mode =
                 capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
             let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
-            let (registrations, client_message) = self
+            let (registrations, client_messages) = self
                 .worker_manager
                 .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
                 .await;
@@ -717,8 +706,8 @@ impl LanguageServer for Backend {
                 warn!("registering file watchers for single-file workspace failed: {err}");
             }
 
-            if let Some(client_message) = client_message {
-                self.client.show_message(client_message.r#type, client_message.message).await;
+            for message in client_messages {
+                self.client.show_message(message.r#type, message.message).await;
             }
         }
 

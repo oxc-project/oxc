@@ -74,8 +74,8 @@ impl ServerLinterBuilder {
     }
 
     /// Creates a new `ServerLinter` instance based on the provided root URI and options.
-    /// Returns a tuple containing the `ServerLinter` instance and an optional message to be sent to the client.
-    /// This message will be used to inform about misconfiguration.
+    /// Returns a tuple containing the `ServerLinter` instance and optional messages to be sent to the client.
+    /// These messages will be used to inform about misconfiguration.
     ///
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
@@ -83,7 +83,7 @@ impl ServerLinterBuilder {
         &self,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> (ServerLinter, Option<ClientMessage>) {
+    ) -> (ServerLinter, Vec<ClientMessage>) {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -254,7 +254,7 @@ impl ServerLinterBuilder {
                 lint_options.report_unused_directive,
                 options.rules_customization,
             ),
-            None,
+            Vec::new(),
         )
     }
 }
@@ -301,8 +301,8 @@ impl ToolBuilder for ServerLinterBuilder {
     }
 
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
-        let (tool, client_message) = self.build(root_uri, options);
-        ToolBuildResult { tool: Box::new(tool), client_message }
+        let (tool, client_messages) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_messages }
     }
 
     #[expect(unused)]
@@ -445,12 +445,12 @@ impl Tool for ServerLinter {
         };
 
         if !Self::needs_restart(&old_option, &new_options) {
-            return ToolRestartChanges { tool: None, watch_patterns: None, client_message: None };
+            return ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() };
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_message } =
+        let ToolBuildResult { tool, client_messages } =
             builder.build(root_uri, new_options_json.clone());
 
         let patterns = {
@@ -464,7 +464,7 @@ impl Tool for ServerLinter {
             }
         };
 
-        ToolRestartChanges { tool: Some(tool), watch_patterns: patterns, client_message }
+        ToolRestartChanges { tool: Some(tool), watch_patterns: patterns, client_messages }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -513,13 +513,13 @@ impl Tool for ServerLinter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_message } = builder.build(root_uri, options);
+        let ToolBuildResult { tool, client_messages: client_message } = builder.build(root_uri, options);
 
         ToolRestartChanges {
             tool: Some(tool),
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
-            client_message,
+            client_messages: client_message,
         }
     }
 
