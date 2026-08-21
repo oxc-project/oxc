@@ -2011,14 +2011,21 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::ObjectExpression { properties, .. } => {
             ox_codegen_object_expression(cx, properties, span)
         }
-        InstructionValue::PropertyLoad { object, property, property_span, .. } => {
+        InstructionValue::PropertyLoad { object, property, computed, property_span, .. } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, *computed, span, *property_span);
             Ok(OxValue::Expression(oxc::Expression::from(member)))
         }
-        InstructionValue::PropertyStore { object, property, property_span, value, .. } => {
+        InstructionValue::PropertyStore {
+            object,
+            property,
+            computed,
+            property_span,
+            value,
+            ..
+        } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, *computed, span, *property_span);
             let val = ox_codegen_place_to_expression(cx, value)?;
             let target = oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(member));
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
@@ -2031,7 +2038,7 @@ fn ox_codegen_base_instruction_value<'a>(
         }
         InstructionValue::PropertyDelete { object, property, property_span, .. } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, false, span, *property_span);
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_unary_expression(
                 span,
                 oxc::UnaryOperator::Delete,
@@ -2281,11 +2288,26 @@ fn ox_property_member<'a>(
     cx: &OxcContext<'a, '_>,
     object: oxc::Expression<'a>,
     property: &PropertyLiteral,
+    computed: bool,
     span: Span,
     property_span: Option<Span>,
 ) -> oxc::MemberExpression<'a> {
     let property_span = property_span.unwrap_or(span);
     match property {
+        PropertyLiteral::String(s) if computed => {
+            oxc_ast::ast::MemberExpression::new_computed_member_expression(
+                span,
+                object,
+                oxc_ast::ast::Expression::new_string_literal(
+                    property_span,
+                    ox_str(&cx.ast, s),
+                    None,
+                    &cx.ast,
+                ),
+                false,
+                &cx.ast,
+            )
+        }
         PropertyLiteral::String(s) => oxc_ast::ast::MemberExpression::new_static_member_expression(
             span,
             object,
@@ -2614,8 +2636,14 @@ fn ox_codegen_dependency<'a>(
         // plain members whose `optional` flags are preserved. Wrapping each step in
         // its own `ChainExpression` would force spurious parens such as `(((a.b)?.c).d)?.e`.
         for path_entry in &dep.path {
-            let member =
-                ox_property_member(cx, object, &path_entry.property, span, path_entry.span);
+            let member = ox_property_member(
+                cx,
+                object,
+                &path_entry.property,
+                path_entry.computed,
+                span,
+                path_entry.span,
+            );
             object = match member {
                 oxc::MemberExpression::StaticMemberExpression(m) => {
                     let m = m.unbox();

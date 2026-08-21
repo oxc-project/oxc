@@ -3066,18 +3066,18 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_ascii_byte(b'#');
-
-        if let Some(mangled) = p.private_member_mappings.as_ref().and_then(|mappings| {
+        let mangled = p.private_member_mappings.as_ref().and_then(|mappings| {
             p.current_class_ids()
                 .find_map(|class_id| mappings.get(class_id).and_then(|m| m.get(self.name.as_str())))
                 .cloned()
-        }) {
-            p.print_str(mangled.as_str());
-        } else {
-            p.print_str(self.name.as_str());
-        }
+        });
+        // Name the mapping after what is printed, not after what the AST holds, so a mangled name
+        // is recorded as a rename and an unmangled one as no rename at all
+        let name = mangled.as_ref().map_or(self.name.as_str(), |mangled| mangled.as_str());
+
+        p.add_source_mapping_for_private_name(self.span, name);
+        p.print_ascii_byte(b'#');
+        p.print_str(name);
     }
 }
 
@@ -3802,7 +3802,7 @@ impl Gen for TSSignature<'_> {
                             key.print(p, ctx);
                         }
                         PropertyKey::PrivateIdentifier(key) => {
-                            p.print_str(key.name.as_str());
+                            key.print(p, ctx);
                         }
                         PropertyKey::StringLiteral(key) => {
                             p.print_string_literal(key, false);
@@ -3853,7 +3853,7 @@ impl Gen for TSPropertySignature<'_> {
                     key.print(p, ctx);
                 }
                 PropertyKey::PrivateIdentifier(key) => {
-                    p.print_str(key.name.as_str());
+                    key.print(p, ctx);
                 }
                 PropertyKey::StringLiteral(key) => {
                     p.print_string_literal(key, false);

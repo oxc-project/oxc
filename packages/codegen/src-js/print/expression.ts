@@ -15,6 +15,15 @@ import {
   CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
+  debugAssertLastFresh,
+  markWithMap,
+  markWithMapAfter,
+  markWithMapAtStartOffset,
+  write,
+  writeNoLast,
+  writeWithMap,
+  writeWithMapEnd,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import {
@@ -50,17 +59,6 @@ import {
   PREC_PREFIX,
   PREC_YIELD,
 } from "./precedence.ts";
-import {
-  debugAssertLastFresh,
-  markWithMap,
-  markWithMapAfter,
-  markWithMapAtStartOffset,
-  write,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapEnd,
-  writeWithMapNoLast,
-} from "./write.ts";
 import { escapeScriptCloseTag } from "./string.ts";
 import {
   printTSAsOrSatisfiesExpression,
@@ -457,8 +455,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
 
   const { key, value } = node;
   if (
-    value.type === "FunctionExpression" ||
-    (TS && value.type === "TSEmptyBodyFunctionExpression")
+    value.type === "FunctionExpression"
+    || (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
     markWithMap(state, node);
 
@@ -520,10 +518,10 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   let { computed } = node;
   // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
   if (
-    !computed &&
-    key.type === "Literal" &&
-    typeof key.value === "number" &&
-    (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+    !computed
+    && key.type === "Literal"
+    && typeof key.value === "number"
+    && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
   ) {
     computed = true;
   }

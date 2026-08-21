@@ -665,7 +665,13 @@ fn collect_dependencies<'a>(
                         }
                     }
                 }
-                InstructionValue::PropertyLoad { object, property, property_span, .. } => {
+                InstructionValue::PropertyLoad {
+                    object,
+                    property,
+                    computed,
+                    property_span,
+                    ..
+                } => {
                     // Number properties or ref.current: visit the object directly
                     let is_numeric = matches!(property, PropertyLiteral::Number(_));
                     let is_ref_current =
@@ -690,6 +696,7 @@ fn collect_dependencies<'a>(
                             new_path.push(DependencyPathEntry {
                                 optional,
                                 property: *property,
+                                computed: *computed,
                                 span: property_span.or_else(|| instr.value.span().copied()),
                             });
                             temporaries.insert(

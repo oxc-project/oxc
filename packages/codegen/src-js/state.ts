@@ -92,9 +92,9 @@ export class State {
     if (indentLevel === undefined) {
       indentLevel = 0;
     } else if (
-      !Number.isSafeInteger(indentLevel) ||
-      indentLevel < 0 ||
-      indentLevel > MAX_STARTING_INDENT_LEVEL
+      !Number.isSafeInteger(indentLevel)
+      || indentLevel < 0
+      || indentLevel > MAX_STARTING_INDENT_LEVEL
     ) {
       throw new RangeError(
         "`startingIndentLevel` must be a non-negative safe integer no greater than 1000",
