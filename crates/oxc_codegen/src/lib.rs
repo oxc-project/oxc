@@ -980,4 +980,19 @@ impl<'a> Codegen<'a> {
     #[inline]
     #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
+
+    /// Add a mapping for a private identifier, printed as `#` followed by `name`.
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_for_private_name(&mut self, span: Span, name: &str) {
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping_for_private_name(self.code.as_bytes(), span, name);
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_for_private_name(&mut self, _span: Span, _name: &str) {}
 }

@@ -465,13 +465,19 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
     // * When `matchesSource === false`, nothing is settled yet.
     //   It could be a genuine rename, or could be a Unicode escape (`\u0061` printed as `a`),
     //   or a non-ASCII character after the name, which `isDefinitelyIdentifierBoundary` will not classify.
+    //
+    // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
+    // That is what the source is compared against, and what gets recorded as the name.
     const printedName = node.name;
-    const nameEnd = start + printedName.length;
+    const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
+    const nameStart = start + hashLength;
+    const nameEnd = nameStart + printedName.length;
     const matchesSource =
       printedName.length > 0
       && end <= sourceText.length
       && nameEnd <= end
-      && sourceText.startsWith(printedName, start)
+      && (hashLength === 0 || sourceText.charCodeAt(start) === 35) /* # */
+      && sourceText.startsWith(printedName, nameStart)
       && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)));
 
     if (!matchesSource) {
@@ -481,7 +487,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
 
       // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
       // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
-      if (originalName !== printedName) {
+      if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
         (state.mapNames ??= []).push(
           state.mapPositions.length >> 1,
           originalName === undefined ? printedName : originalName,
@@ -491,6 +497,21 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
   }
 
   state.mapPositions.push(state.output.length, sourceOffset);
+}
+
+/**
+ * Is `originalName` the same token as `printedName`, taking into account leading `#` if `hashLength === 1`.
+ */
+function isSameToken(originalName: string, printedName: string, hashLength: 0 | 1): boolean {
+  if (hashLength === 0) return originalName === printedName;
+
+  // Compare with 2 operations rather than `originalName === "#" + printedName`
+  // to avoid allocating a temporary string
+  return (
+    originalName.length === printedName.length + 1
+    && originalName.charCodeAt(0) === 35 /* # */
+    && originalName.endsWith(printedName)
+  );
 }
 
 /**
