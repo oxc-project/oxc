@@ -481,8 +481,7 @@ export function markMapAtStartOffset(state: State, node: MappableNode, columnOff
     || !Number.isSafeInteger(start)
     || !Number.isSafeInteger(end)
     || start < 0
-    || end < start
-    || start === end
+    || end <= start
   ) {
     return;
   }
@@ -516,8 +515,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
     || !Number.isSafeInteger(start)
     || !Number.isSafeInteger(end)
     || start < 0
-    || end < start
-    || start === end
+    || end <= start
   ) {
     return;
   }
