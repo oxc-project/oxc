@@ -18,9 +18,9 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        arrow_function_body_contains_jsx, expression_contains_jsx, function_contains_jsx,
-        is_create_element_call, is_es6_component, is_hoc_call, is_react_component_name,
-        is_react_hook,
+        arrow_function_body_contains_jsx, arrow_function_returns, expression_contains_jsx,
+        function_contains_jsx, function_returns, is_create_element_call, is_es6_component,
+        is_hoc_call, is_react_component_name, is_react_hook,
     },
 };
 
@@ -193,7 +193,9 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
-            if function_contains_jsx(func) {
+            // Returning JSX, not merely containing it: a handler that calls
+            // showToast(<Toast />) produces nothing and is not a component.
+            if function_returns(func, ctx).has_jsx() {
                 return Some(ComponentCandidate { span: func.span, is_component_in_prop });
             }
             return None;
@@ -223,6 +225,9 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
+            if !arrow_function_returns(arrow, ctx).has_jsx() {
+                return None;
+            }
             return Some(ComponentCandidate { span: arrow.span, is_component_in_prop });
         }
 
@@ -1198,6 +1203,26 @@ fn test() {
                   ",
             Some(serde_json::json!([{ "allowAsProps": true, }])),
         ),
+        // A handler that hands JSX to a function does not return it, so it is
+        // not a component. https://github.com/oxc-project/oxc/issues/22608
+        (
+            "function MyComponent() {
+              return <Button onClick={() => { showToast(<Toast label='clicked' />); }} />;
+            }",
+            None,
+        ),
+        (
+            "function MyComponent() {
+              return <Form onCompleted={(data) => { if (data.errors) { showToast(<ErrorToast />); } }} />;
+            }",
+            None,
+        ),
+        (
+            "function MyComponent() {
+              return <Button onClick={() => { const el = <Icon />; log(el); }} />;
+            }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1882,6 +1907,18 @@ fn test() {
                       );
                     }
                   ",
+            None,
+        ),
+        (
+            "function MyComponent() {
+              return <Button onClick={() => <Cell />} />;
+            }",
+            None,
+        ),
+        (
+            "function MyComponent() {
+              return <Button onClick={() => { return <Cell />; }} />;
+            }",
             None,
         ),
     ];
