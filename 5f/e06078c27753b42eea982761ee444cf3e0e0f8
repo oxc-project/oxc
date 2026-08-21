@@ -1,0 +1,19 @@
+crates/oxc_codegen/src/comment.rs
+  s_7ae0754ee527ba::t_7fb822599a457a 89-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5fe06078c27753b42eea982761ee444cf3e0e0f8",
+  "prompts": {},
+  "sessions": {
+    "s_7ae0754ee527ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023a9-309a-7aa0-8554-d23c20daa3d1",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
