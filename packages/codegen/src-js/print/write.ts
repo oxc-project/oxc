@@ -493,9 +493,10 @@ export function markMapAtStartOffset(state: State, node: MappableNode, columnOff
 
   const sourceOffset = start + columnOffset;
   if (!(sourceOffset >= 0 && sourceOffset <= state.sourceText.length)) return;
-  if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
-  state.mapPositions.push(state.output.length, sourceOffset);
+  const { mapPositions } = state;
+  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
+  mapPositions.push(state.output.length, sourceOffset);
 }
 
 /**
@@ -540,7 +541,8 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
-  if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
+  const { mapPositions } = state;
+  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
 
   if (location === LOCATION_NAMED) {
     // Only the named forms pass `LOCATION_NAMED`, and they take a `NamedMappableNode`
@@ -585,14 +587,14 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
       // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
       if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
         (state.mapNames ??= []).push(
-          state.mapPositions.length >> 1,
+          mapPositions.length >> 1,
           originalName === undefined ? printedName : originalName,
         );
       }
     }
   }
 
-  state.mapPositions.push(state.output.length, sourceOffset);
+  mapPositions.push(state.output.length, sourceOffset);
 }
 
 /**
