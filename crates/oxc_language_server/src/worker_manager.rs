@@ -100,7 +100,7 @@ impl WorkerManager {
     /// Start the manager with the given workers and diagnostic mode.
     ///
     /// On dynamic workspaces, this will also start a worker for the root URI `file:///` with the given diagnostic mode.
-    /// It can return an optional [`ClientMessage`] that should be sent to the client.
+    /// It can return a list of [`ClientMessage`] that should be sent to the client.
     ///
     /// # Panics
     /// If `file:///` cannot be converted to `Uri`, which should never happen.

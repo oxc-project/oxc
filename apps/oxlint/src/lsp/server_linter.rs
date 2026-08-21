@@ -445,7 +445,11 @@ impl Tool for ServerLinter {
         };
 
         if !Self::needs_restart(&old_option, &new_options) {
-            return ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() };
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: Vec::new(),
+            };
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
@@ -513,13 +517,13 @@ impl Tool for ServerLinter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_messages: client_message } = builder.build(root_uri, options);
+        let ToolBuildResult { tool, client_messages } = builder.build(root_uri, options);
 
         ToolRestartChanges {
             tool: Some(tool),
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
-            client_messages: client_message,
+            client_messages,
         }
     }
 

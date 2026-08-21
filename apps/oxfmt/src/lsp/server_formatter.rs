@@ -107,8 +107,8 @@ impl ToolBuilder for ServerFormatterBuilder {
     }
 
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
-        let (tool, client_message) = self.build(root_uri, options);
-        ToolBuildResult { tool: Box::new(tool), client_messages: client_message }
+        let (tool, client_messages) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_messages }
     }
 }
 
@@ -172,7 +172,11 @@ impl Tool for ServerFormatter {
         let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
-            return ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() };
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: Vec::new(),
+            };
         }
 
         builder.shutdown(root_uri);

@@ -1,5 +1,6 @@
 use std::{
-    collections::VecDeque, sync::{Arc, Mutex}, vec,
+    collections::VecDeque,
+    sync::{Arc, Mutex},
 };
 
 use serde_json::{Value, json};

@@ -77,7 +77,7 @@ impl WorkspaceWorker {
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     ///
-    /// Returns an optional message to be sent to the client.
+    /// Returns messages to be sent to the client.
     pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
         let result = self.builder.build(&self.root_uri, options.clone());
         *self.tool.write().await = Some(result.tool);
