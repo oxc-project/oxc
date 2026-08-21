@@ -164,7 +164,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
-            Expression::TemplateLiteral(lit) => {
+            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
                 let mut value = String::new();
                 for part in &lit.quasis {
                     value.push_str(&part.value.raw);
