@@ -15,7 +15,9 @@ export declare const enum BadConstEnum {
 }
 export declare const enum TemplateEnum {
 	NoSubstitution = "constant",
-	WithSubstitution
+	WithConstantSubstitution = "prefixfoo",
+	WithConstantIdentifierSubstitution = "prefix123",
+	WithRuntimeSubstitution
 }
 
 
@@ -38,11 +40,11 @@ export declare const enum TemplateEnum {
    `----
 
   x TS2474: const enum member initializers must be constant expressions.
-    ,-[13:22]
- 12 |   NoSubstitution = `constant`,
- 13 |   WithSubstitution = `prefix${Math.random()}`,
-    :                      ^^^^^^^^^^^^^^^^^^^^^^^^
- 14 | }
+    ,-[17:29]
+ 16 |   WithConstantIdentifierSubstitution = `prefix${foo}`,
+ 17 |   WithRuntimeSubstitution = `prefix${Math.random()}`,
+    :                             ^^^^^^^^^^^^^^^^^^^^^^^^
+ 18 | }
     `----
 
 

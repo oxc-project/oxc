@@ -8,7 +8,11 @@ export const enum BadConstEnum {
   B = A + 1,
 }
 
+const foo = "123";
+
 export const enum TemplateEnum {
   NoSubstitution = `constant`,
-  WithSubstitution = `prefix${Math.random()}`,
+  WithConstantSubstitution = `prefix${"foo"}`,
+  WithConstantIdentifierSubstitution = `prefix${foo}`,
+  WithRuntimeSubstitution = `prefix${Math.random()}`,
 }
