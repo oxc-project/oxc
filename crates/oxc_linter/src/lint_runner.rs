@@ -10,8 +10,8 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_span::Span;
 
 use crate::{
-    AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, RuleTimingStore, TsGoLintState, suppression::DiffManager,
+    AllocatorPools, AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions,
+    Linter, Message, OsFileSystem, RuleTimingStore, TsGoLintState, suppression::DiffManager,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -154,6 +154,7 @@ pub struct LintRunnerBuilder {
     type_check_only: bool,
     timings: bool,
     with_ignore_fixes: bool,
+    allocator_pools: Option<AllocatorPools>,
 }
 
 impl LintRunnerBuilder {
@@ -168,6 +169,7 @@ impl LintRunnerBuilder {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            allocator_pools: None,
         }
     }
 
@@ -213,6 +215,16 @@ impl LintRunnerBuilder {
         self
     }
 
+    /// Use prebuilt allocator pools instead of letting the runtime create its own.
+    ///
+    /// Required when the caller already minted buffer ids (for example the language server,
+    /// which must forget those ids when a folder is dropped).
+    #[must_use]
+    pub fn with_allocator_pools(mut self, pools: AllocatorPools) -> Self {
+        self.allocator_pools = Some(pools);
+        self
+    }
+
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
     pub fn build(self) -> Result<LintRunner, String> {
@@ -238,7 +250,14 @@ impl LintRunnerBuilder {
         };
 
         let cwd = self.lint_service_options.cwd().to_path_buf();
-        let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
+        let mut lint_service = match self.allocator_pools {
+            Some(pools) => LintService::new_with_allocator_pools(
+                self.regular_linter,
+                self.lint_service_options,
+                pools,
+            ),
+            None => LintService::new(self.regular_linter, self.lint_service_options),
+        };
         lint_service.set_disable_directives_map(directives_coordinator.map());
 
         Ok(LintRunner {

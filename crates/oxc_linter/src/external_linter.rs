@@ -40,6 +40,8 @@ pub type ExternalLinterLoadPluginCb = Arc<
 pub type ExternalLinterSetupRuleConfigsCb =
     Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
+pub type ExternalLinterForgetBufferCb = Arc<Box<dyn Fn(u32) -> Result<(), String> + Send + Sync>>;
+
 pub type ExternalLinterLintFileCb = Arc<
     Box<
         dyn Fn(
@@ -247,23 +249,230 @@ fn create_invalid_offset_error(span: Span) -> Result<Fix, MergeFixesError> {
 
 #[derive(Clone)]
 pub struct ExternalLinter {
-    pub(crate) load_plugin: ExternalLinterLoadPluginCb,
-    pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
-    pub(crate) lint_file: ExternalLinterLintFileCb,
-    pub create_workspace: ExternalLinterCreateWorkspaceCb,
-    pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
+    k: usize,
+    load_plugin_on_workers: Box<[ExternalLinterLoadPluginCb]>,
+    setup_rule_configs_on_workers: Box<[ExternalLinterSetupRuleConfigsCb]>,
+    lint_file_on_workers: Box<[ExternalLinterLintFileCb]>,
+    forget_buffer_on_workers: Box<[ExternalLinterForgetBufferCb]>,
+    create_workspace_on_workers: Box<[ExternalLinterCreateWorkspaceCb]>,
+    destroy_workspace_on_workers: Box<[ExternalLinterDestroyWorkspaceCb]>,
 }
 
 impl ExternalLinter {
+    /// Create an [`ExternalLinter`] with `K` callback slots (one per JS isolate).
+    ///
+    /// All slices must have the same non-zero length `K`. `K == 1` is today's
+    /// main-thread callback path.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any slice is empty or the slice lengths do not match.
     pub fn new(
-        load_plugin: ExternalLinterLoadPluginCb,
-        setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
-        lint_file: ExternalLinterLintFileCb,
-        create_workspace: ExternalLinterCreateWorkspaceCb,
-        destroy_workspace: ExternalLinterDestroyWorkspaceCb,
+        load_plugin_on_workers: Box<[ExternalLinterLoadPluginCb]>,
+        setup_rule_configs_on_workers: Box<[ExternalLinterSetupRuleConfigsCb]>,
+        lint_file_on_workers: Box<[ExternalLinterLintFileCb]>,
+        forget_buffer_on_workers: Box<[ExternalLinterForgetBufferCb]>,
+        create_workspace_on_workers: Box<[ExternalLinterCreateWorkspaceCb]>,
+        destroy_workspace_on_workers: Box<[ExternalLinterDestroyWorkspaceCb]>,
     ) -> Self {
-        Self { load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace }
+        let k = load_plugin_on_workers.len();
+        assert!(k >= 1, "ExternalLinter requires at least one worker");
+        assert_eq!(
+            setup_rule_configs_on_workers.len(),
+            k,
+            "setup_rule_configs callback count must equal K"
+        );
+        assert_eq!(lint_file_on_workers.len(), k, "lint_file callback count must equal K");
+        assert_eq!(forget_buffer_on_workers.len(), k, "forget_buffer callback count must equal K");
+        assert_eq!(
+            create_workspace_on_workers.len(),
+            k,
+            "create_workspace callback count must equal K"
+        );
+        assert_eq!(
+            destroy_workspace_on_workers.len(),
+            k,
+            "destroy_workspace callback count must equal K"
+        );
+        Self {
+            k,
+            load_plugin_on_workers,
+            setup_rule_configs_on_workers,
+            lint_file_on_workers,
+            forget_buffer_on_workers,
+            create_workspace_on_workers,
+            destroy_workspace_on_workers,
+        }
     }
+
+    /// Load a JS plugin on every worker and return the first worker's result.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any worker fails to load the plugin, or if workers
+    /// register different `name` / `offset` / `rule_names`.
+    pub fn load_plugin(
+        &self,
+        plugin_url: String,
+        plugin_name: Option<String>,
+        plugin_name_is_alias: bool,
+        workspace_uri: Option<String>,
+    ) -> Result<LoadPluginResult, String> {
+        if self.k == 1 {
+            return (self.load_plugin_on_workers[0])(
+                plugin_url,
+                plugin_name,
+                plugin_name_is_alias,
+                workspace_uri,
+            );
+        }
+        let first = (self.load_plugin_on_workers[0])(
+            plugin_url.clone(),
+            plugin_name.clone(),
+            plugin_name_is_alias,
+            workspace_uri.clone(),
+        )?;
+        for cb in &self.load_plugin_on_workers[1..self.k - 1] {
+            let other = cb(
+                plugin_url.clone(),
+                plugin_name.clone(),
+                plugin_name_is_alias,
+                workspace_uri.clone(),
+            )?;
+            if load_plugin_mismatch(&first, &other) {
+                return Err("JS worker rule registration mismatch".to_string());
+            }
+        }
+        let other = (self.load_plugin_on_workers[self.k - 1])(
+            plugin_url,
+            plugin_name,
+            plugin_name_is_alias,
+            workspace_uri,
+        )?;
+        if load_plugin_mismatch(&first, &other) {
+            return Err("JS worker rule registration mismatch".to_string());
+        }
+        Ok(first)
+    }
+
+    /// Send rule options JSON to every worker.
+    ///
+    /// # Errors
+    ///
+    /// Returns every worker error, joined. Every slot is still called so a failure
+    /// on one isolate cannot leave the others unconfigured.
+    pub fn setup_rule_configs(&self, options_json: String) -> Result<(), String> {
+        call_every_worker(&self.setup_rule_configs_on_workers, options_json)
+    }
+
+    /// Route `lint_file` to the worker that owns `allocator`'s buffer (`buffer_id % K`).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the owning worker's callback fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `allocator` is not a fixed-size arena.
+    pub fn lint_file(
+        &self,
+        file_path: String,
+        rule_ids: Vec<u32>,
+        options_ids: Vec<u32>,
+        settings_json: String,
+        globals_json: String,
+        workspace_uri: Option<String>,
+        allocator: &Allocator,
+    ) -> Result<Vec<LintFileResult>, String> {
+        assert!(
+            allocator.is_fixed_size(),
+            "ExternalLinter::lint_file requires a fixed-size allocator"
+        );
+
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        {
+            // SAFETY: `is_fixed_size` was checked above.
+            let buffer_id = unsafe { allocator.fixed_size_buffer_id() };
+            let owner = (buffer_id as usize) % self.k;
+            (self.lint_file_on_workers[owner])(
+                file_path,
+                rule_ids,
+                options_ids,
+                settings_json,
+                globals_json,
+                workspace_uri,
+                allocator,
+            )
+        }
+
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        {
+            (self.lint_file_on_workers[0])(
+                file_path,
+                rule_ids,
+                options_ids,
+                settings_json,
+                globals_json,
+                workspace_uri,
+                allocator,
+            )
+        }
+    }
+
+    /// Drop a cached raw-transfer buffer on the worker that owns `buffer_id`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the owning worker's callback fails.
+    pub fn forget_buffer(&self, buffer_id: u32) -> Result<(), String> {
+        let owner = (buffer_id as usize) % self.k;
+        (self.forget_buffer_on_workers[owner])(buffer_id)
+    }
+
+    /// Create a JS workspace on every worker.
+    ///
+    /// # Errors
+    ///
+    /// Returns every worker error, joined. Every slot is still called.
+    pub fn create_workspace(&self, workspace_uri: String) -> Result<(), String> {
+        call_every_worker(&self.create_workspace_on_workers, workspace_uri)
+    }
+
+    /// Destroy a JS workspace on every worker.
+    ///
+    /// # Errors
+    ///
+    /// Returns every worker error, joined. Every slot is still called.
+    pub fn destroy_workspace(&self, workspace_uri: String) -> Result<(), String> {
+        call_every_worker(&self.destroy_workspace_on_workers, workspace_uri)
+    }
+}
+
+/// Call every callback with `arg`. Collect errors instead of returning on the first failure,
+/// so a broken isolate cannot skip configuration of the rest.
+fn call_every_worker(
+    callbacks: &[Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>],
+    arg: String,
+) -> Result<(), String> {
+    let last = callbacks.len() - 1;
+    let mut errors = Vec::new();
+    for cb in &callbacks[..last] {
+        if let Err(err) = cb(arg.clone()) {
+            errors.push(err);
+        }
+    }
+    if let Err(err) = callbacks[last](arg) {
+        errors.push(err);
+    }
+    match errors.len() {
+        0 => Ok(()),
+        1 => Err(errors.pop().unwrap()),
+        _ => Err(errors.join("; ")),
+    }
+}
+
+fn load_plugin_mismatch(first: &LoadPluginResult, other: &LoadPluginResult) -> bool {
+    other.rule_names != first.rule_names || other.offset != first.offset || other.name != first.name
 }
 
 impl Debug for ExternalLinter {
@@ -299,5 +508,335 @@ impl Serialize for EnabledEnvs<'_> {
         }
 
         map.end()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{
+        Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
+    };
+
+    use oxc_allocator::Allocator;
+
+    use super::*;
+
+    fn unused_load() -> ExternalLinterLoadPluginCb {
+        Arc::new(Box::new(|_, _, _, _| panic!("load_plugin should not be called")))
+    }
+
+    fn unused_setup() -> ExternalLinterSetupRuleConfigsCb {
+        Arc::new(Box::new(|_| panic!("setup_rule_configs should not be called")))
+    }
+
+    fn unused_lint() -> ExternalLinterLintFileCb {
+        Arc::new(Box::new(|_, _, _, _, _, _, _| panic!("lint_file should not be called")))
+    }
+
+    fn unused_forget() -> ExternalLinterForgetBufferCb {
+        Arc::new(Box::new(|_| panic!("forget_buffer should not be called")))
+    }
+
+    fn unused_create() -> ExternalLinterCreateWorkspaceCb {
+        Arc::new(Box::new(|_| panic!("create_workspace should not be called")))
+    }
+
+    fn unused_destroy() -> ExternalLinterDestroyWorkspaceCb {
+        Arc::new(Box::new(|_| panic!("destroy_workspace should not be called")))
+    }
+
+    fn plugin_ok(name: &str, offset: usize, rules: &[&str]) -> LoadPluginResult {
+        LoadPluginResult {
+            name: name.to_string(),
+            offset,
+            rule_names: rules.iter().map(|s| (*s).to_string()).collect(),
+        }
+    }
+
+    fn load_stub(result: LoadPluginResult, calls: Arc<AtomicUsize>) -> ExternalLinterLoadPluginCb {
+        Arc::new(Box::new(move |_, _, _, _| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            Ok(result.clone())
+        }))
+    }
+
+    fn setup_stub(
+        calls: Arc<AtomicUsize>,
+        err: Option<String>,
+    ) -> ExternalLinterSetupRuleConfigsCb {
+        Arc::new(Box::new(move |_| {
+            calls.fetch_add(1, Ordering::SeqCst);
+            match &err {
+                Some(message) => Err(message.clone()),
+                None => Ok(()),
+            }
+        }))
+    }
+
+    fn lint_stub(called: Arc<Mutex<Vec<u32>>>) -> ExternalLinterLintFileCb {
+        Arc::new(Box::new(move |_, _, _, _, _, _, allocator| {
+            #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+            {
+                // SAFETY: routing tests only pass fixed-size allocators.
+                let buffer_id = unsafe { allocator.fixed_size_buffer_id() };
+                called.lock().expect("lint_file stub mutex poisoned").push(buffer_id);
+            }
+            #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+            {
+                let _ = allocator;
+                called.lock().expect("lint_file stub mutex poisoned").push(0);
+            }
+            Ok(Vec::new())
+        }))
+    }
+
+    fn forget_stub(called: Arc<Mutex<Vec<u32>>>) -> ExternalLinterForgetBufferCb {
+        Arc::new(Box::new(move |buffer_id| {
+            called.lock().expect("forget_buffer stub mutex poisoned").push(buffer_id);
+            Ok(())
+        }))
+    }
+
+    fn linter_from_slots(
+        load: Vec<ExternalLinterLoadPluginCb>,
+        setup: Vec<ExternalLinterSetupRuleConfigsCb>,
+        lint: Vec<ExternalLinterLintFileCb>,
+        forget: Vec<ExternalLinterForgetBufferCb>,
+        create: Vec<ExternalLinterCreateWorkspaceCb>,
+        destroy: Vec<ExternalLinterDestroyWorkspaceCb>,
+    ) -> ExternalLinter {
+        ExternalLinter::new(
+            load.into_boxed_slice(),
+            setup.into_boxed_slice(),
+            lint.into_boxed_slice(),
+            forget.into_boxed_slice(),
+            create.into_boxed_slice(),
+            destroy.into_boxed_slice(),
+        )
+    }
+
+    fn call_lint_file(
+        linter: &ExternalLinter,
+        allocator: &Allocator,
+    ) -> Result<Vec<LintFileResult>, String> {
+        linter.lint_file(
+            "file.js".to_string(),
+            Vec::new(),
+            Vec::new(),
+            "{}".to_string(),
+            "{}".to_string(),
+            None,
+            allocator,
+        )
+    }
+
+    #[test]
+    fn load_plugin_calls_all_k_and_returns_first() {
+        let calls0 = Arc::new(AtomicUsize::new(0));
+        let calls1 = Arc::new(AtomicUsize::new(0));
+        let first = plugin_ok("demo", 3, &["a", "b"]);
+        let linter = linter_from_slots(
+            vec![
+                load_stub(first.clone(), Arc::clone(&calls0)),
+                load_stub(first.clone(), Arc::clone(&calls1)),
+            ],
+            vec![unused_setup(), unused_setup()],
+            vec![unused_lint(), unused_lint()],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        let result = linter
+            .load_plugin("file:///plugin.js".into(), Some("demo".into()), false, None)
+            .unwrap();
+        assert_eq!(calls0.load(Ordering::SeqCst), 1);
+        assert_eq!(calls1.load(Ordering::SeqCst), 1);
+        assert_eq!(result.name, first.name);
+        assert_eq!(result.offset, first.offset);
+        assert_eq!(result.rule_names, first.rule_names);
+    }
+
+    #[test]
+    fn load_plugin_mismatch_is_error() {
+        let first = plugin_ok("demo", 3, &["a"]);
+        let other = plugin_ok("demo", 3, &["b"]);
+        let linter = linter_from_slots(
+            vec![
+                load_stub(first, Arc::new(AtomicUsize::new(0))),
+                load_stub(other, Arc::new(AtomicUsize::new(0))),
+            ],
+            vec![unused_setup(), unused_setup()],
+            vec![unused_lint(), unused_lint()],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        let err = linter
+            .load_plugin("file:///plugin.js".into(), Some("demo".into()), false, None)
+            .unwrap_err();
+        assert_eq!(err, "JS worker rule registration mismatch");
+    }
+
+    #[test]
+    fn setup_rule_configs_calls_all_k() {
+        let calls0 = Arc::new(AtomicUsize::new(0));
+        let calls1 = Arc::new(AtomicUsize::new(0));
+        let linter = linter_from_slots(
+            vec![unused_load(), unused_load()],
+            vec![setup_stub(Arc::clone(&calls0), None), setup_stub(Arc::clone(&calls1), None)],
+            vec![unused_lint(), unused_lint()],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        linter.setup_rule_configs("{}".into()).unwrap();
+        assert_eq!(calls0.load(Ordering::SeqCst), 1);
+        assert_eq!(calls1.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn setup_rule_configs_worker_error_is_error() {
+        let calls0 = Arc::new(AtomicUsize::new(0));
+        let calls1 = Arc::new(AtomicUsize::new(0));
+        let linter = linter_from_slots(
+            vec![unused_load(), unused_load()],
+            vec![
+                setup_stub(Arc::clone(&calls0), None),
+                setup_stub(Arc::clone(&calls1), Some("bad options".into())),
+            ],
+            vec![unused_lint(), unused_lint()],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        let err = linter.setup_rule_configs("{}".into()).unwrap_err();
+        assert_eq!(err, "bad options");
+        assert_eq!(calls0.load(Ordering::SeqCst), 1);
+        assert_eq!(calls1.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn setup_rule_configs_still_calls_later_workers_when_one_fails() {
+        let calls0 = Arc::new(AtomicUsize::new(0));
+        let calls1 = Arc::new(AtomicUsize::new(0));
+        let linter = linter_from_slots(
+            vec![unused_load(), unused_load()],
+            vec![
+                setup_stub(Arc::clone(&calls0), Some("bad options".into())),
+                setup_stub(Arc::clone(&calls1), None),
+            ],
+            vec![unused_lint(), unused_lint()],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        let err = linter.setup_rule_configs("{}".into()).unwrap_err();
+        assert_eq!(err, "bad options");
+        assert_eq!(calls0.load(Ordering::SeqCst), 1);
+        assert_eq!(calls1.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "ExternalLinter::lint_file requires a fixed-size allocator")]
+    fn lint_file_panics_on_non_fixed_size_allocator() {
+        let linter = linter_from_slots(
+            vec![unused_load()],
+            vec![unused_setup()],
+            vec![unused_lint()],
+            vec![unused_forget()],
+            vec![unused_create()],
+            vec![unused_destroy()],
+        );
+        let allocator = Allocator::new();
+        let _ = call_lint_file(&linter, &allocator);
+    }
+
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    #[test]
+    fn lint_file_routes_by_buffer_id_mod_k() {
+        use oxc_allocator::AllocatorPool;
+
+        let called0 = Arc::new(Mutex::new(Vec::new()));
+        let called1 = Arc::new(Mutex::new(Vec::new()));
+        let linter = linter_from_slots(
+            vec![unused_load(), unused_load()],
+            vec![unused_setup(), unused_setup()],
+            vec![lint_stub(Arc::clone(&called0)), lint_stub(Arc::clone(&called1))],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        let pool = AllocatorPool::new_fixed_size(2);
+        let a0 = pool.get();
+        let a1 = pool.get();
+        // SAFETY: allocators came from `new_fixed_size`.
+        let id0 = unsafe { a0.fixed_size_buffer_id() };
+        // SAFETY: allocators came from `new_fixed_size`.
+        let id1 = unsafe { a1.fixed_size_buffer_id() };
+
+        call_lint_file(&linter, &a0).unwrap();
+        call_lint_file(&linter, &a1).unwrap();
+
+        let got0 = called0.lock().expect("mutex").clone();
+        let got1 = called1.lock().expect("mutex").clone();
+        for id in [id0, id1] {
+            let owner = (id as usize) % 2;
+            if owner == 0 {
+                assert!(got0.contains(&id), "buffer {id} should route to worker 0");
+                assert!(!got1.contains(&id), "buffer {id} should not route to worker 1");
+            } else {
+                assert!(got1.contains(&id), "buffer {id} should route to worker 1");
+                assert!(!got0.contains(&id), "buffer {id} should not route to worker 0");
+            }
+        }
+    }
+
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    #[test]
+    fn lint_file_k1_uses_the_only_callback() {
+        use oxc_allocator::AllocatorPool;
+
+        let called = Arc::new(Mutex::new(Vec::new()));
+        let linter = linter_from_slots(
+            vec![unused_load()],
+            vec![unused_setup()],
+            vec![lint_stub(Arc::clone(&called))],
+            vec![unused_forget()],
+            vec![unused_create()],
+            vec![unused_destroy()],
+        );
+
+        let pool = AllocatorPool::new_fixed_size(1);
+        let allocator = pool.get();
+        // SAFETY: allocator came from `new_fixed_size`.
+        let id = unsafe { allocator.fixed_size_buffer_id() };
+        call_lint_file(&linter, &allocator).unwrap();
+        assert_eq!(*called.lock().expect("mutex"), vec![id]);
+    }
+
+    #[test]
+    fn forget_buffer_routes_by_buffer_id_mod_k() {
+        let called0 = Arc::new(Mutex::new(Vec::new()));
+        let called1 = Arc::new(Mutex::new(Vec::new()));
+        let linter = linter_from_slots(
+            vec![unused_load(), unused_load()],
+            vec![unused_setup(), unused_setup()],
+            vec![unused_lint(), unused_lint()],
+            vec![forget_stub(Arc::clone(&called0)), forget_stub(Arc::clone(&called1))],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        linter.forget_buffer(4).unwrap();
+        linter.forget_buffer(5).unwrap();
+        assert_eq!(*called0.lock().expect("mutex"), vec![4]);
+        assert_eq!(*called1.lock().expect("mutex"), vec![5]);
     }
 }

@@ -13,38 +13,43 @@ use serde::Deserialize;
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
+    ExternalLinterForgetBufferCb, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+    ExternalLinterSetupRuleConfigsCb, LintFileResult, LoadPluginResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
     run::{
-        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb,
+        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsForgetBufferCb, JsLintFileCb, JsLoadPluginCb,
         JsSetupRuleConfigsCb,
     },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
+///
+/// This is the single-isolate (`K == 1`) path, where JS plugins run on the main JS thread.
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    forget_buffer: JsForgetBufferCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_forget_buffer = wrap_forget_buffer(forget_buffer);
     let rust_create_workspace = wrap_create_workspace(create_workspace);
     let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
     ExternalLinter::new(
-        rust_load_plugin,
-        rust_setup_rule_configs,
-        rust_lint_file,
-        rust_create_workspace,
-        rust_destroy_workspace,
+        Box::new([rust_load_plugin]),
+        Box::new([rust_setup_rule_configs]),
+        Box::new([rust_lint_file]),
+        Box::new([rust_forget_buffer]),
+        Box::new([rust_create_workspace]),
+        Box::new([rust_destroy_workspace]),
     )
 }
 
@@ -226,6 +231,22 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             }
         },
     ))
+}
+
+/// Wrap `forgetBuffer` JS callback as a normal Rust function.
+///
+/// The JS side just nulls a slot in its buffer cache, so there's no return value to wait for.
+/// Dispatch it non-blocking and don't block the calling thread: the buffer's memory is freed by the
+/// `Uint8Array` finalizer once JS garbage collects the view, which cannot happen synchronously.
+fn wrap_forget_buffer(cb: JsForgetBufferCb) -> ExternalLinterForgetBufferCb {
+    Arc::new(Box::new(move |buffer_id: u32| {
+        let status = cb.call(buffer_id, ThreadsafeFunctionCallMode::NonBlocking);
+        if status == Status::Ok {
+            Ok(())
+        } else {
+            Err(format!("Failed to schedule `forgetBuffer` callback: {status:?}"))
+        }
+    }))
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,

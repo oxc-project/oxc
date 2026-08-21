@@ -679,16 +679,12 @@ impl ConfigStoreBuilder {
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
 
-        let result = (external_linter.load_plugin)(
-            plugin_url,
-            plugin_name,
-            alias.is_some(),
-            workspace_uri.map(String::from),
-        )
-        .map_err(|error| ConfigBuilderError::PluginLoadFailed {
-            plugin_specifier: plugin_specifier.to_string(),
-            error,
-        })?;
+        let result = external_linter
+            .load_plugin(plugin_url, plugin_name, alias.is_some(), workspace_uri.map(String::from))
+            .map_err(|error| ConfigBuilderError::PluginLoadFailed {
+                plugin_specifier: plugin_specifier.to_string(),
+                error,
+            })?;
         let plugin_name = result.name;
 
         if LintPlugins::try_from(plugin_name.as_str()).is_err() {

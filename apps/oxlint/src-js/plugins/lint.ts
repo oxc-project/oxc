@@ -28,9 +28,28 @@ import type { AfterHook, BufferWithArrays } from "./types.ts";
 // Buffers cache.
 //
 // All buffers sent from Rust are stored in this array, indexed by `bufferId` (also sent from Rust).
-// Buffers are only added to this array, never removed, so no buffers will be garbage collected
-// until the process exits.
+// `forgetBuffer` nulls a slot so the `Uint8Array` can be garbage collected.
 export const buffers: (BufferWithArrays | null)[] = [];
+
+/**
+ * Drop the cached buffer for `id` so the `Uint8Array` can be garbage collected.
+ *
+ * Called from Rust when the owning allocator is freed.
+ */
+export function forgetBuffer(id: number): void {
+  if (id < buffers.length) buffers[id] = null;
+}
+
+/**
+ * Number of cached buffers that have not been forgotten.
+ */
+export function occupiedBufferCount(): number {
+  let count = 0;
+  for (let i = 0, len = buffers.length; i < len; i++) {
+    if (buffers[i] != null) count++;
+  }
+  return count;
+}
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];

@@ -7,6 +7,7 @@ import { debugAssertIsNonNull, debugAssertIsNotUndefined } from "./utils/asserts
 let loadPlugin: typeof import("./plugins/index.ts").loadPlugin | null = null;
 let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | null = null;
 let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
+let forgetBuffer: typeof import("./plugins/index.ts").forgetBuffer | null = null;
 let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
 let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
 // Lazy-loaded JS/TS config loader (experimental)
@@ -38,7 +39,7 @@ function loadPluginWrapper(
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, lintFile, setupRuleConfigs } = mod);
+      ({ loadPlugin, lintFile, setupRuleConfigs, forgetBuffer } = mod);
       return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
     });
   }
@@ -101,6 +102,19 @@ function lintFileWrapper(
     globalsJSON,
     workspaceUri,
   );
+}
+
+/**
+ * Drop the cached buffer with this ID.
+ *
+ * Delegates to `forgetBuffer`, which was lazy-loaded by `loadPluginWrapper`. Rust only asks to
+ * forget buffers it previously sent to JS, so the plugins module is always loaded by then.
+ *
+ * @param bufferId - ID of buffer to forget
+ */
+function forgetBufferWrapper(bufferId: number): undefined {
+  debugAssertIsNonNull(forgetBuffer);
+  forgetBuffer(bufferId);
 }
 
 /**
@@ -187,6 +201,7 @@ const success = await lint(
   loadPluginWrapper,
   setupRuleConfigsWrapper,
   lintFileWrapper,
+  forgetBufferWrapper,
   createWorkspaceWrapper,
   destroyWorkspaceWrapper,
   loadJsConfigsWrapper,
