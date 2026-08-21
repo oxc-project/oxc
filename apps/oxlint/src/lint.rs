@@ -1588,6 +1588,27 @@ mod test {
     }
 
     #[test]
+    fn test_import_plugin_detects_cycles_with_unnormalized_paths() {
+        // Module identity is keyed on the resolved path, so a path the user spelled with `.`
+        // components or repeated separators has to resolve to the same module its own imports
+        // resolve back to. `absolutize` strips both before any path reaches the module graph.
+        let tester = Tester::new().with_cwd("fixtures/cli/import-cycle".into());
+        let run = |a: &str, b: &str| {
+            let (output, result) =
+                tester.test_output(&["--import-plugin", "-D", "import/no-cycle", a, b]);
+            // The trailing summary carries a timing that varies between runs.
+            (output.split("Finished in").next().unwrap().to_string(), format!("{result:?}"))
+        };
+
+        let expected = run("a.ts", "b.ts");
+        assert!(expected.0.contains("Found 0 warnings and 2 errors."), "{expected:?}");
+
+        for (a, b) in [("./a.ts", "./b.ts"), ("././a.ts", "././b.ts"), (".//a.ts", ".//b.ts")] {
+            assert_eq!(run(a, b), expected, "`{a}` and `{b}` changed the diagnostics");
+        }
+    }
+
+    #[test]
     fn test_import_plugin_detects_cycles_with_auto_discovered_tsconfig_paths() {
         let args = &["--import-plugin", "-D", "import/no-cycle", "deep/src/dep-a.ts"];
         Tester::new().with_cwd("fixtures/lsp/ts_path_alias".into()).test_and_snapshot(args);
