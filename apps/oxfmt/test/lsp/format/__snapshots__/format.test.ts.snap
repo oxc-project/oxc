@@ -31,10 +31,8 @@ file://<fixture>/format/test.svelte
 <script>let   count=$state(0);</script>
 <button onclick={()=>count++}>{count}</button>
 
---- AFTER ----------
-<script>let   count=$state(0);</script>
-<button onclick={()=>count++}>{count}</button>
-
+--- ERROR ----------
+\`svelte\` plugin is not enabled in resolved config: <cwd>/test/lsp/format/fixtures/format/test.svelte
 --------------------"
 `;
 
@@ -316,6 +314,18 @@ const x = "1";
 --- AFTER ----------
 // { "semi": false, "singleQuote": false }
 const x = "1"
+
+--------------------"
+`;
+
+exports[`LSP formatting > error handling on format > should handle config-invalid-override/test.ts 1`] = `
+"--- URI -----------
+file://<fixture>/config-invalid-override/test.ts
+--- BEFORE ---------
+const   value   =   1;
+
+--- ERROR ----------
+Config resolve error for <cwd>/test/lsp/format/fixtures/config-invalid-override/test.ts: Invalid tabWidth: The indent width should be between 0 and 24
 
 --------------------"
 `;
