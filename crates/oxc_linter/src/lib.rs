@@ -376,6 +376,11 @@ impl Linter {
                         return false;
                     }
 
+                    // Project rules do not use `LintContext`
+                    if rule.run_info() == RuleRunFunctionsImplemented::ProjectOnly {
+                        return false;
+                    }
+
                     // If only the `run` function is implemented, we can skip running the file entirely if the current
                     // file does not contain any of the relevant AST node types.
                     if rule.run_info() == RuleRunFunctionsImplemented::Run

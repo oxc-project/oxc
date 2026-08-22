@@ -1,0 +1,39 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/no_cycle_override_subdir
+----------
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[root-a.ts:1:19]
+ 1 | import { b } from "./root-b";
+   :                   ^^^^^^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./root-b (fixtures/cli/no_cycle_override_subdir/root-b.ts)
+           │         ⬇ imports
+           │    ./root-a (fixtures/cli/no_cycle_override_subdir/root-a.ts)
+           ╰─────────╯ imports the current file
+
+  x import(no-cycle): Dependency cycle detected
+   ,-[root-b.ts:1:19]
+ 1 | import { a } from "./root-a";
+   :                   ^^^^^^^^^^
+ 2 | 
+   `----
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./root-a (fixtures/cli/no_cycle_override_subdir/root-a.ts)
+           │         ⬇ imports
+           │    ./root-b (fixtures/cli/no_cycle_override_subdir/root-b.ts)
+           ╰─────────╯ imports the current file
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 5 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
