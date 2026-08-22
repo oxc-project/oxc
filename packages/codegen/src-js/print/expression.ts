@@ -16,14 +16,16 @@ import {
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
-  markMapNamed,
   markMapAfter,
   markMapAtStartOffset,
+  markMapStart,
   write,
   writeNoLast,
-  writeWithMapNamed,
+  writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNamedNoLast,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import {
@@ -148,11 +150,11 @@ export function printExpression(
       break;
     case "ThisExpression":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "this", CAT_IDENT, node);
+      writeWithMap(state, "this", CAT_IDENT, node);
       break;
     case "Super":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "super", CAT_IDENT, node);
+      writeWithMap(state, "super", CAT_IDENT, node);
       break;
     case "NewExpression":
       printNewExpression(node, state, precedence);
@@ -161,7 +163,7 @@ export function printExpression(
       printTemplateLiteral(node, state);
       break;
     case "TaggedTemplateExpression":
-      markMapNamed(state, node);
+      markMapStart(state, node);
       printExpression(node.tag, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
       if (TS) printTypeArguments(node.typeArguments, state);
       printTemplateLiteral(node.quasi, state);
@@ -180,7 +182,7 @@ export function printExpression(
       break;
     case "MetaProperty":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamedNoLast(state, node.meta.name, node);
+      writeWithMapNoLast(state, node.meta.name, node);
       writeNoLast(state, ".");
       write(state, node.property.name, CAT_IDENT);
       break;
@@ -363,7 +365,7 @@ function printArguments(
 
     const arg = args[i];
     if (arg.type === "SpreadElement") {
-      writeWithMapNamed(state, "...", CAT_OTHER, arg);
+      writeWithMap(state, "...", CAT_OTHER, arg);
       printExpression(arg.argument, state, PREC_COMMA, CTX_NONE);
     } else {
       printExpression(arg, state, PREC_COMMA, CTX_NONE);
@@ -388,7 +390,7 @@ export function printPrivateInExpression(
   const wrap = precedence >= PREC_COMPARE;
   if (wrap) write(state, "(", CAT_OTHER);
 
-  markMapNamed(state, node);
+  markMapStart(state, node);
   writeWithMapNamedNoLast(state, "#", node.left);
   write(state, node.left.name, CAT_IDENT);
   write(state, " in ", CAT_OTHER);
@@ -415,7 +417,7 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
   const { length } = properties;
   const isMultiLine = length > 1;
 
-  writeWithMapNamed(state, "{", CAT_OTHER, node);
+  writeWithMap(state, "{", CAT_OTHER, node);
 
   if (isMultiLine) {
     state.indentLevel++;
@@ -448,7 +450,7 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
  */
 function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): void {
   if (node.type === "SpreadElement") {
-    writeWithMapNamed(state, "...", CAT_OTHER, node);
+    writeWithMap(state, "...", CAT_OTHER, node);
     printExpression(node.argument, state, PREC_COMMA, CTX_NONE);
     return;
   }
@@ -458,7 +460,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     value.type === "FunctionExpression"
     || (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
-    markMapNamed(state, node);
+    markMapStart(state, node);
 
     const { kind } = node;
     const isGetter = kind === "get";
@@ -561,7 +563,7 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
   const { length } = elements;
   const isMultiLine = length > 2;
 
-  writeWithMapNamed(state, "[", CAT_OTHER, node);
+  writeWithMap(state, "[", CAT_OTHER, node);
 
   if (isMultiLine) state.indentLevel++;
 
@@ -576,7 +578,7 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
     const element = elements[i];
     if (element != null) {
       if (element.type === "SpreadElement") {
-        writeWithMapNamed(state, "...", CAT_OTHER, element);
+        writeWithMap(state, "...", CAT_OTHER, element);
         printExpression(element.argument, state, PREC_COMMA, CTX_NONE);
       } else {
         printExpression(element, state, PREC_COMMA, CTX_NONE);
@@ -621,7 +623,7 @@ function printAssignmentExpression(
 
   if (wrap) write(state, "(", CAT_OTHER);
 
-  markMapNamed(state, node);
+  markMapStart(state, node);
 
   printAssignmentTarget(left, state);
   write(state, PADDED_ASSIGN_OPERATORS[node.operator], CAT_OTHER);
@@ -651,10 +653,10 @@ function printUpdateExpression(
 
   if (node.prefix) {
     printSpaceBeforeOperator(state, operatorCode);
-    writeWithMapNamed(state, node.operator, operatorCode, node);
+    writeWithMap(state, node.operator, operatorCode, node);
     printExpression(node.argument, state, PREC_PREFIX, ctx);
   } else {
-    markMapNamed(state, node);
+    markMapStart(state, node);
     printExpression(node.argument, state, PREC_POSTFIX, ctx);
     printSpaceBeforeOperator(state, operatorCode);
     write(state, node.operator, operatorCode);
@@ -684,7 +686,7 @@ function printUnaryExpression(
   if (operator.length > 1) {
     // typeof, void, delete
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, operator, CAT_IDENT, node);
+    writeWithMap(state, operator, CAT_IDENT, node);
     write(state, " ", CAT_OTHER);
     // `delete Infinity` is a syntax error in strict mode
     isDeleteInfinity =
@@ -696,7 +698,7 @@ function printUnaryExpression(
     if (operatorCode === CAT_OP_UN_NOT && state.last === CAT_LT) {
       operatorCode = CAT_OP_UN_NOT_AFTER_LT;
     }
-    writeWithMapNamed(state, operator, operatorCode, node);
+    writeWithMap(state, operator, operatorCode, node);
   }
 
   if (isDeleteInfinity) write(state, "(0, ", CAT_OTHER);
@@ -796,7 +798,7 @@ function printArrowFunctionExpression(
 
   if (node.async) {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, "async ", CAT_OTHER, node);
+    writeWithMap(state, "async ", CAT_OTHER, node);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -832,7 +834,7 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
   if (wrap) write(state, "(", CAT_OTHER);
 
   printSpaceBeforeIdentifier(state);
-  writeWithMapNamed(state, "new ", CAT_OTHER, node);
+  writeWithMap(state, "new ", CAT_OTHER, node);
   printExpression(node.callee, state, PREC_NEW, CTX_FORBID_CALL);
   if (TS) printTypeArguments(node.typeArguments, state);
   printArguments(node, node.arguments, state);
@@ -847,7 +849,7 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
  * Substitutions print from `PREC_LOWEST` with no context flags, since `${` and `}` fence them from everything around.
  */
 function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void {
-  writeWithMapNamedNoLast(state, "`", node);
+  writeWithMapNoLast(state, "`", node);
 
   const { quasis, expressions } = node;
   const { length } = expressions;
@@ -898,7 +900,7 @@ function printAwaitExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   printSpaceBeforeIdentifier(state);
-  writeWithMapNamed(state, "await ", CAT_OTHER, node);
+  writeWithMap(state, "await ", CAT_OTHER, node);
   printExpression(node.argument, state, PREC_EXPONENTIATION, ctx);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
@@ -917,7 +919,7 @@ function printYieldExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   printSpaceBeforeIdentifier(state);
-  writeWithMapNamed(state, "yield", CAT_IDENT, node);
+  writeWithMap(state, "yield", CAT_IDENT, node);
 
   if (node.delegate) write(state, "*", CAT_OTHER);
 
@@ -945,7 +947,7 @@ function printImportExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   printSpaceBeforeIdentifier(state);
-  writeWithMapNamed(state, "import", CAT_IDENT, node);
+  writeWithMap(state, "import", CAT_IDENT, node);
 
   if (node.phase != null) {
     writeNoLast(state, ".");

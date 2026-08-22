@@ -6,6 +6,7 @@ import {
   CAT_START_OF_DEFAULT_EXPORT,
   write,
   writeNoLast,
+  writeWithMap,
   writeWithMapNamed,
 } from "./write.ts";
 import { printClass } from "./class.ts";
@@ -39,7 +40,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
   printIndent(state);
 
   printSpaceBeforeIdentifier(state);
-  writeWithMapNamed(state, "import", CAT_IDENT, node);
+  writeWithMap(state, "import", CAT_IDENT, node);
 
   if (TS && node.importKind === "type") write(state, " type", CAT_IDENT);
 
@@ -74,7 +75,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         }
 
         printSpaceBeforeIdentifier(state);
-        writeWithMapNamed(state, specifier.local.name, CAT_IDENT, specifier);
+        writeWithMap(state, specifier.local.name, CAT_IDENT, specifier);
 
         if (i === length - 1) write(state, " ", CAT_OTHER);
 
@@ -142,7 +143,7 @@ function printImportAttributes(
   // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor
   // to the first attribute, which is the first location both representations carry.
   writeNoLast(state, " ");
-  writeWithMapNamed(state, "with { ", CAT_OTHER, attributes[0]);
+  writeWithMap(state, "with { ", CAT_OTHER, attributes[0]);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
@@ -189,7 +190,7 @@ function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
 export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, state: State): void {
   printIndent(state);
 
-  writeWithMapNamed(state, "export ", CAT_OTHER, node);
+  writeWithMap(state, "export ", CAT_OTHER, node);
 
   const { declaration } = node;
   if (declaration != null) {
@@ -281,7 +282,7 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
 export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, state: State): void {
   printIndent(state);
 
-  writeWithMapNamed(
+  writeWithMap(
     state,
     TS && node.exportKind === "type" ? "export type *" : "export *",
     CAT_OTHER,
@@ -311,7 +312,7 @@ export function printExportDefaultDeclaration(
 ): void {
   printIndent(state);
 
-  writeWithMapNamed(state, "export default ", CAT_OTHER, node);
+  writeWithMap(state, "export default ", CAT_OTHER, node);
 
   const { declaration } = node;
   switch (declaration.type) {
