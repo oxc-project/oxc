@@ -10,43 +10,43 @@ function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): 
 	return x;
 }
 ----------
-function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,`x`>):T{return x}
+function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,"x">):T{return x}
 ########## 2
 let x: string[] = ['abc', 'def', 'ghi'];
 ----------
-let x:string[]=[`abc`,`def`,`ghi`];
+let x:string[]=["abc","def","ghi"];
 ########## 3
 let x: Array<string> = ['abc', 'def', 'ghi',];
 ----------
-let x:Array<string>=[`abc`,`def`,`ghi`];
+let x:Array<string>=["abc","def","ghi"];
 ########## 4
 let x: [string, number] = ['abc', 123];
 ----------
-let x:[string,number]=[`abc`,123];
+let x:[string,number]=["abc",123];
 ########## 5
 let x: string | number = 'abc';
 ----------
-let x:string|number=`abc`;
+let x:string|number="abc";
 ########## 6
 let x: string & number = 'abc';
 ----------
-let x:string&number=`abc`;
+let x:string&number="abc";
 ########## 7
 let x: typeof String = 'string';
 ----------
-let x:typeof String=`string`;
+let x:typeof String="string";
 ########## 8
 let x: keyof string = 'length';
 ----------
-let x:keyof string=`length`;
+let x:keyof string="length";
 ########## 9
 let x: keyof typeof String = 'length';
 ----------
-let x:keyof typeof String=`length`;
+let x:keyof typeof String="length";
 ########## 10
 let x: string['length'] = 123;
 ----------
-let x:string[`length`]=123;
+let x:string["length"]=123;
 ########## 11
 function isString(value: unknown): asserts value is string {
             if (typeof value !== 'string') {
@@ -54,7 +54,7 @@ function isString(value: unknown): asserts value is string {
             }
         }
 ----------
-function isString(value:unknown):asserts value is string{if(typeof value!==`string`){throw new Error(`Not a string`)}}
+function isString(value:unknown):asserts value is string{if(typeof value!=="string"){throw new Error("Not a string")}}
 ########## 12
 import type { Foo } from 'foo';
 ----------
@@ -74,7 +74,7 @@ type A<T>={[K in keyof T as K extends string?B<K>:K]:T[K]};
 ########## 16
 class A {readonly type = 'frame'}
 ----------
-class A{readonly type=`frame`}
+class A{readonly type="frame"}
 ########## 17
 let foo: { <T>(t: T): void }
 ----------

@@ -47,7 +47,7 @@ fn string_literals() {
     // Directives keep their raw text, with non-ASCII characters escaped in place.
     test_minify(
         "'use strict'; 'caf\\é'; let x = 'é';",
-        "\"use strict\";\"caf\\u00E9\";let x=`\\u00E9`;",
+        "\"use strict\";\"caf\\u00E9\";let x=\"\\u00E9\";",
     );
     // A directive containing a LineContinuation is not a Use Strict Directive and must not become one.
     test("'use\\\u{2028} strict';", "\"use\\\n strict\";\n");
@@ -63,7 +63,7 @@ fn lone_surrogates_and_replacement_characters() {
         (r"\uD800\uFEFF\uFFFF😀", r"\ud800\uFEFF\uFFFF\u{1F600}"),
     ] {
         test(&format!("let x = '{value}';"), &format!("let x = \"{escaped}\";\n"));
-        test_minify(&format!("let x = '{value}';"), &format!("let x=`{escaped}`;"));
+        test_minify(&format!("let x = '{value}';"), &format!("let x=\"{escaped}\";"));
     }
 }
 
