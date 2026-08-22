@@ -838,6 +838,7 @@ pub use crate::rules::vue::component_definition_name_casing::ComponentDefinition
 pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as VueDefineEmitsDeclaration;
 pub use crate::rules::vue::define_props_declaration::DefinePropsDeclaration as VueDefinePropsDeclaration;
 pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring as VueDefinePropsDestructuring;
+pub use crate::rules::vue::match_component_import_name::MatchComponentImportName as VueMatchComponentImportName;
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
 pub use crate::rules::vue::next_tick_style::NextTickStyle as VueNextTickStyle;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
@@ -1726,6 +1727,7 @@ pub enum RuleEnum {
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
     VueDefinePropsDestructuring(VueDefinePropsDestructuring),
+    VueMatchComponentImportName(VueMatchComponentImportName),
     VueMaxProps(VueMaxProps),
     VueNextTickStyle(VueNextTickStyle),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
@@ -2699,7 +2701,8 @@ const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_TOP_LEVEL_AWAIT_I
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
-const VUE_MAX_PROPS_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
+const VUE_MATCH_COMPONENT_IMPORT_NAME_ID: usize = VUE_DEFINE_PROPS_DESTRUCTURING_ID + 1usize;
+const VUE_MAX_PROPS_ID: usize = VUE_MATCH_COMPONENT_IMPORT_NAME_ID + 1usize;
 const VUE_NEXT_TICK_STYLE_ID: usize = VUE_MAX_PROPS_ID + 1usize;
 const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = VUE_NEXT_TICK_STYLE_ID + 1usize;
 const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3577,6 +3580,7 @@ static RULE_NAMES: [&str; 870usize] = [
     VueDefineEmitsDeclaration::NAME,
     VueDefinePropsDeclaration::NAME,
     VueDefinePropsDestructuring::NAME,
+    VueMatchComponentImportName::NAME,
     VueMaxProps::NAME,
     VueNextTickStyle::NAME,
     VueNoArrowFunctionsInWatch::NAME,
@@ -4577,6 +4581,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
             Self::VueDefinePropsDestructuring(_) => VUE_DEFINE_PROPS_DESTRUCTURING_ID,
+            Self::VueMatchComponentImportName(_) => VUE_MATCH_COMPONENT_IMPORT_NAME_ID,
             Self::VueMaxProps(_) => VUE_MAX_PROPS_ID,
             Self::VueNextTickStyle(_) => VUE_NEXT_TICK_STYLE_ID,
             Self::VueNoArrowFunctionsInWatch(_) => VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID,
@@ -5626,6 +5631,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::CATEGORY,
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::CATEGORY,
             Self::VueMaxProps(_) => VueMaxProps::CATEGORY,
             Self::VueNextTickStyle(_) => VueNextTickStyle::CATEGORY,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::CATEGORY,
@@ -6617,6 +6623,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::FIX,
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::FIX,
             Self::VueMaxProps(_) => VueMaxProps::FIX,
             Self::VueNextTickStyle(_) => VueNextTickStyle::FIX,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FIX,
@@ -7866,6 +7873,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::documentation(),
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::documentation(),
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::documentation(),
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::documentation(),
             Self::VueMaxProps(_) => VueMaxProps::documentation(),
             Self::VueNextTickStyle(_) => VueNextTickStyle::documentation(),
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::documentation(),
@@ -10305,6 +10313,10 @@ impl RuleEnum {
                 VueDefinePropsDestructuring::config_schema(generator)
                     .or_else(|| VueDefinePropsDestructuring::schema(generator))
             }
+            Self::VueMatchComponentImportName(_) => {
+                VueMatchComponentImportName::config_schema(generator)
+                    .or_else(|| VueMatchComponentImportName::schema(generator))
+            }
             Self::VueMaxProps(_) => {
                 VueMaxProps::config_schema(generator).or_else(|| VueMaxProps::schema(generator))
             }
@@ -11257,6 +11269,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
             Self::VueDefinePropsDestructuring(_) => "vue",
+            Self::VueMatchComponentImportName(_) => "vue",
             Self::VueMaxProps(_) => "vue",
             Self::VueNextTickStyle(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
@@ -13262,6 +13275,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDestructuring(rule) => rule.run(node, ctx),
+            Self::VueMatchComponentImportName(rule) => rule.run(node, ctx),
             Self::VueMaxProps(rule) => rule.run(node, ctx),
             Self::VueNextTickStyle(rule) => rule.run(node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
@@ -14149,6 +14163,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDestructuring(rule) => rule.run_once(ctx),
+            Self::VueMatchComponentImportName(rule) => rule.run_once(ctx),
             Self::VueMaxProps(rule) => rule.run_once(ctx),
             Self::VueNextTickStyle(rule) => rule.run_once(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
@@ -15149,6 +15164,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueMatchComponentImportName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNextTickStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16041,6 +16057,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDestructuring(rule) => rule.should_run(ctx),
+            Self::VueMatchComponentImportName(rule) => rule.should_run(ctx),
             Self::VueMaxProps(rule) => rule.should_run(ctx),
             Self::VueNextTickStyle(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
@@ -17285,6 +17302,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::IS_TSGOLINT_RULE,
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::IS_TSGOLINT_RULE,
             Self::VueMaxProps(_) => VueMaxProps::IS_TSGOLINT_RULE,
             Self::VueNextTickStyle(_) => VueNextTickStyle::IS_TSGOLINT_RULE,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::IS_TSGOLINT_RULE,
@@ -18347,6 +18365,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::VERSION,
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::VERSION,
             Self::VueMaxProps(_) => VueMaxProps::VERSION,
             Self::VueNextTickStyle(_) => VueNextTickStyle::VERSION,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::VERSION,
@@ -19434,6 +19453,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::HAS_CONFIG,
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::HAS_CONFIG,
             Self::VueMaxProps(_) => VueMaxProps::HAS_CONFIG,
             Self::VueNextTickStyle(_) => VueNextTickStyle::HAS_CONFIG,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::HAS_CONFIG,
@@ -20428,6 +20448,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
             Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::INFO,
+            Self::VueMatchComponentImportName(_) => VueMatchComponentImportName::INFO,
             Self::VueMaxProps(_) => VueMaxProps::INFO,
             Self::VueNextTickStyle(_) => VueNextTickStyle::INFO,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::INFO,
@@ -21311,6 +21332,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDestructuring(rule) => rule.types_info(),
+            Self::VueMatchComponentImportName(rule) => rule.types_info(),
             Self::VueMaxProps(rule) => rule.types_info(),
             Self::VueNextTickStyle(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
@@ -22185,6 +22207,7 @@ impl RuleEnum {
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDestructuring(rule) => rule.run_info(),
+            Self::VueMatchComponentImportName(rule) => rule.run_info(),
             Self::VueMaxProps(rule) => rule.run_info(),
             Self::VueNextTickStyle(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
@@ -23191,6 +23214,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
         RuleEnum::VueDefinePropsDestructuring(VueDefinePropsDestructuring::default()),
+        RuleEnum::VueMatchComponentImportName(VueMatchComponentImportName::default()),
         RuleEnum::VueMaxProps(VueMaxProps::default()),
         RuleEnum::VueNextTickStyle(VueNextTickStyle::default()),
         RuleEnum::VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch::default()),

@@ -10355,6 +10355,9 @@
             }
           ]
         },
+        "vue/match-component-import-name": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/max-props": {
           "anyOf": [
             {
