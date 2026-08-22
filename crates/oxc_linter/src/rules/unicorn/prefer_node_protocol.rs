@@ -74,7 +74,9 @@ impl Rule for PreferNodeProtocol {
             return;
         };
         let module_name = string_lit_value.as_str();
-        if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
+        if module_name.is_some_and(|s| s.starts_with("node:"))
+            || !is_nodejs_builtin_module(module_name.unwrap_or_default())
+        {
             return;
         }
 

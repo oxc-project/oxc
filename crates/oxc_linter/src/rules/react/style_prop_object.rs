@@ -191,7 +191,7 @@ impl Rule for StylePropObject {
                 };
 
                 let name = match expr {
-                    Expression::StringLiteral(literal) => literal.value.as_str(),
+                    Expression::StringLiteral(literal) => literal.value.as_str_or_default(),
                     Expression::Identifier(identifier) => identifier.name.as_str(),
                     _ => return,
                 };

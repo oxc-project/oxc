@@ -1285,7 +1285,7 @@ impl NoRestrictedImports {
         is_type: bool,
         is_dynamic_import: bool,
     ) {
-        let source = source_literal.value.as_str();
+        let source = source_literal.value.as_str_or_default();
 
         for path in &self.paths {
             if source != path.name.as_str() {

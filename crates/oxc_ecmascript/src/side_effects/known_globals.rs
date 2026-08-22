@@ -35,7 +35,10 @@ pub fn is_valid_regexp<'a>(
             // validated below because support for that constructor form varies by target.
             Some(Expression::RegExpLiteral(_)) => ("", true),
             // String literal: extract the pattern to validate
-            Some(Expression::StringLiteral(s)) if !s.lone_surrogates => (s.value.as_str(), false),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(p) = s.value.as_str() else { return false };
+                (p, false)
+            }
             // Non-literal argument: can't statically determine, assume side effects
             _ => return false,
         },
@@ -45,7 +48,10 @@ pub fn is_valid_regexp<'a>(
     let flags = match args.get(1) {
         None => None,
         Some(arg) => match arg.as_expression() {
-            Some(Expression::StringLiteral(s)) => Some(s.value.as_str()),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(f) = s.value.as_str() else { return false };
+                Some(f)
+            }
             // Non-literal flags: can't statically determine, assume side effects
             _ => return false,
         },

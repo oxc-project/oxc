@@ -321,12 +321,12 @@ impl Rule for NoImplicitCoercion {
                         .value
                         .cooked
                         .as_ref()
-                        .is_some_and(|s| s.is_empty());
+                        .is_some_and(oxc_str::Wtf8Str::is_empty);
                     let last_is_empty = last_quasi
                         .value
                         .cooked
                         .as_ref()
-                        .is_some_and(|s| s.is_empty());
+                        .is_some_and(oxc_str::Wtf8Str::is_empty);
 
                     if first_is_empty && last_is_empty {
                         let expr = &template.expressions[0];

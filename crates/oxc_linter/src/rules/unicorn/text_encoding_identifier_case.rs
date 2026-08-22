@@ -89,8 +89,10 @@ impl Rule for TextEncodingIdentifierCase {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (s, span) = match node.kind() {
-            AstKind::StringLiteral(string_lit) => (string_lit.value.as_str(), string_lit.span),
-            AstKind::JSXText(jsx_text) => (jsx_text.value.as_str(), jsx_text.span),
+            AstKind::StringLiteral(string_lit) => {
+                (string_lit.value.as_str_or_default(), string_lit.span)
+            }
+            AstKind::JSXText(jsx_text) => (jsx_text.value.as_str_or_default(), jsx_text.span),
             _ => return,
         };
 

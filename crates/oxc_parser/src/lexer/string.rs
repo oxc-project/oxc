@@ -19,9 +19,9 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
 }
 
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
+const WTF8_MARKER_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+const WTF8_MARKER_CHAR_FIRST_BYTE: u8 = WTF8_MARKER_CHAR_BYTES[0];
+const _: () = assert!(WTF8_MARKER_CHAR_FIRST_BYTE == 0xEF);
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
@@ -34,12 +34,12 @@ static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
 // Same as above, but with 1st byte of lossy replacement character added
 static DOUBLE_QUOTE_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!(
     b,
-    b'"' | b'\r' | b'\n' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE
+    b'"' | b'\r' | b'\n' | b'\\' | WTF8_MARKER_CHAR_FIRST_BYTE
 ));
 
 static SINGLE_QUOTE_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!(
     b,
-    b'\'' | b'\r' | b'\n' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE
+    b'\'' | b'\r' | b'\n' | b'\\' | WTF8_MARKER_CHAR_FIRST_BYTE
 ));
 
 /// Macro to handle a string literal.
@@ -157,7 +157,7 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => {
+                    WTF8_MARKER_CHAR_FIRST_BYTE => {
                         // If the string contains lone surrogates, the lossy replacement character (U+FFFD)
                         // is used as start of an escape sequence.
                         // So an actual lossy escape character has to be escaped too.
@@ -170,8 +170,8 @@ macro_rules! handle_string_literal_escape {
                         $lexer.source.next_byte_unchecked();
                         let next1 = $lexer.source.next_byte_unchecked();
                         let next2 = $lexer.source.next_byte_unchecked();
-                        if $lexer.token.lone_surrogates()
-                            && [next1, next2] == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
+                        if $lexer.token.has_wtf8_surrogate()
+                            && [next1, next2] == [WTF8_MARKER_CHAR_BYTES[1], WTF8_MARKER_CHAR_BYTES[2]]
                         {
                             let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
                             str.push_str(chunk);

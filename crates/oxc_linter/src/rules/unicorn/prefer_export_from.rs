@@ -147,7 +147,7 @@ impl PreferExportFrom {
 
         let re_export_decl = find_corresponding_export(ctx, import_decl);
 
-        let source = import_decl.source.value.as_str();
+        let source = import_decl.source.value.as_str_or_default();
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
             let keyword = match with_clause.keyword {
                 WithClauseKeyword::With => "with",
@@ -160,7 +160,7 @@ impl PreferExportFrom {
                     let key = match &attribute.key {
                         ImportAttributeKey::Identifier(ident_name) => ident_name.name.as_str(),
                         ImportAttributeKey::StringLiteral(string_literal) => {
-                            string_literal.value.as_str()
+                            string_literal.value.as_str().unwrap_or("")
                         }
                     };
                     let value = &attribute.value.raw.unwrap();
@@ -1148,7 +1148,7 @@ fn find_corresponding_export<'a>(
     ctx: &LintContext<'a>,
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
-    let source = import_decl.source.value.as_str();
+    let source = import_decl.source.value.as_str_or_default();
     let program = ctx.nodes().program();
 
     for requested_module in ctx.module_record().requested_modules.get(source)? {

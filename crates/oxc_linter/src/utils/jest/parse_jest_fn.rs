@@ -498,7 +498,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
             MemberExpressionElement::Expression(expr) => match expr {
                 Expression::Identifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
                 Expression::StringLiteral(string_literal) => {
-                    Some(Cow::Borrowed(string_literal.value.as_str()))
+                    Some(Cow::Borrowed(string_literal.value.as_str().unwrap_or("")))
                 }
                 Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
                     template_literal.single_quasi().expect("get string content").as_str(),

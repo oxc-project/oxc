@@ -92,7 +92,7 @@ use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, Replac
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::PropName;
 use oxc_span::{SPAN, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, Str, Wtf8Str};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_white_space_single_line},
     keyword::is_reserved_keyword,
@@ -912,13 +912,15 @@ impl<'a> JsxImpl<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let mut decoded = None;
-                decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx.allocator());
+                if let Some(str_val) = s.value.as_str() {
+                    decode_entities(str_val, &mut decoded, s.value.len(), ctx.allocator());
+                }
                 let jsx_text = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
-                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
-                    Str::from(decoded)
+                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Wtf8Str`.
+                    Wtf8Str::from(decoded)
                 } else {
-                    // No HTML entities needed to be decoded. Use the original `Str` without copying.
+                    // No HTML entities needed to be decoded. Use the original `Wtf8Str` without copying.
                     s.value
                 };
                 Expression::new_string_literal(s.span, jsx_text, None, ctx)
@@ -1026,43 +1028,33 @@ impl<'a> JsxImpl<'a> {
     ///
     /// <https://github.com/microsoft/TypeScript/blob/f0374ce2a9c465e27a15b7fa4a347e2bd9079450/src/compiler/transformers/jsx.ts#L557-L608>
     fn fixup_whitespace_and_decode_entities(
-        text: Str<'a>,
+        text: Wtf8Str<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> Option<Str<'a>> {
-        // Avoid copying strings in the common case where there's only 1 line of text,
-        // and it contains no HTML entities that need decoding.
-        //
-        // Where we do have to decode HTML entities, or concatenate multiple lines, assemble the
-        // concatenated text directly in arena, in an `ArenaString` (the accumulator `acc`),
-        // to avoid allocations. Initialize that `ArenaString` with capacity equal to length of
-        // the original text. This may be a bit more capacity than is required, once whitespace
-        // is removed, but it's highly unlikely to be insufficient capacity, so the `ArenaString`
-        // shouldn't need to reallocate while it's being constructed.
-        //
-        // When first line containing some text is found:
-        // * If it contains HTML entities, decode them and write decoded text to accumulator `acc`.
-        // * Otherwise, store trimmed text in `only_line` as a `Str<'a>`.
-        //
-        // When another line containing some text is found:
-        // * If accumulator isn't already initialized, initialize it, starting with `only_line`.
-        // * Push a space to the accumulator.
-        // * Decode current line into the accumulator.
-        //
-        // At the end:
-        // * If accumulator is initialized, convert the `ArenaString` to a `Str` and return it.
-        // * If `only_line` contains a string, that means only 1 line contained text, and that line
-        //   didn't contain any HTML entities which needed decoding.
-        //   So we can just return the `Str` that's in `only_line` (without any copying).
+    ) -> Option<Wtf8Str<'a>> {
+        // JSXText is now WTF-8. For the common case of valid UTF-8, reuse original
+        // whitespace-trimming logic. If the text contains lone surrogates (not valid UTF-8),
+        // whitespace handling is not critical; preserve the original value to avoid losing
+        // surrogates via lossy conversion. `ArenaStringBuilder` is UTF-8 only, so we cannot
+        // safely accumulate WTF-8 bytes there.
+        let Some(str_val) = text.as_str() else {
+            // Contains lone surrogates — return original without whitespace fixup.
+            // This preserves WTF-8 bytes; codegen will handle escaping.
+            if text.is_empty() {
+                return None;
+            }
+            return Some(text);
+        };
 
+        // Valid UTF-8 fast path — original logic, but producing `Wtf8Str`.
         let mut acc: Option<ArenaStringBuilder> = None;
-        let mut only_line: Option<Str<'a>> = None;
+        let mut only_line: Option<Wtf8Str<'a>> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
-        for (index, c) in text.char_indices() {
+        for (index, c) in str_val.char_indices() {
             if is_line_terminator(c) {
                 if let (Some(first), Some(last)) = (first_non_whitespace, last_non_whitespace) {
                     Self::add_line_of_jsx_text(
-                        Str::from(&text.as_str()[first..last]),
+                        Wtf8Str::from(&str_val[first..last]),
                         &mut acc,
                         &mut only_line,
                         text.len(),
@@ -1080,7 +1072,7 @@ impl<'a> JsxImpl<'a> {
 
         if let Some(first) = first_non_whitespace {
             Self::add_line_of_jsx_text(
-                Str::from(&text.as_str()[first..]),
+                Wtf8Str::from(&str_val[first..]),
                 &mut acc,
                 &mut only_line,
                 text.len(),
@@ -1088,13 +1080,13 @@ impl<'a> JsxImpl<'a> {
             );
         }
 
-        if let Some(acc) = acc { Some(Str::from(acc)) } else { only_line }
+        if let Some(acc) = acc { Some(Wtf8Str::from(acc)) } else { only_line }
     }
 
     fn add_line_of_jsx_text(
-        trimmed_line: Str<'a>,
+        trimmed_line: Wtf8Str<'a>,
         acc: &mut Option<ArenaStringBuilder<'a>>,
-        only_line: &mut Option<Str<'a>>,
+        only_line: &mut Option<Wtf8Str<'a>>,
         text_len: usize,
         ctx: &TraverseCtx<'a>,
     ) {
@@ -1106,13 +1098,14 @@ impl<'a> JsxImpl<'a> {
             // Generate an accumulator containing previous line and a trailing space.
             // Current line will be added to the accumulator after it.
             let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator());
-            buffer.push_str(only_line.as_str());
+            // `only_line` came from valid UTF-8 `text`, so `as_str` is Some.
+            buffer.push_str(only_line.as_str().unwrap());
             buffer.push(' ');
             *acc = Some(buffer);
         }
 
         // Decode any HTML entities in this line
-        decode_entities(trimmed_line.as_str(), acc, text_len, ctx.allocator());
+        decode_entities(trimmed_line.as_str().unwrap(), acc, text_len, ctx.allocator());
 
         if acc.is_none() {
             // This is the first line containing text, and there are no HTML entities in this line.

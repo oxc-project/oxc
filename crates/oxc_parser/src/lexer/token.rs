@@ -12,7 +12,7 @@ use super::kind::Kind;
 // - Bits 64-71 (8 bits): `kind` (`Kind`)
 // - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
 // - Bits 80-87 (8 bits): `escaped` (`bool`)
-// - Bits 88-95 (8 bits): `lone_surrogates` (`bool`)
+// - Bits 88-95 (8 bits): `has_wtf8_surrogate` (`bool`)
 // - Bits 96-103 (8 bits): `has_separator` (`bool`)
 // - Bits 104-127 (24 bits): unused
 
@@ -21,7 +21,7 @@ const END_SHIFT: usize = 32;
 const KIND_SHIFT: usize = 64;
 const IS_ON_NEW_LINE_SHIFT: usize = 72;
 const ESCAPED_SHIFT: usize = 80;
-const LONE_SURROGATES_SHIFT: usize = 88;
+const HAS_WTF8_SURROGATE_SHIFT: usize = 88;
 const HAS_SEPARATOR_SHIFT: usize = 96;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
@@ -48,7 +48,7 @@ const _: () = {
     // Check flags fields are aligned on 8 and in bounds, so can be read/written via pointers
     assert!(is_valid_shift::<bool>(IS_ON_NEW_LINE_SHIFT));
     assert!(is_valid_shift::<bool>(ESCAPED_SHIFT));
-    assert!(is_valid_shift::<bool>(LONE_SURROGATES_SHIFT));
+    assert!(is_valid_shift::<bool>(HAS_WTF8_SURROGATE_SHIFT));
     assert!(is_valid_shift::<bool>(HAS_SEPARATOR_SHIFT));
 };
 
@@ -65,7 +65,7 @@ impl Default for Token {
         // kind: Kind::default(),
         // is_on_new_line: false,
         // escaped: false,
-        // lone_surrogates: false,
+        // has_wtf8_surrogate: false,
         // has_separator: false,
         const _: () = assert!(Kind::Eof as u8 == 0);
         Self(0)
@@ -80,7 +80,7 @@ impl fmt::Debug for Token {
             .field("end", &self.end())
             .field("is_on_new_line", &self.is_on_new_line())
             .field("escaped", &self.escaped())
-            .field("lone_surrogates", &self.lone_surrogates())
+            .field("has_wtf8_surrogate", &self.has_wtf8_surrogate())
             .field("has_separator", &self.has_separator())
             .finish()
     }
@@ -257,23 +257,23 @@ impl Token {
     }
 
     #[inline]
-    pub fn lone_surrogates(&self) -> bool {
+    pub fn has_wtf8_surrogate(&self) -> bool {
         // Use a pointer read rather than arithmetic as it produces less instructions.
-        // SAFETY: 8 bits starting at `LONE_SURROGATES_SHIFT` are only set in `Token::default` and
-        // `Token::set_lone_surrogates`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
-        unsafe { self.read_bool(LONE_SURROGATES_SHIFT) }
+        // SAFETY: 8 bits starting at `HAS_WTF8_SURROGATE_SHIFT` are only set in `Token::default` and
+        // `Token::set_has_wtf8_surrogate`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe { self.read_bool(HAS_WTF8_SURROGATE_SHIFT) }
     }
 
     #[inline]
-    pub(super) fn set_lone_surrogates(&mut self, value: bool) {
+    pub(super) fn set_has_wtf8_surrogate(&mut self, value: bool) {
         /*
         // Original version. Perf regressed in Rust 1.95.0.
-        self.0 &= !(BOOL_MASK << LONE_SURROGATES_SHIFT); // Clear current `lone_surrogates` bits
-        self.0 |= u128::from(value) << LONE_SURROGATES_SHIFT;
+        self.0 &= !(BOOL_MASK << HAS_WTF8_SURROGATE_SHIFT); // Clear current `has_wtf8_surrogate` bits
+        self.0 |= u128::from(value) << HAS_WTF8_SURROGATE_SHIFT;
         */
 
-        // SAFETY: `LONE_SURROGATES_SHIFT` is a valid `bool` field position in `Token`
-        unsafe { self.write_bool(LONE_SURROGATES_SHIFT, value) };
+        // SAFETY: `HAS_WTF8_SURROGATE_SHIFT` is a valid `bool` field position in `Token`
+        unsafe { self.write_bool(HAS_WTF8_SURROGATE_SHIFT, value) };
     }
 
     #[inline]
@@ -405,7 +405,7 @@ mod test {
         assert_eq!(token.kind(), Kind::Eof); // Kind::default() is Eof
         assert!(!token.is_on_new_line());
         assert!(!token.escaped());
-        assert!(!token.lone_surrogates());
+        assert!(!token.has_wtf8_surrogate());
         assert!(!token.has_separator());
     }
 
@@ -417,7 +417,7 @@ mod test {
         assert_eq!(token.kind(), Kind::Eof);
         assert!(token.is_on_new_line());
         assert!(!token.escaped());
-        assert!(!token.lone_surrogates());
+        assert!(!token.has_wtf8_surrogate());
         assert!(!token.has_separator());
     }
 
@@ -428,7 +428,7 @@ mod test {
         let end = start + 5u32;
         let is_on_new_line = true;
         let escaped = false;
-        let lone_surrogates = true;
+        let has_wtf8_surrogate = true;
         let has_separator = false;
 
         let mut token = Token::default();
@@ -437,7 +437,7 @@ mod test {
         token.set_end(end);
         token.set_is_on_new_line(is_on_new_line);
         token.set_escaped(escaped);
-        token.set_lone_surrogates(lone_surrogates);
+        token.set_has_wtf8_surrogate(has_wtf8_surrogate);
         if has_separator {
             // Assuming set_has_separator is not always called if false
             token.set_has_separator(true);
@@ -448,7 +448,7 @@ mod test {
         assert_eq!(token.end(), end);
         assert_eq!(token.is_on_new_line(), is_on_new_line);
         assert_eq!(token.escaped(), escaped);
-        assert_eq!(token.lone_surrogates(), lone_surrogates);
+        assert_eq!(token.has_wtf8_surrogate(), has_wtf8_surrogate);
         assert_eq!(token.has_separator(), has_separator);
     }
 
@@ -457,13 +457,13 @@ mod test {
         let mut token = Token::default();
         token.set_kind(Kind::Ident);
         token.set_span(Span::new(10, 15));
-        // is_on_new_line, escaped, lone_surrogates, has_separator are false by default from Token::default()
+        // is_on_new_line, escaped, has_wtf8_surrogate, has_separator are false by default from Token::default()
 
         assert_eq!(token.start(), 10);
         assert_eq!(token.end(), 15);
         assert!(!token.escaped());
         assert!(!token.is_on_new_line());
-        assert!(!token.lone_surrogates());
+        assert!(!token.has_wtf8_surrogate());
 
         // Test set_end
         let mut token_for_set_end = Token::default();
@@ -483,14 +483,14 @@ mod test {
         token_with_flags.set_end(33);
         token_with_flags.set_is_on_new_line(true);
         token_with_flags.set_escaped(true);
-        token_with_flags.set_lone_surrogates(true);
+        token_with_flags.set_has_wtf8_surrogate(true);
         token_with_flags.set_has_separator(true);
 
         token_with_flags.set_start(40);
         assert_eq!(token_with_flags.start(), 40);
         assert!(token_with_flags.is_on_new_line());
         assert!(token_with_flags.escaped());
-        assert!(token_with_flags.lone_surrogates());
+        assert!(token_with_flags.has_wtf8_surrogate());
         assert!(token_with_flags.has_separator());
 
         // Test that other flags are not affected by set_escaped
@@ -500,19 +500,19 @@ mod test {
         token_with_flags2.set_end(52);
         token_with_flags2.set_is_on_new_line(true);
         // escaped is false by default
-        token_with_flags2.set_lone_surrogates(true);
+        token_with_flags2.set_has_wtf8_surrogate(true);
         token_with_flags2.set_has_separator(true);
 
         token_with_flags2.set_escaped(true);
         assert_eq!(token_with_flags2.start(), 50);
         assert!(token_with_flags2.is_on_new_line());
         assert!(token_with_flags2.escaped());
-        assert!(token_with_flags2.lone_surrogates());
+        assert!(token_with_flags2.has_wtf8_surrogate());
         assert!(token_with_flags2.has_separator());
         token_with_flags2.set_escaped(false);
         assert!(!token_with_flags2.escaped());
         assert!(token_with_flags2.is_on_new_line()); // Check again
-        assert!(token_with_flags2.lone_surrogates()); // Check again
+        assert!(token_with_flags2.has_wtf8_surrogate()); // Check again
         assert!(token_with_flags2.has_separator()); // Check again
 
         // Test set_is_on_new_line does not affect other flags
@@ -522,42 +522,42 @@ mod test {
         token_flags_test_newline.set_end(62);
         // is_on_new_line is false by default
         token_flags_test_newline.set_escaped(true);
-        token_flags_test_newline.set_lone_surrogates(true);
+        token_flags_test_newline.set_has_wtf8_surrogate(true);
         token_flags_test_newline.set_has_separator(true);
 
         token_flags_test_newline.set_is_on_new_line(true);
         assert!(token_flags_test_newline.is_on_new_line());
         assert_eq!(token_flags_test_newline.start(), 60);
         assert!(token_flags_test_newline.escaped());
-        assert!(token_flags_test_newline.lone_surrogates());
+        assert!(token_flags_test_newline.has_wtf8_surrogate());
         assert!(token_flags_test_newline.has_separator());
         token_flags_test_newline.set_is_on_new_line(false);
         assert!(!token_flags_test_newline.is_on_new_line());
         assert!(token_flags_test_newline.escaped());
-        assert!(token_flags_test_newline.lone_surrogates());
+        assert!(token_flags_test_newline.has_wtf8_surrogate());
         assert!(token_flags_test_newline.has_separator());
 
-        // Test set_lone_surrogates does not affect other flags
-        let mut token_flags_test_lone_surrogates = Token::default();
-        token_flags_test_lone_surrogates.set_kind(Kind::Str);
-        token_flags_test_lone_surrogates.set_start(70);
-        token_flags_test_lone_surrogates.set_end(72);
-        token_flags_test_lone_surrogates.set_is_on_new_line(true);
-        token_flags_test_lone_surrogates.set_escaped(true);
-        // lone_surrogates is false by default
-        token_flags_test_lone_surrogates.set_has_separator(true);
+        // Test set_has_wtf8_surrogate does not affect other flags
+        let mut token_flags_test_has_wtf8_surrogate = Token::default();
+        token_flags_test_has_wtf8_surrogate.set_kind(Kind::Str);
+        token_flags_test_has_wtf8_surrogate.set_start(70);
+        token_flags_test_has_wtf8_surrogate.set_end(72);
+        token_flags_test_has_wtf8_surrogate.set_is_on_new_line(true);
+        token_flags_test_has_wtf8_surrogate.set_escaped(true);
+        // has_wtf8_surrogate is false by default
+        token_flags_test_has_wtf8_surrogate.set_has_separator(true);
 
-        token_flags_test_lone_surrogates.set_lone_surrogates(true);
-        assert!(token_flags_test_lone_surrogates.lone_surrogates());
-        assert_eq!(token_flags_test_lone_surrogates.start(), 70);
-        assert!(token_flags_test_lone_surrogates.is_on_new_line());
-        assert!(token_flags_test_lone_surrogates.escaped());
-        assert!(token_flags_test_lone_surrogates.has_separator());
-        token_flags_test_lone_surrogates.set_lone_surrogates(false);
-        assert!(!token_flags_test_lone_surrogates.lone_surrogates());
-        assert!(token_flags_test_lone_surrogates.is_on_new_line());
-        assert!(token_flags_test_lone_surrogates.escaped());
-        assert!(token_flags_test_lone_surrogates.has_separator());
+        token_flags_test_has_wtf8_surrogate.set_has_wtf8_surrogate(true);
+        assert!(token_flags_test_has_wtf8_surrogate.has_wtf8_surrogate());
+        assert_eq!(token_flags_test_has_wtf8_surrogate.start(), 70);
+        assert!(token_flags_test_has_wtf8_surrogate.is_on_new_line());
+        assert!(token_flags_test_has_wtf8_surrogate.escaped());
+        assert!(token_flags_test_has_wtf8_surrogate.has_separator());
+        token_flags_test_has_wtf8_surrogate.set_has_wtf8_surrogate(false);
+        assert!(!token_flags_test_has_wtf8_surrogate.has_wtf8_surrogate());
+        assert!(token_flags_test_has_wtf8_surrogate.is_on_new_line());
+        assert!(token_flags_test_has_wtf8_surrogate.escaped());
+        assert!(token_flags_test_has_wtf8_surrogate.has_separator());
     }
 
     #[test]
@@ -581,13 +581,13 @@ mod test {
     }
 
     #[test]
-    fn lone_surrogates() {
+    fn has_wtf8_surrogate() {
         let mut token = Token::default();
-        assert!(!token.lone_surrogates());
-        token.set_lone_surrogates(true);
-        assert!(token.lone_surrogates());
-        token.set_lone_surrogates(false);
-        assert!(!token.lone_surrogates());
+        assert!(!token.has_wtf8_surrogate());
+        token.set_has_wtf8_surrogate(true);
+        assert!(token.has_wtf8_surrogate());
+        token.set_has_wtf8_surrogate(false);
+        assert!(!token.has_wtf8_surrogate());
     }
 
     #[test]

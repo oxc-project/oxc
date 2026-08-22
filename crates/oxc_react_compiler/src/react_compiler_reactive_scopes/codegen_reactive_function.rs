@@ -1407,9 +1407,12 @@ fn ox_convert_value_to_expression<'a>(
 ) -> oxc::Expression<'a> {
     match value {
         OxValue::Expression(e) => e,
-        OxValue::JsxText(text) => {
-            oxc_ast::ast::Expression::new_string_literal(text.span, text.value.as_str(), None, ast)
-        }
+        OxValue::JsxText(text) => oxc_ast::ast::Expression::new_string_literal(
+            text.span,
+            text.value.as_str().unwrap_or_default(),
+            None,
+            ast,
+        ),
     }
 }
 
@@ -3247,7 +3250,8 @@ fn ox_codegen_jsx_attribute<'a>(
             let inner_value = ox_codegen_place_to_expression(cx, place)?;
             let attr_value = match inner_value {
                 oxc::Expression::StringLiteral(ref s)
-                    if !ox_string_requires_expr_container(s.value.as_str()) || is_fbt_operand =>
+                    if !ox_string_requires_expr_container(s.value.as_str().unwrap_or_default())
+                        || is_fbt_operand =>
                 {
                     let value = s.value;
                     Some(oxc_ast::ast::JSXAttributeValue::new_string_literal(
@@ -3282,7 +3286,7 @@ fn ox_codegen_jsx_element<'a>(
     match value {
         OxValue::JsxText(text) => {
             let span = text.span;
-            let raw = text.value.as_str();
+            let raw = text.value.as_str().unwrap_or_default();
             if raw.contains(JSX_TEXT_CHILD_REQUIRES_EXPR_CONTAINER_PATTERN) {
                 let lit = oxc_ast::ast::Expression::new_string_literal(
                     span,
@@ -3339,7 +3343,7 @@ fn ox_codegen_jsx_fbt_child_element<'a>(
     match value {
         OxValue::JsxText(text) => {
             let span = text.span;
-            let encoded = ox_encode_jsx_text(text.value.as_str());
+            let encoded = ox_encode_jsx_text(text.value.as_str().unwrap_or_default());
             Ok(oxc_ast::ast::JSXChild::new_text(span, ox_str(&cx.ast, &encoded), None, &cx.ast))
         }
         OxValue::Expression(oxc::Expression::JSXElement(elem)) => {
@@ -3390,7 +3394,7 @@ fn ox_expression_to_jsx_tag<'a>(
             ))
         }
         oxc::Expression::StringLiteral(s) => {
-            let tag_text = s.value.as_str();
+            let tag_text = s.value.as_str().unwrap_or_default();
             if tag_text.contains(':') {
                 let parts: Vec<&str> = tag_text.splitn(2, ':').collect();
                 let namespace =
@@ -3582,7 +3586,7 @@ fn ox_convert_unary_operator(op: &crate::react_compiler_hir::UnaryOperator) -> o
 
 fn ox_codegen_primitive_value<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
-    value: &PrimitiveValue,
+    value: &PrimitiveValue<'a>,
     span: Span,
 ) -> oxc::Expression<'a> {
     match value {
@@ -3614,7 +3618,7 @@ fn ox_codegen_primitive_value<'a>(
         }
         PrimitiveValue::Boolean(b) => oxc_ast::ast::Expression::new_boolean_literal(span, *b, ast),
         PrimitiveValue::String(s) => {
-            oxc_ast::ast::Expression::new_string_literal(span, ox_str(ast, s.as_str()), None, ast)
+            oxc_ast::ast::Expression::new_string_literal(span, *s, None, ast)
         }
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(span, ast),
         PrimitiveValue::Undefined => {

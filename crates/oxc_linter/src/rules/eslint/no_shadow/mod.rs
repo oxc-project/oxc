@@ -458,7 +458,7 @@ impl NoShadow {
         let shadowed_declaration_id = ctx.scoping().symbol_declaration(shadowed_symbol_id);
         let import_source = ctx.nodes().ancestor_kinds(shadowed_declaration_id).find_map(|kind| {
             if let AstKind::ImportDeclaration(declaration) = kind {
-                Some(declaration.source.value.as_str())
+                Some(declaration.source.value.as_str_or_default())
             } else {
                 None
             }
@@ -472,7 +472,7 @@ impl NoShadow {
             if let AstKind::TSExternalModuleDeclaration(module_decl) = kind
                 && module_decl.declare
             {
-                Some(module_decl.id.value.as_str())
+                Some(module_decl.id.value.as_str_or_default())
             } else {
                 None
             }

@@ -5,6 +5,7 @@ use crate::{
 };
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_allocator::ArenaVec;
+use oxc_str::Str;
 
 use oxc_ast::{
     AstKind,
@@ -382,7 +383,7 @@ impl JsxCurlyBracePresence {
                     self.check_expression_container(ctx, container, node, false);
                 }
                 JSXChild::Text(text) => {
-                    let text_value = text.value.as_str();
+                    let text_value = text.value.as_str_or_default();
                     if self.children.is_always()
                         && !contains_only_html_entities(text_value)
                         && !is_whitespace(text_value)
@@ -425,7 +426,7 @@ impl JsxCurlyBracePresence {
                     report_missing_curly_for_string_attribute_value(
                         ctx,
                         string.span,
-                        string.value.as_str(),
+                        string.value.as_str().unwrap_or(""),
                     );
                 }
             }
@@ -592,7 +593,7 @@ fn report_unnecessary_curly<'a>(
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(string_literal.value.as_str());
+                fix.print_str(string_literal.value.as_str().unwrap_or(""));
 
                 fixer.replace(container.span, fix.into_source_text())
             }
@@ -616,7 +617,9 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
         let str = match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
-            JSXExpression::StringLiteral(string_lit) => string_lit.value,
+            JSXExpression::StringLiteral(string_lit) => {
+                Str::from(string_lit.value.as_str_or_default())
+            }
             JSXExpression::JSXElement(el) => {
                 return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
             }

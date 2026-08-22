@@ -21,7 +21,7 @@ use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str, format_ident, static_ident};
+use oxc_str::{Ident, Str, Wtf8Str, format_ident, static_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
@@ -784,7 +784,7 @@ fn lower_inner<'a>(
             body_span = Some(block.span);
             directives = ArenaVec::from_iter_in(
                 block.directives.iter().map(|d| FunctionDirective {
-                    value: d.expression.value,
+                    value: oxc_str::Str::from(d.expression.value.as_str().unwrap_or_default()),
                     span: d.span,
                     expression_span: d.expression.span,
                 }),
@@ -1020,7 +1020,11 @@ fn lower_member_expression_impl<'a>(
 
 /// Build a HIR `TemplateQuasi` from an oxc `TemplateElement`.
 fn template_quasi_from_oxc<'a>(q: &oxc::TemplateElement<'a>) -> TemplateQuasi<'a> {
-    TemplateQuasi { raw: q.value.raw, cooked: q.value.cooked, span: q.span }
+    TemplateQuasi {
+        raw: q.value.raw,
+        cooked: q.value.cooked.map(|c| oxc_str::Str::from(c.as_str().unwrap_or_default())),
+        span: q.span,
+    }
 }
 
 /// Lower the `import` keyword callee of an `ImportExpression`. The original Babel
@@ -4646,16 +4650,17 @@ fn lower_jsx_element_expr<'a>(
                 let value = match &attr.value {
                     Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
                         let str_span = Some(s.span);
-                        let decoded = match decode_jsx_entities(s.value.as_str()) {
-                            Cow::Borrowed(text) => Str::from(text),
-                            Cow::Owned(text) => {
-                                Str::from_str_in(&text, &builder.environment().allocator)
-                            }
-                        };
+                        let decoded =
+                            match decode_jsx_entities(s.value.as_str().unwrap_or_default()) {
+                                Cow::Borrowed(text) => Str::from(text),
+                                Cow::Owned(text) => {
+                                    Str::from_str_in(&text, &builder.environment().allocator)
+                                }
+                            };
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::Primitive {
-                                value: PrimitiveValue::String(decoded),
+                                value: PrimitiveValue::String(decoded.into()),
                                 span: str_span,
                             },
                         )?
@@ -4889,7 +4894,7 @@ fn lower_jsx_element_name<'a>(
             let place = lower_value_to_temporary(
                 builder,
                 InstructionValue::Primitive {
-                    value: PrimitiveValue::String(Str::from_str_in(
+                    value: PrimitiveValue::String(Wtf8Str::from_str_in(
                         &tag,
                         &builder.environment().allocator,
                     )),
@@ -4971,7 +4976,7 @@ fn lower_jsx_element<'a>(
         oxc::JSXChild::Text(text) => {
             // oxc keeps JSX text raw; decode entities first so the value matches
             // Babel's `JSXText.value` (the Babel bridge decoded in convert_ast).
-            let decoded = decode_jsx_entities(text.value.as_str());
+            let decoded = decode_jsx_entities(text.value.as_str().unwrap_or_default());
             // FBT whitespace normalization differs from standard JSX.
             // Since the fbt transform runs after, preserve all whitespace
             // in FBT subtrees as is.
@@ -4994,8 +4999,10 @@ fn lower_jsx_element<'a>(
                 None => Ok(None),
                 Some((value, start)) => {
                     let mut span = text.span;
-                    span.start +=
-                        source_offset_for_decoded_jsx_text(text.value.as_str(), start) as u32;
+                    span.start += source_offset_for_decoded_jsx_text(
+                        text.value.as_str().unwrap_or_default(),
+                        start,
+                    ) as u32;
                     let place = lower_value_to_temporary(
                         builder,
                         InstructionValue::JSXText { value, span: Some(span) },
@@ -5575,7 +5582,7 @@ fn lower_object_property_key<'a>(
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
         oxc::PropertyKey::StringLiteral(lit) => Ok(Some(ObjectPropertyKey::String {
-            name: Ident::from(lit.value.as_str()),
+            name: Ident::from(lit.value.as_str().unwrap_or_default()),
             span: Some(lit.span),
         })),
         oxc::PropertyKey::StaticIdentifier(ident) if !computed => {

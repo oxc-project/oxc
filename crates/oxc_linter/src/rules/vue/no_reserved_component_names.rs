@@ -147,7 +147,7 @@ impl NoReservedComponentNames {
     fn check_name_expression<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
         match expr {
             Expression::StringLiteral(lit) => {
-                self.report_if_reserved(&lit.value, lit.span, ctx);
+                self.report_if_reserved(lit.value.as_str().unwrap_or_default(), lit.span, ctx);
             }
             Expression::TemplateLiteral(tpl) => {
                 if let Some(value) = single_quasi_value(tpl) {

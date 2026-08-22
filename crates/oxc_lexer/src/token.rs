@@ -403,7 +403,7 @@ pub struct StringSpan {
 
 #[expect(clippy::inline_always, reason = "cook-path hot: spans are packed per string/template")]
 impl StringSpan {
-    pub const LONE_SURROGATES_MASK: u32 = 0x8000_0000;
+    pub const HAS_WTF8_SURROGATE_MASK: u32 = 0x8000_0000;
     pub const END_MASK: u32 = 0x7FFF_FFFF;
     /// On `start`, template spans only: the body contained a
     /// `NotEscapeSequence` (bad `\u`/`\x`, octal, `\8`/`\9`). The equivalent
@@ -414,9 +414,10 @@ impl StringSpan {
 
     #[inline(always)]
     #[must_use]
-    pub const fn new(start: u32, end: u32, lone_surrogates: bool) -> Self {
+    pub const fn new(start: u32, end: u32, has_wtf8_surrogate: bool) -> Self {
         debug_assert!(end <= Self::END_MASK);
-        let end_and_flags = if lone_surrogates { end | Self::LONE_SURROGATES_MASK } else { end };
+        let end_and_flags =
+            if has_wtf8_surrogate { end | Self::HAS_WTF8_SURROGATE_MASK } else { end };
         Self { start, end_and_flags }
     }
 
@@ -446,8 +447,8 @@ impl StringSpan {
 
     #[inline(always)]
     #[must_use]
-    pub const fn lone_surrogates(self) -> bool {
-        (self.end_and_flags & Self::LONE_SURROGATES_MASK) != 0
+    pub const fn has_wtf8_surrogate(self) -> bool {
+        (self.end_and_flags & Self::HAS_WTF8_SURROGATE_MASK) != 0
     }
 }
 

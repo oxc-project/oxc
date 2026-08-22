@@ -158,7 +158,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
             UnicodeEscape::CodePoint(ch) => {
-                if ch == '\u{FFFD}' && self.token.lone_surrogates() {
+                if ch == '\u{FFFD}' && self.token.has_wtf8_surrogate() {
                     // Lossy replacement character is being used as an escape marker. Escape it.
                     text.push_str("\u{FFFD}fffd");
                 } else {
@@ -179,8 +179,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn string_lone_surrogate(&mut self, code_point: u32, text: &mut ArenaStringBuilder<'a>) {
         debug_assert!(code_point <= 0xFFFF);
 
-        if !self.token.lone_surrogates() {
-            self.token.set_lone_surrogates(true);
+        if !self.token.has_wtf8_surrogate() {
+            self.token.set_has_wtf8_surrogate(true);
 
             // We use `\u{FFFD}` (the lossy replacement character) as a marker indicating the start
             // of a lone surrogate. e.g. `\u{FFFD}d800` (which will be output as `\ud800`).

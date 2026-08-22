@@ -233,7 +233,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if matches!(
                     import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
+                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
                 ) {
                     let original = find_original_name(import_decl, name);
                     return Some(
@@ -285,7 +285,7 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>
     match expr {
         Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
         Expression::StringLiteral(string_literal) => {
-            chain.push(Cow::Borrowed(&string_literal.value));
+            chain.push(Cow::Borrowed(string_literal.value.as_str().unwrap_or_default()));
         }
         Expression::TemplateLiteral(template_literal) => {
             if let Some(quasi) = template_literal.single_quasi() {

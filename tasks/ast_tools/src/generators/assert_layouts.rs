@@ -561,7 +561,7 @@ impl LayoutCalculator<'_> {
             "f32" => Layout::from_type::<f32>(),
             "f64" => Layout::from_type::<f64>(),
             "&str" => str_layout,
-            "Str" => str_layout,
+            "Str" | "Wtf8Str" => str_layout,
             // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
             // Niche for 0 on the pointer field.
             "Ident" => Layout {

@@ -21,16 +21,16 @@ const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
 }
 
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
+const WTF8_MARKER_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+const WTF8_MARKER_CHAR_FIRST_BYTE: u8 = WTF8_MARKER_CHAR_BYTES[0];
+const _: () = assert!(WTF8_MARKER_CHAR_FIRST_BYTE == 0xEF);
 
 static TEMPLATE_LITERAL_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'$' | b'`' | b'\r' | b'\\'));
 
 // Same as above, but with 1st byte of lossy replacement character added
 static TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(
-    |b| matches!(b, b'$' | b'`' | b'\r' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE)
+    |b| matches!(b, b'$' | b'`' | b'\r' | b'\\' | WTF8_MARKER_CHAR_FIRST_BYTE)
 );
 
 /// 12.8.6 Template Literal Lexical Components
@@ -343,17 +343,17 @@ impl<'a, C: Config> Lexer<'a, C> {
                         _ => {
                             // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
                             // or first byte of lossy replacement character
-                            debug_assert_eq!(next_byte, LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
+                            debug_assert_eq!(next_byte, WTF8_MARKER_CHAR_FIRST_BYTE);
 
                             // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
                             // so there must be 2 more bytes to read
                             let next2 = unsafe { pos.add(1).read2() };
-                            if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                                && self.token.lone_surrogates()
+                            if next2 == [WTF8_MARKER_CHAR_BYTES[1], WTF8_MARKER_CHAR_BYTES[2]]
+                                && self.token.has_wtf8_surrogate()
                             {
                                 str.push_str("\u{FFFD}fffd");
                             } else {
-                                let bytes = [LOSSY_REPLACEMENT_CHAR_FIRST_BYTE, next2[0], next2[1]];
+                                let bytes = [WTF8_MARKER_CHAR_FIRST_BYTE, next2[0], next2[1]];
                                 // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
                                 // so these 3 bytes must comprise a valid UTF-8 string
                                 let s = unsafe { str::from_utf8_unchecked(&bytes) };

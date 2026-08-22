@@ -118,7 +118,8 @@ impl Rule for NoAbsolutePath {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import_decl)
-                if self.esmodule && check_path_is_absolute(import_decl.source.value.as_str()) =>
+                if self.esmodule
+                    && check_path_is_absolute(import_decl.source.value.as_str().unwrap_or("")) =>
             {
                 ctx.diagnostic(no_absolute_path_diagnostic(import_decl.source.span));
             }
@@ -134,14 +135,16 @@ impl Rule for NoAbsolutePath {
                             if count == 1
                                 && func_name == "require"
                                 && self.commonjs
-                                && check_path_is_absolute(str_literal.value.as_str()) =>
+                                && check_path_is_absolute(
+                                    str_literal.value.as_str().unwrap_or(""),
+                                ) =>
                         {
                             ctx.diagnostic(no_absolute_path_diagnostic(str_literal.span));
                         }
                         Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
                             for el in &arr_expr.elements {
                                 if let Some(el_expr) = el.as_expression()
-                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
+                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str().unwrap_or("")))
                                 {
                                     ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
                                 }

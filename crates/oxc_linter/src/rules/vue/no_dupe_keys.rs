@@ -317,7 +317,7 @@ fn report_or_add<'a>(
 /// Non-string literals are stringified like JS `String(value)`; `null` has no name.
 fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
     match expr {
-        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str().unwrap_or(""))),
         Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
         Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
         Expression::BooleanLiteral(b) => {

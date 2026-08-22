@@ -500,7 +500,7 @@ impl<'s> StructSerializerGenerator<'s> {
             let value = match field.type_def(self.schema) {
                 TypeDef::Primitive(primitive_def) => match primitive_def.name() {
                     "&str" => Some(quote!( JsonSafeString(#self_path.#field_name_ident) )),
-                    "Str" | "Ident" => {
+                    "Str" | "Wtf8Str" | "Ident" => {
                         Some(quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) ))
                     }
                     _ => None,
@@ -512,7 +512,7 @@ impl<'s> StructSerializerGenerator<'s> {
                         "&str" => Some(quote! {
                             #self_path.#field_name_ident.map(|s| JsonSafeString(s))
                         }),
-                        "Str" | "Ident" => Some(quote! {
+                        "Str" | "Wtf8Str" | "Ident" => Some(quote! {
                             #self_path.#field_name_ident.map(|s| JsonSafeString(s.as_str()))
                         }),
                         _ => None,

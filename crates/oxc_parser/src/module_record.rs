@@ -200,7 +200,10 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        let module_request = NameSpan::new(
+            decl.source.value.as_str().map_or_else(|| oxc_str::Str::from(""), oxc_str::Str::from),
+            decl.source.span,
+        );
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
@@ -246,7 +249,10 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        let module_request = NameSpan::new(
+            decl.source.value.as_str().map_or_else(|| oxc_str::Str::from(""), oxc_str::Str::from),
+            decl.source.span,
+        );
         let export_entry = ExportEntry {
             statement_span: decl.span,
             span: decl.span,
@@ -360,7 +366,10 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_from_declaration(&mut self, decl: &ExportFromDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        let module_request = NameSpan::new(
+            decl.source.value.as_str().map_or_else(|| oxc_str::Str::from(""), oxc_str::Str::from),
+            decl.source.span,
+        );
         self.add_module_request(
             module_request.name,
             RequestedModule {

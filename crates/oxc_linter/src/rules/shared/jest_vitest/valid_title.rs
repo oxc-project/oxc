@@ -234,7 +234,7 @@ impl ValidTitleConfig {
         match arg {
             Argument::StringLiteral(string_literal) => {
                 validate_title(
-                    &string_literal.value,
+                    string_literal.value.as_str().unwrap_or_default(),
                     string_literal.span,
                     config,
                     &jest_fn_call.name,

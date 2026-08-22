@@ -266,6 +266,11 @@ fn generate_deserializers(
         export declare function resetBuffer(): void;
     ".to_string();
 
+    // Track generated deserializer function names to avoid duplicates.
+    // Multiple types can map to the same deserializer name (e.g. `Option<Str>` and
+    // `Option<Wtf8Str>` both produce `deserializeOptionStr`).
+    let mut generated_deserializer_names = FxHashSet::default();
+
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
@@ -275,16 +280,39 @@ fn generate_deserializers(
                 generate_enum(enum_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
-                generate_primitive(primitive_def, &mut code, schema);
+                generate_primitive(
+                    primitive_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    schema,
+                );
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut code, estree_derive_id, schema);
+                generate_option(
+                    option_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut code, estree_derive_id, schema);
+                generate_box(
+                    box_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut code, estree_derive_id, schema);
+                generate_vec(
+                    vec_def,
+                    &mut code,
+                    &mut generated_deserializer_names,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
@@ -740,7 +768,7 @@ impl<'s> StructDeserializerGenerator<'s> {
             };
 
             if inner_type.as_primitive().is_none_or(|primitive_def| {
-                !matches!(primitive_def.name(), "Str" | "Ident" | "&str")
+                !matches!(primitive_def.name(), "Str" | "Wtf8Str" | "Ident" | "&str")
             }) {
                 panic!(
                     "`#[estree(from_span)]` can only be on a field of type `Str`, `Ident`, `&str`, or `Option` containing one of those types: `{}::{}`",
@@ -906,11 +934,16 @@ fn generate_enum(
 }
 
 /// Generate deserialize function for a primitive.
-fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
+fn generate_primitive(
+    primitive_def: &PrimitiveDef,
+    code: &mut String,
+    generated_names: &mut FxHashSet<String>,
+    schema: &Schema,
+) {
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
-        "Str" | "Ident" => return,
+        "Str" | "Wtf8Str" | "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
         "bool" => "return uint8[pos] === 1;",
@@ -943,6 +976,9 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     };
 
     let fn_name = primitive_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -1016,6 +1052,7 @@ static STR_DESERIALIZER_BODY: &str = "
 fn generate_option(
     option_def: &OptionDef,
     code: &mut String,
+    generated_names: &mut FxHashSet<String>,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -1025,6 +1062,9 @@ fn generate_option(
     }
 
     let fn_name = option_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
     let inner_fn_name = inner_type.deser_name(schema);
 
     let (none_condition, payload_offset) =
@@ -1074,13 +1114,22 @@ fn get_option_none_condition_and_offset(
 }
 
 /// Generate deserialize function for a `Box`.
-fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+fn generate_box(
+    box_def: &BoxDef,
+    code: &mut String,
+    generated_names: &mut FxHashSet<String>,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = box_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
     let fn_name = box_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
     let inner_fn_name = inner_type.deser_name(schema);
 
     #[rustfmt::skip]
@@ -1092,13 +1141,22 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
 }
 
 /// Generate deserialize function for a `Vec`.
-fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+fn generate_vec(
+    vec_def: &VecDef,
+    code: &mut String,
+    generated_names: &mut FxHashSet<String>,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = vec_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
     let fn_name = vec_def.deser_name(schema);
+    if !generated_names.insert(fn_name.to_string()) {
+        return;
+    }
     let inner_fn_name = inner_type.deser_name(schema);
     let inner_type_size = inner_type.layout_64().size;
 
@@ -1401,7 +1459,7 @@ impl_deser_name_concat!(VecDef, "Vec");
 impl DeserializeFunctionName for PrimitiveDef {
     fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
         let type_name = self.name();
-        if matches!(type_name, "&str" | "Str" | "Ident") {
+        if matches!(type_name, "&str" | "Str" | "Wtf8Str" | "Ident") {
             // Use 1 deserializer for `&str`, `Str`, and `Ident`
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {

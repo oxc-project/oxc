@@ -93,7 +93,7 @@ impl Rule for PreferGlobalThis {
                     {
                         if let Some(Expression::StringLiteral(lit)) =
                             call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                            && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
+                            && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str_or_default())
                         {
                             return;
                         }

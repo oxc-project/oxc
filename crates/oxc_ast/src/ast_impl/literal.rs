@@ -83,25 +83,15 @@ impl StringLiteral<'_> {
     ///
     /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
     pub fn is_string_well_formed_unicode(&self) -> bool {
-        let mut chars = self.value.chars();
-        while let Some(c) = chars.next() {
-            if c == '\\' && chars.next() == Some('u') {
-                let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16)
-                    && (0xd800..=0xdfff).contains(&hex)
-                {
-                    return false;
-                }
-            }
-        }
-        true
+        // WTF-8 string is well-formed iff it's valid UTF-8 (i.e., contains no lone surrogates).
+        self.value.as_str().is_some()
     }
 }
 
-impl AsRef<str> for StringLiteral<'_> {
+impl AsRef<oxc_wtf8::Wtf8> for StringLiteral<'_> {
     #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
+    fn as_ref(&self) -> &oxc_wtf8::Wtf8 {
+        self.value.as_wtf8()
     }
 }
 

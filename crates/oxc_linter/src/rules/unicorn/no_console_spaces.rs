@@ -75,7 +75,7 @@ impl Rule for NoConsoleSpaces {
             if let Some(expression_arg) = arg.as_expression() {
                 let (literal_raw, is_template_lit) = match expression_arg {
                     Expression::StringLiteral(string_lit) => {
-                        let literal_raw = string_lit.value.as_str();
+                        let literal_raw = string_lit.value.as_str_or_default();
 
                         (literal_raw, false)
                     }

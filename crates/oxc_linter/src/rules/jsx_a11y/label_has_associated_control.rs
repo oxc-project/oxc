@@ -337,7 +337,7 @@ impl LabelHasAssociatedControl {
 
         match node {
             JSXChild::ExpressionContainer(_) => true,
-            JSXChild::Text(text) => !text.value.as_str().trim().is_empty(),
+            JSXChild::Text(text) => !text.value.as_str_or_default().trim().is_empty(),
             JSXChild::Element(element) => {
                 let has_labelling_prop =
                     element.opening_element.attributes.iter().any(|attr| match attr {
@@ -347,7 +347,7 @@ impl LabelHasAssociatedControl {
                                     && attribute.value.as_ref().is_some_and(|attribute_value| {
                                         match attribute_value {
                                             JSXAttributeValue::StringLiteral(literal) => {
-                                                !literal.value.as_str().trim().is_empty()
+                                                !literal.value.as_str_or_default().trim().is_empty()
                                             }
                                             _ => true,
                                         }

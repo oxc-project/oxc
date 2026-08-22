@@ -111,7 +111,7 @@ impl Rule for ConsistentVitestVi {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import) => {
-                if !is_vitest_import_source(import.source.value.as_str()) {
+                if !is_vitest_import_source(import.source.value.as_str().unwrap_or("")) {
                     return;
                 }
 

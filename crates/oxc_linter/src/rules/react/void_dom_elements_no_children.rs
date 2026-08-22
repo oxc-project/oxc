@@ -118,7 +118,7 @@ impl Rule for VoidDomElementsNoChildren {
                     return;
                 };
 
-                if !is_void_dom_element(element_name.value.as_str()) {
+                if !is_void_dom_element(element_name.value.as_str().unwrap_or("")) {
                     return;
                 }
 
@@ -143,7 +143,7 @@ impl Rule for VoidDomElementsNoChildren {
 
                 if call_expr.arguments.get(2).is_some() || has_children_prop_or_danger {
                     ctx.diagnostic(void_dom_elements_no_children_diagnostic(
-                        &element_name.value,
+                        element_name.value.as_str().unwrap_or_default(),
                         element_name.span,
                     ));
                 }

@@ -178,7 +178,7 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
         write!(f, FormatInvalidJson(template.span));
         return;
     };
-    let body = json_stringify_escape(cooked.as_str(), quasi.lone_surrogates);
+    let body = json_stringify_escape(cooked.as_wtf8());
     write_quoted_str(f, b'"', arena_cow_str(&body, f));
 }
 
@@ -186,65 +186,48 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
 /// (the quotes themselves are not included): `"` and `\` get a backslash,
 /// control characters use their short escapes (`\b\f\n\r\t`) or `\uXXXX`.
 ///
-/// When `lone_surrogates` is set, `content` encodes each lone surrogate as
-/// `\u{FFFD}XXXX` (and a literal U+FFFD as `\u{FFFD}fffd`).
-/// The same scheme `oxc_codegen` decodes, `JSON.stringify` prints lone surrogates as `\uXXXX`.
-fn json_stringify_escape(content: &str, lone_surrogates: bool) -> Cow<'_, str> {
+/// Lone surrogates in WTF-8 are escaped as `\uXXXX`.
+fn json_stringify_escape(content: &oxc_wtf8::Wtf8) -> Cow<'_, str> {
     const HEX: &[u8; 16] = b"0123456789abcdef";
 
-    if !lone_surrogates && !content.bytes().any(|b| matches!(b, b'"' | b'\\') || b < 0x20) {
-        return Cow::Borrowed(content);
+    // Fast path: valid UTF-8 without escapes
+    if let Some(s) = content.as_str()
+        && !s.bytes().any(|b| matches!(b, b'"' | b'\\') || b < 0x20)
+    {
+        return Cow::Borrowed(s);
     }
 
     let mut out = String::with_capacity(content.len() + 8);
-    // Start of the pending run of as-is characters, flushed in one `push_str`
-    // before each escape (mirrors `oxc_formatter_core::spec::normalize_string`).
-    let mut copy_start = 0;
-    let mut chars = content.char_indices();
-    while let Some((i, c)) = chars.next() {
-        let short_escape = match c {
-            '"' => Some("\\\""),
-            '\\' => Some("\\\\"),
-            '\u{8}' => Some("\\b"),
-            '\u{c}' => Some("\\f"),
-            '\n' => Some("\\n"),
-            '\r' => Some("\\r"),
-            '\t' => Some("\\t"),
-            _ => None,
-        };
-        if let Some(escaped) = short_escape {
-            out.push_str(&content[copy_start..i]);
-            out.push_str(escaped);
-            copy_start = i + 1; // every short-escaped char is a single byte
-        } else if (c as u32) < 0x20 {
-            out.push_str(&content[copy_start..i]);
-            // Always `\u00XX` — the guard caps the code point below 0x20.
-            let code = c as u32;
-            out.push_str("\\u00");
-            out.push(HEX[(code >> 4) as usize] as char);
-            out.push(HEX[(code & 0xF) as usize] as char);
-            copy_start = i + 1;
-        } else if c == '\u{FFFD}' && lone_surrogates {
-            out.push_str(&content[copy_start..i]);
-            // 4 lowercase-hex ASCII chars always follow the 3-byte escape marker;
-            // `get` only guards against malformed input the parser never produces,
-            // falling back (like the `fffd` self-escape) to a literal U+FFFD.
-            let hex_start = i + 3;
-            match content.get(hex_start..hex_start + 4) {
-                Some(hex) if hex != "fffd" => {
-                    out.push_str("\\u");
-                    out.push_str(hex);
+    for cp in content.code_points() {
+        if let Some(c) = cp.to_char() {
+            match c {
+                '"' => out.push_str("\\\""),
+                '\\' => out.push_str("\\\\"),
+                '\u{8}' => out.push_str("\\b"),
+                '\u{c}' => out.push_str("\\f"),
+                '\n' => out.push_str("\\n"),
+                '\r' => out.push_str("\\r"),
+                '\t' => out.push_str("\\t"),
+                c if (c as u32) < 0x20 => {
+                    let code = c as u32;
+                    out.push_str("\\u00");
+                    out.push(HEX[(code >> 4) as usize] as char);
+                    out.push(HEX[(code & 0xF) as usize] as char);
                 }
-                _ => out.push('\u{FFFD}'),
+                _ => out.push(c),
             }
-            copy_start = (hex_start + 4).min(content.len());
-            // Skip the 4 (single-byte) hex chars.
-            for _ in 0..4 {
-                chars.next();
-            }
+        } else {
+            // Lone surrogate – emit \uXXXX
+            // (manual hex push: the project's `write!` macro shadows `std::write!`)
+            let code = cp.to_u32();
+            out.push('\\');
+            out.push('u');
+            out.push(HEX[((code >> 12) & 0xF) as usize] as char);
+            out.push(HEX[((code >> 8) & 0xF) as usize] as char);
+            out.push(HEX[((code >> 4) & 0xF) as usize] as char);
+            out.push(HEX[(code & 0xF) as usize] as char);
         }
     }
-    out.push_str(&content[copy_start..]);
     Cow::Owned(out)
 }
 
@@ -276,14 +259,26 @@ mod tests {
 
     #[test]
     fn stringify_escape() {
-        assert_eq!(json_stringify_escape("plain", false), "plain");
-        assert_eq!(json_stringify_escape("a\"b\\c", false), "a\\\"b\\\\c");
-        assert_eq!(json_stringify_escape("\u{8}\u{c}\n\r\t", false), "\\b\\f\\n\\r\\t");
-        assert_eq!(json_stringify_escape("\0\u{1}\u{1f}", false), "\\u0000\\u0001\\u001f");
+        use oxc_wtf8::{Wtf8, Wtf8Buf};
+
+        fn w(s: &str) -> &Wtf8 {
+            // SAFETY: `s` is valid UTF-8, so its bytes are valid WTF-8
+            unsafe { &*(std::ptr::from_ref::<[u8]>(s.as_bytes()) as *const Wtf8) }
+        }
+
+        assert_eq!(json_stringify_escape(w("plain")), "plain");
+        assert_eq!(json_stringify_escape(w("a\"b\\c")), "a\\\"b\\\\c");
+        assert_eq!(json_stringify_escape(w("\u{8}\u{c}\n\r\t")), "\\b\\f\\n\\r\\t");
+        assert_eq!(json_stringify_escape(w("\0\u{1}\u{1f}")), "\\u0000\\u0001\\u001f");
         // U+2028 / U+2029 are NOT escaped by `JSON.stringify`
-        assert_eq!(json_stringify_escape("\u{2028}\u{2029}", false), "\u{2028}\u{2029}");
-        // Lone surrogate `\u{FFFD}XXXX` encoding; `\u{FFFD}fffd` is a literal U+FFFD
-        assert_eq!(json_stringify_escape("a\u{FFFD}d800b", true), "a\\ud800b");
-        assert_eq!(json_stringify_escape("a\u{FFFD}fffdb", true), "a\u{FFFD}b");
+        assert_eq!(json_stringify_escape(w("\u{2028}\u{2029}")), "\u{2028}\u{2029}");
+        // Lone surrogates in WTF-8 are escaped as \uXXXX
+        let lone = Wtf8Buf::from_ill_formed_utf16(&[0xD800]);
+        let mut buf = Wtf8Buf::from_str("a");
+        buf.push_wtf8(&lone);
+        buf.push_str("b");
+        assert_eq!(json_stringify_escape(&buf), "a\\ud800b");
+        // Valid replacement character is not escaped
+        assert_eq!(json_stringify_escape(w("a\u{FFFD}b")), "a\u{FFFD}b");
     }
 }

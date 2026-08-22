@@ -7,7 +7,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
-use oxc_str::Ident;
+use oxc_str::{Ident, Str, Wtf8Str};
 use oxc_syntax::node::NodeId;
 
 use crate::ast_nodes::AstNode;
@@ -1684,11 +1684,6 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn tail(&self) -> bool {
         self.inner.tail
-    }
-
-    #[inline]
-    pub fn lone_surrogates(&self) -> bool {
-        self.inner.lone_surrogates
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6476,18 +6471,13 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Str<'a> {
+    pub fn value(&self) -> Wtf8Str<'a> {
         self.inner.value
     }
 
     #[inline]
     pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
-    }
-
-    #[inline]
-    pub fn lone_surrogates(&self) -> bool {
-        self.inner.lone_surrogates
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7293,7 +7283,7 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Str<'a> {
+    pub fn value(&self) -> Wtf8Str<'a> {
         self.inner.value
     }
 

@@ -64,7 +64,7 @@ pub fn is_import_from_module(
         return false;
     };
 
-    import_decl.source.value.as_str() == module_name
+    import_decl.source.value.as_str_or_default() == module_name
 }
 
 /// Returns `true` when `ident` resolves to a named import with the given source module and
@@ -398,7 +398,8 @@ pub fn is_same_member_expression(
             // x[/regex/] === x['/regex/']
             (Expression::StringLiteral(string_lit), Expression::RegExpLiteral(regex_lit))
             | (Expression::RegExpLiteral(regex_lit), Expression::StringLiteral(string_lit)) => {
-                if string_lit.value != regex_lit.raw.as_ref().unwrap() {
+                if string_lit.value.as_str_or_default() != regex_lit.raw.as_ref().unwrap().as_str()
+                {
                     return false;
                 }
             }

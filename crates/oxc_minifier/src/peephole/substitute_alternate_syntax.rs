@@ -124,7 +124,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|s| property_key_parent.should_keep_as_computed_property(s))
         {
             return;
         }
@@ -139,7 +142,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|s| property_key_parent.should_keep_as_computed_property(s))
         {
             return;
         }
@@ -154,7 +160,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|s| property_key_parent.should_keep_as_computed_property(s))
         {
             return;
         }
@@ -1427,11 +1436,11 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
-                let value = s.value.as_str();
+                let Some(value) = s.value.as_str() else { return };
                 if is_identifier_name_patched(value) {
                     // Bool field flip on an existing AST node, not a slot replacement.
                     *computed = false;
-                    let new_key = PropertyKey::new_static_identifier(s.span, s.value, ctx);
+                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
@@ -1752,13 +1761,20 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let strings = array.elements.iter().map(|element| {
-            let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.value.as_str()
-        });
-        let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
+        let strings: Option<Vec<&str>> = array
+            .elements
+            .iter()
+            .map(|element| {
+                let Expression::StringLiteral(str) = element.to_expression() else {
+                    unreachable!()
+                };
+                str.value.as_str()
+            })
+            .collect();
+        let Some(strings) = strings else { return };
+        let Some(delimiter) = Self::pick_delimiter(&strings.iter().copied()) else { return };
 
-        let concatenated_string = strings.collect::<Vec<_>>().join(delimiter);
+        let concatenated_string = strings.join(delimiter);
 
         // "str1,str2".split(',')
         let new_value = Expression::new_call_expression_with_pure(

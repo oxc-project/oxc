@@ -1788,6 +1788,7 @@ dependencies = [
  "oxc_span",
  "oxc_str",
  "oxc_syntax",
+ "oxc_wtf8",
 ]
 
 [[package]]
@@ -1903,6 +1904,7 @@ dependencies = [
  "oxc_span",
  "oxc_str",
  "oxc_syntax",
+ "oxc_wtf8",
  "pico-args",
  "rustc-hash",
 ]
@@ -2148,6 +2150,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "oxc_tasks_common",
+ "oxc_wtf8",
  "pico-args",
 ]
 
@@ -2370,6 +2373,7 @@ dependencies = [
  "oxc_str",
  "oxc_syntax",
  "oxc_traverse",
+ "oxc_wtf8",
  "pico-args",
  "rustc-hash",
 ]
@@ -2449,6 +2453,7 @@ dependencies = [
  "oxc_span",
  "oxc_str",
  "oxc_syntax",
+ "oxc_wtf8",
  "pico-args",
  "rustc-hash",
  "seq-macro",
@@ -2644,11 +2649,13 @@ name = "oxc_str"
 version = "0.146.0"
 dependencies = [
  "compact_str 0.10.0",
+ "cow-utils",
  "hashbrown 0.17.1",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_estree",
+ "oxc_wtf8",
  "serde",
 ]
 
@@ -2878,6 +2885,10 @@ dependencies = [
  "rustc-hash",
  "self_cell",
 ]
+
+[[package]]
+name = "oxc_wtf8"
+version = "0.146.0"
 
 [[package]]
 name = "oxfmt"

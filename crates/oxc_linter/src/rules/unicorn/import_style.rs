@@ -352,7 +352,7 @@ impl ImportStyle {
         let actual_styles = get_actual_import_declaration_styles(import_decl);
         self.report_if_needed(
             import_decl.span,
-            import_decl.source.value.as_str(),
+            import_decl.source.value.as_str().unwrap_or(""),
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,
@@ -366,7 +366,7 @@ impl ImportStyle {
     ) {
         self.report_if_needed(
             export_decl.span,
-            export_decl.source.value.as_str(),
+            export_decl.source.value.as_str().unwrap_or(""),
             StyleSet::namespace(),
             SourceKind::ModuleSyntax,
             ctx,
@@ -381,7 +381,7 @@ impl ImportStyle {
         let actual_styles = get_actual_export_declaration_styles(export_decl);
         self.report_if_needed(
             export_decl.span,
-            export_decl.source.value.as_str(),
+            export_decl.source.value.as_str().unwrap_or(""),
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,

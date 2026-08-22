@@ -16,7 +16,9 @@ impl<'a> TSEnumMemberName<'a> {
     pub fn static_name(&self) -> Str<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
-            Self::String(lit) | Self::ComputedString(lit) => lit.value,
+            Self::String(lit) | Self::ComputedString(lit) => {
+                lit.value.as_str().map_or_else(|| Str::from(""), Str::from)
+            }
             Self::ComputedTemplateString(template) => template
                 .single_quasi()
                 .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),

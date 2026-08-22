@@ -26,7 +26,7 @@ use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, ReplaceWith, TakeIn, Unstab
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SourceType, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, Str, Wtf8Str};
 use oxc_syntax::{
     node::NodeId,
     operator::{
@@ -453,14 +453,6 @@ pub struct TemplateElement<'a> {
     pub span: Span,
     pub value: TemplateElementValue<'a>,
     pub tail: bool,
-    /// The template element contains lone surrogates.
-    ///
-    /// `value.cooked` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
-    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
-    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
-    #[builder(default)]
-    #[estree(skip)]
-    pub lone_surrogates: bool,
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
@@ -477,7 +469,8 @@ pub struct TemplateElementValue<'a> {
     /// For example, \t produces a tab character.
     /// This interpretation of the template strings is stored as an Array in the first argument.
     /// cooked = None when template literal has invalid escape sequence
-    pub cooked: Option<Str<'a>>,
+    /// Value is stored as WTF-8, which can contain lone surrogates.
+    pub cooked: Option<Wtf8Str<'a>>,
 }
 
 /// Represents a member access expression, which can include computed member access,

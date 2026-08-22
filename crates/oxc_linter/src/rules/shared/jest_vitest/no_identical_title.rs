@@ -125,7 +125,7 @@ fn filter_and_process_jest_result<'a>(
 
     match call_expr.arguments.first() {
         Some(Argument::StringLiteral(string_lit)) => {
-            Some((string_lit.span, &string_lit.value, kind, parent_id))
+            Some((string_lit.span, string_lit.value.as_str().unwrap_or_default(), kind, parent_id))
         }
         Some(Argument::TemplateLiteral(template_lit)) => template_lit
             .single_quasi()

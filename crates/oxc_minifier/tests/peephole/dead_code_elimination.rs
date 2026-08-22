@@ -378,7 +378,7 @@ fn regexp_named_group_targets() {
 }
 
 #[test]
-fn keep_regexp_with_lone_surrogates() {
+fn keep_regexp_with_surrogates() {
     test_same(r"new RegExp('[\uD801-\uD800]')");
 }
 

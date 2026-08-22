@@ -274,7 +274,7 @@ impl<'a> VisitJs<'a> for TestCase {
                 let ArrayExpressionElement::StringLiteral(lit) = arg else {
                     continue;
                 };
-                code.push_str(lit.value.as_str());
+                code.push_str(lit.value.as_str().unwrap_or_default());
                 code.push('\n');
             }
             self.code = Some(code);
@@ -316,7 +316,7 @@ impl<'a> VisitJs<'a> for TestCase {
                                         .iter()
                                         .map(|arg| match arg {
                                             ArrayExpressionElement::StringLiteral(string) => {
-                                                string.value.as_str()
+                                                string.value.as_str().unwrap_or_default()
                                             }
                                             _ => "",
                                         })
@@ -984,11 +984,11 @@ impl<'a> RuleConfig<'a> {
     // Helper function to parse type string literals
     fn parse_type_string_literal(&mut self, lit: &StringLiteral) -> Option<RuleConfigElement> {
         match lit.value.as_str() {
-            "string" => Some(RuleConfigElement::String),
-            "boolean" => Some(RuleConfigElement::Boolean),
-            "number" => Some(RuleConfigElement::Number),
-            "integer" => Some(RuleConfigElement::Integer),
-            "array" | "object" => None,
+            Some("string") => Some(RuleConfigElement::String),
+            Some("boolean") => Some(RuleConfigElement::Boolean),
+            Some("number") => Some(RuleConfigElement::Number),
+            Some("integer") => Some(RuleConfigElement::Integer),
+            Some("array" | "object") => None,
             _ => {
                 self.log_error(&format!("Unhandled `type` value: {}", lit.value));
                 None
@@ -1097,7 +1097,9 @@ impl<'a> RuleConfig<'a> {
             .iter()
             .filter_map(|arg| match arg {
                 ArrayExpressionElement::StringLiteral(string_literal) => {
-                    Some(RuleConfigElement::StringLiteral(string_literal.value.into()))
+                    Some(RuleConfigElement::StringLiteral(
+                        string_literal.value.as_str().unwrap_or_default().to_string(),
+                    ))
                 }
                 ArrayExpressionElement::BooleanLiteral(boolean_literal) => {
                     if boolean_literal.value {

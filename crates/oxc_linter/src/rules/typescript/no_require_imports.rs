@@ -159,7 +159,7 @@ impl Rule for NoRequireImports {
                         Argument::StringLiteral(string_literal)
                             if match_argument_value_with_regex(
                                 &self.allow,
-                                &string_literal.value,
+                                string_literal.value.as_str().unwrap_or_default(),
                             ) =>
                         {
                             return;

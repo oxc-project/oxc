@@ -11,6 +11,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::Wtf8Str;
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -35,7 +36,7 @@ impl<'a> PeepholeOptimizations {
         let CallExpression { span, callee, arguments, .. } = ce.as_mut();
         let (name, object) = match &callee {
             Expression::StaticMemberExpression(member) if !member.optional => {
-                (member.property.name.as_str(), &member.object)
+                (Some(member.property.name.as_str()), &member.object)
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
@@ -45,6 +46,7 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return,
         };
+        let Some(name) = name else { return };
         let replacement = match name {
             "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
             "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
@@ -299,7 +301,7 @@ impl<'a> PeepholeOptimizations {
                 // separator quasi without a state-machine flag.
                 let scratch = &mut ctx.state.concat_scratch;
                 scratch.clear();
-                scratch.push_str(base_str.value.as_str());
+                scratch.push_str(base_str.value.as_str()?);
 
                 let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
                 let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
@@ -307,11 +309,11 @@ impl<'a> PeepholeOptimizations {
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
                         // Append onto the in-progress quasi.
-                        scratch.push_str(&str_lit.value);
+                        scratch.push_str(str_lit.value.as_str()?);
                     } else {
                         // Flush the current quasi (possibly empty) before
                         // pushing the next expression.
-                        let cooked = Str::from_str_in(scratch, ast);
+                        let cooked = Wtf8Str::from_str_in(scratch, ast);
                         let raw_cow = Self::escape_string_for_template_literal(scratch);
                         let raw = Str::from_str_in(&raw_cow, ast);
                         // `raw` is already escaped
@@ -329,14 +331,14 @@ impl<'a> PeepholeOptimizations {
 
                 if expressions.is_empty() {
                     debug_assert_eq!(quasis.len(), 0);
-                    let s = Str::from_str_in(scratch, ast);
+                    let s = Wtf8Str::from_str_in(scratch, ast);
                     return Some(Expression::new_string_literal(span, s, None, ast));
                 }
 
                 // Flush the trailing quasi. If the last arg was an expression
                 // `scratch` is empty, giving the required trailing empty
                 // quasi; otherwise it holds the accumulated tail text.
-                let cooked = Str::from_str_in(scratch, ast);
+                let cooked = Wtf8Str::from_str_in(scratch, ast);
                 let raw_cow = Self::escape_string_for_template_literal(scratch);
                 let raw = Str::from_str_in(&raw_cow, ast);
                 // `raw` is already escaped
@@ -380,7 +382,7 @@ impl<'a> PeepholeOptimizations {
         let (name, object, span) = match node {
             Expression::StaticMemberExpression(member) if !member.optional => {
                 let span = member.span;
-                (member.property.name.as_str(), &mut member.object, span)
+                (Some(member.property.name.as_str()), &mut member.object, span)
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
@@ -424,6 +426,7 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return,
         };
+        let Some(name) = name else { return };
 
         let replacement = match object {
             Expression::Identifier(ident) => {
@@ -552,10 +555,10 @@ impl<'a> PeepholeOptimizations {
         match object {
             Expression::StringLiteral(s) => {
                 if let StringCharAtResult::Value(c) =
-                    s.value.as_str().char_at(Some(property.into()))
+                    s.value.as_str()?.char_at(Some(property.into()))
                 {
                     s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx);
+                    s.value = Wtf8Str::from_str_in(&c.to_string(), ctx);
                     s.raw = None;
                     Some(object.take_in(ctx))
                 } else {

@@ -13,7 +13,7 @@ use std::{alloc::Layout, mem::MaybeUninit, slice, str};
 
 use oxc_allocator::{Allocator, ArenaBox, GetAllocator};
 use oxc_span::{SPAN, Span};
-use oxc_str::Str;
+use oxc_str::{Str, Wtf8Str};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
@@ -56,9 +56,10 @@ impl<'a> Directive<'a> {
     pub fn new_use_strict(builder: &impl GetAstBuilder<'a>) -> Self {
         let builder = builder.builder();
         let use_strict = Str::from("use strict");
+        let use_strict_wtf8 = Wtf8Str::new_const("use strict");
         Directive::new(
             SPAN,
-            StringLiteral::new(SPAN, use_strict, None, builder),
+            StringLiteral::new(SPAN, use_strict_wtf8, None, builder),
             use_strict,
             builder,
         )
@@ -197,29 +198,6 @@ impl<'a> TemplateElement<'a> {
         let builder = builder.builder();
         value.raw = escape_template_element_raw(value.raw, builder.allocator());
         TemplateElement::new(span, value, tail, builder)
-    }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`, escaping special characters in the raw value.
-    ///
-    /// Like [`TemplateElement::new_with_lone_surrogates`], but escapes backticks, `${`,
-    /// backslashes, and carriage returns in `value.raw` first.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn new_escape_raw_with_lone_surrogates(
-        span: Span,
-        mut value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        let builder = builder.builder();
-        value.raw = escape_template_element_raw(value.raw, builder.allocator());
-        TemplateElement::new_with_lone_surrogates(span, value, tail, lone_surrogates, builder)
     }
 }
 

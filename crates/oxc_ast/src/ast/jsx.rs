@@ -10,7 +10,7 @@ use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, ReplaceWith, TakeIn, Unstab
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_str::Str;
+use oxc_str::{Str, Wtf8Str};
 use oxc_syntax::node::NodeId;
 
 use super::{js::*, literal::*, ts::*};
@@ -532,7 +532,9 @@ pub struct JSXText<'a> {
     /// Node location in source code.
     pub span: Span,
     /// The text content.
-    pub value: Str<'a>,
+    ///
+    /// Value is stored as WTF-8, which can contain lone surrogates.
+    pub value: Wtf8Str<'a>,
 
     /// The raw string as it appears in source code.
     ///

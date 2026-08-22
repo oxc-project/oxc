@@ -49,7 +49,7 @@ impl Def for PrimitiveDef {
     /// Get if type has a lifetime.
     #[expect(unused_variables)]
     fn has_lifetime(&self, schema: &Schema) -> bool {
-        matches!(self.name(), "&str" | "Str" | "Ident")
+        matches!(self.name(), "&str" | "Str" | "Wtf8Str" | "Ident")
     }
 
     /// Get type signature (including lifetimes).
@@ -69,6 +69,13 @@ impl Def for PrimitiveDef {
                     quote!(Str<'_>)
                 } else {
                     quote!(Str<'a>)
+                }
+            }
+            "Wtf8Str" => {
+                if anon {
+                    quote!(Wtf8Str<'_>)
+                } else {
+                    quote!(Wtf8Str<'a>)
                 }
             }
             "Ident" => {

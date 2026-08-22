@@ -130,7 +130,7 @@ impl PreferImportInMock {
 
                 fixer.replace(
                     import_value.span,
-                    format!("import('{}')", import_value.value.as_ref()),
+                    format!("import('{}')", import_value.value.as_str_or_default()),
                 )
             },
         );

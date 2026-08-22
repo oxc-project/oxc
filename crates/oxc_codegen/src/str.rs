@@ -6,6 +6,7 @@ use oxc_syntax::{
     identifier::NBSP,
     line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
 };
+use oxc_wtf8::Wtf8;
 
 use crate::Codegen;
 
@@ -31,7 +32,7 @@ impl Codegen<'_> {
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
-        self.print_string_impl(s.value.as_str(), s.lone_surrogates, allow_backtick);
+        self.print_wtf8_string_impl(s.value.as_wtf8(), allow_backtick);
     }
 
     /// Print a [`StringLiteral`] as a template literal, whatever its contents.
@@ -42,15 +43,11 @@ impl Codegen<'_> {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
         Quote::Backtick.print(self);
-        self.print_string_body(s.value.as_str(), s.lone_surrogates, Some(Quote::Backtick), true);
+        self.print_wtf8_string_body(s.value.as_wtf8(), Some(Quote::Backtick), true);
+        Quote::Backtick.print(self);
     }
 
-    pub(super) fn print_string_impl(
-        &mut self,
-        s: &str,
-        lone_surrogates: bool,
-        allow_backtick: bool,
-    ) {
+    pub(super) fn print_string_impl(&mut self, s: &str, allow_backtick: bool) {
         // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
         // What is the best quote to use will be determined when first character needing escape is found.
         // This avoids iterating through the string twice if it contains no quotes (common case).
@@ -65,30 +62,18 @@ impl Codegen<'_> {
             Some(quote)
         };
 
-        self.print_string_body(s, lone_surrogates, quote, allow_backtick);
+        self.print_string_body(s, quote, allow_backtick);
     }
 
     /// Print the contents of a string, and its closing quote.
     ///
     /// `quote` is `None` where it has yet to be chosen - it is then calculated from the contents,
     /// and the opening quote printed, when the first character needing an escape is found.
-    fn print_string_body(
-        &mut self,
-        s: &str,
-        lone_surrogates: bool,
-        quote: Option<Quote>,
-        allow_backtick: bool,
-    ) {
+    fn print_string_body(&mut self, s: &str, quote: Option<Quote>, allow_backtick: bool) {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.as_bytes().iter();
-        let mut state = PrintStringState {
-            chunk_start: bytes.ptr(),
-            bytes,
-            quote,
-            lone_surrogates,
-            allow_backtick,
-        };
+        let mut state = PrintStringState { chunk_start: bytes.ptr(), bytes, quote, allow_backtick };
 
         // Loop through bytes.
         while let Some(b) = state.peek() {
@@ -123,6 +108,195 @@ impl Codegen<'_> {
         let quote = unsafe { state.quote.unwrap_unchecked() };
         quote.print(self);
     }
+
+    pub(super) fn print_wtf8_string_impl(&mut self, s: &Wtf8, allow_backtick: bool) {
+        if let Some(s_str) = s.as_str() {
+            self.print_string_impl(s_str, allow_backtick);
+            return;
+        }
+        // Contains lone surrogates – need WTF-8 aware printing
+        let quote = if self.options.minify {
+            if allow_backtick {
+                // Replicate calculate_quote_maybe_backtick logic over CodePoints
+                let mut single_cost: isize = 0;
+                let mut double_cost: isize = 0;
+                let mut backtick_cost: isize = 0;
+                let mut iter = s.code_points().peekable();
+                while let Some(cp) = iter.next() {
+                    if let Some(c) = cp.to_char() {
+                        match c {
+                            '\n' => backtick_cost -= 1,
+                            '\'' => single_cost += 1,
+                            '"' => double_cost += 1,
+                            '`' => backtick_cost += 1,
+                            '$' => {
+                                if matches!(
+                                    iter.peek().and_then(|a: &oxc_wtf8::CodePoint| {
+                                        oxc_wtf8::CodePoint::to_char(*a)
+                                    }),
+                                    Some('{')
+                                ) {
+                                    backtick_cost += 1;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                if backtick_cost <= double_cost {
+                    if backtick_cost <= single_cost { Quote::Backtick } else { Quote::Single }
+                } else if double_cost <= single_cost {
+                    Quote::Double
+                } else {
+                    Quote::Single
+                }
+            } else {
+                // No backtick option – count single vs double
+                let mut single_cost: isize = 0;
+                for cp in s.code_points() {
+                    if let Some(c) = cp.to_char() {
+                        match c {
+                            '\'' => single_cost += 1,
+                            '"' => single_cost -= 1,
+                            _ => {}
+                        }
+                    }
+                }
+                if single_cost < 0 { Quote::Single } else { Quote::Double }
+            }
+        } else {
+            self.quote
+        };
+        quote.print(self);
+        self.print_wtf8_string_body(s, Some(quote), allow_backtick);
+        quote.print(self);
+    }
+
+    fn print_wtf8_string_body(&mut self, s: &Wtf8, quote: Option<Quote>, _allow_backtick: bool) {
+        // Iterate over code points; surrogates are emitted as \uXXXX, valid chars are escaped as needed
+        let mut iter = s.code_points().peekable();
+        while let Some(cp) = iter.next() {
+            if let Some(c) = cp.to_char() {
+                // Handle escapes for valid scalar values
+                match c {
+                    '"' => {
+                        if quote == Some(Quote::Double) {
+                            self.code.print_str("\\\"");
+                        } else {
+                            self.code.print_str("\"");
+                        }
+                    }
+                    '\'' => {
+                        if quote == Some(Quote::Single) {
+                            self.code.print_str("\\'");
+                        } else {
+                            self.code.print_str("'");
+                        }
+                    }
+                    '\\' => self.code.print_str("\\\\"),
+                    '\n' => {
+                        if quote == Some(Quote::Backtick) {
+                            self.code.print_str("\n");
+                        } else {
+                            self.code.print_str("\\n");
+                        }
+                    }
+                    '\r' => self.code.print_str("\\r"),
+                    '\t' => self.code.print_str("\\t"),
+                    '\x08' => self.code.print_str("\\b"),
+                    '\x0C' => self.code.print_str("\\f"),
+                    '\x0B' => self.code.print_str("\\v"),
+                    '\0' => {
+                        // Check if next char is digit (0-9) – if so, use \x00, else \0
+                        let next_is_digit = iter
+                            .peek()
+                            .and_then(|a: &oxc_wtf8::CodePoint| oxc_wtf8::CodePoint::to_char(*a))
+                            .is_some_and(|next_c| next_c.is_ascii_digit());
+                        if next_is_digit {
+                            self.code.print_str("\\x00");
+                        } else {
+                            self.code.print_str("\\0");
+                        }
+                    }
+                    '`' => {
+                        if quote == Some(Quote::Backtick) {
+                            self.code.print_str("\\`");
+                        } else {
+                            self.code.print_str("`");
+                        }
+                    }
+                    '$' => {
+                        if quote == Some(Quote::Backtick)
+                            && matches!(
+                                iter.peek().and_then(|a: &oxc_wtf8::CodePoint| {
+                                    oxc_wtf8::CodePoint::to_char(*a)
+                                }),
+                                Some('{')
+                            )
+                        {
+                            self.code.print_str("\\$");
+                        } else {
+                            self.code.print_str("$");
+                        }
+                    }
+                    '<' => {
+                        // Escape `</script` and `<!--` as \x3C
+                        // Check if following code points are "/script" or "!--"
+                        #[expect(clippy::unused_peekable)]
+                        // The lookahead clone only calls `next()`, never `peek()`
+                        let mut lookahead = iter.clone();
+                        let mut is_script = false;
+                        let mut is_comment = false;
+                        if let Some(cp1) = lookahead.next().and_then(oxc_wtf8::CodePoint::to_char) {
+                            if cp1 == '/' {
+                                let s: String = lookahead
+                                    .by_ref()
+                                    .take(6)
+                                    .filter_map(oxc_wtf8::CodePoint::to_char)
+                                    .collect();
+                                if s.eq_ignore_ascii_case("script") {
+                                    is_script = true;
+                                }
+                            } else if cp1 == '!' {
+                                let mut s = String::new();
+                                if let Some(cp2) =
+                                    lookahead.next().and_then(oxc_wtf8::CodePoint::to_char)
+                                {
+                                    s.push(cp2);
+                                    if let Some(cp3) =
+                                        lookahead.next().and_then(oxc_wtf8::CodePoint::to_char)
+                                    {
+                                        s.push(cp3);
+                                        if s == "--" {
+                                            is_comment = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if is_script || is_comment {
+                            self.code.print_str("\\x3C");
+                        } else {
+                            self.code.print_str("<");
+                        }
+                    }
+                    '\u{2028}' => self.code.print_str("\\u2028"),
+                    '\u{2029}' => self.code.print_str("\\u2029"),
+                    c if c.is_control() => {
+                        self.code.print_str(format!("\\u{:04x}", c as u32));
+                    }
+                    _ => {
+                        let mut buf = [0u8; 4];
+                        let s = c.encode_utf8(&mut buf);
+                        self.code.print_str(s);
+                    }
+                }
+            } else {
+                // Lone surrogate – emit \uXXXX (lowercase per spec)
+                self.code.print_str(format!("\\u{:04x}", cp.to_u32()));
+            }
+        }
+    }
 }
 
 /// String printer state.
@@ -133,7 +307,6 @@ struct PrintStringState<'s> {
     chunk_start: *const u8,
     bytes: slice::Iter<'s, u8>,
     quote: Option<Quote>,
-    lone_surrogates: bool,
     allow_backtick: bool,
 }
 
@@ -333,12 +506,6 @@ const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
 const _: () = assert!(NBSP_BYTES[0] == 0xC2);
 const NBSP_LAST_BYTE: u8 = NBSP_BYTES[1];
 
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
-const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
-    [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
-
 /// Escape codes.
 ///
 /// Discriminant - 1 is used as index into `BYTE_HANDLERS` (except for `__` variant).
@@ -362,7 +529,6 @@ enum Escape {
     LT = 14, // <     - Less-than sign
     LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
     NB = 16, // NBSP  - Non-breaking space (first byte)
-    LO = 17, // �     - U+FFFD lossy replacement character (first byte)
 }
 
 /// Struct which ensures content is aligned on 128.
@@ -393,7 +559,7 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
         __, __, NB, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
-        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, LO, // E
+        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, __, // E
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
     ])
 };
@@ -408,7 +574,7 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 136 bytes in total.
 /// Aligned on 128, so first 16 occupy a pair of L1 cache lines.
 /// The last will be in separate cache line, but it should be vanishingly rare that it's accessed.
-static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
+static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
     print_null,
     print_bell,
     print_backspace,
@@ -425,7 +591,6 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
     print_less_than,
     print_ls_or_ps,
     print_non_breaking_space,
-    print_lossy_replacement,
 ]);
 
 /// Call byte handler for byte which needs escaping.
@@ -668,69 +833,6 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
         unsafe { state.consume_bytes_unchecked(2) };
     }
-}
-
-// 0xEF - first byte of lossy replacement character (U+FFFD)
-unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) {
-    debug_assert_eq!(state.peek(), Some(0xEF));
-
-    if state.lone_surrogates {
-        // String contains lone surrogates which use the lossy replacement character (U+FFFD)
-        // as an escape marker.
-        // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-        let next2: [u8; 2] = {
-            // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-            // so there must be 2 more bytes available to consume
-            let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
-            next2.try_into().unwrap()
-        };
-
-        if next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
-            // Get the 4 hex bytes
-            let bytes = &mut state.bytes;
-            let hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
-
-            if hex == *b"fffd" {
-                // Actual lossy replacement character.
-                // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                unsafe { state.consume_bytes_unchecked(3) };
-                state.flush(codegen);
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
-                // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
-                // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                unsafe { state.consume_bytes_unchecked(4) };
-                // Start next chunk after the 4 hex bytes
-                state.start_chunk();
-                return;
-            }
-
-            // Flush text before the lossy replacement character
-            state.flush(codegen);
-
-            // Check all 4 hex bytes are ASCII
-            assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-
-            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
-            // remaining. First 3 bytes are lossy replacement character, and we just checked that
-            // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked(7) };
-
-            // Start next chunk after the 4 hex bytes
-            state.start_chunk();
-
-            codegen.print_str("\\u");
-            // SAFETY: Just checked all 4 hex bytes are ASCII
-            unsafe { codegen.code.print_bytes_unchecked(&hex) };
-
-            return;
-        }
-    }
-
-    // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
-    // Advance past the character.
-    // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-    unsafe { state.consume_bytes_unchecked(3) };
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.

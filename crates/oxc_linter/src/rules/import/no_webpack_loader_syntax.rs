@@ -78,7 +78,7 @@ impl Rule for NoWebpackLoaderSyntax {
 
                     if ident.value.contains('!') {
                         ctx.diagnostic(no_named_as_default_diagnostic(
-                            ident.value.as_str(),
+                            ident.value.as_str().unwrap_or(""),
                             ident.span,
                         ));
                     }

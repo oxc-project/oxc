@@ -556,7 +556,7 @@ impl Rule for Extensions {
             if let Argument::StringLiteral(s) = argument {
                 self.process_import(
                     ctx,
-                    s.value.as_str(),
+                    s.value.as_str().unwrap_or(""),
                     call_expr.span,
                     false, // require() is never a type import
                     true,  // treat require as import for diagnostics

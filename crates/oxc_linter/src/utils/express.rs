@@ -28,7 +28,7 @@ pub fn as_endpoint_registration<'a, 'n>(
     let first = call.arguments[0].as_expression()?;
     match first {
         Expression::StringLiteral(path) => {
-            Some((Some(path.value), &call.arguments.as_slice()[1..]))
+            Some((path.value.as_str().map(Str::from), &call.arguments.as_slice()[1..]))
         }
         Expression::TemplateLiteral(template) => {
             template.single_quasi().map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..]))

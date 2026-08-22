@@ -13696,6 +13696,11 @@ function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
+function constructOptionStr(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructStr(pos, ast);
+}
+
 function constructU8(pos, ast) {
   return ast.buffer[pos];
 }

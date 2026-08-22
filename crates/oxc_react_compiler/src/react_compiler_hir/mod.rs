@@ -25,7 +25,7 @@ pub(crate) use assert_valid_block_nesting::{get_scopes, recursively_traverse_ite
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, Str, Wtf8Str};
 use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
 pub use reactive::*;
@@ -962,7 +962,7 @@ pub enum PrimitiveValue<'a> {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(Str<'a>),
+    String(Wtf8Str<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

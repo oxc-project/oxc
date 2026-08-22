@@ -1,5 +1,5 @@
 use oxc_ast_macros::ast_meta;
-use oxc_estree::{ESTree, JsonSafeString, LoneSurrogatesString, Serializer, StructSerializer};
+use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 
 use crate::ast::*;
 
@@ -51,38 +51,15 @@ impl ESTree for NullLiteralRaw<'_> {
 
 /// Serializer for `value` field of `StringLiteral`.
 ///
-/// Handle when `lone_surrogates` flag is set, indicating the string contains lone surrogates.
+/// Value is stored as WTF-8, which can contain lone surrogates.
+/// `Wtf8Str`'s `ESTree` impl handles surrogate escaping as `\uXXXX`.
 #[ast_meta]
-#[estree(
-    ts_type = "string",
-    raw_deser = r#"
-        let value = DESER[Str](POS_OFFSET.value);
-        if (DESER[bool](POS_OFFSET.lone_surrogates)) {
-            value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-        }
-        value
-    "#
-)]
+#[estree(ts_type = "string", raw_deser = "DESER[Wtf8Str](POS_OFFSET.value)")]
 pub struct StringLiteralValue<'a, 'b>(pub &'b StringLiteral<'a>);
 
 impl ESTree for StringLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let lit = self.0;
-        #[expect(clippy::if_not_else)]
-        if !lit.lone_surrogates {
-            lit.value.serialize(serializer);
-        } else {
-            // String contains lone surrogates. Very uncommon, so cold path.
-            self.serialize_lone_surrogates(serializer);
-        }
-    }
-}
-
-impl StringLiteralValue<'_, '_> {
-    #[cold]
-    #[inline(never)]
-    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
-        LoneSurrogatesString(self.0.value.as_str()).serialize(serializer);
+        self.0.value.serialize(serializer);
     }
 }
 
@@ -200,10 +177,6 @@ impl ESTree for RegExpFlagsConverter<'_> {
         start = IS_TS ? DESER[i32](POS_OFFSET.span.start) - 1 : DESER[i32](POS_OFFSET.span.start),
         end = IS_TS ? DESER[i32](POS_OFFSET.span.end) + 2 - tail : DESER[i32](POS_OFFSET.span.end),
         value = DESER[TemplateElementValue](POS_OFFSET.value);
-    if (value.cooked !== null && DESER[bool](POS_OFFSET.lone_surrogates)) {
-        value.cooked = value.cooked
-            .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-    }
     { type: 'TemplateElement', value, tail, start, end, ...(RANGE && { range: [start, end] }), ...(PARENT && { parent }) }
 "#)]
 pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
@@ -230,42 +203,12 @@ impl ESTree for TemplateElementConverter<'_, '_> {
 }
 
 /// Serializer for `value` field of `TemplateElement`.
-///
-/// Handle when `lone_surrogates` flag is set, indicating the cooked string contains lone surrogates.
-///
-/// Implementation for `raw_deser` is included in `TemplateElementConverter` above.
 #[ast_meta]
-#[estree(
-    ts_type = "TemplateElementValue",
-    raw_deser = "(() => { throw new Error('Should not appear in deserializer code'); })()"
-)]
+#[estree(ts_type = "TemplateElementValue")]
 pub struct TemplateElementValue<'a, 'b>(pub &'b TemplateElement<'a>);
 
 impl ESTree for TemplateElementValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let element = self.0;
-        #[expect(clippy::if_not_else)]
-        if !element.lone_surrogates {
-            element.value.serialize(serializer);
-        } else {
-            // String contains lone surrogates. Very uncommon, so cold path.
-            self.serialize_lone_surrogates(serializer);
-        }
-    }
-}
-
-impl TemplateElementValue<'_, '_> {
-    #[cold]
-    #[inline(never)]
-    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
-        let value = &self.0.value;
-
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("raw", &value.raw);
-
-        let cooked = value.cooked.as_ref().map(|cooked| LoneSurrogatesString(cooked.as_str()));
-        state.serialize_field("cooked", &cooked);
-
-        state.end();
+        self.0.value.serialize(serializer);
     }
 }

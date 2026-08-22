@@ -125,8 +125,8 @@ impl Rule for ValidTypeof {
         };
 
         if let Expression::StringLiteral(lit) = sibling {
-            if !VALID_TYPES.contains(&lit.value.as_str()) {
-                let help = get_typo_suggestion(lit.value.as_str())
+            if !VALID_TYPES.contains(&lit.value.as_str_or_default()) {
+                let help = get_typo_suggestion(lit.value.as_str().unwrap_or(""))
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }

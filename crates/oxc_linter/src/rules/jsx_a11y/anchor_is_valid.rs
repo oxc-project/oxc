@@ -249,7 +249,7 @@ impl AnchorIsValid {
         match value {
             JSXAttributeValue::Element(_) => HrefValueKind::Valid,
             JSXAttributeValue::StringLiteral(str_lit) => {
-                Self::href_value_kind_from_string(&str_lit.value)
+                Self::href_value_kind_from_string(str_lit.value.as_str().unwrap_or_default())
             }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
                 JSXExpression::Identifier(ident) if ident.name == "undefined" => {
@@ -257,7 +257,7 @@ impl AnchorIsValid {
                 }
                 JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
                 JSXExpression::StringLiteral(str_lit) => {
-                    Self::href_value_kind_from_string(&str_lit.value)
+                    Self::href_value_kind_from_string(str_lit.value.as_str().unwrap_or_default())
                 }
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {

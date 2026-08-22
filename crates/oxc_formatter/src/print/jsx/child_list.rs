@@ -388,8 +388,8 @@ impl FormatJsxChildList {
                     }
                 }
                 JSXChild::Text(text) => {
-                    meta.meaningful_text =
-                        meta.meaningful_text || is_meaningful_jsx_text(&text.value);
+                    meta.meaningful_text = meta.meaningful_text
+                        || is_meaningful_jsx_text(text.value.as_str().unwrap_or_default());
                 }
                 JSXChild::Spread(_) => {}
             }

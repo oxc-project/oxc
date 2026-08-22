@@ -178,7 +178,7 @@ fn is_forbidden_type(expr: &Expression) -> bool {
 fn literal_identifier_replacement(expr: &Expression) -> Option<String> {
     match expr {
         Expression::StringLiteral(lit) => {
-            let value = lit.value.as_str();
+            let value = lit.value.as_str_or_default();
             is_identifier_name(value).then(|| value.to_string())
         }
         Expression::TemplateLiteral(tpl) => single_quasi_identifier(tpl),
@@ -191,7 +191,8 @@ fn single_quasi_identifier(tpl: &TemplateLiteral) -> Option<String> {
         return None;
     }
     let cooked = tpl.quasis[0].value.cooked.as_ref()?;
-    is_identifier_name(cooked).then(|| cooked.to_string())
+    let cooked_str = cooked.as_str()?;
+    is_identifier_name(cooked_str).then(|| cooked_str.to_string())
 }
 
 #[test]

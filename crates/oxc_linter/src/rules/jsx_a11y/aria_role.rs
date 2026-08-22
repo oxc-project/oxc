@@ -130,7 +130,7 @@ impl Rule for AriaRole {
                     }
                 }
                 Some(JSXAttributeValue::StringLiteral(str)) => {
-                    let value = str.value.as_str();
+                    let value = str.value.as_str_or_default();
                     if value.trim().is_empty() {
                         ctx.diagnostic(aria_role_diagnostic(str.span, ""));
                     } else if let Some(error_prop) = value.split_whitespace().find(|word| {

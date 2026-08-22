@@ -65,7 +65,7 @@ impl Rule for NoDocumentImportInPage {
             return;
         };
 
-        if import_decl.source.value.as_str() != "next/document" {
+        if import_decl.source.value.as_str_or_default() != "next/document" {
             return;
         }
 

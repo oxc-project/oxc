@@ -10,7 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
-use oxc_str::Str;
+use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -110,8 +110,8 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 struct AssignmentVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
     parameters: &'b [FormalParameter<'a>],
-    assigned_before_unnecessary: FxHashSet<Str<'a>>,
-    assigned_before_constructor: FxHashSet<Str<'a>>,
+    assigned_before_unnecessary: FxHashSet<CompactStr>,
+    assigned_before_constructor: FxHashSet<CompactStr>,
 }
 
 impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
@@ -146,7 +146,7 @@ impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
             let Some(binding_identifier) = param.pattern.get_binding_identifier() else {
                 continue;
             };
-            if binding_identifier.name != this_property_name {
+            if binding_identifier.name.as_str() != this_property_name.as_str() {
                 continue;
             }
             // name of property parameter matches the name of the assigned property
@@ -232,20 +232,20 @@ fn is_unnecessary_assignment_operator(operator: AssignmentOperator) -> bool {
     )
 }
 
-fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Str<'a>> {
+fn get_property_name<'a>(assignment_target: &'a AssignmentTarget<'a>) -> Option<CompactStr> {
     match assignment_target {
         AssignmentTarget::StaticMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this.property
-            Some(expr.property.name.into())
+            Some(expr.property.name.as_str().into())
         }
         AssignmentTarget::ComputedMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this["property"]
             if let Expression::StringLiteral(str) = &expr.expression {
-                Some(str.value)
+                Some(CompactStr::from(str.value.as_str_or_default()))
             } else {
                 None
             }

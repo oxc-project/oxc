@@ -263,7 +263,9 @@ fn match_href_expression(
     is_dynamic_link: &mut bool,
 ) {
     match expr {
-        Expression::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
+        Expression::StringLiteral(str) => {
+            *is_external_link = check_is_external_link(str.value.as_str().unwrap_or_default());
+        }
         Expression::Identifier(_) => *is_dynamic_link = true,
         Expression::ConditionalExpression(expr) => {
             match_href_expression(&expr.consequent, is_external_link, is_dynamic_link);
@@ -283,7 +285,7 @@ fn check_href(
         matches!(enforce_dynamic_links, EnforceDynamicLinksEnum::Never);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            is_external_link = check_is_external_link(&str.value);
+            is_external_link = check_is_external_link(str.value.as_str().unwrap_or_default());
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
@@ -309,7 +311,7 @@ fn check_href(
 }
 
 fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
-    let mut splits = str.value.as_str().split(' ');
+    let mut splits = str.value.as_str_or_default().split(' ');
     if allow_referrer {
         return splits.any(|str| {
             if str == "noopener" {

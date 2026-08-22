@@ -675,7 +675,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         let leaf = static_property_name_of_computed_expr(member)?;
         // TODO: meta_property_define
         let value = self.find_dot_define_value(
-            leaf.as_str(),
+            leaf,
             DotDefineMemberExpression::ComputedMemberExpression(member),
         )?;
         Some(self.parse_value(&value))
@@ -963,7 +963,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     }
                     Expression::ComputedMemberExpression(computed_member) => {
                         static_property_name_of_computed_expr(computed_member).map(|name| {
-                            cur_part_name = name.as_str();
+                            cur_part_name = name;
                             DotDefineMemberExpression::ComputedMemberExpression(computed_member)
                         })
                     }
@@ -1078,7 +1078,7 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
                 Some(expr.property.name.as_arena_str())
             }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
-                static_property_name_of_computed_expr(expr).copied()
+                static_property_name_of_computed_expr(expr).map(Str::from)
             }
         }
     }
@@ -1091,13 +1091,13 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
     }
 }
 
-fn static_property_name_of_computed_expr<'b, 'a: 'b>(
-    expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Str<'a>> {
+fn static_property_name_of_computed_expr<'a>(
+    expr: &ComputedMemberExpression<'a>,
+) -> Option<&'a str> {
     match &expr.expression {
-        Expression::StringLiteral(lit) => Some(&lit.value),
+        Expression::StringLiteral(lit) => lit.value.as_str(),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
-            Some(&lit.quasis[0].value.raw)
+            Some(lit.quasis[0].value.raw.as_str())
         }
         _ => None,
     }

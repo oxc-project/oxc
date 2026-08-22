@@ -1170,7 +1170,7 @@ fn get_module_export_name<'a>(
     match module_export_name {
         ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
         ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
-        ModuleExportName::StringLiteral(s) => s.value.as_str(),
+        ModuleExportName::StringLiteral(s) => s.value.as_str().unwrap_or(""),
     }
 }
 
@@ -2726,9 +2726,10 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
+                let quote = if lit.value.as_bytes().contains(&b'"') { b'\'' } else { b'"' };
                 p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
+                // For JSX attribute string, use WTF-8 aware printing via lossy fallback for now
+                p.print_str(&lit.value.to_string_lossy());
                 p.print_ascii_byte(quote);
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
@@ -2819,7 +2820,8 @@ impl Gen for JSXClosingFragment {
 impl Gen for JSXText<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
-        p.print_str(self.value.as_str());
+        // JSXText value is WTF-8; print lossily for now
+        p.print_str(&self.value.to_string_lossy());
     }
 }
 

@@ -150,6 +150,7 @@ oxc_relay = { version = "0.144.0", path = "crates/oxc_relay" } # Relay graphql t
 oxc_semantic = { version = "0.146.0", path = "crates/oxc_semantic" } # Semantic analysis
 oxc_span = { version = "0.146.0", path = "crates/oxc_span" } # Source positions
 oxc_str = { version = "0.146.0", path = "crates/oxc_str" } # String types
+oxc_wtf8 = { version = "0.146.0", path = "crates/oxc_wtf8" } # WTF-8 encoding
 oxc_syntax = { version = "0.146.0", path = "crates/oxc_syntax" } # Syntax utilities
 oxc_transform_napi = { version = "0.146.0", path = "napi/transform" } # Node.js transformer binding
 oxc_transform_react_napi = { version = "0.143.0", path = "napi/transform-react" } # Node.js React Compiler binding

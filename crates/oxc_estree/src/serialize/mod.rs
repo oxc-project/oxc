@@ -23,7 +23,7 @@ pub use concat::{Concat2, Concat3, ConcatElement};
 pub use config::{Config, ConfigFixes, ConfigNoFixes};
 pub use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 pub use sequences::SequenceSerializer;
-pub use strings::{JsonSafeString, LoneSurrogatesString};
+pub use strings::JsonSafeString;
 pub use structs::{ESTreeSpan, FlatStructSerializer, StructSerializer};
 
 /// Trait for types which can be serialized to ESTree.

@@ -157,10 +157,14 @@ impl Rule for ForbidElements {
                         self.add_diagnostic_if_invalid_element(ctx, it.name.as_str(), it.span);
                     }
                     Argument::StringLiteral(str) => {
-                        if !is_valid_literal(&str.value) {
+                        if !is_valid_literal(str.value.as_str().unwrap_or_default()) {
                             return;
                         }
-                        self.add_diagnostic_if_invalid_element(ctx, str.value.as_str(), str.span);
+                        self.add_diagnostic_if_invalid_element(
+                            ctx,
+                            str.value.as_str().unwrap_or(""),
+                            str.span,
+                        );
                     }
                     Argument::StaticMemberExpression(member_expression) => {
                         let Some(it) = member_expression.object.get_identifier_reference() else {

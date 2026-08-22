@@ -22,8 +22,10 @@ doctest = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_estree = { workspace = true }
+oxc_wtf8 = { workspace = true }
 
 compact_str = { workspace = true }
+cow-utils = { workspace = true }
 hashbrown = { workspace = true, default-features = false, features = ["inline-more"] }
 
 schemars = { workspace = true, optional = true }

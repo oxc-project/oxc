@@ -401,7 +401,9 @@ impl NoRestrictedProperties {
 
 fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a, str>> {
     match expression {
-        Expression::StringLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
+        Expression::StringLiteral(literal) => {
+            Some(Cow::Borrowed(literal.value.as_str().unwrap_or("")))
+        }
         Expression::RegExpLiteral(literal) => literal.raw.map(|r| Cow::Borrowed(r.as_str())),
         Expression::NumericLiteral(literal) => Some(Cow::Owned(literal.value.to_string())),
         Expression::BigIntLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
@@ -410,7 +412,7 @@ fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
         Expression::TemplateLiteral(literal) if literal.quasis.len() == 1 => {
-            literal.quasis[0].value.cooked.map(|cooked| Cow::Borrowed(cooked.as_str()))
+            literal.quasis[0].value.cooked.map(|cooked| Cow::Owned(cooked.to_string()))
         }
         _ => None,
     }

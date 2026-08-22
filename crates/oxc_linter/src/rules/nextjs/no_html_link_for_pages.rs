@@ -147,7 +147,7 @@ impl Rule for NoHtmlLinkForPages {
             match value {
                 // String literal href - check if it's an internal link
                 JSXAttributeValue::StringLiteral(str_lit) => {
-                    let href_value = str_lit.value.as_str();
+                    let href_value = str_lit.value.as_str_or_default();
                     is_internal_page_link(href_value)
                 }
                 // Expression href (dynamic) - ignore, can't statically determine if internal

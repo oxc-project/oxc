@@ -22,6 +22,7 @@ doctest = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_wtf8 = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["code_buffer", "slice_iter", "stack"] }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }

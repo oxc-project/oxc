@@ -192,7 +192,9 @@ impl Rule for JsxNoScriptUrl {
                         };
                         if prop_value.as_string_literal().is_some_and(|val| {
                             link_props.contains(&attr.name.get_identifier().name.to_string())
-                                && JS_SCRIPT_REGEX.captures(&val.value).is_some()
+                                && JS_SCRIPT_REGEX
+                                    .captures(val.value.as_str().unwrap_or_default())
+                                    .is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
                         }
@@ -209,7 +211,9 @@ impl Rule for JsxNoScriptUrl {
                                 component_name.as_str(),
                                 attr.name.get_identifier().name.to_string(),
                                 ctx,
-                            ) && JS_SCRIPT_REGEX.captures(&val.value).is_some()
+                            ) && JS_SCRIPT_REGEX
+                                .captures(val.value.as_str().unwrap_or_default())
+                                .is_some()
                         }) {
                             ctx.diagnostic(jsx_no_script_url_diagnostic(attr.span()));
                         }

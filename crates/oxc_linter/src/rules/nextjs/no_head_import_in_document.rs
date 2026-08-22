@@ -85,7 +85,7 @@ impl Rule for NoHeadImportInDocument {
             return;
         };
 
-        if import_decl.source.value.as_str() != "next/head" {
+        if import_decl.source.value.as_str_or_default() != "next/head" {
             return;
         }
 

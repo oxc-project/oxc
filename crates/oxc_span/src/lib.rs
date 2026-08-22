@@ -13,7 +13,7 @@ mod span;
 pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
 pub use labeled_span::LabeledSpan;
-use oxc_str::{CompactStr, Ident, Str};
+use oxc_str::{CompactStr, Ident, Str, Wtf8Str};
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
     VALID_EXTENSIONS,
@@ -51,6 +51,13 @@ impl ContentEq for Str<'_> {
 }
 
 impl ContentEq for Ident<'_> {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for Wtf8Str<'_> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other

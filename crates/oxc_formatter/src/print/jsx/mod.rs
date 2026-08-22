@@ -393,6 +393,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, text(self.value().as_str()));
+        write!(f, text(self.value().as_str().unwrap_or_default()));
     }
 }

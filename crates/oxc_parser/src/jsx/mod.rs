@@ -3,7 +3,7 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
-use oxc_str::Str;
+use oxc_str::{Str, Wtf8Str};
 
 use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
@@ -522,7 +522,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_jsx_text(&mut self) -> ArenaBox<'a, JSXText<'a>> {
         let span = self.cur_token().span();
         let raw = Str::from(self.cur_src());
-        let value = Str::from(self.cur_string());
+        // JSXText is always valid UTF-8 (source is valid UTF-8), so reinterpret as WTF-8 without copy.
+        let value = Wtf8Str::from(self.cur_string());
         self.bump_any();
         JSXText::boxed(span, value, Some(raw), self)
     }

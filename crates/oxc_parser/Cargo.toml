@@ -21,6 +21,7 @@ workspace = true
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_wtf8 = { workspace = true }
 oxc_data_structures = { workspace = true, features = [
   "assert_unchecked",
   "branch_hints",

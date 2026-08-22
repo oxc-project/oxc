@@ -145,9 +145,9 @@ impl Rule for NoReservedKeys {
                             let Some(Expression::StringLiteral(lit)) = elem.as_expression() else {
                                 continue;
                             };
-                            if self.is_reserved(lit.value.as_str()) {
+                            if self.is_reserved(lit.value.as_str().unwrap_or("")) {
                                 ctx.diagnostic(reserved_key_diagnostic(
-                                    lit.value.as_str(),
+                                    lit.value.as_str().unwrap_or(""),
                                     lit.span,
                                 ));
                             }
@@ -243,9 +243,12 @@ impl NoReservedKeys {
                 Expression::ArrayExpression(arr) => {
                     for elem in &arr.elements {
                         if let Some(Expression::StringLiteral(lit)) = elem.as_expression()
-                            && self.is_reserved(lit.value.as_str())
+                            && self.is_reserved(lit.value.as_str().unwrap_or(""))
                         {
-                            ctx.diagnostic(reserved_key_diagnostic(lit.value.as_str(), lit.span));
+                            ctx.diagnostic(reserved_key_diagnostic(
+                                lit.value.as_str().unwrap_or(""),
+                                lit.span,
+                            ));
                         }
                     }
                 }

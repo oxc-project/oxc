@@ -4,7 +4,76 @@ use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, Str, Wtf8Str};
+use oxc_wtf8::{CodePoint, Wtf8Buf};
+
+fn wtf8_from_str<'a>(
+    s: &str,
+    has_wtf8_surrogate: bool,
+    allocator: &impl GetAllocator<'a>,
+) -> Wtf8Str<'a> {
+    if !has_wtf8_surrogate {
+        return Wtf8Str::from_str_in(s, allocator);
+    }
+    // Decode lossy replacement marker + hex escapes into WTF-8 surrogates.
+    let mut buf = Wtf8Buf::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\u{FFFD}' {
+            // Peek next 4 chars as hex
+            let mut hex = String::with_capacity(4);
+            let mut peeked = Vec::with_capacity(4);
+            let mut is_hex = true;
+            for _ in 0..4 {
+                match chars.peek() {
+                    Some(&ch) if ch.is_ascii_hexdigit() => {
+                        hex.push(ch);
+                        peeked.push(ch);
+                        chars.next();
+                    }
+                    _ => {
+                        is_hex = false;
+                        break;
+                    }
+                }
+            }
+            if is_hex && hex.len() == 4 {
+                if hex.eq_ignore_ascii_case("fffd") {
+                    buf.push_char('\u{FFFD}');
+                } else if let Ok(code) = u16::from_str_radix(&hex, 16) {
+                    // SAFETY: hex is 4 digits, code <= 0xFFFF, and for lone surrogates it's 0xD800..0xDFFF
+                    let cp = unsafe { CodePoint::from_u32_unchecked(u32::from(code)) };
+                    buf.push(cp);
+                } else {
+                    buf.push_char('\u{FFFD}');
+                    for ch in peeked {
+                        buf.push_char(ch);
+                    }
+                }
+            } else {
+                buf.push_char('\u{FFFD}');
+                for ch in peeked {
+                    buf.push_char(ch);
+                }
+                if !is_hex {
+                    // The peeked non-hex char is still in iterator (not consumed if break due to non-hex)
+                    // Actually we already break without consuming that char, so no need to push
+                }
+            }
+        } else {
+            buf.push_char(c);
+        }
+    }
+    Wtf8Str::from_wtf8_buf_in(&buf, allocator)
+}
+
+fn wtf8_from_option_str<'a>(
+    s: Option<&str>,
+    has_wtf8_surrogate: bool,
+    allocator: &impl GetAllocator<'a>,
+) -> Option<Wtf8Str<'a>> {
+    s.map(|st| wtf8_from_str(st, has_wtf8_surrogate, allocator))
+}
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,
@@ -499,10 +568,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let span = self.cur_token().span();
         let raw = Str::from(self.cur_src());
-        let value = self.cur_string();
-        let lone_surrogates = self.cur_token().lone_surrogates();
+        let value_str = self.cur_string();
+        let has_wtf8_surrogate = self.cur_token().has_wtf8_surrogate();
+        let value = wtf8_from_str(value_str, has_wtf8_surrogate, self);
         self.bump_any();
-        StringLiteral::new_with_lone_surrogates(span, value, Some(raw), lone_surrogates, self)
+        StringLiteral::new(span, value, Some(raw), self)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
@@ -639,16 +709,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Also replace `\r` with `\n` in `raw`.
         // If contains `\r`, then `escaped` must be `true` (because `\r` needs unescaping),
         // so we can skip searching for `\r` in common case where contains no escapes.
-        let (cooked, lone_surrogates) = if self.cur_token().escaped() {
+        let cooked = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
-            let cooked = self.cur_template_string().map(Str::from);
-            if cooked.is_some() && raw.contains('\r') {
+            let cooked_str = self.cur_template_string();
+            let lone = self.cur_token().has_wtf8_surrogate();
+            if cooked_str.is_some() && raw.contains('\r') {
                 raw =
                     Str::from_str_in(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"), self);
             }
-            (cooked, self.cur_token().lone_surrogates())
+            wtf8_from_option_str(cooked_str, lone, self)
         } else {
-            (Some(raw), false)
+            Some(Wtf8Str::from(raw.as_str()))
         };
 
         self.bump_any();
@@ -663,13 +734,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
         // Parser provides already-escaped values from source, so no escaping needed here
-        TemplateElement::new_with_lone_surrogates(
-            span,
-            TemplateElementValue { raw, cooked },
-            tail,
-            lone_surrogates,
-            self,
-        )
+        TemplateElement::new(span, TemplateElementValue { raw, cooked }, tail, self)
     }
 
     /// Section 13.3 ImportCall or ImportMeta

@@ -16,7 +16,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, IntoIn};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, Str, Wtf8Str};
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::{
@@ -191,37 +191,11 @@ impl<'a> Expression<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build an [`Expression::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build an [`Expression::TemplateLiteral`].
@@ -1719,37 +1693,11 @@ impl<'a> ArrayExpressionElement<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build an [`ArrayExpressionElement::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build an [`ArrayExpressionElement::TemplateLiteral`].
@@ -3154,37 +3102,11 @@ impl<'a> PropertyKey<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`PropertyKey::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`PropertyKey::TemplateLiteral`].
@@ -4385,38 +4307,7 @@ impl<'a> TemplateElement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TemplateElement {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value,
-            tail,
-            lone_surrogates: Default::default(),
-        }
-    }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn new_with_lone_surrogates(
-        span: Span,
-        value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        let builder = builder.builder();
-        TemplateElement {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value,
-            tail,
-            lone_surrogates,
-        }
+        TemplateElement { node_id: Cell::new(builder.node_id()), span, value, tail }
     }
 }
 
@@ -5096,37 +4987,11 @@ impl<'a> Argument<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build an [`Argument::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build an [`Argument::TemplateLiteral`].
@@ -10432,37 +10297,11 @@ impl<'a> ForStatementInit<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`ForStatementInit::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`ForStatementInit::TemplateLiteral`].
@@ -13494,37 +13333,11 @@ impl<'a> ArrowFunctionBody<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build an [`ArrowFunctionBody::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build an [`ArrowFunctionBody::TemplateLiteral`].
@@ -16311,35 +16124,11 @@ impl<'a> ImportAttributeKey<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
-    }
-
-    /// Build an [`ImportAttributeKey::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::new_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 }
 
@@ -16963,37 +16752,11 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build an [`ExportDefaultDeclarationKind::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build an [`ExportDefaultDeclarationKind::TemplateLiteral`].
@@ -18139,35 +17902,11 @@ impl<'a> ModuleExportName<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`ModuleExportName::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::new_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 }
 
@@ -18339,18 +18078,12 @@ impl<'a> StringLiteral<'a> {
     #[inline]
     pub fn new(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        StringLiteral {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value: value.into(),
-            raw,
-            lone_surrogates: Default::default(),
-        }
+        StringLiteral { node_id: Cell::new(builder.node_id()), span, value: value.into(), raw }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -18365,65 +18098,12 @@ impl<'a> StringLiteral<'a> {
     #[inline]
     pub fn boxed(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, value, raw, builder), &builder.allocator())
-    }
-
-    /// Build a [`StringLiteral`] with `lone_surrogates`.
-    ///
-    /// If you want the built node to be allocated in the memory arena,
-    /// use [`StringLiteral::boxed_with_lone_surrogates`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        let builder = builder.builder();
-        StringLiteral {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value: value.into(),
-            raw,
-            lone_surrogates,
-        }
-    }
-
-    /// Build a [`StringLiteral`] with `lone_surrogates`, and store it in the memory arena.
-    ///
-    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`StringLiteral::new_with_lone_surrogates`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn boxed_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> ArenaBox<'a, Self> {
-        let builder = builder.builder();
-        ArenaBox::new_in(
-            Self::new_with_lone_surrogates(span, value, raw, lone_surrogates, builder),
-            &builder.allocator(),
-        )
     }
 }
 
@@ -19154,37 +18834,11 @@ impl<'a> JSXExpression<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`JSXExpression::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`JSXExpression::TemplateLiteral`].
@@ -20459,37 +20113,11 @@ impl<'a> JSXAttributeValue<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`JSXAttributeValue::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
@@ -20611,7 +20239,7 @@ impl<'a> JSXChild<'a> {
     #[inline]
     pub fn new_text(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
@@ -20754,7 +20382,7 @@ impl<'a> JSXText<'a> {
     #[inline]
     pub fn new(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
@@ -20774,7 +20402,7 @@ impl<'a> JSXText<'a> {
     #[inline]
     pub fn boxed(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
@@ -20973,37 +20601,11 @@ impl<'a> TSEnumMemberName<'a> {
     #[inline]
     pub fn new_string(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::String(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`TSEnumMemberName::String`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::String(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`TSEnumMemberName::ComputedString`].
@@ -21017,37 +20619,11 @@ impl<'a> TSEnumMemberName<'a> {
     #[inline]
     pub fn new_computed_string(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::ComputedString(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`TSEnumMemberName::ComputedString`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_computed_string_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::ComputedString(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`TSEnumMemberName::ComputedTemplateString`].
@@ -21206,37 +20782,11 @@ impl<'a> TSLiteral<'a> {
     #[inline]
     pub fn new_string_literal(
         span: Span,
-        value: impl Into<Str<'a>>,
+        value: impl Into<Wtf8Str<'a>>,
         raw: Option<Str<'a>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`TSLiteral::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].

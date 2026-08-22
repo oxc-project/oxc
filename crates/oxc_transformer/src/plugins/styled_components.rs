@@ -475,7 +475,7 @@ impl<'a> StyledComponents<'a> {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
             let Some(specifiers) = &import.specifiers else { continue };
-            if !is_valid_styled_component_source(&import.source.value) {
+            if !import.source.value.as_str().is_some_and(is_valid_styled_component_source) {
                 continue;
             }
 
@@ -1161,7 +1161,7 @@ mod tests {
                 SPAN,
                 TemplateElementValue {
                     raw: Str::from_str_in(input, &ast),
-                    cooked: Some(Str::from_str_in(input, &ast)),
+                    cooked: Some(Str::from_str_in(input, &ast).into()),
                 },
                 true,
                 &ast,

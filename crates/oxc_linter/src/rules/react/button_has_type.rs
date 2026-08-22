@@ -117,7 +117,7 @@ impl Rule for ButtonHasType {
                     return;
                 };
 
-                if str.value.as_str() != "button" {
+                if str.value.as_str_or_default() != "button" {
                     return;
                 }
 
@@ -195,7 +195,7 @@ impl ButtonHasType {
                 }
             }
             Some(JSXAttributeValue::StringLiteral(str)) => {
-                self.is_valid_button_type_prop_string_literal(str.value.as_str())
+                self.is_valid_button_type_prop_string_literal(str.value.as_str().unwrap_or(""))
             }
             _ => false,
         }
@@ -204,7 +204,7 @@ impl ButtonHasType {
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
         match expr.without_parentheses() {
             Expression::StringLiteral(str) => {
-                self.is_valid_button_type_prop_string_literal(str.value.as_str())
+                self.is_valid_button_type_prop_string_literal(str.value.as_str().unwrap_or(""))
             }
             Expression::TemplateLiteral(template_literal) => template_literal
                 .single_quasi()

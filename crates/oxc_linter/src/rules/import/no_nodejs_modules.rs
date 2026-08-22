@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Str};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -91,7 +91,9 @@ impl Rule for NoNodejsModules {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let module_name = match node.kind() {
             AstKind::ImportExpression(import) => match &import.source {
-                Expression::StringLiteral(str_lit) => Some(str_lit.value),
+                Expression::StringLiteral(str_lit) => {
+                    Some(Str::from(str_lit.value.as_str_or_default()))
+                }
                 Expression::TemplateLiteral(temp_lit) if temp_lit.is_no_substitution_template() => {
                     temp_lit.single_quasi()
                 }
@@ -99,16 +101,22 @@ impl Rule for NoNodejsModules {
             },
             AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {
                 TSModuleReference::ExternalModuleReference(external) => {
-                    Some(external.expression.value)
+                    Some(Str::from(external.expression.value.as_str_or_default()))
                 }
                 _ => None,
             },
             AstKind::CallExpression(call) if !call.optional => {
-                call.common_js_require().map(|s| s.value)
+                call.common_js_require().map(|s| Str::from(s.value.as_str_or_default()))
             }
-            AstKind::ImportDeclaration(import) => Some(import.source.value),
-            AstKind::ExportFromDeclaration(export) => Some(export.source.value),
-            AstKind::ExportAllDeclaration(export_all) => Some(export_all.source.value),
+            AstKind::ImportDeclaration(import) => {
+                Some(Str::from(import.source.value.as_str_or_default()))
+            }
+            AstKind::ExportFromDeclaration(export) => {
+                Some(Str::from(export.source.value.as_str_or_default()))
+            }
+            AstKind::ExportAllDeclaration(export_all) => {
+                Some(Str::from(export_all.source.value.as_str_or_default()))
+            }
             _ => return,
         };
 

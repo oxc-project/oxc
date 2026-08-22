@@ -157,7 +157,7 @@ impl<'a> TaggedTemplateTransform {
         let cooked_elements = ArenaVec::from_iter_in(
             template_lit.quasis.iter().map(|quasi| {
                 let expr = if let Some(cooked) = &quasi.value.cooked {
-                    if cooked.as_str() != quasi.value.raw.as_str() {
+                    if cooked.as_str() != Some(quasi.value.raw.as_str()) {
                         needs_raw_array = true;
                     }
                     Expression::new_string_literal(SPAN, *cooked, None, ctx)

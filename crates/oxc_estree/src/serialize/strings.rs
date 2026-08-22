@@ -4,17 +4,6 @@ use oxc_data_structures::{code_buffer::CodeBuffer, slice_iter::SliceIter};
 
 use super::{ESTree, Serializer};
 
-/// Convert `char` to UTF-8 bytes array.
-const fn char_to_bytes<const N: usize>(ch: char) -> [u8; N] {
-    let mut bytes = [0u8; N];
-    ch.encode_utf8(&mut bytes);
-    bytes
-}
-
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = char_to_bytes('\u{FFFD}');
-const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0]; // 0xEF
-
 /// A string which does not need any escaping in JSON.
 ///
 /// This provides better performance when you know that the string definitely contains no characters
@@ -27,21 +16,6 @@ impl ESTree for JsonSafeString<'_> {
     #[inline(always)]
     fn serialize<S: Serializer>(&self, mut serializer: S) {
         serializer.buffer_mut().print_strs_array(["\"", self.0, "\""]);
-    }
-}
-
-/// A string which contains lone surrogates escaped with lossy replacement character (U+FFFD).
-///
-/// Lone surrogates are encoded in the string as `\uFFFD1234` where `1234` is the code point in hex.
-/// These are converted to `\u1234` in JSON.
-/// An actual lossy replacement character is encoded in the string as `\uFFFDfffd`, and is converted
-/// to the actual character.
-pub struct LoneSurrogatesString<'s>(pub &'s str);
-
-impl ESTree for LoneSurrogatesString<'_> {
-    #[inline(always)]
-    fn serialize<S: Serializer>(&self, mut serializer: S) {
-        write_str::<LoneSurrogatesEscapeTable>(self.0, serializer.buffer_mut());
     }
 }
 
@@ -71,7 +45,6 @@ enum Escape {
     RR = b'r',  // \x0D
     QU = b'"',  // \x22
     BS = b'\\', // \x5C
-    LO = b'X',  // Lossy escape character first byte
     UU = b'u',  // \x00...\x1F except the ones above
 }
 
@@ -80,12 +53,9 @@ enum Escape {
 ///
 /// A value of `UU` means that byte is escaped as `\u00xx`, where `xx` is the hex code of the byte.
 /// e.g. `0x1F` is output as `\u001F`.
-static ESCAPE: [Escape; 256] = create_table(Escape::__);
+static ESCAPE: [Escape; 256] = create_table();
 
-/// Same as `ESCAPE` but with `Escape::LO` for byte 0xEF.
-static ESCAPE_LONE_SURROGATES: [Escape; 256] = create_table(Escape::LO);
-
-const fn create_table(lo: Escape) -> [Escape; 256] {
+const fn create_table() -> [Escape; 256] {
     #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
     use Escape::*;
 
@@ -105,16 +75,13 @@ const fn create_table(lo: Escape) -> [Escape; 256] {
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
-        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, lo, // E
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // E
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
     ]
 }
 
 /// Trait for tables determining whether bytes need escaping.
 trait EscapeTable {
-    /// `true` if need to escape lone surrogate escape sequences.
-    const LONE_SURROGATES: bool;
-
     /// Get `Escape` for a byte.
     /// If byte does not require escaping, returns `Escape::__`.
     fn get_escape_for_byte(b: u8) -> Escape;
@@ -142,8 +109,6 @@ trait EscapeTable {
 struct StandardEscapeTable;
 
 impl EscapeTable for StandardEscapeTable {
-    const LONE_SURROGATES: bool = false;
-
     #[inline]
     fn get_escape_for_byte(b: u8) -> Escape {
         ESCAPE[b as usize]
@@ -190,45 +155,6 @@ impl EscapeTable for StandardEscapeTable {
         // Now any bytes needing escape = 0x80.
         // Any bytes not needing escape = 0.
         escapes & asciis
-    }
-}
-
-/// Escape table for strings containing lone surrogates (`impl ESTree for LoneSurrogatesString`).
-struct LoneSurrogatesEscapeTable;
-
-impl EscapeTable for LoneSurrogatesEscapeTable {
-    const LONE_SURROGATES: bool = true;
-
-    #[inline]
-    fn get_escape_for_byte(b: u8) -> Escape {
-        ESCAPE_LONE_SURROGATES[b as usize]
-    }
-
-    #[inline]
-    fn get_escapes_mask(bytes: [u8; 8]) -> u64 {
-        const LOSSYS: u64 = splat_u64(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
-        const ONES: u64 = splat_u64(1);
-        const TOP_BITS: u64 = splat_u64(0x80);
-
-        // Get mask for ASCII escapes
-        let ascii_escapes = StandardEscapeTable::get_escapes_mask(bytes);
-
-        // Convert bytes to a `u64` in native byte order
-        let n = u64::from_ne_bytes(bytes);
-
-        // 0xEF -> 0xFF (top bit set).
-        // All other non-ASCII bytes -> values with top bit unset.
-        let lossys = (n ^ LOSSYS).wrapping_sub(ONES);
-        // ASCII bytes -> 0x00 (top bit unset).
-        // Non-ASCII bytes -> 0x80 (top bit set).
-        let non_ascii = n & TOP_BITS;
-        // Mask `lossys` to only top bits, and zero any ASCII bytes
-        let lossys = lossys & non_ascii;
-
-        // Combine masks for ASCII escapes and lossy replacement characters.
-        // Now any bytes needing escape = 0x80.
-        // Any bytes not needing escape = 0.
-        ascii_escapes | lossys
     }
 }
 
@@ -306,77 +232,9 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
 
         // Found a character that needs escaping
 
-        // Handle lone surrogates.
-        // Skip this block if not escaping lone surrogates.
-        if T::LONE_SURROGATES && escape == Escape::LO {
-            // SAFETY: `0xEF` is always 1st byte in a 3-byte UTF-8 character,
-            // so reading next 2 bytes cannot be out of bounds
-            let next_2_bytes = unsafe { iter.as_slice().get_unchecked(1..3) };
-            if next_2_bytes == &LOSSY_REPLACEMENT_CHAR_BYTES[1..] {
-                // Lossy replacement character (U+FFFD) is used as an escape before lone surrogates,
-                // with the code point as 4 x hex characters after it e.g. `\u{FFFD}d800`.
-
-                // Print the chunk up to before the lossy replacement character.
-                // SAFETY: 0xEF is always the start of a 3-byte unicode character.
-                // Therefore `current_ptr` must be on a UTF-8 character boundary.
-                // `chunk_start_ptr` is start of string originally, and is only updated to be after
-                // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
-                // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
-                unsafe {
-                    let current_ptr = iter.ptr();
-                    let len = current_ptr.offset_from_unsigned(chunk_start_ptr);
-                    let chunk = slice::from_raw_parts(chunk_start_ptr, len);
-                    buffer.print_bytes_unchecked(chunk);
-                }
-
-                // Consume the lossy replacement character.
-                // SAFETY: Lossy replacement character is 3 bytes.
-                unsafe { iter.advance_unchecked(3) };
-
-                let hex = iter.as_slice().get(..4).unwrap();
-                if hex == b"fffd" {
-                    // This is an actual lossy replacement character (not an escaped lone surrogate)
-                    buffer.print_str("\u{FFFD}");
-
-                    // Consume `fffd`.
-                    // SAFETY: We know next 4 bytes are `fffd`.
-                    unsafe { iter.advance_unchecked(4) };
-
-                    // Set `chunk_start_ptr` to after `\u{FFFD}fffd`.
-                    // That's a complete UTF-8 sequence, so `chunk_start_ptr` is definitely
-                    // left on a UTF-8 character boundary.
-                    chunk_start_ptr = iter.ptr();
-                } else {
-                    // This is an escaped lone surrogate.
-                    // Next 4 bytes should be code point encoded as 4 x hex bytes.
-                    #[cfg(debug_assertions)]
-                    for &b in hex {
-                        assert!(matches!(b, b'0'..=b'9' | b'a'..=b'f'));
-                    }
-
-                    // Print `\u`. Leave the hex bytes to be printed in next batch.
-                    // After lossy replacement character is definitely a UTF-8 boundary.
-                    buffer.print_str("\\u");
-                    chunk_start_ptr = iter.ptr();
-
-                    // SAFETY: `iter.as_slice().get(..4).unwrap()` above would have panicked
-                    // if there weren't at least 4 bytes remaining in `iter`.
-                    // We haven't checked that the 4 following bytes are ASCII, but it doesn't matter
-                    // whether `iter` is left on a UTF-8 char boundary or not.
-                    unsafe { iter.advance_unchecked(4) }
-                }
-            } else {
-                // Some other unicode character starting with 0xEF.
-                // Consume it and continue the loop.
-                // SAFETY: `0xEF` is always 1st byte in a 3-byte UTF-8 character.
-                unsafe { iter.advance_unchecked(3) };
-            }
-            continue;
-        }
-
         // Print the chunk up to before the character which requires escaping.
         let current_ptr = iter.ptr();
-        // SAFETY: `escape` is only non-zero for ASCII bytes, except `Escape::LO` which is handled above.
+        // SAFETY: `escape` is only non-zero for ASCII bytes.
         // Therefore `current_ptr` must be on an ASCII byte.
         // `chunk_start_ptr` is start of string originally, and is only updated to be after
         // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
@@ -488,29 +346,6 @@ mod tests {
         for (input, output) in cases {
             let mut serializer = CompactSerializer::default();
             JsonSafeString(input).serialize(&mut serializer);
-            let s = serializer.into_string();
-            assert_eq!(&s, output);
-        }
-    }
-
-    #[test]
-    fn serialize_lone_surrogates_string() {
-        let cases = [
-            ("\u{FFFD}fffd", "\"\u{FFFD}\""),
-            ("_x_\u{FFFD}fffd_y_\u{FFFD}fffd_z_", "\"_x_\u{FFFD}_y_\u{FFFD}_z_\""),
-            ("\u{FFFD}d834\u{FFFD}d835", r#""\ud834\ud835""#),
-            ("_x_\u{FFFD}d834\u{FFFD}d835", r#""_x_\ud834\ud835""#),
-            ("\u{FFFD}d834\u{FFFD}d835_y_", r#""\ud834\ud835_y_""#),
-            ("_x_\u{FFFD}d834_y_\u{FFFD}d835_z_", r#""_x_\ud834_y_\ud835_z_""#),
-            (
-                "They call me \"Bob\" but I prefer \"Den\u{FFFD}d834\\qnis\", innit?",
-                r#""They call me \"Bob\" but I prefer \"Den\ud834\\qnis\", innit?""#,
-            ),
-        ];
-
-        for (input, output) in cases {
-            let mut serializer = CompactSerializer::default();
-            LoneSurrogatesString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
         }

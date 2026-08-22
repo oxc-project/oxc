@@ -552,16 +552,10 @@ function deserializeTaggedTemplateExpression(pos) {
 function deserializeTemplateElement(pos) {
   let tail = deserializeBool(pos + 12),
     start = deserializeI32(pos),
-    end = deserializeI32(pos + 4),
-    value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null
-    && deserializeBool(pos + 13)
-    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)),
-    ));
+    end = deserializeI32(pos + 4);
   return {
     type: "TemplateElement",
-    value,
+    value: deserializeTemplateElementValue(pos + 16),
     tail,
     start,
     end,
@@ -3079,13 +3073,8 @@ function deserializeStringLiteral(pos) {
       end,
       range: [start, end],
       parent,
-    }),
-    value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12)
-    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)),
-    ));
-  node.value = value;
+    });
+  node.value = deserializeStr(pos + 16);
   parent = previousParent;
   return node;
 }

@@ -65,7 +65,7 @@ pub fn run_once(ctx: &LintContext) {
             return;
         };
 
-        if contains_mocks_dir(&string_literal.value) {
+        if contains_mocks_dir(string_literal.value.as_str().unwrap_or_default()) {
             ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
         }
     }

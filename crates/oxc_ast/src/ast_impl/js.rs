@@ -95,7 +95,7 @@ impl<'a> Expression<'a> {
     #[inline]
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         match self {
-            Self::StringLiteral(s) => s.value == string,
+            Self::StringLiteral(s) => s.value.as_str() == Some(string),
             _ => false,
         }
     }
@@ -465,12 +465,12 @@ impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::StringLiteral(lit) => lit.value.as_str().map(Cow::Borrowed),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
+            Self::TemplateLiteral(lit) => lit.single_quasi().map(|s| Cow::Borrowed(s.as_str())),
             _ => None,
         }
     }
@@ -531,7 +531,7 @@ impl<'a> PropertyKey<'a> {
 
     /// Returns `true` if this property key is a string literal with the given value.
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
-        matches!(self, Self::StringLiteral(s) if s.value == string)
+        matches!(self, Self::StringLiteral(s) if s.value.as_str() == Some(string))
     }
 }
 
@@ -558,7 +558,11 @@ impl<'a> TemplateLiteral<'a> {
 
     /// Get single quasi from `template`
     pub fn single_quasi(&self) -> Option<Str<'a>> {
-        if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
+        if self.is_no_substitution_template() {
+            self.quasis[0].value.cooked.and_then(|c| c.as_str().map(Str::from))
+        } else {
+            None
+        }
     }
 }
 
@@ -624,10 +628,13 @@ impl<'a> MemberExpression<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => lit.value.as_str().map(|s| (lit.span, s)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        lit.quasis[0]
+                            .value
+                            .cooked
+                            .and_then(|cooked| cooked.as_str().map(|s| (lit.span, s)))
                     } else {
                         None
                     }
@@ -670,8 +677,10 @@ impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
     pub fn static_property_name(&self) -> Option<Str<'a>> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            Expression::StringLiteral(lit) => lit.value.as_str().map(Str::from),
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked.and_then(|c| c.as_str().map(Str::from))
+            }
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
@@ -682,9 +691,9 @@ impl<'a> ComputedMemberExpression<'a> {
     /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            Expression::StringLiteral(lit) => lit.value.as_str().map(|s| (lit.span, s)),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                lit.quasis[0].value.cooked.and_then(|cooked| cooked.as_str().map(|s| (lit.span, s)))
             }
             Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
@@ -2041,7 +2050,9 @@ impl<'a> ImportAttributeKey<'a> {
     pub fn as_arena_str(&self) -> Str<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => literal.value,
+            Self::StringLiteral(literal) => {
+                literal.value.as_str().map_or_else(|| Str::from(""), Str::from)
+            }
         }
     }
 }
@@ -2126,7 +2137,9 @@ impl<'a> ModuleExportName<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),
-            Self::StringLiteral(literal) => literal.value,
+            Self::StringLiteral(literal) => {
+                literal.value.as_str().map_or_else(|| Str::from(""), Str::from)
+            }
         }
     }
 

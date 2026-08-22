@@ -321,12 +321,12 @@ fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
         return false;
     }
     // Slower check that parses the file name to check if it's a declaration file
-    let path = Path::new(source.as_str());
+    let path = Path::new(source.as_str_or_default());
     let Some(extension) = path.extension().and_then(std::ffi::os_str::OsStr::to_str) else {
         return false;
     };
     match FileExtension::from_str(extension) {
-        Ok(file_ext) => file_ext.is_ts_declaration(source),
+        Ok(file_ext) => file_ext.is_ts_declaration(source.as_str_or_default()),
         Err(_) => false,
     }
 }

@@ -6,11 +6,13 @@ mod compact_str;
 mod ident;
 mod ident_hasher;
 mod str;
+mod wtf8_str;
 
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
 pub use ident::{ArenaIdentHashMap, Ident, IdentHashMap, IdentHashSet};
 pub use ident_hasher::{IdentBuildHasher, IdentHasher};
 pub use str::{Str, Str as ArenaStr};
+pub use wtf8_str::Wtf8Str;
 
 #[doc(hidden)]
 pub mod __internal {

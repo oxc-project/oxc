@@ -80,7 +80,9 @@ impl Rule for PreferBigintLiterals {
 
         match argument_expression.get_inner_expression() {
             Expression::StringLiteral(string_literal) => {
-                if let Some(replacement) = bigint_literal_from_string(&string_literal.value) {
+                if let Some(replacement) =
+                    bigint_literal_from_string(string_literal.value.as_str().unwrap_or_default())
+                {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
                         |fixer| fixer.replace(call.span, replacement),

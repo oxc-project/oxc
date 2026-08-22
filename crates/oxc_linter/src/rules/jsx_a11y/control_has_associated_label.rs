@@ -227,7 +227,7 @@ impl ControlHasAssociatedLabel {
                 match &attr.value {
                     None => false,
                     Some(JSXAttributeValue::StringLiteral(s)) => {
-                        !s.value.as_str().trim().is_empty()
+                        !s.value.as_str_or_default().trim().is_empty()
                     }
                     Some(_) => true,
                 }
@@ -247,7 +247,7 @@ impl ControlHasAssociatedLabel {
 
         match node {
             JSXChild::ExpressionContainer(_) => true,
-            JSXChild::Text(text) => !text.value.as_str().trim().is_empty(),
+            JSXChild::Text(text) => !text.value.as_str_or_default().trim().is_empty(),
             JSXChild::Element(element) => {
                 if self.has_labelling_prop(&element.opening_element.attributes) {
                     return true;

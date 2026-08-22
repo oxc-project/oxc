@@ -12,7 +12,7 @@ impl<'a> IsolatedDeclarations<'a> {
             lit.quasis.first().map(|item| {
                 StringLiteral::boxed(
                     lit.span,
-                    item.value.cooked.unwrap_or(item.value.raw),
+                    item.value.cooked.unwrap_or(item.value.raw.into()),
                     None,
                     self,
                 )

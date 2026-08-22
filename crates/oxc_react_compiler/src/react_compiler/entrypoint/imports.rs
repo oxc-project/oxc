@@ -233,12 +233,10 @@ pub fn validate_restricted_imports(
 
     for stmt in &program.body {
         if let Statement::ImportDeclaration(import) = stmt
-            && restricted.contains(import.source.value.as_str())
+            && let Some(src) = import.source.value.as_str()
+            && restricted.contains(src)
         {
-            diagnostics.push(diagnostics::blocklisted_import(
-                import.source.value.as_str(),
-                import.source.span,
-            ));
+            diagnostics.push(diagnostics::blocklisted_import(src, import.source.span));
         }
     }
 
@@ -261,7 +259,7 @@ pub fn has_memo_cache_function_import(program: &Program, module_name: &str) -> b
                     let imported_name = match &data.imported {
                         ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
                         ModuleExportName::IdentifierReference(id) => Some(id.name.as_str()),
-                        ModuleExportName::StringLiteral(s) => Some(s.value.as_str()),
+                        ModuleExportName::StringLiteral(s) => s.value.as_str(),
                     };
                     if imported_name == Some("c") {
                         return true;

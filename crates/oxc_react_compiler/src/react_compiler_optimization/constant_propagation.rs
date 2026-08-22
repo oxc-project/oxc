@@ -28,7 +28,7 @@ use std::mem::replace;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, GetAllocator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{StringToNumber, ToInt32, ToUint32};
 use oxc_str::{Ident, Str};
@@ -300,11 +300,14 @@ fn evaluate_instruction<'a>(
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
-                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
+                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str_or_default()) => {
                         let object = *object;
                         let property_span = property.span;
                         let span = *span;
-                        let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
+                        let new_property = PropertyLiteral::String(Ident::from_str_in(
+                            s.as_str_or_default(),
+                            &env.allocator(),
+                        ));
                         func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyLoad {
                                 object,
@@ -340,12 +343,15 @@ fn evaluate_instruction<'a>(
             let prop_value = read(constants, property);
             if let Some(Constant::Primitive { value: ref prim, .. }) = prop_value {
                 match prim {
-                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
+                    PrimitiveValue::String(s) if is_valid_identifier(s.as_str_or_default()) => {
                         let object = *object;
                         let property_span = property.span;
                         let store_value = *value;
                         let span = *span;
-                        let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
+                        let new_property = PropertyLiteral::String(Ident::from_str_in(
+                            s.as_str_or_default(),
+                            &env.allocator(),
+                        ));
                         func.instructions[instr_id.index()].value =
                             InstructionValue::PropertyStore {
                                 object,
@@ -491,7 +497,7 @@ fn evaluate_instruction<'a>(
                 && prop_name == "length"
             {
                 // Use UTF-16 code unit count to match JS .length semantics
-                let len = s.as_str().encode_utf16().count() as f64;
+                let len = s.as_str_or_default().encode_utf16().count() as f64;
                 let span = *span;
                 let result = Constant::Primitive {
                     value: PrimitiveValue::Number(FloatValue::new(len)),
@@ -514,7 +520,7 @@ fn evaluate_instruction<'a>(
                 }
                 let span = *span;
                 let value =
-                    PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
+                    PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator).into());
                 let result = Constant::Primitive { value, span };
                 func.instructions[instr_id.index()].value =
                     InstructionValue::Primitive { value, span };
@@ -530,8 +536,7 @@ fn evaluate_instruction<'a>(
             }
 
             let mut quasi_index = 0usize;
-            let mut result_string =
-                quasis[quasi_index].cooked.as_ref().unwrap().as_str().to_string();
+            let mut result_string = quasis[quasi_index].cooked.as_ref().unwrap().to_string();
             quasi_index += 1;
 
             for sub_expr in subexprs {
@@ -545,7 +550,7 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null => "null".to_string(),
                     PrimitiveValue::Boolean(b) => b.to_string(),
                     PrimitiveValue::Number(n) => n.value().to_js_string(),
-                    PrimitiveValue::String(s) => s.as_str().to_string(),
+                    PrimitiveValue::String(s) => s.as_str_or_default().to_string(),
                     // TS rejects undefined subexpression values
                     PrimitiveValue::Undefined => return None,
                 };
@@ -558,7 +563,8 @@ fn evaluate_instruction<'a>(
             }
 
             let span = *span;
-            let value = PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
+            let value =
+                PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator).into());
             let result = Constant::Primitive { value, span };
             func.instructions[instr_id.index()].value = InstructionValue::Primitive { value, span };
             Some(result)
@@ -688,7 +694,7 @@ fn is_truthy(value: &PrimitiveValue) -> bool {
             let v = n.value();
             v != 0.0 && !v.is_nan()
         }
-        PrimitiveValue::String(s) => !s.as_str().is_empty(),
+        PrimitiveValue::String(s) => !s.as_str_or_default().is_empty(),
     }
 }
 
@@ -708,7 +714,8 @@ fn evaluate_binary_op<'a>(
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() + r.value())))
             }
             (PrimitiveValue::String(l), PrimitiveValue::String(r)) => Some(PrimitiveValue::String(
-                Str::from_strs_array_in([l.as_str(), r.as_str()], &allocator),
+                Str::from_strs_array_in([l.as_str_or_default(), r.as_str_or_default()], &allocator)
+                    .into(),
             )),
             _ => None,
         },
@@ -862,7 +869,7 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
         (PrimitiveValue::Number(n), PrimitiveValue::String(s))
         | (PrimitiveValue::String(s), PrimitiveValue::Number(n)) => {
             // String is coerced to number using JS ToNumber semantics.
-            let sv = s.as_str().string_to_number();
+            let sv = s.as_str_or_default().string_to_number();
             let nv = n.value();
             if nv.is_nan() || sv.is_nan() { false } else { nv == sv }
         }

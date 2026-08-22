@@ -453,7 +453,7 @@ fn fix_to_type_import_declaration(options: &FixOptions<'_, '_>) -> FixerResult<R
     if !type_names_specifiers.is_empty() {
         // definitely all type references: `import type { A, B } from 'foo'`
         if let Some(type_only_named_import) =
-            get_type_only_named_import(ctx, import_decl.source.value.as_str())
+            get_type_only_named_import(ctx, import_decl.source.value.as_str().unwrap_or(""))
         {
             let new_options = FixOptions {
                 import_decl: type_only_named_import,

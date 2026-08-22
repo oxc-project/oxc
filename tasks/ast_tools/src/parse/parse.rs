@@ -279,6 +279,7 @@ impl<'c> Parser<'c> {
             "AtomicPtr" => primitive("AtomicPtr"),
             "&str" => primitive("&str"),
             "Str" => primitive("Str"),
+            "Wtf8Str" => primitive("Wtf8Str"),
             "Ident" => primitive("Ident"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types

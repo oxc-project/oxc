@@ -422,12 +422,14 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '
         .quasis
         .first()
         .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
+        .and_then(oxc_str::Wtf8Str::as_str)
+        .is_some_and(|t| t.starts_with(|c: char| c.is_ascii_whitespace()));
     let has_trailing_ws = template
         .quasis
         .last()
         .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
+        .and_then(oxc_str::Wtf8Str::as_str)
+        .is_some_and(|t| t.ends_with(|c: char| c.is_ascii_whitespace()));
     has_leading_ws && has_trailing_ws
 }
 

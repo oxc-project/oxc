@@ -68,7 +68,10 @@ impl Rule for NoNamespace {
                 };
 
                 if str_lit.value.contains(':') {
-                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &str_lit.value));
+                    ctx.diagnostic(no_namespace_diagnostic(
+                        str_lit.span,
+                        str_lit.value.as_str().unwrap_or_default(),
+                    ));
                 }
             }
             _ => {}

@@ -1320,7 +1320,7 @@ fn body_directive_values<'a>(body: &FunctionBody<'a>) -> Vec<BodyDirective<'a>> 
     body.directives
         .iter()
         .map(|directive| BodyDirective {
-            value: directive.expression.value,
+            value: oxc_str::Str::from(directive.expression.value.as_str().unwrap_or_default()),
             span: directive.expression.span,
         })
         .collect()
@@ -2981,9 +2981,10 @@ fn ox_add_imports_to_program<'a>(
     let mut existing_import_indices: FxHashMap<&str, usize> = FxHashMap::default();
     for (idx, stmt) in program.body.iter().enumerate() {
         if let Statement::ImportDeclaration(import) = stmt
+            && let Some(src) = import.source.value.as_str()
             && ox_is_non_namespaced_import(import)
         {
-            existing_import_indices.entry(import.source.value.as_str()).or_insert(idx);
+            existing_import_indices.entry(src).or_insert(idx);
         }
     }
 
@@ -3157,7 +3158,7 @@ pub fn compile_program<'a, const EMIT: bool>(
 
     // Check for module-scope opt-out directive
     let has_module_scope_opt_out = find_directive_disabling_memoization(
-        program.directives.iter().map(|d| d.expression.value.as_str()),
+        program.directives.iter().filter_map(|d| d.expression.value.as_str()),
         options.custom_opt_out_directives.as_deref(),
     )
     .is_some();

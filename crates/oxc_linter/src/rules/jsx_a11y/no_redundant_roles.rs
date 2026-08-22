@@ -198,12 +198,12 @@ fn get_select_implicit_role(jsx_el: &JSXOpeningElement) -> &'static str {
 
 fn get_static_string_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
     match get_prop_value(item)? {
-        JSXAttributeValue::StringLiteral(lit) => Some(lit.value.as_str()),
+        JSXAttributeValue::StringLiteral(lit) => Some(lit.value.as_str().unwrap_or("")),
         JSXAttributeValue::ExpressionContainer(container) => {
             let Expression::StringLiteral(lit) = container.expression.as_expression()? else {
                 return None;
             };
-            Some(lit.value.as_str())
+            Some(lit.value.as_str().unwrap_or(""))
         }
         _ => None,
     }

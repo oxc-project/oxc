@@ -340,14 +340,14 @@ impl NoRestrictedGlobals {
                     return;
                 }
                 let property_name = match &expression.expression {
-                    Expression::StringLiteral(str) => str.value.as_str(),
+                    Expression::StringLiteral(str) => str.value.as_str_or_default(),
                     Expression::TemplateLiteral(template)
                         if template.is_no_substitution_template() =>
                     {
                         let Some(cooked) = &template.quasis[0].value.cooked else {
                             return;
                         };
-                        cooked.as_str()
+                        cooked.as_str_or_default()
                     }
                     _ => return,
                 };

@@ -95,7 +95,9 @@ fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
                 && call_expr.callee.is_specific_id("require")
                 && call_expr.arguments.len() == 1
                 && match &call_expr.arguments[0] {
-                    Argument::StringLiteral(source) => is_ignored_package(source.value.as_str()),
+                    Argument::StringLiteral(source) => {
+                        is_ignored_package(source.value.as_str().unwrap_or(""))
+                    }
                     Argument::TemplateLiteral(source) => source
                         .single_quasi()
                         .is_some_and(|source| is_ignored_package(source.as_str())),
@@ -106,7 +108,9 @@ fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
         {
             Expression::ImportExpression(import_expr) => {
                 match import_expr.source.get_inner_expression() {
-                    Expression::StringLiteral(source) => is_ignored_package(source.value.as_str()),
+                    Expression::StringLiteral(source) => {
+                        is_ignored_package(source.value.as_str().unwrap_or(""))
+                    }
                     Expression::TemplateLiteral(source) => source
                         .single_quasi()
                         .is_some_and(|source| is_ignored_package(source.as_str())),
