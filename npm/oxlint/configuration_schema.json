@@ -1165,9 +1165,9 @@
       "type": "object",
       "properties": {
         "allowPattern": {
-          "description": "A regex pattern; capitalized functions and methods whose name matches\nmay be called directly.",
+          "description": "A regex pattern; capitalized functions and methods whose name matches\nmay be called directly. Anchor the pattern to allow exact names, e.g.\n`\"^(StyleSheet|Schema)$\"`.",
           "type": "string",
-          "markdownDescription": "A regex pattern; capitalized functions and methods whose name matches\nmay be called directly."
+          "markdownDescription": "A regex pattern; capitalized functions and methods whose name matches\nmay be called directly. Anchor the pattern to allow exact names, e.g.\n`\"^(StyleSheet|Schema)$\"`."
         }
       },
       "additionalProperties": false

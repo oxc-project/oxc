@@ -1,4 +1,4 @@
-use lazy_regex::{Regex, RegexBuilder};
+use lazy_regex::Regex;
 use oxc_react_compiler::{ErrorCategory, LintDiagnostic};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -6,28 +6,19 @@ use serde::Deserialize;
 use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{run_react_compiler_rule_filtered, should_run_react_compiler},
+    utils::{
+        deserialize_regex_option, run_react_compiler_rule_filtered, should_run_react_compiler,
+    },
 };
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CapitalizedCallsConfig {
     /// A regex pattern; capitalized functions and methods whose name matches
-    /// may be called directly.
-    #[serde(deserialize_with = "deserialize_allow_pattern")]
+    /// may be called directly. Anchor the pattern to allow exact names, e.g.
+    /// `"^(StyleSheet|Schema)$"`.
+    #[serde(deserialize_with = "deserialize_regex_option")]
     allow_pattern: Option<Regex>,
-}
-
-fn deserialize_allow_pattern<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::de::Error;
-
-    Option::<String>::deserialize(deserializer)?
-        .map(|pattern| RegexBuilder::new(&pattern).build())
-        .transpose()
-        .map_err(D::Error::custom)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -63,28 +54,6 @@ declare_react_compiler_lint!(
     /// import Child from './Child';
     /// function Component() {
     ///   return <div><Child /></div>;
-    /// }
-    /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowPattern
-    ///
-    /// `{ type: string, default: undefined }`
-    ///
-    /// A regex pattern; capitalized functions and methods whose name matches
-    /// may be called directly — the rule-level counterpart of the React
-    /// Compiler's `validateNoCapitalizedCalls` environment option. Useful when
-    /// a codebase has a naming convention for capitalized non-component
-    /// factories, such as generated event or schema builders. Anchor the
-    /// pattern to allow exact names, e.g. `"^(StyleSheet|Schema)$"`.
-    ///
-    /// Example of **correct** code for this rule with `{ "allowPattern": "Event$" }`:
-    /// ```jsx
-    /// import { ButtonClickEvent } from './events';
-    /// function Component() {
-    ///   const event = ButtonClickEvent();
-    ///   return <button onClick={() => log(event)} />;
     /// }
     /// ```
     CapitalizedCalls,

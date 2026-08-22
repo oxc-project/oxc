@@ -4626,7 +4626,8 @@ export interface ButtonHasType {
 export interface CapitalizedCallsConfig {
   /**
    * A regex pattern; capitalized functions and methods whose name matches
-   * may be called directly.
+   * may be called directly. Anchor the pattern to allow exact names, e.g.
+   * `"^(StyleSheet|Schema)$"`.
    */
   allowPattern?: string;
 }
