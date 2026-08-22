@@ -2375,6 +2375,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_minifier_fuzz"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_codegen",
+ "oxc_minifier",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "pico-args",
+ "rand",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "oxc_minify_napi"
 version = "0.146.0"
 dependencies = [
