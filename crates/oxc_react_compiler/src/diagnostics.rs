@@ -2301,7 +2301,7 @@ pub fn function_accesses_ref(span: Option<Span>, ref_access_span: Option<Span>) 
 
 #[cold]
 pub fn set_state_in_effect(
-    span: Option<Span>,
+    set_state_span: Option<Span>,
     effect_span: Option<Span>,
     verbose: bool,
 ) -> OxcDiagnostic {
@@ -2322,17 +2322,22 @@ pub fn set_state_in_effect(
         "Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. \
          Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system."
     };
-    let mut diagnostic = diagnostic_with_help_and_label(
+    let primary_span = effect_span.or(set_state_span);
+    let primary_label = if effect_span.is_some() {
+        "This effect triggers a synchronous state update"
+    } else {
+        "This state update runs synchronously inside the effect"
+    };
+    let mut diagnostic = diagnostic(
         ErrorCategory::EffectSetState,
         "Calling setState synchronously within an effect can trigger cascading renders",
-        help,
-        span,
-        "Avoid calling setState() directly within an effect",
-    );
+    )
+    .with_help(help)
+    .with_labels(primary_span.map(|span| span.primary_label(primary_label)));
     diagnostic.labels.extend(
-        effect_span
-            .filter(|effect_span| Some(*effect_span) != span)
-            .map(|span| span.label("This is the containing effect")),
+        set_state_span
+            .filter(|set_state_span| Some(*set_state_span) != primary_span)
+            .map(|span| span.label("The state update occurs here")),
     );
     diagnostic
 }
