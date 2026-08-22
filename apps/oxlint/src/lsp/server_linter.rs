@@ -104,9 +104,10 @@ impl ServerLinterBuilder {
             let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
 
             if let Err(err) = res {
-                let message = format!("Failed to setup JS workspace:\n{err}\n");
-                error!(message);
-                client_messages.push(ClientMessage { message, r#type: MessageType::ERROR });
+                client_messages.push(ClientMessage {
+                    message: format!("Failed to setup JS workspace:\n{err}\n"),
+                    r#type: MessageType::ERROR,
+                });
             }
         }
 
@@ -123,9 +124,7 @@ impl ServerLinterBuilder {
         let mut oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
             Ok(config) => config,
             Err(e) => {
-                let message = oxc_diagnostic_to_client_message(&e);
-                error!(message.message);
-                client_messages.push(message);
+                client_messages.push(oxc_diagnostic_to_client_message(&e));
                 Oxlintrc::default()
             }
         };
@@ -162,11 +161,10 @@ impl ServerLinterBuilder {
         ) {
             Ok(builder) => builder,
             Err(e) => {
-                let message = format!("Failed to build config from oxlintrc:\n{e}");
-                // show message in LSP stderr
-                error!(message);
-
-                client_messages.push(ClientMessage { message, r#type: MessageType::ERROR });
+                client_messages.push(ClientMessage {
+                    message: format!("Failed to build config from oxlintrc:\n{e}"),
+                    r#type: MessageType::ERROR,
+                });
                 ConfigStoreBuilder::default()
             }
         };
@@ -181,9 +179,10 @@ impl ServerLinterBuilder {
 
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
-            let message = format!("Failed to build config:\n{err}");
-            error!("{message}");
-            client_messages.push(ClientMessage { message, r#type: MessageType::ERROR });
+            client_messages.push(ClientMessage {
+                message: format!("Failed to build config:\n{err}"),
+                r#type: MessageType::ERROR,
+            });
             ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
@@ -218,9 +217,10 @@ impl ServerLinterBuilder {
                 external_linter,
             );
             if let Err(err) = res {
-                let message = format!("Failed to setup JS plugins config:\n{err}");
-                error!("{message}");
-                client_messages.push(ClientMessage { message, r#type: MessageType::ERROR });
+                client_messages.push(ClientMessage {
+                    message: format!("Failed to setup JS plugins config:\n{err}"),
+                    r#type: MessageType::ERROR,
+                });
             }
         }
 
@@ -245,11 +245,10 @@ impl ServerLinterBuilder {
         {
             Ok(runner) => runner,
             Err(e) => {
-                let message = format!("Failed to initialize type-aware linting:\n{e}");
-
-                error!(message);
-
-                client_messages.push(ClientMessage { message, r#type: MessageType::ERROR });
+                client_messages.push(ClientMessage {
+                    message: format!("Failed to initialize type-aware linting:\n{e}"),
+                    r#type: MessageType::ERROR,
+                });
                 let linter =
                     Linter::new(lint_options, config_store_clone, external_linter.cloned())
                         .with_workspace_uri(Some(root_uri.as_str()));
@@ -373,13 +372,11 @@ impl ServerLinterBuilder {
 
         let mut client_messages = Vec::with_capacity(errors.len());
         for error in errors {
-            let message = config_loader_error_to_message(error);
-
-            // send message to LSP stderr
-            warn!(message);
-
-            // show message to the LSP client, if there is already a message, append to it
-            client_messages.push(ClientMessage { message, r#type: MessageType::ERROR });
+            // show message to the LSP client
+            client_messages.push(ClientMessage {
+                message: config_loader_error_to_message(error),
+                r#type: MessageType::ERROR,
+            });
         }
 
         (
