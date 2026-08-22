@@ -27,6 +27,14 @@ describe("simple", () => {
     expect(ret.code).toBe("function foo() {\n\tvar bar;\n\tbar(undefined);\n}\nfoo();\n");
   });
 
+  it("escapes non-ASCII characters with codegen.asciiOnly", () => {
+    const ret = minifySync("test.js", "export let café = 'naïve ☕';", {
+      codegen: { asciiOnly: true },
+    });
+    expect(ret.code).toBe('export let caf\\u00E9=`na\\u00EFve \\u2615`;');
+    expect(ret.errors.length).toBe(0);
+  });
+
   it("defaults to esnext", () => {
     const code = "try { foo } catch (e) {}";
     const ret = minifySync("test.js", code);
