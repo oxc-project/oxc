@@ -4,7 +4,6 @@ import {
   CAT_IDENT,
   CAT_OTHER,
   CAT_START_OF_DEFAULT_EXPORT,
-  markWithMapAtStartOffset,
   write,
   writeNoLast,
   writeWithMap,
@@ -143,8 +142,7 @@ function printImportAttributes(
   // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor
   // to the first attribute, which is the first location both representations carry.
   writeNoLast(state, " ");
-  markWithMapAtStartOffset(state, attributes[0], 0);
-  write(state, "with { ", CAT_OTHER);
+  writeWithMap(state, "with { ", CAT_OTHER, attributes[0]);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
