@@ -102,6 +102,25 @@ If your editor does not support `textDocument/diagnostic`,
 this option handles when diagnostics are sent to the client.
 
 
+## showSuppressedViolations
+
+type: `boolean`
+
+
+Whether to show violations suppressed by the bulk-suppression baseline
+(`oxlint-suppressions.json`) in the editor as faded (`UNNECESSARY`-tagged) diagnostics
+instead of hiding them entirely. Unset is treated as `true`; set to `false` to hide them.
+
+
+## suppressedViolationSeverity
+
+type: `"hint" | "information" | "warning" | "error"`
+
+
+Severity used to render bulk-suppressed violations when they are shown. Defaults to
+`warning`.
+
+
 ## tsConfigPath
 
 type: `string`

@@ -5,7 +5,8 @@ use ignore::gitignore::Gitignore;
 use oxc_language_server::{ClientMessage, ToolBuildResult};
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
-    CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
+    CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities, DiagnosticSeverity,
+    DiagnosticTag,
 };
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
@@ -18,9 +19,10 @@ use tower_lsp_server::{
 use tracing::{debug, error, warn};
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
-    LintServiceOptions, Linter, Oxlintrc, read_to_string,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DiffManager, ExternalLinter,
+    ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
+    LintRunnerBuilder, LintServiceOptions, Linter, OxlintSuppressionFileAction, Oxlintrc,
+    SuppressionManager, read_to_string,
 };
 
 use oxc_language_server::{
@@ -47,7 +49,8 @@ use crate::{
         },
         lsp_file_system::LspFileSystem,
         options::{
-            LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
+            LintOptions as LSPLintOptions, RulesCustomization, Run, SuppressedViolationSeverity,
+            UnusedDisableDirectives,
         },
         utils::range_overlaps,
     },
@@ -94,6 +97,9 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
+        // Read suppression-display options up front, before `options` is partially moved below.
+        let show_suppressed_violations = options.should_show_suppressed_violations();
+        let suppressed_violation_severity = options.suppressed_violation_severity;
         let mut external_linter = self.external_linter.as_ref();
         let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
 
@@ -253,6 +259,8 @@ impl ServerLinterBuilder {
                 fix_kind,
                 lint_options.report_unused_directive,
                 options.rules_customization,
+                show_suppressed_violations,
+                suppressed_violation_severity,
             ),
             None,
         )
@@ -401,6 +409,41 @@ impl ServerLinterBuilder {
     }
 }
 
+const SUPPRESSIONS_FILE_NAME: &str = "oxlint-suppressions.json";
+
+struct WorkspaceSuppressions {
+    workspace_root: PathBuf,
+    manager: Option<Arc<DiffManager>>,
+}
+
+impl WorkspaceSuppressions {
+    fn new(workspace_root: PathBuf) -> Self {
+        let suppression_manager =
+            SuppressionManager::load(&workspace_root, SUPPRESSIONS_FILE_NAME, false, false);
+        let manager = match &suppression_manager.file_action {
+            OxlintSuppressionFileAction::Malformed(error) => {
+                warn!("{error}");
+                None
+            }
+            _ => Some(suppression_manager.build_diff()),
+        };
+
+        Self { workspace_root, manager }
+    }
+
+    fn partition_file(
+        &self,
+        path: &Path,
+        messages: Vec<oxc_linter::Message>,
+    ) -> (Vec<oxc_linter::Message>, Vec<oxc_linter::Message>) {
+        let Some(manager) = &self.manager else {
+            return (messages, Vec::new());
+        };
+
+        manager.partition_file(path, &self.workspace_root, messages)
+    }
+}
+
 pub struct ServerLinter {
     run: Run,
     cwd: PathBuf,
@@ -412,6 +455,12 @@ pub struct ServerLinter {
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
+    /// Bulk-suppression baseline loaded from the workspace root.
+    suppressions: WorkspaceSuppressions,
+    /// Whether suppressed violations are rendered (faded) in the editor instead of hidden.
+    show_suppressed_violations: bool,
+    /// Severity override applied to suppressed violations when they are shown.
+    suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
 impl Tool for ServerLinter {
@@ -500,6 +549,9 @@ impl Tool for ServerLinter {
         if options.type_aware.unwrap_or(self.runner.has_type_aware()) {
             watchers.push("**/tsconfig*.json".to_string());
         }
+
+        // Re-lint open documents when the bulk-suppression baseline changes.
+        watchers.push(SUPPRESSIONS_FILE_NAME.to_string());
 
         watchers
     }
@@ -709,7 +761,10 @@ impl ServerLinter {
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
+        show_suppressed_violations: bool,
+        suppressed_violation_severity: SuppressedViolationSeverity,
     ) -> Self {
+        let suppressions = WorkspaceSuppressions::new(cwd.clone());
         Self {
             run,
             cwd,
@@ -721,6 +776,9 @@ impl ServerLinter {
             fix_kind,
             unused_directives_severity,
             rules_customization,
+            suppressions,
+            show_suppressed_violations,
+            suppressed_violation_severity,
         }
     }
 
@@ -827,27 +885,55 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> =
-            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
-                Ok(results) => results
-                    .into_iter()
-                    .filter_map(|message| {
-                        message_to_lsp_diagnostic(
-                            message,
-                            uri,
-                            source_text,
-                            self.rules_customization.as_ref(),
-                        )
-                    })
-                    .collect(),
-                Err(e) => {
-                    // clear disable directives on error to prevent stale directives
-                    self.runner.directives_coordinator().remove(path);
-                    return Err(e);
-                }
-            };
+        let raw_messages = match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
+            Ok(results) => results,
+            Err(e) => {
+                // clear disable directives on error to prevent stale directives
+                self.runner.directives_coordinator().remove(path);
+                return Err(e);
+            }
+        };
+
+        // Split off diagnostics covered by the bulk-suppression baseline. `surfaced` are reported
+        // normally; `suppressed` are either hidden or rendered faded, depending on the option.
+        let (surfaced, suppressed) = self.suppressions.partition_file(path, raw_messages);
+
+        let mut messages: Vec<DiagnosticReport> = surfaced
+            .into_iter()
+            .filter_map(|message| {
+                message_to_lsp_diagnostic(
+                    message,
+                    uri,
+                    source_text,
+                    self.rules_customization.as_ref(),
+                )
+            })
+            .collect();
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
+
+        if self.show_suppressed_violations {
+            let severity = match self.suppressed_violation_severity {
+                SuppressedViolationSeverity::Hint => DiagnosticSeverity::HINT,
+                SuppressedViolationSeverity::Information => DiagnosticSeverity::INFORMATION,
+                SuppressedViolationSeverity::Warning => DiagnosticSeverity::WARNING,
+                SuppressedViolationSeverity::Error => DiagnosticSeverity::ERROR,
+            };
+            for message in suppressed {
+                if let Some(mut report) = message_to_lsp_diagnostic(
+                    message,
+                    uri,
+                    source_text,
+                    self.rules_customization.as_ref(),
+                ) {
+                    // Fade the diagnostic (greyed out in VS Code / neovim-lsp) while preserving
+                    // its code actions so developers can remove baselined violations over time.
+                    report.diagnostic.tags = Some(vec![DiagnosticTag::UNNECESSARY]);
+                    report.diagnostic.severity = Some(severity);
+                    messages.push(report);
+                }
+            }
+        }
 
         // Take directives once to avoid separate get/remove lock acquisitions.
         let directives = self.runner.directives_coordinator().take(path);
@@ -869,6 +955,10 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.should_show_suppressed_violations()
+                != new_options.should_show_suppressed_violations()
+            || old_options.suppressed_violation_severity
+                != new_options.suppressed_violation_severity
     }
 
     /// Check if the linter is responsible for the given URI.
@@ -977,11 +1067,12 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
+            assert_eq!(patterns[4], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -994,11 +1085,12 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 4);
+            assert_eq!(patterns.len(), 5);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
+            assert_eq!(patterns[4], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1011,8 +1103,9 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "configs/lint.json".to_string());
+            assert_eq!(patterns[1], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1020,14 +1113,15 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 5 watchers
-            // (json, jsonc, ts, mts, lint.json)
-            assert_eq!(patterns.len(), 5);
+            // The `.oxlintrc.json` extends `./lint.json` -> 6 watchers
+            // (json, jsonc, ts, mts, lint.json, oxlint-suppressions.json)
+            assert_eq!(patterns.len(), 6);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
             assert_eq!(patterns[4], "lint.json".to_string());
+            assert_eq!(patterns[5], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1040,9 +1134,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxlintrc.json".to_string());
             assert_eq!(patterns[1], "lint.json".to_string());
+            assert_eq!(patterns[2], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1055,12 +1150,13 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 5);
+            assert_eq!(patterns.len(), 6);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
             assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[5], "oxlint-suppressions.json".to_string());
         }
     }
 
@@ -1087,7 +1183,7 @@ mod test_watchers {
                     }));
 
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
             assert_eq!(watch_patterns.unwrap()[0], "configs/lint.json".to_string());
         }
 
@@ -1111,12 +1207,16 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 5);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 6);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/oxlint.config.mts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
+            assert_eq!(
+                watch_patterns.as_ref().unwrap()[5],
+                "oxlint-suppressions.json".to_string()
+            );
         }
     }
 }
