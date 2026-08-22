@@ -2027,15 +2027,6 @@ pub fn local_fbt_tag(tag_name: &str, span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unsupported_object_method(kind: &str, span: Span) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!("(BuildHIR::lowerExpression) Handle {kind} functions in ObjectExpression"),
-    )
-    .with_label(span.primary_label(format!("Unsupported {kind} function")))
-}
-
-#[cold]
 pub fn unsafe_reorderable_expression(expression_type: &str, span: Span) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Todo,

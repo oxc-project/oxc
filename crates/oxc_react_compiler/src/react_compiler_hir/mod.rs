@@ -1187,6 +1187,8 @@ impl ObjectPropertyKey<'_> {
 pub enum ObjectPropertyType {
     Property,
     Method,
+    Getter,
+    Setter,
 }
 
 impl std::fmt::Display for ObjectPropertyType {
@@ -1194,6 +1196,8 @@ impl std::fmt::Display for ObjectPropertyType {
         match self {
             ObjectPropertyType::Property => write!(f, "property"),
             ObjectPropertyType::Method => write!(f, "method"),
+            ObjectPropertyType::Getter => write!(f, "getter"),
+            ObjectPropertyType::Setter => write!(f, "setter"),
         }
     }
 }

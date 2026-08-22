@@ -10,7 +10,7 @@ function Component(props) {
 }
 
 export const FIXTURE_ENTRYPOINT = {
-  fn: foo,
+  fn: Component,
   params: [{value: 0}],
   sequentialRenders: [{value: 1}, {value: 2}],
 };

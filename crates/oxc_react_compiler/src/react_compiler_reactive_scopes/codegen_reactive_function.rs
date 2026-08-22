@@ -35,6 +35,7 @@ use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PrimitiveValue;
 use crate::react_compiler_hir::PropertyLiteral;
+use crate::react_compiler_hir::ReactiveScopeDeclaration;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::TypeCast;
 use crate::react_compiler_hir::environment::{Environment, OutputMode};
@@ -55,6 +56,7 @@ use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted
 use crate::react_compiler_reactive_scopes::prune_unused_labels::prune_unused_labels;
 use crate::react_compiler_reactive_scopes::prune_unused_lvalues::prune_unused_lvalues;
 use crate::react_compiler_reactive_scopes::rename_variables::rename_variables;
+use crate::react_compiler_utils::typescript::copy_param_ts_metadata;
 
 // =============================================================================
 // Public API
@@ -715,8 +717,30 @@ fn ox_codegen_reactive_scope<'a>(
     scope_id: ScopeId,
     block: &ReactiveBlock<'a>,
 ) -> Result<(), OxcDiagnostic> {
+    let mut scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
+    scope_decls.sort_unstable_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
+
+    if cx.env.has_object_accessors {
+        // Property reads and writes may invoke an accessor and therefore run
+        // arbitrary user code. Until property effects reference statically known
+        // accessors, emitting dependency guards could duplicate getter calls or
+        // skip setter calls. Preserve source semantics by executing the scope on
+        // every invocation, while retaining the declaration bookkeeping and
+        // lexical block boundary needed by block codegen.
+        for (_ident_id, decl) in &scope_decls {
+            ox_codegen_scope_declaration(cx, statements, decl)?;
+        }
+        let computation_body = ox_codegen_block(cx, block)?;
+        statements.push(oxc_ast::ast::Statement::new_block_statement(
+            SPAN,
+            computation_body,
+            &cx.ast,
+        ));
+        ox_codegen_scope_early_return(cx, statements, scope_id)?;
+        return Ok(());
+    }
+
     let scope_deps = cx.env.scopes[scope_id].dependencies.clone_in(cx.env.allocator);
-    let scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
     let scope_reassignments =
         cx.env.scopes[scope_id].reassignments.iter().copied().collect::<Vec<_>>();
 
@@ -761,31 +785,13 @@ fn ox_codegen_reactive_scope<'a>(
 
     let mut first_output_index: Option<u32> = None;
 
-    let mut decls = scope_decls;
-    decls.sort_unstable_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
-
-    for (_ident_id, decl) in &decls {
+    for (_ident_id, decl) in &scope_decls {
         let index = cx.alloc_cache_index();
         if first_output_index.is_none() {
             first_output_index = Some(index);
         }
-        let name = ox_identifier_name(cx.env, decl.identifier)?;
-        if !cx.has_declared(decl.identifier) {
-            let binding = ox_binding_for_identifier(cx, decl.identifier, None)?;
-            let declarator =
-                oxc_ast::ast::VariableDeclarator::new(SPAN, binding, None, None, false, &cx.ast);
-            statements.push(oxc::Statement::VariableDeclaration(
-                oxc_ast::ast::VariableDeclaration::boxed(
-                    SPAN,
-                    oxc::VariableDeclarationKind::Let,
-                    [declarator],
-                    false,
-                    &cx.ast,
-                ),
-            ));
-        }
+        let name = ox_codegen_scope_declaration(cx, statements, decl)?;
         cache_loads.push((name, index));
-        cx.declare(decl.identifier);
     }
 
     for reassignment_id in scope_reassignments {
@@ -867,7 +873,40 @@ fn ox_codegen_reactive_scope<'a>(
     );
     statements.push(memo_stmt);
 
-    // Early return
+    ox_codegen_scope_early_return(cx, statements, scope_id)?;
+
+    Ok(())
+}
+
+fn ox_codegen_scope_declaration<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    statements: &mut oxc_allocator::Vec<'a, oxc::Statement<'a>>,
+    declaration: &ReactiveScopeDeclaration,
+) -> Result<Ident<'a>, OxcDiagnostic> {
+    let name = ox_identifier_name(cx.env, declaration.identifier)?;
+    if !cx.has_declared(declaration.identifier) {
+        let binding = ox_binding_for_identifier(cx, declaration.identifier, None)?;
+        let declarator =
+            oxc_ast::ast::VariableDeclarator::new(SPAN, binding, None, None, false, &cx.ast);
+        statements.push(oxc::Statement::VariableDeclaration(
+            oxc_ast::ast::VariableDeclaration::boxed(
+                SPAN,
+                oxc::VariableDeclarationKind::Let,
+                [declarator],
+                false,
+                &cx.ast,
+            ),
+        ));
+    }
+    cx.declare(declaration.identifier);
+    Ok(name)
+}
+
+fn ox_codegen_scope_early_return<'a>(
+    cx: &mut OxcContext<'a, '_>,
+    statements: &mut oxc_allocator::Vec<'a, oxc::Statement<'a>>,
+    scope_id: ScopeId,
+) -> Result<(), OxcDiagnostic> {
     let early_return_value = cx.env.scopes[scope_id].early_return_value.clone();
     if let Some(ref early_return) = early_return_value {
         let early_ident = &cx.env.identifiers[early_return.value];
@@ -3037,7 +3076,9 @@ fn ox_codegen_object_expression<'a>(
                             oxc_allocator::ArenaBox::new_in(p, &cx.ast),
                         ));
                     }
-                    ObjectPropertyType::Method => {
+                    ObjectPropertyType::Method
+                    | ObjectPropertyType::Getter
+                    | ObjectPropertyType::Setter => {
                         let method_data = cx
                             .object_methods
                             .get(&obj_prop.place.identifier)
@@ -3056,6 +3097,46 @@ fn ox_codegen_object_expression<'a>(
                         prune_unused_lvalues(&mut reactive_fn, cx.env);
 
                         let fn_result = ox_codegen_inner_function(cx, &reactive_fn)?;
+                        let mut this_param = None;
+                        let mut params = fn_result.params;
+                        let mut return_type = None;
+                        if let Some(signature) =
+                            cx.env.object_accessor_signatures.get(&lowered_func.func)
+                        {
+                            this_param = signature.this_param.as_ref().map(|this_param| {
+                                this_param.clone_in_with_semantic_ids(cx.ast.allocator())
+                            });
+                            copy_param_ts_metadata(
+                                cx.ast.allocator(),
+                                &mut params,
+                                &signature.params,
+                            );
+                            return_type = signature.return_type.as_ref().map(|return_type| {
+                                return_type.clone_in_with_semantic_ids(cx.ast.allocator())
+                            });
+                            if !cx.env.renames.is_empty() {
+                                let mut renamer = BindingReferenceRenamer {
+                                    allocator: cx.ast.allocator(),
+                                    renames: &cx.env.renames,
+                                };
+                                if let Some(this_param) = &mut this_param {
+                                    oxc_ast_visit::VisitMut::visit_ts_this_parameter(
+                                        &mut renamer,
+                                        this_param,
+                                    );
+                                }
+                                oxc_ast_visit::VisitMut::visit_formal_parameters(
+                                    &mut renamer,
+                                    &mut params,
+                                );
+                                if let Some(return_type) = &mut return_type {
+                                    oxc_ast_visit::VisitMut::visit_ts_type_annotation(
+                                        &mut renamer,
+                                        return_type,
+                                    );
+                                }
+                            }
+                        }
                         let method = oxc_ast::ast::Function::new(
                             property_span,
                             oxc::FunctionType::FunctionExpression,
@@ -3064,21 +3145,27 @@ fn ox_codegen_object_expression<'a>(
                             fn_result.is_async,
                             false,
                             None,
-                            None,
-                            fn_result.params,
-                            None,
+                            this_param,
+                            params,
+                            return_type,
                             Some(fn_result.body),
                             &cx.ast,
                         );
                         let func_expr = oxc::Expression::FunctionExpression(
                             oxc_allocator::ArenaBox::new_in(method, &cx.ast),
                         );
+                        let (kind, method) = match obj_prop.property_type {
+                            ObjectPropertyType::Method => (oxc::PropertyKind::Init, true),
+                            ObjectPropertyType::Getter => (oxc::PropertyKind::Get, false),
+                            ObjectPropertyType::Setter => (oxc::PropertyKind::Set, false),
+                            ObjectPropertyType::Property => unreachable!(),
+                        };
                         let p = oxc_ast::ast::ObjectProperty::new(
                             obj_prop.place.span.unwrap_or_default(),
-                            oxc::PropertyKind::Init,
+                            kind,
                             key,
                             func_expr,
-                            true,
+                            method,
                             false,
                             key_computed,
                             &cx.ast,

@@ -8,6 +8,10 @@
 //! For useMemo: replaces `Call useMemo(fn, deps)` with `Call fn()`
 //! For useCallback: replaces `Call useCallback(fn, deps)` with `LoadLocal fn`
 //!
+//! Accessor-bearing functions retain the original calls because their inferred
+//! reactive scopes are emitted without caching. React must continue to provide
+//! the explicit memoization guarantees in that case.
+//!
 //! When validation flags are set, inserts `StartMemoize`/`FinishMemoize` markers.
 //!
 //! Analogous to TS `Inference/DropManualMemoization.ts`.
@@ -94,8 +98,8 @@ struct ExtractedMemoArgs<'a> {
 // Main pass
 // =============================================================================
 
-/// Drop manual memoization (useMemo/useCallback calls), replacing them
-/// with direct invocations/references.
+/// Drop manual memoization (useMemo/useCallback calls), replacing them with
+/// direct invocations/references unless the function contains object accessors.
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
@@ -116,7 +120,8 @@ pub fn drop_manual_memoization<'a>(
     let mut next_manual_memo_id: u32 = 0;
 
     // Phase 1:
-    // - Overwrite manual memoization CallExpression/MethodCall
+    // - Overwrite manual memoization CallExpression/MethodCall when compiler
+    //   memoization will replace their guarantees
     // - (if validation is enabled) collect manual memoization markers
     //
     // queued_inserts maps InstructionId -> new Instruction to insert after that instruction
@@ -224,10 +229,14 @@ fn process_manual_memo_call<'a>(
     let span = func.instructions[instr_id.index()].value.span().cloned();
     let callee_span = func.instructions[manual_memo.load_instr_id.index()].value.span().copied();
 
-    // Replace the instruction value with the memoization replacement
-    let replacement =
-        get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
-    func.instructions[instr_id.index()].value = replacement;
+    // Accessor reads and writes may invoke arbitrary user code, so accessor-bearing
+    // functions later emit inferred reactive scopes without caching. Keep React's
+    // manual memo call intact rather than dropping its semantic guarantee.
+    if !env.has_object_accessors {
+        let replacement =
+            get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
+        func.instructions[instr_id.index()].value = replacement;
+    }
 
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
@@ -484,7 +493,10 @@ fn make_manual_memoization_markers<'a>(
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
             decl: *memo_decl,
-            pruned: false,
+            // The original hook still provides the memoization guarantee when
+            // accessor-bearing functions disable compiler caching, so the
+            // post-conversion validator has nothing to prove for this marker.
+            pruned: env.has_object_accessors,
             span: fn_expr.span,
         },
         span: fn_expr.span,

@@ -5517,30 +5517,26 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
 }
 
 /// Lower an oxc object getter/setter/method (`ObjectProperty` whose value is a
-/// `FunctionExpression`). Faithful to the original `lower_object_method`:
-/// `get`/`set` record a Todo error and are skipped. The `method` case lowers the
-/// key and the nested function (`lower_function_for_object_method`) and emits an
-/// `ObjectMethod` instruction value.
+/// `FunctionExpression`). Lowers the key and nested function
+/// (`lower_function_for_object_method`) and emits an `ObjectMethod` instruction
+/// value while preserving the property's accessor/method kind for codegen.
 fn lower_object_method<'a>(
     builder: &mut HirBuilder<'a, '_>,
     method: &oxc::ObjectProperty<'a>,
 ) -> Result<Option<ObjectProperty<'a>>, OxcDiagnostic> {
-    // In oxc, a shorthand method is encoded as `kind: Init, method: true`; only
+    // In oxc, a shorthand method is encoded as `kind: Init, method: true`;
     // getters/setters carry a non-`Init` `PropertyKind`.
-    let is_method = method.method && matches!(method.kind, oxc::PropertyKind::Init);
-    if !is_method {
-        let kind_str = match method.kind {
-            oxc::PropertyKind::Get => "get",
-            oxc::PropertyKind::Set => "set",
-            oxc::PropertyKind::Init => "method",
-        };
-        let kind_span = Span::new(
-            method.span.start,
-            method.span.start.saturating_add(kind_str.len() as u32).min(method.span.end),
-        );
-        builder.record_error(diagnostics::unsupported_object_method(kind_str, kind_span))?;
-        return Ok(None);
-    }
+    let property_type = match method.kind {
+        oxc::PropertyKind::Init => ObjectPropertyType::Method,
+        oxc::PropertyKind::Get => {
+            builder.environment_mut().has_object_accessors = true;
+            ObjectPropertyType::Getter
+        }
+        oxc::PropertyKind::Set => {
+            builder.environment_mut().has_object_accessors = true;
+            ObjectPropertyType::Setter
+        }
+    };
 
     let key = lower_object_property_key(builder, &method.key, method.computed)?
         .unwrap_or(ObjectPropertyKey::String { name: Ident::empty(), span: None });
@@ -5559,12 +5555,27 @@ fn lower_object_method<'a>(
         func.generator,
         func.r#async,
     )?;
+    if !matches!(property_type, ObjectPropertyType::Method) {
+        let allocator = builder.environment().allocator;
+        let signature = crate::react_compiler_hir::environment::ObjectAccessorSignature {
+            this_param: func
+                .this_param
+                .as_ref()
+                .map(|this_param| this_param.clone_in_with_semantic_ids(allocator)),
+            params: func.params.clone_in_with_semantic_ids(allocator),
+            return_type: func
+                .return_type
+                .as_ref()
+                .map(|return_type| return_type.clone_in_with_semantic_ids(allocator)),
+        };
+        builder.environment_mut().object_accessor_signatures.insert(lowered_func.func, signature);
+    }
 
     let span = Some(method.span);
     let method_value = InstructionValue::ObjectMethod { span, lowered_func };
     let method_place = lower_value_to_temporary(builder, method_value)?;
 
-    Ok(Some(ObjectProperty { key, property_type: ObjectPropertyType::Method, place: method_place }))
+    Ok(Some(ObjectProperty { key, property_type, place: method_place }))
 }
 
 /// Lower an object property key. Faithful to the original `lower_object_property_key`.
