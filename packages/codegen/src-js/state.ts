@@ -136,7 +136,7 @@ export class State {
       this.lastCharWritten = "";
     }
 
-    // `writeWithMap` records the output offset and original position of every mapped node,
+    // `writeWithMap*` functions record the output offset and original position of every mapped node,
     // and `generateSourceMap` encodes them in one pass at the end
     if (options.sourcemap !== true) {
       this.sourceText = null;

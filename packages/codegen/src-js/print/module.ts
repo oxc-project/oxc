@@ -4,10 +4,9 @@ import {
   CAT_IDENT,
   CAT_OTHER,
   CAT_START_OF_DEFAULT_EXPORT,
-  markWithMapAtStartOffset,
   write,
   writeNoLast,
-  writeWithMap,
+  writeWithMapNamed,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import { printExpression } from "./expression.ts";
@@ -40,7 +39,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
   printIndent(state);
 
   printSpaceBeforeIdentifier(state);
-  writeWithMap(state, "import", CAT_IDENT, node);
+  writeWithMapNamed(state, "import", CAT_IDENT, node);
 
   if (TS && node.importKind === "type") write(state, " type", CAT_IDENT);
 
@@ -75,7 +74,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         }
 
         printSpaceBeforeIdentifier(state);
-        writeWithMap(state, specifier.local.name, CAT_IDENT, specifier);
+        writeWithMapNamed(state, specifier.local.name, CAT_IDENT, specifier);
 
         if (i === length - 1) write(state, " ", CAT_OTHER);
 
@@ -91,7 +90,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         }
 
         write(state, "* as ", CAT_OTHER);
-        writeWithMap(state, specifier.local.name, CAT_IDENT, specifier.local);
+        writeWithMapNamed(state, specifier.local.name, CAT_IDENT, specifier.local);
         write(state, " ", CAT_OTHER);
         break;
       default: {
@@ -112,7 +111,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         const { local } = specifier;
         if (importedName !== local.name) {
           write(state, " as ", CAT_OTHER);
-          writeWithMap(state, local.name, CAT_IDENT, local);
+          writeWithMapNamed(state, local.name, CAT_IDENT, local);
         }
         break;
       }
@@ -143,8 +142,7 @@ function printImportAttributes(
   // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor
   // to the first attribute, which is the first location both representations carry.
   writeNoLast(state, " ");
-  markWithMapAtStartOffset(state, attributes[0], 0);
-  write(state, "with { ", CAT_OTHER);
+  writeWithMapNamed(state, "with { ", CAT_OTHER, attributes[0]);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
@@ -176,7 +174,7 @@ function printImportAttributes(
 function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
   if (node.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, node.name, CAT_IDENT, node);
+    writeWithMapNamed(state, node.name, CAT_IDENT, node);
     return node.name;
   }
 
@@ -191,7 +189,7 @@ function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
 export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, state: State): void {
   printIndent(state);
 
-  writeWithMap(state, "export ", CAT_OTHER, node);
+  writeWithMapNamed(state, "export ", CAT_OTHER, node);
 
   const { declaration } = node;
   if (declaration != null) {
@@ -283,7 +281,7 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
 export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, state: State): void {
   printIndent(state);
 
-  writeWithMap(
+  writeWithMapNamed(
     state,
     TS && node.exportKind === "type" ? "export type *" : "export *",
     CAT_OTHER,
@@ -313,7 +311,7 @@ export function printExportDefaultDeclaration(
 ): void {
   printIndent(state);
 
-  writeWithMap(state, "export default ", CAT_OTHER, node);
+  writeWithMapNamed(state, "export default ", CAT_OTHER, node);
 
   const { declaration } = node;
   switch (declaration.type) {

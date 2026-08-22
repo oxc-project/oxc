@@ -163,17 +163,14 @@ impl LanguageServer for Backend {
                     .unwrap_or_default();
 
                 debug!("starting worker in initialize with options: {option:?}");
-                if let Some(message) = worker.start_worker(option).await {
-                    client_messages.push(message);
-                }
+
+                client_messages.extend(worker.start_worker(option).await);
             }
         }
 
-        if let Some(client_message) =
-            self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await
-        {
-            client_messages.push(client_message);
-        }
+        client_messages.extend(
+            self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await,
+        );
 
         if !client_messages.is_empty() {
             let _ = self.pending_initialization_messages.set(client_messages);
@@ -239,9 +236,7 @@ impl LanguageServer for Backend {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 debug!("starting worker in initialize with options: {configuration:?}");
-                if let Some(message) = worker.start_worker(configuration.clone()).await {
-                    client_messages.push(message);
-                }
+                client_messages.extend(worker.start_worker(configuration.clone()).await);
 
                 // run diagnostics for all known files in the workspace of the worker.
                 // This is necessary because the worker was not started before.
@@ -263,7 +258,8 @@ impl LanguageServer for Backend {
                                 "running diagnostics for {} failed: {err}",
                                 document.uri.as_str()
                             );
-                            self.client.show_message(MessageType::ERROR, err).await;
+                            client_messages
+                                .push(ClientMessage { r#type: MessageType::ERROR, message: err });
                         }
                         Ok(diagnostics) => new_diagnostics.extend(diagnostics),
                     }
@@ -287,9 +283,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        for message in client_messages {
-            self.client.show_message(message.r#type, message.message).await;
-        }
+        self.send_client_messages(client_messages).await;
 
         let mut registrations = vec![];
 
@@ -427,9 +421,7 @@ impl LanguageServer for Backend {
 
             removing_registrations.extend(result.removed_watchers);
             adding_registrations.extend(result.new_watchers);
-            if let Some(client_message) = result.client_message {
-                client_messages.push(client_message);
-            }
+            client_messages.extend(result.client_messages);
         }
 
         if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
@@ -454,9 +446,7 @@ impl LanguageServer for Backend {
             warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
 
-        for message in client_messages {
-            self.client.show_message(message.r#type, message.message).await;
-        }
+        self.send_client_messages(client_messages).await;
     }
 
     /// This notification is sent when a configuration file of a tool changes (example: `.oxlintrc.json`).
@@ -496,9 +486,7 @@ impl LanguageServer for Backend {
                 }
                 removing_registrations.extend(result.removed_watchers);
                 adding_registrations.extend(result.new_watchers);
-                if let Some(client_message) = result.client_message {
-                    client_messages.push(client_message);
-                }
+                client_messages.extend(result.client_messages);
             }
         }
 
@@ -527,9 +515,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        for message in client_messages {
-            self.client.show_message(message.r#type, message.message).await;
-        }
+        self.send_client_messages(client_messages).await;
     }
 
     /// The server will start new [WorkspaceWorker]s for added workspace folders
@@ -580,9 +566,7 @@ impl LanguageServer for Backend {
             let worker = self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone());
             let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
-            if let Some(message) = worker.start_worker(options.clone()).await {
-                client_messages.push(message);
-            }
+            client_messages.extend(worker.start_worker(options.clone()).await);
             added_registrations.extend(worker.init_watchers().await);
             new_workers.push(worker);
         }
@@ -610,9 +594,7 @@ impl LanguageServer for Backend {
         }
 
         // === Phase 6: Show messages to the client ===
-        for message in client_messages {
-            self.client.show_message(message.r#type, message.message).await;
-        }
+        self.send_client_messages(client_messages).await;
     }
 
     /// It will save the in-memory file content, because non file-system files needs to be keep tracked too, and can not be accessed by the OS file system.
@@ -706,7 +688,7 @@ impl LanguageServer for Backend {
             let diagnostic_mode =
                 capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
             let dynamic_watchers = capabilities.is_some_and(|c| c.dynamic_watchers);
-            let (registrations, client_message) = self
+            let (registrations, client_messages) = self
                 .worker_manager
                 .ensure_worker_for_file_uri(&uri, diagnostic_mode, dynamic_watchers)
                 .await;
@@ -717,9 +699,7 @@ impl LanguageServer for Backend {
                 warn!("registering file watchers for single-file workspace failed: {err}");
             }
 
-            if let Some(client_message) = client_message {
-                self.client.show_message(client_message.r#type, client_message.message).await;
-            }
+            self.send_client_messages(client_messages).await;
         }
 
         let content = params.text_document.text;
@@ -1037,6 +1017,34 @@ impl Backend {
             let version = version_map.pin().get(&uri).copied();
             self.client.publish_diagnostics(uri, diagnostics, version)
         }))
+        .await;
+    }
+
+    /// Send multiple messages to the client, if any.
+    /// Will cap the number of messages to 5, to avoid flooding the client.
+    async fn send_client_messages(&self, messages: Vec<ClientMessage>) {
+        let max_messages = 5;
+        let messages_to_send = if messages.len() > max_messages {
+            let extra_message = ClientMessage {
+                r#type: MessageType::WARNING,
+                message: format!(
+                    "{} more messages not shown. See LSP logs for details.",
+                    messages.len() - max_messages + 1
+                ),
+            };
+            let mut messages_to_send =
+                messages.into_iter().take(max_messages - 1).collect::<Vec<_>>();
+            messages_to_send.push(extra_message);
+            messages_to_send
+        } else {
+            messages
+        };
+
+        join_all(
+            messages_to_send
+                .into_iter()
+                .map(|message| self.client.show_message(message.r#type, message.message)),
+        )
         .await;
     }
 }

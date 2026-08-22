@@ -10,8 +10,8 @@ import {
   CAT_REGEX_SLASH,
   write,
   writeNoLast,
-  writeWithMap,
-  writeWithMapNoLast,
+  writeWithMapNamed,
+  writeWithMapNamedNoLast,
 } from "./write.ts";
 import { printSpaceBeforeIdentifier, printSpaceBeforeOperator } from "./space.ts";
 import { printNonNegativeFloat } from "./number.ts";
@@ -60,7 +60,7 @@ export function printLiteral(
       break;
     case "boolean":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, value ? "true" : "false", CAT_IDENT, node);
+      writeWithMapNamed(state, value ? "true" : "false", CAT_IDENT, node);
       break;
     default:
       typeAssertIs<LiteralExtras>(node);
@@ -73,7 +73,7 @@ export function printLiteral(
       } else {
         // `null`
         printSpaceBeforeIdentifier(state);
-        writeWithMap(state, "null", CAT_IDENT, node);
+        writeWithMapNamed(state, "null", CAT_IDENT, node);
       }
       break;
   }
@@ -102,7 +102,7 @@ function printNumericLiteral(
     // `CAT_IDENT` rather than `CAT_INT_DIGIT` - raw text only prints inside a TS type,
     // where no member `.` can follow, so there is no `0 .toExponential()` hazard to separate.
     const { raw } = node;
-    writeWithMap(state, raw, raw[raw.length - 1] === "." ? CAT_OTHER : CAT_IDENT, node);
+    writeWithMapNamed(state, raw, raw[raw.length - 1] === "." ? CAT_OTHER : CAT_IDENT, node);
     return;
   }
 
@@ -113,7 +113,7 @@ function printNumericLiteral(
     printNonNegativeFloat(state, value, node);
   } else if (Number.isNaN(value)) {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, "NaN", CAT_IDENT, node);
+    writeWithMapNamed(state, "NaN", CAT_IDENT, node);
   } else if (!Number.isFinite(value)) {
     const negative = value < 0;
     const wrap = negative && precedence >= PREC_PREFIX;
@@ -125,13 +125,13 @@ function printNumericLiteral(
     } else {
       printSpaceBeforeIdentifier(state);
     }
-    writeWithMap(state, "Infinity", CAT_IDENT, node);
+    writeWithMapNamed(state, "Infinity", CAT_IDENT, node);
 
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   } else if (Object.is(value, 0)) {
     // +0 exactly - `Object.is` rejects `-0`, which the negative paths below print as `-0`
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, "0", CAT_INT_DIGIT, node);
+    writeWithMapNamed(state, "0", CAT_INT_DIGIT, node);
   } else if (precedence >= PREC_PREFIX) {
     writeNoLast(state, "(-");
     printNonNegativeFloat(state, -value, node);
@@ -169,7 +169,7 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
   // * `last === CAT_REGEX_SLASH` keeps `/a//b/` from lexing as a line comment
   // * `CAT_LT` arm keeps `<` followed by `/script...` from closing a host `<script>` element.
 
-  writeWithMapNoLast(state, "/", node);
+  writeWithMapNamedNoLast(state, "/", node);
   writeNoLast(state, node.regex.pattern);
 
   // `CAT_REGEX_SLASH` rather than `CAT_OTHER`. It means "a regex just closed", which is what the
@@ -192,11 +192,11 @@ function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence
 
   const value = node.bigint;
   if (value.startsWith("-") && precedence >= PREC_PREFIX) {
-    writeWithMapNoLast(state, "(", node);
+    writeWithMapNamedNoLast(state, "(", node);
     writeNoLast(state, value);
     write(state, "n)", CAT_CLOSE_BRACKET);
   } else {
-    writeWithMapNoLast(state, value, node);
+    writeWithMapNamedNoLast(state, value, node);
     write(state, "n", CAT_IDENT);
   }
 }
