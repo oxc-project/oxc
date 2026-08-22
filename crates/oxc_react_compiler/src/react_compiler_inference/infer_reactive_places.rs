@@ -16,6 +16,7 @@
 //! 6. Conditional assignment based on reactive control flow
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics;
@@ -44,8 +45,9 @@ pub fn infer_reactive_places(
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     let mut aliased_identifiers = find_disjoint_mutable_values(func, env);
-    let mut reactive_map = ReactivityMap::new(&mut aliased_identifiers);
-    let mut stable_sidemap = StableSidemap::new();
+    let identifier_count = env.identifiers.len();
+    let mut reactive_map = ReactivityMap::new(&mut aliased_identifiers, identifier_count);
+    let mut stable_sidemap = StableSidemap::new(identifier_count);
 
     // Mark all function parameters as reactive
     for param in &func.params {
@@ -231,23 +233,31 @@ pub fn infer_reactive_places(
 
 struct ReactivityMap<'a> {
     has_changes: bool,
-    reactive: FxHashSet<IdentifierId>,
+    reactive: IndexVec<IdentifierId, bool>,
     aliased_identifiers: &'a mut DisjointSet<IdentifierId>,
 }
 
 impl<'a> ReactivityMap<'a> {
-    fn new(aliased_identifiers: &'a mut DisjointSet<IdentifierId>) -> Self {
-        ReactivityMap { has_changes: false, reactive: FxHashSet::default(), aliased_identifiers }
+    fn new(
+        aliased_identifiers: &'a mut DisjointSet<IdentifierId>,
+        identifier_count: usize,
+    ) -> Self {
+        ReactivityMap {
+            has_changes: false,
+            reactive: IndexVec::from_vec(vec![false; identifier_count]),
+            aliased_identifiers,
+        }
     }
 
     fn is_reactive(&mut self, id: IdentifierId) -> bool {
         let canonical = self.aliased_identifiers.find_opt(id).unwrap_or(id);
-        self.reactive.contains(&canonical)
+        self.reactive[canonical]
     }
 
     fn mark_reactive(&mut self, id: IdentifierId) {
         let canonical = self.aliased_identifiers.find_opt(id).unwrap_or(id);
-        if self.reactive.insert(canonical) {
+        if !self.reactive[canonical] {
+            self.reactive[canonical] = true;
             self.has_changes = true;
         }
     }
@@ -265,12 +275,12 @@ impl<'a> ReactivityMap<'a> {
 // =============================================================================
 
 struct StableSidemap {
-    map: FxHashMap<IdentifierId, bool>,
+    map: IndexVec<IdentifierId, Option<bool>>,
 }
 
 impl StableSidemap {
-    fn new() -> Self {
-        StableSidemap { map: FxHashMap::default() }
+    fn new(identifier_count: usize) -> Self {
+        StableSidemap { map: IndexVec::from_vec(vec![None; identifier_count]) }
     }
 
     fn handle_instruction(&mut self, instr: &Instruction, env: &Environment) {
@@ -284,9 +294,9 @@ impl StableSidemap {
                 if evaluates_to_stable_type_or_container(env, callee_ty) {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type(lvalue_ty) {
-                        self.map.insert(lvalue_id, true);
+                        self.map[lvalue_id] = Some(true);
                     } else {
-                        self.map.insert(lvalue_id, false);
+                        self.map[lvalue_id] = Some(false);
                     }
                 }
             }
@@ -295,46 +305,46 @@ impl StableSidemap {
                 if evaluates_to_stable_type_or_container(env, property_ty) {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type(lvalue_ty) {
-                        self.map.insert(lvalue_id, true);
+                        self.map[lvalue_id] = Some(true);
                     } else {
-                        self.map.insert(lvalue_id, false);
+                        self.map[lvalue_id] = Some(false);
                     }
                 }
             }
             InstructionValue::PropertyLoad { object, .. } => {
                 let source_id = object.identifier;
-                if self.map.contains_key(&source_id) {
+                if self.map[source_id].is_some() {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
                     if is_stable_type_container(lvalue_ty) {
-                        self.map.insert(lvalue_id, false);
+                        self.map[lvalue_id] = Some(false);
                     } else if is_stable_type(lvalue_ty) {
-                        self.map.insert(lvalue_id, true);
+                        self.map[lvalue_id] = Some(true);
                     }
                 }
             }
             InstructionValue::Destructure { value: val, .. } => {
                 let source_id = val.identifier;
-                if self.map.contains_key(&source_id) {
+                if self.map[source_id].is_some() {
                     for lvalue in visitors::each_instruction_lvalue(instr) {
                         let lid = lvalue.identifier;
                         let lid_ty = &env.types[env.identifiers[lid].type_];
                         if is_stable_type_container(lid_ty) {
-                            self.map.insert(lid, false);
+                            self.map[lid] = Some(false);
                         } else if is_stable_type(lid_ty) {
-                            self.map.insert(lid, true);
+                            self.map[lid] = Some(true);
                         }
                     }
                 }
             }
             InstructionValue::StoreLocal { lvalue, value: val, .. } => {
-                if let Some(&entry) = self.map.get(&val.identifier) {
-                    self.map.insert(lvalue_id, entry);
-                    self.map.insert(lvalue.place.identifier, entry);
+                if let Some(entry) = self.map[val.identifier] {
+                    self.map[lvalue_id] = Some(entry);
+                    self.map[lvalue.place.identifier] = Some(entry);
                 }
             }
             InstructionValue::LoadLocal { place, .. } => {
-                if let Some(&entry) = self.map.get(&place.identifier) {
-                    self.map.insert(lvalue_id, entry);
+                if let Some(entry) = self.map[place.identifier] {
+                    self.map[lvalue_id] = Some(entry);
                 }
             }
             _ => {}
@@ -342,7 +352,7 @@ impl StableSidemap {
     }
 
     fn is_stable(&self, id: IdentifierId) -> bool {
-        self.map.get(&id).copied().unwrap_or(false)
+        self.map[id].unwrap_or(false)
     }
 }
 
@@ -542,7 +552,7 @@ fn apply_reactive_flags_replay(
             let block = func.body.blocks.get_mut(block_id).unwrap();
             let phi = &mut block.phis[phi_idx];
 
-            if reactive_ids.contains(&phi.place.identifier) {
+            if reactive_ids[phi.place.identifier] {
                 phi.place.reactive = true;
             }
 
@@ -565,7 +575,7 @@ fn apply_reactive_flags_replay(
             // Compute hasReactiveInput by checking value operands
             let mut has_reactive_input = false;
             for operand in visitors::each_instruction_value_operand(&instr.value, env) {
-                if reactive_ids.contains(&operand.identifier) {
+                if reactive_ids[operand.identifier] {
                     has_reactive_input = true;
                     break;
                 }
@@ -599,7 +609,7 @@ fn apply_reactive_flags_replay(
             // Value operands: set reactive flag using canonical visitor
             let instr = &mut func.instructions[instr_id.index()];
             visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
-                if reactive_ids.contains(&place.identifier) {
+                if reactive_ids[place.identifier] {
                     place.reactive = true;
                 }
             });
@@ -609,7 +619,7 @@ fn apply_reactive_flags_replay(
             {
                 let inner_func = &mut env.functions[lowered_func.func];
                 for ctx in &mut inner_func.context {
-                    if reactive_ids.contains(&ctx.identifier) {
+                    if reactive_ids[ctx.identifier] {
                         ctx.reactive = true;
                     }
                 }
@@ -618,7 +628,7 @@ fn apply_reactive_flags_replay(
             // Lvalues: markReactive is called only when hasReactiveInput
             if has_reactive_input {
                 let lvalue_id = instr.lvalue.identifier;
-                if !stable_sidemap.is_stable(lvalue_id) && reactive_ids.contains(&lvalue_id) {
+                if !stable_sidemap.is_stable(lvalue_id) && reactive_ids[lvalue_id] {
                     instr.lvalue.reactive = true;
                 }
                 // Handle value lvalues — includes DeclareContext/StoreContext which
@@ -629,14 +639,14 @@ fn apply_reactive_flags_replay(
                     | InstructionValue::StoreLocal { lvalue, .. }
                     | InstructionValue::StoreContext { lvalue, .. } => {
                         let id = lvalue.place.identifier;
-                        if !stable_sidemap.is_stable(id) && reactive_ids.contains(&id) {
+                        if !stable_sidemap.is_stable(id) && reactive_ids[id] {
                             lvalue.place.reactive = true;
                         }
                     }
                     InstructionValue::Destructure { lvalue, .. } => {
                         visitors::for_each_pattern_operand_mut(&mut lvalue.pattern, &mut |place| {
                             if !stable_sidemap.is_stable(place.identifier)
-                                && reactive_ids.contains(&place.identifier)
+                                && reactive_ids[place.identifier]
                             {
                                 place.reactive = true;
                             }
@@ -645,7 +655,7 @@ fn apply_reactive_flags_replay(
                     InstructionValue::PrefixUpdate { lvalue, .. }
                     | InstructionValue::PostfixUpdate { lvalue, .. } => {
                         let id = lvalue.identifier;
-                        if !stable_sidemap.is_stable(id) && reactive_ids.contains(&id) {
+                        if !stable_sidemap.is_stable(id) && reactive_ids[id] {
                             lvalue.reactive = true;
                         }
                     }
@@ -657,7 +667,7 @@ fn apply_reactive_flags_replay(
         // 2c. Terminal operands
         let block = func.body.blocks.get_mut(block_id).unwrap();
         visitors::for_each_terminal_operand_mut(&mut block.terminal, &mut |place| {
-            if reactive_ids.contains(&place.identifier) {
+            if reactive_ids[place.identifier] {
                 place.reactive = true;
             }
         });
@@ -667,15 +677,12 @@ fn apply_reactive_flags_replay(
     apply_reactive_flags_to_inner_functions(func, env, &reactive_ids);
 }
 
-fn build_reactive_id_set(reactive_map: &mut ReactivityMap) -> FxHashSet<IdentifierId> {
-    let mut result = FxHashSet::default();
-    for &id in &reactive_map.reactive {
-        result.insert(id);
-    }
+fn build_reactive_id_set(reactive_map: &mut ReactivityMap) -> IndexVec<IdentifierId, bool> {
+    let mut result = reactive_map.reactive.clone();
     let reactive = &reactive_map.reactive;
     reactive_map.aliased_identifiers.for_each(|id, canonical| {
-        if reactive.contains(&canonical) {
-            result.insert(id);
+        if reactive[canonical] {
+            result[id] = true;
         }
     });
     result
@@ -684,7 +691,7 @@ fn build_reactive_id_set(reactive_map: &mut ReactivityMap) -> FxHashSet<Identifi
 fn apply_reactive_flags_to_inner_functions(
     func: &HirFunction,
     env: &mut Environment,
-    reactive_ids: &FxHashSet<IdentifierId>,
+    reactive_ids: &IndexVec<IdentifierId, bool>,
 ) {
     for (_block_id, block) in &func.body.blocks {
         for instr_id in &block.instructions {
@@ -703,7 +710,7 @@ fn apply_reactive_flags_to_inner_functions(
 fn apply_reactive_flags_to_inner_func(
     func_id: FunctionId,
     env: &mut Environment,
-    reactive_ids: &FxHashSet<IdentifierId>,
+    reactive_ids: &IndexVec<IdentifierId, bool>,
 ) {
     // Collect nested function IDs first to avoid borrow issues
     let nested_func_ids: Vec<FunctionId> = {
@@ -730,13 +737,13 @@ fn apply_reactive_flags_to_inner_func(
         for instr_id in &block.instructions {
             let instr = &mut inner_func.instructions[instr_id.index()];
             visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
-                if reactive_ids.contains(&place.identifier) {
+                if reactive_ids[place.identifier] {
                     place.reactive = true;
                 }
             });
         }
         visitors::for_each_terminal_operand_mut(&mut block.terminal, &mut |place| {
-            if reactive_ids.contains(&place.identifier) {
+            if reactive_ids[place.identifier] {
                 place.reactive = true;
             }
         });
@@ -746,7 +753,7 @@ fn apply_reactive_flags_to_inner_func(
     for nested_id in nested_func_ids {
         let nested_func = &mut env.functions[nested_id];
         for ctx in &mut nested_func.context {
-            if reactive_ids.contains(&ctx.identifier) {
+            if reactive_ids[ctx.identifier] {
                 ctx.reactive = true;
             }
         }
