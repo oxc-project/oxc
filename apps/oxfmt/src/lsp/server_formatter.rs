@@ -249,7 +249,7 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text) else {
+            let Some(result) = self.format_file(&path, source_text)? else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -261,7 +261,7 @@ impl Tool for ServerFormatter {
                 .ok_or_else(|| "In-memory formatting requires content".to_string())?;
 
             let Some(result) =
-                self.format_in_memory(document.uri, source_text, &document.language_id)
+                self.format_in_memory(document.uri, source_text, &document.language_id)?
             else {
                 return Ok(vec![]); // currently not supported
             };
@@ -376,8 +376,13 @@ impl ServerFormatter {
     }
 
     /// Resolve config and format a file at the given path.
-    /// Returns `None` if the file is unsupported or ignored.
-    fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    /// - Returns `Ok(None)` if the file is unsupported or ignored.
+    /// - Returns `Err` if config resolve fails.
+    fn resolve_and_format(
+        &self,
+        path: &Path,
+        source_text: &str,
+    ) -> Result<Option<FormatResult>, String> {
         // Snapshot the current state.
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
@@ -397,39 +402,39 @@ impl ServerFormatter {
 
         if resolver.is_path_ignored(path, path.is_dir()) {
             debug!("File is ignored by config ignorePatterns: {}", path.display());
-            return None;
+            return Ok(None);
         }
 
         let Some(kind) = classify_file_kind(Arc::from(path)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
-            return None;
+            return Ok(None);
         };
         let strategy = match resolver.resolve(kind) {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
-                warn!(
-                    "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
+                return Err(format!(
+                    "`{plugin}` plugin is not enabled in resolved config: {}",
                     path.display()
-                );
-                return None;
+                ));
             }
             Err(err) => {
-                debug!("Config resolve error for {}: {err}", path.display());
-                return None;
+                return Err(format!("Config resolve error for {}: {err}", path.display()));
             }
         };
         debug!("strategy = {strategy:?}");
 
-        Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
+        Ok(Some(tokio::task::block_in_place(|| {
+            self.source_formatter.format(source_text, strategy)
+        })))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    fn format_file(&self, path: &Path, source_text: &str) -> Result<Option<FormatResult>, String> {
         if self.prettierignore_glob.as_ref().is_some_and(|glob| {
             path.starts_with(glob.path())
                 && glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
         }) {
             debug!("File is ignored by .prettierignore: {}", path.display());
-            return None;
+            return Ok(None);
         }
         self.resolve_and_format(path, source_text)
     }
@@ -439,11 +444,11 @@ impl ServerFormatter {
         uri: &Uri,
         source_text: &str,
         language_id: &LanguageId,
-    ) -> Option<FormatResult> {
+    ) -> Result<Option<FormatResult>, String> {
         let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
         else {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
-            return None;
+            return Ok(None);
         };
         self.resolve_and_format(&path, source_text)
     }
