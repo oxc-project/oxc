@@ -12,6 +12,7 @@ import {
   debugAssertLastFresh,
   markMapStart,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -74,7 +75,7 @@ export function printClass(node: ESTree.Class, state: State): void {
     }
   }
   if (declare || abstract) {
-    write(state, "class", CAT_IDENT);
+    writeIdent(state, "class");
   } else {
     writeWithMap(state, "class", CAT_IDENT, node);
   }
@@ -411,7 +412,7 @@ function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
   }
 
   printSpaceBeforeIdentifier(state);
-  write(state, "accessor", CAT_IDENT);
+  writeIdent(state, "accessor");
 
   if (node.computed) {
     write(state, " [", CAT_OTHER);

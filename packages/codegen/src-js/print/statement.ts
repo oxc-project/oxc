@@ -11,6 +11,7 @@ import {
   CAT_START_OF_STMT,
   markMapStart,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -343,7 +344,7 @@ export function printVariableDeclaration(
   const declare = TS && node.declare;
   if (declare) {
     writeWithMap(state, "declare ", CAT_OTHER, node);
-    write(state, node.kind, CAT_IDENT);
+    writeIdent(state, node.kind);
   } else {
     writeWithMap(state, node.kind, CAT_IDENT, node);
   }
@@ -442,7 +443,7 @@ function printIf(node: ESTree.IfStatement, state: State): void {
   if (alternate != null) {
     printSpaceBeforeIdentifier(state);
 
-    write(state, "else", CAT_IDENT);
+    writeIdent(state, "else");
 
     if (alternate.type === "BlockStatement") {
       write(state, " ", CAT_OTHER);
@@ -517,7 +518,7 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
 
   const { handler } = node;
   if (handler != null) {
-    write(state, " catch", CAT_IDENT);
+    writeIdent(state, " catch");
 
     if (handler.param != null) {
       write(state, " (", CAT_OTHER);
@@ -730,7 +731,7 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
 
   writeWithMap(state, "for", CAT_IDENT, node);
 
-  if (node.await) write(state, " await", CAT_IDENT);
+  if (node.await) writeIdent(state, " await");
 
   write(state, " (", CAT_OTHER);
 

@@ -279,9 +279,11 @@ only the last piece's category can possibly be read. Hence eleven write primitiv
   a JSX identifier may hold a `-`, and a private identifier's span covers a `#` which is not part of its name.
   Which one applies is settled at the call site, where the node's type is known statically, rather than read back
   off a `node` which is megamorphic by the time it arrives.
-- `writeWithMapNamed` and `writeWithMapNamedPrivate` take no category, because a name ends in an identifier
-  character and so `last` is always `CAT_IDENT`. The private form writes its own `#`, so what it takes is
-  the name which follows it. That is why their plain forms are `writeIdent` and `writePrivate`, not `write`.
+- `writeIdent` is `write` with the category fixed at `CAT_IDENT` - an identifier, a keyword, or the trailing digits
+  of a number. It is the commonest category by far, so every call which passed it was spending an argument
+  on a value which could never be anything else.
+- `writeWithMapNamed` and `writeWithMapNamedPrivate` take no category for the same reason, which is why their
+  plain forms are `writeIdent` and `writePrivate` rather than `write`.
 - The two `Private` forms write the `#` themselves, so the name they are given is what follows it,
   and `last` is always `CAT_IDENT` - the caller passes neither.
 - The three `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
@@ -386,8 +388,8 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 Rewrites every mapped write into the plain one it becomes with no mapping to record - so
 `writeWithMap(state, code, cat, node)` turns into `write(state, code, cat)` - and rewrites the import to match.
 `writeWithMapEnd` becomes `write` too, and every `NoLast` form becomes `writeNoLast`.
-`writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate` -
-the two plain forms nothing calls directly, which exist only for these rewrites to land on.
+`writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate`, which fix the category
+instead of taking it. `writePrivate` exists only for the rewrite to land on.
 
 `printString` and `printNonNegativeFloat` take a node only to hand on to a mapped write. They keep their names,
 but the argument comes off every call, and the parameter off their declarations - which, unlike the mapped writes,
