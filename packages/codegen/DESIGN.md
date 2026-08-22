@@ -368,8 +368,8 @@ drops the `node` argument, and rewrites the import to match.
 
 Without it, the node argument would still be evaluated and held live across a call which ignores it.
 
-It re-parses its own output and fails the build if anything still reaches a mapped write, or calls a name
-it did not bring into scope.
+It fails the build if a mapped write is called with the wrong number of arguments, if a declaration it transforms
+has the wrong number of parameters, or if a call it rewrote had no matching import to rewrite.
 
 #### `const_functions`
 
