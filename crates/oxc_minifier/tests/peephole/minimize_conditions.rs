@@ -144,6 +144,7 @@ fn test_fold_nested_terminated_returns_at_function_tail() {
     test("function f(){if(a)return x?void side():y}", "function f(){if(a)return x?void side():y}");
     test("function f(){if(a)return x?undefined:y}", "function f(){if(a&&!x)return y}");
     test("function f(){if(a)return x?void 0:y}", "function f(){if(a&&!x)return y}");
+    test("function f(){if(a)return !x?void 0:y}", "function f(){if(a&&x)return y}");
     test("function f(){if(a)return x?y:void 0}", "function f(){if(a&&x)return y}");
     test("function f(){if(a||b)return c?d:void 0}", "function f(){if((a||b)&&c)return d}");
     test("function f(){if(a)return b||c?void 0:d}", "function f(){if(a&&!(b||c))return d}");

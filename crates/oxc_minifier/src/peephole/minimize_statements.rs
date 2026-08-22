@@ -2116,7 +2116,12 @@ impl<'a> PeepholeOptimizations {
             let conditional_test = conditional.test.take_in(ctx);
             if consequent_is_undefined {
                 (
-                    Self::minimize_not(conditional_test.span(), conditional_test, ctx),
+                    match conditional_test {
+                        Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                            unary_expr.unbox().argument
+                        }
+                        expr => Self::minimize_not(expr.span(), expr, ctx),
+                    },
                     conditional.alternate.take_in(ctx),
                 )
             } else {
