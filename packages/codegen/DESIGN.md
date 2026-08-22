@@ -368,6 +368,9 @@ drops the `node` argument, and rewrites the import to match.
 
 Without it, the node argument would still be evaluated and held live across a call which ignores it.
 
+The three `markMap*` calls write nothing, so they have no plain form to become, and keep their names -
+the arguments come off, and a body which opens `if (!SOURCEMAPS) return` lets the minifier remove what is left.
+
 It fails the build if a mapped write is called with the wrong number of arguments, if a declaration it transforms
 has the wrong number of parameters, or if a call it rewrote had no matching import to rewrite.
 

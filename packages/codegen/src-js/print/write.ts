@@ -382,7 +382,7 @@ export function writeWithMapEnd(
  * @param node - Node the mapping points at
  */
 export function markWithMap(state: State, node: MappableNode): void {
-  recordSourceMapping(state, node, LOCATION_NAMED);
+  if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_NAMED);
 }
 
 /**
@@ -395,7 +395,7 @@ export function markWithMap(state: State, node: MappableNode): void {
  * @param node - Node the mapping points at
  */
 export function markWithMapNoName(state: State, node: MappableNode): void {
-  recordSourceMapping(state, node, LOCATION_START);
+  if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_START);
 }
 
 /**
@@ -408,7 +408,7 @@ export function markWithMapNoName(state: State, node: MappableNode): void {
  * @param node - Node whose end offset the mapping points at
  */
 export function markWithMapAfter(state: State, node: MappableNode): void {
-  recordSourceMapping(state, node, LOCATION_END);
+  if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_END);
 }
 
 /**

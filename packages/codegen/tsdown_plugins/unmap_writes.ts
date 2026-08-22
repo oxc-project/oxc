@@ -18,6 +18,8 @@ import type { Plugin } from "rolldown";
  * it would otherwise be, and the node argument goes with it - it would still be evaluated,
  * and held live across the call, for a function which ignores it.
  *
+ * `remove` is how many trailing arguments are dropped from the call.
+ *
  * The import is rewritten to match, which both keeps the plain name in scope and leaves the mapped functions
  * unreferenced for the minifier to remove.
  *
@@ -29,14 +31,14 @@ import type { Plugin } from "rolldown";
  */
 const REWRITES = {
   // `write` takes the `last` category between the code and the node, `writeNoLast` does not
-  writeWithMap: { arity: 4, rename: "write" },
-  writeWithMapNoLast: { arity: 3, rename: "writeNoLast" },
-  writeWithMapEnd: { arity: 4, rename: "write" },
-  // A standalone mark has no non-sourcemap equivalent. `void 0` is removed by the minifier.
-  markWithMap: { arity: 2, rename: null },
-  markWithMapNoName: { arity: 2, rename: null },
-  markWithMapAfter: { arity: 2, rename: null },
-  markWithMapAtStartOffset: { arity: 3, rename: null },
+  writeWithMap: { arity: 4, remove: 1, rename: "write" },
+  writeWithMapNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
+  writeWithMapEnd: { arity: 4, remove: 1, rename: "write" },
+  // `rename: null` because a standalone mark has no non-sourcemap equivalent
+  markWithMap: { arity: 2, remove: 1, rename: null },
+  markWithMapNoName: { arity: 2, remove: 1, rename: null },
+  markWithMapAfter: { arity: 2, remove: 1, rename: null },
+  markWithMapAtStartOffset: { arity: 3, remove: 2, rename: null },
 } as const;
 
 const WRITE_MODULE = "./write.ts";
@@ -62,8 +64,7 @@ const plugin: Plugin = {
       let importIsTransformed = false;
 
       new Visitor({
-        // Remove last arg (`node`) from calls, and rename callees.
-        // A call with no plain equivalent goes in full.
+        // Remove the dropped args from calls, and rename callees where required
         CallExpression(node) {
           const { callee } = node;
           if (callee.type !== "Identifier") return;
@@ -72,7 +73,7 @@ const plugin: Plugin = {
           const rewrite = REWRITES[name];
           if (rewrite === undefined) return;
 
-          const { arity, rename } = rewrite;
+          const { arity, remove, rename } = rewrite;
           const args = node.arguments;
           if (args.length !== arity) {
             throw new Error(
@@ -81,19 +82,17 @@ const plugin: Plugin = {
             );
           }
 
-          if (rename === null) {
-            magicString.overwrite(node.start, node.end, "void 0");
-          } else {
-            // Remove `, node`, from the end of the argument before it to the end of it
-            magicString.remove(args.at(-2)!.end, args.at(-1)!.end);
+          // Remove the dropped arguments, from the end of the last kept one to the end of the last
+          magicString.remove(args[arity - remove - 1].end, args[arity - 1].end);
 
-            // Rename callee, and record that it needs to be imported under new name
+          // If callee needs to be renamed, rename it, and record that it needs to be imported under new name
+          if (rename !== null) {
             magicString.overwrite(callee.start, callee.end, rename);
             neededImportReplacements.add(name);
           }
         },
 
-        // Check `arity` is correct
+        // Remove the dropped params from declarations
         FunctionDeclaration(node) {
           const { id } = node;
           if (id === null) return;
@@ -102,7 +101,7 @@ const plugin: Plugin = {
           const rewrite = REWRITES[name];
           if (rewrite === undefined) return;
 
-          const { arity } = rewrite;
+          const { arity, remove } = rewrite;
           const { params } = node;
           if (params.length !== arity) {
             throw new Error(
@@ -110,6 +109,9 @@ const plugin: Plugin = {
                 + `${path}:${node.start}`,
             );
           }
+
+          // Remove the dropped params, from the end of the last kept one to the end of the last
+          magicString.remove(params[arity - remove - 1].end, params[arity - 1].end);
         },
 
         // Replace import of functions whose calls are renamed or removed
@@ -139,7 +141,6 @@ const plugin: Plugin = {
             const name = specifier.imported.name as MappedName;
             const rewrite = REWRITES[name];
             if (rewrite !== undefined) {
-              // A name whose calls become `void 0` has nothing to import in its place
               const { rename } = rewrite;
               if (rename !== null) {
                 specifierNames.add(rename);
