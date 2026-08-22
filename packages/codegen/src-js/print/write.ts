@@ -242,6 +242,7 @@ const LOCATION_START = 3;
 /**
  * Append `code` to the output, and record what it ends with.
  *
+ * @param state - Printer state
  * @param code - Text to append, never empty
  * @param last - Category of the last character of `code`
  */
@@ -261,12 +262,12 @@ export function write(state: State, code: string, last: Category): void {
 /**
  * Append `code` to the output, record what it ends with, and record a source mapping for `node`.
  *
- * The mapping is only recorded where the caller asked for source maps, supplied `sourceText`, and
- * `node` carries Oxc `start` / `end` offsets.
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
  * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
+ * @param state - Printer state
  * @param code - Text to append, never empty
  * @param last - Category of the last character of `code`
  * @param node - Node this text came from
@@ -290,12 +291,15 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
  * Append `code` to the output, leaving `state.last` describing whatever came before it.
  *
  * Only sound where the value of `last` is provably dead - another `write` must follow before anything reads it.
- * The readers are `printSpaceBeforeIdentifier` and the `CAT_LT`, `CAT_REGEX_SLASH` and `CAT_QUESTION`
- * adjacency checks, all of which run at the start of printing a construct.
+ * The readers are the two space functions, the `CAT_INT_DIGIT`, `CAT_LT` and `CAT_QUESTION` adjacency checks,
+ * the `CAT_START_OF_*` marker checks, and the `CAT_CLOSE_BRACKET` source map hook - which is the one that runs
+ * at the end of printing an expression rather than at the start of one.
+ * Every one of them calls `debugAssertLastFresh` first.
  *
  * In practice that means using it for all but the final fragment when one token is written in pieces.
  * Debug builds track the rule and throw if a reader sees a stale `last`.
  *
+ * @param state - Printer state
  * @param code - Text to append, which unlike `write` may be empty
  */
 export function writeNoLast(state: State, code: string): void {
@@ -313,8 +317,9 @@ export function writeNoLast(state: State, code: string): void {
  * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
+ * @param state - Printer state
  * @param code - Text to append, which unlike `writeWithMap` may be empty
  * @param node - Node this text came from
  */
@@ -333,7 +338,18 @@ export function writeWithMapNoLast(state: State, code: string, node: MappableNod
  * Append `code`, recording a mapping for the last source character in `node` immediately before it.
  *
  * Rust uses this for emitted closing delimiters, including synthesized ones. The node end offset is
- * exclusive, so move back by one source code point to match Rust's byte-span lookup.
+ * exclusive, so move back by one UTF-16 unit to match Rust's byte-span lookup. That can land on
+ * the low surrogate of an astral character, which `generateSourceMap` normalizes back to its start.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ *
+ * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
+ * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ *
+ * @param state - Printer state
+ * @param code - Text to append, never empty
+ * @param last - Category of the last character of `code`
+ * @param node - Node whose last source character this text maps to
  */
 export function writeWithMapEnd(
   state: State,
@@ -355,14 +371,28 @@ export function writeWithMapEnd(
 }
 
 /**
- * Record a start mapping at the current output position without writing anything.
+ * Record a mapping for `node`'s start offset at the current output position, with a name.
+ *
+ * Where `node` is an identifier, the mapping carries the name it had in the source.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ * Builds without source map support have no use for this. In those builds, minifier removes it.
+ *
+ * @param state - Printer state
+ * @param node - Node the mapping points at
  */
 export function markWithMap(state: State, node: MappableNode): void {
   recordSourceMapping(state, node, LOCATION_NAMED);
 }
 
 /**
- * Record a start mapping without attaching an identifier name.
+ * Record a mapping for `node`'s start offset at the current output position.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ * Builds without source map support have no use for this. In those builds, minifier removes it.
+ *
+ * @param state - Printer state
+ * @param node - Node the mapping points at
  */
 export function markWithMapNoName(state: State, node: MappableNode): void {
   recordSourceMapping(state, node, LOCATION_START);
@@ -370,13 +400,26 @@ export function markWithMapNoName(state: State, node: MappableNode): void {
 
 /**
  * Record a mapping for `node`'s end offset at the current output position.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ * Builds without source map support have no use for this. In those builds, minifier removes it.
+ *
+ * @param state - Printer state
+ * @param node - Node whose end offset the mapping points at
  */
 export function markWithMapAfter(state: State, node: MappableNode): void {
   recordSourceMapping(state, node, LOCATION_END);
 }
 
 /**
- * Record a mapping a fixed number of columns after `node`'s start offset.
+ * Record a mapping a fixed number of characters after `node`'s start offset.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ * Builds without source map support have no use for this. In those builds, minifier removes it.
+ *
+ * @param state - Printer state
+ * @param node - Node the mapping points into
+ * @param columnOffset - Number of UTF-16 units to add to `node`'s start offset
  */
 export function markWithMapAtStartOffset(
   state: State,
@@ -411,7 +454,11 @@ export function markWithMapAtStartOffset(
 }
 
 /**
- * Record one mapping, if source maps and a non-empty location are available.
+ * Record one mapping, if source maps are enabled and `node` carries a non-empty span.
+ *
+ * @param state - Printer state
+ * @param node - Node the mapping points at
+ * @param location - Which of `node`'s offsets to record, and whether to recover its name
  */
 function recordSourceMapping(state: State, node: MappableNode, location: Location): void {
   if (!SOURCEMAPS) return;
@@ -519,6 +566,15 @@ function isSameToken(originalName: string, printedName: string, hashLength: 0 | 
 
 /**
  * Recover the original identifier spelling from validated source offsets.
+ *
+ * A private identifier's span covers its leading `#`. The scan steps over it to reach the name behind,
+ * and the `#` is part of what is returned - the token is `#name`.
+ *
+ * @param sourceText - Original source text
+ * @param node - Node the offsets came from
+ * @param start - Start offset of `node`, already validated
+ * @param end - End offset of `node`, already validated
+ * @returns The identifier as it appears in the source, or `undefined` if the offsets do not span one
  */
 function originalNameFromSource(
   sourceText: string,
@@ -560,7 +616,14 @@ function originalNameFromSource(
 }
 
 /**
- * Return the UTF-16 length of a `\\u` identifier escape within `end`, or `0` if invalid.
+ * Return the UTF-16 length of a `\u` identifier escape within `end`, or `0` if invalid.
+ *
+ * Covers both the fixed 4-digit form and the braced `\u{...}` one.
+ *
+ * @param sourceText - Original source text
+ * @param index - Offset of the `\` starting the escape
+ * @param end - Offset the escape must finish within
+ * @returns Length of the escape in UTF-16 units, or `0` if it is not a valid one
  */
 function unicodeEscapeLength(sourceText: string, index: number, end: number): number {
   if (sourceText.charCodeAt(index + 1) !== 117) return 0; // `u`
@@ -583,6 +646,11 @@ function unicodeEscapeLength(sourceText: string, index: number, end: number): nu
 
 /**
  * Decode the code point in a syntactically valid identifier escape.
+ *
+ * @param sourceText - Original source text
+ * @param index - Offset of the `\` starting the escape
+ * @param length - Length of the escape, as returned by `unicodeEscapeLength`
+ * @returns The code point the escape denotes
  */
 function unicodeEscapeCodePoint(sourceText: string, index: number, length: number): number {
   const braced = sourceText.charCodeAt(index + 2) === 123;
@@ -593,6 +661,9 @@ function unicodeEscapeCodePoint(sourceText: string, index: number, length: numbe
 
 /**
  * Whether `code` is an ASCII hexadecimal digit.
+ *
+ * @param code - Character code
+ * @returns `true` if `code` is `0`-`9`, `a`-`f` or `A`-`F`
  */
 function isHexDigit(code: number): boolean {
   return (code >= 48 && code <= 57) || (code >= 65 && code <= 70) || (code >= 97 && code <= 102);
@@ -600,6 +671,10 @@ function isHexDigit(code: number): boolean {
 
 /**
  * Whether an ASCII character definitely cannot continue any supported identifier spelling.
+ *
+ * @param code - Character code
+ * @returns `true` only for an ASCII character which cannot continue an identifier. Every non-ASCII
+ *   character gives `false`, since this runtime's tables cannot settle it
  */
 function isDefinitelyIdentifierBoundary(code: number): boolean {
   return (
@@ -619,6 +694,8 @@ function isDefinitelyIdentifierBoundary(code: number): boolean {
  * the conformance suites rather than silently incorrectly spacing one construct.
  *
  * Debug builds only - the call and its argument are removed from release builds entirely.
+ *
+ * @param state - Printer state
  */
 export function debugAssertLastFresh(state: State): void {
   debugAssert(!state.lastIsStale, "`last` was read after `writeNoLast` left it stale");
@@ -637,6 +714,11 @@ const JSX_IDENTIFIER_REGEX = /^[\p{ID_Start}$_](?:[\p{ID_Continue}$-]|\u200C|\u2
  * has a set of permitted categories rather than one right answer.
  *
  * Debug builds only. Removed by minifier in release builds.
+ *
+ * @param state - Printer state
+ * @param code - Code being appended to output
+ * @param last - Category of the last character of `code`
+ * @throws - If `last` and `code` do not match
  */
 function debugAssertCategoryMatches(state: State, code: string, last: Category): void {
   if (!DEBUG) return;
