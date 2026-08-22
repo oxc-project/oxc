@@ -85,6 +85,109 @@ fn test_var_read_write() {
     .test();
 }
 
+// https://github.com/rolldown/rolldown/issues/10722
+#[test]
+fn test_forward_outer_binding_in_nested_default_parameter() {
+    let tester = SemanticTester::js(
+        "let var_n = 0, let_n = 0, fn_n = 0;
+        function outer() {
+            const read_var = function(a = var_n) { return a };
+            const read_let = function(a = let_n) { return a };
+            const read_fn = function(a = fn_n) { return a };
+            var var_n = 1;
+            let let_n = 1;
+            function fn_n() {}
+            return [read_var, read_let, read_fn];
+        }
+        use(var_n, let_n, fn_n, outer);",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let root_scope_id = scoping.root_scope_id();
+
+    for name in ["var_n", "let_n", "fn_n"] {
+        let root_symbol = scoping.get_binding(root_scope_id, name.into()).unwrap();
+        let local_symbol = scoping
+            .symbol_ids()
+            .find(|&symbol_id| {
+                scoping.symbol_name(symbol_id) == name
+                    && scoping.symbol_scope_id(symbol_id) != root_scope_id
+            })
+            .unwrap();
+
+        assert_eq!(scoping.get_resolved_references(root_symbol).count(), 1, "{name}");
+        assert_eq!(scoping.get_resolved_references(local_symbol).count(), 1, "{name}");
+    }
+}
+
+#[test]
+fn test_nested_default_parameter_does_not_see_own_function_body() {
+    let tester = SemanticTester::js(
+        "let n = 0;
+        function outer() {
+            const read = function(a = n) {
+                var n = 1;
+                return a;
+            };
+            return read;
+        }
+        use(n, outer);",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let root_scope_id = scoping.root_scope_id();
+    let root_n = scoping.get_binding(root_scope_id, "n".into()).unwrap();
+    let local_n = scoping
+        .symbol_ids()
+        .find(|&symbol_id| {
+            scoping.symbol_name(symbol_id) == "n"
+                && scoping.symbol_scope_id(symbol_id) != root_scope_id
+        })
+        .unwrap();
+
+    assert_eq!(scoping.get_resolved_references(root_n).count(), 2);
+    assert_eq!(scoping.get_resolved_references(local_n).count(), 0);
+}
+
+#[test]
+fn test_nested_default_parameter_in_outer_parameter_skips_outer_function_body() {
+    let tester = SemanticTester::js(
+        "let n = 0;
+        function outer(read = function(a = n) { return a }) {
+            var n = 1;
+            return read;
+        }
+        use(n, outer);",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let root_scope_id = scoping.root_scope_id();
+    let root_n = scoping.get_binding(root_scope_id, "n".into()).unwrap();
+    let local_n = scoping
+        .symbol_ids()
+        .find(|&symbol_id| {
+            scoping.symbol_name(symbol_id) == "n"
+                && scoping.symbol_scope_id(symbol_id) != root_scope_id
+        })
+        .unwrap();
+
+    assert_eq!(scoping.get_resolved_references(root_n).count(), 2);
+    assert_eq!(scoping.get_resolved_references(local_n).count(), 0);
+}
+
+#[test]
+fn test_nested_default_parameter_sees_later_outer_parameter() {
+    SemanticTester::js(
+        "function outer(read = function(a = n) { return a }, n) {
+            return read;
+        }
+        use(outer);",
+    )
+    .has_some_symbol("n")
+    .has_number_of_references(1)
+    .test();
+}
+
 #[test]
 fn test_types_simple() {
     let test = SemanticTester::ts(
