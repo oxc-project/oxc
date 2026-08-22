@@ -23,6 +23,10 @@ import type { Plugin } from "rolldown";
  * The import is rewritten to match, which both keeps the plain name in scope and leaves the mapped functions
  * unreferenced for the minifier to remove.
  *
+ * `printString` and `printNonNegativeFloat` take a node only to hand it on to their mapped writes.
+ * So they are rewritten the same way, but keep their names - the argument comes off every call.
+ * The parameter also comes off their declarations which, unlike the mapped writes, survive into the build.
+ *
  * Only valid where `SOURCEMAPS` is `false`, which is where the config includes it.
  *
  * The checks afterwards fail the build rather than let a mismatch through. A rewrite which dropped
@@ -39,6 +43,9 @@ const REWRITES = {
   markWithMapNoName: { arity: 2, remove: 1, rename: null },
   markWithMapAfter: { arity: 2, remove: 1, rename: null },
   markWithMapAtStartOffset: { arity: 3, remove: 2, rename: null },
+  // `rename: null` to transform the function declarations, removing the `node` param
+  printString: { arity: 3, remove: 1, rename: null },
+  printNonNegativeFloat: { arity: 3, remove: 1, rename: null },
 } as const;
 
 const WRITE_MODULE = "./write.ts";

@@ -366,6 +366,10 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 Rewrites `writeWithMap(state, code, cat, node)` into `write(state, code, cat)` in non-sourcemap builds,
 drops the `node` argument, and rewrites the import to match.
 
+`printString` and `printNonNegativeFloat` take a node only to hand on to a mapped write. They keep their names,
+but the argument comes off every call, and the parameter off their declarations - which, unlike the mapped writes,
+survive into the build.
+
 Without it, the node argument would still be evaluated and held live across a call which ignores it.
 
 The three `markMap*` calls write nothing, so they have no plain form to become, and keep their names -
