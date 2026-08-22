@@ -10430,6 +10430,9 @@
         "vue/no-deprecated-destroyed-lifecycle": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-deprecated-dollar-scopedslots-api": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vue/no-deprecated-events-api": {
           "$ref": "#/definitions/RuleNoConfig"
         },
