@@ -169,6 +169,39 @@ export function Component({ value }) {
 }
 
 #[test]
+fn object_accessors_keep_generated_names_unique() {
+    let source = "\
+export function Component({ value }) {
+  const first = { method(y) { return y; } };
+  const x = value;
+  const object = {
+    get value() {
+      return x;
+    },
+  };
+  return <div>{object.value + first.method(1)}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    let output_allocator = Allocator::default();
+    let parsed = Parser::new(&output_allocator, &output, SourceType::tsx()).parse();
+    assert!(parsed.diagnostics.is_empty(), "compiled accessor output must parse:\n{output}");
+    let semantic = SemanticBuilder::new().build(&parsed.program);
+    assert!(
+        semantic.diagnostics.is_empty(),
+        "compiled accessor output must not contain duplicate declarations:\n{output}"
+    );
+}
+
+#[test]
 fn object_accessors_preserve_typescript_annotations() {
     let source = "\
 type Model = { value: number };
@@ -195,6 +228,35 @@ export function Component({ value }: { value: number }) {
         output.contains("get value(this: Model): number")
             && output.contains("set value(this: Model, next: number)"),
         "accessor TypeScript annotations must be preserved:\n{output}"
+    );
+}
+
+#[test]
+fn object_accessors_rename_typescript_annotation_references() {
+    let source = "\
+export function Component({ value }: { value: number }) {
+  const identity = (x: number) => x;
+  const x = value;
+  const object = {
+    get value(): typeof x {
+      return x;
+    },
+  };
+  return <div>{identity(object.value)}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("get value(): typeof x_0") && output.contains("return x_0"),
+        "accessor annotation references must follow binding renames:\n{output}"
     );
 }
 
