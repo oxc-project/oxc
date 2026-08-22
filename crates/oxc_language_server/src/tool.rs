@@ -152,8 +152,8 @@ pub struct ToolBuildResult {
     /// It should always be started and on internal errors, fallback to the default configuration of the tool.
     pub tool: Box<dyn Tool>,
     /// Even if the tool started successfully, it may have encountered issues during initialization.
-    /// The `client_message` field can be used to communicate any warnings or errors to the client.
-    pub client_message: Option<ClientMessage>,
+    /// The `client_messages` field can be used to communicate any warnings or errors to the client.
+    pub client_messages: Vec<ClientMessage>,
 }
 
 pub struct ToolRestartChanges {
@@ -164,6 +164,6 @@ pub struct ToolRestartChanges {
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,
     /// Even if the tool restarted successfully, it may have encountered issues during initialization.
-    /// The `client_message` field can be used to communicate any warnings or errors to the client.
-    pub client_message: Option<ClientMessage>,
+    /// The `client_messages` field can be used to communicate any warnings or errors to the client.
+    pub client_messages: Vec<ClientMessage>,
 }

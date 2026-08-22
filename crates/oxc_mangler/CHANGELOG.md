@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-18
+
+### 🚀 Features
+
+- 2f5cdb1 minifier: Add property name mangling (#24740) (Dunqing)
+- 4922141 mangler: Deduplicate private accessor names (#25601) (camc314)
+
+### 🐛 Bug Fixes
+
+- 80484ce mangler: Correct base54 safety comment (#25606) (camc314)
+- 771d79a mangler: Exclude non-manglable symbols from slot assignment (#25539) (sapphi-red)
+
+### ⚡ Performance
+
+- 757f3d4 mangler: Share allocated names across reused slots (#25605) (camc314)
+
+### 📚 Documentation
+
+- 31e571d mangler: Update code example (#25599) (camc314)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

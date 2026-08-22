@@ -127,6 +127,7 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+    has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
     /// so the emission site can recover verbatim source text instead of a
@@ -195,6 +196,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
@@ -364,11 +366,8 @@ impl<'a> Codegen<'a> {
         };
 
         // Search string in chunks of 16 bytes
-        let mut chunks = bytes.chunks_exact(16);
-        for (chunk_index, chunk) in chunks.by_ref().enumerate() {
-            #[expect(clippy::missing_panics_doc, reason = "infallible")]
-            let chunk: &[u8; 16] = chunk.try_into().unwrap();
-
+        let (chunks, last_chunk) = bytes.as_chunks::<16>();
+        for (chunk_index, chunk) in chunks.iter().enumerate() {
             // Compiler vectorizes this loop to a few SIMD ops
             let mut contains_lt = false;
             for &byte in chunk {
@@ -400,7 +399,6 @@ impl<'a> Codegen<'a> {
 
         // Search last chunk byte-by-byte.
         // Skip this if less than 8 bytes remaining, because less than 8 bytes can't contain `</script`.
-        let last_chunk = chunks.remainder();
         if last_chunk.len() >= 8 {
             let ptr = last_chunk.as_ptr();
             // SAFETY: `last_chunk.len() >= 8`, so `- 8` cannot wrap.
@@ -982,4 +980,19 @@ impl<'a> Codegen<'a> {
     #[inline]
     #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
+
+    /// Add a mapping for a private identifier, printed as `#` followed by `name`.
+    #[cfg(feature = "sourcemap")]
+    fn add_source_mapping_for_private_name(&mut self, span: Span, name: &str) {
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping_for_private_name(self.code.as_bytes(), span, name);
+        }
+    }
+
+    #[cfg(not(feature = "sourcemap"))]
+    #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
+    fn add_source_mapping_for_private_name(&mut self, _span: Span, _name: &str) {}
 }

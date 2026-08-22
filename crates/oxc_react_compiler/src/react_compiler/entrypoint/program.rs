@@ -16,24 +16,23 @@ use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_ast::ast::*;
 use oxc_ast::builder::AstBuilder;
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_diagnostics::Diagnostics;
+use oxc_span::{GetSpan, SPAN, SourceType, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{ErrorCategory, should_panic, with_fallback_label};
+use crate::diagnostics::{self, should_panic, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator};
-use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
+use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic, SemanticBuilder};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::keyword::is_reserved_keyword;
 use oxc_syntax::scope::ScopeId;
 use oxc_syntax::symbol::SymbolId;
 
-use super::compile_result::CodegenFunction;
-use super::compile_result::CompileResult;
+use super::compile_result::{CodegenFunction, CompileResult, OutlinedFunction};
 use super::imports::ProgramContext;
 use super::pipeline;
 use super::suppression::filter_suppressions_that_affect_function;
@@ -67,9 +66,6 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 struct CompileSource<'b, 'a> {
     kind: CompileSourceKind,
     original_kind: OriginalFnKind,
-    /// Byte span of the discovered function, used as the fallback labeled span in
-    /// compile-error diagnostics.
-    fn_ast_span: Option<Span>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_scope_id: ScopeId,
@@ -77,12 +73,19 @@ struct CompileSource<'b, 'a> {
     /// The discovered oxc function node, handed straight to lowering.
     fn_node: FunctionNode<'b, 'a>,
     /// Directive values from the function body (for opt-in/opt-out checks)
-    body_directives: Vec<Str<'a>>,
+    body_directives: Vec<BodyDirective<'a>>,
+}
+
+#[derive(Clone, Copy)]
+struct BodyDirective<'a> {
+    value: Str<'a>,
+    span: Span,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CompileSourceKind {
     Original,
+    Outlined,
 }
 
 // -----------------------------------------------------------------------
@@ -94,13 +97,13 @@ enum CompileSourceKind {
 ///
 /// Also checks for dynamic gating directives (`use memo if(...)`)
 fn try_find_directive_enabling_memoization<'a>(
-    directives: &[Str<'a>],
+    directives: &[BodyDirective<'a>],
     opts: &PluginOptions,
 ) -> Result<Option<&'a str>, Diagnostics> {
     // Check standard opt-in directives
-    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
+    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.value.as_str()));
     if let Some(directive) = opt_in {
-        return Ok(Some(directive.as_str()));
+        return Ok(Some(directive.value.as_str()));
     }
 
     // Check dynamic gating directives
@@ -132,7 +135,7 @@ struct DynamicGatingResult<'a> {
 /// Check for dynamic gating directives like `use memo if(identifier)`.
 /// Returns the directive and gating config if found, or an error if malformed.
 fn find_directives_dynamic_gating<'a>(
-    directives: &[Str<'a>],
+    directives: &[BodyDirective<'a>],
     opts: &PluginOptions,
 ) -> Result<Option<DynamicGatingResult<'a>>, Diagnostics> {
     let dynamic_gating = match &opts.dynamic_gating {
@@ -141,18 +144,17 @@ fn find_directives_dynamic_gating<'a>(
     };
 
     let mut errors = Diagnostics::new();
-    let mut matches: Vec<(&'a str, String)> = Vec::new();
+    let mut matches: Vec<(&'a str, String, Span)> = Vec::new();
 
     for directive in directives {
-        if let Some(ident) = parse_dynamic_gating_directive(directive) {
+        if let Some(ident) = parse_dynamic_gating_directive(directive.value.as_str()) {
             if is_valid_identifier(ident) {
-                matches.push((directive.as_str(), ident.to_string()));
+                matches.push((directive.value.as_str(), ident.to_string(), directive.span));
             } else {
-                errors.push(
-                    ErrorCategory::Gating
-                        .diagnostic("Dynamic gating directive is not a valid JavaScript identifier")
-                        .with_help(format!("Found '{directive}'")),
-                );
+                errors.push(diagnostics::invalid_gating_directive(
+                    directive.value.as_str(),
+                    directive.span,
+                ));
             }
         }
     }
@@ -162,12 +164,9 @@ fn find_directives_dynamic_gating<'a>(
     }
 
     if matches.len() > 1 {
-        let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        return Err(Diagnostics::from(
-            ErrorCategory::Gating
-                .diagnostic("Multiple dynamic gating directives found")
-                .with_help(format!("Expected a single directive but found [{}]", names.join(", "))),
-        ));
+        let names: Vec<&str> = matches.iter().map(|(directive, _, _)| *directive).collect();
+        let spans = matches.iter().map(|(_, _, span)| *span);
+        return Err(Diagnostics::from(diagnostics::multiple_gating_directives(&names, spans)));
     }
 
     if matches.len() == 1 {
@@ -866,7 +865,7 @@ fn get_react_function_type(
     name: Option<&str>,
     params: &FormalParameters,
     body: &FnBody,
-    body_directives: &[Str<'_>],
+    body_directives: &[BodyDirective<'_>],
     is_declaration: bool,
     parent_callee_name: Option<&str>,
     opts: &PluginOptions,
@@ -996,15 +995,9 @@ fn log_error(err: &Diagnostics, fn_span: Option<Span>, diagnostics: &mut Diagnos
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
     // exceptions that are not compiler errors surface as a pipeline error carrying
     // the error message rather than a per-detail compiler error.
-    let is_simulated_unknown = err.len() == 1
-        && err.iter().all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
+    let is_simulated_unknown = err.len() == 1 && err.iter().all(diagnostics::is_unexpected_error);
     if is_simulated_unknown {
-        let mut diagnostic =
-            OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
-        if let Some(span) = fn_span {
-            diagnostic = diagnostic.with_label(span);
-        }
-        diagnostics.push(diagnostic);
+        diagnostics.push(diagnostics::pipeline_error(fn_span));
         return;
     }
 
@@ -1035,14 +1028,14 @@ fn handle_error<'a>(
 }
 
 // -----------------------------------------------------------------------
-// Compilation pipeline stubs
+// Compilation pipeline
 // -----------------------------------------------------------------------
 
 /// Attempt to compile a single function.
 ///
 /// Returns `CodegenFunction` on success or the failed attempt's diagnostics.
 /// Debug log entries are accumulated on `context.debug_logs`.
-fn try_compile_function<'a>(
+fn try_compile_function<'a, const EMIT: bool>(
     ast: &AstBuilder<'a>,
     source: &CompileSource<'_, 'a>,
     scope: &ScopeResolver<'_, 'a>,
@@ -1060,7 +1053,7 @@ fn try_compile_function<'a>(
 
     // Run the compilation pipeline directly on the oxc function node discovered
     // during the program walk.
-    pipeline::compile_fn(
+    pipeline::compile_fn::<EMIT>(
         ast,
         &source.fn_node,
         scope,
@@ -1071,13 +1064,166 @@ fn try_compile_function<'a>(
     )
 }
 
+/// Build the function declaration used to analyse an outlined component. Outlined functions are
+/// emitted as declarations regardless of the kind of the original function, matching Babel's
+/// `insertNewOutlinedFunctionNode`.
+fn outlined_function_declaration<'a>(
+    ast: &AstBuilder<'a>,
+    codegen_fn: &CodegenFunction<'a>,
+) -> Statement<'a> {
+    let allocator = ast.allocator();
+    let function = Function::boxed(
+        codegen_fn.span.unwrap_or_default(),
+        FunctionType::FunctionDeclaration,
+        codegen_fn.id.clone_in(allocator),
+        codegen_fn.generator,
+        codegen_fn.is_async,
+        false,
+        None,
+        None,
+        codegen_fn.params.clone_in(allocator),
+        None,
+        Some(codegen_fn.body.clone_in(allocator)),
+        ast,
+    );
+    Statement::FunctionDeclaration(function)
+}
+
+struct OutlinedNode<'a> {
+    outlined: Option<OutlinedFunction<'a>>,
+    children: Vec<usize>,
+}
+
+fn outlined_compile_source<'b, 'a>(
+    function: &'b Function<'a>,
+    fn_type: ReactFunctionType,
+) -> CompileSource<'b, 'a> {
+    let span = function.span;
+    CompileSource {
+        kind: CompileSourceKind::Outlined,
+        original_kind: OriginalFnKind::FunctionDeclaration,
+        fn_start: Some(span.start),
+        fn_end: Some(span.end),
+        fn_scope_id: function.scope_id.get().expect("outlined function should have a scope"),
+        fn_type,
+        fn_node: FunctionNode::Function(function),
+        body_directives: function.body.as_deref().map(body_directive_values).unwrap_or_default(),
+    }
+}
+
+/// Queue outlined functions back through [`process_fn`], as in `Program.ts`.
+///
+/// Babel updates scopes as it inserts a `NodePath`. Oxc semantics are immutable, so each FIFO
+/// generation is represented by one temporary program and one shared semantic build. The small
+/// node forest records where newly outlined functions were inserted so it can be flattened back
+/// into the codegen results after the queue is empty.
+#[allow(clippy::result_large_err)]
+fn compile_outlined_functions<'a, 'b, 'p, 's, const EMIT: bool>(
+    ast: &AstBuilder<'a>,
+    compiled_fns: &mut [CompiledFunction<'a, 'b, 'p, 's>],
+    source_type: SourceType,
+    output_mode: CompilerOutputMode,
+    env_config: &EnvironmentConfig,
+    context: &mut ProgramContext<'a>,
+) -> Result<(), CompileResult<'a>> {
+    let mut nodes = Vec::new();
+    let mut roots = vec![Vec::new(); compiled_fns.len()];
+    let mut queue = Vec::new();
+    for (compiled, roots) in compiled_fns.iter_mut().zip(&mut roots) {
+        for outlined in std::mem::take(&mut compiled.codegen_fn.outlined) {
+            let should_compile = outlined.fn_type.is_some();
+            let index = nodes.len();
+            nodes.push(OutlinedNode { outlined: Some(outlined), children: Vec::new() });
+            roots.push(index);
+            if should_compile {
+                queue.push(index);
+            }
+        }
+    }
+
+    'queue: while !queue.is_empty() {
+        let mut body = ArenaVec::with_capacity_in(queue.len(), ast);
+        for &index in &queue {
+            let outlined = nodes[index].outlined.as_ref().unwrap();
+            body.push(outlined_function_declaration(ast, &outlined.func));
+        }
+        let program = Program::new(SPAN, source_type, context.source_text, [], None, [], body, ast);
+        let semantic_ret = SemanticBuilder::new().with_build_nodes(true).build(&program);
+        if !semantic_ret.diagnostics.is_empty() {
+            if let Some(result) = handle_error(
+                &semantic_ret.diagnostics,
+                None,
+                context.opts.panic_threshold,
+                &mut context.diagnostics,
+            ) {
+                return Err(result);
+            }
+            break 'queue;
+        }
+        let semantic = semantic_ret.semantic;
+        let scope = ScopeResolver::new(&semantic, ast.allocator());
+        let sources = program
+            .body
+            .iter()
+            .zip(&queue)
+            .map(|(statement, &index)| {
+                let Statement::FunctionDeclaration(function) = statement else { unreachable!() };
+                let fn_type = nodes[index].outlined.as_ref().unwrap().fn_type.unwrap();
+                outlined_compile_source(function, fn_type)
+            })
+            .collect::<Vec<_>>();
+        let mut results = Vec::with_capacity(sources.len());
+        for source in &sources {
+            results.push(process_fn::<EMIT>(ast, source, &scope, output_mode, env_config, context));
+        }
+
+        let mut next_queue = Vec::new();
+        for (index, result) in queue.into_iter().zip(results) {
+            let nested = match result {
+                Ok(Some(mut compiled)) => {
+                    let nested = std::mem::take(&mut compiled.outlined);
+                    let outlined = nodes[index].outlined.as_mut().unwrap();
+                    outlined.fn_type = None;
+                    outlined.func = compiled;
+                    nested
+                }
+                Ok(None) => {
+                    nodes[index].outlined.as_mut().unwrap().fn_type = None;
+                    Vec::new()
+                }
+                Err(result) => return Err(result),
+            };
+            for outlined in nested {
+                let should_compile = outlined.fn_type.is_some();
+                let child = nodes.len();
+                nodes.push(OutlinedNode { outlined: Some(outlined), children: Vec::new() });
+                nodes[index].children.push(child);
+                if should_compile {
+                    next_queue.push(child);
+                }
+            }
+        }
+        queue = next_queue;
+    }
+
+    for (compiled, roots) in compiled_fns.iter_mut().zip(roots) {
+        let mut stack = roots.into_iter().rev().collect::<Vec<_>>();
+        while let Some(index) = stack.pop() {
+            let node = &mut nodes[index];
+            stack.extend(std::mem::take(&mut node.children).into_iter().rev());
+            compiled.codegen_fn.outlined.push(node.outlined.take().unwrap());
+        }
+    }
+    Ok(())
+}
+
 /// Process a single function: check directives, attempt compilation, handle results.
 ///
 /// Returns `Ok(Some(codegen_fn))` when the function was compiled and should be applied,
 /// `Ok(None)` when the function was skipped or lint-only,
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
 #[allow(clippy::result_large_err)]
-fn process_fn<'a>(
+fn process_fn<'a, const EMIT: bool>(
     ast: &AstBuilder<'a>,
     source: &CompileSource<'_, 'a>,
     scope: &ScopeResolver<'_, 'a>,
@@ -1085,11 +1231,12 @@ fn process_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
+    let diagnostic_span = Some(source.fn_node.diagnostic_span());
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
     let opt_out = find_directive_disabling_memoization(
-        source.body_directives.iter().map(Str::as_str),
+        source.body_directives.iter().map(|directive| directive.value.as_str()),
         context.opts.custom_opt_out_directives.as_deref(),
     );
 
@@ -1100,7 +1247,7 @@ fn process_fn<'a>(
             // Apply panic threshold logic (same as compilation errors)
             if let Some(result) = handle_error(
                 &err,
-                source.fn_ast_span,
+                diagnostic_span,
                 context.opts.panic_threshold,
                 &mut context.diagnostics,
             ) {
@@ -1111,18 +1258,19 @@ fn process_fn<'a>(
     };
 
     // Attempt compilation
-    let compile_result = try_compile_function(ast, source, scope, output_mode, env_config, context);
+    let compile_result =
+        try_compile_function::<EMIT>(ast, source, scope, output_mode, env_config, context);
 
     match compile_result {
         Err(err) => {
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_span, &mut context.diagnostics);
+                log_error(&err, diagnostic_span, &mut context.diagnostics);
             } else {
                 // Apply panic threshold logic
                 if let Some(result) = handle_error(
                     &err,
-                    source.fn_ast_span,
+                    diagnostic_span,
                     context.opts.panic_threshold,
                     &mut context.diagnostics,
                 ) {
@@ -1168,8 +1316,14 @@ fn process_fn<'a>(
 
 /// Collect the directive value strings of a function body (for opt-in/opt-out
 /// checks). Matches the Babel-bridge directive values (`d.expression.value`).
-fn body_directive_values<'a>(body: &FunctionBody<'a>) -> Vec<Str<'a>> {
-    body.directives.iter().map(|d| d.expression.value).collect()
+fn body_directive_values<'a>(body: &FunctionBody<'a>) -> Vec<BodyDirective<'a>> {
+    body.directives
+        .iter()
+        .map(|directive| BodyDirective {
+            value: directive.expression.value,
+            span: directive.expression.span,
+        })
+        .collect()
 }
 
 /// Try to create a `CompileSource` from a discovered oxc function node.
@@ -1230,10 +1384,6 @@ fn try_make_compile_source<'b, 'a>(
     Some(CompileSource {
         kind: CompileSourceKind::Original,
         original_kind,
-        // The function source location flows into compile-error diagnostics as the
-        // fallback labeled span (offset/length). Only the byte `index` is
-        // load-bearing; line/column/filename never reach the example's output.
-        fn_ast_span: Some(span),
         fn_start: Some(span.start),
         fn_end: Some(span.end),
         fn_scope_id,
@@ -1611,10 +1761,14 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             // functions are descended to find nested declarations. Parameters
             // are visited before the body because their defaults may contain a
             // compilable function (for example, `Wrapper = memo(() => ...)`).
+            // The enclosing call identifies only its direct function argument;
+            // nested functions must not inherit `memo` / `forwardRef` context.
+            self.parent_callee_stack.push(None);
             self.walk_formal_parameters(&func.params);
             if let Some(body) = &func.body {
                 self.walk_function_body_block(body);
             }
+            self.parent_callee_stack.pop();
         }
 
         if pushed {
@@ -1649,6 +1803,9 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         };
 
         if !skip_body {
+            // The enclosing call identifies only its direct function argument;
+            // nested functions must not inherit `memo` / `forwardRef` context.
+            self.parent_callee_stack.push(None);
             self.walk_formal_parameters(&arrow.params);
             if let Some(expression) = arrow.get_expression() {
                 self.walk_expression(expression);
@@ -1657,6 +1814,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                     self.walk_statement(stmt);
                 }
             }
+            self.parent_callee_stack.pop();
         }
 
         if pushed {
@@ -2317,6 +2475,18 @@ enum OxcVisitMode<'a, 'b> {
     /// (a declaration becomes a `FunctionExpression`), for
     /// [`ox_clone_original_fn_as_expression`]. Mutates nothing.
     FindOriginalFn { scope_id: ScopeId, found: Option<Expression<'a>> },
+    /// Insert outlined function declarations immediately after the statement
+    /// declaring the function with scope `scope_id`, in whatever statement
+    /// list that statement lives (program body, function body, nested block),
+    /// for [`ox_insert_outlined_after`]. Mirrors Babel
+    /// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals,
+    /// which inserts into the enclosing statement list at any nesting depth.
+    InsertOutlinedAfter {
+        scope_id: ScopeId,
+        /// Declarations to insert; drained on insertion, so leftovers mean
+        /// the original statement was not found.
+        decls: Vec<Statement<'a>>,
+    },
 }
 
 type GatedStatementMatch<'a> = (Option<(Ident<'a>, Span)>, Option<Span>);
@@ -2417,6 +2587,12 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                 }
             }
             OxcVisitMode::ReplaceWithGated { .. } => {}
+            OxcVisitMode::InsertOutlinedAfter { decls, .. } => {
+                // Prune the walk once the declarations have been inserted.
+                if decls.is_empty() {
+                    return;
+                }
+            }
             OxcVisitMode::FindOriginalFn { scope_id, found } => {
                 if found.is_some() {
                     return;
@@ -2460,6 +2636,12 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                 }
             }
             OxcVisitMode::ReplaceWithGated { .. } => {}
+            OxcVisitMode::InsertOutlinedAfter { decls, .. } => {
+                // Prune the walk once the declarations have been inserted.
+                if decls.is_empty() {
+                    return;
+                }
+            }
             OxcVisitMode::FindOriginalFn { scope_id, found } => {
                 if found.is_some() {
                     return;
@@ -2477,6 +2659,23 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
     }
 
     fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        if let OxcVisitMode::InsertOutlinedAfter { scope_id, decls } = &mut self.mode {
+            if decls.is_empty() {
+                return;
+            }
+            let scope_id = *scope_id;
+            if let Some(idx) = stmts.iter().position(|s| ox_declares_fn_with_scope(s, scope_id)) {
+                // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
+                // anchored at the same original node, so repeated insertions reverse the
+                // emitted order. Insert each at `idx + 1` to reproduce that.
+                for stmt in std::mem::take(decls) {
+                    stmts.insert(idx + 1, stmt);
+                }
+                return;
+            }
+            oxc_ast_visit::walk_mut::walk_statements(self, stmts);
+            return;
+        }
         if !matches!(self.mode, OxcVisitMode::ReplaceWithGated { .. }) {
             oxc_ast_visit::walk_mut::walk_statements(self, stmts);
             return;
@@ -2636,14 +2835,26 @@ fn ox_transform_program<'a>(
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
 ) {
+    // Anchor generated top-level imports immediately before the first source
+    // statement. Keep the span empty so the imports remain unmapped. The
+    // preceding offset also keeps them distinct from comments attached to the
+    // first statement, while avoiding `SPAN` (`0..0`), which makes later
+    // transforms mistake them for source text at the beginning of the file.
+    let import_span = program
+        .body
+        .first()
+        .map_or(SPAN, |statement| Span::empty(statement.span().start.saturating_sub(1)));
+
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
     //   - FunctionDeclaration originals: inserted as a sibling immediately after the
-    //     original function (Babel `insertAfter`).
+    //     original function (Babel `insertAfter`), however deeply nested it is.
     //   - (Arrow)FunctionExpression originals: appended at the end of the program
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
-    //     would corrupt the parent expression.
+    //     would corrupt the parent expression. For a nested original this can hoist
+    //     the outlined function past bindings it references — upstream has the same
+    //     behavior, so we reproduce it rather than diverge.
     let mut appended_outlined_decls: Vec<Statement<'a>> = Vec::new();
 
     // Substitute every non-gated compiled function into its original in a single
@@ -2676,12 +2887,16 @@ fn ox_transform_program<'a>(
             }
         }
 
-        if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
+        // Insert outlined declarations before applying gating: upstream inserts
+        // them during the compile-queue loop, before any original is replaced,
+        // so they anchor to the original statement — gating rewrites it into a
+        // `const`, which no longer matches the function's scope.
+        if !sibling_outlined_decls.is_empty() {
+            ox_insert_outlined_after(ast, program, replacement.fn_scope_id, sibling_outlined_decls);
         }
 
-        if !sibling_outlined_decls.is_empty() {
-            ox_insert_outlined_after(program, replacement.fn_scope_id, sibling_outlined_decls);
+        if let Some(ref gating_config) = replacement.gating {
+            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
         }
     }
 
@@ -2690,51 +2905,61 @@ fn ox_transform_program<'a>(
     program.body.extend(appended_outlined_decls);
 
     // Register the memo cache import; codegen emitted its pre-reserved local name.
-    if replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0) {
+    if replacements.iter().any(|r| codegen_uses_memo_cache(&r.codegen_fn)) {
         context.add_memo_cache_import();
     }
 
-    ox_add_imports_to_program(ast, program, context);
+    ox_add_imports_to_program(ast, program, context, import_span);
 }
 
-/// Insert outlined function declarations immediately after the top-level statement
-/// that declares the function with scope `scope_id`. Mirrors Babel's
-/// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals. The statement
-/// may be a bare `FunctionDeclaration` or one wrapped in an `export`.
+fn codegen_uses_memo_cache(codegen_fn: &CodegenFunction<'_>) -> bool {
+    codegen_fn.memo_slots_used > 0
+        || codegen_fn.outlined.iter().any(|outlined| codegen_uses_memo_cache(&outlined.func))
+}
+
+/// Insert outlined function declarations immediately after the statement that
+/// declares the function with scope `scope_id`, in whatever statement list
+/// that statement lives (program body, a function body, a nested block).
+/// Mirrors Babel's `originalFn.insertAfter(...)` for `FunctionDeclaration`
+/// originals, which inserts into the enclosing statement list at any nesting
+/// depth. Placement matters for correctness: an outlined function may reference
+/// bindings of the functions enclosing the original (free variables of the
+/// compiled function are plain loads/stores in its HIR, so outlining does not
+/// count them as context), and every name visible to the original is also
+/// visible at its sibling position — but not necessarily at module scope. The
+/// statement may be a bare `FunctionDeclaration` or one wrapped in an `export`.
 fn ox_insert_outlined_after<'a>(
+    ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
     scope_id: ScopeId,
     outlined_decls: Vec<Statement<'a>>,
 ) {
-    let matches = |stmt: &Statement<'a>| -> bool {
-        let is_target = |f: &Function<'a>| -> bool { f.scope_id.get() == Some(scope_id) };
-        match stmt {
-            Statement::FunctionDeclaration(f) => is_target(f),
-            Statement::ExportDeclaration(e) => {
-                matches!(&e.declaration, Declaration::FunctionDeclaration(f) if is_target(f))
-            }
-            Statement::ExportDefaultDeclaration(e) => {
-                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if is_target(f))
-            }
-            _ => false,
-        }
+    let mut visitor = OxcVisitor {
+        ast,
+        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls: outlined_decls },
     };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    let OxcVisitMode::InsertOutlinedAfter { decls, .. } = visitor.mode else { unreachable!() };
+    // A `FunctionDeclaration` sits directly in a statement list everywhere in
+    // module code, so the walk finds it; the exception is sloppy-mode annex-B
+    // positions (`if (c) function F() {}`), where we degrade to appending at
+    // the top level rather than dropping the functions.
+    program.body.extend(decls);
+}
 
-    let index = program.body.iter().position(matches);
-    match index {
-        Some(idx) => {
-            // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
-            // anchored at the same original node, so repeated insertions reverse the
-            // emitted order. Insert each at `idx + 1` to reproduce that.
-            for stmt in outlined_decls {
-                program.body.insert(idx + 1, stmt);
-            }
+/// Whether `stmt` declares the function with scope `scope_id` — a bare
+/// `FunctionDeclaration` or one wrapped in an `export` / `export default`.
+fn ox_declares_fn_with_scope(stmt: &Statement<'_>, scope_id: ScopeId) -> bool {
+    let is_target = |f: &Function<'_>| -> bool { f.scope_id.get() == Some(scope_id) };
+    match stmt {
+        Statement::FunctionDeclaration(f) => is_target(f),
+        Statement::ExportDeclaration(e) => {
+            matches!(&e.declaration, Declaration::FunctionDeclaration(f) if is_target(f))
         }
-        None => {
-            // Function is nested (not a direct program-body statement); fall back to
-            // appending at the top level.
-            program.body.extend(outlined_decls);
+        Statement::ExportDefaultDeclaration(e) => {
+            matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if is_target(f))
         }
+        _ => false,
     }
 }
 
@@ -2745,6 +2970,7 @@ fn ox_add_imports_to_program<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
     context: &ProgramContext,
+    import_span: Span,
 ) {
     if !context.has_pending_imports() {
         return;
@@ -2775,20 +3001,21 @@ fn ox_add_imports_to_program<'a>(
         if let Some(&idx) = existing_import_indices.get(module_name.as_str()) {
             // Merge into the existing import declaration.
             if let Statement::ImportDeclaration(import) = &mut program.body[idx] {
+                let specifier_span = Span::empty(import.span.start);
                 let specifiers = import.specifiers.get_or_insert_with(|| ArenaVec::new_in(ast));
                 for spec in &sorted_imports {
-                    specifiers.push(ox_make_import_specifier(ast, spec));
+                    specifiers.push(ox_make_import_specifier(ast, spec, specifier_span));
                 }
             }
         } else if is_module {
             // ESM: import { imported as local, ... } from 'module'
             let mut specifiers = ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                specifiers.push(ox_make_import_specifier(ast, spec));
+                specifiers.push(ox_make_import_specifier(ast, spec, import_span));
             }
-            let source = StringLiteral::new(SPAN, ox_atom(ast, module_name), None, ast);
+            let source = StringLiteral::new(import_span, ox_atom(ast, module_name), None, ast);
             let import = ImportDeclaration::boxed(
-                SPAN,
+                import_span,
                 Some(specifiers),
                 source,
                 None,
@@ -2801,25 +3028,37 @@ fn ox_add_imports_to_program<'a>(
             // CommonJS: const { imported: local, ... } = require('module')
             let mut props = ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                let key =
-                    PropertyKey::new_static_identifier(SPAN, ox_atom(ast, &spec.imported), ast);
-                let value =
-                    BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, &spec.name), ast);
-                props.push(BindingProperty::new(SPAN, key, value, false, false, ast));
+                let key = PropertyKey::new_static_identifier(
+                    import_span,
+                    ox_atom(ast, &spec.imported),
+                    ast,
+                );
+                let value = BindingPattern::new_binding_identifier(
+                    import_span,
+                    ox_atom(ast, &spec.name),
+                    ast,
+                );
+                props.push(BindingProperty::new(import_span, key, value, false, false, ast));
             }
-            let object_pattern = BindingPattern::new_object_pattern(SPAN, props, None, ast);
+            let object_pattern = BindingPattern::new_object_pattern(import_span, props, None, ast);
             let require_call = Expression::new_call_expression(
-                SPAN,
-                Expression::new_identifier(SPAN, "require", ast),
+                import_span,
+                Expression::new_identifier(import_span, "require", ast),
                 None,
-                [Argument::new_string_literal(SPAN, ox_atom(ast, module_name), None, ast)],
+                [Argument::new_string_literal(import_span, ox_atom(ast, module_name), None, ast)],
                 false,
                 ast,
             );
-            let declarator =
-                VariableDeclarator::new(SPAN, object_pattern, None, Some(require_call), false, ast);
+            let declarator = VariableDeclarator::new(
+                import_span,
+                object_pattern,
+                None,
+                Some(require_call),
+                false,
+                ast,
+            );
             let decl = VariableDeclaration::boxed(
-                SPAN,
+                import_span,
                 VariableDeclarationKind::Const,
                 [declarator],
                 false,
@@ -2840,11 +3079,12 @@ fn ox_add_imports_to_program<'a>(
 fn ox_make_import_specifier<'a>(
     ast: &AstBuilder<'a>,
     spec: &super::imports::NonLocalImportSpecifier,
+    span: Span,
 ) -> ImportDeclarationSpecifier<'a> {
-    let imported = ModuleExportName::new_identifier_name(SPAN, ox_atom(ast, &spec.imported), ast);
-    let local = BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
+    let imported = ModuleExportName::new_identifier_name(span, ox_atom(ast, &spec.imported), ast);
+    let local = BindingIdentifier::new(span, ox_atom(ast, &spec.name), ast);
     ImportDeclarationSpecifier::new_import_specifier(
-        SPAN,
+        span,
         imported,
         local,
         ImportOrExportKind::Value,
@@ -2877,7 +3117,7 @@ fn ox_is_non_namespaced_import(import: &ImportDeclaration) -> bool {
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program<'a>(
+pub fn compile_program<'a, const EMIT: bool>(
     allocator: &'a Allocator,
     semantic: &Semantic<'_>,
     program: &Program<'a>,
@@ -2939,10 +3179,12 @@ pub fn compile_program<'a>(
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
 
-    // Pre-register instrumentation imports to get stable local names.
-    // These are needed before compilation so codegen can use the correct names.
-    let (instrument_fn_name, instrument_gating_name) =
-        if let Some(ref instrument_config) = options.environment.enable_emit_instrument_forget {
+    if EMIT {
+        // Pre-register instrumentation imports to get stable local names.
+        // These are needed before compilation so codegen can use the correct names.
+        let (instrument_fn_name, instrument_gating_name) = if let Some(ref instrument_config) =
+            options.environment.enable_emit_instrument_forget
+        {
             let fn_spec = context.add_import_specifier(
                 &instrument_config.fn_.source,
                 &instrument_config.fn_.import_specifier_name,
@@ -2957,31 +3199,39 @@ pub fn compile_program<'a>(
             (None, None)
         };
 
-    let hook_guard_name =
-        options.environment.enable_emit_hook_guards.as_ref().map(|hook_guard_config| {
-            let spec = context.add_import_specifier(
-                &hook_guard_config.source,
-                &hook_guard_config.import_specifier_name,
-                None,
-            );
-            spec.name
-        });
+        let hook_guard_name =
+            options.environment.enable_emit_hook_guards.as_ref().map(|hook_guard_config| {
+                let spec = context.add_import_specifier(
+                    &hook_guard_config.source,
+                    &hook_guard_config.import_specifier_name,
+                    None,
+                );
+                spec.name
+            });
 
-    // Store pre-resolved names on context for pipeline access
-    context.instrument_fn_name = instrument_fn_name;
-    context.instrument_gating_name = instrument_gating_name;
-    context.hook_guard_name = hook_guard_name;
+        // Store pre-resolved names on context for pipeline access
+        context.instrument_fn_name = instrument_fn_name;
+        context.instrument_gating_name = instrument_gating_name;
+        context.hook_guard_name = hook_guard_name;
 
-    // Reserve the memo-cache import's local name (`_c`, `_c2`, ...) up front so codegen
-    // can emit it directly; the import itself is registered in `ox_transform_program`,
-    // and only when an applied function uses memo slots.
-    context.reserve_memo_cache_name(&scope);
+        // Reserve the memo-cache import's local name (`_c`, `_c2`, ...) up front so codegen
+        // can emit it directly; the import itself is registered in `ox_transform_program`,
+        // and only when an applied function uses memo slots.
+        context.reserve_memo_cache_name(&scope);
+    }
 
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(&ast, source, &scope, output_mode, &options.environment, &mut context) {
+        match process_fn::<EMIT>(
+            &ast,
+            source,
+            &scope,
+            output_mode,
+            &options.environment,
+            &mut context,
+        ) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -2994,13 +3244,26 @@ pub fn compile_program<'a>(
         }
     }
 
+    if !EMIT {
+        return CompileResult::Success { output: None, diagnostics: context.diagnostics };
+    }
+
+    if let Err(fatal_result) = compile_outlined_functions::<EMIT>(
+        &ast,
+        &mut compiled_fns,
+        program.source_type,
+        output_mode,
+        &options.environment,
+        &mut context,
+    ) {
+        return fatal_result;
+    }
+
     // TS invariant: if there's a module scope opt-out, no functions should have been compiled
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
             let err =
-                Diagnostics::from(ErrorCategory::Invariant.diagnostic(
-                    "Unexpected compiled functions when module scope opt-out is present",
-                ));
+                Diagnostics::from(diagnostics::invariant_unexpected_compiled_functions_when_module_scope_opt_out_present());
             if let Some(result) =
                 handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics)
             {

@@ -116,7 +116,8 @@ impl StdinRunner {
             }
         };
 
-        // Check if the file is ignored by global ignores or config's `ignorePatterns`
+        // Check if the file is ignored by tool-ignores or config's `ignorePatterns`.
+        // `.gitignore` is deliberately not consulted, stdin is an explicitly requested document.
         let global_matchers = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
             .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
         {

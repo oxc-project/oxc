@@ -940,23 +940,17 @@ pub(super) fn write_comma_group<'a>(
                     filler.entry(&soft_line_break_or_space(), &content);
                 }
             }
-            // Trailing same-line comments become their own fill items
-            // (they wrap independently when the line is too long).
+            // Block comments between runs become their own fill items, own-line ones included:
+            // keeping those own-line would freeze a previously wrapped layout (= not idempotent).
             if !is_last_run {
                 let next_start = to_span(values[run_end].span()).start;
                 for &comment in pending.iter().filter(|c| {
-                    !c.inline
-                        && c.span.start >= run_end_pos
-                        && c.span.end <= next_start
-                        && !comment_is_own_line(**c, source)
+                    !c.inline && c.span.start >= run_end_pos && c.span.end <= next_start
                 }) {
                     let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                         if f.context().comments().peek().is_some_and(|c| c.span == comment.span) {
                             f.context().comments().take_before(comment.span.end);
                             comments::write_single_comment(comment, f);
-                            if comment.inline {
-                                write!(f, expand_parent());
-                            }
                         }
                     });
                     filler.entry(&soft_line_break_or_space(), &entry);

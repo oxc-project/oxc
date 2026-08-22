@@ -39,8 +39,8 @@ const rule: Rule = {
     // `ast.tokens` does not include comments
     context.report({
       message:
-        `Tokens:\n` +
-        ast.tokens
+        `Tokens:\n`
+        + ast.tokens
           .map((token) => {
             const { range } = token;
             assert(token.start === range[0]);
@@ -49,10 +49,10 @@ const rule: Rule = {
             const { start, end } = token.loc;
 
             return (
-              `${token.type.padEnd(17)} ` +
-              `loc= ${start.line}:${start.column} - ${end.line}:${end.column} `.padEnd(18) +
-              `range= ${range[0]}-${range[1]} `.padEnd(15) +
-              `${JSON.stringify(token.value)}`
+              `${token.type.padEnd(17)} `
+              + `loc= ${start.line}:${start.column} - ${end.line}:${end.column} `.padEnd(18)
+              + `range= ${range[0]}-${range[1]} `.padEnd(15)
+              + `${JSON.stringify(token.value)}`
             );
           })
           .join("\n"),
@@ -62,8 +62,8 @@ const rule: Rule = {
     // `sourceCode.tokensAndComments` does include comments
     context.report({
       message:
-        `Tokens and comments:\n` +
-        tokensAndComments
+        `Tokens and comments:\n`
+        + tokensAndComments
           .map((token) => {
             const { range } = token;
             assert(token.start === range[0]);
@@ -72,10 +72,10 @@ const rule: Rule = {
             const { start, end } = token.loc;
 
             return (
-              `${token.type.padEnd(17)} ` +
-              `loc= ${start.line}:${start.column} - ${end.line}:${end.column} `.padEnd(18) +
-              `range= ${range[0]}-${range[1]} `.padEnd(15) +
-              `${JSON.stringify(token.value)}`
+              `${token.type.padEnd(17)} `
+              + `loc= ${start.line}:${start.column} - ${end.line}:${end.column} `.padEnd(18)
+              + `range= ${range[0]}-${range[1]} `.padEnd(15)
+              + `${JSON.stringify(token.value)}`
             );
           })
           .join("\n"),

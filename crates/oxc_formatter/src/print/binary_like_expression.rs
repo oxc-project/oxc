@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
@@ -404,36 +404,26 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                         && let Some(operator) = logical_operator
                         && operator == right_logical.operator()
                     {
-                        write!(
-                            f,
-                            [
-                                space(),
-                                operator.as_str(),
-                                soft_line_break_or_space(),
-                                format_with(|f| {
-                                    // If the left side of the right logical expression is still a logical expression with
-                                    // the same operator, we need to recursively format it inline.
-                                    // This way, we can ensure that all parts are in the same group.
-                                    // We format directly instead of allocating a Vec via split_into_left_and_right_sides.
-                                    let left_child = right_logical.left();
-                                    if let AstNodes::LogicalExpression(left_logical_child) =
-                                        left_child.as_ast_nodes()
-                                        && operator == left_logical_child.operator()
-                                    {
-                                        // Format the nested logical expression inline without Vec allocation
-                                        format_flattened_logical_expression(
-                                            BinaryLikeExpression::LogicalExpression(
-                                                left_logical_child,
-                                            ),
-                                            *inside_parenthesis,
-                                            f,
-                                        );
-                                    } else {
-                                        left_child.fmt(f);
-                                    }
-                                })
-                            ]
-                        );
+                        format_operator_and_break(operator.into(), right_logical.left().span(), f);
+
+                        // If the left side of the right logical expression is still a logical expression with the same operator,
+                        // we need to recursively format it inline.
+                        // This way, we can ensure that all parts are in the same group.
+                        // We format directly instead of allocating a Vec via `split_into_left_and_right_sides`.
+                        let left_child = right_logical.left();
+                        if let AstNodes::LogicalExpression(left_logical_child) =
+                            left_child.as_ast_nodes()
+                            && operator == left_logical_child.operator()
+                        {
+                            // Format the nested logical expression inline without Vec allocation
+                            format_flattened_logical_expression(
+                                BinaryLikeExpression::LogicalExpression(left_logical_child),
+                                *inside_parenthesis,
+                                f,
+                            );
+                        } else {
+                            left_child.fmt(f);
+                        }
 
                         binary_like_expression =
                             BinaryLikeExpression::LogicalExpression(right_logical);
@@ -445,12 +435,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                 let right = binary_like_expression.right();
 
                 let operator_and_right_expression = format_with(|f| {
-                    write!(f, [space(), binary_like_expression.operator()]);
-
-                    let should_inline = binary_like_expression.should_inline_logical_expression();
-
-                    if should_inline {
-                        write!(f, [space()]);
+                    if binary_like_expression.should_inline_logical_expression() {
+                        write!(f, [space(), binary_like_expression.operator(), space()]);
 
                         if !right.is_jsx()
                             && f.comments().has_leading_own_line_comment(right.span().start)
@@ -458,7 +444,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                             return write!(f, soft_line_indent_or_space(right));
                         }
                     } else {
-                        write!(f, [soft_line_break_or_space()]);
+                        format_operator_and_break(
+                            binary_like_expression.operator(),
+                            right.span(),
+                            f,
+                        );
                     }
 
                     write!(f, right);
@@ -579,6 +569,33 @@ fn split_into_left_and_right_sides<'a, 'b>(
     split_into_left_and_right_sides_inner(binary, inside_condition, &mut items);
 
     items
+}
+
+/// Writes the operator and the break around it for one operand of a binary-like chain, per `operatorPosition`.
+///
+/// If `operatorPosition: end`, `<space><operator><soft break>`: the operator trails the previous line.
+///
+/// If `operatorPosition: start`, `<soft break><operator><space>`: with the operand's leading own-line comments hoisted above the operator.
+/// NOTE: Prettier additionally emits a stray second space before the previous operand's flushed trailing line comment
+/// (`prev  // comment`), but we don't.
+fn format_operator_and_break(
+    operator: BinaryLikeOperator,
+    operand_span: Span,
+    f: &mut JsFormatter<'_, '_>,
+) {
+    if f.options().operator_position.is_end() {
+        write!(f, [space(), operator, soft_line_break_or_space()]);
+    } else {
+        write!(
+            f,
+            [
+                soft_line_break_or_space(),
+                format_hoisted_leading_comments(operand_span),
+                operator,
+                space()
+            ]
+        );
+    }
 }
 
 /// There are cases where the parent decides to inline the element; in

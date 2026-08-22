@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    cell::{Cell, RefCell},
+    cell::{Cell, OnceCell, RefCell},
     ffi::OsStr,
     path::Path,
     rc::Rc,
@@ -25,6 +25,7 @@ use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
+    utils::ReactCompilerResults,
 };
 
 #[cfg(not(test))]
@@ -198,6 +199,10 @@ pub struct ContextHost<'a> {
     pub(super) frameworks: FrameworkFlags,
     /// If true, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// Lazily-computed shared result of the React Compiler lint run, reused by
+    /// every rule in the React Compiler family (`react/hooks`, `react/refs`, …).
+    /// Stays empty until the first such rule runs on this file.
+    pub(super) react_compiler_results: OnceCell<ReactCompilerResults>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -237,6 +242,7 @@ impl<'a> ContextHost<'a> {
             config,
             frameworks: options.framework_hints,
             with_ignore_fixes: options.with_ignore_fixes,
+            react_compiler_results: OnceCell::new(),
         }
         .sniff_for_frameworks()
     }

@@ -1,4 +1,4 @@
-use oxc_allocator::GetAllocator;
+use oxc_allocator::{GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_compat::{ESFeature, EngineTargets};
 use oxc_ecmascript::{
@@ -312,7 +312,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         constant: Option<ConstantValue<'a>>,
         kind: FreshValueKind,
         falsy_init: bool,
-        init_absent: bool,
+        implicit_undefined_source: bool,
     ) {
         let mut references = ReferenceCounts::default();
         for reference in self.scoping().get_resolved_references(symbol_id) {
@@ -358,9 +358,10 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         };
 
         // See `SymbolValue::implicit_undefined` — only meaningful when the
-        // recorded constant is the hoist-produced `undefined` of `let x;`.
-        let implicit_undefined =
-            init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
+        // recorded constant is the implicit `undefined` of an uninitialized
+        // binding or a direct alias of one.
+        let implicit_undefined = implicit_undefined_source
+            && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
 
         let symbol_value = SymbolValue {
             initialized_constant,
@@ -448,6 +449,22 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
         self.dropped_subtree_collector().visit_expression(slot);
         *slot = new;
+        self.state.record_ast_change();
+    }
+
+    /// Replace an expression slot with a value built from the owned old expression.
+    ///
+    /// Prefer this over `take_in` followed by [`Self::replace_expression`]. It avoids
+    /// leaving a dummy node in the arena. The closure must report any discarded
+    /// subtrees through the `drop_*` helpers; values moved into its result are not dropped.
+    #[inline]
+    pub fn replace_expression_with(
+        &mut self,
+        slot: &mut Expression<'a>,
+        replacer: impl FnOnce(Expression<'a>, &mut Self) -> Expression<'a>,
+    ) {
+        let ctx = &mut *self;
+        slot.replace_with(|old| replacer(old, ctx));
         self.state.record_ast_change();
     }
 

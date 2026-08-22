@@ -40,6 +40,9 @@ pub use arrow_function_expression::{
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use function::FormatFunctionOptions;
+pub use union_type::{
+    alias_union_breaks_after_operator, is_trailing_own_line_jsdoc_comment, type_alias_left_end,
+};
 
 use cow_utils::CowUtils;
 
@@ -456,37 +459,44 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
             _ => self.parent().is_call_like_callee_span(self.span),
         };
 
-        if is_callee_or_object {
-            let mut await_expression = None;
-            for ancestor in self.ancestors().skip(1) {
-                match ancestor {
-                    AstNodes::ArrowFunctionExpression(_)
-                    | AstNodes::BlockStatement(_)
-                    | AstNodes::FunctionBody(_)
-                    | AstNodes::SwitchCase(_)
-                    | AstNodes::Program(_)
-                    | AstNodes::TSModuleBlock(_) => break,
-                    AstNodes::AwaitExpression(expr) => await_expression = Some(expr),
-                    _ => {}
-                }
-            }
-
-            let indented = format_with(|f| write!(f, [soft_block_indent(&format_inner)]));
-
-            return if let Some(expr) = await_expression.take() {
-                if !expr.needs_parentheses(f)
-                    && ExpressionLeftSide::leftmost(expr.argument()).span() != self.span()
-                {
-                    return write!(f, [group(&indented)]);
-                }
-
-                write!(f, [indented]);
-            } else {
-                write!(f, [group(&indented)]);
-            };
+        if !is_callee_or_object {
+            write!(f, [format_inner]);
+            return;
         }
 
-        write!(f, [format_inner]);
+        // Only the nearest enclosing `await` matters:
+        // the leftmost walk below never crosses a statement or function boundary.
+        let enclosing_await = self
+            .ancestors()
+            .skip(1)
+            // PERF: Early exit only; past any of these, the leftmost check below always fails.
+            .take_while(|ancestor| {
+                !matches!(
+                    ancestor,
+                    AstNodes::ArrowFunctionExpression(_)
+                        | AstNodes::BlockStatement(_)
+                        | AstNodes::FunctionBody(_)
+                        | AstNodes::SwitchCase(_)
+                        | AstNodes::Program(_)
+                        | AstNodes::TSModuleBlock(_)
+                )
+            })
+            .find_map(|ancestor| match ancestor {
+                AstNodes::AwaitExpression(expr) => Some(expr),
+                _ => None,
+            });
+
+        let indented = format_with(|f| write!(f, [soft_block_indent(&format_inner)]));
+
+        // Group unless the enclosing `await`'s argument starts with this expression,
+        // to avoid printing `await (await` on one line.
+        let should_group = enclosing_await
+            .is_none_or(|expr| ExpressionLeftSide::leftmost(expr.argument()).span() != self.span());
+        if should_group {
+            write!(f, [group(&indented)]);
+        } else {
+            write!(f, [indented]);
+        }
     }
 }
 
@@ -2167,5 +2177,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSDocUnknownType> {
-    fn write(&self, _f: &mut JsFormatter<'_, 'a>) {}
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, "?");
+    }
 }

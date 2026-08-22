@@ -104,6 +104,9 @@ pub struct ReactCompilerOptions {
 
     /// Only run the React Compiler when the filename contains one of these strings.
     ///
+    /// By default, files whose filename contains `node_modules` are skipped.
+    /// Providing this option replaces that default filter.
+    ///
     /// Function-valued `sources` filters from the Babel plugin are intentionally
     /// unsupported across the native boundary.
     pub sources: Option<Vec<String>>,
@@ -259,6 +262,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_custom_type_definition_for_reanimated: Option<bool>,
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     pub enable_treat_set_identifiers_as_state_setters: Option<bool>,
+    /// Validate that `useMemo` callbacks return a value.
+    ///
+    /// @default false
     pub validate_no_void_use_memo: Option<bool>,
     pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
     pub enable_verbose_no_set_state_in_effect: Option<bool>,
@@ -271,7 +277,9 @@ impl TransformOptions {
         filename: &str,
     ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
         let react_compiler = match self.react_compiler {
-            None | Some(Either::A(true)) => Some(PluginOptions::default()),
+            None | Some(Either::A(true)) => {
+                should_compile_react_source(filename, None).then(PluginOptions::default)
+            }
             Some(Either::A(false)) => None,
             Some(Either::B(options)) => options.resolve(filename)?,
         };
@@ -297,10 +305,7 @@ impl TransformOptions {
 
 impl ReactCompilerOptions {
     fn resolve(self, filename: &str) -> Result<Option<PluginOptions>, OxcDiagnostic> {
-        let enabled = self
-            .sources
-            .as_ref()
-            .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
+        let enabled = should_compile_react_source(filename, self.sources.as_deref());
         enabled.then(|| self.into_plugin_options()).transpose()
     }
 
@@ -367,6 +372,13 @@ impl ReactCompilerOptions {
 
         Ok(options)
     }
+}
+
+fn should_compile_react_source(filename: &str, sources: Option<&[String]>) -> bool {
+    sources.map_or_else(
+        || !filename.contains("node_modules"),
+        |sources| sources.iter().any(|source| filename.contains(source)),
+    )
 }
 
 impl From<JsxOptions> for oxc::transformer::JsxOptions {

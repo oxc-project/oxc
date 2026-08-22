@@ -11,13 +11,14 @@
 //! 1. Props (component parameters may change between renders)
 //! 2. Hooks (can access state or context)
 //! 3. `use` operator (can access context)
-//! 4. Mutation with reactive operands
-//! 5. Conditional assignment based on reactive control flow
+//! 4. Tagged templates (calls may produce a new result with stable operands)
+//! 5. Mutation with reactive operands
+//! 6. Conditional assignment based on reactive control flow
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -129,26 +130,27 @@ pub fn infer_reactive_places(
 
                 // Check if any operand is reactive
                 let mut has_reactive_input = false;
-                let operands: Vec<IdentifierId> =
-                    visitors::each_instruction_value_operand(value, env)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                for &op_id in &operands {
-                    let reactive = reactive_map.is_reactive(op_id);
+                let operands = visitors::each_instruction_value_operand(value, env);
+                for op in &operands {
+                    let reactive = reactive_map.is_reactive(op.identifier);
                     has_reactive_input = has_reactive_input || reactive;
                 }
 
                 // Hooks and `use` operator are sources of reactivity
                 match value {
-                    InstructionValue::CallExpression { callee, .. }
-                    | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
+                    InstructionValue::CallExpression { callee, .. } => {
                         let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                         if get_hook_kind_for_type(env, callee_ty)?.is_some()
                             || is_use_operator_type(callee_ty)
                         {
                             has_reactive_input = true;
                         }
+                    }
+                    InstructionValue::TaggedTemplateExpression { .. } => {
+                        // A tag may produce a new result even when its explicit operands are
+                        // stable. Proven-pure tags retain the resulting scope; other tags have it
+                        // flattened later so the call remains unconditional.
+                        has_reactive_input = true;
                     }
                     InstructionValue::MethodCall { property, .. } => {
                         let property_ty = &env.types[env.identifiers[property.identifier].type_];
@@ -163,11 +165,8 @@ pub fn infer_reactive_places(
 
                 if has_reactive_input {
                     // Mark lvalues reactive (unless stable)
-                    let lvalue_ids: Vec<IdentifierId> = visitors::each_instruction_lvalue(instr)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                    for lvalue_id in lvalue_ids {
+                    for lvalue in visitors::each_instruction_lvalue(instr) {
+                        let lvalue_id = lvalue.identifier;
                         if stable_sidemap.is_stable(lvalue_id) {
                             continue;
                         }
@@ -177,8 +176,7 @@ pub fn infer_reactive_places(
 
                 if has_reactive_input || has_reactive_control {
                     // Mark mutable operands reactive
-                    let operand_places = visitors::each_instruction_value_operand(value, env);
-                    for op_place in &operand_places {
+                    for op_place in &operands {
                         match op_place.effect {
                             Effect::Capture
                             | Effect::Store
@@ -194,10 +192,7 @@ pub fn infer_reactive_places(
                                 // no-op
                             }
                             Effect::Unknown => {
-                                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                                    "Unexpected unknown effect at {:?}",
-                                    op_place.span
-                                )));
+                                return Err(diagnostics::unexpected_unknown_effect(op_place.span));
                             }
                         }
                     }
@@ -320,11 +315,8 @@ impl StableSidemap {
             InstructionValue::Destructure { value: val, .. } => {
                 let source_id = val.identifier;
                 if self.map.contains_key(&source_id) {
-                    let lvalue_ids: Vec<IdentifierId> = visitors::each_instruction_lvalue(instr)
-                        .into_iter()
-                        .map(|p| p.identifier)
-                        .collect();
-                    for lid in lvalue_ids {
+                    for lvalue in visitors::each_instruction_lvalue(instr) {
+                        let lid = lvalue.identifier;
                         let lid_ty = &env.types[env.identifiers[lid].type_];
                         if is_stable_type_container(lid_ty) {
                             self.map.insert(lid, false);
@@ -571,28 +563,27 @@ fn apply_reactive_flags_replay(
             let instr = &func.instructions[instr_id.index()];
 
             // Compute hasReactiveInput by checking value operands
-            let value_operand_ids: Vec<IdentifierId> =
-                visitors::each_instruction_value_operand(&instr.value, env)
-                    .into_iter()
-                    .map(|p| p.identifier)
-                    .collect();
             let mut has_reactive_input = false;
-            for &op_id in &value_operand_ids {
-                if reactive_ids.contains(&op_id) {
+            for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+                if reactive_ids.contains(&operand.identifier) {
                     has_reactive_input = true;
+                    break;
                 }
             }
 
             // Check hooks/use
             match &instr.value {
-                InstructionValue::CallExpression { callee, .. }
-                | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
+                InstructionValue::CallExpression { callee, .. } => {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some()
                         || is_use_operator_type(callee_ty)
                     {
                         has_reactive_input = true;
                     }
+                }
+                InstructionValue::TaggedTemplateExpression { .. } => {
+                    // Mirror the fixpoint rule above when writing the final reactive flags.
+                    has_reactive_input = true;
                 }
                 InstructionValue::MethodCall { property, .. } => {
                     let property_ty = &env.types[env.identifiers[property.identifier].type_];

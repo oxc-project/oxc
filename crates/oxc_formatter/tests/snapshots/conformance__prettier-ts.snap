@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-ts compatibility: 624/659 (94.69%), 16 files skipped
+ts compatibility: 629/659 (95.45%), 16 files skipped
 
 # Failed
 
@@ -16,13 +16,12 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/comments/type-parameters.ts | 💥 | 81.82% |
 | typescript/comments/first-argument/first-argument.ts | 💥 | 81.16% |
-| typescript/conditional-types/comments.ts | 💥 | 90.83% |
 | typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 85.25% |
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 91.62% |
 | typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 83.64% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 85.64% |
-| typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
-| typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 78.00% |
+| typescript/intersection/intersection-parens.ts | 💥💥✨ | 65.96% |
+| typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 97.67% |
+| typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 88.24% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
 | typescript/template-literals/member-expression.ts | 💥 | 65.12% |
@@ -32,17 +31,13 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 | typescript/type-parameters-arguments/constraints-and-default.ts | 💥 | 91.67% |
 | typescript/type-parameters-arguments/issue-6858.ts | 💥 | 60.61% |
 | typescript/union/5849.ts | 💥 | 95.38% |
-| typescript/union/union-parens.ts | 💥 | 90.23% |
+| typescript/union/union-parens.ts | 💥 | 97.67% |
 | typescript/union/comments/18106.ts | 💥 | 86.36% |
-| typescript/union/comments/18389.ts | 💥 | 90.48% |
-| typescript/union/consistent-with-flow/18647.ts | 💥 | 76.92% |
 | typescript/union/consistent-with-flow/81-characters.ts | 💥 | 53.85% |
-| typescript/union/consistent-with-flow/comment.ts | 💥 | 75.00% |
+| typescript/union/consistent-with-flow/comment.ts | 💥 | 87.50% |
 | typescript/union/consistent-with-flow/conditional.ts | 💥 | 54.55% |
-| typescript/union/consistent-with-flow/leading-comments.ts | 💥 | 85.71% |
-| typescript/union/consistent-with-flow/single-type.ts | 💥 | 95.00% |
-| typescript/union/single-type/comments.ts | 💥 | 11.11% |
-| typescript/union/single-type/single-type-2.ts | 💥 | 72.73% |
+| typescript/union/consistent-with-flow/leading-comments.ts | 💥 | 90.14% |
+| typescript/union/consistent-with-flow/single-type.ts | 💥 | 97.50% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 
@@ -70,7 +65,5 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 - typescript/as/comments/17407.ts
 - typescript/as/comments/18160.ts
 - typescript/call/callee-comments.ts
-- typescript/intersection/consistent-with-flow/single-member.ts
 - typescript/method-chain/object/issue-17239.ts
 - typescript/satisfies-operators/comments-unstable.ts
-- typescript/union/consistent-with-flow/single-type.ts
