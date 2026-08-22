@@ -1028,14 +1028,14 @@ fn handle_error<'a>(
 }
 
 // -----------------------------------------------------------------------
-// Compilation pipeline stubs
+// Compilation pipeline
 // -----------------------------------------------------------------------
 
 /// Attempt to compile a single function.
 ///
 /// Returns `CodegenFunction` on success or the failed attempt's diagnostics.
 /// Debug log entries are accumulated on `context.debug_logs`.
-fn try_compile_function<'a>(
+fn try_compile_function<'a, const EMIT: bool>(
     ast: &AstBuilder<'a>,
     source: &CompileSource<'_, 'a>,
     scope: &ScopeResolver<'_, 'a>,
@@ -1053,7 +1053,7 @@ fn try_compile_function<'a>(
 
     // Run the compilation pipeline directly on the oxc function node discovered
     // during the program walk.
-    pipeline::compile_fn(
+    pipeline::compile_fn::<EMIT>(
         ast,
         &source.fn_node,
         scope,
@@ -1118,7 +1118,7 @@ fn outlined_compile_source<'b, 'a>(
 /// node forest records where newly outlined functions were inserted so it can be flattened back
 /// into the codegen results after the queue is empty.
 #[allow(clippy::result_large_err)]
-fn compile_outlined_functions<'a, 'b, 'p, 's>(
+fn compile_outlined_functions<'a, 'b, 'p, 's, const EMIT: bool>(
     ast: &AstBuilder<'a>,
     compiled_fns: &mut [CompiledFunction<'a, 'b, 'p, 's>],
     source_type: SourceType,
@@ -1174,7 +1174,7 @@ fn compile_outlined_functions<'a, 'b, 'p, 's>(
             .collect::<Vec<_>>();
         let mut results = Vec::with_capacity(sources.len());
         for source in &sources {
-            results.push(process_fn(ast, source, &scope, output_mode, env_config, context));
+            results.push(process_fn::<EMIT>(ast, source, &scope, output_mode, env_config, context));
         }
 
         let mut next_queue = Vec::new();
@@ -1223,7 +1223,7 @@ fn compile_outlined_functions<'a, 'b, 'p, 's>(
 /// `Ok(None)` when the function was skipped or lint-only,
 /// or `Err(CompileResult)` if a fatal error should short-circuit the program.
 #[allow(clippy::result_large_err)]
-fn process_fn<'a>(
+fn process_fn<'a, const EMIT: bool>(
     ast: &AstBuilder<'a>,
     source: &CompileSource<'_, 'a>,
     scope: &ScopeResolver<'_, 'a>,
@@ -1258,7 +1258,8 @@ fn process_fn<'a>(
     };
 
     // Attempt compilation
-    let compile_result = try_compile_function(ast, source, scope, output_mode, env_config, context);
+    let compile_result =
+        try_compile_function::<EMIT>(ast, source, scope, output_mode, env_config, context);
 
     match compile_result {
         Err(err) => {
@@ -3116,7 +3117,7 @@ fn ox_is_non_namespaced_import(import: &ImportDeclaration) -> bool {
 /// - findFunctionsToCompile: traverse program to find components and hooks
 /// - processFn: per-function compilation with directive and suppression handling
 /// - applyCompiledFunctions: replace original functions with compiled versions
-pub fn compile_program<'a>(
+pub fn compile_program<'a, const EMIT: bool>(
     allocator: &'a Allocator,
     semantic: &Semantic<'_>,
     program: &Program<'a>,
@@ -3178,10 +3179,12 @@ pub fn compile_program<'a>(
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);
 
-    // Pre-register instrumentation imports to get stable local names.
-    // These are needed before compilation so codegen can use the correct names.
-    let (instrument_fn_name, instrument_gating_name) =
-        if let Some(ref instrument_config) = options.environment.enable_emit_instrument_forget {
+    if EMIT {
+        // Pre-register instrumentation imports to get stable local names.
+        // These are needed before compilation so codegen can use the correct names.
+        let (instrument_fn_name, instrument_gating_name) = if let Some(ref instrument_config) =
+            options.environment.enable_emit_instrument_forget
+        {
             let fn_spec = context.add_import_specifier(
                 &instrument_config.fn_.source,
                 &instrument_config.fn_.import_specifier_name,
@@ -3196,31 +3199,39 @@ pub fn compile_program<'a>(
             (None, None)
         };
 
-    let hook_guard_name =
-        options.environment.enable_emit_hook_guards.as_ref().map(|hook_guard_config| {
-            let spec = context.add_import_specifier(
-                &hook_guard_config.source,
-                &hook_guard_config.import_specifier_name,
-                None,
-            );
-            spec.name
-        });
+        let hook_guard_name =
+            options.environment.enable_emit_hook_guards.as_ref().map(|hook_guard_config| {
+                let spec = context.add_import_specifier(
+                    &hook_guard_config.source,
+                    &hook_guard_config.import_specifier_name,
+                    None,
+                );
+                spec.name
+            });
 
-    // Store pre-resolved names on context for pipeline access
-    context.instrument_fn_name = instrument_fn_name;
-    context.instrument_gating_name = instrument_gating_name;
-    context.hook_guard_name = hook_guard_name;
+        // Store pre-resolved names on context for pipeline access
+        context.instrument_fn_name = instrument_fn_name;
+        context.instrument_gating_name = instrument_gating_name;
+        context.hook_guard_name = hook_guard_name;
 
-    // Reserve the memo-cache import's local name (`_c`, `_c2`, ...) up front so codegen
-    // can emit it directly; the import itself is registered in `ox_transform_program`,
-    // and only when an applied function uses memo slots.
-    context.reserve_memo_cache_name(&scope);
+        // Reserve the memo-cache import's local name (`_c`, `_c2`, ...) up front so codegen
+        // can emit it directly; the import itself is registered in `ox_transform_program`,
+        // and only when an applied function uses memo slots.
+        context.reserve_memo_cache_name(&scope);
+    }
 
     // Process each function and collect compiled results
     let mut compiled_fns: Vec<CompiledFunction<'_, '_, '_, '_>> = Vec::new();
 
     for source in &queue {
-        match process_fn(&ast, source, &scope, output_mode, &options.environment, &mut context) {
+        match process_fn::<EMIT>(
+            &ast,
+            source,
+            &scope,
+            output_mode,
+            &options.environment,
+            &mut context,
+        ) {
             Ok(Some(codegen_fn)) => {
                 compiled_fns.push(CompiledFunction { kind: source.kind, source, codegen_fn });
             }
@@ -3233,7 +3244,11 @@ pub fn compile_program<'a>(
         }
     }
 
-    if let Err(fatal_result) = compile_outlined_functions(
+    if !EMIT {
+        return CompileResult::Success { output: None, diagnostics: context.diagnostics };
+    }
+
+    if let Err(fatal_result) = compile_outlined_functions::<EMIT>(
         &ast,
         &mut compiled_fns,
         program.source_type,
