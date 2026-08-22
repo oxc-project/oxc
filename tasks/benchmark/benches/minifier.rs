@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fmt::Write, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
@@ -10,6 +10,64 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
+
+/// One statement list where dropping the second declaration marks every symbol
+/// declared by the first as unused in a single step, while the side-effectful
+/// initializers keep the dirtied declarators in place:
+///
+/// ```js
+/// function main() {
+///   var a0 = (foo(), 0), /* ... */ a3999 = (foo(), 0);
+///   var b0 = a0,         /* ... */ b3999 = a3999;
+/// }
+/// main();
+/// ```
+///
+/// Retrying the surviving declarators once per dirty symbol instead of once per
+/// statement scans the whole list N times, so this shape keeps the compressor's
+/// dirty-symbol worklist honest about its complexity.
+fn dirty_symbol_source(count: usize) -> String {
+    let mut source = String::from("function main() {\n  var ");
+    for i in 0..count {
+        if i > 0 {
+            source.push_str(", ");
+        }
+        write!(source, "a{i} = (foo(), 0)").unwrap();
+    }
+    source.push_str(";\n  var ");
+    for i in 0..count {
+        if i > 0 {
+            source.push_str(", ");
+        }
+        write!(source, "b{i} = a{i}").unwrap();
+    }
+    source.push_str(";\n}\nmain();\n");
+    source
+}
+
+fn bench_minifier_dirty_symbols(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("minifier_dirty_symbols");
+
+    let source_text = dirty_symbol_source(4000);
+    let source_type = SourceType::mjs();
+    let mut allocator = Allocator::default();
+
+    group.bench_function(BenchmarkId::from_parameter("shared_statement"), |b| {
+        b.iter_with_setup_wrapper(|runner| {
+            allocator.reset();
+
+            let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
+            let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+
+            let options = CompressOptions::smallest();
+            runner.run(|| {
+                Compressor::new(&allocator).build_with_scoping(&mut program, scoping, options);
+            });
+        });
+    });
+
+    group.finish();
+}
 
 fn bench_minifier(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("minifier");
@@ -159,5 +217,11 @@ fn bench_property_mangler(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(minifier, bench_minifier, bench_mangler, bench_property_mangler);
+criterion_group!(
+    minifier,
+    bench_minifier,
+    bench_minifier_dirty_symbols,
+    bench_mangler,
+    bench_property_mangler
+);
 criterion_main!(minifier);

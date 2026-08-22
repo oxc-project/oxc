@@ -1,11 +1,11 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, BitSet};
+use oxc_allocator::{Allocator, ArenaVec, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
-use oxc_syntax::scope::ScopeId;
+use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
@@ -58,18 +58,79 @@ pub struct PassChanges<'a> {
     /// taken at construction is exact for the first pass.
     pub(crate) removed_references: BitSet<'a>,
 
+    /// Number of resolved references removed from each symbol during this
+    /// pass. This is the incremental overlay on top of `Scoping`, whose lists
+    /// are batch-pruned only at pass completion.
+    removed_reference_counts: ArenaVec<'a, u32>,
+
+    /// Symbols whose last live resolved reference was removed this pass, in
+    /// transition order. Consumers treat this as an append-only work journal;
+    /// a future parallel traversal can produce one journal per worker and
+    /// merge them at a deterministic barrier without sharing a mutable queue.
+    pub(crate) dirty_symbols: ArenaVec<'a, SymbolId>,
+
+    /// Sparse reset list for `removed_reference_counts`.
+    touched_symbols: ArenaVec<'a, SymbolId>,
+
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
     pub(crate) direct_eval_dropped: bool,
 }
 
 impl<'a> PassChanges<'a> {
-    pub fn new(references_len: usize, allocator: &'a Allocator) -> Self {
+    pub fn new(references_len: usize, symbols_len: usize, allocator: &'a Allocator) -> Self {
         Self {
             revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
+            removed_reference_counts: ArenaVec::from_iter_in(
+                std::iter::repeat_n(0, symbols_len),
+                &allocator,
+            ),
+            dirty_symbols: ArenaVec::new_in(&allocator),
+            touched_symbols: ArenaVec::new_in(&allocator),
             direct_eval_dropped: false,
         }
+    }
+
+    /// Record one reference removed from the live AST. Returns early for a
+    /// duplicate removal or a reference minted beyond this pass's capacity.
+    pub fn remove_reference(&mut self, reference_id: ReferenceId, scoping: &Scoping) {
+        let index = reference_id.index();
+        if index >= self.removed_references.capacity() || self.removed_references.has_bit(index) {
+            return;
+        }
+        self.removed_references.set_bit(index);
+
+        let Some(symbol_id) = scoping.get_reference(reference_id).symbol_id() else { return };
+        let removed_count = &mut self.removed_reference_counts[symbol_id.index()];
+        if *removed_count == 0 {
+            self.touched_symbols.push(symbol_id);
+        }
+        *removed_count += 1;
+        if *removed_count as usize == scoping.get_resolved_reference_ids(symbol_id).len() {
+            self.dirty_symbols.push(symbol_id);
+        }
+    }
+
+    #[inline]
+    pub fn symbol_is_unused(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
+        self.removed_reference_counts[symbol_id.index()] as usize
+            == scoping.get_resolved_reference_ids(symbol_id).len()
+    }
+
+    #[inline]
+    pub fn symbol_became_unused(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
+        let removed_count = self.removed_reference_counts[symbol_id.index()] as usize;
+        removed_count != 0 && removed_count == scoping.get_resolved_reference_ids(symbol_id).len()
+    }
+
+    /// Reset the incremental reference overlay after it has been flushed into
+    /// `Scoping`. Dense counts are cleared through the sparse touched list.
+    pub fn reset_reference_changes(&mut self) {
+        for symbol_id in self.touched_symbols.drain(..) {
+            self.removed_reference_counts[symbol_id.index()] = 0;
+        }
+        self.dirty_symbols.clear();
     }
 }
 
@@ -114,6 +175,12 @@ pub struct MinifierState<'a> {
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
+
+    /// Scratch buffer reused by `drain_dirty_declarators` to hold the statement
+    /// indices queued for one round. Taken out and put back by the caller, so
+    /// its capacity survives across statement lists instead of costing one
+    /// arena allocation per list.
+    pub(crate) dirty_statement_scratch: ArenaVec<'a, usize>,
 }
 
 impl<'a> MinifierState<'a> {
@@ -134,8 +201,13 @@ impl<'a> MinifierState<'a> {
                 hoisted_var_inlining_unsafe: false,
                 this_initialized_at: None,
             }),
-            pass_changes: PassChanges::new(scoping.references_len(), allocator),
+            pass_changes: PassChanges::new(
+                scoping.references_len(),
+                scoping.symbols_len(),
+                allocator,
+            ),
             concat_scratch: String::new(),
+            dirty_statement_scratch: ArenaVec::new_in(&allocator),
         }
     }
 
@@ -189,6 +261,7 @@ impl<'a> MinifierState<'a> {
     pub(crate) fn pass_changes_are_clean(&self) -> bool {
         !self.pass_changes.revisit_requested
             && self.pass_changes.removed_references.is_empty()
+            && self.pass_changes.dirty_symbols.is_empty()
             && !self.pass_changes.direct_eval_dropped
     }
 }

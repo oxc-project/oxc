@@ -10,10 +10,13 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
+
+type StatementIter<'a> = <ArenaVec<'a, Statement<'a>> as IntoIterator>::IntoIter;
 
 /// `false` when dropping `stmt` produces a byte-identical AST — a `var`
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
@@ -48,12 +51,12 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut old_stmts = stmts.take_in(ctx);
+        // Consuming the vector avoids `Statement::take_in`, whose dummy replacement allocates.
+        let mut old_stmts = stmts.take_in(ctx).into_iter();
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
-        for i in 0..old_stmts.len() {
-            let stmt = old_stmts[i].take_in(ctx);
+        while let Some(stmt) = old_stmts.next() {
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -73,7 +76,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, ctx).is_break() {
+            if Self::minimize_statement(stmt, &mut old_stmts, stmts, ctx).is_break() {
                 break;
             }
             // A statement that never completes normally — a direct jump, a
@@ -268,6 +271,126 @@ impl<'a> PeepholeOptimizations {
                 }
             }
         }
+
+        Self::drain_dirty_declarators(stmts, ctx);
+    }
+
+    /// Consume symbols whose last live reference was removed during this pass
+    /// and retry declarations owned by this statement list. Statement indices
+    /// remain stable while the rounds run: empty declarations are retained as
+    /// placeholders and removed only after all queued work is complete.
+    ///
+    /// The dirty-symbol journal is append-only. Removing one declarator may
+    /// append symbols referenced by its initializer, allowing an arbitrarily
+    /// ordered acyclic declaration chain to collapse without another full-AST
+    /// traversal. The journal and index are local to this compressor / list;
+    /// neither requires shared mutable state for future parallel traversal.
+    fn drain_dirty_declarators(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        if ctx.state.pass_changes.dirty_symbols.is_empty() {
+            return;
+        }
+
+        let mut declaration_count = 0;
+        let mut owns_dirty_symbol = false;
+        for stmt in stmts.iter() {
+            let Statement::VariableDeclaration(var_decl) = stmt else { continue };
+            for decl in &var_decl.declarations {
+                let BindingPattern::BindingIdentifier(ident) = &decl.id else { continue };
+                declaration_count += 1;
+                owns_dirty_symbol |=
+                    ident.symbol_id.get().is_some_and(|id| ctx.symbol_became_unused(id));
+            }
+        }
+        if !owns_dirty_symbol {
+            return;
+        }
+
+        // A sorted flat index avoids one heap allocation per symbol while
+        // still supporting multiple declarations for a redeclared symbol.
+        let mut declarations_by_symbol =
+            ArenaVec::<(SymbolId, usize)>::with_capacity_in(declaration_count, ctx);
+        for (statement_index, stmt) in stmts.iter().enumerate() {
+            let Statement::VariableDeclaration(var_decl) = stmt else { continue };
+            for decl in &var_decl.declarations {
+                let BindingPattern::BindingIdentifier(ident) = &decl.id else { continue };
+                let Some(symbol_id) = ident.symbol_id.get() else { continue };
+                declarations_by_symbol.push((symbol_id, statement_index));
+            }
+        }
+        declarations_by_symbol.sort_unstable_by_key(|(symbol_id, statement_index)| {
+            (symbol_id.index(), *statement_index)
+        });
+        declarations_by_symbol.dedup();
+
+        // Work is queued per statement, not per dirty symbol: one `retain_mut`
+        // already retries every declarator of a statement, so visiting a
+        // statement once per dirty symbol rescans the same declarator list N
+        // times for N dirty symbols declared by it - quadratic whenever
+        // side-effectful initializers keep those declarators alive. Sorting and
+        // deduplicating each round collapses those repeats, and a statement is
+        // revisited only once a later removal dirties one of its symbols again,
+        // so rescans are bounded by removals rather than by journal length.
+        //
+        // The round buffer is borrowed from the state so repeated statement
+        // lists reuse one allocation; a re-entrant call starts from an empty
+        // buffer and is equally correct.
+        let empty = ArenaVec::new_in(ctx);
+        let mut round = std::mem::replace(&mut ctx.state.dirty_statement_scratch, empty);
+        let mut cursor = 0;
+
+        loop {
+            // Absorb journal entries appended since the previous round,
+            // including symbols dirtied by the statements it processed.
+            while cursor < ctx.state.pass_changes.dirty_symbols.len() {
+                let symbol_id = ctx.state.pass_changes.dirty_symbols[cursor];
+                cursor += 1;
+                let symbol_index = symbol_id.index();
+                let start = declarations_by_symbol
+                    .partition_point(|(candidate, _)| candidate.index() < symbol_index);
+                let end = declarations_by_symbol
+                    .partition_point(|(candidate, _)| candidate.index() <= symbol_index);
+                round.extend(declarations_by_symbol[start..end].iter().map(|&(_, index)| index));
+            }
+            if round.is_empty() {
+                break;
+            }
+            round.sort_unstable();
+            round.dedup();
+
+            for &statement_index in &round {
+                let Statement::VariableDeclaration(var_decl) = &mut stmts[statement_index] else {
+                    continue;
+                };
+                let kind = var_decl.kind;
+                var_decl.declarations.retain_mut(|decl| {
+                    if !Self::should_remove_unused_declarator(decl, kind, ctx) {
+                        return true;
+                    }
+
+                    // Reuse the ordinary unused-expression reducer. If it
+                    // leaves an observable residue, keep the declarator for
+                    // the normal statement pipeline to lower on the next pass;
+                    // any reductions already made remain valid AST progress.
+                    if let Some(mut init) = decl.init.take() {
+                        if !Self::remove_unused_expression(&mut init, ctx) {
+                            decl.init = Some(init);
+                            return true;
+                        }
+                        ctx.drop_expression(&init);
+                    }
+                    ctx.drop_variable_declarator(decl);
+                    false
+                });
+            }
+            round.clear();
+        }
+        ctx.state.dirty_statement_scratch = round;
+
+        // All semantic references in emptied declarations were already routed
+        // through the typed drop helpers above.
+        stmts.retain(|stmt| {
+            !matches!(stmt, Statement::VariableDeclaration(decl) if decl.declarations.is_empty())
+        });
     }
 
     /// Some parsers cannot parse long conditional expressions.
@@ -317,8 +440,7 @@ impl<'a> PeepholeOptimizations {
 
     fn minimize_statement(
         stmt: Statement<'a>,
-        i: usize,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
@@ -334,7 +456,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
+                if Self::handle_if_statement(stmts, if_stmt, result, ctx).is_break() {
                     return ControlFlow::Break(());
                 }
             }
@@ -780,8 +902,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_if_statement(
-        i: usize,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
 
@@ -841,12 +962,10 @@ impl<'a> PeepholeOptimizations {
                     //
                     let can_move_branch_condition_outside_scope =
                         !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
-                            && !stmts.get(i + 1..).is_some_and(|stmts| {
-                                stmts.iter().any(Self::statement_cares_about_scope)
-                            });
+                            && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
 
                     if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.drain(i + 1..);
+                        let drained_stmts = stmts.by_ref();
                         let mut body = if let Some(alternate) = if_stmt.alternate.take() {
                             ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
                         } else {
