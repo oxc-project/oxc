@@ -74,7 +74,7 @@ pub use options::RegExpOptions;
 
 pub struct RegExp {
     unsupported_flags: RegExpFlags,
-    some_unsupported_patterns: bool,
+    some_other_unsupported_patterns: bool,
     unsupported_patterns: RegexUnsupportedPatterns,
     duplicate_named_capture_groups_runtime: bool,
 }
@@ -109,14 +109,12 @@ impl RegExp {
             ..
         } = options;
 
-        let some_unsupported_patterns = look_behind_assertions
-            || named_capture_groups
-            || unicode_property_escapes
-            || duplicate_named_capture_groups;
+        let some_other_unsupported_patterns =
+            look_behind_assertions || named_capture_groups || unicode_property_escapes;
 
         Self {
             unsupported_flags,
-            some_unsupported_patterns,
+            some_other_unsupported_patterns,
             unsupported_patterns: RegexUnsupportedPatterns {
                 look_behind_assertions,
                 named_capture_groups,
@@ -144,89 +142,32 @@ impl<'a> RegExp {
     /// flags to `new RegExp(...)`.
     fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let is_regexp_test = Self::is_regexp_test(ctx);
-        let groups = self.rewrite_duplicate_named_capture_groups(expr, ctx);
 
         let Expression::RegExpLiteral(regexp) = expr else {
             unreachable!();
         };
         let regexp = regexp.as_mut();
 
-        let pattern_text = regexp.regex.pattern.text;
         let flags = regexp.regex.flags;
         let has_unsupported_flags = flags.intersects(self.unsupported_flags);
-        if !has_unsupported_flags {
-            if !self.some_unsupported_patterns {
-                // This RegExp has no unsupported flags, and there are no patterns which may need transforming,
-                // so there's nothing to do
-                return;
-            }
+        let may_have_duplicate_named_capture_groups =
+            self.unsupported_patterns.duplicate_named_capture_groups
+                && Self::may_contain_named_capture_group(regexp.regex.pattern.text.as_str());
 
-            let owned_pattern;
-            let pattern = if let Some(pattern) = &regexp.regex.pattern.pattern {
-                pattern
-            } else {
-                match regexp.parse_pattern(ctx.allocator()) {
-                    Ok(pattern) => {
-                        owned_pattern = Some(pattern);
-                        owned_pattern.as_ref().unwrap()
-                    }
-                    Err(error) => {
-                        ctx.state.error(error);
-                        return;
-                    }
-                }
-            };
-
-            if !has_unsupported_regular_expression_pattern(pattern, &self.unsupported_patterns) {
-                if let Some(groups) = groups
-                    && self.duplicate_named_capture_groups_runtime
-                    && !is_regexp_test
-                {
-                    Self::wrap_regexp(expr, groups, ctx);
-                }
-                return;
-            }
+        // Unsupported flags already require a constructor. Only parse the pattern too when it may
+        // contain duplicate named groups, which need semantic lowering before the constructor is
+        // emitted.
+        if has_unsupported_flags && !may_have_duplicate_named_capture_groups {
+            Self::replace_with_regexp_constructor(expr, ctx);
+            return;
         }
 
-        let callee = {
-            let regexp = static_ident!("RegExp");
-            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), regexp);
-            ctx.create_ident_expr(SPAN, regexp, symbol_id, ReferenceFlags::read())
-        };
-
-        let arguments = [
-            Argument::new_string_literal(SPAN, pattern_text, None, ctx),
-            Argument::new_string_literal(
-                SPAN,
-                Str::from_str_in(flags.to_inline_string().as_str(), ctx),
-                None,
-                ctx,
-            ),
-        ];
-
-        *expr = Expression::new_new_expression(regexp.span, callee, None, arguments, ctx);
-
-        if let Some(groups) = groups
-            && self.duplicate_named_capture_groups_runtime
-            && !is_regexp_test
+        if !has_unsupported_flags
+            && !self.some_other_unsupported_patterns
+            && !may_have_duplicate_named_capture_groups
         {
-            Self::wrap_regexp(expr, groups, ctx);
+            return;
         }
-    }
-
-    fn rewrite_duplicate_named_capture_groups(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Vec<NamedCaptureGroup>> {
-        if !self.unsupported_patterns.duplicate_named_capture_groups {
-            return None;
-        }
-
-        let Expression::RegExpLiteral(regexp) = expr else {
-            unreachable!();
-        };
-        let regexp = regexp.as_mut();
 
         let owned_pattern;
         let pattern = if let Some(pattern) = &regexp.regex.pattern.pattern {
@@ -239,23 +180,93 @@ impl<'a> RegExp {
                 }
                 Err(error) => {
                     ctx.state.error(error);
-                    return None;
+                    return;
                 }
             }
         };
 
-        let pattern_offset = regexp.span.start + 1;
-        let result = rewrite_duplicate_named_capture_groups(
-            regexp.regex.pattern.text.as_str(),
-            pattern,
-            pattern_offset,
-        )?;
+        let rewrite = if may_have_duplicate_named_capture_groups {
+            rewrite_duplicate_named_capture_groups(
+                regexp.regex.pattern.text.as_str(),
+                pattern,
+                regexp.span.start + 1,
+            )
+        } else {
+            None
+        };
 
-        regexp.regex.pattern.text = Str::from_str_in(&result.pattern, ctx);
-        regexp.regex.pattern.pattern = None;
-        regexp.raw = None;
+        let has_unsupported_pattern = if has_unsupported_flags {
+            false
+        } else {
+            // Duplicate groups were checked by the rewriter using this parsed AST. If it rewrites
+            // them, all named group syntax is removed as well.
+            let unsupported_patterns = RegexUnsupportedPatterns {
+                named_capture_groups: self.unsupported_patterns.named_capture_groups
+                    && rewrite.is_none(),
+                duplicate_named_capture_groups: false,
+                unicode_property_escapes: self.unsupported_patterns.unicode_property_escapes,
+                look_behind_assertions: self.unsupported_patterns.look_behind_assertions,
+                pattern_modifiers: self.unsupported_patterns.pattern_modifiers,
+            };
+            has_unsupported_regular_expression_pattern(pattern, &unsupported_patterns)
+        };
 
-        Some(result.groups)
+        let groups = rewrite.map(|result| {
+            regexp.regex.pattern.text = Str::from_str_in(&result.pattern, ctx);
+            regexp.regex.pattern.pattern = None;
+            regexp.raw = None;
+            result.groups
+        });
+
+        if !has_unsupported_flags && !has_unsupported_pattern {
+            if let Some(groups) = groups
+                && self.duplicate_named_capture_groups_runtime
+                && !is_regexp_test
+            {
+                Self::wrap_regexp(expr, groups, ctx);
+            }
+            return;
+        }
+
+        Self::replace_with_regexp_constructor(expr, ctx);
+
+        if let Some(groups) = groups
+            && self.duplicate_named_capture_groups_runtime
+            && !is_regexp_test
+        {
+            Self::wrap_regexp(expr, groups, ctx);
+        }
+    }
+
+    fn replace_with_regexp_constructor(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::RegExpLiteral(regexp) = expr else {
+            unreachable!();
+        };
+        let regexp = regexp.as_mut();
+
+        let callee = {
+            let name = static_ident!("RegExp");
+            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), name);
+            ctx.create_ident_expr(SPAN, name, symbol_id, ReferenceFlags::read())
+        };
+
+        let arguments = [
+            Argument::new_string_literal(SPAN, regexp.regex.pattern.text, None, ctx),
+            Argument::new_string_literal(
+                SPAN,
+                Str::from_str_in(regexp.regex.flags.to_inline_string().as_str(), ctx),
+                None,
+                ctx,
+            ),
+        ];
+
+        *expr = Expression::new_new_expression(regexp.span, callee, None, arguments, ctx);
+    }
+
+    fn may_contain_named_capture_group(pattern: &str) -> bool {
+        pattern
+            .match_indices("(?<")
+            .any(|(index, _)| !matches!(pattern.as_bytes().get(index + 3), Some(b'=' | b'!')))
     }
 
     fn wrap_regexp(
@@ -322,5 +333,19 @@ impl<'a> RegExp {
             ctx.parent(),
             Ancestor::StaticMemberExpressionObject(member) if member.property().name == "test"
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::RegExp;
+
+    #[test]
+    fn named_capture_group_prefilter() {
+        assert!(RegExp::may_contain_named_capture_group(r"(?<name>x)"));
+        assert!(RegExp::may_contain_named_capture_group(r"(?<\u0061>x)"));
+        assert!(!RegExp::may_contain_named_capture_group(r"(?<=x)"));
+        assert!(!RegExp::may_contain_named_capture_group(r"(?<!x)"));
+        assert!(!RegExp::may_contain_named_capture_group("plain"));
     }
 }
