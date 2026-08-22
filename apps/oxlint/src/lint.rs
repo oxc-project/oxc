@@ -99,6 +99,10 @@ impl CliRunner {
             return crate::mode::run_init(&self.cwd, stdout);
         }
 
+        if debug_timings && !output_formatter.supports_rule_timings() {
+            print_timings_not_supported_warning();
+        }
+
         let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
@@ -751,6 +755,15 @@ fn render_config_builder_error(
             .collect::<String>(),
         _ => render_report(handler, &OxcDiagnostic::error(error.to_string())),
     }
+}
+
+/// Surfaces #24998: every format except `default` silently drops the
+/// `--debug=timings` output, so say so on stderr instead of printing nothing.
+#[expect(clippy::print_stderr)]
+fn print_timings_not_supported_warning() {
+    eprintln!(
+        "warning: --debug=timings output is only printed by the `default` output format. Pass --format=default to see timings."
+    );
 }
 
 #[cfg(test)]

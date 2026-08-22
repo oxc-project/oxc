@@ -278,6 +278,9 @@ pub struct WarningOptions {
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
     /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+    ///
+    /// Without this flag, `agent` is auto-selected when an AI agent environment is
+    /// detected, and `github` inside GitHub Actions
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 
