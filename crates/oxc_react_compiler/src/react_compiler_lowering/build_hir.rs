@@ -6016,10 +6016,7 @@ fn lower_statement<'a>(
                     continuation_block,
                 );
             } else {
-                builder.record_error(
-                    diagnostics::todo_build_hir_lower_statement_handle_empty_test_statement(span),
-                )?;
-                // Treat `for(;;)` as `while(true)` to keep the builder state consistent
+                // Treat `for(;;)` as `while(true)`.
                 let true_val =
                     InstructionValue::Primitive { value: PrimitiveValue::Boolean(true), span };
                 let test = lower_value_to_temporary(builder, true_val)?;
