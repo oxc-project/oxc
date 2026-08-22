@@ -32,6 +32,36 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withPatterns from "foo/bar";
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import withPatterns from "foo/bar";
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import caseInsensitive from "foo/bar";
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * from "foo/bar";
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'restricted' import from 'foo/bar' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ import { restricted } from "foo/bar";
+   ·          ──────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): 'foo/baz' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import withPatterns from "foo/baz";
