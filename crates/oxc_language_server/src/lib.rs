@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{num::NonZero, sync::Arc};
 
 use futures::future::BoxFuture;
 use rustc_hash::FxBuildHasher;
@@ -73,5 +73,10 @@ async fn run_server_impl(
     })
     .finish();
 
-    Server::new(stdin, stdout, socket).serve(service).await;
+    // If the system has more than 6 threads, we use 2 less than the available threads
+    // to avoid overwhelming the system. Otherwise, we use all available threads.
+    let current_threads = std::thread::available_parallelism().map_or(1, NonZero::get);
+    let max = if current_threads > 6 { current_threads - 2 } else { current_threads };
+
+    Server::new(stdin, stdout, socket).concurrency_level(max).serve(service).await;
 }
