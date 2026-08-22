@@ -10494,6 +10494,26 @@
         "vue/no-multiple-slot-args": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vue/no-mutating-props": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMutatingPropsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "vue/no-required-prop-with-default": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -14977,6 +14997,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When `true`, the rule will ignore stateless components and will allow you to have multiple\nstateless components in the same file. Or one stateful component and one-or-more stateless\ncomponents in the same file.\n\nStateless basically just means function components, including those created via\n`memo` and `forwardRef`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoMutatingPropsConfig": {
+      "type": "object",
+      "properties": {
+        "shallowOnly": {
+          "description": "When `true`, only mutations that write directly to a prop itself\n(e.g. `props.a = 1`, `props.a++`) are reported; mutations of nested\nvalues (e.g. `props.a.b = 1`, `props.a.push(1)`) are allowed.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When `true`, only mutations that write directly to a prop itself\n(e.g. `props.a = 1`, `props.a++`) are reported; mutations of nested\nvalues (e.g. `props.a.b = 1`, `props.a.push(1)`) are allowed."
         }
       },
       "additionalProperties": false
