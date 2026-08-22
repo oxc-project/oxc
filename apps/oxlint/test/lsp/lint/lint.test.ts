@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { lintFixture, lintMultiFileFixture } from "../utils";
+import { lintFixture, lintFixtureWithInitializationMessages, lintMultiFileFixture } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
@@ -61,6 +61,24 @@ describe("LSP linting", () => {
         await lintFixture(FIXTURES_DIR, "custom-config-path/test.ts", "typescript", {
           configPath: "./lint.json",
         }),
+      ).toMatchSnapshot();
+    });
+
+    it("should show an error message when the workspace config is invalid", async () => {
+      expect(
+        await lintFixtureWithInitializationMessages(FIXTURES_DIR, "invalid-config-root/test.ts"),
+      ).toMatchSnapshot();
+    });
+
+    it("should show an error message when configPath points to an invalid config", async () => {
+      expect(
+        await lintFixtureWithInitializationMessages(
+          FIXTURES_DIR,
+          "invalid-custom-config-path/test.ts",
+          {
+            configPath: "./not-found.json",
+          },
+        ),
       ).toMatchSnapshot();
     });
   });
