@@ -226,20 +226,6 @@ if (DEBUG) {
 }
 
 /**
- * Location of mapping to record.
- */
-type Location =
-  | typeof LOCATION_NAMED
-  | typeof LOCATION_END_MINUS_ONE
-  | typeof LOCATION_END
-  | typeof LOCATION_START;
-
-const LOCATION_NAMED = 0;
-const LOCATION_END_MINUS_ONE = 1;
-const LOCATION_END = 2;
-const LOCATION_START = 3;
-
-/**
  * Append `code` to the output, and record what it ends with.
  *
  * @param state - Printer state
@@ -281,7 +267,7 @@ export function writeWithMap(
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  recordSourceMapping(state, node, LOCATION_START);
+  markMapStart(state, node);
 
   state.last = last;
   state.output += code;
@@ -314,7 +300,7 @@ export function writeWithMapNamed(
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  recordSourceMapping(state, node, LOCATION_NAMED);
+  markMapNamed(state, node);
 
   state.last = last;
   state.output += code;
@@ -364,7 +350,7 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMapNoLast(state: State, code: string, node: UnnamedMappableNode): void {
-  recordSourceMapping(state, node, LOCATION_START);
+  markMapStart(state, node);
 
   state.output += code;
 
@@ -389,7 +375,7 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
  * @param node - Node this text came from
  */
 export function writeWithMapNamedNoLast(state: State, code: string, node: NamedMappableNode): void {
-  recordSourceMapping(state, node, LOCATION_NAMED);
+  markMapNamed(state, node);
 
   state.output += code;
 
@@ -425,7 +411,8 @@ export function writeWithMapEnd(
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  recordSourceMapping(state, node, LOCATION_END_MINUS_ONE);
+  markMapEnd(state, node);
+
   state.last = last;
   state.output += code;
 
@@ -445,7 +432,7 @@ export function writeWithMapEnd(
  * @param node - Node the mapping points at
  */
 export function markMapStart(state: State, node: MappableNode): void {
-  if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_START);
+  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start);
 }
 
 /**
@@ -458,7 +445,7 @@ export function markMapStart(state: State, node: MappableNode): void {
  * @param node - Node whose end offset the mapping points at
  */
 export function markMapAfter(state: State, node: MappableNode): void {
-  if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_END);
+  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.end);
 }
 
 /**
@@ -472,128 +459,138 @@ export function markMapAfter(state: State, node: MappableNode): void {
  * @param columnOffset - Number of UTF-16 units to add to `node`'s start offset
  */
 export function markMapAtStartOffset(state: State, node: MappableNode, columnOffset: number): void {
-  if (!SOURCEMAPS) return;
-
-  const { start, end } = node;
-  if (
-    typeof start !== "number"
-    || typeof end !== "number"
-    || !Number.isSafeInteger(start)
-    || !Number.isSafeInteger(end)
-    || start < 0
-    || end <= start
-  ) {
-    return;
-  }
-
-  debugAssert(
-    state.mapPositions !== null && state.sourceText !== null,
-    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
-  );
-
-  const sourceOffset = start + columnOffset;
-  if (!(sourceOffset >= 0 && sourceOffset <= state.sourceText.length)) return;
-
-  const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
-  mapPositions.push(state.output.length, sourceOffset);
+  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start + columnOffset);
 }
 
 /**
- * Record one mapping, if source maps are enabled and `node` carries a non-empty span.
+ * Record an unnamed mapping at `node`'s last source character.
+ *
+ * The end offset is exclusive, so this is one UTF-16 unit back from it, matching Rust's byte-span lookup.
+ * `generateSourceMap` normalizes a landing on a low surrogate back to its code point.
+ *
+ * @param state - Printer state
+ * @param node - Node whose last source character the mapping points at
+ */
+function markMapEnd(state: State, node: MappableNode): void {
+  if (SOURCEMAPS && hasMappableSpan(node)) {
+    // `hasMappableSpan` ensured span is non-empty, so `end` is at least 1. `end - 1` cannot go negative.
+    recordMapping(state, node.end - 1);
+  }
+}
+
+/**
+ * Record a mapping at `node`'s start offset, carrying the name it had in the source.
+ *
+ * The name is only recorded for the mapping where it differs from the text which is printed.
  *
  * @param state - Printer state
  * @param node - Node the mapping points at
- * @param location - Which of `node`'s offsets to record, and whether to recover its name
  */
-function recordSourceMapping(state: State, node: MappableNode, location: Location): void {
-  if (!SOURCEMAPS) return;
-
-  const { start, end } = node;
-  if (
-    typeof start !== "number"
-    || typeof end !== "number"
-    || !Number.isSafeInteger(start)
-    || !Number.isSafeInteger(end)
-    || start < 0
-    || end <= start
-  ) {
-    return;
-  }
+function markMapNamed(state: State, node: NamedMappableNode): void {
+  if (!SOURCEMAPS || !hasMappableSpan(node)) return;
 
   debugAssert(
     state.mapPositions !== null && state.sourceText !== null,
     "`mapPositions` and `sourceText` should be defined when source maps are enabled",
   );
 
-  let sourceOffset: number;
-  if (location === LOCATION_END_MINUS_ONE) {
-    sourceOffset = end - 1;
-  } else if (location === LOCATION_END) {
-    sourceOffset = end;
-  } else {
-    debugAssert(location === LOCATION_START || location === LOCATION_NAMED);
-    sourceOffset = start;
-  }
-
+  const { start, end } = node;
   const { sourceText } = state;
-  if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
+  if (start > sourceText.length) return;
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
   const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
+  if (mapPositions[mapPositions.length - 1] === start) return;
 
-  if (location === LOCATION_NAMED) {
-    // Only the named forms pass `LOCATION_NAMED`, and they take a `NamedMappableNode`
-    debugAssert("name" in node && typeof node.name === "string");
+  // A mapping carries a name only when the identifier printed differs from the one in the source.
+  // When possible, the mapping records the name from source, but if the source range is invalid,
+  // it falls back to the printed name.
+  //
+  // Almost every identifier is printed exactly as it was in source, so we do a quick check first,
+  // and only fall back to expensive scanning with Unicode property regexps in rare cases.
+  //
+  // A span can reach past the name it begins with, since a TypeScript annotation is absorbed into it,
+  // so a match has to be followed by a character which cannot continue an identifier.
+  //
+  // This check is one-sided.
+  // * When `matchesSource === true`, the source definitely has the same name that was printed,
+  //   and the mapping needs no name recorded.
+  // * When `matchesSource === false`, nothing is settled yet.
+  //   It could be a genuine rename, or could be a Unicode escape (`\u0061` printed as `a`),
+  //   or a non-ASCII character after the name, which `isDefinitelyIdentifierBoundary` will not classify.
+  //
+  // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
+  // That is what the source is compared against, and what gets recorded as the name.
+  const printedName = node.name;
+  const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
+  const nameStart = start + hashLength;
+  const nameEnd = nameStart + printedName.length;
+  const matchesSource =
+    end <= sourceText.length
+    && nameEnd <= end
+    && (hashLength === 0 || sourceText.charCodeAt(start) === 35) /* # */
+    && sourceText.startsWith(printedName, nameStart)
+    && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)));
 
-    // A mapping carries a name only when the identifier printed differs from the one in the source.
-    // When possible, the mapping records the name from source, but if the source range is invalid,
-    // it falls back to the printed name.
-    //
-    // Almost every identifier is printed exactly as it was in source, so we do a quick check first,
-    // and only fall back to expensive scanning with Unicode property regexps in rare cases.
-    //
-    // A span can reach past the name it begins with, since a TypeScript annotation is absorbed into it,
-    // so a match has to be followed by a character which cannot continue an identifier.
-    //
-    // This check is one-sided.
-    // * When `matchesSource === true`, the source definitely has the same name that was printed,
-    //   and the mapping needs no name recorded.
-    // * When `matchesSource === false`, nothing is settled yet.
-    //   It could be a genuine rename, or could be a Unicode escape (`\u0061` printed as `a`),
-    //   or a non-ASCII character after the name, which `isDefinitelyIdentifierBoundary` will not classify.
-    //
-    // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
-    // That is what the source is compared against, and what gets recorded as the name.
-    const printedName = node.name;
-    const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
-    const nameStart = start + hashLength;
-    const nameEnd = nameStart + printedName.length;
-    const matchesSource =
-      end <= sourceText.length
-      && nameEnd <= end
-      && (hashLength === 0 || sourceText.charCodeAt(start) === 35) /* # */
-      && sourceText.startsWith(printedName, nameStart)
-      && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)));
+  if (!matchesSource) {
+    // Read the name out of the source.
+    // We can use it for a definitive comparison, which the quick check above couldn't.
+    const originalName = originalNameFromSource(sourceText, node, start, end);
 
-    if (!matchesSource) {
-      // Read the name out of the source.
-      // We can use it for a definitive comparison, which the quick check above couldn't.
-      const originalName = originalNameFromSource(sourceText, node, start, end);
-
-      // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
-      // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
-      if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
-        (state.mapNames ??= []).push(
-          mapPositions.length >> 1,
-          originalName === undefined ? printedName : originalName,
-        );
-      }
+    // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
+    // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
+    if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
+      (state.mapNames ??= []).push(
+        mapPositions.length >> 1,
+        originalName === undefined ? printedName : originalName,
+      );
     }
   }
 
+  mapPositions.push(state.output.length, start);
+}
+
+/**
+ * Whether `node` carries a span a mapping can be recorded for.
+ *
+ * A transformed or hand-authored AST can carry anything at all, so the offsets are checked rather
+ * than trusted. Proving `start` and `end` here is what lets each recorder below skip the lower half
+ * of its own bounds check - `start` is not negative, and `end` is greater than it.
+ *
+ * @param node - Node the mapping is for
+ * @returns `true` if `node` has a non-empty span of safe integer offsets
+ */
+function hasMappableSpan(
+  node: MappableNode,
+): node is MappableNode & { start: number; end: number } {
+  const { start, end } = node;
+  return (
+    typeof start === "number"
+    && typeof end === "number"
+    && Number.isSafeInteger(start)
+    && Number.isSafeInteger(end)
+    && start >= 0
+    && end > start
+  );
+}
+
+/**
+ * Record source mapping at specified offset.
+ *
+ * @param state - Printer state
+ * @param sourceOffset - Source offset to record mapping for
+ */
+function recordMapping(state: State, sourceOffset: number): void {
+  debugAssert(
+    state.mapPositions !== null && state.sourceText !== null,
+    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
+  );
+
+  if (sourceOffset > state.sourceText.length) return;
+
+  const { mapPositions } = state;
+  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
   mapPositions.push(state.output.length, sourceOffset);
 }
 
