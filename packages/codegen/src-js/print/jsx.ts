@@ -28,7 +28,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 export function printJSXElement(node: ESTree.JSXElement, state: State): void {
   const { openingElement } = node;
 
-  writeWithMapNoLast(state, "<", openingElement);
+  writeWithMapNoLast(state, "<", openingElement.start, openingElement.end, openingElement);
   printJSXElementName(openingElement.name, state);
 
   if (TS) printTypeArguments(openingElement.typeArguments, state);
@@ -39,9 +39,9 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
     writeNoLast(state, " ");
     const attribute = attributes[i];
     if (attribute.type === "JSXSpreadAttribute") {
-      writeWithMap(state, "{...", CAT_OTHER, attribute);
+      writeWithMap(state, "{...", CAT_OTHER, attribute.start, attribute.end, attribute);
       printExpression(attribute.argument, state, PREC_COMMA, CTX_NONE);
-      writeWithMapEnd(state, "}", CAT_OTHER, attribute);
+      writeWithMapEnd(state, "}", CAT_OTHER, attribute.start, attribute.end, attribute);
     } else {
       printJSXAttribute(attribute, state);
     }
@@ -61,7 +61,7 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
     printJSXChild(children[i], state);
   }
 
-  writeWithMapNoLast(state, "</", closingElement);
+  writeWithMapNoLast(state, "</", closingElement.start, closingElement.end, closingElement);
   printJSXElementName(closingElement.name, state);
   write(state, ">", CAT_OTHER);
 }
@@ -75,7 +75,7 @@ function printJSXElementName(
 ): void {
   switch (node.type) {
     case "JSXIdentifier":
-      writeWithMapNamedJSXNoLast(state, node.name, node);
+      writeWithMapNamedJSXNoLast(state, node.name, node.start, node.end, node);
       break;
     case "JSXMemberExpression":
       printJSXElementName(node.object, state);
@@ -83,12 +83,18 @@ function printJSXElementName(
       printJSXElementName(node.property, state);
       break;
     case "JSXNamespacedName":
-      writeWithMapNamedJSXNoLast(state, node.namespace.name, node.namespace);
+      writeWithMapNamedJSXNoLast(
+        state,
+        node.namespace.name,
+        node.namespace.start,
+        node.namespace.end,
+        node.namespace,
+      );
       writeNoLast(state, ":");
-      writeWithMapNamedJSXNoLast(state, node.name.name, node.name);
+      writeWithMapNamedJSXNoLast(state, node.name.name, node.name.start, node.name.end, node.name);
       break;
     case "ThisExpression":
-      writeWithMapNoLast(state, "this", node);
+      writeWithMapNoLast(state, "this", node.start, node.end, node);
       break;
     default:
       throw new Error(`Unknown JSX name type: ${node.type}`);
@@ -105,11 +111,17 @@ function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
   // and the next real write reads `last`.
   const { name } = node;
   if (name.type === "JSXNamespacedName") {
-    writeWithMapNamedJSXNoLast(state, name.namespace.name, name.namespace);
+    writeWithMapNamedJSXNoLast(
+      state,
+      name.namespace.name,
+      name.namespace.start,
+      name.namespace.end,
+      name.namespace,
+    );
     writeNoLast(state, ":");
-    writeWithMapNamedJSXNoLast(state, name.name.name, name.name);
+    writeWithMapNamedJSXNoLast(state, name.name.name, name.name.start, name.name.end, name.name);
   } else {
-    writeWithMapNamedJSXNoLast(state, name.name, name);
+    writeWithMapNamedJSXNoLast(state, name.name, name.start, name.end, name);
   }
 
   const { value } = node;
@@ -179,7 +191,13 @@ function printJSXExpressionContainer(node: ESTree.JSXExpressionContainer, state:
  * Print a `<>...</>` fragment.
  */
 export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
-  writeWithMapNoLast(state, "<>", node.openingFragment);
+  writeWithMapNoLast(
+    state,
+    "<>",
+    node.openingFragment.start,
+    node.openingFragment.end,
+    node.openingFragment,
+  );
 
   const { children } = node;
   const { length } = children;
@@ -187,7 +205,14 @@ export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
     printJSXChild(children[i], state);
   }
 
-  writeWithMap(state, "</>", CAT_OTHER, node.closingFragment);
+  writeWithMap(
+    state,
+    "</>",
+    CAT_OTHER,
+    node.closingFragment.start,
+    node.closingFragment.end,
+    node.closingFragment,
+  );
 }
 
 /**
@@ -199,7 +224,13 @@ export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
 function printJSXChild(node: ESTree.JSXChild | UnknownNode, state: State): void {
   switch (node.type) {
     case "JSXText":
-      writeWithMapNoLast(state, node.raw != null ? node.raw : node.value, node);
+      writeWithMapNoLast(
+        state,
+        node.raw != null ? node.raw : node.value,
+        node.start,
+        node.end,
+        node,
+      );
       break;
     case "JSXExpressionContainer":
       printJSXExpressionContainer(node, state);

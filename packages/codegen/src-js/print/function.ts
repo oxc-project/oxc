@@ -47,17 +47,25 @@ export function printFunction(node: ESTree.Function, state: State): void {
   // The node's mapping goes on whichever of these is written first
   const declare = TS && node.declare;
   if (declare) {
-    writeWithMap(state, "declare ", CAT_OTHER, node);
+    writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
     writeIdent(state, node.async ? "async function" : "function");
   } else {
-    writeWithMap(state, node.async ? "async function" : "function", CAT_IDENT, node);
+    writeWithMap(
+      state,
+      node.async ? "async function" : "function",
+      CAT_IDENT,
+      node.start,
+      node.end,
+      node,
+    );
   }
 
   if (node.generator) write(state, "* ", CAT_OTHER);
 
-  if (node.id != null) {
+  const { id } = node;
+  if (id != null) {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, node.id.name, node.id);
+    writeWithMapNamed(state, id.name, id.start, id.end, id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -116,7 +124,7 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     if (decorators != null && decorators.length > 0) {
       printDecorators(decorators, state);
     } else {
-      markMapStart(state, param);
+      markMapStart(state, param.start, param.end, param);
     }
 
     if (TS && param.type === "TSParameterProperty") {
@@ -154,18 +162,18 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   // `body` is a BlockStatement holding directives + statements.
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMapNoLast(state, "{", body);
-    writeWithMapEnd(state, "}", CAT_OTHER, body);
+    writeWithMapNoLast(state, "{", body.start, body.end, body);
+    writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body.start, body.end, body);
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
   state.indentLevel--;
   printIndent(state);
 
-  writeWithMapEnd(state, "}", CAT_OTHER, body);
+  writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
 }
 
 /**

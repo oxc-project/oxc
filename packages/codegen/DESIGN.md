@@ -271,6 +271,12 @@ only the last piece's category can possibly be read. Hence eleven write primitiv
 | `writeWithMapNamedNoLast`    | No             | At the node's start, with name |
 | `writeWithMapNamedJSXNoLast` | No             | At the node's start, with name |
 
+- Every `writeWithMap*` and `markMap*` function takes the node's `start` and `end` offsets, extracted by the caller.
+  The node itself is still passed, last, but only debug asserts read it - which is what checks the offsets
+  against the node they claim to describe. The point is where the read happens - in a caller the node's type is known,
+  so `node.start` is a monomorphic load, whereas inside the write functions the same read is megamorphic,
+  because the printer reaches them from every node type there is. Release builds have the parameter and every argument
+  removed by the TSDown plugin.
 - The `*Named` functions record the name the node had in the source, and take a `NamedMappableNode`,
   which covers nodes with a string `name`. What they record is the text they print -
   debug builds assert the two are the same string.
@@ -386,16 +392,17 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 #### `unmap_writes`
 
 Rewrites every mapped write into the plain one it becomes with no mapping to record - so
-`writeWithMap(state, code, cat, node)` turns into `write(state, code, cat)` - and rewrites the import to match.
+`writeWithMap(state, code, cat, node.start, node.end, node)` turns into `write(state, code, cat)` -
+and rewrites the import to match.
 `writeWithMapEnd` becomes `write` too, and every `NoLast` form becomes `writeNoLast`.
 `writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate`, which fix the category
 instead of taking it. `writePrivate` exists only for the rewrite to land on.
 
-`printString` and `printNonNegativeFloat` take a node only to hand on to a mapped write. They keep their names,
-but the argument comes off every call, and the parameter off their declarations - which, unlike the mapped writes,
-survive into the build.
+`printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to a mapped write.
+They keep their names, but the arguments come off every call, and the parameters off their declarations -
+which, unlike the mapped writes, survive into the build.
 
-Without it, the node argument would still be evaluated and held live across a call which ignores it.
+Without it, the offsets would still be read and held live across a call which ignores them.
 
 The three `markMap*` calls write nothing, so they have no plain form to become, and keep their names -
 the arguments come off, and a body which opens `if (!SOURCEMAPS) return` lets the minifier remove what is left.
