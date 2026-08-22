@@ -57,6 +57,17 @@ fn minimize_nots_with_de_morgan_negative_cases() {
     // Existing shapes that consume the `!` for free must not regress.
     test("var v = !!(a == b || c == d);", "var v = a == b || c == d;");
     test("if (!(a == b && c == d)) x(); else y();", "a != b || c != d ? x() : y();");
+    // mixed unary-not leaves in both boolean and value contexts.
+    test("if (!(!a || b)) x();", "a && !b && x();");
+    test_same("var v = !(!a || b);");
+    test("if (!(a == b || !c && d == e)) x();", "a == b || !c && d == e || x();");
+    // parenthesis-size guard.
+    test_same("if (!(a == b || fn1())) throw x;");
+    test_same("if (!(a == b && fn1())) throw x;");
+    test("var v = !!(!a || b);", "var v = !(a && !b);");
+    test("var v = !!(a && !b);", "var v = !(!a || b);");
+    test_same("if (!(a < b || !c)) throw x;");
+    test_same("if (!(a in b || c == d)) throw x;");
 }
 
 #[test]
