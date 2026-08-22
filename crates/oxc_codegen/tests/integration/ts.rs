@@ -1,12 +1,14 @@
-use oxc_codegen::CodegenOptions;
-use oxc_parser::ParseOptions;
+use oxc_allocator::Allocator;
+use oxc_ast::ast::Statement;
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 use crate::{
     snapshot, snapshot_options,
     tester::{
-        default_options, test_idempotency, test_options_with_source_type, test_same, test_tsx,
-        test_with_parse_options,
+        default_options, test_idempotency, test_options_with_source_type,
+        test_reparse_with_source_type, test_same, test_tsx, test_with_parse_options,
     },
 };
 
@@ -71,6 +73,140 @@ fn tsx() {
     test_tsx("<T,>() => {}", "<T,>() => {};\n");
     test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
     test_tsx("<Foo<T> />", "<Foo<T> />;\n");
+}
+
+#[test]
+fn comparison_must_not_become_type_arguments() {
+    let test_ts = |source, expected| {
+        test_reparse_with_source_type(source, expected, SourceType::ts(), default_options());
+    };
+
+    // A structural close (`>`, `>>`, or `>>>`) groups an exposed-open expression on its left.
+    // The rule does not try to predict which token can follow speculative type arguments.
+    test_ts("(a < b) > /x/;", "(a < b) > /x/;\n");
+    test_ts("(a < b) > /x/.source;", "(a < b) > /x/.source;\n");
+    test_ts("(a < b) > /x/ + 1;", "(a < b) > /x/ + 1;\n");
+    test_ts("(a < b) > `x`;", "(a < b) > `x`;\n");
+    test_ts("(a < b) > `x`.length;", "(a < b) > `x`.length;\n");
+    test_ts("(a < b) > (c == d);", "(a < b) > (c == d);\n");
+    test_ts("(a < b) > c;", "(a < b) > c;\n");
+    test_ts("(a < b) > +c;", "(a < b) > +c;\n");
+    test_ts("(a < b) > -c;", "(a < b) > -c;\n");
+
+    // Conversely, a structural open (`<` or `<<`) groups a close-exposing right operand. These
+    // are the `>>` and `>>>` cases that ordinary precedence would otherwise print ungrouped.
+    test_ts("(a < b) < (c >> /x/);", "(a < b) < (c >> /x/);\n");
+    test_ts("((a < b) < c) < (d >>> `x`);", "(a < b < c) < (d >>> `x`);\n");
+
+    // `>=`, `<=`, an inner `>`, and an unmatched `<` do not form an open/close pair.
+    test_ts("(a < b) < /x/;", "a < b < /x/;\n");
+    test_ts("(a > b) > /x/;", "a > b > /x/;\n");
+    test_ts("(a > b) < /x/;", "a > b < /x/;\n");
+    test_ts("(a <= b) > /x/;", "a <= b > /x/;\n");
+    test_ts("(a < b) >= /x/;", "a < b >= /x/;\n");
+
+    test_reparse_with_source_type(
+        "(a < b) > /x/;",
+        "(a < b) > /x/;\n",
+        SourceType::tsx(),
+        default_options(),
+    );
+    test_reparse_with_source_type(
+        "(a < b) > /x/;",
+        "(a<b)>/x/;",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+    // Minification may intentionally change a string literal into a template literal.
+    test_options_with_source_type(
+        "(a < b) > \"x\";",
+        "(a<b)>`x`;",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+
+    // `|` and `&` group an operand whenever that operand exposes a dangling `<` suffix.
+    test_ts("(a < b) | c & d > /x/;", "(a < b) | c & d > /x/;\n");
+    test_ts("a | (b < c);", "a | (b < c);\n");
+    test_ts("a & (b < c);", "a & (b < c);\n");
+    test_ts("((a < b) | c) | d > /x/;", "(a < b) | c | d > /x/;\n");
+    test_ts("((a < b) | c) & d > /x/;", "((a < b) | c) & d > /x/;\n");
+    test_ts("(((a < b) < c) | (d >> /x/));", "(a < b < c) | d >> /x/;\n");
+    test_ts("((((a < b) < c) < d) & (e >>> `x`));", "(a < b < c < d) & e >>> `x`;\n");
+}
+
+#[test]
+fn nested_openers_with_less_than_must_not_become_type_arguments() {
+    test_reparse_with_source_type(
+        "((a < b) < (c >> (d, e)));",
+        "(a < b) < (c >> (d, e));\n",
+        SourceType::ts(),
+        default_options(),
+    );
+    test_reparse_with_source_type(
+        "((a < b) < (c >> (d, e)));",
+        "(a<b)<(c>>(d,e));",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+    test_reparse_with_source_type(
+        "((a < b) < (c >> (d, e)));",
+        "(a < b) < (c >> (d, e));\n",
+        SourceType::tsx(),
+        default_options(),
+    );
+
+    // A single closing angle cannot reach the earlier opener.
+    test_reparse_with_source_type(
+        "((a < b) < (c > (d, e)));",
+        "a < b < (c > (d, e));\n",
+        SourceType::ts(),
+        default_options(),
+    );
+}
+
+#[test]
+fn nested_openers_with_shift_left_must_not_become_type_arguments() {
+    test_reparse_with_source_type(
+        "((a << b) < (c >>> (d, e)));",
+        "(a << b) < (c >>> (d, e));\n",
+        SourceType::ts(),
+        default_options(),
+    );
+    test_reparse_with_source_type(
+        "((a < b) << (c >>> (d, e)));",
+        "(a < b) << (c >>> (d, e));\n",
+        SourceType::ts(),
+        default_options(),
+    );
+
+    // Two closing angles cannot consume the earlier `<<` and the current `<`.
+    test_reparse_with_source_type(
+        "((a << b) < (c >> (d, e)));",
+        "a << b < (c >> (d, e));\n",
+        SourceType::ts(),
+        default_options(),
+    );
+}
+
+#[test]
+fn comparison_type_argument_ambiguity_in_expression_fragment() {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, "(a < b) > /x/;", SourceType::ts())
+        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .parse();
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
+    let Statement::ExpressionStatement(statement) = &ret.program.body[0] else {
+        unreachable!();
+    };
+
+    let mut codegen = Codegen::new().with_source_type(SourceType::ts());
+    codegen.print_expression(&statement.expression);
+    assert_eq!(codegen.into_source_text(), "(a < b) > /x/");
+
+    let mut codegen = Codegen::new().with_source_type(SourceType::mjs());
+    codegen.print_expression(&statement.expression);
+    assert_eq!(codegen.into_source_text(), "a < b > /x/");
 }
 
 #[test]

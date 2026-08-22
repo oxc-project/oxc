@@ -1,11 +1,12 @@
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, SourceType};
 
 use crate::tester::{
-    test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
-    test_unambiguous, test_with_parse_options,
+    default_options, test, test_minify, test_minify_same, test_options,
+    test_reparse_with_source_type, test_same, test_same_ignore_parse_errors, test_unambiguous,
+    test_with_parse_options,
 };
 
 #[test]
@@ -13,6 +14,27 @@ fn cases() {
     test_same_ignore_parse_errors("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
     test_same_ignore_parse_errors("function foo(@foo x = @bar class {}) {}\n");
     test_same_ignore_parse_errors("function foo(@foo ...rest) {}\n");
+}
+
+#[test]
+fn comparison_type_argument_parentheses_are_typescript_only() {
+    for (source, expected) in [
+        // One JavaScript control for each TypeScript-only precedence adjustment.
+        ("(a < b) > /x/;", "a < b > /x/;\n"),
+        ("(a << b) >> /x/;", "a << b >> /x/;\n"),
+        ("(a < b) < (c >> /x/);", "a < b < c >> /x/;\n"),
+        ("(a < b) | c;", "a < b | c;\n"),
+        ("a & (b < c);", "a & b < c;\n"),
+        ("((a < b) < (c >> (d, e)));", "a < b < c >> (d, e);\n"),
+        ("((a << b) < (c >>> (d, e)));", "a << b < c >>> (d, e);\n"),
+    ] {
+        test_reparse_with_source_type(
+            source,
+            expected,
+            SourceType::unambiguous(),
+            default_options(),
+        );
+    }
 }
 
 #[test]
