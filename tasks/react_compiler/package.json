@@ -1,0 +1,17 @@
+{
+  "name": "react_compiler",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "compare": "node compare.mjs",
+    "report": "node report.mjs"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-react-jsx": "^7.29.7",
+    "@babel/plugin-transform-typescript": "^7.29.7",
+    "babel-plugin-react-compiler": "0.0.0-experimental-a1856f3-20260507",
+    "oxc-transform": "link:../../napi/transform",
+    "oxc-transform-react": "link:../../napi/transform-react"
+  }
+}
