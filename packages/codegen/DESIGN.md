@@ -255,17 +255,18 @@ No operator merges with a plain `!`, so storing it must not cost `printSpaceBefo
 Not every write needs to update `last`.
 
 When one token is written in pieces - a string's opening quote, its contents, its closing quote -
-only the last piece's category can possibly be read. Hence seven write primitives in [`print/write.ts`]:
+only the last piece's category can possibly be read. Hence eight write primitives in [`print/write.ts`]:
 
-| Function                  | Updates `last` | Records a source mapping       |
-| :------------------------ | :------------- | :----------------------------- |
-| `write`                   | Yes            | No                             |
-| `writeWithMap`            | Yes            | At the node's start            |
-| `writeWithMapNamed`       | Yes            | At the node's start, with name |
-| `writeWithMapEnd`         | Yes            | At the node's last character   |
-| `writeNoLast`             | No             | No                             |
-| `writeWithMapNoLast`      | No             | At the node's start            |
-| `writeWithMapNamedNoLast` | No             | At the node's start, with name |
+| Function                     | Updates `last` | Records a source mapping       |
+| :--------------------------- | :------------- | :----------------------------- |
+| `write`                      | Yes            | No                             |
+| `writeWithMap`               | Yes            | At the node's start            |
+| `writeWithMapNamed`          | Yes            | At the node's start, with name |
+| `writeWithMapEnd`            | Yes            | At the node's last character   |
+| `writeNoLast`                | No             | No                             |
+| `writeWithMapNoLast`         | No             | At the node's start            |
+| `writeWithMapNamedNoLast`    | No             | At the node's start, with name |
+| `writeWithMapNamedJSXNoLast` | No             | At the node's start, with name |
 
 - The `*Named` functions record the name the node had in the source, and take a `NamedMappableNode`,
   which covers nodes with a string `name`.

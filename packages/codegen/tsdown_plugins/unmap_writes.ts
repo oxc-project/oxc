@@ -39,6 +39,7 @@ const REWRITES = {
   writeWithMapNamed: { arity: 4, remove: 1, rename: "write" },
   writeWithMapNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
   writeWithMapNamedNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
+  writeWithMapNamedJSXNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
   writeWithMapEnd: { arity: 4, remove: 1, rename: "write" },
   // `rename: null` because a standalone mark has no non-sourcemap equivalent
   markMapStart: { arity: 2, remove: 1, rename: null },
