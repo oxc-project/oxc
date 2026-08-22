@@ -616,6 +616,7 @@ unicorn/no-useless-promise-resolve-reject                  |  62606
 unicorn/no-useless-spread                                  |  18240
 unicorn/no-useless-switch-case                             |    284
 unicorn/no-useless-undefined                               | 272171
+unicorn/no-xor-as-exponentiation                           |  20604
 unicorn/no-zero-fractions                                  |  14295
 unicorn/number-literal-case                                |  14334
 unicorn/numeric-separators-style                           |  14334

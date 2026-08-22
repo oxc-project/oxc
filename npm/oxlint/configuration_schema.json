@@ -9282,6 +9282,9 @@
             }
           ]
         },
+        "unicorn/no-xor-as-exponentiation": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-zero-fractions": {
           "$ref": "#/definitions/RuleNoConfig"
         },

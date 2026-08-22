@@ -693,6 +693,7 @@ pub use crate::rules::unicorn::no_useless_promise_resolve_reject::NoUselessPromi
 pub use crate::rules::unicorn::no_useless_spread::NoUselessSpread as UnicornNoUselessSpread;
 pub use crate::rules::unicorn::no_useless_switch_case::NoUselessSwitchCase as UnicornNoUselessSwitchCase;
 pub use crate::rules::unicorn::no_useless_undefined::NoUselessUndefined as UnicornNoUselessUndefined;
+pub use crate::rules::unicorn::no_xor_as_exponentiation::NoXorAsExponentiation as UnicornNoXorAsExponentiation;
 pub use crate::rules::unicorn::no_zero_fractions::NoZeroFractions as UnicornNoZeroFractions;
 pub use crate::rules::unicorn::number_literal_case::NumberLiteralCase as UnicornNumberLiteralCase;
 pub use crate::rules::unicorn::numeric_separators_style::NumericSeparatorsStyle as UnicornNumericSeparatorsStyle;
@@ -1441,6 +1442,7 @@ pub enum RuleEnum {
     UnicornNoUselessSpread(UnicornNoUselessSpread),
     UnicornNoUselessSwitchCase(UnicornNoUselessSwitchCase),
     UnicornNoUselessUndefined(UnicornNoUselessUndefined),
+    UnicornNoXorAsExponentiation(UnicornNoXorAsExponentiation),
     UnicornNoZeroFractions(UnicornNoZeroFractions),
     UnicornNumberLiteralCase(UnicornNumberLiteralCase),
     UnicornNumericSeparatorsStyle(UnicornNumericSeparatorsStyle),
@@ -2387,7 +2389,8 @@ const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize =
 const UNICORN_NO_USELESS_SPREAD_ID: usize = UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID + 1usize;
 const UNICORN_NO_USELESS_SWITCH_CASE_ID: usize = UNICORN_NO_USELESS_SPREAD_ID + 1usize;
 const UNICORN_NO_USELESS_UNDEFINED_ID: usize = UNICORN_NO_USELESS_SWITCH_CASE_ID + 1usize;
-const UNICORN_NO_ZERO_FRACTIONS_ID: usize = UNICORN_NO_USELESS_UNDEFINED_ID + 1usize;
+const UNICORN_NO_XOR_AS_EXPONENTIATION_ID: usize = UNICORN_NO_USELESS_UNDEFINED_ID + 1usize;
+const UNICORN_NO_ZERO_FRACTIONS_ID: usize = UNICORN_NO_XOR_AS_EXPONENTIATION_ID + 1usize;
 const UNICORN_NUMBER_LITERAL_CASE_ID: usize = UNICORN_NO_ZERO_FRACTIONS_ID + 1usize;
 const UNICORN_NUMERIC_SEPARATORS_STYLE_ID: usize = UNICORN_NUMBER_LITERAL_CASE_ID + 1usize;
 const UNICORN_PREFER_ADD_EVENT_LISTENER_ID: usize = UNICORN_NUMERIC_SEPARATORS_STYLE_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3298,6 +3301,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornNoUselessSpread::NAME,
     UnicornNoUselessSwitchCase::NAME,
     UnicornNoUselessUndefined::NAME,
+    UnicornNoXorAsExponentiation::NAME,
     UnicornNoZeroFractions::NAME,
     UnicornNumberLiteralCase::NAME,
     UnicornNumericSeparatorsStyle::NAME,
@@ -4270,6 +4274,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UNICORN_NO_USELESS_SPREAD_ID,
             Self::UnicornNoUselessSwitchCase(_) => UNICORN_NO_USELESS_SWITCH_CASE_ID,
             Self::UnicornNoUselessUndefined(_) => UNICORN_NO_USELESS_UNDEFINED_ID,
+            Self::UnicornNoXorAsExponentiation(_) => UNICORN_NO_XOR_AS_EXPONENTIATION_ID,
             Self::UnicornNoZeroFractions(_) => UNICORN_NO_ZERO_FRACTIONS_ID,
             Self::UnicornNumberLiteralCase(_) => UNICORN_NUMBER_LITERAL_CASE_ID,
             Self::UnicornNumericSeparatorsStyle(_) => UNICORN_NUMERIC_SEPARATORS_STYLE_ID,
@@ -5303,6 +5308,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::CATEGORY,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::CATEGORY,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::CATEGORY,
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::CATEGORY,
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::CATEGORY,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::CATEGORY,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::CATEGORY,
@@ -6316,6 +6322,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::FIX,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::FIX,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::FIX,
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::FIX,
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::FIX,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::FIX,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::FIX,
@@ -7459,6 +7466,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::documentation(),
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::documentation(),
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::documentation(),
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::documentation(),
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::documentation(),
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::documentation(),
             Self::UnicornNumericSeparatorsStyle(_) => {
@@ -9503,6 +9511,10 @@ impl RuleEnum {
                 UnicornNoUselessUndefined::config_schema(generator)
                     .or_else(|| UnicornNoUselessUndefined::schema(generator))
             }
+            Self::UnicornNoXorAsExponentiation(_) => {
+                UnicornNoXorAsExponentiation::config_schema(generator)
+                    .or_else(|| UnicornNoXorAsExponentiation::schema(generator))
+            }
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::config_schema(generator)
                 .or_else(|| UnicornNoZeroFractions::schema(generator)),
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::config_schema(generator)
@@ -10978,6 +10990,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => "unicorn",
             Self::UnicornNoUselessSwitchCase(_) => "unicorn",
             Self::UnicornNoUselessUndefined(_) => "unicorn",
+            Self::UnicornNoXorAsExponentiation(_) => "unicorn",
             Self::UnicornNoZeroFractions(_) => "unicorn",
             Self::UnicornNumberLiteralCase(_) => "unicorn",
             Self::UnicornNumericSeparatorsStyle(_) => "unicorn",
@@ -12983,6 +12996,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.run(node, ctx),
+            Self::UnicornNoXorAsExponentiation(rule) => rule.run(node, ctx),
             Self::UnicornNoZeroFractions(rule) => rule.run(node, ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.run(node, ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run(node, ctx),
@@ -13870,6 +13884,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.run_once(ctx),
+            Self::UnicornNoXorAsExponentiation(rule) => rule.run_once(ctx),
             Self::UnicornNoZeroFractions(rule) => rule.run_once(ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.run_once(ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_once(ctx),
@@ -14848,6 +14863,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoXorAsExponentiation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoZeroFractions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15762,6 +15778,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessSwitchCase(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessUndefined(rule) => rule.should_run(ctx),
+            Self::UnicornNoXorAsExponentiation(rule) => rule.should_run(ctx),
             Self::UnicornNoZeroFractions(rule) => rule.should_run(ctx),
             Self::UnicornNumberLiteralCase(rule) => rule.should_run(ctx),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.should_run(ctx),
@@ -16878,6 +16895,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::IS_TSGOLINT_RULE,
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::IS_TSGOLINT_RULE,
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::IS_TSGOLINT_RULE,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::IS_TSGOLINT_RULE,
             Self::UnicornNumericSeparatorsStyle(_) => {
@@ -18024,6 +18042,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::VERSION,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::VERSION,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::VERSION,
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::VERSION,
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::VERSION,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::VERSION,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::VERSION,
@@ -19099,6 +19118,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::HAS_CONFIG,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::HAS_CONFIG,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::HAS_CONFIG,
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::HAS_CONFIG,
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::HAS_CONFIG,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::HAS_CONFIG,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::HAS_CONFIG,
@@ -20127,6 +20147,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::INFO,
             Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::INFO,
             Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::INFO,
+            Self::UnicornNoXorAsExponentiation(_) => UnicornNoXorAsExponentiation::INFO,
             Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::INFO,
             Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::INFO,
             Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::INFO,
@@ -21032,6 +21053,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(rule) => rule.types_info(),
             Self::UnicornNoUselessSwitchCase(rule) => rule.types_info(),
             Self::UnicornNoUselessUndefined(rule) => rule.types_info(),
+            Self::UnicornNoXorAsExponentiation(rule) => rule.types_info(),
             Self::UnicornNoZeroFractions(rule) => rule.types_info(),
             Self::UnicornNumberLiteralCase(rule) => rule.types_info(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.types_info(),
@@ -21906,6 +21928,7 @@ impl RuleEnum {
             Self::UnicornNoUselessSpread(rule) => rule.run_info(),
             Self::UnicornNoUselessSwitchCase(rule) => rule.run_info(),
             Self::UnicornNoUselessUndefined(rule) => rule.run_info(),
+            Self::UnicornNoXorAsExponentiation(rule) => rule.run_info(),
             Self::UnicornNoZeroFractions(rule) => rule.run_info(),
             Self::UnicornNumberLiteralCase(rule) => rule.run_info(),
             Self::UnicornNumericSeparatorsStyle(rule) => rule.run_info(),
@@ -22890,6 +22913,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoUselessSpread(UnicornNoUselessSpread::default()),
         RuleEnum::UnicornNoUselessSwitchCase(UnicornNoUselessSwitchCase::default()),
         RuleEnum::UnicornNoUselessUndefined(UnicornNoUselessUndefined::default()),
+        RuleEnum::UnicornNoXorAsExponentiation(UnicornNoXorAsExponentiation::default()),
         RuleEnum::UnicornNoZeroFractions(UnicornNoZeroFractions::default()),
         RuleEnum::UnicornNumberLiteralCase(UnicornNumberLiteralCase::default()),
         RuleEnum::UnicornNumericSeparatorsStyle(UnicornNumericSeparatorsStyle::default()),
