@@ -1332,7 +1332,7 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
-  "react/capitalized-calls"?: RuleNoConfig;
+  "react/capitalized-calls"?: RuleNoConfig | [AllowWarnDeny, CapitalizedCallsConfig];
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
   "react/error-boundaries"?: RuleNoConfig;
@@ -4622,6 +4622,21 @@ export interface ButtonHasType {
    * If true, allow `type="submit"`.
    */
   submit?: boolean;
+}
+export interface CapitalizedCallsConfig {
+  /**
+   * Exact names of capitalized functions that may be called directly.
+   * Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+   * environment option.
+   */
+  allow?: string[];
+  /**
+   * A regex pattern; capitalized functions whose name matches may be called
+   * directly, checked alongside `allow`. Useful when a codebase has a
+   * naming convention for capitalized non-component factories, such as
+   * generated event or schema builders (e.g. `"Event$"`).
+   */
+  allowPattern?: string;
 }
 export interface CheckedRequiresOnchangeOrReadonly {
   /**
