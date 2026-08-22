@@ -74,7 +74,7 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     // Prettier-delegated files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
     {
-        if let Some(parser_name) = get_prettier_parser_name(file_name, extension) {
+        if let Some(parser_name) = get_prettier_parser_name(&path, file_name, extension) {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
             let supports_svelte = SVELTE_PARSERS.contains(parser_name);
@@ -417,7 +417,11 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 /// Returns the Prettier parser name for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
-fn get_prettier_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
+fn get_prettier_parser_name(
+    path: &Path,
+    file_name: &str,
+    extension: Option<&str>,
+) -> Option<&'static str> {
     // Markdown and variants
     if MARKDOWN_FILENAMES.contains(file_name) {
         return Some("markdown");
@@ -434,6 +438,9 @@ fn get_prettier_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     // HTML and variants
     // Must be checked before generic HTML
     if file_name.ends_with(".component.html") {
+        return Some("angular");
+    }
+    if extension == Some("html") && path.with_extension("ts").is_file() {
         return Some("angular");
     }
     if let Some(ext) = extension
@@ -629,7 +636,7 @@ mod tests {
         fn get_parser_name(file_name: &str) -> Option<&'static str> {
             let path = Path::new(file_name);
             let extension = path.extension().and_then(|ext| ext.to_str());
-            get_prettier_parser_name(file_name, extension)
+            get_prettier_parser_name(path, file_name, extension)
         }
 
         let test_cases = vec![
@@ -685,6 +692,43 @@ mod tests {
             let result = get_parser_name(file_name);
             assert_eq!(result, expected, "`{file_name}` should be parsed as {expected:?}");
         }
+
+        // Angular template detection via sibling `.ts` file
+        let temp_dir =
+            std::env::temp_dir().join(format!("oxfmt_test_angular_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&temp_dir);
+
+        let my_comp_ts = temp_dir.join("mycomponent.ts");
+        let my_comp_html = temp_dir.join("mycomponent.html");
+        let standalone_html = temp_dir.join("standalone.html");
+
+        std::fs::write(&my_comp_ts, "").unwrap();
+        std::fs::write(&my_comp_html, "").unwrap();
+        std::fs::write(&standalone_html, "").unwrap();
+
+        let ext = Some("html");
+        let parser_with_sibling = get_prettier_parser_name(&my_comp_html, "mycomponent.html", ext);
+        assert_eq!(
+            parser_with_sibling,
+            Some("angular"),
+            "mycomponent.html with sibling mycomponent.ts should be parsed as angular"
+        );
+
+        let parser_without_sibling =
+            get_prettier_parser_name(&standalone_html, "standalone.html", ext);
+        assert_eq!(
+            parser_without_sibling,
+            Some("html"),
+            "standalone.html without sibling .ts should be parsed as html"
+        );
+
+        let kind = classify_file_kind(Arc::from(my_comp_html.as_path())).unwrap();
+        assert!(
+            matches!(kind, FileKind::Prettier { parser_name: "angular", .. }),
+            "classify_file_kind should classify mycomponent.html as Prettier angular"
+        );
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
     }
 
     #[test]
