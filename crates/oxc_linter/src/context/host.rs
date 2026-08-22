@@ -160,7 +160,9 @@ impl Default for ContextSubHostOptions<'_> {
 pub struct ContextHost<'a> {
     /// A file can have multiple script entries.
     /// Some rules (like vue) need the information of the other entries.
-    pub(super) sub_hosts: Vec<ContextSubHost<'a>>,
+    ///
+    /// Never modified after construction; `current_sub_host` relies on that.
+    sub_hosts: Vec<ContextSubHost<'a>>,
     /// Allocator that owns the parsed AST and related semantic data.
     pub(super) allocator: &'a Allocator,
     /// The current index which will be linted.
@@ -235,8 +237,18 @@ impl<'a> ContextHost<'a> {
     }
 
     /// The current [`ContextSubHost`]
+    #[inline]
     pub fn current_sub_host(&self) -> &ContextSubHost<'a> {
-        &self.sub_hosts[self.current_sub_host_index.get()]
+        let index = self.current_sub_host_index.get();
+        debug_assert!(index < self.sub_hosts.len());
+        // SAFETY: `current_sub_host_index` is always a valid index into `sub_hosts`.
+        // `sub_hosts` is non-empty (asserted in `new`) and never modified after construction,
+        // the index starts at `0`, and `next_sub_host` is the only writer and only ever advances
+        // it to an index `< sub_hosts.len()`.
+        // This accessor sits behind nearly every `LintContext` method (`semantic()`,
+        // `source_text()`, ...) and is inlined at well over a thousand call sites, so skipping the
+        // bounds check here removes that many redundant checks and panic paths from the binary.
+        unsafe { self.sub_hosts.get_unchecked(index) }
     }
 
     /// Allocator that owns the parsed AST and semantic data.
@@ -247,7 +259,10 @@ impl<'a> ContextHost<'a> {
 
     /// Get mutable reference to the current [`ContextSubHost`]
     fn current_sub_host_mut(&mut self) -> &mut ContextSubHost<'a> {
-        &mut self.sub_hosts[self.current_sub_host_index.get()]
+        let index = self.current_sub_host_index.get();
+        debug_assert!(index < self.sub_hosts.len());
+        // SAFETY: See `current_sub_host`.
+        unsafe { self.sub_hosts.get_unchecked_mut(index) }
     }
 
     // Whether the current sub host is the first one.
