@@ -883,24 +883,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_expression_handle_meta_property_expressions_other_than_import_meta<
-    L,
-    T,
->(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
-        ErrorCategory::Todo,
-        "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta",
-    )
-    .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_build_hir_lower_expression_handle_class_expression_expressions<L, T>(
     labels: T,
 ) -> OxcDiagnostic
