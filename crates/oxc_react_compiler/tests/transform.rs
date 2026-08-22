@@ -135,6 +135,70 @@ export function Component({ value }) {
 }
 
 #[test]
+fn object_accessors_preserve_manual_memoization_calls() {
+    let source = "\
+import { useCallback, useMemo } from 'react';
+export function Component({ value }) {
+  const callback = useCallback(() => value, [value]);
+  const memo = useMemo(() => ({ value }), [value]);
+  const object = {
+    get value() {
+      return memo.value;
+    },
+  };
+  return <button onClick={callback}>{object.value}</button>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("useCallback(") && output.contains("useMemo("),
+        "React must retain manual memoization when compiler caching is disabled:\n{output}"
+    );
+    assert!(
+        !output.contains("react/compiler-runtime"),
+        "accessor-bearing functions must not use compiler caching:\n{output}"
+    );
+}
+
+#[test]
+fn object_accessors_preserve_typescript_annotations() {
+    let source = "\
+type Model = { value: number };
+export function Component({ value }: { value: number }) {
+  const object = {
+    get value(this: Model): number {
+      return value;
+    },
+    set value(this: Model, next: number) {},
+  };
+  return <div>{object.value}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("get value(this: Model): number")
+            && output.contains("set value(this: Model, next: number)"),
+        "accessor TypeScript annotations must be preserved:\n{output}"
+    );
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();

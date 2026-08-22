@@ -24,6 +24,7 @@ use crate::diagnostics::{self, should_panic, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
+use crate::react_compiler_utils::typescript::copy_param_ts_metadata;
 use crate::scope::ScopeResolver;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator};
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic, SemanticBuilder};
@@ -2278,30 +2279,6 @@ fn prune_inner_comments(program: &mut Program<'_>) {
         }
     }
     program.comments.retain(|comment| top_level_starts.contains(&comment.attached_to));
-}
-
-/// Copy the TS metadata (type annotation, decorators, optional/modifier flags)
-/// from a function's original parameters onto the compiled replacement parameters,
-/// matched positionally. Mirrors the Babel reference's signature restoration for
-/// functions that are not memoized: the parameter bindings are unchanged, so their
-/// types carry through. The compiled params (from codegen) never carry types.
-fn copy_param_ts_metadata<'a>(
-    allocator: &'a oxc_allocator::Allocator,
-    new_params: &mut FormalParameters<'a>,
-    source_params: &FormalParameters<'a>,
-) {
-    for (param, source) in new_params.items.iter_mut().zip(source_params.items.iter()) {
-        param.decorators = source.decorators.clone_in_with_semantic_ids(allocator);
-        param.type_annotation = source.type_annotation.clone_in_with_semantic_ids(allocator);
-        param.optional = source.optional;
-        param.accessibility = source.accessibility;
-        param.readonly = source.readonly;
-        param.r#override = source.r#override;
-    }
-    if let (Some(rest), Some(source_rest)) = (&mut new_params.rest, &source_params.rest) {
-        rest.decorators = source_rest.decorators.clone_in_with_semantic_ids(allocator);
-        rest.type_annotation = source_rest.type_annotation.clone_in_with_semantic_ids(allocator);
-    }
 }
 
 /// Build an oxc `Function` from a compiled codegen function. `r#type` selects
