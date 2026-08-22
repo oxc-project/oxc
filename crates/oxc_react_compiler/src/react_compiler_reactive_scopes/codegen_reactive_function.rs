@@ -1315,6 +1315,20 @@ fn ox_codegen_for_init<'a>(
     init: &ReactiveValue<'a>,
 ) -> Result<Option<oxc::ForStatementInit<'a>>, OxcDiagnostic> {
     if let ReactiveValue::SequenceExpression { instructions, .. } = init {
+        // An omitted initializer is represented by a synthetic `undefined`
+        // instruction so the HIR block is not empty.
+        if instructions.len() == 1
+            && matches!(
+                &instructions[0].value,
+                ReactiveValue::Instruction(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    ..
+                })
+            )
+        {
+            return Ok(None);
+        }
+
         let block_items = oxc_allocator::Vec::from_iter_in(
             instructions
                 .iter()
