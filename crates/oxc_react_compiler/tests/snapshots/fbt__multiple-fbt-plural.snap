@@ -1,0 +1,41 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/multiple-fbt-plural.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+import fbt from "fbt";
+/**
+* FBT uses Babel node `start` and `end` offsets to distinguish multiple string
+* variation arguments. The compiler must preserve those offsets on generated
+* nodes so separate plural values are not deduplicated together.
+*/
+function Foo(t0) {
+	const $ = _c(3);
+	const { rewrites, months } = t0;
+	let t1;
+	if ($[0] !== months || $[1] !== rewrites) {
+		t1 = <fbt desc="Test fbt description">
+      <fbt:plural count={rewrites} name="number of rewrites" showCount="yes">
+        rewrite
+      </fbt:plural>
+      to Rust ·
+      <fbt:plural count={months} name="number of months" showCount="yes">
+        month
+      </fbt:plural>
+      traveling
+    </fbt>;
+		$[0] = months;
+		$[1] = rewrites;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	return t1;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Foo,
+	params: [{
+		rewrites: 1,
+		months: 2
+	}]
+};

@@ -2,16 +2,8 @@ import fbt from 'fbt';
 import {identity} from 'shared-runtime';
 
 /**
- * Note that the fbt transform looks for callsites with a `fbt`-named callee.
- * This is incompatible with react-compiler as we rename local variables in
- * HIRBuilder + RenameVariables.
- *
- * See evaluator error:
- *   Found differences in evaluator results
- *   Non-forget (expected):
- *   (kind: ok) <div>Hello, Sathya!Goodbye, Sathya!</div>
- *   Forget:
- *   (kind: exception) fbt$0.param is not a function
+ * The fbt transform looks for callsites with an `fbt`-named callee, so the
+ * compiler must preserve local `fbt` binding names across nested scopes.
  */
 
 function Foo(props) {

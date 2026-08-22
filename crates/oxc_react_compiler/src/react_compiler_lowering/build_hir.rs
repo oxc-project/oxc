@@ -4604,10 +4604,8 @@ fn lower_assignment_expression<'a>(
 /// Lower a JSX element expression. Faithful translation of the original Babel
 /// `Expression::JSXElement` arm, adapted to oxc's JSX shapes.
 ///
-/// fbt note: the original tracked fbt/fbs sub-tags (`collect_fbt_sub_tags`) and
-/// reported duplicates, and incremented `builder.fbt_depth` around the children so
-/// JSX text whitespace is preserved within fbt subtrees. Both behaviors are ported
-/// below.
+/// fbt note: `builder.fbt_depth` is incremented around the children so JSX text
+/// whitespace is preserved within fbt subtrees.
 fn lower_jsx_element_expr<'a>(
     builder: &mut HirBuilder<'a, '_>,
     jsx_element: &oxc::JSXElement<'a>,
@@ -4704,6 +4702,30 @@ fn lower_jsx_element_expr<'a>(
         }
     }
 
+    // A function-local fbt/fbs module binding used as a JSX macro tag remains
+    // unsupported. This is narrower than rejecting every local variable with
+    // this name: ordinary local macro parameters are safe when their spelling
+    // is preserved through codegen.
+    let local_fbt_tag = match &jsx_element.opening_element.name {
+        oxc::JSXElementName::Identifier(id) if matches!(id.name.as_str(), "fbt" | "fbs") => {
+            Some((id.name.as_str(), id.span))
+        }
+        oxc::JSXElementName::IdentifierReference(id)
+            if matches!(id.name.as_str(), "fbt" | "fbs") =>
+        {
+            Some((id.name.as_str(), id.span))
+        }
+        _ => None,
+    };
+    if let Some((name, tag_span)) = local_fbt_tag
+        && let Some(symbol_id) =
+            builder.scope().find_binding_in_descendants(name, builder.component_scope())
+        && builder.scope().symbol_scope(symbol_id) != builder.scope().program_scope()
+    {
+        let error_span = builder.declaration_span(symbol_id).or(Some(tag_span));
+        builder.record_error(diagnostics::local_fbt_variable(error_span))?;
+    }
+
     // Check if this is an fbt/fbs tag, which requires special whitespace handling
     let is_fbt = matches!(&tag, JsxTag::Builtin(b) if b.name == "fbt" || b.name == "fbs");
 
@@ -4728,38 +4750,6 @@ fn lower_jsx_element_expr<'a>(
             let is_local_binding = builder.has_local_binding(name);
             if is_local_binding {
                 return Err(diagnostics::local_fbt_tag(&tag_name, id_span));
-            }
-        }
-    }
-
-    // Check for duplicate fbt:enum, fbt:plural, fbt:pronoun tags.
-    if is_fbt {
-        let tag_name = match &tag {
-            JsxTag::Builtin(b) => b.name.as_str(),
-            _ => "fbt",
-        };
-        let mut enum_spans: Vec<Option<Span>> = Vec::new();
-        let mut plural_spans: Vec<Option<Span>> = Vec::new();
-        let mut pronoun_spans: Vec<Option<Span>> = Vec::new();
-        collect_fbt_sub_tags(
-            builder,
-            &jsx_element.children,
-            tag_name,
-            &mut enum_spans,
-            &mut plural_spans,
-            &mut pronoun_spans,
-        );
-
-        for (name, locations) in
-            [("enum", &enum_spans), ("plural", &plural_spans), ("pronoun", &pronoun_spans)]
-        {
-            if locations.len() > 1 {
-                let diag = diagnostics::duplicate_fbt_tags(
-                    tag_name,
-                    name,
-                    locations.iter().filter_map(|span| *span),
-                );
-                builder.environment_mut().record_diagnostic(diag);
             }
         }
     }
@@ -5022,259 +5012,6 @@ fn lower_jsx_element<'a>(
         },
         oxc::JSXChild::Spread(spread) => {
             Ok(Some(lower_expression_to_temporary(builder, &spread.expression)?))
-        }
-    }
-}
-
-/// Recursively collect the locations of `<tag:enum>`, `<tag:plural>`, and
-/// `<tag:pronoun>` sub-tags within fbt/fbs children. Faithful translation of the
-/// original Babel `collect_fbt_sub_tags`, adapted to oxc's JSX shapes.
-fn collect_fbt_sub_tags(
-    builder: &HirBuilder<'_, '_>,
-    children: &[oxc::JSXChild],
-    tag_name: &str,
-    enum_spans: &mut Vec<Option<Span>>,
-    plural_spans: &mut Vec<Option<Span>>,
-    pronoun_spans: &mut Vec<Option<Span>>,
-) {
-    for child in children {
-        match child {
-            oxc::JSXChild::Element(el) => {
-                collect_fbt_sub_tags_from_element(
-                    builder,
-                    el,
-                    tag_name,
-                    enum_spans,
-                    plural_spans,
-                    pronoun_spans,
-                );
-            }
-            oxc::JSXChild::Fragment(frag) => {
-                collect_fbt_sub_tags(
-                    builder,
-                    &frag.children,
-                    tag_name,
-                    enum_spans,
-                    plural_spans,
-                    pronoun_spans,
-                );
-            }
-            oxc::JSXChild::ExpressionContainer(container) => {
-                if let Some(expr) = container.expression.as_expression() {
-                    collect_fbt_sub_tags_from_expr(
-                        builder,
-                        expr,
-                        tag_name,
-                        enum_spans,
-                        plural_spans,
-                        pronoun_spans,
-                    );
-                }
-            }
-            _ => {}
-        }
-    }
-}
-
-fn collect_fbt_sub_tags_from_element(
-    builder: &HirBuilder<'_, '_>,
-    el: &oxc::JSXElement,
-    tag_name: &str,
-    enum_spans: &mut Vec<Option<Span>>,
-    plural_spans: &mut Vec<Option<Span>>,
-    pronoun_spans: &mut Vec<Option<Span>>,
-) {
-    if let oxc::JSXElementName::NamespacedName(ns) = &el.opening_element.name
-        && ns.namespace.name == tag_name
-    {
-        let span = Some(ns.span);
-        match ns.name.name.as_str() {
-            "enum" => enum_spans.push(span),
-            "plural" => plural_spans.push(span),
-            "pronoun" => pronoun_spans.push(span),
-            _ => {}
-        }
-    }
-    collect_fbt_sub_tags(builder, &el.children, tag_name, enum_spans, plural_spans, pronoun_spans);
-    // Also traverse JSX attributes (matching TS expr.traverse which visits all nodes)
-    for attr in &el.opening_element.attributes {
-        if let oxc::JSXAttributeItem::Attribute(a) = attr {
-            match &a.value {
-                Some(oxc::JSXAttributeValue::ExpressionContainer(container)) => {
-                    if let Some(expr) = container.expression.as_expression() {
-                        collect_fbt_sub_tags_from_expr(
-                            builder,
-                            expr,
-                            tag_name,
-                            enum_spans,
-                            plural_spans,
-                            pronoun_spans,
-                        );
-                    }
-                }
-                Some(oxc::JSXAttributeValue::Element(nested)) => {
-                    collect_fbt_sub_tags_from_element(
-                        builder,
-                        nested,
-                        tag_name,
-                        enum_spans,
-                        plural_spans,
-                        pronoun_spans,
-                    );
-                }
-                _ => {}
-            }
-        }
-    }
-}
-
-fn collect_fbt_sub_tags_from_expr(
-    builder: &HirBuilder<'_, '_>,
-    expr: &oxc::Expression,
-    tag_name: &str,
-    enum_spans: &mut Vec<Option<Span>>,
-    plural_spans: &mut Vec<Option<Span>>,
-    pronoun_spans: &mut Vec<Option<Span>>,
-) {
-    match expr {
-        oxc::Expression::JSXElement(el) => {
-            collect_fbt_sub_tags_from_element(
-                builder,
-                el,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-        }
-        oxc::Expression::JSXFragment(frag) => {
-            collect_fbt_sub_tags(
-                builder,
-                &frag.children,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-        }
-        oxc::Expression::ConditionalExpression(cond) => {
-            collect_fbt_sub_tags_from_expr(
-                builder,
-                &cond.consequent,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-            collect_fbt_sub_tags_from_expr(
-                builder,
-                &cond.alternate,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-        }
-        oxc::Expression::LogicalExpression(log) => {
-            collect_fbt_sub_tags_from_expr(
-                builder,
-                &log.left,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-            collect_fbt_sub_tags_from_expr(
-                builder,
-                &log.right,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-        }
-        oxc::Expression::ParenthesizedExpression(paren) => {
-            collect_fbt_sub_tags_from_expr(
-                builder,
-                &paren.expression,
-                tag_name,
-                enum_spans,
-                plural_spans,
-                pronoun_spans,
-            );
-        }
-        oxc::Expression::ArrowFunctionExpression(arrow) => {
-            if let Some(expression) = arrow.get_expression() {
-                collect_fbt_sub_tags_from_expr(
-                    builder,
-                    expression,
-                    tag_name,
-                    enum_spans,
-                    plural_spans,
-                    pronoun_spans,
-                );
-            } else {
-                collect_fbt_sub_tags_from_stmts(
-                    builder,
-                    &arrow.get_function_body().unwrap().statements,
-                    tag_name,
-                    enum_spans,
-                    plural_spans,
-                    pronoun_spans,
-                );
-            }
-        }
-        oxc::Expression::CallExpression(call) => {
-            for arg in &call.arguments {
-                if let Some(arg_expr) = arg.as_expression() {
-                    collect_fbt_sub_tags_from_expr(
-                        builder,
-                        arg_expr,
-                        tag_name,
-                        enum_spans,
-                        plural_spans,
-                        pronoun_spans,
-                    );
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
-fn collect_fbt_sub_tags_from_stmts(
-    builder: &HirBuilder<'_, '_>,
-    stmts: &[oxc::Statement],
-    tag_name: &str,
-    enum_spans: &mut Vec<Option<Span>>,
-    plural_spans: &mut Vec<Option<Span>>,
-    pronoun_spans: &mut Vec<Option<Span>>,
-) {
-    for stmt in stmts {
-        match stmt {
-            oxc::Statement::ReturnStatement(ret) => {
-                if let Some(arg) = &ret.argument {
-                    collect_fbt_sub_tags_from_expr(
-                        builder,
-                        arg,
-                        tag_name,
-                        enum_spans,
-                        plural_spans,
-                        pronoun_spans,
-                    );
-                }
-            }
-            oxc::Statement::ExpressionStatement(expr_stmt) => {
-                collect_fbt_sub_tags_from_expr(
-                    builder,
-                    &expr_stmt.expression,
-                    tag_name,
-                    enum_spans,
-                    plural_spans,
-                    pronoun_spans,
-                );
-            }
-            _ => {}
         }
     }
 }

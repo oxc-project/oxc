@@ -1,4 +1,6 @@
-// @compilationMode:"infer"
+// @compilationMode(infer)
+import fbt from 'fbt';
+
 function Component(props) {
   return (
     <fbt desc="test">
@@ -17,3 +19,8 @@ function Component(props) {
     </fbt>
   );
 }
+
+export const FIXTURE_ENTRYPOINT = {
+  fn: Component,
+  params: [{count: 1, showAlt: true, altCount: 2}],
+};

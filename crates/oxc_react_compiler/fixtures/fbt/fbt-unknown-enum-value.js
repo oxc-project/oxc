@@ -8,3 +8,8 @@ function Component({a, b}) {
     </fbt>
   );
 }
+
+export const FIXTURE_ENTRYPOINT = {
+  fn: Component,
+  params: [{a: 'avalue1', b: 'bvalue2'}],
+};

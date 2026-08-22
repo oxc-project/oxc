@@ -10,8 +10,10 @@
 
 use rustc_hash::FxHashMap;
 
+use oxc_span::Span;
 use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 
+use crate::diagnostics;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::EvaluationOrder;
 use crate::react_compiler_hir::FunctionId;
@@ -42,6 +44,7 @@ struct Scopes<'a> {
     stack: Vec<IdentHashMap<'a, DeclarationId>>,
     globals: IdentHashSet<'a>,
     names: IdentHashSet<'a>,
+    local_fbt_conflicts: Vec<Option<Span>>,
 }
 
 impl<'a> Scopes<'a> {
@@ -51,6 +54,7 @@ impl<'a> Scopes<'a> {
             stack: vec![IdentHashMap::default()],
             globals,
             names: IdentHashSet::default(),
+            local_fbt_conflicts: Vec::new(),
         }
     }
 
@@ -67,6 +71,8 @@ impl<'a> Scopes<'a> {
         }
 
         let original_value = original_name.value();
+        let preserve_fbt_name = env.is_local_fbt_identifier(declaration_id);
+        let preferred_value = if preserve_fbt_name { "fbt" } else { original_value };
         let is_promoted = matches!(original_name, IdentifierName::Promoted(_));
         let is_promoted_temp = is_promoted && original_value.starts_with("#t");
         let is_promoted_jsx = is_promoted && original_value.starts_with("#T");
@@ -80,10 +86,18 @@ impl<'a> Scopes<'a> {
             name = format_ident!(env.allocator, "T{}", id);
             id += 1;
         } else {
-            name = Ident::from(original_value);
+            name = Ident::from(preferred_value);
         }
 
-        while self.lookup(&name).is_some() || self.globals.contains(&name) {
+        let mut has_conflict = if preserve_fbt_name {
+            self.lookup_current(&name).is_some()
+        } else {
+            self.lookup(&name).is_some() || self.globals.contains(&name)
+        };
+        if preserve_fbt_name && has_conflict {
+            self.local_fbt_conflicts.push(identifier.span);
+        }
+        while has_conflict {
             if is_promoted_temp {
                 name = format_ident!(env.allocator, "t{}", id);
                 id += 1;
@@ -91,9 +105,10 @@ impl<'a> Scopes<'a> {
                 name = format_ident!(env.allocator, "T{}", id);
                 id += 1;
             } else {
-                name = format_ident!(env.allocator, "{}${}", original_value, id);
+                name = format_ident!(env.allocator, "{}${}", preferred_value, id);
                 id += 1;
             }
+            has_conflict = self.lookup(&name).is_some() || self.globals.contains(&name);
         }
 
         let identifier_name = IdentifierName::Named(name);
@@ -109,6 +124,10 @@ impl<'a> Scopes<'a> {
             }
         }
         None
+    }
+
+    fn lookup_current(&self, name: &str) -> Option<DeclarationId> {
+        self.stack.last().and_then(|scope| scope.get(name)).copied()
     }
 
     fn enter(&mut self) {
@@ -205,6 +224,10 @@ pub fn rename_variables<'a>(
     // This collects DeclarationId -> IdentifierName without mutating env.
     let mut scopes = Scopes::new(globals.clone());
     rename_variables_impl(func, &Visitor { env }, &mut scopes);
+
+    for span in &scopes.local_fbt_conflicts {
+        env.record_diagnostic(diagnostics::local_fbt_variable(*span));
+    }
 
     // Phase 2: Apply the computed renames to all identifiers in env.
     for identifier in env.identifiers.iter_mut() {

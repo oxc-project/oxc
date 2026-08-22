@@ -1620,22 +1620,6 @@ pub fn empty_goto(block: impl Display, span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn duplicate_fbt_tags<I>(tag_name: &str, name: &str, locations: I) -> OxcDiagnostic
-where
-    I: IntoIterator<Item = Span>,
-{
-    diagnostic(ErrorCategory::Todo, "Support duplicate fbt tags")
-        .with_help(format!(
-            "Support `<{tag_name}>` tags with multiple `<{tag_name}:{name}>` values"
-        ))
-        .with_labels(
-            locations
-                .into_iter()
-                .map(|span| span.label(format!("Multiple `<{tag_name}:{name}>` tags found"))),
-        )
-}
-
-#[cold]
 pub fn invalid_jsx_namespace(namespace: &str, name: &str, span: Option<Span>) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Syntax,
