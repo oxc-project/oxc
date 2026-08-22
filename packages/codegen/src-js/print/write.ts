@@ -213,13 +213,13 @@ export const ALL_CATEGORIES: Category[] = [
 if (DEBUG) {
   for (const category of ALL_CATEGORIES) {
     debugAssert(
-      ((category | 1) === CAT_START_OF_STMT) ===
-        (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
+      ((category | 1) === CAT_START_OF_STMT)
+        === (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
       `Category ${category} disagrees with \`(last | 1) === CAT_START_OF_STMT\``,
     );
     debugAssert(
-      (((category - 1) | 1) === CAT_START_OF_STMT) ===
-        (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
+      (((category - 1) | 1) === CAT_START_OF_STMT)
+        === (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
       `Category ${category} disagrees with \`((last - 1) | 1) === CAT_START_OF_STMT\``,
     );
   }
@@ -387,13 +387,13 @@ export function markWithMapAtStartOffset(
 
   const { start, end } = node;
   if (
-    typeof start !== "number" ||
-    typeof end !== "number" ||
-    !Number.isSafeInteger(start) ||
-    !Number.isSafeInteger(end) ||
-    start < 0 ||
-    end < start ||
-    start === end
+    typeof start !== "number"
+    || typeof end !== "number"
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end < start
+    || start === end
   ) {
     return;
   }
@@ -418,13 +418,13 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
 
   const { start, end } = node;
   if (
-    typeof start !== "number" ||
-    typeof end !== "number" ||
-    !Number.isSafeInteger(start) ||
-    !Number.isSafeInteger(end) ||
-    start < 0 ||
-    end < start ||
-    start === end
+    typeof start !== "number"
+    || typeof end !== "number"
+    || !Number.isSafeInteger(start)
+    || !Number.isSafeInteger(end)
+    || start < 0
+    || end < start
+    || start === end
   ) {
     return;
   }
@@ -451,41 +451,70 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
-  if (location === LOCATION_NAMED) {
-    let name: string | undefined;
-    const printedName = typeof node.name === "string" ? node.name : undefined;
-    if (printedName !== undefined) {
-      // Almost every identifier is printed exactly as it appeared in the source. Avoid scanning it
-      // with Unicode property regexps or allocating a source substring in that common case.
-      const nameEnd = start + printedName.length;
-      const originalName =
-        printedName.length > 0 &&
-        end <= sourceText.length &&
-        nameEnd <= end &&
-        sourceText.startsWith(printedName, start) &&
-        (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
-          ? printedName
-          : originalNameFromSource(sourceText, node, start, end);
+  if (location === LOCATION_NAMED && typeof node.name === "string") {
+    // A mapping carries a name only when the identifier printed differs from the one in the source.
+    // When possible, the mapping records the name from source, but if the source range is invalid,
+    // it falls back to the printed name.
+    //
+    // Almost every identifier is printed exactly as it was in source, so we do a quick check first,
+    // and only fall back to expensive scanning with Unicode property regexps in rare cases.
+    //
+    // A span can reach past the name it begins with, since a TypeScript annotation is absorbed into it,
+    // so a match has to be followed by a character which cannot continue an identifier.
+    //
+    // This check is one-sided.
+    // * When `matchesSource === true`, the source definitely has the same name that was printed,
+    //   and the mapping needs no name recorded.
+    // * When `matchesSource === false`, nothing is settled yet.
+    //   It could be a genuine rename, or could be a Unicode escape (`\u0061` printed as `a`),
+    //   or a non-ASCII character after the name, which `isDefinitelyIdentifierBoundary` will not classify.
+    //
+    // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
+    // That is what the source is compared against, and what gets recorded as the name.
+    const printedName = node.name;
+    const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
+    const nameStart = start + hashLength;
+    const nameEnd = nameStart + printedName.length;
+    const matchesSource =
+      printedName.length > 0
+      && end <= sourceText.length
+      && nameEnd <= end
+      && (hashLength === 0 || sourceText.charCodeAt(start) === 35) /* # */
+      && sourceText.startsWith(printedName, nameStart)
+      && (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)));
+
+    if (!matchesSource) {
+      // Read the name out of the source.
+      // We can use it for a definitive comparison, which the quick check above couldn't.
+      const originalName = originalNameFromSource(sourceText, node, start, end);
 
       // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
       // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
-      name =
-        originalName === undefined
-          ? printedName
-          : originalName === printedName
-            ? undefined
-            : originalName;
-    } else {
-      name = printedName;
-    }
-
-    if (name !== undefined) {
-      const mappingIndex = state.mapPositions.length >> 1;
-      (state.mapNames ??= []).push(mappingIndex, name);
+      if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
+        (state.mapNames ??= []).push(
+          state.mapPositions.length >> 1,
+          originalName === undefined ? printedName : originalName,
+        );
+      }
     }
   }
 
   state.mapPositions.push(state.output.length, sourceOffset);
+}
+
+/**
+ * Is `originalName` the same token as `printedName`, taking into account leading `#` if `hashLength === 1`.
+ */
+function isSameToken(originalName: string, printedName: string, hashLength: 0 | 1): boolean {
+  if (hashLength === 0) return originalName === printedName;
+
+  // Compare with 2 operations rather than `originalName === "#" + printedName`
+  // to avoid allocating a temporary string
+  return (
+    originalName.length === printedName.length + 1
+    && originalName.charCodeAt(0) === 35 /* # */
+    && originalName.endsWith(printedName)
+  );
 }
 
 /**
@@ -574,12 +603,12 @@ function isHexDigit(code: number): boolean {
  */
 function isDefinitelyIdentifierBoundary(code: number): boolean {
   return (
-    code <= 0x7f &&
-    !((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)) &&
-    code !== 36 && // `$`
-    code !== 45 && // `-` in JSX identifiers
-    code !== 92 && // `\` starting a Unicode escape
-    code !== 95 // `_`
+    code <= 0x7f
+    && !((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122))
+    && code !== 36 // `$`
+    && code !== 45 // `-` in JSX identifiers
+    && code !== 92 // `\` starting a Unicode escape
+    && code !== 95 // `_`
   );
 }
 

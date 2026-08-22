@@ -696,7 +696,7 @@ impl<'a> ResolveFinder<'a> {
 
     #[inline]
     fn take_resolved(&mut self) -> Vec<&'a CallExpression<'a>> {
-        self.resolved.drain(..).collect()
+        std::mem::take(&mut self.resolved)
     }
 
     #[inline]

@@ -11,21 +11,21 @@ const testRule: Rule = {
 
         context.report({
           message:
-            "\n" +
+            "\n"
             // Test where 2 nodes are separated, maybe with whitespace in between
-            `isSpaceBetween(left, right): ${isSpaceBetween(left, right)}\n` +
-            `isSpaceBetweenTokens(left, right): ${isSpaceBetweenTokens(left, right)}\n` +
-            `isSpaceBetween(right, left): ${isSpaceBetween(right, left)}\n` +
-            `isSpaceBetweenTokens(right, left): ${isSpaceBetweenTokens(right, left)}\n` +
+            + `isSpaceBetween(left, right): ${isSpaceBetween(left, right)}\n`
+            + `isSpaceBetweenTokens(left, right): ${isSpaceBetweenTokens(left, right)}\n`
+            + `isSpaceBetween(right, left): ${isSpaceBetween(right, left)}\n`
+            + `isSpaceBetweenTokens(right, left): ${isSpaceBetweenTokens(right, left)}\n`
             // Test where 1 node is inside another, sharing same `start` or `end`
-            `isSpaceBetween(left, node): ${isSpaceBetween(left, node)}\n` +
-            `isSpaceBetweenTokens(left, node): ${isSpaceBetweenTokens(left, node)}\n` +
-            `isSpaceBetween(node, left): ${isSpaceBetween(node, left)}\n` +
-            `isSpaceBetweenTokens(node, left): ${isSpaceBetweenTokens(node, left)}\n` +
-            `isSpaceBetween(right, node): ${isSpaceBetween(right, node)}\n` +
-            `isSpaceBetweenTokens(right, node): ${isSpaceBetweenTokens(right, node)}\n` +
-            `isSpaceBetween(node, right): ${isSpaceBetween(node, right)}\n` +
-            `isSpaceBetweenTokens(node, right): ${isSpaceBetweenTokens(node, right)}`,
+            + `isSpaceBetween(left, node): ${isSpaceBetween(left, node)}\n`
+            + `isSpaceBetweenTokens(left, node): ${isSpaceBetweenTokens(left, node)}\n`
+            + `isSpaceBetween(node, left): ${isSpaceBetween(node, left)}\n`
+            + `isSpaceBetweenTokens(node, left): ${isSpaceBetweenTokens(node, left)}\n`
+            + `isSpaceBetween(right, node): ${isSpaceBetween(right, node)}\n`
+            + `isSpaceBetweenTokens(right, node): ${isSpaceBetweenTokens(right, node)}\n`
+            + `isSpaceBetween(node, right): ${isSpaceBetween(node, right)}\n`
+            + `isSpaceBetweenTokens(node, right): ${isSpaceBetweenTokens(node, right)}`,
           node,
         });
 
@@ -34,11 +34,11 @@ const testRule: Rule = {
           const binaryLeft = right.left;
           context.report({
             message:
-              "\n" +
-              `isSpaceBetween(node, binaryLeft): ${isSpaceBetween(node, binaryLeft)}\n` +
-              `isSpaceBetweenTokens(node, binaryLeft): ${isSpaceBetweenTokens(node, binaryLeft)}\n` +
-              `isSpaceBetween(binaryLeft, node): ${isSpaceBetween(binaryLeft, node)}\n` +
-              `isSpaceBetweenTokens(binaryLeft, node): ${isSpaceBetweenTokens(binaryLeft, node)}`,
+              "\n"
+              + `isSpaceBetween(node, binaryLeft): ${isSpaceBetween(node, binaryLeft)}\n`
+              + `isSpaceBetweenTokens(node, binaryLeft): ${isSpaceBetweenTokens(node, binaryLeft)}\n`
+              + `isSpaceBetween(binaryLeft, node): ${isSpaceBetween(binaryLeft, node)}\n`
+              + `isSpaceBetweenTokens(binaryLeft, node): ${isSpaceBetweenTokens(binaryLeft, node)}`,
             node,
           });
         }
@@ -57,11 +57,11 @@ const testRule: Rule = {
 
           context.report({
             message:
-              "\n" +
-              `isSpaceBetween(leftExtended, right): ${isSpaceBetween(leftExtended, right)}\n` +
-              `isSpaceBetweenTokens(leftExtended, right): ${isSpaceBetweenTokens(leftExtended, right)}\n` +
-              `isSpaceBetween(right, leftExtended): ${isSpaceBetween(right, leftExtended)}\n` +
-              `isSpaceBetweenTokens(right, leftExtended): ${isSpaceBetweenTokens(right, leftExtended)}`,
+              "\n"
+              + `isSpaceBetween(leftExtended, right): ${isSpaceBetween(leftExtended, right)}\n`
+              + `isSpaceBetweenTokens(leftExtended, right): ${isSpaceBetweenTokens(leftExtended, right)}\n`
+              + `isSpaceBetween(right, leftExtended): ${isSpaceBetween(right, leftExtended)}\n`
+              + `isSpaceBetweenTokens(right, leftExtended): ${isSpaceBetweenTokens(right, leftExtended)}`,
             node,
           });
         }
@@ -74,11 +74,11 @@ const testRule: Rule = {
         // We get this wrong. Should be `false`, but we get `true`.
         context.report({
           message:
-            "\n" +
-            `isSpaceBetween(beforeString, afterString): ${isSpaceBetween(beforeString, afterString)}\n` +
-            `isSpaceBetweenTokens(beforeString, afterString): ${isSpaceBetweenTokens(beforeString, afterString)}\n` +
-            `isSpaceBetween(afterString, beforeString): ${isSpaceBetween(afterString, beforeString)}\n` +
-            `isSpaceBetweenTokens(afterString, beforeString): ${isSpaceBetweenTokens(afterString, beforeString)}`,
+            "\n"
+            + `isSpaceBetween(beforeString, afterString): ${isSpaceBetween(beforeString, afterString)}\n`
+            + `isSpaceBetweenTokens(beforeString, afterString): ${isSpaceBetweenTokens(beforeString, afterString)}\n`
+            + `isSpaceBetween(afterString, beforeString): ${isSpaceBetween(afterString, beforeString)}\n`
+            + `isSpaceBetweenTokens(afterString, beforeString): ${isSpaceBetweenTokens(afterString, beforeString)}`,
           node,
         });
       },
@@ -93,11 +93,11 @@ const testRule: Rule = {
         // `isSpaceBetweenTokens` is correct for all cases.
         context.report({
           message:
-            "\n" +
-            `isSpaceBetween(openingElement, closingElement): ${isSpaceBetween(openingElement, closingElement)}\n` +
-            `isSpaceBetweenTokens(openingElement, closingElement): ${isSpaceBetweenTokens(openingElement, closingElement)}\n` +
-            `isSpaceBetween(closingElement, openingElement): ${isSpaceBetween(closingElement, openingElement)}\n` +
-            `isSpaceBetweenTokens(closingElement, openingElement): ${isSpaceBetweenTokens(closingElement, openingElement)}`,
+            "\n"
+            + `isSpaceBetween(openingElement, closingElement): ${isSpaceBetween(openingElement, closingElement)}\n`
+            + `isSpaceBetweenTokens(openingElement, closingElement): ${isSpaceBetweenTokens(openingElement, closingElement)}\n`
+            + `isSpaceBetween(closingElement, openingElement): ${isSpaceBetween(closingElement, openingElement)}\n`
+            + `isSpaceBetweenTokens(closingElement, openingElement): ${isSpaceBetweenTokens(closingElement, openingElement)}`,
           node,
         });
       },

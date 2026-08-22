@@ -741,8 +741,8 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
     typeAssertIs<ESTree.Expression>(left);
     const bare = withoutParens(left);
     const wrap =
-      forOfHeadStartsWithLet(left) ||
-      (!node.await && bare.type === "Identifier" && bare.name === "async");
+      forOfHeadStartsWithLet(left)
+      || (!node.await && bare.type === "Identifier" && bare.name === "async");
     if (wrap) write(state, "(", CAT_OTHER);
     printAssignmentTarget(left, state);
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);

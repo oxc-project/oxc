@@ -18,10 +18,10 @@ const plugin: Plugin = {
           Program(node) {
             context.report({
               message:
-                "\n" +
-                `hasBOM: ${context.sourceCode.hasBOM}\n` +
-                `sourceText: ${JSON.stringify(sourceText)}\n` +
-                `Program span: ${node.start}-${node.end}`,
+                "\n"
+                + `hasBOM: ${context.sourceCode.hasBOM}\n`
+                + `sourceText: ${JSON.stringify(sourceText)}\n`
+                + `Program span: ${node.start}-${node.end}`,
               node,
             });
           },

@@ -111,8 +111,8 @@ function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
 
   // No parens if both sides use the same logical operator
   const precedenceCheck =
-    v.precedence >= ePrecedence &&
-    (!isLogicalOperator(v.operator) || v.precedence !== BIN_PRECEDENCE[v.operator]);
+    v.precedence >= ePrecedence
+    && (!isLogicalOperator(v.operator) || v.precedence !== BIN_PRECEDENCE[v.operator]);
   v.operator = eOperator;
   v.wrap = precedenceCheck || (eOperator === "in" && (v.ctx & CTX_FORBID_IN) !== 0);
 
@@ -152,10 +152,10 @@ function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
     const left = withoutParens(e.left);
     typeAssertIs<LiteralExtras>(left);
     if (
-      left.type === "UnaryExpression" ||
-      left.type === "AwaitExpression" ||
-      (TS && left.type === "TSTypeAssertion") ||
-      (left.type === "Literal" && (typeof left.value === "number" || left.bigint != null))
+      left.type === "UnaryExpression"
+      || left.type === "AwaitExpression"
+      || (TS && left.type === "TSTypeAssertion")
+      || (left.type === "Literal" && (typeof left.value === "number" || left.bigint != null))
     ) {
       v.leftPrecedence = PREC_CALL;
     }

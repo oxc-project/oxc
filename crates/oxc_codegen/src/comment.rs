@@ -85,21 +85,15 @@ impl Codegen<'_> {
                 }
                 continue;
             }
+
             let mut add = false;
             if comment.is_leading() {
-                if comment.is_legal() && self.options.print_legal_comment() {
-                    add = true;
-                }
-                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
-                    add = true;
-                }
-                if comment.is_annotation() && self.options.print_annotation_comment() {
-                    add = true;
-                }
-                if comment.is_normal() && self.options.print_normal_comment() {
-                    add = true;
-                }
+                add = (comment.is_legal() && self.options.print_legal_comment())
+                    || (comment.is_jsdoc() && self.options.print_jsdoc_comment())
+                    || (comment.is_annotation() && self.options.print_annotation_comment())
+                    || (comment.is_normal() && self.options.print_normal_comment());
             }
+
             if add {
                 self.has_property_key_annotations |= comment.is_property_key_annotation();
                 if preserve_when_orphaned(*comment)
