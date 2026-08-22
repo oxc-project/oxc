@@ -272,7 +272,12 @@ export function write(state: State, code: string, last: Category): void {
  * @param last - Category of the last character of `code`
  * @param node - Node this text came from
  */
-export function writeWithMap(state: State, code: string, last: Category, node: MappableNode): void {
+export function writeWithMapNamed(
+  state: State,
+  code: string,
+  last: Category,
+  node: MappableNode,
+): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
@@ -320,10 +325,10 @@ export function writeNoLast(state: State, code: string): void {
  * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
- * @param code - Text to append, which unlike `writeWithMap` may be empty
+ * @param code - Text to append, which unlike `writeWithMapNamed` may be empty
  * @param node - Node this text came from
  */
-export function writeWithMapNoLast(state: State, code: string, node: MappableNode): void {
+export function writeWithMapNamedNoLast(state: State, code: string, node: MappableNode): void {
   recordSourceMapping(state, node, LOCATION_NAMED);
 
   state.output += code;
@@ -381,7 +386,7 @@ export function writeWithMapEnd(
  * @param state - Printer state
  * @param node - Node the mapping points at
  */
-export function markWithMap(state: State, node: MappableNode): void {
+export function markMapNamed(state: State, node: MappableNode): void {
   if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_NAMED);
 }
 
@@ -394,7 +399,7 @@ export function markWithMap(state: State, node: MappableNode): void {
  * @param state - Printer state
  * @param node - Node the mapping points at
  */
-export function markWithMapNoName(state: State, node: MappableNode): void {
+export function markMapStart(state: State, node: MappableNode): void {
   if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_START);
 }
 
@@ -407,7 +412,7 @@ export function markWithMapNoName(state: State, node: MappableNode): void {
  * @param state - Printer state
  * @param node - Node whose end offset the mapping points at
  */
-export function markWithMapAfter(state: State, node: MappableNode): void {
+export function markMapAfter(state: State, node: MappableNode): void {
   if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_END);
 }
 
@@ -421,11 +426,7 @@ export function markWithMapAfter(state: State, node: MappableNode): void {
  * @param node - Node the mapping points into
  * @param columnOffset - Number of UTF-16 units to add to `node`'s start offset
  */
-export function markWithMapAtStartOffset(
-  state: State,
-  node: MappableNode,
-  columnOffset: number,
-): void {
+export function markMapAtStartOffset(state: State, node: MappableNode, columnOffset: number): void {
   if (!SOURCEMAPS) return;
 
   const { start, end } = node;

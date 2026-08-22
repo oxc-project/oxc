@@ -10,12 +10,12 @@ import {
   CAT_QUESTION,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
-  markWithMap,
+  markMapNamed,
   write,
   writeNoLast,
-  writeWithMap,
+  writeWithMapNamed,
   writeWithMapEnd,
-  writeWithMapNoLast,
+  writeWithMapNamedNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { printFunctionBody, printParenParams } from "./function.ts";
@@ -64,23 +64,23 @@ export function printClass(node: ESTree.Class, state: State): void {
   const abstract = TS && node.abstract;
 
   // The node's mapping goes on whichever of these is written first
-  if (declare) writeWithMap(state, "declare ", CAT_OTHER, node);
+  if (declare) writeWithMapNamed(state, "declare ", CAT_OTHER, node);
   if (abstract) {
     if (declare) {
       write(state, "abstract ", CAT_OTHER);
     } else {
-      writeWithMap(state, "abstract ", CAT_OTHER, node);
+      writeWithMapNamed(state, "abstract ", CAT_OTHER, node);
     }
   }
   if (declare || abstract) {
     write(state, "class", CAT_IDENT);
   } else {
-    writeWithMap(state, "class", CAT_IDENT, node);
+    writeWithMapNamed(state, "class", CAT_IDENT, node);
   }
 
   if (node.id != null) {
     write(state, " ", CAT_OTHER);
-    writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+    writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -119,7 +119,7 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
   for (let i = 0; i < length; i++) {
     const decorator = decorators[i];
 
-    writeWithMap(state, "@", CAT_OTHER, decorator);
+    writeWithMapNamed(state, "@", CAT_OTHER, decorator);
 
     const { expression } = decorator;
     const wrap = decoratorNeedsWrap(expression);
@@ -161,12 +161,12 @@ function printClassBody(node: ClassBodyNode, state: State): void {
   const { body } = node;
   const { length } = body;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", node);
+    writeWithMapNamedNoLast(state, "{", node);
     writeWithMapEnd(state, "}", CAT_OTHER, node);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, node);
+  writeWithMapNamed(state, "{\n", CAT_OTHER, node);
 
   state.indentLevel++;
 
@@ -221,7 +221,7 @@ function printClassBody(node: ClassBodyNode, state: State): void {
  * Print a method, including getters, setters, constructors and their modifiers.
  */
 function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
-  markWithMap(state, node);
+  markMapNamed(state, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -293,7 +293,7 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
  * Print a class field, with its modifiers and initializer.
  */
 function printPropertyDefinition(node: PropertyDefinitionNode, state: State): void {
-  markWithMap(state, node);
+  markMapNamed(state, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -356,17 +356,17 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
 function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
   printSpaceBeforeIdentifier(state);
 
-  writeWithMap(state, "static ", CAT_OTHER, node);
+  writeWithMapNamed(state, "static ", CAT_OTHER, node);
 
   const { body } = node;
   const { length } = body;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", node);
+    writeWithMapNamedNoLast(state, "{", node);
     writeWithMapEnd(state, "}", CAT_OTHER, node);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, node);
+  writeWithMapNamed(state, "{\n", CAT_OTHER, node);
 
   state.indentLevel++;
 
@@ -384,7 +384,7 @@ function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
  * Print an `accessor` field.
  */
 function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
-  markWithMap(state, node);
+  markMapNamed(state, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);

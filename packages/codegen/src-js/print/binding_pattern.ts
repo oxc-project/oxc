@@ -7,8 +7,8 @@ import {
   CAT_OTHER,
   CAT_QUESTION,
   write,
-  writeWithMap,
-  writeWithMapNoLast,
+  writeWithMapNamed,
+  writeWithMapNamedNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
@@ -39,7 +39,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, CAT_IDENT, node);
       if (TS && node.optional) write(state, "?", CAT_QUESTION);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -59,7 +59,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
       printExpression(node.right, state, PREC_COMMA, CTX_NONE);
       break;
     case "RestElement":
-      writeWithMap(state, "...", CAT_OTHER, node);
+      writeWithMapNamed(state, "...", CAT_OTHER, node);
       printBindingPattern(node.argument, state);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -76,17 +76,17 @@ function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): vo
   const { length } = properties;
 
   if (length === 0) {
-    writeWithMap(state, "{}", CAT_OTHER, node);
+    writeWithMapNamed(state, "{}", CAT_OTHER, node);
     return;
   }
 
-  writeWithMap(state, "{ ", CAT_OTHER, node);
+  writeWithMapNamed(state, "{ ", CAT_OTHER, node);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
     const property = properties[i];
     if (property.type === "RestElement") {
-      writeWithMap(state, "...", CAT_OTHER, property);
+      writeWithMapNamed(state, "...", CAT_OTHER, property);
       printBindingPattern(property.argument, state);
     } else {
       printBindingProperty(property, state);
@@ -141,10 +141,10 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, key.name, CAT_IDENT, key);
+      writeWithMapNamed(state, key.name, CAT_IDENT, key);
       break;
     case "PrivateIdentifier":
-      writeWithMapNoLast(state, "#", key);
+      writeWithMapNamedNoLast(state, "#", key);
       write(state, key.name, CAT_IDENT);
       break;
     case "Literal":
@@ -177,7 +177,7 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
     }
   }
 
-  writeWithMap(state, "[", CAT_OTHER, node);
+  writeWithMapNamed(state, "[", CAT_OTHER, node);
 
   for (let i = 0; i < length; i++) {
     if (i !== 0) write(state, ", ", CAT_OTHER);

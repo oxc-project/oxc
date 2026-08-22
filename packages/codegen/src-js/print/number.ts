@@ -9,7 +9,7 @@
 // Each form is written to the output in pieces, so no candidate string is ever built.
 
 import { debugAssert } from "../asserts.ts";
-import { CAT_IDENT, CAT_INT_DIGIT, markWithMapNoName, write, writeNoLast } from "./write.ts";
+import { CAT_IDENT, CAT_INT_DIGIT, markMapStart, write, writeNoLast } from "./write.ts";
 
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
@@ -25,7 +25,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * from a following `.` already.
  */
 export function printNonNegativeFloat(state: State, value: number, node: ESTree.Node): void {
-  markWithMapNoName(state, node);
+  markMapStart(state, node);
 
   if (Number.isInteger(value)) {
     if (value < 1000) {

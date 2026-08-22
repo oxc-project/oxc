@@ -2,7 +2,7 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
-import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, write, writeWithMap } from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, write, writeWithMapNamed } from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";
@@ -23,7 +23,7 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
     // For speed, the two common ones are printed here instead of through the expression printer's own dispatch.
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, CAT_IDENT, node);
       break;
     case "MemberExpression":
       printMemberExpression(node, state, CTX_NONE);
@@ -53,7 +53,7 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
  * Print an object destructuring target, as in `({ a, b: c } = obj)`.
  */
 function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state: State): void {
-  writeWithMap(state, "{", CAT_OTHER, node);
+  writeWithMapNamed(state, "{", CAT_OTHER, node);
 
   const { properties } = node;
   const { length } = properties;
@@ -62,7 +62,7 @@ function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state:
 
     const property = properties[i];
     if (property.type === "RestElement") {
-      writeWithMap(state, "...", CAT_OTHER, property);
+      writeWithMapNamed(state, "...", CAT_OTHER, property);
       printAssignmentTarget(property.argument, state);
     } else {
       printAssignmentTargetProperty(property, state);
@@ -83,12 +83,12 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     if (value.type === "AssignmentPattern") {
       typeAssertIs<ESTree.IdentifierReference>(value.left);
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, value.left.name, CAT_IDENT, value.left);
+      writeWithMapNamed(state, value.left.name, CAT_IDENT, value.left);
       write(state, " = ", CAT_OTHER);
       printExpression(value.right, state, PREC_COMMA, CTX_NONE);
     } else {
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, value.name, CAT_IDENT, value);
+      writeWithMapNamed(state, value.name, CAT_IDENT, value);
     }
   } else {
     const { key } = node;
@@ -139,7 +139,7 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
     }
   }
 
-  writeWithMap(state, "[", CAT_OTHER, node);
+  writeWithMapNamed(state, "[", CAT_OTHER, node);
 
   for (let i = 0; i < length; i++) {
     if (i !== 0) write(state, ", ", CAT_OTHER);
@@ -155,7 +155,7 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
 
   if (rest !== null) {
     if (length > 0) write(state, " ", CAT_OTHER);
-    writeWithMap(state, "...", CAT_OTHER, rest);
+    writeWithMapNamed(state, "...", CAT_OTHER, rest);
     printAssignmentTarget(rest.argument, state);
   }
 
