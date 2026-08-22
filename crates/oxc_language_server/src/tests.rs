@@ -689,6 +689,46 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_client_message_cap_max_messages() {
+        let builder = FakeToolBuilder {
+            build_client_message: (1..=6)
+                .map(|index| ClientMessage {
+                    message: format!("Fake misconfiguration message {index}"),
+                    r#type: MessageType::WARNING,
+                })
+                .collect(),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+        });
+
+        // initialize: worker starts here (no workspace_configuration), messages must NOT be sent yet
+        server.send_request(initialize_request(InitializeRequestOptions::default())).await;
+        let initialize_result = server.recv_response().await;
+        assert!(initialize_result.is_ok());
+
+        // initialized: messages are capped to 5 with the last one being an overflow warning
+        server.send_request(initialized_notification()).await;
+
+        for index in 1..=4 {
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], format!("Fake misconfiguration message {index}"));
+            assert_eq!(params["type"], json!(MessageType::WARNING));
+        }
+
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "2 more messages not shown. See LSP logs for details.");
+        assert_eq!(params["type"], json!(MessageType::WARNING));
+
+        server.shutdown(2).await;
+    }
+
+    #[tokio::test]
     async fn test_basic_start_and_shutdown_flow() {
         let mut server = TestServer::new(|client| {
             Backend::new(client, server_info(), create_workspace_manager())
