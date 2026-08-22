@@ -48,6 +48,8 @@ pub struct ContextSubHost<'a> {
     /// Parser tokens collected during parsing.
     /// Empty if parsing failed, or tokens are disabled (no JS plugins).
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
+    /// Original source text for the whole file being linted.
+    pub(super) actual_source_text: &'a str,
     /// Stable source text for this script section
     /// which remains available even after `semantic` is taken while running JS plugins.
     pub(super) source_text: &'a str,
@@ -56,10 +58,6 @@ pub struct ContextSubHost<'a> {
 }
 
 impl<'a> ContextSubHost<'a> {
-    pub(crate) fn source_text_offset(&self) -> u32 {
-        self.source_text_offset
-    }
-
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new(
@@ -80,6 +78,8 @@ impl<'a> ContextSubHost<'a> {
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
+        let actual_source_text =
+            options.actual_source_text.unwrap_or_else(|| semantic.source_text());
 
         Self {
             semantic,
@@ -89,6 +89,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: options.framework_options,
             parser_tokens: options.parser_tokens,
+            actual_source_text,
         }
     }
 
@@ -114,6 +115,16 @@ impl<'a> ContextSubHost<'a> {
         self.framework_options
     }
 
+    /// Shared reference to the original full-file source text.
+    pub fn actual_source_text(&self) -> &'a str {
+        self.actual_source_text
+    }
+
+    /// Source text offset of this sub host within the full file.
+    pub fn source_text_offset(&self) -> u32 {
+        self.source_text_offset
+    }
+
     #[inline]
     pub fn source_text(&self) -> &'a str {
         self.source_text
@@ -124,6 +135,7 @@ impl<'a> ContextSubHost<'a> {
 pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
     pub parser_tokens: ArenaBox<'a, [Token]>,
+    pub actual_source_text: Option<&'a str>,
     pub respect_eslint_disable_directives: bool,
 }
 
@@ -132,6 +144,7 @@ impl Default for ContextSubHostOptions<'_> {
         Self {
             framework_options: FrameworkOptions::Default,
             parser_tokens: ArenaBox::new_empty_boxed_slice(),
+            actual_source_text: None,
             respect_eslint_disable_directives: true,
         }
     }
@@ -288,6 +301,16 @@ impl<'a> ContextHost<'a> {
         &mut self.current_sub_host_mut().parser_tokens
     }
 
+    /// Shared reference to the original full-file source text of the current file.
+    pub fn actual_source_text(&self) -> &'a str {
+        self.current_sub_host().actual_source_text()
+    }
+
+    /// Source text offset of the current sub host within the full file.
+    pub fn current_source_text_offset(&self) -> u32 {
+        self.current_sub_host().source_text_offset()
+    }
+
     /// Path to the file being linted.
     ///
     /// When created from a [`LintService`](`crate::service::LintService`), this
@@ -346,6 +369,12 @@ impl<'a> ContextHost<'a> {
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
+        self.diagnostics.borrow_mut().push(diagnostic);
+    }
+
+    /// Add a diagnostic that is already expressed in actual file coordinates.
+    #[inline]
+    pub(crate) fn push_diagnostic_in_actual_coordinates(&self, diagnostic: Message) {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
