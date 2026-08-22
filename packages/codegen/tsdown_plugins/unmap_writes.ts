@@ -36,7 +36,7 @@ import type { Plugin } from "rolldown";
 const REWRITES = {
   // `write` takes the `last` category between the code and the node, `writeNoLast` does not
   writeWithMap: { arity: 4, remove: 1, rename: "write" },
-  writeWithMapNamed: { arity: 4, remove: 1, rename: "write" },
+  writeWithMapNamed: { arity: 3, remove: 1, rename: "writeIdent" },
   writeWithMapNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
   writeWithMapNamedNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
   writeWithMapNamedJSXNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
