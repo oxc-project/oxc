@@ -16,6 +16,7 @@ import {
   writeWithMapEnd,
   writeWithMapNamed,
   writeWithMapNamedNoLast,
+  writeWithMapNamedPrivate,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
@@ -527,8 +528,7 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
       writeWithMapNamed(state, key.name, CAT_IDENT, key);
       break;
     case "PrivateIdentifier":
-      writeWithMapNamedNoLast(state, "#", key);
-      write(state, key.name, CAT_IDENT);
+      writeWithMapNamedPrivate(state, key.name, key);
       break;
     case "Literal":
       if (typeof key.value === "string") {

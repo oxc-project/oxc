@@ -24,7 +24,7 @@ import {
   writeWithMap,
   writeWithMapEnd,
   writeWithMapNamed,
-  writeWithMapNamedNoLast,
+  writeWithMapNamedPrivate,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
@@ -293,8 +293,7 @@ export function printMemberExpression(
 
     const { property } = node;
     if (property.type === "PrivateIdentifier") {
-      writeWithMapNamedNoLast(state, "#", property);
-      write(state, property.name, CAT_IDENT);
+      writeWithMapNamedPrivate(state, property.name, property);
     } else {
       writeWithMapNamed(state, property.name, CAT_IDENT, property);
     }
@@ -391,8 +390,7 @@ export function printPrivateInExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   markMapStart(state, node);
-  writeWithMapNamedNoLast(state, "#", node.left);
-  write(state, node.left.name, CAT_IDENT);
+  writeWithMapNamedPrivate(state, node.left.name, node.left);
   write(state, " in ", CAT_OTHER);
   printExpression(node.right, state, PREC_EQUALS, CTX_FORBID_IN);
 

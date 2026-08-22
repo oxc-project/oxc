@@ -252,6 +252,31 @@ export function write(state: State, code: string, last: Category): void {
 }
 
 /**
+ * Append a private identifier - `#` and `name` - to the output, and record what it ends with.
+ *
+ * The plain form of `writeWithMapNamedPrivate`.
+ * Nothing calls it directly - the TSDown plugin rewrites the mapped calls to it for builds without source map support.
+ *
+ * `last` is always `CAT_IDENT`, since the name is what is written last, so the caller does not pass it.
+ *
+ * @param state - Printer state
+ * @param name - The identifier's name, which is what follows the `#`, so never empty
+ */
+export function writePrivate(state: State, name: string): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
+
+  state.last = CAT_IDENT;
+  state.output += "#";
+  state.output += name;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
+  }
+}
+
+/**
  * Append `code` to the output, record what it ends with, and record an unnamed source mapping for `node`.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
@@ -305,8 +330,9 @@ export function writeWithMapNamed(
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
+  debugAssertNameMatches(node, code);
 
-  markMapNamed(state, false, node);
+  markMapNamed(state, code, false, 0, node);
 
   state.last = last;
   state.output += code;
@@ -314,6 +340,42 @@ export function writeWithMapNamed(
   if (DEBUG) {
     state.lastIsStale = false;
     state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append a private identifier - `#` and `name` - to the output, record what it ends with,
+ * and record a named source mapping for `node`.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ *
+ * `last` is always `CAT_IDENT`, since the name is what is written last, so the caller does not pass it.
+ *
+ * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
+ * into `writePrivate` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ *
+ * @param state - Printer state
+ * @param name - The identifier's name, which is what follows the `#`, so never empty
+ * @param node - Private identifier this text came from
+ */
+export function writeWithMapNamedPrivate(
+  state: State,
+  name: string,
+  node: ESTree.PrivateIdentifier,
+): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
+  debugAssertNameMatches(node, name);
+
+  markMapNamed(state, name, false, 1, node);
+
+  state.last = CAT_IDENT;
+  state.output += "#";
+  state.output += name;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -377,11 +439,14 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
  * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
- * @param code - Text to append, which unlike `writeWithMapNamed` may be empty
+ * @param code - The identifier's name, so never empty, unlike the plain `NoLast` forms
  * @param node - Node this text came from
  */
 export function writeWithMapNamedNoLast(state: State, code: string, node: IdentMappableNode): void {
-  markMapNamed(state, false, node);
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertNameMatches(node, code);
+
+  markMapNamed(state, code, false, 0, node);
 
   state.output += code;
 
@@ -410,8 +475,9 @@ export function writeWithMapNamedJSXNoLast(
   node: ESTree.JSXIdentifier,
 ): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertNameMatches(node, name);
 
-  markMapNamed(state, true, node);
+  markMapNamed(state, name, true, 0, node);
 
   state.output += name;
 
@@ -519,16 +585,33 @@ function markMapEnd(state: State, node: MappableNode): void {
  *
  * The name is only recorded for the mapping where it differs from the text which is printed.
  *
+ * A private identifier's mapping stays on the `#`, where the printed token starts, and the `#` is part
+ * of the name recorded - the token is `#name`, so a name of `name` alone would describe a region of
+ * the output which includes the `#`.
+ *
  * @param state - Printer state
+ * @param printedName - Name written to the output, which is the identifier's `name`
  * @param isJSXIdentifier - `true` if the node is a `JSXIdentifier`
+ * @param hashLength - Length of the `#` the token is printed behind.
+ *   1 if the node is a `PrivateIdentifier`, 0 otherwise.
  * @param node - Node the mapping points at
  */
-function markMapNamed(state: State, isJSXIdentifier: boolean, node: NamedMappableNode): void {
+function markMapNamed(
+  state: State,
+  printedName: string,
+  isJSXIdentifier: boolean,
+  hashLength: 0 | 1,
+  node: NamedMappableNode,
+): void {
   if (!SOURCEMAPS || !hasMappableSpan(node)) return;
 
   debugAssert(
     state.mapPositions !== null && state.mapNames !== null && state.sourceText !== null,
     "`mapPositions`, `mapNames` and `sourceText` should be defined when source maps are enabled",
+  );
+  debugAssert(
+    !(isJSXIdentifier && hashLength > 0),
+    "A node cannot be both a `JSXIdentifier` and a `PrivateIdentifier`",
   );
 
   const { start, end } = node;
@@ -559,8 +642,6 @@ function markMapNamed(state: State, isJSXIdentifier: boolean, node: NamedMappabl
   //
   // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
   // That is what the source is compared against, and what gets recorded as the name.
-  const printedName = node.name;
-  const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
   const nameStart = start + hashLength;
   const nameEnd = nameStart + printedName.length;
   const matchesSource =
@@ -655,8 +736,8 @@ function isSameToken(originalName: string, printedName: string, hashLength: 0 | 
  * and the `#` is part of what is returned - the token is `#name`.
  *
  * @param sourceText - Original source text
- * @param start - Start offset of `node`, already validated
- * @param end - End offset of `node`, already validated
+ * @param start - Offset the identifier starts at, already validated
+ * @param end - Offset the scan stops at, already validated
  * @returns The identifier as it appears in the source, or `undefined` if the offsets do not span one
  */
 function originalNameFromSource(
@@ -782,6 +863,24 @@ function isDefinitelyIdentifierBoundary(code: number): boolean {
     && code !== 45 // `-` in JSX identifiers
     && code !== 92 // `\` starting a Unicode escape
     && code !== 95 // `_`
+  );
+}
+
+/**
+ * Assert that the name a mapping records is the text which was printed.
+ *
+ * The `Named` write functions record what they print, on the premise that an identifier's `name` and
+ * the text printed for it are one and the same string. This is what holds that premise up.
+ *
+ * Debug builds only. Removed by minifier in release builds.
+ *
+ * @param node - Node the mapping is for
+ * @param name - Name the mapping records, which is what was printed
+ */
+function debugAssertNameMatches(node: NamedMappableNode, name: string): void {
+  debugAssert(
+    node.name === name,
+    () => `\`${node.type}\` has name "${node.name}", but "${name}" was printed`,
   );
 }
 
