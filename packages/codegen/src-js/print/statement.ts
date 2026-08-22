@@ -41,7 +41,7 @@ import {
 } from "./typescript.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, UnknownNode } from "./types.ts";
+import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -84,7 +84,6 @@ export function printDirectivesAndStatements(
       // Ensure a string literal (only possible via parentheses, since a bare one would be a directive)
       // as 1st statement or after other real directives, is not re-parsed as a directive
       const inner = withoutParens(stmt.expression);
-      typeAssertIs<LiteralExtras>(inner);
       if (inner.type === "Literal" && typeof inner.value === "string") {
         const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
         printIndent(state);

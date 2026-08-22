@@ -34,7 +34,7 @@ import { printDirectivesAndStatements } from "./statement.ts";
 import { printString } from "./string.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, UnknownNode } from "./types.ts";
+import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -529,7 +529,6 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
       write(state, key.name, CAT_IDENT);
       break;
     case "Literal":
-      typeAssertIs<LiteralExtras>(key);
       if (typeof key.value === "string") {
         printString(state, key.value, key);
       } else {

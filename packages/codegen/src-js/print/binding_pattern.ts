@@ -19,7 +19,7 @@ import { printString } from "./string.ts";
 import { printTypeAnnotation } from "./typescript.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, UnknownNode } from "./types.ts";
+import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -148,7 +148,6 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
       write(state, key.name, CAT_IDENT);
       break;
     case "Literal":
-      typeAssertIs<LiteralExtras>(key);
       if (typeof key.value === "string") {
         printString(state, key.value, key);
       } else {

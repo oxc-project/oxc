@@ -150,12 +150,12 @@ function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
     // The base of `**` must be an `UpdateExpression`.
     // Unary/await bases and negative-printing literals must be parenthesized.
     const left = withoutParens(e.left);
-    typeAssertIs<LiteralExtras>(left);
     if (
       left.type === "UnaryExpression"
       || left.type === "AwaitExpression"
       || (TS && left.type === "TSTypeAssertion")
-      || (left.type === "Literal" && (typeof left.value === "number" || left.bigint != null))
+      || (left.type === "Literal"
+        && (typeof left.value === "number" || (left as LiteralExtras).bigint != null))
     ) {
       v.leftPrecedence = PREC_CALL;
     }
