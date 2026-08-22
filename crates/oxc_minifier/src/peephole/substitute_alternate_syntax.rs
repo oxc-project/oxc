@@ -644,9 +644,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(&mut e.right, new_null);
             } else if ctx.is_expression_undefined(&e.left) {
                 let new_null = Expression::new_null_literal(e.left.span(), ctx);
-                let right_expr = e.right.take_in(ctx);
-                ctx.replace_expression(&mut e.left, right_expr);
-                ctx.replace_expression(&mut e.right, new_null);
+                ctx.replace_expression(&mut e.left, new_null);
             }
         }
     }
