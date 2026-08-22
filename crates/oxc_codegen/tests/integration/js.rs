@@ -86,8 +86,8 @@ fn expr() {
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
 
-    test_minify("throw 'foo'", "throw`foo`;");
-    test_minify("function a() { return 'foo' }", "function a(){return`foo`}");
+    test_minify("throw 'foo'", "throw\"foo\";");
+    test_minify("function a() { return 'foo' }", "function a(){return\"foo\"}");
     test_minify("function a() { return class {} }", "function a(){return class{}}");
     test_minify(
         "function a() { return async function foo() {} }",
@@ -492,8 +492,8 @@ fn vite_special_comments() {
 
 #[test]
 fn import_phase() {
-    test_minify("import.defer('foo')", "import.defer(`foo`);");
-    test_minify("import.source('foo')", "import.source(`foo`);");
+    test_minify("import.defer('foo')", "import.defer(\"foo\");");
+    test_minify("import.source('foo')", "import.source(\"foo\");");
     test("import.defer('foo')", "import.defer(\"foo\");\n");
     test("import.source('foo')", "import.source(\"foo\");\n");
 }
@@ -693,7 +693,7 @@ fn directive_prologue_boundary_minify() {
     test_minify("(\"`\");", "`\\``;");
     // `${` costs a backtick the same as a backtick does
     test_minify("(\"${}\");", "`\\${}`;");
-    // Strings which would have chosen a template literal anyway are unaffected
+    // A string with no quotes to escape is forced to a template literal too
     test_minify("(\"use strict\");", "`use strict`;");
     // After real directives
     test_minify("\"use asm\"; (\"`\");", "\"use asm\";`\\``;");
@@ -722,14 +722,14 @@ fn string() {
 
     // Lossy replacement character
     test("let x = \"�\\u{FFFD}\";", "let x = \"��\";\n");
-    test_minify("let x = \"�\\u{FFFD}\";", "let x=`��`;");
+    test_minify("let x = \"�\\u{FFFD}\";", "let x=\"��\";");
     test(
         "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";",
         "let x = \"� ��� � ��� �\";\n",
     );
     test_minify(
         "let x = \"� ��� \\u{FFFD} \\u{FFFD}\\u{FFFD}\\u{FFFD} �\";",
-        "let x=`� ��� � ��� �`;",
+        "let x=\"� ��� � ��� �\";",
     );
     // Lone surrogates
     test(
@@ -738,10 +738,10 @@ fn string() {
     );
     test_minify(
         "let x = \"\\uD800 \\uDBFF \\uDC00 \\uDFFF\";",
-        "let x=`\\ud800 \\udbff \\udc00 \\udfff`;",
+        "let x=\"\\ud800 \\udbff \\udc00 \\udfff\";",
     );
     test("let x = \"\\uD800\u{41}\";", "let x = \"\\ud800A\";\n");
-    test_minify("let x = \"\\uD800\u{41}\";", "let x=`\\ud800A`;");
+    test_minify("let x = \"\\uD800\u{41}\";", "let x=\"\\ud800A\";");
     // Invalid pairs
     test(
         "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
@@ -749,7 +749,7 @@ fn string() {
     );
     test_minify(
         "let x = \"\\uD800\\uDBFF \\uDC00\\uDFFF\";",
-        "let x=`\\ud800\\udbff \\udc00\\udfff`;",
+        "let x=\"\\ud800\\udbff \\udc00\\udfff\";",
     );
     // Lone surrogates and lossy replacement characters
     test(
@@ -758,7 +758,7 @@ fn string() {
     );
     test_minify(
         "let x = \"��\\u{FFFD}\\u{FFFD}\\uD800\\uDBFF��\\u{FFFD}\\u{FFFD}\\uDC00\\uDFFF��\\u{FFFD}\\u{FFFD}\";",
-        "let x=`����\\ud800\\udbff����\\udc00\\udfff����`;",
+        "let x=\"����\\ud800\\udbff����\\udc00\\udfff����\";",
     );
 
     test_minify(
@@ -780,7 +780,7 @@ fn string() {
         r#"exports["has-dash"] = a; module.exports["__esModule"] = true;"#,
         r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
     );
-    test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
+    test_minify(r#"obj["not-exports"] = a;"#, "obj[\"not-exports\"]=a;");
 
     // require() should preserve string quotes for cjs-module-lexer compatibility
     test_minify(
@@ -790,7 +790,7 @@ fn string() {
     test_minify(r#"var a = require("./foo");"#, r#"var a=require("./foo");"#);
     test_minify(r#"require("./foo");"#, r#"require("./foo");"#);
     // Non-require calls should still use backtick optimization
-    test_minify(r#"foo("./bar")"#, "foo(`./bar`);");
+    test_minify(r#"foo("./bar")"#, "foo(\"./bar\");");
     // Dynamic require is not affected
     test_minify("require(foo);", "require(foo);");
     // Single-quoted require
@@ -808,9 +808,9 @@ fn string() {
     // Magic string on the left side of an equality is also preserved.
     test_minify(r#"a = "default" === x"#, r#"a="default"===x;"#);
     // Other strings in equality comparisons are unaffected.
-    test_minify(r#"a = x === "foo""#, "a=x===`foo`;");
+    test_minify(r#"a = x === "foo""#, "a=x===\"foo\";");
     // The two magic strings are unaffected when not in equality comparisons.
-    test_minify(r#"a = "default""#, "a=`default`;");
+    test_minify(r#"a = "default""#, "a=\"default\";");
 }
 
 #[test]
