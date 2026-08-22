@@ -47,11 +47,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-    pub fn minimize_statements(
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-        is_traversed_statement_list: bool,
-    ) {
+    pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
@@ -107,18 +103,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // At a normal function tail, a `void 0` branch can become fallthrough.
-        // Preserve both condition evaluations while keeping loop bodies, non-tail statements,
-        // synthetic statement lists, and async-generator return semantics unchanged.
-        if is_traversed_statement_list
-            && !ctx.is_tree_shake_only()
-            && ctx.parent().is_function_body()
-            && !ctx.is_closest_function_scope_an_async_generator()
-            && let Some(last_stmt) = stmts.last_mut()
-        {
-            Self::try_minimize_tail_conditional_return(last_stmt, ctx);
-        }
-
         // Drop a trailing unconditional jump statement if applicable
         if let Some(last_stmt) = stmts.last()
             && Self::can_remove_termination_statement(last_stmt, ctx)
@@ -171,9 +155,22 @@ impl<'a> PeepholeOptimizations {
                             let Some(Statement::ReturnStatement(last_return)) = stmts.last() else {
                                 unreachable!()
                             };
-                            if (ctx.is_closest_function_scope_an_async_generator()
-                                && (prev_return.argument.is_none()
-                                    || last_return.argument.is_none()))
+                            let is_async_generator =
+                                ctx.is_closest_function_scope_an_async_generator();
+                            let prev_return_is_bare = prev_return.argument.is_none();
+                            let last_return_is_bare = last_return.argument.is_none();
+                            if is_async_generator && prev_return_is_bare && last_return_is_bare {
+                                let Statement::IfStatement(if_stmt) = &mut stmts[prev_index] else {
+                                    unreachable!()
+                                };
+                                let span = if_stmt.span;
+                                let test = if_stmt.test.take_in(ctx);
+                                let expr_stmt =
+                                    Statement::new_expression_statement(span, test, ctx);
+                                ctx.replace_statement(&mut stmts[prev_index], expr_stmt);
+                                continue 'return_loop;
+                            }
+                            if (is_async_generator && (prev_return_is_bare || last_return_is_bare))
                                 || last_return
                                     .argument
                                     .as_ref()
@@ -894,7 +891,7 @@ impl<'a> PeepholeOptimizations {
                             ArenaVec::from_iter_in(drained_stmts, ctx)
                         };
 
-                        Self::minimize_statements(&mut body, ctx, false);
+                        Self::minimize_statements(&mut body, ctx);
                         let span = if body.is_empty() {
                             if_stmt.consequent.span()
                         } else {
@@ -2093,7 +2090,10 @@ impl<'a> PeepholeOptimizations {
     /// This is only called for the final statement in a normal function body. `void 0` is
     /// equivalent to falling through here, while the outer and conditional tests retain their
     /// original short-circuit order.
-    fn try_minimize_tail_conditional_return(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub(super) fn try_minimize_tail_conditional_return(
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
         if if_stmt.alternate.is_some() {
             return;

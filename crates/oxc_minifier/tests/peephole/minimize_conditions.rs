@@ -135,6 +135,10 @@ fn test_fold_nested_terminated_returns_at_function_tail() {
         "function f(){L:{if(a)if(x)return;else return 2-x}g()}",
         "function f(){L:if(a)return x?void 0:2-x;g()}",
     );
+    test(
+        "function f(){L:if(a)if(x)return;else return 2-x}",
+        "function f(){L:if(a)return x?void 0:2-x}",
+    );
 
     // Preserve evaluation of an undefined-valued branch with side effects.
     test("function f(){if(a)return x?void side():y}", "function f(){if(a)return x?void side():y}");
@@ -155,7 +159,19 @@ fn test_fold_nested_terminated_returns_at_function_tail() {
     );
     test(
         "async function* f(b){try{if(b)return;else return}finally{a='PASS'}}",
+        "async function* f(b){try{return}finally{a='PASS'}}",
+    );
+    test(
         "async function* f(b){try{if(b)return;return}finally{a='PASS'}}",
+        "async function* f(b){try{return}finally{a='PASS'}}",
+    );
+    test(
+        "async function* f(){try{if(b)return;return}finally{a='PASS'}}",
+        "async function* f(){try{b;return}finally{a='PASS'}}",
+    );
+    test(
+        "async function* f(){try{if(b())return;return}finally{a='PASS'}}",
+        "async function* f(){try{b();return}finally{a='PASS'}}",
     );
 }
 
