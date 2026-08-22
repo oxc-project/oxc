@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
+assertion_line: 172
 expression: report
 ---
 js compatibility: 773/810 (95.43%), 23 files skipped
@@ -81,8 +82,6 @@ js compatibility: 773/810 (95.43%), 23 files skipped
 - js/comments/between-head-and-body/between-head-and-body.js
 - js/comments/between-head-and-body/empty-statement.js
 - js/comments/first-argument/first-argument.js
-- js/comments/while-like/if.js
-- js/comments/while-like/while.js
 - js/comments/while-like/with.js
 - js/for/9812-2.js
 - js/for/continue-and-break-comment-without-blocks.js

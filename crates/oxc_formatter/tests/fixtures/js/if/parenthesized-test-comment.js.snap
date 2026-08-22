@@ -1,0 +1,85 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// The test is parenthesised, so its own `)` sits between the expression and the
+// statement's `)`. The comment belongs to the condition and must stay inside it
+// on every pass -- it used to escape one paren per reformat.
+if ((0, 0/* comment */)) {}
+
+while ((0, 0/* comment */)) {}
+
+if ((a, b) /* comment */) {}
+
+while ((a, b) /* comment */) {}
+
+if (((x)) /* comment */) {}
+
+// Unparenthesised tests, and comments that really do sit after the `)`,
+// must keep their existing placement.
+if (x /* comment */) {}
+
+while (x /* comment */) {}
+
+if (x) /* comment */ {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// The test is parenthesised, so its own `)` sits between the expression and the
+// statement's `)`. The comment belongs to the condition and must stay inside it
+// on every pass -- it used to escape one paren per reformat.
+if ((0, 0) /* comment */) {
+}
+
+while ((0, 0) /* comment */) {}
+
+if ((a, b) /* comment */) {
+}
+
+while ((a, b) /* comment */) {}
+
+if (x /* comment */) {
+}
+
+// Unparenthesised tests, and comments that really do sit after the `)`,
+// must keep their existing placement.
+if (x /* comment */) {
+}
+
+while (x /* comment */) {}
+
+if (x) /* comment */ {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// The test is parenthesised, so its own `)` sits between the expression and the
+// statement's `)`. The comment belongs to the condition and must stay inside it
+// on every pass -- it used to escape one paren per reformat.
+if ((0, 0) /* comment */) {
+}
+
+while ((0, 0) /* comment */) {}
+
+if ((a, b) /* comment */) {
+}
+
+while ((a, b) /* comment */) {}
+
+if (x /* comment */) {
+}
+
+// Unparenthesised tests, and comments that really do sit after the `)`,
+// must keep their existing placement.
+if (x /* comment */) {
+}
+
+while (x /* comment */) {}
+
+if (x) /* comment */ {
+}
+
+===================== End =====================
