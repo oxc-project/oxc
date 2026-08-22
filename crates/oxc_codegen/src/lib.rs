@@ -101,6 +101,10 @@ pub struct Codegen<'a> {
     // states
     prev_op_end: usize,
     prev_reg_exp_end: usize,
+    /// Buffer length right after an identifier was printed ending in a `\u` escape
+    /// (`ascii_only`): its last byte (`}` or a hex digit) does not look like an identifier
+    /// character, but a following keyword still needs a separating space.
+    prev_escaped_ident_end: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
@@ -125,6 +129,10 @@ pub struct Codegen<'a> {
     /// Fast path for [CodegenOptions::single_quote]
     quote: Quote,
 
+    /// Set while printing the quasi of a `TaggedTemplateExpression`: its raw value is
+    /// observable by the tag, so [CodegenOptions::ascii_only] must not rewrite it.
+    pub(crate) in_tagged_template: bool,
+
     // Builders
     comments: CommentsMap,
     has_property_key_annotations: bool,
@@ -146,6 +154,22 @@ pub struct Codegen<'a> {
 
     #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
+}
+
+/// How [`Codegen::print_non_ascii_escaped`] escapes a non-ASCII character, by the grammar
+/// of the text being printed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum NonAsciiEscape {
+    /// An IdentifierName.
+    Identifier,
+    /// A regular expression's pattern source (raw text; a preceding backslash is consumed;
+    /// astral characters become a surrogate pair, valid with or without the `u` flag).
+    RegExp,
+    /// An untagged template literal quasi (raw text; a preceding backslash is consumed, an
+    /// LS/PS line continuation is respelled with LF, `</script` is escaped).
+    TemplateRaw,
+    /// A directive's raw string text (as `TemplateRaw`, without the `</script` handling).
+    Directive,
 }
 
 impl Default for Codegen<'_> {
@@ -188,6 +212,7 @@ impl<'a> Codegen<'a> {
             next_class_id: ClassId::from_usize(0),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
+            prev_escaped_ident_end: 0,
             prev_op: None,
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
@@ -195,6 +220,7 @@ impl<'a> Codegen<'a> {
             is_jsx: false,
             indent: 0,
             quote: Quote::Double,
+            in_tagged_template: false,
             comments: CommentsMap::default(),
             has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
@@ -304,6 +330,166 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_str(&mut self, s: &str) {
         self.code.print_str(s);
+    }
+
+    /// Print an identifier name (binding, reference, label, private name, property key),
+    /// `\u`-escaping non-ASCII characters when [CodegenOptions::ascii_only] is set.
+    #[inline]
+    pub fn print_name(&mut self, s: &str) {
+        if !self.options.ascii_only || s.is_ascii() {
+            self.code.print_str(s);
+        } else {
+            self.print_non_ascii_escaped(s, NonAsciiEscape::Identifier);
+            self.prev_escaped_ident_end = self.code.len();
+        }
+    }
+
+    /// Print `s`, replacing every non-ASCII character with an escape sequence according to
+    /// `mode` (see [NonAsciiEscape]). ASCII runs are copied through unchanged, except that
+    /// `</script` is escaped in [NonAsciiEscape::TemplateRaw] mode like everywhere else
+    /// template text is printed.
+    #[cold]
+    pub(crate) fn print_non_ascii_escaped(&mut self, s: &str, mode: NonAsciiEscape) {
+        let raw = mode != NonAsciiEscape::Identifier;
+        let mut start = 0;
+        for (i, ch) in s.char_indices() {
+            if ch.is_ascii() {
+                continue;
+            }
+            // In raw text (regex source, template raw) the character may itself be the
+            // target of a backslash: an identity escape `\é` in a non-`u` regex, a
+            // NonEscapeCharacter `\é` or a LineContinuation `\<LS>` in a template. Emitting
+            // `\uXXXX` after that backslash would produce `\\uXXXX` — an escaped backslash
+            // followed by literal text — so the backslash is consumed here instead: `\é` and
+            // `\u00E9` mean the same in both grammars.
+            let mut end = i;
+            let mut escaped = false;
+            if raw {
+                let backslashes =
+                    s.as_bytes()[start..i].iter().rev().take_while(|&&b| b == b'\\').count();
+                escaped = backslashes % 2 == 1;
+                if escaped {
+                    end = i - 1;
+                }
+            }
+            if start < end {
+                if mode == NonAsciiEscape::TemplateRaw {
+                    self.print_str_escaping_script_close_tag(&s[start..end]);
+                } else {
+                    self.code.print_str(&s[start..end]);
+                }
+            }
+            start = i + ch.len_utf8();
+            // A LineContinuation (`\` + LS/PS) stays a LineContinuation, spelled with LF: it
+            // contributes nothing to the cooked value either way, and keeping a continuation in
+            // place means the surrounding characters still lex the same (`$\<LS>{`, `\0\<LS>1`).
+            let line_continuation = escaped
+                && matches!(mode, NonAsciiEscape::TemplateRaw | NonAsciiEscape::Directive)
+                && matches!(ch, '\u{2028}' | '\u{2029}');
+            if line_continuation {
+                self.print_str("\\\n");
+                continue;
+            }
+            match mode {
+                NonAsciiEscape::RegExp => self.print_unicode_escape_utf16(ch),
+                NonAsciiEscape::Identifier
+                | NonAsciiEscape::TemplateRaw
+                | NonAsciiEscape::Directive => self.print_unicode_escape(ch),
+            }
+        }
+        if start < s.len() {
+            if mode == NonAsciiEscape::TemplateRaw {
+                self.print_str_escaping_script_close_tag(&s[start..]);
+            } else {
+                self.code.print_str(&s[start..]);
+            }
+        }
+    }
+
+    /// Print `ch` as `\uXXXX`, or as `\u{X…}` above the BMP (ES2015 code point escape:
+    /// valid in string literals, template literals and identifier names).
+    #[inline]
+    pub(crate) fn print_unicode_escape(&mut self, ch: char) {
+        if let Ok(unit) = u16::try_from(ch as u32) {
+            self.print_u16_escape(unit);
+        } else {
+            self.print_code_point_escape(ch as u32);
+        }
+    }
+
+    /// Print `ch` as `\uXXXX`, or as an escaped UTF-16 surrogate pair above the BMP. Used in
+    /// regular expression source, where `\u{…}` is only valid with the `u`/`v` flag but a
+    /// surrogate pair matches the same text with or without it.
+    #[inline]
+    fn print_unicode_escape_utf16(&mut self, ch: char) {
+        let mut units = [0u16; 2];
+        for unit in ch.encode_utf16(&mut units) {
+            self.print_u16_escape(*unit);
+        }
+    }
+
+    #[inline]
+    fn print_code_point_escape(&mut self, cp: u32) {
+        const HEX: &[u8; 16] = b"0123456789ABCDEF";
+        self.print_str("\\u{");
+        let mut started = false;
+        for shift in (0..8).rev() {
+            let nibble = (cp >> (shift * 4)) & 0xF;
+            if nibble != 0 || started || shift == 0 {
+                started = true;
+                self.print_ascii_byte(HEX[nibble as usize]);
+            }
+        }
+        self.print_ascii_byte(b'}');
+    }
+
+    #[inline]
+    fn print_u16_escape(&mut self, unit: u16) {
+        const HEX: &[u8; 16] = b"0123456789ABCDEF";
+        let bytes = [
+            b'\\',
+            b'u',
+            HEX[(unit >> 12) as usize & 0xF],
+            HEX[(unit >> 8) as usize & 0xF],
+            HEX[(unit >> 4) as usize & 0xF],
+            HEX[unit as usize & 0xF],
+        ];
+        // SAFETY: all 6 bytes are ASCII
+        unsafe { self.code.print_bytes_unchecked(&bytes) };
+    }
+
+    /// Print a template literal quasi's raw text. Only untagged templates are escaped under
+    /// [CodegenOptions::ascii_only]: a tag function (e.g. `String.raw`) can observe the raw
+    /// text, which escaping would change.
+    #[inline]
+    pub(crate) fn print_template_quasi_raw(&mut self, raw: &str) {
+        if !self.options.ascii_only || self.in_tagged_template || raw.is_ascii() {
+            self.print_str_escaping_script_close_tag(raw);
+        } else {
+            self.print_non_ascii_escaped(raw, NonAsciiEscape::TemplateRaw);
+        }
+    }
+
+    /// Print a directive's raw string text, escaping non-ASCII characters under
+    /// [CodegenOptions::ascii_only].
+    #[inline]
+    pub(crate) fn print_directive_raw(&mut self, raw: &str) {
+        if !self.options.ascii_only || raw.is_ascii() {
+            self.code.print_str(raw);
+        } else {
+            self.print_non_ascii_escaped(raw, NonAsciiEscape::Directive);
+        }
+    }
+
+    /// Print a regular expression's pattern source, escaping non-ASCII characters under
+    /// [CodegenOptions::ascii_only].
+    #[inline]
+    pub(crate) fn print_regex_pattern(&mut self, pattern: &str) {
+        if !self.options.ascii_only || pattern.is_ascii() {
+            self.code.print_str(pattern);
+        } else {
+            self.print_non_ascii_escaped(pattern, NonAsciiEscape::RegExp);
+        }
     }
 
     /// Push str into the buffer, escaping `</script` to `<\/script`.
@@ -477,7 +663,9 @@ impl<'a> Codegen<'a> {
     fn print_space_before_identifier(&mut self) {
         let Some(byte) = self.last_byte() else { return };
 
-        if self.prev_reg_exp_end != self.code.len() {
+        if self.prev_reg_exp_end != self.code.len()
+            && self.prev_escaped_ident_end != self.code.len()
+        {
             let is_identifier = if byte.is_ascii() {
                 // Fast path for ASCII (very common case)
                 is_identifier_part_ascii(byte as char)

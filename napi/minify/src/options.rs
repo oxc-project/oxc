@@ -391,6 +391,13 @@ pub struct CodegenOptions {
     /// @default true
     pub remove_whitespace: Option<bool>,
 
+    /// Escape every non-ASCII character in string literals, template literals, regular
+    /// expressions and identifier names so the output is 7-bit clean
+    /// (like esbuild `charset: 'ascii'` / terser `ascii_only`).
+    ///
+    /// @default false
+    pub ascii_only: Option<bool>,
+
     /// How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
     ///
     /// * `"none"` - Do not preserve any legal comments.
@@ -406,7 +413,7 @@ pub struct CodegenOptions {
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true), legal_comments: None }
+        Self { remove_whitespace: Some(true), ascii_only: None, legal_comments: None }
     }
 }
 
@@ -423,6 +430,7 @@ impl CodegenOptions {
             // Need to remove all comments.
             oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
         };
+        opts.ascii_only = self.ascii_only.unwrap_or(false);
 
         if let Some(legal) = &self.legal_comments {
             opts.comments.legal = match legal {

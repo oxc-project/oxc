@@ -8,6 +8,14 @@ export interface CodegenOptions {
    */
   removeWhitespace?: boolean
   /**
+   * Escape every non-ASCII character in string literals, template literals, regular
+   * expressions and identifier names so the output is 7-bit clean
+   * (like esbuild `charset: 'ascii'` / terser `ascii_only`).
+   *
+   * @default false
+   */
+  asciiOnly?: boolean
+  /**
    * How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
    *
    * * `"none"` - Do not preserve any legal comments.

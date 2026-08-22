@@ -15,6 +15,17 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub minify: bool,
 
+    /// Escape every non-ASCII character so the emitted code is 7-bit clean
+    /// (esbuild's `charset: 'ascii'`, terser's `ascii_only`).
+    ///
+    /// String literals, untagged template literals, regular expression literals and
+    /// identifier names are escaped (`\uXXXX`; `\u{XXXXX}` above the BMP, or a surrogate
+    /// pair inside a regular expression, which is visible through `RegExp#source`). Tagged
+    /// template quasis (their raw value is observable), JSX and comments are left as written.
+    ///
+    /// Default is `false`.
+    pub ascii_only: bool,
+
     /// Print comments?
     ///
     /// At present, only some leading comments are preserved.
@@ -50,6 +61,7 @@ impl Default for CodegenOptions {
         Self {
             single_quote: false,
             minify: false,
+            ascii_only: false,
             comments: CommentOptions::default(),
             source_map_path: None,
             indent_char: IndentChar::default(),
@@ -65,6 +77,7 @@ impl CodegenOptions {
         Self {
             single_quote: false,
             minify: true,
+            ascii_only: false,
             comments: CommentOptions::disabled(),
             source_map_path: None,
             indent_char: IndentChar::default(),
