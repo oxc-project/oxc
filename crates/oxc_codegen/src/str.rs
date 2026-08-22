@@ -90,10 +90,13 @@ impl Codegen<'_> {
             allow_backtick,
         };
 
+        // With `ascii_only`, every UTF-8 lead byte routes to the unicode-escape handler.
+        let table = if self.options.ascii_only { &ESCAPES_ASCII_ONLY.0 } else { &ESCAPES.0 };
+
         // Loop through bytes.
         while let Some(b) = state.peek() {
             // Look up whether byte needs escaping
-            let escape = ESCAPES.0[b as usize];
+            let escape = table[b as usize];
             if escape == Escape::__ {
                 // No escape required.
                 // SAFETY: We just checked there's a byte to consume.
@@ -363,6 +366,7 @@ enum Escape {
     LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
     NB = 16, // NBSP  - Non-breaking space (first byte)
     LO = 17, // �     - U+FFFD lossy replacement character (first byte)
+    UC = 18, // any non-ASCII character (UTF-8 lead byte) - `ascii_only` mode
 }
 
 /// Struct which ensures content is aligned on 128.
@@ -398,6 +402,18 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
     ])
 };
 
+/// As [`ESCAPES`], but every UTF-8 lead byte (0xC0-0xFF) maps to `Escape::UC`, so that all
+/// non-ASCII characters are printed as `\u` escapes. Used when `ascii_only` is enabled.
+static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
+    let mut table = ESCAPES.0;
+    let mut i = 0xC0;
+    while i < 0x100 {
+        table[i] = Escape::UC;
+        i += 1;
+    }
+    Aligned128(table)
+};
+
 type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 
 /// Byte handlers.
@@ -408,7 +424,7 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 136 bytes in total.
 /// Aligned on 128, so first 16 occupy a pair of L1 cache lines.
 /// The last will be in separate cache line, but it should be vanishingly rare that it's accessed.
-static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
+static BYTE_HANDLERS: Aligned128<[ByteHandler; 18]> = Aligned128([
     print_null,
     print_bell,
     print_backspace,
@@ -426,6 +442,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
     print_ls_or_ps,
     print_non_breaking_space,
     print_lossy_replacement,
+    print_unicode_escaped,
 ]);
 
 /// Call byte handler for byte which needs escaping.
@@ -731,6 +748,45 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
     // Advance past the character.
     // SAFETY: 0xEF is always the start of a 3-byte Unicode character
     unsafe { state.consume_bytes_unchecked(3) };
+}
+
+// Any UTF-8 lead byte (0xC0-0xFF), `ascii_only` mode: print the character as `\uXXXX`
+// (or an escaped surrogate pair above the BMP).
+unsafe fn print_unicode_escaped(codegen: &mut Codegen, state: &mut PrintStringState) {
+    debug_assert!(state.peek().is_some_and(|b| b >= 0xC0));
+
+    // Lone surrogates are encoded in `value` as `\u{FFFD}XXXX`; that handler already prints
+    // them as `\uXXXX`. Only a *real* U+FFFD (encoded `\u{FFFD}fffd`) needs escaping here.
+    if state.lone_surrogates && state.peek() == Some(0xEF) {
+        let rest = state.bytes.as_slice();
+        if rest.len() >= 7
+            && rest[1..3] == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES
+            && rest[3..7] != *b"fffd"
+        {
+            // SAFETY: next byte is 0xEF and `state.lone_surrogates` is set - exactly the
+            // preconditions of `print_lossy_replacement`.
+            unsafe { print_lossy_replacement(codegen, state) };
+            return;
+        }
+        if rest.len() >= 7 && rest[1..3] == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
+            // Real U+FFFD: flush, skip the 3-byte char plus its 4 hex marker bytes, escape.
+            state.flush(codegen);
+            // SAFETY: 3 bytes of U+FFFD followed by 4 ASCII hex bytes (checked by slice above).
+            unsafe { state.consume_bytes_unchecked(7) };
+            state.start_chunk();
+            codegen.print_unicode_escape('\u{FFFD}');
+            return;
+        }
+    }
+
+    // Decode the character at the current position.
+    // SAFETY: `bytes` is always positioned on a UTF-8 character boundary within a valid `&str`,
+    // so the remaining slice is valid UTF-8 and non-empty.
+    let rest = unsafe { std::str::from_utf8_unchecked(state.bytes.as_slice()) };
+    let ch = rest.chars().next().unwrap();
+    // SAFETY: consuming exactly one whole character keeps `bytes` on a char boundary.
+    unsafe { state.flush_and_consume_bytes(codegen, ch.len_utf8()) };
+    codegen.print_unicode_escape(ch);
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
