@@ -282,16 +282,16 @@ impl PrintStringState<'_> {
         }
 
         // If equal cost for different quotes prefer, in order:
-        // 1. Backtick
-        // 2. Double quote
-        // 3. Single quote
+        // 1. Double quote
+        // 2. Single quote
+        // 3. Backtick
+        // A template literal is only chosen when it is strictly shorter (it saves escaping
+        // a newline or both quote kinds). On a tie a plain string literal is preferred:
+        // it is valid where a `StringLiteral` is required (directives, `import ... from`,
+        // import attributes) and is what tooling that scans output for `import("...")` expects.
         #[rustfmt::skip]
-        let quote = if backtick_cost <= double_cost {
-            if backtick_cost <= single_cost {
-                Quote::Backtick
-            } else {
-                Quote::Single
-            }
+        let quote = if backtick_cost < double_cost && backtick_cost < single_cost {
+            Quote::Backtick
         } else if double_cost <= single_cost {
             Quote::Double
         } else {
