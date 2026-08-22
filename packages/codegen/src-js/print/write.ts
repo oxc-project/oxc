@@ -576,10 +576,10 @@ export function markMapAfter(state: State, node: MappableNode): void {
  * Builds without source map support have no use for this. In those builds, minifier removes it.
  *
  * @param state - Printer state
- * @param node - Node the mapping points into
  * @param columnOffset - Number of UTF-16 units to add to `node`'s start offset
+ * @param node - Node the mapping points into
  */
-export function markMapAtStartOffset(state: State, node: MappableNode, columnOffset: number): void {
+export function markMapAtStartOffset(state: State, columnOffset: number, node: MappableNode): void {
   if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start + columnOffset);
 }
 
