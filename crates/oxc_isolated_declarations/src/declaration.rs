@@ -17,6 +17,28 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
+    pub(crate) fn collect_constant_bindings(&mut self, stmts: &ArenaVec<'a, Statement<'a>>) {
+        for stmt in stmts {
+            let decl = match stmt {
+                Statement::VariableDeclaration(decl) => Some(decl),
+                Statement::ExportDeclaration(decl) => match &decl.declaration {
+                    Declaration::VariableDeclaration(decl) => Some(decl),
+                    _ => None,
+                },
+                _ => None,
+            };
+
+            let Some(decl) = decl.filter(|decl| decl.kind.is_const()) else { continue };
+            for declarator in &decl.declarations {
+                if let (Some(name), Some(init)) =
+                    (declarator.id.get_identifier_name(), declarator.init.as_ref())
+                {
+                    self.scope.add_constant_binding(name.into(), init.clone_in(self.allocator()));
+                }
+            }
+        }
+    }
+
     pub(crate) fn transform_variable_declaration(
         &self,
         decl: &VariableDeclaration<'a>,
