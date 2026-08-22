@@ -73,6 +73,9 @@ const minifyConfig = DEBUG
 // In builds without source maps, nothing reads the mapping arguments the mapped writes take,
 // so `unmap_writes` rewrites every mapped write call, and the imports which bring them in,
 // into the plain `write` / `writeNoLast` they become without the mapping arguments.
+//
+// In sourcemap release builds the same plugin removes only the trailing `node` argument,
+// which nothing but the debug asserts those builds have lost ever read.
 const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; ts: boolean }) => ({
   ...commonConfig,
   minify: minifyConfig,
@@ -89,7 +92,7 @@ const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; 
     // `const_functions` runs last, so the plugins before it still see function declarations.
     ...(ts ? [] : [stripTsPlugin()]),
     ...assertPlugins,
-    ...(sourcemaps ? [] : [unmapWritesPlugin()]),
+    unmapWritesPlugin(sourcemaps, DEBUG),
     constFunctionsPlugin,
   ],
 });
