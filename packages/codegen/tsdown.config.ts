@@ -89,7 +89,7 @@ const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; 
     // `const_functions` runs last, so the plugins before it still see function declarations.
     ...(ts ? [] : [stripTsPlugin()]),
     ...assertPlugins,
-    ...(sourcemaps ? [] : [unmapWritesPlugin]),
+    ...(sourcemaps ? [] : [unmapWritesPlugin()]),
     constFunctionsPlugin,
   ],
 });
