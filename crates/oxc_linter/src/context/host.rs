@@ -579,3 +579,86 @@ impl<'a> From<ContextHost<'a>> for Vec<Message> {
         ctx_host.diagnostics.into_inner()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{mem, sync::Arc};
+
+    use oxc_allocator::Allocator;
+    use oxc_diagnostics::Severity;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::{SourceType, Span};
+
+    use super::{ContextHost, ContextSubHost, ContextSubHostOptions};
+    use crate::{LintOptions, module_record::ModuleRecord};
+
+    /// Regression test for <https://github.com/oxc-project/oxc/issues/25892>.
+    ///
+    /// `Linter::run_external_rules` takes the `Semantic` out of the context host (leaving an
+    /// empty one behind) before `ContextHost::report_unused_directives` runs for partial-loader
+    /// files (e.g. `.vue`) when JS plugins are used. Reporting an unused disable directive used
+    /// to slice the *semantic's* source text, which is empty at that point, panicking in
+    /// `RuleCommentRule::create_fix` ("start byte index N is out of bounds for string of length 0")
+    /// whenever the directive had trailing unused "rule names" next to a used rule.
+    ///
+    /// The reporting must use the sub host's stable `source_text` instead, which survives the
+    /// semantic being taken.
+    #[test]
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn report_unused_directives_after_semantic_is_taken() {
+        // Mimics a Vue script block containing a disable directive with a used rule
+        // (`no-debugger`) followed by trailing unused "rule names".
+        let source_text = concat!(
+            "// eslint-disable-next-line no-debugger FORWARD does not exist on Icon enum\n",
+            "debugger;\n",
+        );
+
+        let allocator = Allocator::default();
+        let parser_ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+        assert!(parser_ret.diagnostics.is_empty());
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new_linter().build(program).semantic;
+
+        let mut ctx_host = ContextHost::new(
+            "test.vue",
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            &allocator,
+            LintOptions::default(),
+            Arc::default(),
+        );
+
+        // The disabled rule is used by the `debugger` statement on the next line,
+        // so only the trailing unused "rule names" get reported.
+        let debugger_span = Span::sized(source_text.find("debugger;").unwrap() as u32, 8);
+        assert!(ctx_host.disable_directives().contains("no-debugger", debugger_span));
+
+        // Simulate `Linter::run_external_rules` taking (and dropping) the semantic,
+        // which leaves an empty semantic with an empty source text behind.
+        let semantic = mem::take(ctx_host.semantic_mut());
+        drop(semantic);
+
+        // Must not panic.
+        ctx_host.report_unused_directives(Severity::Warning);
+
+        let messages = ctx_host.take_diagnostics();
+        let mut unused_rule_names: Vec<&str> = messages
+            .iter()
+            .map(|message| {
+                let span = message.span;
+                &source_text[span.start as usize..span.end as usize]
+            })
+            .collect();
+        unused_rule_names.sort();
+        assert_eq!(
+            unused_rule_names,
+            ["FORWARD", "Icon", "does", "enum", "exist", "not", "on"],
+            "only the trailing unused rule names should be reported, with spans into the real source text"
+        );
+    }
+}
