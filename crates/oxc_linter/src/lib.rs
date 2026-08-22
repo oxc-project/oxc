@@ -357,8 +357,20 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host =
-            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
+        // The shared React Compiler run takes its environment additions from the
+        // `react/capitalized-calls` rule's resolved options.
+        let react_compiler_env_options = rules
+            .iter()
+            .find_map(|(rule, _)| match rule {
+                RuleEnum::ReactCapitalizedCalls(rule) => Some(rule.react_compiler_env_options()),
+                _ => None,
+            })
+            .unwrap_or_default();
+
+        let mut ctx_host = Rc::new(
+            ContextHost::new(path, context_sub_hosts, allocator, self.options, config)
+                .with_react_compiler_env_options(react_compiler_env_options),
+        );
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

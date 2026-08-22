@@ -1164,10 +1164,19 @@
     "CapitalizedCallsConfig": {
       "type": "object",
       "properties": {
+        "allow": {
+          "description": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option."
+        },
         "allowPattern": {
-          "description": "A regex pattern; capitalized functions and methods whose name matches\nmay be called directly. Anchor the pattern to allow exact names, e.g.\n`\"^(StyleSheet|Schema)$\"`.",
+          "description": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`).",
           "type": "string",
-          "markdownDescription": "A regex pattern; capitalized functions and methods whose name matches\nmay be called directly. Anchor the pattern to allow exact names, e.g.\n`\"^(StyleSheet|Schema)$\"`."
+          "markdownDescription": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`)."
         }
       },
       "additionalProperties": false

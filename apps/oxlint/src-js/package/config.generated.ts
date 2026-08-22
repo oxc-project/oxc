@@ -4625,9 +4625,16 @@ export interface ButtonHasType {
 }
 export interface CapitalizedCallsConfig {
   /**
-   * A regex pattern; capitalized functions and methods whose name matches
-   * may be called directly. Anchor the pattern to allow exact names, e.g.
-   * `"^(StyleSheet|Schema)$"`.
+   * Exact names of capitalized functions that may be called directly.
+   * Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+   * environment option.
+   */
+  allow?: string[];
+  /**
+   * A regex pattern; capitalized functions whose name matches may be called
+   * directly, checked alongside `allow`. Useful when a codebase has a
+   * naming convention for capitalized non-component factories, such as
+   * generated event or schema builders (e.g. `"Event$"`).
    */
   allowPattern?: string;
 }

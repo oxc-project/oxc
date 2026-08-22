@@ -1,5 +1,5 @@
 use lazy_regex::Regex;
-use oxc_react_compiler::{ErrorCategory, LintDiagnostic};
+use oxc_react_compiler::ErrorCategory;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -7,16 +7,22 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        deserialize_regex_option, run_react_compiler_rule_filtered, should_run_react_compiler,
+        ReactCompilerEnvOptions, deserialize_regex_option, run_react_compiler_rule,
+        should_run_react_compiler,
     },
 };
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CapitalizedCallsConfig {
-    /// A regex pattern; capitalized functions and methods whose name matches
-    /// may be called directly. Anchor the pattern to allow exact names, e.g.
-    /// `"^(StyleSheet|Schema)$"`.
+    /// Exact names of capitalized functions that may be called directly.
+    /// Forwarded to the React Compiler's `validateNoCapitalizedCalls`
+    /// environment option.
+    allow: Vec<String>,
+    /// A regex pattern; capitalized functions whose name matches may be called
+    /// directly, checked alongside `allow`. Useful when a codebase has a
+    /// naming convention for capitalized non-component factories, such as
+    /// generated event or schema builders (e.g. `"Event$"`).
     #[serde(deserialize_with = "deserialize_regex_option")]
     allow_pattern: Option<Regex>,
 }
@@ -71,9 +77,7 @@ impl Rule for CapitalizedCalls {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        run_react_compiler_rule_filtered(ctx, ErrorCategory::CapitalizedCalls, |finding| {
-            !self.is_allowed(finding, ctx)
-        });
+        run_react_compiler_rule(ctx, ErrorCategory::CapitalizedCalls);
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -82,16 +86,13 @@ impl Rule for CapitalizedCalls {
 }
 
 impl CapitalizedCalls {
-    fn is_allowed(&self, finding: &LintDiagnostic, ctx: &LintContext) -> bool {
-        let Some(pattern) = self.0.allow_pattern.as_ref() else {
-            return false;
-        };
-        // The finding's label covers exactly the offending function or method
-        // name (see `diagnostics::capitalized_call`).
-        let Some(label) = finding.diagnostic.labels.first() else {
-            return false;
-        };
-        pattern.is_match(ctx.source_range(label.span()))
+    /// The environment additions this rule's options contribute to the shared
+    /// React Compiler run.
+    pub(crate) fn react_compiler_env_options(&self) -> ReactCompilerEnvOptions {
+        ReactCompilerEnvOptions {
+            capitalized_calls_allow: self.0.allow.clone(),
+            capitalized_calls_allow_pattern: self.0.allow_pattern.clone(),
+        }
     }
 }
 
@@ -110,7 +111,7 @@ function Component(props) {
 ",
             None,
         ),
-        // Anchored pattern allows an exact name
+        // Exact name allowed
         (
             "
 import Child from './Child';
@@ -120,19 +121,7 @@ function Component() {
   </>;
 }
 ",
-            Some(json!([{ "allowPattern": "^Child$" }])),
-        ),
-        // The pattern applies to method calls too
-        (
-            "
-import myModule from './MyModule';
-function Component() {
-  return <>
-    {myModule.Child()}
-  </>;
-}
-",
-            Some(json!([{ "allowPattern": "^Child$" }])),
+            Some(json!([{ "allow": ["Child"] }])),
         ),
         // Pattern allowed
         (
@@ -144,6 +133,18 @@ function Component() {
 }
 ",
             Some(json!([{ "allowPattern": "Event$" }])),
+        ),
+        // Anchored pattern allows an exact name
+        (
+            "
+import Child from './Child';
+function Component() {
+  return <>
+    {Child()}
+  </>;
+}
+",
+            Some(json!([{ "allowPattern": "^Child$" }])),
         ),
     ];
 
@@ -197,6 +198,19 @@ function Component() {
 ",
             None,
         ),
+        // Like the compiler's validateNoCapitalizedCalls, the allowlist only
+        // applies to global loads, not to method calls
+        (
+            "
+import myModule from './MyModule';
+function Component() {
+  return <>
+    {myModule.Child()}
+  </>;
+}
+",
+            Some(json!([{ "allow": ["Child"], "allowPattern": "^Child$" }])),
+        ),
         // Allowing one name does not allow others
         (
             "
@@ -208,7 +222,7 @@ function Component() {
     {Child2()}
   </>;
 }",
-            Some(json!([{ "allowPattern": "^Child1$" }])),
+            Some(json!([{ "allow": ["Child1"] }])),
         ),
         // Pattern matches the whole name, not the suffix convention
         (
