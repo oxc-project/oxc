@@ -2,6 +2,7 @@ mod comments;
 mod enum_eval;
 mod es_target;
 mod helper_call;
+mod regexp;
 mod targets;
 
 use std::path::Path;

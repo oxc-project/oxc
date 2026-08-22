@@ -1,8 +1,9 @@
 commit: 1eac4481
 
-Passed: 732/1162
+Passed: 736/1165
 
 # All Passed:
+* babel-plugin-transform-duplicate-named-capturing-groups-regex
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-chaining
@@ -10,7 +11,7 @@ Passed: 732/1162
 * babel-plugin-transform-react-display-name
 
 
-# babel-preset-env (36/85)
+# babel-preset-env (37/85)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -99,9 +100,6 @@ x Output mismatch
 x Output mismatch
 
 * preset-options/destructuring-edge/input.js
-x Output mismatch
-
-* preset-options/duplicate-named-capturing-groups-regex-chrome-123/input.js
 x Output mismatch
 
 * preset-options/include/input.mjs

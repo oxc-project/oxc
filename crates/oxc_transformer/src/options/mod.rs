@@ -223,6 +223,12 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 || options.plugins.unicode_property_escapes,
             match_indices: env.regexp.match_indices,
             set_notation: env.regexp.set_notation || options.plugins.set_notation,
+            duplicate_named_capture_groups: env.regexp.duplicate_named_capture_groups
+                || options.plugins.duplicate_named_capture_groups.is_some(),
+            duplicate_named_capture_groups_runtime: options
+                .plugins
+                .duplicate_named_capture_groups
+                .is_none_or(|options| options.runtime),
         };
 
         let es2015 = ES2015Options {
