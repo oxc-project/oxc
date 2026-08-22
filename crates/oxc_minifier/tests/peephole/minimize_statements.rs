@@ -207,7 +207,7 @@ fn test_handle_switch_statement() {
     test_same("switch (a) { case 1: if (b) break; c(); }");
     test(
         "switch (a) { case 3: { if(b) {c()} else {break;} }}",
-        "switch (a) { case 3: if (b) c(); else break; }",
+        "switch (a) { case 3: if (!b) break; c(); }",
     ); // a === 3 && b && c();
     test(
         "switch (a) { case 3: { if(b) {c(); break;} else { d(); break;} }}",

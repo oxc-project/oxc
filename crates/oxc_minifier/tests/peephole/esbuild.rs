@@ -795,31 +795,31 @@ fn js_parser_test() {
     test("if (0 == ~a) throw 0", "if (~a == 0) throw 0;");
     test(
         "function _() { if (a) { if (b) return c } else return d }",
-        "function _() { if (a) { if (b) return c;} else return d; }",
+        "function _() { if (!a) return d; if (b) return c; }",
     );
     test(
         "function _() { if (a) while (1) { if (b) return c } else return d }",
-        "function _() { if (a) { for (;;) if (b) return c;} else return d; }",
+        "function _() { if (!a) return d; for (;;) if (b) return c; }",
     );
     test(
         "function _() { if (a) for (;;) { if (b) return c } else return d }",
-        "function _() { if (a) { for (;;) if (b) return c;} else return d; }",
+        "function _() { if (!a) return d; for (;;) if (b) return c; }",
     );
     test(
         "function _() { if (a) for (x in y) { if (b) return c } else return d }",
-        "function _() { if (a) { for (x in y) if (b) return c;} else return d; }",
+        "function _() { if (!a) return d; for (x in y) if (b) return c; }",
     );
     test(
         "function _() { if (a) for (x of y) { if (b) return c } else return d }",
-        "function _() { if (a) { for (x of y) if (b) return c;} else return d; }",
+        "function _() { if (!a) return d; for (x of y) if (b) return c; }",
     );
     test(
         "function _() { if (a) with (x) { if (b) return c } else return d }",
-        "function _() { if (a) { with (x) if (b) return c;} else return d; }",
+        "function _() { if (!a) return d; with(x) if (b) return c; }",
     );
     test(
         "function _() { if (a) x: { if (b) break x } else return c }",
-        "function _() { if (a) { x: if (b) break x;} else return c; }",
+        "function _() { if (!a) return c; x: if (b) break x; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b : undefined }",
@@ -2283,12 +2283,12 @@ fn test_remove_dead_expr_other() {
     test("if (1) a(); else { let b }", "a();");
     test("if (1) a(); else { throw b }", "a();");
     test("if (1) a(); else { return b }", "a();");
-    test("b: { if (x) a(); else { break b } }", "b: if (x) a(); else break b;");
+    test("b: { if (x) a(); else { break b } }", "b: { if (!x) break b; a(); }");
     // test("b: { if (1) a(); else { break b } }", "a();");
     test("b: { if (0) a(); else { break b } }", "");
     test(
         "b: while (1) if (x) a(); else { continue b }",
-        "b: for (;;) if (x) a(); else continue b;",
+        "b: for (;;) if (!x) continue b; else a();",
     );
     // test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
     test("b: while (1) if (0) a(); else { continue b }", "b: for (;;) continue b;");
