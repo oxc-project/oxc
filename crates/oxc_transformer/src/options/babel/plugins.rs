@@ -8,6 +8,22 @@ use crate::{
 
 use super::PluginPresetEntries;
 
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct RegExpRuntimeOptions {
+    #[serde(default = "default_as_true")]
+    pub runtime: bool,
+}
+
+impl Default for RegExpRuntimeOptions {
+    fn default() -> Self {
+        Self { runtime: true }
+    }
+}
+
+const fn default_as_true() -> bool {
+    true
+}
+
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 pub struct SyntaxTypeScriptOptions {
     #[serde(default)]
@@ -49,6 +65,7 @@ pub struct BabelPlugins {
     pub dot_all_flag: bool,
     pub look_behind_assertions: bool,
     pub named_capture_groups: bool,
+    pub duplicate_named_capture_groups: Option<RegExpRuntimeOptions>,
     pub unicode_property_escapes: bool,
     pub match_indices: bool,
     /// Enables plugin to transform the RegExp literal has `v` flag
@@ -133,6 +150,12 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                 "transform-dotall-regex" => p.dot_all_flag = true,
                 "esbuild-regexp-lookbehind-assertions" => p.look_behind_assertions = true,
                 "transform-named-capturing-groups-regex" => p.named_capture_groups = true,
+                "transform-duplicate-named-capturing-groups-regex" => {
+                    p.duplicate_named_capture_groups = entry
+                        .value::<RegExpRuntimeOptions>()
+                        .map_err(|err| p.errors.push(err))
+                        .ok();
+                }
                 "transform-unicode-property-regex" => p.unicode_property_escapes = true,
                 "esbuild-regexp-match-indices" => p.match_indices = true,
                 "transform-unicode-sets-regex" => p.set_notation = true,

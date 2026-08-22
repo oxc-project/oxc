@@ -2,6 +2,8 @@ pub const PLUGINS: &[&str] = &[
     "babel-preset-env",
     // ES2026
     "babel-plugin-transform-explicit-resource-management",
+    // ES2025
+    "babel-plugin-transform-duplicate-named-capturing-groups-regex",
     // ES2024
     "babel-plugin-transform-unicode-sets-regex",
     // ES2022
@@ -78,6 +80,10 @@ pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
 ];
 
 pub const SKIP_TESTS: &[&str] = &[
+    // These fixtures use transform-named-capturing-groups-regex, which Oxc does not yet fully
+    // lower. They do not exercise transform-duplicate-named-capturing-groups-regex itself.
+    "babel-plugin-transform-duplicate-named-capturing-groups-regex/test/fixtures/wrapper",
+    "babel-plugin-transform-duplicate-named-capturing-groups-regex/test/fixtures/syntax/unique-name-with-named-groups-plugin",
     // Shouldn't report in transformer
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-cts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-mts",

@@ -151,6 +151,8 @@ pub enum Helper {
     ObjectSpread2,
     /// Runtime helper `wrapAsyncGenerator`.
     WrapAsyncGenerator,
+    /// Runtime helper `wrapRegExp`.
+    WrapRegExp,
     /// Runtime helper `extends`.
     Extends,
     /// Runtime helper `objectDestructuringEmpty`.
@@ -209,6 +211,7 @@ impl Helper {
             Self::AsyncToGenerator => "asyncToGenerator",
             Self::ObjectSpread2 => "objectSpread2",
             Self::WrapAsyncGenerator => "wrapAsyncGenerator",
+            Self::WrapRegExp => "wrapRegExp",
             Self::Extends => "extends",
             Self::ObjectDestructuringEmpty => "objectDestructuringEmpty",
             Self::ObjectWithoutProperties => "objectWithoutProperties",
@@ -237,7 +240,7 @@ impl Helper {
 
     /// Whether calling this helper is side-effect free.
     pub const fn pure(self) -> bool {
-        matches!(self, Self::ClassPrivateFieldLooseKey)
+        matches!(self, Self::ClassPrivateFieldLooseKey | Self::WrapRegExp)
     }
 }
 
