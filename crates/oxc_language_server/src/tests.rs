@@ -22,12 +22,12 @@ use crate::{
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
-    pub build_client_message: Option<ClientMessage>,
+    pub build_client_message: Vec<ClientMessage>,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode, cache_uris: None, build_client_message: None }
+        Self { diagnostic_mode, cache_uris: None, build_client_message: Vec::new() }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
@@ -39,7 +39,7 @@ impl ToolBuilder for FakeToolBuilder {
     fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
         ToolBuildResult {
             tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone() }),
-            client_message: self.build_client_message.clone(),
+            client_messages: self.build_client_message.clone(),
         }
     }
 
@@ -99,27 +99,27 @@ impl Tool for FakeTool {
             return ToolRestartChanges {
                 tool: Some(result.tool),
                 watch_patterns: None,
-                client_message: result.client_message,
+                client_messages: result.client_messages,
             };
         }
         if new_options_json.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
-                client_message: None,
+                client_messages: Vec::new(),
             };
         }
         if new_options_json.as_u64() == Some(4) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: None,
-                client_message: Some(ClientMessage {
+                client_messages: vec![ClientMessage {
                     message: "Fake misconfiguration message".to_string(),
                     r#type: MessageType::WARNING,
-                }),
+                }],
             };
         }
-        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
     fn get_watcher_patterns(
@@ -144,28 +144,28 @@ impl Tool for FakeTool {
             return ToolRestartChanges {
                 tool: Some(result.tool),
                 watch_patterns: None,
-                client_message: result.client_message,
+                client_messages: result.client_messages,
             };
         }
         if changed_uri.as_str().ends_with("watcher.config") {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
-                client_message: None,
+                client_messages: Vec::new(),
             };
         }
         if changed_uri.as_str().ends_with("misconfiguration.config") {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: None,
-                client_message: Some(ClientMessage {
+                client_messages: vec![ClientMessage {
                     message: "Fake misconfiguration message".to_string(),
                     r#type: MessageType::WARNING,
-                }),
+                }],
             };
         }
 
-        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
     fn get_code_actions_or_commands(
@@ -663,10 +663,10 @@ mod test_suite {
     #[tokio::test]
     async fn test_client_message_deferred_until_initialized() {
         let builder = FakeToolBuilder {
-            build_client_message: Some(ClientMessage {
+            build_client_message: vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            }),
+            }],
             ..Default::default()
         };
         let mut server = TestServer::new(|client| {
@@ -1107,10 +1107,10 @@ mod test_suite {
         );
 
         let builder = FakeToolBuilder {
-            build_client_message: Some(ClientMessage {
+            build_client_message: vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            }),
+            }],
             ..Default::default()
         };
 
@@ -2028,10 +2028,10 @@ mod test_suite {
         #[tokio::test]
         async fn test_dynamic_workers_show_client_message_in_single_file_mode() {
             let builder = FakeToolBuilder {
-                build_client_message: Some(ClientMessage {
+                build_client_message: vec![ClientMessage {
                     message: "Fake misconfiguration message".to_string(),
                     r#type: MessageType::WARNING,
-                }),
+                }],
                 ..Default::default()
             };
 
