@@ -3300,6 +3300,9 @@
         "jest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jest/padding-around-describe-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jest/padding-around-test-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -10008,6 +10011,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-after-all-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "vitest/padding-around-describe-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/padding-around-test-blocks": {
