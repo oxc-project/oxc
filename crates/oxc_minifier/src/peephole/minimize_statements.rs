@@ -566,22 +566,6 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
-        let is_empty = if stmt.consequent.len() == 1 {
-            match stmt.consequent.last() {
-                Some(Statement::EmptyStatement(_)) => true,
-                Some(Statement::BreakStatement(break_stmt)) => {
-                    allow_break && break_stmt.label.is_none()
-                }
-                _ => false,
-            }
-        } else {
-            stmt.consequent.is_empty()
-        };
-
-        is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
-    }
-
     /// Check if a switch case can be inlined by verifying:
     /// - The test expression has no side effects
     /// - All statements can be safely inlined (no unlabeled breaks)
@@ -613,71 +597,6 @@ impl<'a> PeepholeOptimizations {
             let b = &mut switch_stmt.discriminant;
             switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
             let dropped = result.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
-
-        // Remove empty case clauses that don't affect behavior.
-        // Handles fall-through semantics: remove empty cases before default or at end (if no default).
-        // e.g., `switch(x){ case 0: foo(); break; case 1: default: bar() }`
-        // => `switch(x){ case 0: foo(); break; default: bar() }`
-        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        let case_count = switch_stmt.cases.len();
-        if case_count == 1 {
-            // Remove sole case if empty and has no side-effect test
-            if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
-                ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
-            }
-        } else if case_count > 1 {
-            // Determine the range [0, end] to check for removable cases.
-            // 1. default exists and is empty: check the full switch.
-            // 2. default exists and is non-removable and last: check only cases before that default.
-            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
-            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
-            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
-            let (end, allow_break) = if let Some(default_pos) = default_pos {
-                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true) {
-                    (case_count, true)
-                } else if default_pos == case_count - 1 {
-                    (default_pos, false)
-                } else {
-                    (0, false)
-                }
-            } else {
-                (case_count, true)
-            };
-
-            if end > 0 {
-                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
-                let last_non_removable_case_before_end = switch_stmt.cases[..end]
-                    .iter()
-                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break));
-
-                // Calculate the start of the removable suffix.
-                // 1. next case after last non-removable: remove from pos + 1
-                // 2. no non-removable case: all cases are removable, start from 0
-                let start = match last_non_removable_case_before_end {
-                    Some(pos) => pos + 1,
-                    None => 0,
-                };
-
-                // Remove the removable suffix if any
-                if start < end && default_pos.is_none_or(|pos| pos >= start) {
-                    for removed_case in switch_stmt.cases.drain(start..end) {
-                        ctx.drop_switch_case(&removed_case);
-                    }
-                }
-            }
-        }
-
-        if switch_stmt.cases.is_empty() {
-            let SwitchStatement { span, discriminant, .. } = switch_stmt.unbox();
-            result.push(Statement::new_expression_statement(span, discriminant, ctx));
-            return;
-        } else if let Some(last_case) = switch_stmt.cases.last_mut()
-            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
-            && last_break.label.is_none()
-        {
-            let dropped = last_case.consequent.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
 
