@@ -1,6 +1,8 @@
 use std::fmt::Write;
 
-use crate::{test, test_same};
+use oxc_span::SourceType;
+
+use crate::{default_options, test, test_options_source_type, test_same};
 
 #[test]
 fn test_for_variable_declaration() {
@@ -21,6 +23,89 @@ fn test_for_variable_declaration() {
     test(
         "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
         "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+    );
+}
+
+// https://github.com/oxc-project/oxc/issues/22222
+#[test]
+fn test_for_break_preserves_block_function_scope_in_module() {
+    test(
+        "let n = 0;
+        for (; n < 2; n++) {
+            if (typeof f === 'function') break;
+            function f() {}
+        }
+        console.log(n);",
+        "let n = 0;
+        for (; n < 2; n++) {
+            if (typeof f == 'function') break;
+            function f() {}
+        }
+        console.log(n);",
+    );
+    test(
+        "for (;;) { if (x) break; var y = foo(); bar(y); bar(y); }",
+        "for (; !x;) { var y = foo(); bar(y), bar(y); }",
+    );
+    test(
+        "for (;;) { if (x) break; let y = foo(); bar(y); bar(y); }",
+        "for (; !x;) { let y = foo(); bar(y), bar(y); }",
+    );
+}
+
+#[test]
+fn test_for_break_preserves_annex_b_function_scope() {
+    let options = default_options();
+    test_options_source_type(
+        "for (var i = 0; i++ < 1;) {
+            if (x) break;
+            else function f() {}
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        "for (var i = 0; i++ < 1;) {
+            if (x) break;
+            else function f() {}
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        SourceType::script(),
+        &options,
+    );
+    test_options_source_type(
+        "for (var i = 0; i++ < 1;) {
+            if (x) function f() {}
+            else break;
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        "for (var i = 0; i++ < 1;) {
+            if (x) function f() {}
+            else break;
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        SourceType::script(),
+        &options,
+    );
+
+    test_options_source_type(
+        "for (;;) {
+            if (x) break;
+            else { function f() {} }
+        }",
+        "for (; !x;) { function f() {} }",
+        SourceType::mjs(),
+        &options,
+    );
+    test_options_source_type(
+        "for (;;) {
+            if (x) { function f() {} }
+            else break;
+        }",
+        "for (; x;) { function f() {} }",
+        SourceType::mjs(),
+        &options,
     );
 }
 

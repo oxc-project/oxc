@@ -58,8 +58,8 @@ function sanitizeSchema(value: any): void {
   }
   for (const key of Object.keys(value)) {
     if (
-      (key === "description" || key === "markdownDescription") &&
-      typeof value[key] === "string"
+      (key === "description" || key === "markdownDescription")
+      && typeof value[key] === "string"
     ) {
       value[key] = sanitizeJsonCodeBlocks(value[key]);
     } else {
@@ -81,8 +81,8 @@ function getEnumPrimitiveType(definition: unknown): "string" | "number" | "boole
 
   const definitionType = definition.type;
   if (
-    (definitionType === "string" || definitionType === "number" || definitionType === "boolean") &&
-    Array.isArray(definition.enum)
+    (definitionType === "string" || definitionType === "number" || definitionType === "boolean")
+    && Array.isArray(definition.enum)
   ) {
     return definitionType;
   }
@@ -177,8 +177,8 @@ function getDefinitionPrimitiveTypes(schema: any): Map<string, Set<PrimitiveType
     if (Array.isArray(value.enum) && value.enum.length > 0) {
       const enumValueType = typeof value.enum[0];
       if (
-        (enumValueType === "string" || enumValueType === "number" || enumValueType === "boolean") &&
-        value.enum.every((item) => typeof item === enumValueType)
+        (enumValueType === "string" || enumValueType === "number" || enumValueType === "boolean")
+        && value.enum.every((item) => typeof item === enumValueType)
       ) {
         result.add(enumValueType);
       }
@@ -255,8 +255,8 @@ function collapseEnumPrimitiveIntersections(
 const dummyRuleMap = schema.definitions?.DummyRuleMap;
 const dummyRuleMapAdditionalProperties = dummyRuleMap?.additionalProperties;
 if (
-  typeof dummyRuleMapAdditionalProperties !== "object" ||
-  dummyRuleMapAdditionalProperties === null
+  typeof dummyRuleMapAdditionalProperties !== "object"
+  || dummyRuleMapAdditionalProperties === null
 ) {
   throw new Error("Expected DummyRuleMap.additionalProperties in the oxlint config schema.");
 }
@@ -266,10 +266,10 @@ if (
 dummyRuleMapAdditionalProperties.tsType = "DummyRule";
 
 const bannerComment =
-  "/*\n" +
-  " * This file is generated from npm/oxlint/configuration_schema.json.\n" +
-  " * Run `just linter-config-ts` to regenerate.\n" +
-  " */";
+  "/*\n"
+  + " * This file is generated from npm/oxlint/configuration_schema.json.\n"
+  + " * Run `just linter-config-ts` to regenerate.\n"
+  + " */";
 
 const enumDefinitionTypes = getEnumDefinitionTypes(schema);
 const definitionPrimitiveTypes = getDefinitionPrimitiveTypes(schema);

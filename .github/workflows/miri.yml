@@ -64,7 +64,7 @@ jobs:
         if: steps.filter.outputs.changed == 'true'
         # Enable strict provenance checks
         env:
-          MIRIFLAGS: -Zmiri-strict-provenance
+          MIRIFLAGS: -Zmiri-strict-provenance -Zmiri-disable-isolation
         run: |
           cargo +"${MIRI_TOOLCHAIN}" miri test --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
           cargo +"${MIRI_TOOLCHAIN}" miri test -p oxc_parser -p oxc_transformer

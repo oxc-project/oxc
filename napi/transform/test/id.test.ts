@@ -21,16 +21,16 @@ describe("isolated declaration", () => {
     const ret = isolatedDeclarationSync("test.ts", code, { sourcemap: true });
     expect(ret).toMatchObject({
       code:
-        "/**\n" +
-        "* jsdoc 1\n" +
-        "*/\n" +
-        "export declare class A {\n" +
-        "\t/**\n" +
-        "\t* jsdoc 2\n" +
-        "\t*/\n" +
-        "\tfoo: string;\n" +
-        "}\n" +
-        "export declare class B {}\n",
+        "/**\n"
+        + "* jsdoc 1\n"
+        + "*/\n"
+        + "export declare class A {\n"
+        + "\t/**\n"
+        + "\t* jsdoc 2\n"
+        + "\t*/\n"
+        + "\tfoo: string;\n"
+        + "}\n"
+        + "export declare class B {}\n",
       map: {
         names: [],
         sources: ["test.ts"],

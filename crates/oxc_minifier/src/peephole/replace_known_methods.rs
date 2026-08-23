@@ -72,28 +72,21 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
 
-        let mut second_arg = arguments.pop().expect("checked len above");
-        let second_arg = second_arg.to_expression_mut(); // checked above
-        let mut first_arg = arguments.pop().expect("checked len above");
-        let first_arg = first_arg.to_expression_mut(); // checked above
+        let second_arg = arguments.pop().expect("checked len above").into_expression();
+        let first_arg = arguments.pop().expect("checked len above").into_expression();
 
-        let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
+        let wrap_with_unary_plus_if_needed = |expr: Expression<'a>| {
             if expr.value_type(ctx).is_number() {
-                expr.take_in(ctx)
+                expr
             } else {
-                Expression::new_unary_expression(
-                    SPAN,
-                    UnaryOperator::UnaryPlus,
-                    expr.take_in(ctx),
-                    ctx,
-                )
+                Expression::new_unary_expression(SPAN, UnaryOperator::UnaryPlus, expr, ctx)
             }
         };
 
         Some(Expression::new_binary_expression(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            first_arg.take_in(ctx),
+            first_arg,
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
             ctx,

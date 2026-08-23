@@ -43,6 +43,7 @@ impl<'a> PeepholeOptimizations {
                     || matches!(first, Statement::FunctionDeclaration(_))
                     || (matches!(first, Statement::IfStatement(decl) if decl.alternate.is_some())
                         && matches!(ctx.parent(), Ancestor::IfStatementConsequent(_)))
+                    || (first.is_iteration_statement() && ctx.parent().is_labeled_statement())
                 {
                     return;
                 }
@@ -201,15 +202,25 @@ impl<'a> PeepholeOptimizations {
                     let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
                     let mut var_decl = keep_var.get_variable_declaration(&ctx.ast);
-                    let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
-                    else {
-                        return;
-                    };
-                    if var_init.kind.is_var() {
+                    let init_is_var = matches!(
+                        &for_stmt.init,
+                        Some(ForStatementInit::VariableDeclaration(var_init)) if var_init.kind.is_var()
+                    );
+                    if init_is_var {
                         if let Some(var_decl) = &mut var_decl {
+                            let Some(ForStatementInit::VariableDeclaration(var_init)) =
+                                &mut for_stmt.init
+                            else {
+                                unreachable!()
+                            };
                             var_decl.declarations.splice(0..0, var_init.declarations.take_in(ctx));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx));
+                            let Some(ForStatementInit::VariableDeclaration(var_init)) =
+                                for_stmt.init.take()
+                            else {
+                                unreachable!()
+                            };
+                            var_decl = Some(var_init);
                         }
                     }
                     let new_stmt = var_decl.map_or_else(

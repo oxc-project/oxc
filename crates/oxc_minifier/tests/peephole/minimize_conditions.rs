@@ -53,16 +53,22 @@ fn test_fold_one_child_blocks() {
     test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
     // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-    test("if(x){ if(y){var x;}else{var z;} }", "if(x){if(y)var x;else var z}");
+    test(
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } }",
+    );
 
     // NOTE - technically we can remove the blocks since both the parent
     // and child have elses. But we don't since it causes ambiguities in
     // some cases where not all descendent ifs having elses
     test(
-        "if(x){ if(y){var x;}else{var z;} }else{var w}",
-        "if(x){if(y)var x;else var z;}else var w",
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } else { var w } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } else var w }",
     );
-    test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+    test(
+        "v = function(x, y) { if(x) { var x } else { if(y) { var y } } }",
+        "v = function(x, y) { if(x) var x; else if(y) var y }",
+    );
 
     // Here's some of the ambiguous cases
     test(
@@ -138,6 +144,10 @@ fn test_fold_nested_terminated_returns_at_function_tail() {
     test(
         "function f(){L:if(a)if(x)return;else return 2-x}",
         "function f(){L:if(a)return x?void 0:2-x}",
+    );
+    test(
+        "function f(){L:{if(b)return;return}}",
+        "function f(){L:return b,void 0}",
     );
 
     // Preserve evaluation of an undefined-valued branch with side effects.

@@ -20,6 +20,7 @@ use crate::react_compiler::entrypoint::imports::{
 };
 use crate::react_compiler::entrypoint::program::compile_program;
 
+pub use crate::diagnostics::{ErrorCategory, LintDiagnostic};
 pub use crate::react_compiler::entrypoint::compile_result::CompileResult;
 pub use crate::react_compiler::entrypoint::program::CompileOutput;
 
@@ -34,8 +35,9 @@ pub use crate::react_compiler_hir::environment_config::{
     InstrumentationConfig,
 };
 pub use crate::react_compiler_hir::type_config::{
-    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
-    TypeReferenceConfig, ValueKind,
+    AliasingEffectConfig, AliasingSignatureConfig, ApplyArgConfig, BuiltInTypeRef,
+    FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig, TypeReferenceConfig,
+    ValueKind, ValueReason,
 };
 pub use crate::react_compiler_utils::FxIndexMap;
 
@@ -44,8 +46,9 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
 pub struct LintResult {
-    /// Errors and warnings produced by the compile.
-    pub diagnostics: Diagnostics,
+    /// Errors and warnings produced by the compile, paired with their
+    /// [`ErrorCategory`] for routing to category-specific lint rules.
+    pub diagnostics: Vec<LintDiagnostic>,
     /// Whether compilation was aborted according to `panic_threshold`.
     pub fatal: bool,
 }
@@ -80,6 +83,15 @@ pub fn compile<'a>(
     allocator: &'a Allocator,
     options: PluginOptions,
 ) -> CompileResult<'a> {
+    run_compiler::<true>(program, semantic, allocator, options)
+}
+
+fn run_compiler<'a, const EMIT: bool>(
+    program: &Program<'a>,
+    semantic: &Semantic<'_>,
+    allocator: &'a Allocator,
+    options: PluginOptions,
+) -> CompileResult<'a> {
     // Check for existing runtime imports (file already compiled).
     if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
     {
@@ -98,7 +110,7 @@ pub fn compile<'a>(
         };
     }
 
-    compile_program(allocator, semantic, program, options)
+    compile_program::<EMIT>(allocator, semantic, program, options)
 }
 
 /// Lint a pre-parsed program — like [`compile`] but read-only: it collects
@@ -115,8 +127,10 @@ pub fn lint<'a>(
     let mut options = options;
     options.no_emit = true;
 
-    match compile(program, semantic, allocator, options) {
-        CompileResult::Success { diagnostics, .. } => LintResult { diagnostics, fatal: false },
-        CompileResult::Fatal { diagnostics } => LintResult { diagnostics, fatal: true },
-    }
+    let (diagnostics, fatal) = match run_compiler::<false>(program, semantic, allocator, options) {
+        CompileResult::Success { diagnostics, .. } => (diagnostics, false),
+        CompileResult::Fatal { diagnostics } => (diagnostics, true),
+    };
+    let diagnostics = diagnostics.into_vec().into_iter().map(diagnostics::categorize).collect();
+    LintResult { diagnostics, fatal }
 }

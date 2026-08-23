@@ -340,7 +340,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxCurlyBracePresence {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<JsxCurlyBracePresenceConfig>>(value)
+        DefaultRuleConfig::<JsxCurlyBracePresenceConfig>::from_value(value)
             .map(|config| config.into_inner().into_rule())
     }
 
@@ -739,10 +739,7 @@ fn calculate_part_start(line_matches: &[usize], index: usize) -> u32 {
     if index == 0 {
         0u32
     } else {
-        u32::try_from(
-            line_matches.get(index - 1).copied().map_or(0usize, |new_line_index| new_line_index),
-        )
-        .unwrap()
+        u32::try_from(line_matches.get(index - 1).copied().unwrap_or(0usize)).unwrap()
     }
 }
 

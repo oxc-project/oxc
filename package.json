@@ -2,17 +2,17 @@
   "name": "oxc",
   "private": true,
   "scripts": {
-    "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build",
-    "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
-    "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
+    "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" --filter \"./packages/*\" build",
+    "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" --filter \"./packages/*\" build-dev",
+    "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" --filter \"./packages/*\" build-test",
     "build-wasm-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" build-wasm-dev",
-    "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
+    "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" --filter \"./packages/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
     "lint": "oxlint -c oxlintrc.json --deny-warnings --report-unused-disable-directives"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
-    "oxfmt": "^0.61.0",
+    "oxfmt": "^0.64.0",
     "oxlint": "^1.66.0",
     "oxlint-tsgolint": "7.0.2001"
   },

@@ -825,6 +825,42 @@ fn fold_optional_chain_on_undefined_let_binding() {
 }
 
 #[test]
+fn fold_optional_chain_on_undefined_var_binding() {
+    // https://github.com/rolldown/rolldown/issues/10659
+    // An uninitialized module-scoped `var` with no writes is always `undefined`,
+    // including before its declaration is evaluated.
+    test(
+        "var slot; function setSlot(cb) { slot = cb } function make(v) { slot?.(v); return v } console.log(make(1))",
+        "function make(v) { return v } console.log(make(1))",
+    );
+    test(
+        "var slot; function make(v) { slot?.(v); return v } console.log(make(1))",
+        "function make(v) { return v } console.log(make(1))",
+    );
+    test("var slot; export function call() { slot?.foo }", "export function call() {}");
+
+    // Constant-driven folds consume the same general `undefined` value. The
+    // provenance flag only prevents textual substitution with `void 0`.
+    test("var slot; export function read() { return slot }", "export function read() {}");
+
+    // A resolved write means the binding is not statically undefined.
+    test_same(
+        "var slot; export function setSlot(v) { slot = v } export function call() { slot?.() }",
+    );
+    // Script-root `var`s are observable and mutable through the global object.
+    test_same_source_type("var slot; function call() { slot?.() } call()", SourceType::script());
+    // Function-scoped vars are outside this optimization.
+    test_same("export function call() { var slot; slot?.() }");
+    // A name inside `with` may resolve to a property instead of a local binding.
+    test_same_source_type(
+        "function call(obj) { var slot; with (obj) slot?.() } call(obj)",
+        SourceType::script(),
+    );
+    // Direct `eval` can assign to the local without a resolved write reference.
+    test_same("var slot; eval('slot = fn'); export function call() { slot?.() }");
+}
+
+#[test]
 fn fold_optional_chain_on_null_const_binding() {
     // A `const` initialized to `null` resolves to `ValueType::Null`, so the
     // optional chain folds the same way the `undefined` case does.
@@ -849,6 +885,30 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
     test(
         "let n = 5n; export function a() { return n ?? other() } export function b() { return n ?? other() }",
         "let n = 5n; export function a() { return n } export function b() { return n }",
+    );
+}
+
+// https://github.com/rolldown/rolldown/issues/10656
+#[test]
+fn does_not_duplicate_large_tracked_strings_when_folding_addition() {
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'y' + p;",
+    );
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'x' + ('y' + p);",
+    );
+
+    // A large string with one read can replace that read and drop the binding,
+    // so folding still reduces the total output size.
+    test(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'y' + p;",
+        "export const b = 'yPAYLOADpayload0123456789PAYLOADpayload0123456789';",
+    );
+
+    // Small tracked strings remain cheap enough to duplicate.
+    test(
+        "const p = 'abc'; export const a = atob(p); export const b = 'y' + p;",
+        "const p = 'abc'; export const a = atob(p); export const b = 'yabc';",
     );
 }
 
@@ -977,6 +1037,20 @@ fn dce_remove_unused_class_identifier_heritage_under_assumptions() {
 }
 
 #[test]
+fn dce_keeps_inferred_class_name_for_executing_class() {
+    // The static block observes the name assigned by `var MyStore = class {}`.
+    // DCE must not turn this into a bare anonymous class expression.
+    test_same("var MyStore = class { static { console.log(this.name) } };");
+    test_same("var MyStore = (class { static { console.log(this.name) } });");
+    test(
+        "var MyStore = (0, class { static { console.log(this.name) } });",
+        // this can be compressed to `class { static { console.log(this.name) } }`
+        "var MyStore = class { static { console.log(this.name) } };",
+    );
+    test_same("var MyStore = class { static foo = console.log(this.name) };");
+}
+
+#[test]
 #[ignore = "TODO: extend recursive reachability to mutual declarators and classes"]
 fn dce_recursive_unused_mutual_declarators_and_classes() {
     test("const a = () => b(); const b = () => a();", "");
@@ -1068,4 +1142,32 @@ fn dce_keeps_implicitly_observable_bindings() {
         "{ using resource = { [Symbol.dispose]() { console.log(this.x) } }; resource.x = 1; }",
         options,
     );
+}
+
+#[test]
+fn dce_inline_template_literal_does_not_create_octal_escape() {
+    // https://github.com/rolldown/rolldown/issues/10661
+    test(
+        r"export function makeKey(messageId, correlationId) { return `${messageId}\0${correlationId}\0${0}`; }",
+        r"export function makeKey(messageId, correlationId) { return `${messageId}\0${correlationId}\x000`; }",
+    );
+
+    // An escaped backslash before `0` is not a null escape, so this boundary is safe to fold.
+    test(
+        r"export function makeKey(messageId) { return `${messageId}\\0${0}`; }",
+        r"export function makeKey(messageId) { return `${messageId}\\00`; }",
+    );
+
+    // Empty folds can expose the same boundary directly or across adjacent expressions.
+    test(
+        r"export function makeKey(messageId) { return `${messageId}\0${''}0`; }",
+        r"export function makeKey(messageId) { return `${messageId}\x000`; }",
+    );
+    test(
+        r"export function makeKey(messageId) { return `${messageId}\0${''}${0}`; }",
+        r"export function makeKey(messageId) { return `${messageId}\x000`; }",
+    );
+
+    // Expressions with side effects must still remain interpolation expressions.
+    test_same(r"export function makeKey(messageId) { return `${messageId}\0${sideEffect()}`; }");
 }

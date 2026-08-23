@@ -29,6 +29,8 @@ fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
+    test("import {} from './a\"b.mjs';", "import {} from \"./a\\\"b.mjs\";\n");
+    test("import {} from './a\\nb.mjs';", "import {} from \"./a\\nb.mjs\";\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
     test(
         "export { default } from './foo.js' with { type: 'json' }",
@@ -41,6 +43,7 @@ fn module_decl() {
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
     );
+    test_minify("import {} from './a\"b.mjs';", "import{}from'./a\"b.mjs';");
     test_minify(
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",

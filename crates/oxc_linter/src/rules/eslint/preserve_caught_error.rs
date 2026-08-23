@@ -65,11 +65,11 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
             _ => return,
         };
 
-        if !is_builtin_error_constructor(callee, self.ctx) {
+        let Some(options_argument_index) = error_options_argument_index(callee, self.ctx) else {
             return;
-        }
+        };
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1)
+        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(options_argument_index)
             && has_cause_property(obj_expr, self.catch_param, self.ctx)
         {
             return;
@@ -201,14 +201,20 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_catch_clause(&mut self, _catch_clause: &CatchClause<'a>) {}
 }
 
-fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
+fn error_options_argument_index(expr: &Expression, ctx: &LintContext) -> Option<usize> {
     let Expression::Identifier(ident) = expr else {
-        return false;
+        return None;
     };
 
-    ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
+    if ident.is_global_reference_name(static_ident!("Error"), ctx.scoping())
         || ident.is_global_reference_name(static_ident!("TypeError"), ctx.scoping())
-        || is_aggregate_error(ident, ctx)
+    {
+        Some(1)
+    } else if is_aggregate_error(ident, ctx) {
+        Some(2)
+    } else {
+        None
+    }
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
@@ -313,7 +319,7 @@ impl PreserveCaughtError {
 
 impl Rule for PreserveCaughtError {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -417,6 +423,10 @@ fn test() {
         ),
         (
             r#"try { doSomething(); } catch (errorA) { try { doSomethingElse(); } catch (errorB) { throw new Error( `The certificate key "${chalk.yellow(keyFile)}" is invalid.\n${errorA.message}`, { cause: errorB }); } }"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: error }); }"#,
             None,
         ),
     ];
@@ -671,6 +681,10 @@ fn test() {
 					set cause(value) { error = value; },
 				});
 			}"#,
+            None,
+        ),
+        (
+            r#"try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }"#,
             None,
         ),
     ];

@@ -17,7 +17,7 @@ import { getVisitorsArr, Visitor } from "./src-js/raw-transfer/visitor.js";
 let fixtureUrls = [
   "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
   "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
-  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/RadixUIAdoptionSection.jsx",
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
   "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
 ];

@@ -10,7 +10,10 @@ use crate::{
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
     print::semicolon::OptionalSemicolon,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    utils::{
+        is_dropped_statement,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+    },
     write,
 };
 
@@ -61,8 +64,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
 
         let mut join = f.join_nodes_with_hardline();
 
-        let mut stmts_iter =
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_)));
+        let mut stmts_iter = self.iter().filter(|stmt| !is_dropped_statement(stmt.as_ref()));
         while let Some(mut stmt) = stmts_iter.next() {
             // Suppressed imports are emitted verbatim and act as partition boundaries,
             // so they are excluded from the sortable run.

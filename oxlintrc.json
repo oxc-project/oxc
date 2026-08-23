@@ -34,6 +34,12 @@
   },
   "overrides": [
     {
+      "files": ["packages/codegen/**"],
+      "rules": {
+        "typescript/no-deprecated": "error"
+      }
+    },
+    {
       "files": ["tasks/e2e/test/*.test.ts"],
       "rules": {
         "vitest/valid-describe-callback": ["off"],
@@ -106,8 +112,7 @@
     "napi/*/src-js/*.wasi-browser.js",
     "napi/*/src-js/wasi-worker.mjs",
     "napi/*/src-js/wasi-worker-browser.mjs",
-    "npm/oxlint-plugins/**",
-    "tasks/prettier_conformance/jsdoc/**"
+    "npm/oxlint-plugins/**"
   ],
   "options": {
     "typeAware": true,

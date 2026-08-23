@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{JsFormatter, JsFormatterExt as _},
-    print::{BinaryLikeExpression, should_flatten},
+    print::{BinaryLikeExpression, should_flatten, unary_argument_takes_comment_parens},
     utils::expression::ExpressionLeftSide,
 };
 
@@ -443,7 +443,7 @@ impl NeedsParentheses<'_> for AstNode<'_, BinaryExpression<'_>> {
             return true;
         }
 
-        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self))
+        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self), f)
     }
 }
 
@@ -536,7 +536,7 @@ impl NeedsParentheses<'_> for AstNode<'_, LogicalExpression<'_>> {
         {
             true
         } else {
-            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self))
+            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self), f)
         }
     }
 }
@@ -971,12 +971,21 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInstantiationExpression<'_>> {
     }
 }
 
-fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
+fn binary_like_needs_parens(
+    binary_like: BinaryLikeExpression<'_, '_>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
     let parent = match binary_like.parent() {
+        // NOTE: The unary adds the parentheses itself when comments are involved.
+        // Deliberately binary-like-only: Prettier keeps the inner parentheses for every other argument type (`!((x, y) /* c */)`)
+        // (Seems a leftover of prettier#18397's narrow scope, not a principle.)
+        // If upstream extends the fix, add the same exemption to those types' `needs_parentheses`.
+        AstNodes::UnaryExpression(unary) => {
+            return !unary_argument_takes_comment_parens(unary, f);
+        }
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::TSTypeAssertion(_)
-        | AstNodes::UnaryExpression(_)
         | AstNodes::AwaitExpression(_)
         | AstNodes::TSNonNullExpression(_)
         | AstNodes::SpreadElement(_)

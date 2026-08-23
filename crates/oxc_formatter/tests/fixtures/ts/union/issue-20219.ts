@@ -28,5 +28,5 @@ type IntersectionComment =
   /** JSDoc */
   & 'VALUE';
 
-// Inline comment should still be relocated (not own-line)
+// Inline comment stays after `=` (not own-line, never moved before `=`)
 type InlineComment = /*1*/ | C;

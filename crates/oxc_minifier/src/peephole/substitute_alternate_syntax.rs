@@ -276,6 +276,10 @@ impl<'a> PeepholeOptimizations {
             Ancestor::BinaryExpressionLeft(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
                     && e.right().value_type(ctx).is_number()
+                    // The right operand is evaluated between the argument of `+`
+                    // and the conversion the operator performs on it, so it must
+                    // not affect that conversion. See the note below.
+                    && !e.right().may_have_side_effects(ctx)
             }
             Ancestor::BinaryExpressionRight(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
@@ -286,8 +290,7 @@ impl<'a> PeepholeOptimizations {
         if !parent_expression_does_to_number_conversion {
             return;
         }
-        let new_value = e.argument.take_in(ctx);
-        ctx.replace_expression(expr, new_value);
+        ctx.replace_expression_with(expr, Self::unwrap_unary);
     }
 
     /// For `+a - n` => `a - n` (assuming n is a number)
@@ -313,7 +316,26 @@ impl<'a> PeepholeOptimizations {
     /// - When `a` is not a object nor a BigInt, `ToNumeric(a)` and `ToNumber(a)` works the same.
     ///   Because the step 2 in `ToNumeric` is always `false`.
     ///
-    /// Thus, removing `+` is fine.
+    /// Thus, removing `+` is fine as far as the conversion itself goes.
+    ///
+    /// What it does change is *when* the conversion happens. Step 1 runs while
+    /// evaluating `+a`, before `n` is evaluated at all; step 2 runs after. So
+    /// evaluating `n` must not affect the conversion of `a`:
+    ///
+    /// ```js
+    /// var xs = [];
+    /// (+xs) - (xs.push(1), 0); // 0, converted while `xs` was still empty
+    /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
+    /// ```
+    ///
+    /// Requiring `n` to be free of side effects rules that out. `n` cannot
+    /// observe the conversion either, because the conversion runs no user code
+    /// under the "Coercion Methods Are Pure" assumption (see
+    /// `docs/ASSUMPTIONS.md`).
+    ///
+    /// For `n - +a` the ordering holds regardless: `n` is evaluated first
+    /// either way, and step 3 is a no-op because `n` is already a number, so
+    /// nothing runs between evaluating `a` and converting it.
     fn is_binary_operator_that_does_number_conversion(operator: BinaryOperator) -> bool {
         matches!(
             operator,
@@ -341,22 +363,18 @@ impl<'a> PeepholeOptimizations {
         if right.operator != e.operator {
             return;
         }
-        let Expression::LogicalExpression(mut right) = e.right.take_in(ctx) else { return };
+        let Expression::LogicalExpression(right) = e.right.take_in(ctx) else { return };
+        let LogicalExpression { left: right_left, right: right_right, .. } = right.unbox();
         let mut new_left = Expression::new_logical_expression(
             e.span,
             e.left.take_in(ctx),
             e.operator,
-            right.left.take_in(ctx),
+            right_left,
             ctx,
         );
         Self::substitute_rotate_logical_expression(&mut new_left, ctx);
-        let new_value = Expression::new_logical_expression(
-            e.span,
-            new_left,
-            e.operator,
-            right.right.take_in(ctx),
-            ctx,
-        );
+        let new_value =
+            Expression::new_logical_expression(e.span, new_left, e.operator, right_right, ctx);
         ctx.replace_expression(expr, new_value);
     }
 
@@ -382,24 +400,20 @@ impl<'a> PeepholeOptimizations {
             && right.operator == e.operator
             && !right.right.may_have_side_effects(ctx)
         {
-            let Expression::BinaryExpression(mut right) = e.right.take_in(ctx) else {
+            let Expression::BinaryExpression(right) = e.right.take_in(ctx) else {
                 return;
             };
+            let BinaryExpression { left: right_left, right: right_right, .. } = right.unbox();
             let mut new_left = Expression::new_binary_expression(
                 e.span,
                 e.left.take_in(ctx),
                 e.operator,
-                right.left.take_in(ctx),
+                right_left,
                 ctx,
             );
             Self::substitute_rotate_binary_expression(&mut new_left, ctx);
-            let new_value = Expression::new_binary_expression(
-                e.span,
-                new_left,
-                e.operator,
-                right.right.take_in(ctx),
-                ctx,
-            );
+            let new_value =
+                Expression::new_binary_expression(e.span, new_left, e.operator, right_right, ctx);
             ctx.replace_expression(expr, new_value);
             return;
         }
@@ -625,15 +639,13 @@ impl<'a> PeepholeOptimizations {
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
-            let (left, right) = if ctx.is_expression_undefined(&e.right) {
-                (e.left.take_in(ctx), Expression::new_null_literal(e.right.span(), ctx))
+            if ctx.is_expression_undefined(&e.right) {
+                let new_null = Expression::new_null_literal(e.right.span(), ctx);
+                ctx.replace_expression(&mut e.right, new_null);
             } else if ctx.is_expression_undefined(&e.left) {
-                (e.right.take_in(ctx), Expression::new_null_literal(e.left.span(), ctx))
-            } else {
-                return;
-            };
-            let new_value = Expression::new_binary_expression(e.span, left, e.operator, right, ctx);
-            ctx.replace_expression(expr, new_value);
+                let new_null = Expression::new_null_literal(e.left.span(), ctx);
+                ctx.replace_expression(&mut e.left, new_null);
+            }
         }
     }
 
@@ -1116,7 +1128,7 @@ impl<'a> PeepholeOptimizations {
                     Self::minimize_expression_in_boolean_context(&mut arg, ctx);
                     let arg =
                         Expression::new_unary_expression(span, UnaryOperator::LogicalNot, arg, ctx);
-                    Some(Self::minimize_not(span, arg, ctx))
+                    Some(Self::minimize_not(span, arg, ctx, false))
                 }
             },
             "String" => {
@@ -1471,31 +1483,25 @@ impl<'a> PeepholeOptimizations {
         let new_args = args;
 
         for arg in old_args {
-            if let Argument::SpreadElement(mut spread_el) = arg {
-                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
-                    for el in &mut array_expr.elements {
+            if let Argument::SpreadElement(spread_el) = arg {
+                let SpreadElement { span, argument, .. } = spread_el.unbox();
+                if let Expression::ArrayExpression(array_expr) = argument {
+                    for el in array_expr.unbox().elements {
                         match el {
                             ArrayExpressionElement::SpreadElement(spread_el) => {
-                                new_args.push(Argument::new_spread_element(
-                                    spread_el.span,
-                                    spread_el.argument.take_in(ctx),
-                                    ctx,
-                                ));
+                                let SpreadElement { span, argument, .. } = spread_el.unbox();
+                                new_args.push(Argument::new_spread_element(span, argument, ctx));
                             }
                             ArrayExpressionElement::Elision(elision) => {
                                 new_args.push(Expression::new_void_0(elision.span, ctx).into());
                             }
                             match_expression!(ArrayExpressionElement) => {
-                                new_args.push(el.to_expression_mut().take_in(ctx).into());
+                                new_args.push(el.into_expression().into());
                             }
                         }
                     }
                 } else {
-                    new_args.push(Argument::new_spread_element(
-                        spread_el.span,
-                        spread_el.argument.take_in(ctx),
-                        ctx,
-                    ));
+                    new_args.push(Argument::new_spread_element(span, argument, ctx));
                 }
             } else {
                 new_args.push(arg);
