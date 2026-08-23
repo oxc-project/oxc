@@ -90,7 +90,6 @@ These Prettier options are skipped during migration:
 | Option                          | Status                                           |
 | ------------------------------- | ------------------------------------------------ |
 | `endOfLine: "auto"`             | Not supported. Use `"lf"` or `"crlf"` explicitly |
-| `experimentalTernaries`         | Not supported in JS/TS files yet                 |
 | `requirePragma`, `insertPragma` | Not supported                                    |
 | `parser`, `filepath`            | Not applicable to oxfmt                          |
 

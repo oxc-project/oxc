@@ -54,7 +54,7 @@ pub struct JsFormatOptions {
     /// - `"start"`: Places the operator at the beginning of the next line.
     /// - `"end"`: Places the operator at the end of the current line (default).
     pub operator_position: OperatorPosition,
-    /// Try prettier's new ternary formatting before it becomes the default behavior. [**NOT SUPPORTED YET**]
+    /// Try Prettier's new ternary formatting before it becomes the default behavior.
     ///
     /// Valid options:
     /// - `true` - Use curious ternaries, with the question mark after the condition.
@@ -223,6 +223,7 @@ impl fmt::Display for JsFormatOptions {
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Operator position: {}", self.operator_position)?;
+        writeln!(f, "Experimental ternaries: {}", self.experimental_ternaries)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
         writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
         writeln!(f, "JSDoc: {:?}", self.jsdoc)

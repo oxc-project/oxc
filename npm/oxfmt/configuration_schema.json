@@ -50,6 +50,11 @@
       ],
       "markdownDescription": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`"
     },
+    "experimentalTernaries": {
+      "description": "Use curious ternaries, with the question mark after the condition.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `false`",
+      "type": "boolean",
+      "markdownDescription": "Use curious ternaries, with the question mark after the condition.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `false`"
+    },
     "htmlWhitespaceSensitivity": {
       "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
       "allOf": [
@@ -324,6 +329,11 @@
             }
           ],
           "markdownDescription": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`"
+        },
+        "experimentalTernaries": {
+          "description": "Use curious ternaries, with the question mark after the condition.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Use curious ternaries, with the question mark after the condition.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `false`"
         },
         "htmlWhitespaceSensitivity": {
           "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",

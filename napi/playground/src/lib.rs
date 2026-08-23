@@ -526,6 +526,10 @@ impl Oxc {
             format_options.operator_position = position;
         }
 
+        if let Some(experimental_ternaries) = options.experimental_ternaries {
+            format_options.experimental_ternaries = experimental_ternaries;
+        }
+
         if let Some(ref sort_imports_config) = options.sort_imports {
             let order = sort_imports_config
                 .order

@@ -92,12 +92,6 @@ export async function runMigratePrettier() {
       console.error(`  - "endOfLine: auto" is not supported, skipping...`);
       continue;
     }
-    // Oxfmt does not support this experimental option yet
-    if (key === "experimentalTernaries") {
-      console.error(`  - "${key}" is not supported yet`);
-      continue;
-    }
-
     // Skip plugin-specific options - handled separately
     if (key.startsWith("tailwind") || key.startsWith("svelte")) {
       continue;

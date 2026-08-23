@@ -83,6 +83,17 @@ or at the end of previous lines (`"end"`).
 - Default: `"end"`
 
 
+## experimentalTernaries
+
+type: `boolean`
+
+
+Use curious ternaries, with the question mark after the condition.
+
+- Languages: JS, JSX, TS, TSX
+- Default: `false`
+
+
 ## htmlWhitespaceSensitivity
 
 type: `"css" | "strict" | "ignore"`

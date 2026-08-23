@@ -152,6 +152,8 @@ pub struct OxcFormatterOptions {
     pub single_attribute_per_line: Option<bool>,
     /// Where to print operators when binary expressions wrap lines: "start" | "end" (default: "end")
     pub experimental_operator_position: Option<String>,
+    /// Use curious ternaries, with the question mark after the condition (default: false)
+    pub experimental_ternaries: Option<bool>,
     /// Sort imports configuration (default: None)
     pub sort_imports: Option<OxcSortImportsOptions>,
 }

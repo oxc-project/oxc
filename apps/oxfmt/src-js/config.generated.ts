@@ -102,6 +102,13 @@ export interface Oxfmtrc {
    */
   experimentalOperatorPosition?: OperatorPositionConfig;
   /**
+   * Use curious ternaries, with the question mark after the condition.
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `false`
+   */
+  experimentalTernaries?: boolean;
+  /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
    * - Languages: HTML, Angular, Vue, Handlebars, Svelte
@@ -438,6 +445,13 @@ export interface FormatConfig {
    * - Default: `"end"`
    */
   experimentalOperatorPosition?: OperatorPositionConfig;
+  /**
+   * Use curious ternaries, with the question mark after the condition.
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `false`
+   */
+  experimentalTernaries?: boolean;
   /**
    * Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
    *
