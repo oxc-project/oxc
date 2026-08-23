@@ -2098,35 +2098,27 @@ impl<'a> PeepholeOptimizations {
         if if_stmt.alternate.is_some() {
             return;
         }
-        let (branch_test, value) = {
-            let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
-                return;
-            };
-            let Some(Expression::ConditionalExpression(conditional)) = &mut return_stmt.argument
-            else {
-                return;
-            };
+        let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
+            return;
+        };
+        let Some(Expression::ConditionalExpression(conditional)) = &mut return_stmt.argument else {
+            return;
+        };
 
-            let consequent_is_undefined = conditional.consequent.is_void_0();
-            let alternate_is_undefined = conditional.alternate.is_void_0();
-            if consequent_is_undefined == alternate_is_undefined {
-                return;
-            }
+        let consequent_is_undefined = conditional.consequent.is_void_0();
+        let alternate_is_undefined = conditional.alternate.is_void_0();
+        if consequent_is_undefined == alternate_is_undefined {
+            return;
+        }
 
+        let (branch_test, value) = if consequent_is_undefined {
             let conditional_test = conditional.test.take_in(ctx);
-            if consequent_is_undefined {
-                (
-                    match conditional_test {
-                        Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                            unary_expr.unbox().argument
-                        }
-                        expr => Self::minimize_not(expr.span(), expr, ctx),
-                    },
-                    conditional.alternate.take_in(ctx),
-                )
-            } else {
-                (conditional_test, conditional.consequent.take_in(ctx))
-            }
+            let mut branch_test =
+                Self::minimize_not(conditional_test.span(), conditional_test, ctx);
+            Self::minimize_expression_in_boolean_context(&mut branch_test, ctx);
+            (branch_test, conditional.alternate.take_in(ctx))
+        } else {
+            (conditional.test.take_in(ctx), conditional.consequent.take_in(ctx))
         };
         let outer_test = if_stmt.test.take_in(ctx);
         let new_test = Self::join_with_left_associative_op(
