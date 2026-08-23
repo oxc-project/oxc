@@ -1,6 +1,3 @@
-// `usage_rs::Args` generates public partial structs with underscore-prefixed fields.
-#![allow(clippy::allow_attributes, clippy::pub_underscore_fields)]
-
 use std::{
     ffi::{OsStr, OsString},
     path::PathBuf,
@@ -296,14 +293,11 @@ pub struct BasicOptions {
     /// Override the TypeScript config used for import resolution.
     /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
     /// Use this only when your project uses a non-standard tsconfig name or location.
-    ///
-    /// **Warning:** Avoid using this option. It can cause differences between import resolution,
-    /// and type-aware linting. Type aware linting **does not** respect this option,
-    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
     #[usage(
         long,
         value_name = "./tsconfig.json",
-        value_hint = usage::ValueHint::FilePath
+        value_hint = usage::ValueHint::FilePath,
+        warning = "Avoid using this option. It can cause differences between import resolution and type-aware linting. Type-aware linting does not respect this option and will always discover the appropriate tsconfig.json for each file automatically."
     )]
     pub tsconfig: Option<PathBuf>,
 
@@ -403,16 +397,26 @@ pub struct WarningOptions {
 
 /// Output
 #[derive(Debug, Clone, Args)]
-#[allow(clippy::duplicated_attributes)]
+#[expect(clippy::duplicated_attributes)]
 #[usage(
     output("default", default, help = "Human-readable diagnostics"),
     output("agent", help = "Diagnostics optimized for coding agents"),
-    output("checkstyle", help = "Checkstyle XML diagnostics"),
+    output("checkstyle", media_type = "application/xml", help = "Checkstyle XML diagnostics"),
     output("github", help = "GitHub workflow annotations"),
-    output("gitlab", help = "GitLab Code Quality diagnostics"),
-    output("json", framing = "json", help = "JSON diagnostics"),
-    output("junit", help = "JUnit XML diagnostics"),
-    output("sarif", framing = "json", help = "SARIF diagnostics"),
+    output(
+        "gitlab",
+        media_type = "application/json",
+        framing = "json",
+        help = "GitLab Code Quality diagnostics"
+    ),
+    output("json", media_type = "application/json", framing = "json", help = "JSON diagnostics"),
+    output("junit", media_type = "application/xml", help = "JUnit XML diagnostics"),
+    output(
+        "sarif",
+        media_type = "application/sarif+json",
+        framing = "json",
+        help = "SARIF diagnostics"
+    ),
     output("stylish", help = "Stylish text diagnostics"),
     output("unix", help = "Unix-style text diagnostics"),
     exit_code(0, "lint completed without errors"),
@@ -1091,7 +1095,8 @@ mod usage_integration {
         let arguments = exit.text.find("Arguments:").expect("arguments heading");
         let flags = exit.text.find("Flags:").expect("flags heading");
         assert!(basic < arguments && arguments < flags);
-        assert!(exit.text.contains("**Warning:**"));
+        assert!(exit.text.contains("Warning: Avoid using this option."));
+        assert!(!exit.text.contains("**Warning:**"));
         assert!(!exit.text.contains("::: warning"));
         assert!(exit.text.contains("[possible values: default, github"));
         assert!(exit.text.contains("Examples:"));
@@ -1101,8 +1106,12 @@ mod usage_integration {
     fn spec_exposes_output_and_completion_contracts() {
         let spec = LintCommand::to_kdl();
         assert!(spec.contains("group lint-filter --allow --warn --deny multiple=#true"));
-        assert!(spec.contains("output json framing=json"));
-        assert!(spec.contains("output sarif framing=json"));
+        assert!(spec.contains("warning \"Avoid using this option."));
+        assert!(spec.contains("flag \"-h --help\"") && spec.contains("builtin=#true"));
+        assert!(spec.contains("flag \"-V --version\""));
+        assert!(spec.contains("output checkstyle media_type=\"application/xml\""));
+        assert!(spec.contains("output json media_type=\"application/json\" framing=json"));
+        assert!(spec.contains("output sarif media_type=\"application/sarif+json\" framing=json"));
         assert!(spec.contains("select \"--format\""));
         assert!(spec.contains("complete path type=path"));
     }
@@ -1116,11 +1125,20 @@ mod usage_integration {
         assert!(exit.text.contains("name oxlint"));
 
         let args =
-            ["__complete_word__", "--shell", "bash", "--line", "oxlint --fo"].map(OsString::from);
+            ["__complete_word__", "--shell", "bash", "--line", "oxlint --form"].map(OsString::from);
         let completions = LintCommand::embedded_outcome(&args);
         let exit = completions.exit().expect("completion request should return an embedded exit");
         assert_eq!(exit.code, 0);
         assert!(!exit.stderr);
         assert!(exit.text.contains("--format"));
+
+        let args = ["__complete_word__", "--shell", "bash", "--line", "oxlint --format=j"]
+            .map(OsString::from);
+        let completions = LintCommand::embedded_outcome(&args);
+        let exit = completions.exit().expect("completion request should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+        assert!(exit.text.contains("--format=json"));
+        assert!(exit.text.contains("--format=junit"));
     }
 }

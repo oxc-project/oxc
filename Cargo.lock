@@ -4227,12 +4227,12 @@ dependencies = [
 [[package]]
 name = "usage-argv"
 version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=b469e82fb68328b63600be07830988a330d7d66f#b469e82fb68328b63600be07830988a330d7d66f"
+source = "git+https://github.com/jdx/usage.git?rev=d68aed987a905681f729502d09e6b362c3bb57ad#d68aed987a905681f729502d09e6b362c3bb57ad"
 
 [[package]]
 name = "usage-derive"
 version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=b469e82fb68328b63600be07830988a330d7d66f#b469e82fb68328b63600be07830988a330d7d66f"
+source = "git+https://github.com/jdx/usage.git?rev=d68aed987a905681f729502d09e6b362c3bb57ad#d68aed987a905681f729502d09e6b362c3bb57ad"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4242,7 +4242,7 @@ dependencies = [
 [[package]]
 name = "usage-lib"
 version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=b469e82fb68328b63600be07830988a330d7d66f#b469e82fb68328b63600be07830988a330d7d66f"
+source = "git+https://github.com/jdx/usage.git?rev=d68aed987a905681f729502d09e6b362c3bb57ad#d68aed987a905681f729502d09e6b362c3bb57ad"
 dependencies = [
  "heck",
  "indexmap",
@@ -4263,7 +4263,7 @@ dependencies = [
 [[package]]
 name = "usage-rs"
 version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=b469e82fb68328b63600be07830988a330d7d66f#b469e82fb68328b63600be07830988a330d7d66f"
+source = "git+https://github.com/jdx/usage.git?rev=d68aed987a905681f729502d09e6b362c3bb57ad#d68aed987a905681f729502d09e6b362c3bb57ad"
 dependencies = [
  "usage-argv",
  "usage-derive",
@@ -4273,7 +4273,7 @@ dependencies = [
 [[package]]
 name = "usage-test"
 version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=b469e82fb68328b63600be07830988a330d7d66f#b469e82fb68328b63600be07830988a330d7d66f"
+source = "git+https://github.com/jdx/usage.git?rev=d68aed987a905681f729502d09e6b362c3bb57ad#d68aed987a905681f729502d09e6b362c3bb57ad"
 dependencies = [
  "usage-argv",
 ]
