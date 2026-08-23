@@ -17,7 +17,7 @@ use crate::{
 /// Run the type checker from the command line.
 ///
 /// Mirrors tsgo's `execute.CommandLine`: parse the arguments, then drive compilation.
-/// `bpaf` reads `std::env::args()` and handles `--help`/`--version`/argument errors itself.
+/// `usage` reads `std::env::args()` and handles `--help`/`--version`/argument errors itself.
 pub fn command_line() -> ExitCode {
     let command = parse_command_line();
     match tsc_compilation(&command) {

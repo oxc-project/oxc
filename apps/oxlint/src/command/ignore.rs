@@ -1,30 +1,28 @@
+// `usage_rs::Args` generates public partial structs with underscore-prefixed fields.
+#![allow(clippy::allow_attributes, clippy::pub_underscore_fields)]
+
 use std::ffi::OsString;
 
-use bpaf::{Bpaf, doc::Style};
-
-pub const NO_IGNORE_HELP: &[(&str, Style)] = &[
-    ("Disable excluding files from `.eslintignore` files, ", Style::Text),
-    ("--ignore-path", Style::Literal),
-    (" flags and ", Style::Text),
-    ("--ignore-pattern", Style::Literal),
-    (" flags", Style::Text),
-];
+use usage_rs::Args;
 
 /// Ignore Files
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct IgnoreOptions {
     /// Specify the file to use as your `.eslintignore`
-    #[bpaf(argument("PATH"), fallback(".eslintignore".into()), hide_usage)]
+    #[usage(long, value_name = "PATH", default = ".eslintignore")]
     pub ignore_path: OsString,
 
     /// Specify patterns of files to ignore (in addition to those in `.eslintignore`)
     ///
     /// The supported syntax is the same as for `.eslintignore` and `.gitignore` files.
     /// You should quote your patterns in order to avoid shell interpretation of glob patterns.
-    #[bpaf(argument("PAT"), many, hide_usage)]
+    #[usage(long, value_name = "PAT")]
     pub ignore_pattern: Vec<String>,
 
-    #[bpaf(switch, hide_usage, help(NO_IGNORE_HELP))]
+    #[usage(
+        long,
+        help = "Disable excluding files from `.eslintignore` files, `--ignore-path` flags and `--ignore-pattern` flags"
+    )]
     pub no_ignore: bool,
 }
 
@@ -32,11 +30,11 @@ pub struct IgnoreOptions {
 mod ignore_options {
     use std::{ffi::OsString, path::PathBuf};
 
-    use super::{super::lint::lint_command, IgnoreOptions};
+    use super::{super::lint::LintCommand, IgnoreOptions};
 
     fn get_ignore_options(arg: &str) -> IgnoreOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap().ignore_options
+        LintCommand::parse_from(args.as_slice()).unwrap().ignore_options
     }
 
     #[test]

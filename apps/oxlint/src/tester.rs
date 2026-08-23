@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use serde_json::Value;
 
-use crate::cli::{CliRunResult, CliRunner, lint_command};
+use crate::cli::{CliRunResult, CliRunner, LintCommand};
 
 pub struct Tester {
     cwd: PathBuf,
@@ -31,7 +31,7 @@ impl Tester {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
 
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+        let options = LintCommand::parse_from(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
         let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
     }
@@ -40,14 +40,14 @@ impl Tester {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
 
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+        let options = LintCommand::parse_from(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
         let result = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
         (String::from_utf8(output).unwrap(), result)
     }
 
     pub fn test_output_verbose(&self, args: &[&str]) -> String {
-        let options = lint_command().run_inner(args).unwrap();
+        let options = LintCommand::parse_from(args).unwrap();
         let mut output = Vec::new();
         let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
 
@@ -98,7 +98,7 @@ impl Tester {
         let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
 
         for args in multiple_args {
-            let options = lint_command().run_inner(*args).unwrap();
+            let options = LintCommand::parse_from(args).unwrap();
             let args_string = args.join(" ");
 
             output.extend_from_slice(b"########## \n");
