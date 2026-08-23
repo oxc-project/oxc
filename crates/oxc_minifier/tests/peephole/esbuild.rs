@@ -2288,7 +2288,7 @@ fn test_remove_dead_expr_other() {
     test("b: { if (0) a(); else { break b } }", "");
     test(
         "b: while (1) if (x) a(); else { continue b }",
-        "b: for (;;) if (x) a(); else continue b;",
+        "b: for (;;) if (!x) continue b; else a();",
     );
     // test("b: while (1) if (1) a(); else { continue b }", "for (;;) a();");
     test("b: while (1) if (0) a(); else { continue b }", "b: for (;;) continue b;");
