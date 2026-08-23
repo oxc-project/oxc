@@ -2058,7 +2058,6 @@ impl<'a> PeepholeOptimizations {
         let mut branch_test = conditional.test.take_in(ctx);
         let value = if consequent_is_undefined {
             branch_test = Self::minimize_not(branch_test.span(), branch_test, ctx, true);
-            Self::minimize_expression_in_boolean_context(&mut branch_test, ctx);
             conditional.alternate.take_in(ctx)
         } else {
             conditional.consequent.take_in(ctx)
