@@ -1051,6 +1051,12 @@ fn test() {
             r#"<Markdown content={`\\* Want to learn more`} />"#,
             Some(json!([{ "props": "never" }])),
         ),
+        (
+            r#"<Markdown content={"\\* Want to learn more"} />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (r#"<Markdown content={"\x26copy;"} />"#, Some(json!([{ "props": "never" }]))),
+        (r#"<Markdown content={"\tWant to learn more"} />"#, Some(json!([{ "props": "never" }]))),
         ("<App prop={`foo`} />", Some(json!([{ "props": "never" }]))),
         ("<App>{<myApp></myApp>}</App>", Some(json!([{ "children": "never" }]))),
         ("<App>{<myApp></myApp>}</App>", None),
@@ -1206,6 +1212,21 @@ fn test() {
         (
             r#"<Markdown content={`\\* Want to learn more`} />"#,
             r#"<Markdown content="\* Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<Markdown content={"\\* Want to learn more"} />"#,
+            r#"<Markdown content="\* Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<Markdown content={"\x26copy;"} />"#,
+            r#"<Markdown content="&amp;copy;" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<Markdown content={"\tWant to learn more"} />"#,
+            r#"<Markdown content={"\tWant to learn more"} />"#,
             Some(json!([{ "props": "never" }])),
         ),
         (
