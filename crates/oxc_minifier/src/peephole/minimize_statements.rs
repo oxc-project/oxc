@@ -127,36 +127,6 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn minimize_conditional_after_if(
-        span: Span,
-        test: Expression<'a>,
-        consequent: Expression<'a>,
-        alternate: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        match test {
-            // "if (!a) return/throw b; return/throw c;" => "return/throw a ? c : b;"
-            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                Self::minimize_conditional(
-                    span,
-                    unary_expr.unbox().argument,
-                    alternate,
-                    consequent,
-                    ctx,
-                )
-            }
-            // "if (a, b) return/throw c; return/throw d;" => "return/throw a, b ? c : d;"
-            Expression::SequenceExpression(mut sequence_expr) => {
-                let test = sequence_expr.expressions.pop().unwrap();
-                let conditional =
-                    Self::minimize_conditional(span, test, consequent, alternate, ctx);
-                sequence_expr.expressions.push(conditional);
-                Expression::SequenceExpression(sequence_expr)
-            }
-            test => Self::minimize_conditional(span, test, consequent, alternate, ctx),
-        }
-    }
-
     fn minimize_statement(
         stmt: Statement<'a>,
         i: usize,
@@ -791,7 +761,7 @@ impl<'a> PeepholeOptimizations {
                         .take()
                         .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
-                    let argument = Self::minimize_conditional_after_if(
+                    let argument = Self::minimize_conditional(
                         prev_if.span,
                         prev_if.test,
                         left,
@@ -857,7 +827,7 @@ impl<'a> PeepholeOptimizations {
                     };
 
                     ctx.replace_expression_with(&mut throw_stmt.argument, |expr, ctx| {
-                        Self::minimize_conditional_after_if(
+                        Self::minimize_conditional(
                             prev_if.span,
                             prev_if.test,
                             prev_throw.unbox().argument,
