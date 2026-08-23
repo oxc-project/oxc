@@ -1,0 +1,6 @@
+{
+  "plugins": [
+    "transform-duplicate-named-capturing-groups-regex",
+    "transform-dotall-regex"
+  ]
+}
