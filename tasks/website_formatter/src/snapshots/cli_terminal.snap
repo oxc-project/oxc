@@ -1,20 +1,11 @@
 ---
 source: tasks/website_formatter/src/cli.rs
+assertion_line: 17
 expression: snapshot
 ---
 oxfmt 0.64.0
+
 oxfmt [-c=PATH] [PATH]...
-
-Arguments:
-  [PATH]…  Single file, path or list of paths. Glob patterns are also supported.
-           (Be sure to quote them, otherwise your shell may expand them before
-           passing.) Exclude patterns with `!` prefix like `'!**/fixtures/*.js'`
-           are also supported. If not provided, current working directory is
-           used.
-
-Flags:
-  -h, --help                           Print help
-  -V, --version                        Print version
 
 Mode Options:
       --init                           Initialize `.oxfmtrc.json` with default
@@ -22,6 +13,7 @@ Mode Options:
       --migrate <SOURCE>               Migrate configuration to `.oxfmtrc.json`
                                        from specified source. Available sources:
                                        prettier, biome.
+    [possible values: prettier, biome]
       --lsp                            Start language server protocol (LSP)
                                        server
       --stdin-filepath <PATH>          Specify the file name to use to infer
@@ -52,3 +44,20 @@ Runtime Options:
                                        unmatched
       --threads <INT>                  Number of threads to use. Set to 1 for
                                        using only 1 CPU core.
+
+Arguments:
+  [PATH]…  Single file, path or list of paths. Glob patterns are also supported.
+           (Be sure to quote them, otherwise your shell may expand them before
+           passing.) Exclude patterns with `!` prefix like `'!**/fixtures/*.js'`
+           are also supported. If not provided, current working directory is
+           used.
+
+Flags:
+  -h, --help                           Print help
+  -V, --version                        Print version
+
+Examples:
+  Check formatting:
+    $ oxfmt --check .
+  Format files:
+    $ oxfmt --write src

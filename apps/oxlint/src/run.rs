@@ -183,35 +183,15 @@ async fn lint_impl(
         return CliRunResult::LintSucceeded;
     }
 
-    let command = {
-        match crate::cli::LintCommand::parse_from(&args) {
-            Ok(cmd) => cmd,
-            Err(error) => {
-                return match error {
-                    usage::Error::Help { cmd, long } => {
-                        if let Some(help) = crate::cli::LintCommand::render_help(cmd, long) {
-                            print!("{help}");
-                        }
-                        CliRunResult::LintSucceeded
-                    }
-                    usage::Error::HelpAll { cmd } => {
-                        if let Some(help) =
-                            usage::help::render_all(crate::cli::LintCommand::spec(), cmd)
-                        {
-                            print!("{help}");
-                        }
-                        CliRunResult::LintSucceeded
-                    }
-                    usage::Error::Version { .. } => {
-                        println!("oxlint {}", env!("CARGO_PKG_VERSION"));
-                        CliRunResult::LintSucceeded
-                    }
-                    error => {
-                        eprint!("{}", crate::cli::LintCommand::render_failure(&args, &error));
-                        CliRunResult::InvalidOptionConfig
-                    }
-                };
+    let command = match crate::cli::LintCommand::embedded_outcome(&args) {
+        usage::embedded::Outcome::Parsed(command) => command,
+        usage::embedded::Outcome::Exit(exit) => {
+            if exit.stderr {
+                eprint!("{}", exit.text);
+                return CliRunResult::InvalidOptionConfig;
             }
+            print!("{}", exit.text);
+            return CliRunResult::LintSucceeded;
         }
     };
 

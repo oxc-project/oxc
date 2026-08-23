@@ -69,31 +69,16 @@ pub async fn run_cli(
         return ("cli".to_string(), Some(0));
     }
 
-    let command = match FormatCommand::parse_from(&args) {
-        Ok(cmd) => cmd,
-        Err(error) => {
-            let exit_code = match error {
-                usage::Error::Help { cmd, long } => {
-                    if let Some(help) = FormatCommand::render_help(cmd, long) {
-                        print!("{help}");
-                    }
-                    0
-                }
-                usage::Error::HelpAll { cmd } => {
-                    if let Some(help) = usage::help::render_all(FormatCommand::spec(), cmd) {
-                        print!("{help}");
-                    }
-                    0
-                }
-                usage::Error::Version { .. } => {
-                    println!("oxfmt {}", env!("CARGO_PKG_VERSION"));
-                    0
-                }
-                error => {
-                    eprint!("{}", FormatCommand::render_failure(&args, &error));
-                    1
-                }
-            };
+    let command = match FormatCommand::embedded_outcome(&args) {
+        usage::embedded::Outcome::Parsed(command) => command,
+        usage::embedded::Outcome::Exit(exit) => {
+            if exit.stderr {
+                eprint!("{}", exit.text);
+            } else {
+                print!("{}", exit.text);
+            }
+            // Preserve the NAPI CLI contract: parser failures have historically returned 1.
+            let exit_code = u8::from(exit.code != 0);
             return ("cli".to_string(), Some(exit_code));
         }
     };

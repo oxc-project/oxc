@@ -273,8 +273,9 @@ tower-lsp-server = "0.23.0" # LSP server framework
 tracing = "0.1.44" # Tracing framework
 tracing-subscriber = "0.3.23" # Tracing implementation
 unicode-width = "0.2" # Unicode display width
-usage-rs = "6.1.1" # CLI parser
-usage-parser = { package = "usage-lib", version = "6.1.1" } # Usage spec parser and renderer
+# Pin the post-6.1.1 Oxc migration work until its next crates.io release.
+usage-rs = { git = "https://github.com/jdx/usage.git", rev = "5f093073b93c10eb5b913f493f31d60a1355b51b" } # CLI parser
+usage-parser = { package = "usage-lib", git = "https://github.com/jdx/usage.git", rev = "5f093073b93c10eb5b913f493f31d60a1355b51b" } # Usage spec parser and renderer
 ureq = { version = "3.3.0", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal

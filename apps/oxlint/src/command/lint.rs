@@ -10,7 +10,7 @@ use std::{
 
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 use usage_rs as usage;
-use usage_rs::{Args, Cli, Event, Parser};
+use usage_rs::{Args, Cli, Event, Parser, ValidationError};
 
 use crate::output_formatter::OutputFormat;
 
@@ -66,7 +66,23 @@ pub struct LintCommand {
     args_override_self = false,
     next_line_help,
     long_about = LINT_FILTERS_HELP,
-    usage = "oxlint [-c=./.oxlintrc.json] [PATH]..."
+    usage = "oxlint [-c=./.oxlintrc.json] [PATH]...",
+    help_template = "{{about}}\n\n{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
+    example("oxlint -D correctness src", header = "Deny a category"),
+    example("oxlint --format github .", header = "GitHub Actions"),
+    output("default", default, help = "Human-readable diagnostics"),
+    output("agent", help = "Diagnostics optimized for coding agents"),
+    output("checkstyle", help = "Checkstyle XML diagnostics"),
+    output("github", help = "GitHub workflow annotations"),
+    output("gitlab", help = "GitLab Code Quality diagnostics"),
+    output("json", framing = "json", help = "JSON diagnostics"),
+    output("junit", help = "JUnit XML diagnostics"),
+    output("sarif", framing = "json", help = "SARIF diagnostics"),
+    output("stylish", help = "Stylish text diagnostics"),
+    output("unix", help = "Unix-style text diagnostics"),
+    exit_code(0, "lint completed without errors"),
+    exit_code(1, "lint errors or invalid options were found"),
+    validate_with = validate_lint_cli
 )]
 struct LintCli {
     #[usage(flatten, next_help_heading = "Basic Configuration")]
@@ -81,8 +97,32 @@ struct LintCli {
     ignore_options: IgnoreOptions,
     #[usage(flatten, next_help_heading = "Handle Warnings")]
     warning_options: WarningOptions,
-    #[usage(flatten, next_help_heading = "Output")]
-    output_options: OutputOptionsCli,
+    /// Use a specific output format.
+    #[usage(
+        long,
+        short,
+        value_name = "FORMAT",
+        value_enum,
+        select,
+        default_fn = default_output_format,
+        default_note = "auto-detected from the runtime environment",
+        help_heading = "Output"
+    )]
+    format: OutputFormat,
+
+    /// Enable debug output options. Options are comma-separated.
+    ///
+    ///  * `files` - Print the list of files that will be linted, then exit.
+    ///  * `timings` - Enable per-rule timing information.
+    #[usage(
+        long,
+        value_name = "OPTIONS",
+        choices("files", "timings"),
+        choices_strict = false,
+        default_fn = DebugOptions::default,
+        help_heading = "Output"
+    )]
+    debug: DebugOptions,
 
     /// List all the rules that are currently registered
     #[usage(long = "rules")]
@@ -118,8 +158,17 @@ struct LintCli {
     suppression_options: SuppressionOptions,
 
     /// Single file, single path or list of paths
-    #[usage(name = "PATH")]
+    #[usage(name = "PATH", value_hint = usage::ValueHint::AnyPath)]
     paths: Vec<PathBuf>,
+}
+
+fn validate_lint_cli(cli: &LintCli) -> Result<(), ValidationError> {
+    if let Some(path) = invalid_path(&cli.paths) {
+        return Err(ValidationError::field("PATH")
+            .value(path.display().to_string())
+            .reason(PATHS_ERROR_MESSAGE));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, Args)]
@@ -134,18 +183,11 @@ pub struct SuppressionOptions {
 }
 
 impl LintCommand {
-    #[expect(clippy::print_stderr)]
     pub fn parse() -> Self {
         let cli = LintCli::parse();
         let args = std::env::args_os().skip(1).collect::<Vec<_>>();
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
-        match Self::from_cli(cli, &refs) {
-            Ok(command) => command,
-            Err(error) => {
-                eprint!("{}", LintCli::render_failure(&refs, &error));
-                usage::__usage_process_exit(2);
-            }
-        }
+        Self::from_cli(cli, &refs)
     }
 
     /// Parses linter options from an argument slice.
@@ -159,28 +201,20 @@ impl LintCommand {
     {
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
         let cli = LintCli::parse_from(&refs)?;
-        Self::from_cli(cli, &refs)
+        Ok(Self::from_cli(cli, &refs))
     }
 
-    fn from_cli<'v>(cli: LintCli, args: &[&'v OsStr]) -> Result<Self, usage::Error<'static, 'v>> {
-        if let Some(path) = invalid_path(&cli.paths) {
-            return Err(usage::Error::InvalidValue(Box::new(usage::InvalidValue {
-                name: "PATH",
-                value: path.display().to_string(),
-                reason: PATHS_ERROR_MESSAGE.to_string(),
-            })));
-        }
-
+    fn from_cli(cli: LintCli, args: &[&OsStr]) -> Self {
         let filter = lint_filters(args);
         let _ = cli.filter_options;
-        Ok(Self {
+        Self {
             basic_options: cli.basic_options,
             filter,
             enable_plugins: cli.enable_plugins.into(),
             fix_options: cli.fix_options,
             ignore_options: cli.ignore_options,
             warning_options: cli.warning_options,
-            output_options: cli.output_options.into(),
+            output_options: OutputOptions { format: cli.format, debug: cli.debug },
             list_rules: cli.list_rules,
             lsp: cli.lsp,
             misc_options: cli.misc_options,
@@ -191,7 +225,7 @@ impl LintCommand {
             inline_config_options: cli.inline_config_options.into(),
             suppression_options: cli.suppression_options,
             paths: cli.paths,
-        })
+        }
     }
 
     pub fn command() -> &'static usage::Command<'static> {
@@ -226,12 +260,20 @@ impl LintCommand {
     pub fn completion_request(args: &[OsString]) -> Option<String> {
         LintCli::completion_request(args)
     }
+
+    pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
+        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
+        usage::embedded::outcome(LintCli::spec(), LintCli::command(), &refs, |argv| {
+            LintCli::parse_from(argv).map(|cli| Self::from_cli(cli, argv))
+        })
+    }
 }
 
 fn lint_filters(args: &[&OsStr]) -> Vec<(AllowWarnDeny, String)> {
     let mut filters = Vec::new();
     let mut parser = Parser::new(LintCli::command(), args);
-    while let Some(Ok(event)) = parser.next_event() {
+    while let Some(event) = parser.next_event() {
+        let event = event.expect("LintCli already parsed the same argv successfully");
         let Event::Flag { flag, value: Some(value), .. } = event else {
             continue;
         };
@@ -241,7 +283,8 @@ fn lint_filters(args: &[&OsStr]) -> Vec<(AllowWarnDeny, String)> {
             "deny" => AllowWarnDeny::Deny,
             _ => continue,
         };
-        filters.push((severity, usage::as_str(value).unwrap().to_string()));
+        let value = usage::as_str(value).expect("String fields reject non-UTF-8 values");
+        filters.push((severity, value.to_string()));
     }
     filters
 }
@@ -310,19 +353,26 @@ pub struct BasicOptions {
     ///  * tries to be compatible with ESLint v8's format
     ///
     /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`, or `oxlint.config.mts` file in the current working directory.
-    #[usage(long, short, value_name = "./.oxlintrc.json")]
+    #[usage(
+        long,
+        short,
+        value_name = "./.oxlintrc.json",
+        value_hint = usage::ValueHint::FilePath
+    )]
     pub config: Option<PathBuf>,
 
     /// Override the TypeScript config used for import resolution.
     /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
     /// Use this only when your project uses a non-standard tsconfig name or location.
     ///
-    /// ::: warning
-    /// Avoid using this option. It can cause differences between import resolution,
+    /// **Warning:** Avoid using this option. It can cause differences between import resolution,
     /// and type-aware linting. Type aware linting **does not** respect this option,
     /// and will always discover the appropriate `tsconfig.json` for each file automatically.
-    /// :::
-    #[usage(long, value_name = "./tsconfig.json")]
+    #[usage(
+        long,
+        value_name = "./tsconfig.json",
+        value_hint = usage::ValueHint::FilePath
+    )]
     pub tsconfig: Option<PathBuf>,
 
     /// Initialize oxlint configuration with default values
@@ -409,30 +459,6 @@ pub struct OutputOptions {
     pub debug: DebugOptions,
 }
 
-#[derive(Debug, Clone, Args)]
-struct OutputOptionsCli {
-    /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
-    #[usage(long, short, value_name = "FORMAT")]
-    format: Option<OutputFormat>,
-
-    #[usage(
-        long,
-        value_name = "OPTIONS",
-        help = "Enable debug output options. Options are comma-separated. Possible values:\n* `files` - Print the list of files that will be linted, then exit.\n* `timings` - Enable per-rule timing information."
-    )]
-    debug: Option<DebugOptions>,
-}
-
-impl From<OutputOptionsCli> for OutputOptions {
-    fn from(options: OutputOptionsCli) -> Self {
-        Self {
-            format: options.format.unwrap_or_else(default_output_format),
-            debug: options.debug.unwrap_or_default(),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DebugOption {
     /// Print the list of files that will be linted
@@ -487,6 +513,21 @@ impl FromStr for DebugOptions {
         }
 
         Ok(Self { options })
+    }
+}
+
+impl std::fmt::Display for DebugOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (index, option) in self.options.iter().enumerate() {
+            if index > 0 {
+                f.write_str(",")?;
+            }
+            f.write_str(match option {
+                DebugOption::Files => DebugOption::FILES_NAME,
+                DebugOption::Timings => DebugOption::TIMINGS_NAME,
+            })?;
+        }
+        Ok(())
     }
 }
 
@@ -905,15 +946,37 @@ mod lint_options {
     fn debug_error() {
         let args =
             "--debug foo".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        let result = LintCommand::parse_from(args.as_slice());
-        assert!(matches!(result, Err(usage::Error::InvalidValue(_))));
+        let error = LintCommand::parse_from(args.as_slice()).unwrap_err();
+        let usage::Error::InvalidValue(error) = error else {
+            panic!("expected invalid debug value");
+        };
+        assert_eq!(error.value, "foo");
+        assert_eq!(error.reason, "'foo' is not a known debug option");
     }
 
     #[test]
     fn format_error() {
         let args = "-f asdf".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        let result = LintCommand::parse_from(args.as_slice());
-        assert!(matches!(result, Err(usage::Error::InvalidValue(_))));
+        let error = LintCommand::parse_from(args.as_slice()).unwrap_err();
+        let usage::Error::InvalidChoice { name, choices } = error else {
+            panic!("expected invalid output format choice");
+        };
+        assert_eq!(name, "format");
+        assert_eq!(
+            choices,
+            [
+                "default",
+                "github",
+                "gitlab",
+                "json",
+                "unix",
+                "agent",
+                "checkstyle",
+                "stylish",
+                "junit",
+                "sarif",
+            ]
+        );
     }
 
     #[test]
@@ -1021,5 +1084,39 @@ mod inline_config_options {
             options.inline_config_options.report_unused_directives,
             ReportUnusedDirectives::WithSeverity(Some(AllowWarnDeny::Deny))
         );
+    }
+}
+
+#[cfg(test)]
+mod usage_integration {
+    use std::ffi::OsString;
+
+    use super::LintCommand;
+
+    #[test]
+    fn embedded_help_preserves_sections_and_renders_markdown() {
+        let args = [OsString::from("--help")];
+        let outcome = LintCommand::embedded_outcome(&args);
+        let exit = outcome.exit().expect("help should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+
+        let basic = exit.text.find("Basic Configuration:").expect("basic options heading");
+        let arguments = exit.text.find("Arguments:").expect("arguments heading");
+        let flags = exit.text.find("Flags:").expect("flags heading");
+        assert!(basic < arguments && arguments < flags);
+        assert!(exit.text.contains("**Warning:**"));
+        assert!(!exit.text.contains("::: warning"));
+        assert!(exit.text.contains("[possible values: default, github"));
+        assert!(exit.text.contains("Examples:"));
+    }
+
+    #[test]
+    fn spec_exposes_output_and_completion_contracts() {
+        let spec = LintCommand::to_kdl();
+        assert!(spec.contains("output json framing=json"));
+        assert!(spec.contains("output sarif framing=json"));
+        assert!(spec.contains("select \"--format\""));
+        assert!(spec.contains("complete path type=path"));
     }
 }
