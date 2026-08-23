@@ -118,6 +118,17 @@ impl<'a> PeepholeOptimizations {
         )
     }
 
+    fn if_statement_requires_block_in_branch(expr: &Statement<'a>) -> bool {
+        match expr {
+            Statement::IfStatement(_) => true,
+            Statement::BlockStatement(block) => match block.body.as_slice() {
+                [stmt] => Self::if_statement_requires_block_in_branch(stmt),
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
     fn should_invert_if(
         consequent: &Statement<'a>,
         alternate: &Statement<'a>,
@@ -137,6 +148,14 @@ impl<'a> PeepholeOptimizations {
             && !Self::statement_cares_about_scope(alternate)
         {
             return is_alternate_terminated;
+        }
+
+        let is_alternate_requires_block = Self::if_statement_requires_block_in_branch(alternate);
+        let is_consequent_requires_block = Self::if_statement_requires_block_in_branch(consequent);
+
+        // `if (a) { if (b) c; else d; } else f; }` -> `if (!a) f; else if (b) c; else d`
+        if is_alternate_requires_block != is_consequent_requires_block {
+            return is_consequent_requires_block;
         }
 
         // Normalize: move the `!` out of the test by swapping branches.

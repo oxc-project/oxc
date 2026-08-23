@@ -80,8 +80,8 @@ fn test_for_break_preserves_annex_b_function_scope() {
         }
         console.log(typeof f, f);",
         "for (var i = 0; i++ < 1;) {
-            if (!x) break;
-            else function f() {}
+            if (x) function f() {}
+            else break;
             f = 0;
         }
         console.log(typeof f, f);",
