@@ -4,8 +4,7 @@
 /// To be aligned with the CLI integration, for files the extension should be used.
 /// If the document is not a file (protocol not `file://`), or the extension is not known,
 /// the language ID is used to select the parser strategy.
-/// For non file protocols (e.g. `untitled://`, `vscode-notebook-cell://`, etc.),
-/// the language ID is always used to select the parser strategy.
+/// For non file protocols (e.g. `untitled://`, `vscode-notebook-cell://`, etc.), the language ID is always used to select the parser strategy.
 ///
 /// For a starting list of known language identifiers, see:
 /// <https://code.visualstudio.com/docs/languages/identifiers#_known-language-identifiers>
