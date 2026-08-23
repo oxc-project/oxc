@@ -118,29 +118,6 @@ impl<'a> PeepholeOptimizations {
                     let prev_index = stmts.len() - 2;
                     let prev_stmt = &stmts[prev_index];
                     match prev_stmt {
-                        Statement::ExpressionStatement(_) => {
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
-                                && last_return.argument.is_none()
-                            {
-                                break 'return_loop;
-                            }
-                            ctx.notice_change();
-                            // "a(); return b;" => "return a(), b;"
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ReturnStatement(mut last_return) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
-                                unreachable!()
-                            };
-                            let b = last_return.argument.as_mut().unwrap();
-                            let argument = Self::join_sequence(&mut expr_stmt.expression, b, ctx);
-                            let right_span = last_return.span;
-                            let last_return_stmt =
-                                Statement::new_return_statement(right_span, Some(argument), ctx);
-                            stmts.push(last_return_stmt);
-                        }
                         // Merge the last two statements
                         Statement::IfStatement(if_stmt) => {
                             // The previous statement must be an if statement with no else clause
@@ -202,27 +179,6 @@ impl<'a> PeepholeOptimizations {
                     let prev_index = stmts.len() - 2;
                     let prev_stmt = &stmts[prev_index];
                     match prev_stmt {
-                        Statement::ExpressionStatement(_) => {
-                            ctx.notice_change();
-                            // "a(); throw b;" => "throw a(), b;"
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ThrowStatement(mut last_throw) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
-                                unreachable!()
-                            };
-                            let argument = Self::join_sequence(
-                                &mut expr_stmt.expression,
-                                &mut last_throw.argument,
-                                ctx,
-                            );
-                            let right_span = last_throw.span;
-                            let last_throw_stmt =
-                                Statement::new_throw_statement(right_span, argument, ctx);
-                            stmts.push(last_throw_stmt);
-                        }
                         // Merge the last two statements
                         Statement::IfStatement(if_stmt) => {
                             // The previous statement must be an if statement with no else clause
