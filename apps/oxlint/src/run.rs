@@ -9,6 +9,7 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
+use usage_rs as usage;
 
 use crate::{init::init_tracing, lint::CliRunner, result::CliRunResult};
 
@@ -161,6 +162,7 @@ pub async fn lint(
 }
 
 /// Run the linter.
+#[expect(clippy::print_stderr, clippy::print_stdout)]
 async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
@@ -170,19 +172,44 @@ async fn lint_impl(
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
 ) -> CliRunResult {
-    // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
 
+    if let Some(spec) = crate::cli::LintCommand::spec_request(&args) {
+        print!("{spec}");
+        return CliRunResult::LintSucceeded;
+    }
+    if let Some(completions) = crate::cli::LintCommand::completion_request(&args) {
+        print!("{completions}");
+        return CliRunResult::LintSucceeded;
+    }
+
     let command = {
-        let cmd = crate::cli::lint_command();
-        match cmd.run_inner(&*args) {
+        match crate::cli::LintCommand::parse_from(&args) {
             Ok(cmd) => cmd,
-            Err(e) => {
-                e.print_message(100);
-                return if e.exit_code() == 0 {
-                    CliRunResult::LintSucceeded
-                } else {
-                    CliRunResult::InvalidOptionConfig
+            Err(error) => {
+                return match error {
+                    usage::Error::Help { cmd, long } => {
+                        if let Some(help) = crate::cli::LintCommand::render_help(cmd, long) {
+                            print!("{help}");
+                        }
+                        CliRunResult::LintSucceeded
+                    }
+                    usage::Error::HelpAll { cmd } => {
+                        if let Some(help) =
+                            usage::help::render_all(crate::cli::LintCommand::spec(), cmd)
+                        {
+                            print!("{help}");
+                        }
+                        CliRunResult::LintSucceeded
+                    }
+                    usage::Error::Version { .. } => {
+                        println!("oxlint {}", env!("CARGO_PKG_VERSION"));
+                        CliRunResult::LintSucceeded
+                    }
+                    error => {
+                        eprint!("{}", crate::cli::LintCommand::render_failure(&args, &error));
+                        CliRunResult::InvalidOptionConfig
+                    }
                 };
             }
         }
