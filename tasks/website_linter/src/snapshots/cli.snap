@@ -1,6 +1,5 @@
 ---
 source: tasks/website_linter/src/cli.rs
-assertion_line: 9
 expression: snapshot
 ---
 ---
@@ -69,6 +68,14 @@ Enable rules that require type information
 
 Enable experimental type checking (includes TypeScript compiler diagnostics)
 
+### `-h --help`
+
+Print help
+
+### `-V --version`
+
+Print version
+
 ## Basic Configuration
 
 ### `-c --config <./.oxlintrc.json>`
@@ -85,7 +92,7 @@ If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `ox
 
 Override the TypeScript config used for import resolution. Oxlint automatically discovers the relevant `tsconfig.json` for each file. Use this only when your project uses a non-standard tsconfig name or location.
 
-**Warning:** Avoid using this option. It can cause differences between import resolution, and type-aware linting. Type aware linting **does not** respect this option, and will always discover the appropriate `tsconfig.json` for each file automatically.
+> **Warning:** Avoid using this option. It can cause differences between import resolution and type-aware linting. Type-aware linting does not respect this option and will always discover the appropriate tsconfig.json for each file automatically.
 
 ### `--init`
 
@@ -295,6 +302,7 @@ Diagnostics optimized for coding agents
 ### `checkstyle`
 
 - **Select**: `--format checkstyle`
+- **Media type**: `application/xml`
 - **Framing**: `text`
 
 Checkstyle XML diagnostics
@@ -309,13 +317,15 @@ GitHub workflow annotations
 ### `gitlab`
 
 - **Select**: `--format gitlab`
-- **Framing**: `text`
+- **Media type**: `application/json`
+- **Framing**: `json`
 
 GitLab Code Quality diagnostics
 
 ### `json`
 
 - **Select**: `--format json`
+- **Media type**: `application/json`
 - **Framing**: `json`
 
 JSON diagnostics
@@ -323,6 +333,7 @@ JSON diagnostics
 ### `junit`
 
 - **Select**: `--format junit`
+- **Media type**: `application/xml`
 - **Framing**: `text`
 
 JUnit XML diagnostics
@@ -330,6 +341,7 @@ JUnit XML diagnostics
 ### `sarif`
 
 - **Select**: `--format sarif`
+- **Media type**: `application/sarif+json`
 - **Framing**: `json`
 
 SARIF diagnostics
