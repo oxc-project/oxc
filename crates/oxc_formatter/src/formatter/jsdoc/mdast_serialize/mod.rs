@@ -146,7 +146,30 @@ pub fn format_description_mdast(
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
     let output = lines.into_string();
-    restore_in_string(&output, &placeholders).into_owned()
+    let output = restore_in_string(&output, &placeholders).into_owned();
+
+    // Greedy fallback in balance mode can move a prose dash to the start of a
+    // line after markdown parsing has already finished. Stabilize that newly
+    // created list marker now, rather than discovering it on the next format.
+    if matches!(line_wrapping_style, crate::LineWrappingStyle::Balance)
+        && contains_dash_list_marker(&output)
+        && !contains_dash_list_marker(text.as_ref())
+    {
+        return format_description_mdast(
+            &output,
+            max_width,
+            tag_string_length,
+            capitalize,
+            format_options,
+            session,
+        );
+    }
+
+    output
+}
+
+fn contains_dash_list_marker(text: &str) -> bool {
+    text.lines().any(|line| line.trim_start().starts_with("- "))
 }
 
 pub(super) struct SerializeOptions<'a> {
