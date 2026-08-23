@@ -159,7 +159,7 @@ impl<'a> PeepholeOptimizations {
                                 ctx.is_closest_function_scope_an_async_generator();
                             let prev_return_is_bare = prev_return.argument.is_none();
                             let last_return_is_bare = last_return.argument.is_none();
-                            if is_async_generator && prev_return_is_bare && last_return_is_bare {
+                            if prev_return_is_bare && last_return_is_bare {
                                 let Statement::IfStatement(if_stmt) = &mut stmts[prev_index] else {
                                     unreachable!()
                                 };
@@ -2111,13 +2111,14 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut branch_test = conditional.test.take_in(ctx);
-        let value = if consequent_is_undefined {
-            branch_test = Self::minimize_not(branch_test.span(), branch_test, ctx);
+        let (branch_test, value) = if consequent_is_undefined {
+            let conditional_test = conditional.test.take_in(ctx);
+            let mut branch_test =
+                Self::minimize_not(conditional_test.span(), conditional_test, ctx);
             Self::minimize_expression_in_boolean_context(&mut branch_test, ctx);
-            conditional.alternate.take_in(ctx)
+            (branch_test, conditional.alternate.take_in(ctx))
         } else {
-            conditional.consequent.take_in(ctx)
+            (conditional.test.take_in(ctx), conditional.consequent.take_in(ctx))
         };
         let outer_test = if_stmt.test.take_in(ctx);
         let new_test = Self::join_with_left_associative_op(

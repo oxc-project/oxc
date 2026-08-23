@@ -174,6 +174,14 @@ fn test_fold_nested_terminated_returns_at_function_tail() {
         "async function* f(){try{if(b())return;return}finally{a='PASS'}}",
         "async function* f(){try{b();return}finally{a='PASS'}}",
     );
+    test(
+        "function f(){try{if(b())return;return}finally{a='PASS'}}",
+        "function f(){try{b();return}finally{a='PASS'}}",
+    );
+    test(
+        "function* f(){try{if(b())return;return}finally{a='PASS'}}",
+        "function* f(){try{b();return}finally{a='PASS'}}",
+    );
 }
 
 #[test]
