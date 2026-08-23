@@ -1,5 +1,6 @@
 ---
 source: tasks/website_linter/src/cli.rs
+assertion_line: 17
 expression: snapshot
 ---
 oxlint 1.79.0
@@ -18,26 +19,6 @@ Categories:
 
 oxlint [-c=./.oxlintrc.json] [PATH]...
 
-Arguments:
-  [PATH]…
-    Single file, single path or list of paths
-
-Flags:
-      --rules
-    List all the rules that are currently registered
-      --lsp
-    Start the language server
-      --disable-nested-config
-    Disable the automatic loading of nested configuration files
-      --type-aware
-    Enable rules that require type information
-      --type-check
-    Enable experimental type checking (includes TypeScript compiler diagnostics)
-  -h, --help
-    Print help
-  -V, --version
-    Print version
-
 Basic Configuration:
   -c, --config <./.oxlintrc.json>
     Oxlint configuration file
@@ -50,7 +31,7 @@ Basic Configuration:
       --tsconfig <./tsconfig.json>
     Override the TypeScript config used for import resolution. Oxlint automatically discovers the relevant `tsconfig.json` for each file. Use this only when your project uses a non-standard tsconfig name or location.
 
-    ::: warning Avoid using this option. It can cause differences between import resolution, and type-aware linting. Type aware linting **does not** respect this option, and will always discover the appropriate `tsconfig.json` for each file automatically. :::
+    **Warning:** Avoid using this option. It can cause differences between import resolution, and type-aware linting. Type aware linting **does not** respect this option, and will always discover the appropriate `tsconfig.json` for each file automatically.
       --init
     Initialize oxlint configuration with default values
 
@@ -103,7 +84,6 @@ Fix Problems:
 Ignore Files:
       --ignore-path <PATH>
     Specify the file to use as your `.eslintignore`
-    (default: .eslintignore)
       --ignore-pattern… <PAT>
     Specify patterns of files to ignore (in addition to those in `.eslintignore`)
 
@@ -121,11 +101,14 @@ Handle Warnings:
 
 Output:
   -f, --format <FORMAT>
-    Use a specific output format. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+    Use a specific output format. (default: auto-detected from the runtime environment)
+    [possible values: default, github, gitlab, json, unix, agent, checkstyle, stylish, junit, sarif]
       --debug <OPTIONS>
-    Enable debug output options. Options are comma-separated. Possible values:
-    * `files` - Print the list of files that will be linted, then exit.
-    * `timings` - Enable per-rule timing information.
+    Enable debug output options. Options are comma-separated.
+
+     * `files` - Print the list of files that will be linted, then exit.
+     * `timings` - Enable per-rule timing information.
+    [possible values: files, timings]
 
 Miscellaneous:
       --silent
@@ -143,3 +126,29 @@ Inline Configuration Comments:
       --report-unused-disable-directives-severity <SEVERITY>
     Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors. Only one of these two options can be used at a time.
     [possible values: allow, off, deny, error, warn]
+
+Arguments:
+  [PATH]…
+    Single file, single path or list of paths
+
+Flags:
+      --rules
+    List all the rules that are currently registered
+      --lsp
+    Start the language server
+      --disable-nested-config
+    Disable the automatic loading of nested configuration files
+      --type-aware
+    Enable rules that require type information
+      --type-check
+    Enable experimental type checking (includes TypeScript compiler diagnostics)
+  -h, --help
+    Print help
+  -V, --version
+    Print version
+
+Examples:
+  Deny a category:
+    $ oxlint -D correctness src
+  GitHub Actions:
+    $ oxlint --format github .

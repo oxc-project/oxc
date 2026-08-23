@@ -1,5 +1,6 @@
 ---
 source: tasks/website_linter/src/cli.rs
+assertion_line: 9
 expression: snapshot
 ---
 ---
@@ -21,6 +22,20 @@ Categories:
 * `nursery` - New lints that are still under development
 * `all` - All categories listed above except `nursery`. Does not enable plugins automatically.
 
+
+## Examples
+
+**Deny a category**
+
+```
+oxlint -D correctness src
+```
+
+**GitHub Actions**
+
+```
+oxlint --format github .
+```
 
 ## Usage
 
@@ -70,7 +85,7 @@ If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `ox
 
 Override the TypeScript config used for import resolution. Oxlint automatically discovers the relevant `tsconfig.json` for each file. Use this only when your project uses a non-standard tsconfig name or location.
 
-::: warning Avoid using this option. It can cause differences between import resolution, and type-aware linting. Type aware linting **does not** respect this option, and will always discover the appropriate `tsconfig.json` for each file automatically. :::
+**Warning:** Avoid using this option. It can cause differences between import resolution, and type-aware linting. Type aware linting **does not** respect this option, and will always discover the appropriate `tsconfig.json` for each file automatically.
 
 ### `--init`
 
@@ -198,13 +213,32 @@ Specify a warning threshold, which can be used to force exit with an error statu
 
 ### `-f --format <FORMAT>`
 
-Use a specific output format. Possible values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+Use a specific output format. (default: auto-detected from the runtime environment)
+
+**Choices:**
+
+- `default`
+- `github`
+- `gitlab`
+- `json`
+- `unix`
+- `agent`
+- `checkstyle`
+- `stylish`
+- `junit`
+- `sarif`
 
 ### `--debug <OPTIONS>`
 
-Enable debug output options. Options are comma-separated. Possible values:
-* `files` - Print the list of files that will be linted, then exit.
-* `timings` - Enable per-rule timing information.
+Enable debug output options. Options are comma-separated.
+
+ * `files` - Print the list of files that will be linted, then exit.
+ * `timings` - Enable per-rule timing information.
+
+**Choices:**
+
+- `files`
+- `timings`
 
 ## Miscellaneous
 
@@ -241,3 +275,82 @@ Same as `--report-unused-disable-directives`, but allows you to specify the seve
 - `deny`
 - `error`
 - `warn`
+
+## Output
+
+### `default` (default)
+
+- **Select**: `--format default`
+- **Framing**: `text`
+
+Human-readable diagnostics
+
+### `agent`
+
+- **Select**: `--format agent`
+- **Framing**: `text`
+
+Diagnostics optimized for coding agents
+
+### `checkstyle`
+
+- **Select**: `--format checkstyle`
+- **Framing**: `text`
+
+Checkstyle XML diagnostics
+
+### `github`
+
+- **Select**: `--format github`
+- **Framing**: `text`
+
+GitHub workflow annotations
+
+### `gitlab`
+
+- **Select**: `--format gitlab`
+- **Framing**: `text`
+
+GitLab Code Quality diagnostics
+
+### `json`
+
+- **Select**: `--format json`
+- **Framing**: `json`
+
+JSON diagnostics
+
+### `junit`
+
+- **Select**: `--format junit`
+- **Framing**: `text`
+
+JUnit XML diagnostics
+
+### `sarif`
+
+- **Select**: `--format sarif`
+- **Framing**: `json`
+
+SARIF diagnostics
+
+### `stylish`
+
+- **Select**: `--format stylish`
+- **Framing**: `text`
+
+Stylish text diagnostics
+
+### `unix`
+
+- **Select**: `--format unix`
+- **Framing**: `text`
+
+Unix-style text diagnostics
+
+## Exit Status
+
+| Code | Meaning |
+| ---- | ------- |
+| `0` | lint completed without errors |
+| `1` | lint errors or invalid options were found |
