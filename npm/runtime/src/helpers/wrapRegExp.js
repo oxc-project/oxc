@@ -22,18 +22,20 @@ function _wrapRegExp() {
       return r;
     }, Object.create(null));
   }
-  return inherits(BabelRegExp, RegExp), BabelRegExp.prototype.exec = function (r) {
-    var t = e.exec.call(this, r);
-    if (t) {
-      t.groups = buildGroups(t, this);
-      var p = t.indices;
-      p && (p.groups = buildGroups(p, this));
+  return inherits(BabelRegExp, RegExp), BabelRegExp.prototype.exec = function (t) {
+    var p = e.exec.call(this, t);
+    if (p && r.get(this)) {
+      p.groups = buildGroups(p, this);
+      var o = p.indices;
+      o && (o.groups = buildGroups(o, this));
     }
-    return t;
+    return p;
   }, BabelRegExp.prototype[Symbol.replace] = function (t, p) {
+    var o = r.get(this);
+    if (!o) return e[Symbol.replace].call(this, t, p);
     if ("string" == typeof p) {
-      var o = r.get(this);
-      return e[Symbol.replace].call(this, t, p.replace(/\$<([^>]+)(>|$)/g, function (e, r, t) {
+      return e[Symbol.replace].call(this, t, p.replace(/\$\$|\$<([^>]+)(>|$)/g, function (e, r, t) {
+        if ("$$" === e) return e;
         if ("" === t) return e;
         var p = o[r];
         return Array.isArray(p) ? "$" + p.join("$") : "number" == typeof p ? "$" + p : "";
