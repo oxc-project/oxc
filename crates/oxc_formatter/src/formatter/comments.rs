@@ -383,6 +383,46 @@ impl<'a> Comments<'a> {
         self.inner.get(first).is_some_and(|comment| comment.span.end <= end)
     }
 
+    /// Whether `(start, end)` contains a comment after `character`, including already-printed
+    /// comments. The range must contain only trivia and the operator being searched for.
+    pub fn has_comment_after_character_in_range(
+        &self,
+        mut start: u32,
+        end: u32,
+        character: u8,
+    ) -> bool {
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        for comment in self.inner[first..].iter().take_while(|comment| comment.span.end <= end) {
+            if self.source_text.bytes_contain(start, comment.span.start, character) {
+                return true;
+            }
+            start = comment.span.end;
+        }
+        false
+    }
+
+    /// Whether `(start, end)` contains an inline single-line comment before `character`, including
+    /// already-printed comments. The range must contain only trivia and the operator being searched
+    /// for.
+    pub fn has_inline_single_line_comment_before_character_in_range(
+        &self,
+        mut start: u32,
+        end: u32,
+        character: u8,
+    ) -> bool {
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        for comment in self.inner[first..].iter().take_while(|comment| comment.span.end <= end) {
+            if self.source_text.bytes_contain(start, comment.span.start, character) {
+                return false;
+            }
+            if !comment.preceded_by_newline() && !comment.is_multiline_block() {
+                return true;
+            }
+            start = comment.span.end;
+        }
+        false
+    }
+
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {
         !self.end_of_line_comments_after(pos).is_empty()
     }

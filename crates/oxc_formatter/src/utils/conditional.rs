@@ -1,20 +1,28 @@
 use std::ops::Deref;
 
 use oxc_ast::ast::*;
+use oxc_formatter_core::FormatElement;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         JsFormatter,
         prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{
+            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
+            FormatTrailingComments,
+        },
     },
+    parentheses::NeedsParentheses,
+    utils::assignment_like::{AssignmentLikeLayout, is_lone_short_argument},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
+#[derive(Clone, Copy)]
 pub enum ConditionalLike<'a, 'b> {
     ConditionalExpression(&'b AstNode<'a, ConditionalExpression<'a>>),
     TSConditionalType(&'b AstNode<'a, TSConditionalType<'a>>),
@@ -163,7 +171,109 @@ fn format_trailing_comments<'a>(
     FormatTrailingComments::Comments(comments).fmt(f);
 }
 
+/// Prints comments that occur before a conditional operator. Unlike the legacy ternary printer,
+/// curious ternaries keep own-line comments on the branch preceding `?` or `:`.
+fn format_comments_before_operator<'a>(
+    mut start: u32,
+    end: u32,
+    operator: u8,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    let mut get_comments = |f: &mut JsFormatter<'_, 'a>| -> &'a [Comment] {
+        let source = f.source_text();
+        let comments = f.context().comments().unprinted_comments();
+        let mut count = 0;
+
+        for comment in comments {
+            if comment.span.end > end || comment.preceded_by_newline() {
+                break;
+            }
+
+            let follows_operator = source.bytes_contain(start, comment.span.start, operator);
+            // Match Prettier's attachment for `test ? consequent :/* multiline */ alternate`:
+            // the comment is printed as a trailing comment of the consequent, before `:`.
+            let is_attached_multiline_comment = operator == b':'
+                && comment.is_multiline_block()
+                && comment.span.start.checked_sub(1).is_some_and(|offset| {
+                    source.as_bytes().get(offset as usize) == Some(&operator)
+                });
+            if follows_operator && !is_attached_multiline_comment {
+                break;
+            }
+
+            count += 1;
+            start = comment.span.end;
+
+            if follows_operator {
+                break;
+            }
+        }
+
+        &comments[..count]
+    };
+
+    let comments = get_comments(f);
+    FormatTrailingComments::Comments(comments).fmt(f);
+}
+
 impl<'a> FormatConditionalLike<'a, '_> {
+    /// Returns comments to print before `:` and whether an end-of-line directive must remain after
+    /// the colon. Preserved directives also disable alternate parenthesization so their line-based
+    /// semantics stay intact.
+    fn alternate_comments(&self, f: &JsFormatter<'_, 'a>) -> (&'a [Comment], bool) {
+        if matches!(self.conditional, ConditionalLike::TSConditionalType(_)) {
+            return (&[], false);
+        }
+
+        let (mut start, end) = match self.conditional {
+            ConditionalLike::ConditionalExpression(conditional) => {
+                (conditional.consequent.span().end, conditional.alternate.span().start)
+            }
+            ConditionalLike::TSConditionalType(conditional) => {
+                (conditional.true_type.span().end, conditional.false_type.span().start)
+            }
+        };
+        let source = f.source_text();
+        let comments = f.context().comments().unprinted_comments();
+        let mut count = 0;
+        let mut passed_colon = false;
+
+        for comment in comments {
+            if comment.span.end > end {
+                break;
+            }
+
+            passed_colon |= source.bytes_contain(start, comment.span.start, b':');
+            if passed_colon && comment.is_line() && !comment.preceded_by_newline() {
+                let content = source.text_for(&comment.content_span()).trim_start();
+                let marker = content.split_ascii_whitespace().next().unwrap_or_default();
+                let is_line_directive = comment.is_annotation()
+                    || f.comments().is_suppression_comment(comment)
+                    || marker.starts_with('@')
+                    || marker.contains(':')
+                    || marker.contains("-disable")
+                    || marker.contains("-ignore");
+                if is_line_directive {
+                    return (&comments[..count], true);
+                }
+            }
+
+            let is_alternate_comment = if passed_colon {
+                comment.is_line() || comment.is_multiline_block()
+            } else {
+                comment.preceded_by_newline()
+            };
+            if !is_alternate_comment {
+                break;
+            }
+
+            count += 1;
+            start = comment.span.end;
+        }
+
+        (&comments[..count], false)
+    }
+
     /// Determines the layout of this conditional based on its parent
     fn layout(&self, f: &JsFormatter<'_, 'a>) -> ConditionalLayout {
         let self_span = self.span();
@@ -193,8 +303,9 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 }
             }
             _ => {
-                let jsx_chain =
-                    f.context().source_type().is_jsx() && self.is_jsx_conditional_chain();
+                let jsx_chain = !f.options().experimental_ternaries
+                    && f.context().source_type().is_jsx()
+                    && self.is_jsx_conditional_chain();
                 ConditionalLayout::Root { jsx_chain }
             }
         }
@@ -477,7 +588,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ConditionalLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatConditionalLike {
             conditional: self,
-            options: FormatConditionalLikeOptions { jsx_chain: false },
+            options: FormatConditionalLikeOptions { jsx_chain: false, assignment_layout: None },
         }
         .fmt(f);
     }
@@ -489,11 +600,37 @@ struct FormatConditionalLikeOptions {
     ///
     /// Doesn't apply for [`TSConditionalType`].
     jsx_chain: bool,
+    /// Assignment layout selected by the parent assignment-like node.
+    assignment_layout: Option<AssignmentLikeLayout>,
 }
 
 struct FormatConditionalLike<'a, 'b> {
     conditional: &'b ConditionalLike<'a, 'b>,
     options: FormatConditionalLikeOptions,
+}
+
+#[derive(Clone)]
+struct ReusedFormatElement<'a>(Option<FormatElement<'a>>);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for ReusedFormatElement<'a> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if let Some(element) = &self.0 {
+            f.write_element(element.clone());
+        }
+    }
+}
+
+/// Formats a conditional while carrying the assignment layout selected by its parent.
+pub fn format_conditional_like_with_assignment_layout<'a>(
+    conditional: ConditionalLike<'a, '_>,
+    assignment_layout: Option<AssignmentLikeLayout>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    FormatConditionalLike {
+        conditional: &conditional,
+        options: FormatConditionalLikeOptions { jsx_chain: false, assignment_layout },
+    }
+    .fmt(f);
 }
 
 impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
@@ -505,8 +642,762 @@ impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
     }
 }
 
+impl<'a> FormatConditionalLike<'a, '_> {
+    fn first_non_conditional_parent(&self) -> &AstNodes<'a> {
+        let mut previous_span = self.span();
+        let mut parent = self.parent();
+
+        loop {
+            let continues_chain = match (self.conditional, parent) {
+                (
+                    ConditionalLike::ConditionalExpression(_),
+                    AstNodes::ConditionalExpression(conditional),
+                ) => conditional.test.span() != previous_span,
+                (
+                    ConditionalLike::TSConditionalType(_),
+                    AstNodes::TSConditionalType(conditional),
+                ) => {
+                    conditional.check_type.span() != previous_span
+                        && conditional.extends_type.span() != previous_span
+                }
+                _ => false,
+            };
+
+            if !continues_chain {
+                return parent;
+            }
+
+            previous_span = parent.span();
+            parent = parent.parent();
+        }
+    }
+
+    fn has_multiline_block_comments(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        let source = f.source_text();
+        let span = self.span();
+        f.comments().comments_in_range(span.start, span.end).iter().any(|comment| {
+            comment.is_block()
+                && source.contains_newline_between(comment.span.start, comment.span.end)
+        })
+    }
+
+    fn format_experimental_test(&self, f: &mut JsFormatter<'_, 'a>) {
+        match self.conditional {
+            ConditionalLike::ConditionalExpression(conditional) => {
+                let test = format_with(|f| {
+                    write!(f, [FormatNodeWithoutTrailingComments(conditional.test())]);
+                    format_trailing_comments(
+                        conditional.test.span().end,
+                        conditional.consequent.span().start,
+                        b'?',
+                        f,
+                    );
+                });
+
+                write!(
+                    f,
+                    [
+                        if_group_breaks(&token("(")),
+                        indent(&format_args!(soft_line_break(), test)),
+                        soft_line_break(),
+                        if_group_breaks(&token(")")),
+                        matches!(conditional.test, Expression::ConditionalExpression(_))
+                            .then_some(expand_parent())
+                    ]
+                );
+            }
+            ConditionalLike::TSConditionalType(conditional) => {
+                write!(f, [conditional.check_type(), space(), "extends", space()]);
+
+                let extends_type = format_with(|f| {
+                    write!(f, [FormatNodeWithoutTrailingComments(conditional.extends_type())]);
+                    format_trailing_comments(
+                        conditional.extends_type.span().end,
+                        conditional.true_type.span().start,
+                        b'?',
+                        f,
+                    );
+                });
+
+                if matches!(
+                    conditional.extends_type,
+                    TSType::TSConditionalType(_) | TSType::TSMappedType(_)
+                ) {
+                    write!(f, [extends_type]);
+                } else {
+                    write!(
+                        f,
+                        [group(&format_args!(
+                            if_group_breaks(&token("(")),
+                            indent(&format_args!(soft_line_break(), extends_type)),
+                            soft_line_break(),
+                            if_group_breaks(&token(")")),
+                        ))]
+                    );
+                }
+            }
+        }
+    }
+
+    fn fmt_experimental(&self, f: &mut JsFormatter<'_, 'a>) {
+        let layout = self.layout(f);
+        let parent = self.parent();
+        let first_non_conditional_parent = self.first_non_conditional_parent();
+
+        let is_parent_ternary = matches!(
+            (self.conditional, parent),
+            (ConditionalLike::ConditionalExpression(_), AstNodes::ConditionalExpression(_))
+                | (ConditionalLike::TSConditionalType(_), AstNodes::TSConditionalType(_))
+        );
+        let is_in_test = layout.is_nested_test();
+        let is_in_alternate = layout.is_nested_alternate();
+        let is_ts_conditional = matches!(self.conditional, ConditionalLike::TSConditionalType(_));
+
+        let (is_consequent_ternary, is_alternate_ternary) = match self.conditional {
+            ConditionalLike::ConditionalExpression(conditional) => (
+                matches!(conditional.consequent, Expression::ConditionalExpression(_)),
+                matches!(conditional.alternate, Expression::ConditionalExpression(_)),
+            ),
+            ConditionalLike::TSConditionalType(conditional) => (
+                matches!(conditional.true_type, TSType::TSConditionalType(_)),
+                matches!(conditional.false_type, TSType::TSConditionalType(_)),
+            ),
+        };
+        let is_in_chain = is_alternate_ternary || is_in_alternate;
+
+        let is_on_same_line_as_assignment = self
+            .options
+            .assignment_layout
+            .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator)
+            && matches!(
+                parent,
+                AstNodes::AssignmentExpression(_)
+                    | AstNodes::VariableDeclarator(_)
+                    | AstNodes::PropertyDefinition(_)
+                    | AstNodes::AccessorProperty(_)
+                    | AstNodes::ObjectProperty(_)
+            );
+        let is_on_same_line_as_return =
+            matches!(parent, AstNodes::ReturnStatement(_) | AstNodes::ThrowStatement(_))
+                && !(is_consequent_ternary || is_alternate_ternary);
+
+        let is_in_jsx = self.is_conditional_expression()
+            && matches!(first_non_conditional_parent, AstNodes::JSXExpressionContainer(_))
+            && !matches!(first_non_conditional_parent.parent(), AstNodes::JSXAttribute(_));
+        let should_extra_indent = self.should_extra_indent(layout);
+        let break_closing_paren = self.is_conditional_expression()
+            && matches!(
+                parent,
+                AstNodes::StaticMemberExpression(_) | AstNodes::PrivateFieldExpression(_)
+            );
+        let break_ts_closing_paren = match self.conditional {
+            ConditionalLike::TSConditionalType(conditional) => conditional.needs_parentheses(f),
+            ConditionalLike::ConditionalExpression(_) => false,
+        };
+
+        let has_multiline_block_comments = self.has_multiline_block_comments(f);
+        let should_break =
+            has_multiline_block_comments || is_consequent_ternary || is_alternate_ternary;
+
+        let printed_test =
+            ReusedFormatElement(f.intern(&format_once(|f| self.format_experimental_test(f))));
+        let printed_consequent =
+            ReusedFormatElement(f.intern(&format_once(|f| match self.conditional {
+                ConditionalLike::ConditionalExpression(conditional) => {
+                    write!(f, [FormatNodeWithoutTrailingComments(conditional.consequent())]);
+                    format_comments_before_operator(
+                        conditional.consequent.span().end,
+                        conditional.alternate.span().start,
+                        b':',
+                        f,
+                    );
+                }
+                ConditionalLike::TSConditionalType(conditional) => {
+                    write!(f, [FormatNodeWithoutTrailingComments(conditional.true_type())]);
+                    format_comments_before_operator(
+                        conditional.true_type.span().end,
+                        conditional.false_type.span().start,
+                        b':',
+                        f,
+                    );
+                }
+            })));
+        let (alternate_comments, has_alternate_eol_directive) = self.alternate_comments(f);
+        let has_alternate_comments = !alternate_comments.is_empty();
+        let try_to_parenthesize_alternate = !has_alternate_eol_directive
+            && !is_in_chain
+            && !is_parent_ternary
+            && !is_ts_conditional
+            && match self.conditional {
+                ConditionalLike::ConditionalExpression(conditional) if is_in_jsx => {
+                    matches!(conditional.consequent, Expression::NullLiteral(_))
+                }
+                ConditionalLike::ConditionalExpression(conditional) => {
+                    is_lone_short_argument(
+                        &conditional.consequent,
+                        conditional.test.span().end,
+                        conditional.alternate.span().start,
+                        f,
+                    ) && is_simple_expression_by_node_count(&conditional.test, 3)
+                }
+                ConditionalLike::TSConditionalType(_) => false,
+            };
+        let should_group_test_and_consequent = is_in_chain
+            || is_in_alternate
+            || (is_ts_conditional && !is_parent_ternary)
+            || (is_parent_ternary
+                && self.is_conditional_expression()
+                && match self.conditional {
+                    ConditionalLike::ConditionalExpression(conditional) => {
+                        is_simple_expression_by_node_count(&conditional.test, 1)
+                    }
+                    ConditionalLike::TSConditionalType(_) => false,
+                })
+            || try_to_parenthesize_alternate;
+        let printed_alternate_comments = ReusedFormatElement(f.intern(&format_once(|f| {
+            FormatDanglingComments::Comments {
+                comments: alternate_comments,
+                indent: DanglingIndentMode::None,
+            }
+            .fmt(f);
+        })));
+        let printed_alternate =
+            ReusedFormatElement(f.intern(&format_once(|f| match self.conditional {
+                ConditionalLike::ConditionalExpression(conditional) => {
+                    conditional.alternate().fmt(f);
+                }
+                ConditionalLike::TSConditionalType(conditional) => {
+                    conditional.false_type().fmt(f);
+                }
+            })));
+
+        let test_id = f.group_id("conditional-test");
+        let consequent_id = f.group_id("conditional-consequent");
+        let test_and_consequent_id = f.group_id("conditional-test-and-consequent");
+        let is_big_tabs =
+            f.options().indent_width.value() > 2 || !f.options().indent_style.is_space();
+        let use_tabs = !f.options().indent_style.is_space();
+        let fill_width = f.options().indent_width.value().saturating_sub(1);
+
+        let parts = format_once(|f| {
+            let printed_test_with_question = format_with(|f| {
+                write!(f, [printed_test.clone(), space(), "?"]);
+            });
+            let printed_test_with_question =
+                group(&printed_test_with_question).with_group_id(Some(test_id));
+
+            let consequent = format_with(|f| {
+                let separator = if is_consequent_ternary
+                    || (is_in_jsx
+                        && (consequent_is_jsx(self.conditional)
+                            || is_parent_ternary
+                            || is_in_chain))
+                {
+                    hard_line_break()
+                } else {
+                    soft_line_break_or_space()
+                };
+                write!(f, [indent(&format_args!(separator, printed_consequent.clone()))]);
+            });
+
+            let test_and_consequent = format_with(|f| {
+                write!(f, [printed_test_with_question]);
+                if !should_group_test_and_consequent || is_in_chain {
+                    write!(f, [consequent]);
+                } else {
+                    write!(
+                        f,
+                        [
+                            if_group_breaks(&consequent).with_group_id(Some(test_id)),
+                            if_group_fits_on_line(
+                                &group(&consequent).with_group_id(Some(consequent_id))
+                            )
+                            .with_group_id(Some(test_id))
+                        ]
+                    );
+                }
+            });
+
+            if should_group_test_and_consequent {
+                write!(
+                    f,
+                    [group(&test_and_consequent).with_group_id(Some(test_and_consequent_id))]
+                );
+            } else {
+                write!(f, [test_and_consequent]);
+            }
+
+            if has_alternate_comments {
+                write!(
+                    f,
+                    [
+                        indent(&format_args!(
+                            hard_line_break(),
+                            printed_alternate_comments.clone()
+                        )),
+                        hard_line_break()
+                    ]
+                );
+            } else if is_alternate_ternary {
+                write!(f, [hard_line_break()]);
+            } else if try_to_parenthesize_alternate {
+                write!(
+                    f,
+                    [
+                        if_group_breaks(&soft_line_break_or_space())
+                            .with_group_id(Some(test_and_consequent_id)),
+                        if_group_fits_on_line(&space()).with_group_id(Some(test_and_consequent_id))
+                    ]
+                );
+            } else {
+                write!(f, [soft_line_break_or_space()]);
+            }
+
+            write!(f, [":"]);
+
+            let fill_tab = format_with(|f| {
+                if use_tabs {
+                    write!(f, [text("\t")]);
+                } else {
+                    const SPACES: &str = "                                ";
+                    write!(f, [text(&SPACES[..usize::from(fill_width)])]);
+                }
+            });
+
+            if is_alternate_ternary || !is_big_tabs {
+                write!(f, [space()]);
+            } else if should_group_test_and_consequent {
+                let flat_fill = format_with(|f| {
+                    if is_in_chain || try_to_parenthesize_alternate {
+                        write!(f, [space()]);
+                    } else {
+                        write!(f, [fill_tab]);
+                    }
+                });
+                write!(
+                    f,
+                    [
+                        if_group_breaks(&fill_tab).with_group_id(Some(test_and_consequent_id)),
+                        if_group_fits_on_line(&format_args!(
+                            if_group_breaks(&flat_fill),
+                            if_group_fits_on_line(&space()),
+                        ))
+                        .with_group_id(Some(test_and_consequent_id))
+                    ]
+                );
+            } else {
+                write!(f, [if_group_breaks(&fill_tab), if_group_fits_on_line(&space())]);
+            }
+
+            let alternate_with_parens = format_with(|f| {
+                let wrapped = format_with(|f| {
+                    write!(
+                        f,
+                        [
+                            if_group_breaks(&token("(")),
+                            indent(&format_args!(soft_line_break(), printed_alternate.clone())),
+                            soft_line_break(),
+                            if_group_breaks(&token(")")),
+                        ]
+                    );
+                });
+                write!(
+                    f,
+                    [
+                        if_group_breaks(&printed_alternate.clone())
+                            .with_group_id(Some(test_and_consequent_id)),
+                        if_group_fits_on_line(&dedent(&wrapped))
+                            .with_group_id(Some(test_and_consequent_id))
+                    ]
+                );
+            });
+
+            let alternate = format_with(|f| {
+                if try_to_parenthesize_alternate {
+                    write!(f, [alternate_with_parens]);
+                } else {
+                    write!(f, [printed_alternate.clone()]);
+                }
+            });
+
+            if is_alternate_ternary {
+                write!(f, [alternate]);
+            } else {
+                write!(
+                    f,
+                    [group(&format_args!(
+                        indent(&alternate),
+                        (is_in_jsx && !try_to_parenthesize_alternate).then_some(soft_line_break())
+                    ))]
+                );
+            }
+
+            if break_closing_paren && !should_extra_indent {
+                write!(f, [soft_line_break()]);
+            }
+            if should_break {
+                write!(f, [expand_parent()]);
+            }
+        });
+
+        if is_on_same_line_as_assignment && !should_break {
+            write!(f, [group(&indent(&format_args!(soft_line_break(), group(&parts))))]);
+        } else if is_on_same_line_as_assignment || is_on_same_line_as_return {
+            write!(f, [group(&indent(&parts))]);
+        } else if should_extra_indent || (is_ts_conditional && is_in_test) {
+            write!(
+                f,
+                [group(&format_args!(
+                    indent(&format_args!(soft_line_break(), parts)),
+                    break_ts_closing_paren.then_some(soft_line_break())
+                ))]
+            );
+        } else if std::ptr::eq(parent, first_non_conditional_parent) {
+            write!(f, [group(&parts)]);
+        } else {
+            write!(f, [parts]);
+        }
+    }
+}
+
+fn consequent_is_jsx(conditional: &ConditionalLike<'_, '_>) -> bool {
+    matches!(
+        conditional,
+        ConditionalLike::ConditionalExpression(conditional)
+            if matches!(conditional.consequent, Expression::JSXElement(_) | Expression::JSXFragment(_))
+    )
+}
+
+/// A bounded implementation of Prettier's generic AST-node counter. Only object-valued AST fields
+/// count as children; node arrays such as arguments, elements, properties, and parameters do not.
+fn is_simple_expression_by_node_count(expression: &Expression<'_>, max_count: usize) -> bool {
+    fn visit_leaf(count: &mut usize, max_count: usize) -> bool {
+        *count += 1;
+        *count <= max_count
+    }
+
+    fn visit_optional_leaf(present: bool, count: &mut usize, max_count: usize) -> bool {
+        !present || visit_leaf(count, max_count)
+    }
+
+    fn visit_child(expression: &Expression<'_>, count: &mut usize, max_count: usize) -> bool {
+        visit_leaf(count, max_count) && visit_children(expression, count, max_count)
+    }
+
+    fn visit_static_member_children(
+        expression: &StaticMemberExpression<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        visit_child(&expression.object, count, max_count) && visit_leaf(count, max_count)
+    }
+
+    fn visit_private_member_children(
+        expression: &PrivateFieldExpression<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        visit_child(&expression.object, count, max_count) && visit_leaf(count, max_count)
+    }
+
+    fn visit_computed_member_children(
+        expression: &ComputedMemberExpression<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        visit_child(&expression.object, count, max_count)
+            && visit_child(&expression.expression, count, max_count)
+    }
+
+    fn visit_simple_assignment_target_children(
+        target: &SimpleAssignmentTarget<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        match target {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => true,
+            SimpleAssignmentTarget::TSAsExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+                    && visit_leaf(count, max_count)
+            }
+            SimpleAssignmentTarget::TSSatisfiesExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+                    && visit_leaf(count, max_count)
+            }
+            SimpleAssignmentTarget::TSTypeAssertion(expression) => {
+                visit_leaf(count, max_count)
+                    && visit_child(&expression.expression, count, max_count)
+            }
+            SimpleAssignmentTarget::TSNonNullExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+            }
+            SimpleAssignmentTarget::StaticMemberExpression(expression) => {
+                visit_static_member_children(expression, count, max_count)
+            }
+            SimpleAssignmentTarget::PrivateFieldExpression(expression) => {
+                visit_private_member_children(expression, count, max_count)
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(expression) => {
+                visit_computed_member_children(expression, count, max_count)
+            }
+        }
+    }
+
+    fn visit_assignment_target(
+        target: &AssignmentTarget<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        visit_leaf(count, max_count)
+            && target.as_simple_assignment_target().is_none_or(|target| {
+                visit_simple_assignment_target_children(target, count, max_count)
+            })
+    }
+
+    fn visit_chain_element(
+        element: &ChainElement<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        if !visit_leaf(count, max_count) {
+            return false;
+        }
+
+        match element {
+            ChainElement::CallExpression(expression) => {
+                visit_child(&expression.callee, count, max_count)
+                    && visit_optional_leaf(expression.type_arguments.is_some(), count, max_count)
+            }
+            ChainElement::TSNonNullExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+            }
+            ChainElement::StaticMemberExpression(expression) => {
+                visit_static_member_children(expression, count, max_count)
+            }
+            ChainElement::PrivateFieldExpression(expression) => {
+                visit_private_member_children(expression, count, max_count)
+            }
+            ChainElement::ComputedMemberExpression(expression) => {
+                visit_computed_member_children(expression, count, max_count)
+            }
+        }
+    }
+
+    fn visit_jsx_member_object(
+        object: &JSXMemberExpressionObject<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        visit_leaf(count, max_count)
+            && match object {
+                JSXMemberExpressionObject::MemberExpression(expression) => {
+                    visit_jsx_member_children(expression, count, max_count)
+                }
+                JSXMemberExpressionObject::IdentifierReference(_)
+                | JSXMemberExpressionObject::ThisExpression(_) => true,
+            }
+    }
+
+    fn visit_jsx_member_children(
+        expression: &JSXMemberExpression<'_>,
+        count: &mut usize,
+        max_count: usize,
+    ) -> bool {
+        visit_jsx_member_object(&expression.object, count, max_count)
+            && visit_leaf(count, max_count)
+    }
+
+    fn visit_jsx_name(name: &JSXElementName<'_>, count: &mut usize, max_count: usize) -> bool {
+        if !visit_leaf(count, max_count) {
+            return false;
+        }
+
+        match name {
+            JSXElementName::NamespacedName(_) => {
+                visit_leaf(count, max_count) && visit_leaf(count, max_count)
+            }
+            JSXElementName::MemberExpression(expression) => {
+                visit_jsx_member_children(expression, count, max_count)
+            }
+            JSXElementName::Identifier(_)
+            | JSXElementName::IdentifierReference(_)
+            | JSXElementName::ThisExpression(_) => true,
+        }
+    }
+
+    fn visit_children(expression: &Expression<'_>, count: &mut usize, max_count: usize) -> bool {
+        match expression {
+            Expression::ArrayExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::SequenceExpression(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::Identifier(_)
+            | Expression::ThisExpression(_)
+            | Expression::Super(_)
+            | Expression::ImportMeta(_)
+            | Expression::NewTarget(_) => true,
+            Expression::ArrowFunctionExpression(expression) => {
+                visit_optional_leaf(expression.type_parameters.is_some(), count, max_count)
+                    && visit_optional_leaf(expression.return_type.is_some(), count, max_count)
+                    && if let Some(body) = expression.body.as_expression() {
+                        visit_child(body, count, max_count)
+                    } else {
+                        visit_leaf(count, max_count)
+                    }
+            }
+            Expression::AssignmentExpression(expression) => {
+                visit_assignment_target(&expression.left, count, max_count)
+                    && visit_child(&expression.right, count, max_count)
+            }
+            Expression::AwaitExpression(expression) => {
+                visit_child(&expression.argument, count, max_count)
+            }
+            Expression::BinaryExpression(expression) => {
+                visit_child(&expression.left, count, max_count)
+                    && visit_child(&expression.right, count, max_count)
+            }
+            Expression::CallExpression(expression) => {
+                visit_child(&expression.callee, count, max_count)
+                    && visit_optional_leaf(expression.type_arguments.is_some(), count, max_count)
+            }
+            Expression::ChainExpression(expression) => {
+                visit_chain_element(&expression.expression, count, max_count)
+            }
+            Expression::ClassExpression(expression) => {
+                if !visit_optional_leaf(expression.id.is_some(), count, max_count)
+                    || !visit_optional_leaf(expression.type_parameters.is_some(), count, max_count)
+                {
+                    return false;
+                }
+                if let Some(heritage) = &expression.heritage
+                    && (!visit_child(&heritage.expression, count, max_count)
+                        || !visit_optional_leaf(
+                            heritage.type_arguments.is_some(),
+                            count,
+                            max_count,
+                        ))
+                {
+                    return false;
+                }
+                visit_leaf(count, max_count)
+            }
+            Expression::LogicalExpression(expression) => {
+                visit_child(&expression.left, count, max_count)
+                    && visit_child(&expression.right, count, max_count)
+            }
+            Expression::ConditionalExpression(expression) => {
+                visit_child(&expression.test, count, max_count)
+                    && visit_child(&expression.consequent, count, max_count)
+                    && visit_child(&expression.alternate, count, max_count)
+            }
+            Expression::FunctionExpression(expression) => {
+                visit_optional_leaf(expression.id.is_some(), count, max_count)
+                    && visit_optional_leaf(expression.type_parameters.is_some(), count, max_count)
+                    && visit_optional_leaf(expression.return_type.is_some(), count, max_count)
+                    && visit_optional_leaf(expression.body.is_some(), count, max_count)
+            }
+            Expression::ImportExpression(expression) => {
+                visit_child(&expression.source, count, max_count)
+                    && expression
+                        .options
+                        .as_ref()
+                        .is_none_or(|options| visit_child(options, count, max_count))
+            }
+            Expression::NewExpression(expression) => {
+                visit_child(&expression.callee, count, max_count)
+                    && visit_optional_leaf(expression.type_arguments.is_some(), count, max_count)
+            }
+            Expression::ParenthesizedExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+            }
+            Expression::TaggedTemplateExpression(expression) => {
+                visit_child(&expression.tag, count, max_count)
+                    && visit_optional_leaf(expression.type_arguments.is_some(), count, max_count)
+                    && visit_leaf(count, max_count)
+            }
+            Expression::TSAsExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+                    && visit_leaf(count, max_count)
+            }
+            Expression::TSSatisfiesExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+                    && visit_leaf(count, max_count)
+            }
+            Expression::TSTypeAssertion(expression) => {
+                visit_leaf(count, max_count)
+                    && visit_child(&expression.expression, count, max_count)
+            }
+            Expression::TSNonNullExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+            }
+            Expression::TSInstantiationExpression(expression) => {
+                visit_child(&expression.expression, count, max_count)
+                    && visit_leaf(count, max_count)
+            }
+            Expression::UnaryExpression(expression) => {
+                visit_child(&expression.argument, count, max_count)
+            }
+            Expression::UpdateExpression(expression) => {
+                visit_leaf(count, max_count)
+                    && visit_simple_assignment_target_children(
+                        &expression.argument,
+                        count,
+                        max_count,
+                    )
+            }
+            Expression::YieldExpression(expression) => expression
+                .argument
+                .as_ref()
+                .is_none_or(|argument| visit_child(argument, count, max_count)),
+            Expression::PrivateInExpression(expression) => {
+                visit_leaf(count, max_count) && visit_child(&expression.right, count, max_count)
+            }
+            Expression::StaticMemberExpression(expression) => {
+                visit_static_member_children(expression, count, max_count)
+            }
+            Expression::PrivateFieldExpression(expression) => {
+                visit_private_member_children(expression, count, max_count)
+            }
+            Expression::ComputedMemberExpression(expression) => {
+                visit_computed_member_children(expression, count, max_count)
+            }
+            Expression::JSXElement(expression) => {
+                visit_leaf(count, max_count)
+                    && visit_jsx_name(&expression.opening_element.name, count, max_count)
+                    && visit_optional_leaf(
+                        expression.opening_element.type_arguments.is_some(),
+                        count,
+                        max_count,
+                    )
+                    && expression.closing_element.as_ref().is_none_or(|closing| {
+                        visit_leaf(count, max_count)
+                            && visit_jsx_name(&closing.name, count, max_count)
+                    })
+            }
+            Expression::JSXFragment(_) => {
+                visit_leaf(count, max_count) && visit_leaf(count, max_count)
+            }
+            Expression::V8IntrinsicExpression(_) => visit_leaf(count, max_count),
+        }
+    }
+
+    let mut count = 0;
+    visit_children(expression, &mut count, max_count) && count <= max_count
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.options().experimental_ternaries {
+            self.fmt_experimental(f);
+            return;
+        }
+
         let layout = self.layout(f);
         let should_extra_indent = self.should_extra_indent(layout);
         let is_jsx_chain = self.options.jsx_chain || layout.is_jsx_chain();
@@ -646,7 +1537,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsxChainExpression<'a, '_> {
             if let AstNodes::ConditionalExpression(conditional) = self.expression.as_ast_nodes() {
                 FormatConditionalLike {
                     conditional: &ConditionalLike::ConditionalExpression(conditional),
-                    options: FormatConditionalLikeOptions { jsx_chain: true },
+                    options: FormatConditionalLikeOptions {
+                        jsx_chain: true,
+                        assignment_layout: None,
+                    },
                 }
                 .fmt(f);
             } else {

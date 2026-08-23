@@ -29,9 +29,6 @@ pub fn to_oxc_formatter(
     let mut format_options = JsFormatOptions::default();
     format_options.apply_core(core_options);
 
-    // NOTE: [Prettier] experimentalTernaries is not yet supported;
-    // rejected at deserialize time (`oxfmtrc::reject_experimental_ternaries`) so it never reaches here.
-
     // [Prettier] singleQuote: boolean
     if let Some(single_quote) = config.single_quote {
         format_options.quote_style =
@@ -108,6 +105,11 @@ pub fn to_oxc_formatter(
             OperatorPositionConfig::Start => OperatorPosition::Start,
             OperatorPositionConfig::End => OperatorPosition::End,
         };
+    }
+
+    // [Prettier] experimentalTernaries: boolean
+    if let Some(experimental_ternaries) = config.experimental_ternaries {
+        format_options.experimental_ternaries = experimental_ternaries;
     }
 
     // [Prettier] htmlWhitespaceSensitivity: "css" | "strict" | "ignore"
@@ -363,6 +365,7 @@ mod tests {
             "printWidth": 100,
             "singleQuote": true,
             "semi": false,
+            "experimentalTernaries": true,
             "experimentalSortImports": {
                 "partitionByNewline": true,
                 "order": "desc",
@@ -379,6 +382,7 @@ mod tests {
         assert_eq!(format_options.line_width.value(), 100);
         assert!(!format_options.quote_style.is_double());
         assert!(format_options.semicolons.is_as_needed());
+        assert!(format_options.experimental_ternaries);
 
         let sort_imports = format_options.sort_imports.unwrap();
         assert!(sort_imports.partition_by_newline);

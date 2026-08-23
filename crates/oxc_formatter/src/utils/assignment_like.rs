@@ -14,6 +14,7 @@ use crate::{
         alias_union_breaks_after_operator, is_trailing_own_line_jsdoc_comment, type_alias_left_end,
     },
     utils::{
+        conditional::{ConditionalLike, format_conditional_like_with_assignment_layout},
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
@@ -395,11 +396,21 @@ impl<'a> AssignmentLike<'a, '_> {
                 write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
-                if let AstNodes::TSUnionType(union) = declaration.type_annotation().as_ast_nodes() {
-                    union.write(f);
-                    union.format_trailing_comments(f);
-                } else {
-                    write!(f, [declaration.type_annotation()]);
+                match declaration.type_annotation().as_ast_nodes() {
+                    AstNodes::TSUnionType(union) => {
+                        union.write(f);
+                        union.format_trailing_comments(f);
+                    }
+                    AstNodes::TSConditionalType(conditional)
+                        if f.options().experimental_ternaries =>
+                    {
+                        format_conditional_like_with_assignment_layout(
+                            ConditionalLike::TSConditionalType(conditional),
+                            Some(layout),
+                            f,
+                        );
+                    }
+                    _ => write!(f, [declaration.type_annotation()]),
                 }
             }
         }
@@ -432,6 +443,26 @@ impl<'a> AssignmentLike<'a, '_> {
 
         if self.should_break_left_hand_side(left_may_break) {
             return AssignmentLikeLayout::BreakLeftHandSide;
+        }
+
+        // Prettier's conditional group contains multiline branch comments without forcing the
+        // surrounding assignment group to break. Oxfmt propagates expanded child groups, so keep
+        // the assignment operator adjacent explicitly for this equivalent observable layout.
+        let keep_multiline_conditional_assignment_adjacent = f.options().experimental_ternaries
+            && matches!(self, AssignmentLike::AssignmentExpression(_))
+            && right_expression.is_some_and(|right| {
+                matches!(right.as_ref(), Expression::ConditionalExpression(_))
+                    && f.comments()
+                        .comments_in_range(right.span().start, right.span().end)
+                        .iter()
+                        .any(|comment| {
+                            comment.is_block()
+                                && f.source_text()
+                                    .contains_newline_between(comment.span.start, comment.span.end)
+                        })
+            });
+        if keep_multiline_conditional_assignment_adjacent {
+            return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
         if self.should_break_after_operator(right_expression, is_left_short, f) {
@@ -635,6 +666,10 @@ impl<'a> AssignmentLike<'a, '_> {
             // For TSTypeAliasDeclaration, check if the type annotation is a union type with comments
             match &decl.type_annotation {
                 TSType::TSConditionalType(conditional_type) => {
+                    if f.options().experimental_ternaries {
+                        return true;
+                    }
+
                     let is_generic = |ts_type: &TSType<'a>| -> bool {
                         match ts_type {
                             TSType::TSFunctionType(function) => function.type_parameters.is_some(),
@@ -780,15 +815,22 @@ fn should_break_after_operator<'a>(
         Expression::LogicalExpression(logical) => {
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
-        Expression::ConditionalExpression(conditional) => match &conditional.test {
-            // A cast-parenthesized test is opaque, same as the whole-RHS case above
-            test if classify_type_cast(test.span(), f).is_target() => false,
-            Expression::BinaryExpression(_) => true,
-            Expression::LogicalExpression(logical) => {
-                !BinaryLikeExpression::can_inline_logical_expr(logical)
+        Expression::ConditionalExpression(conditional) => {
+            if f.options().experimental_ternaries {
+                matches!(conditional.consequent, Expression::ConditionalExpression(_))
+                    || matches!(conditional.alternate, Expression::ConditionalExpression(_))
+            } else {
+                match &conditional.test {
+                    // A cast-parenthesized test is opaque, same as the whole-RHS case above
+                    test if classify_type_cast(test.span(), f).is_target() => false,
+                    Expression::BinaryExpression(_) => true,
+                    Expression::LogicalExpression(logical) => {
+                        !BinaryLikeExpression::can_inline_logical_expr(logical)
+                    }
+                    _ => false,
+                }
             }
-            _ => false,
-        },
+        }
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
@@ -974,6 +1016,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
                 },
                 f,
             ),
+            AstNodes::ConditionalExpression(conditional) if f.options().experimental_ternaries => {
+                format_conditional_like_with_assignment_layout(
+                    ConditionalLike::ConditionalExpression(conditional),
+                    self.layout,
+                    f,
+                );
+            }
             _ => self.expression.fmt(f),
         }
     }
@@ -1119,6 +1168,26 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
         | Expression::NumericLiteral(_) => true,
         _ => false,
     }
+}
+
+/// Prettier's short-argument predicate, including its requirement that the expression has no
+/// attached comments. `test_end` and `alternate_start` include comments adjacent to the expression
+/// because Oxc's AST spans exclude them. Kept separate from [`is_short_argument`] to avoid changing
+/// legacy assignment layout.
+pub(super) fn is_lone_short_argument(
+    argument: &Expression,
+    test_end: u32,
+    alternate_start: u32,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    let comments = f.comments();
+    !comments.has_comment_after_character_in_range(test_end, argument.span().start, b'?')
+        && !comments.has_inline_single_line_comment_before_character_in_range(
+            argument.span().end,
+            alternate_start,
+            b':',
+        )
+        && is_short_argument(argument, f.options().line_width.value() / 4, f)
 }
 
 /// This function checks if `TSTypeArguments` is complex.

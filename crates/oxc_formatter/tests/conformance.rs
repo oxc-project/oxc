@@ -117,17 +117,12 @@ const IGNORE: &[&str] = &[
     "js/quotes/objects.js",
 ];
 
-/// Option combinations not supported yet; dropped from the test population entirely.
-fn skip_unsupported_options(spec: &OptionSet) -> bool {
-    spec.get("experimentalTernaries").and_then(serde_json::Value::as_bool) == Some(true)
-}
-
 const JS: ConformanceConfig = ConformanceConfig {
     language: "js",
     fixture_roots: &["js", "jsx"],
     exact_parser: None,
     ignore: IGNORE,
-    skip_spec: Some(skip_unsupported_options),
+    skip_spec: None,
 };
 
 const TS: ConformanceConfig = ConformanceConfig {
@@ -137,7 +132,7 @@ const TS: ConformanceConfig = ConformanceConfig {
     fixture_roots: &["typescript", "jsx"],
     exact_parser: None,
     ignore: IGNORE,
-    skip_spec: Some(skip_unsupported_options),
+    skip_spec: None,
 };
 
 fn parse_options(spec: &OptionSet) -> JsFormatOptions {

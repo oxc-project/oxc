@@ -157,7 +157,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
                 }
             });
             write!(f, [token("("), &block_indent(&inner), token(")")]);
-        } else if argument.is_binaryish() {
+        } else if argument.is_binaryish()
+            || (f.options().experimental_ternaries
+                && matches!(
+                    argument.as_ref(),
+                    Expression::ConditionalExpression(conditional)
+                        if matches!(conditional.consequent, Expression::ConditionalExpression(_))
+                            || matches!(conditional.alternate, Expression::ConditionalExpression(_))
+                ))
+        {
             write!(
                 f,
                 [group(&format_args!(

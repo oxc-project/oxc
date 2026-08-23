@@ -167,14 +167,11 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_operator_position: Option<OperatorPositionConfig>,
 
-    // NOTE: This experimental option is not yet supported.
-    // Reject at deserialize time so all entry paths (base / overrides / NAPI `resolve()`) are covered uniformly.
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "reject_experimental_ternaries",
-        default
-    )]
-    #[schemars(skip)]
+    /// Use curious ternaries, with the question mark after the condition.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_ternaries: Option<bool>,
 
     /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
@@ -350,19 +347,6 @@ impl FormatConfig {
         let merged = json_deep_merge(base, overlay);
         *self = serde_json::from_value(merged).unwrap();
     }
-}
-
-// ---
-
-fn reject_experimental_ternaries<'de, D>(d: D) -> Result<Option<bool>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let v = Option::<bool>::deserialize(d)?;
-    if v.is_some() {
-        return Err(serde::de::Error::custom("Unsupported option: `experimentalTernaries`"));
-    }
-    Ok(v)
 }
 
 // ---
@@ -994,34 +978,5 @@ mod tests_json_deep_merge {
             merged,
             json!({ "experimentalSortImports": { "order": "desc", "ignoreCase": true } })
         );
-    }
-}
-
-// ---
-
-#[cfg(test)]
-mod tests_reject_experimental {
-    use super::*;
-
-    #[test]
-    fn test_reject_experimental_ternaries_in_base() {
-        let json = r#"{ "experimentalTernaries": true }"#;
-        let err = serde_json::from_str::<FormatConfig>(json).unwrap_err();
-        assert!(err.to_string().contains("experimentalTernaries"));
-    }
-
-    #[test]
-    fn test_reject_experimental_in_overrides() {
-        // `OxfmtOverrideConfig.options: FormatConfig` so the same deserialize_with applies
-        let json = r#"{
-            "overrides": [
-                {
-                    "files": ["*.ts"],
-                    "options": { "experimentalTernaries": true }
-                }
-            ]
-        }"#;
-        let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
-        assert!(err.to_string().contains("experimentalTernaries"));
     }
 }

@@ -548,6 +548,12 @@ impl NeedsParentheses<'_> for AstNode<'_, ConditionalExpression<'_>> {
         }
 
         let parent = self.parent();
+        if f.options().experimental_ternaries
+            && matches!(parent, AstNodes::ConditionalExpression(parent) if parent.test.span() == self.span())
+        {
+            return false;
+        }
+
         if matches!(
             parent,
             AstNodes::UnaryExpression(_)

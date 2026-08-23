@@ -110,6 +110,8 @@ export interface OxcFormatterOptions {
   singleAttributePerLine?: boolean
   /** Where to print operators when binary expressions wrap lines: "start" | "end" (default: "end") */
   experimentalOperatorPosition?: string
+  /** Use curious ternaries, with the question mark after the condition (default: false) */
+  experimentalTernaries?: boolean
   /** Sort imports configuration (default: None) */
   sortImports?: OxcSortImportsOptions
 }
