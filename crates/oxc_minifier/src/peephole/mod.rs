@@ -397,10 +397,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::minimize_statements(stmts, ctx);
-        // At a normal function tail, a `void 0` branch can become fallthrough. Run this only for
-        // statement lists reached by traversal, not synthetic lists minimized during rewrites.
+        // At a removable termination point, a `void 0` branch can become fallthrough. Run this
+        // only for statement lists reached by traversal, not synthetic lists minimized during
+        // rewrites.
         if !ctx.is_tree_shake_only()
-            && ctx.parent().is_function_body()
             && !ctx.is_closest_function_scope_an_async_generator()
             && let Some(last_stmt) = stmts.last_mut()
         {

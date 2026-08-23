@@ -159,7 +159,12 @@ impl<'a> PeepholeOptimizations {
                                 ctx.is_closest_function_scope_an_async_generator();
                             let prev_return_is_bare = prev_return.argument.is_none();
                             let last_return_is_bare = last_return.argument.is_none();
-                            if prev_return_is_bare && last_return_is_bare {
+                            let is_labeled_block = ctx.parent().is_block_statement()
+                                && ctx.ancestor(1).is_labeled_statement();
+                            if prev_return_is_bare
+                                && last_return_is_bare
+                                && (is_async_generator || !is_labeled_block)
+                            {
                                 let Statement::IfStatement(if_stmt) = &mut stmts[prev_index] else {
                                     unreachable!()
                                 };
@@ -2087,8 +2092,8 @@ impl<'a> PeepholeOptimizations {
 
     /// `if (a) return b ? void 0 : c` => `if (a && !b) return c`
     ///
-    /// This is only called for the final statement in a normal function body. `void 0` is
-    /// equivalent to falling through here, while the outer and conditional tests retain their
+    /// This is only applied where the nested return is a removable termination statement. `void 0`
+    /// is equivalent to falling through there, while the outer and conditional tests retain their
     /// original short-circuit order.
     pub(super) fn try_minimize_tail_conditional_return(
         stmt: &mut Statement<'a>,
@@ -2096,6 +2101,9 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
         if if_stmt.alternate.is_some() {
+            return;
+        }
+        if !Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
             return;
         }
         let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
