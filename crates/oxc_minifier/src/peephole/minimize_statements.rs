@@ -2031,8 +2031,8 @@ impl<'a> PeepholeOptimizations {
 
     /// `if (a) return b ? void 0 : c` => `if (a && !b) return c`
     ///
-    /// This is only applied where the nested return is a removable termination statement. `void 0`
-    /// is equivalent to falling through there, while the outer and conditional tests retain their
+    /// This is only called for the final statement in a normal function body. `void 0` is
+    /// equivalent to falling through here, while the outer and conditional tests retain their
     /// original short-circuit order.
     pub(super) fn try_minimize_tail_conditional_return(
         stmt: &mut Statement<'a>,
@@ -2040,9 +2040,6 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
         if if_stmt.alternate.is_some() {
-            return;
-        }
-        if !Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
             return;
         }
         let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
@@ -2058,14 +2055,13 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let (branch_test, value) = if consequent_is_undefined {
-            let conditional_test = conditional.test.take_in(ctx);
-            let mut branch_test =
-                Self::minimize_not(conditional_test.span(), conditional_test, ctx);
+        let mut branch_test = conditional.test.take_in(ctx);
+        let value = if consequent_is_undefined {
+            branch_test = Self::minimize_not(branch_test.span(), branch_test, ctx, true);
             Self::minimize_expression_in_boolean_context(&mut branch_test, ctx);
-            (branch_test, conditional.alternate.take_in(ctx))
+            conditional.alternate.take_in(ctx)
         } else {
-            (conditional.test.take_in(ctx), conditional.consequent.take_in(ctx))
+            conditional.consequent.take_in(ctx)
         };
         let outer_test = if_stmt.test.take_in(ctx);
         let new_test = Self::join_with_left_associative_op(

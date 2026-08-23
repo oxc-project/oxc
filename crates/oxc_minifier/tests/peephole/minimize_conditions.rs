@@ -145,10 +145,7 @@ fn test_fold_nested_terminated_returns_at_function_tail() {
         "function f(){L:if(a)if(x)return;else return 2-x}",
         "function f(){L:if(a)return x?void 0:2-x}",
     );
-    test(
-        "function f(){L:{if(b)return;return}}",
-        "function f(){L:return b,void 0}",
-    );
+    test("function f(){L:{if(b)return;return}}", "function f(){L:return b,void 0}");
 
     // Preserve evaluation of an undefined-valued branch with side effects.
     test("function f(){if(a)return x?void side():y}", "function f(){if(a)return x?void side():y}");
