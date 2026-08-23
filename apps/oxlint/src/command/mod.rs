@@ -1,6 +1,3 @@
-// `usage_rs::Args` generates public partial structs with underscore-prefixed fields.
-#![allow(clippy::allow_attributes, clippy::pub_underscore_fields)]
-
 mod ignore;
 mod lint;
 

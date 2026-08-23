@@ -1,6 +1,5 @@
 ---
 source: tasks/website_formatter/src/cli.rs
-assertion_line: 9
 expression: snapshot
 ---
 ---
@@ -32,6 +31,16 @@ oxfmt --write src
 ### `[PATH]…`
 
 Single file, path or list of paths. Glob patterns are also supported. (Be sure to quote them, otherwise your shell may expand them before passing.) Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported. If not provided, current working directory is used.
+
+## Flags
+
+### `-h --help`
+
+Print help
+
+### `-V --version`
+
+Print version
 
 ## Mode Options
 
