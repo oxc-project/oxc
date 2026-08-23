@@ -38,6 +38,7 @@ impl<'a> PeepholeOptimizations {
         if body_has_function_declaration {
             return;
         }
+        let is_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
 
         // "for (;;) if (x) break;" => "for (; !x;) ;"
         // "for (; a;) if (x) break;" => "for (; a && !x;) ;"
@@ -45,6 +46,12 @@ impl<'a> PeepholeOptimizations {
         // "for (; a;) if (x) break; else y();" => "for (; a && !x;) y();"
         if let Some(Statement::BreakStatement(break_stmt)) = if_stmt.consequent.get_one_child() {
             if break_stmt.label.is_some() {
+                return;
+            }
+            // Annex B gives a direct function declaration in an `if` branch an implicit scope.
+            if is_sloppy_mode
+                && if_stmt.alternate.as_ref().is_some_and(Self::statement_has_function_declaration)
+            {
                 return;
             }
 
@@ -83,6 +90,10 @@ impl<'a> PeepholeOptimizations {
             if_stmt.alternate.as_ref().and_then(|stmt| stmt.get_one_child())
         {
             if break_stmt.label.is_some() {
+                return;
+            }
+            // Annex B gives a direct function declaration in an `if` branch an implicit scope.
+            if is_sloppy_mode && Self::statement_has_function_declaration(&if_stmt.consequent) {
                 return;
             }
 
