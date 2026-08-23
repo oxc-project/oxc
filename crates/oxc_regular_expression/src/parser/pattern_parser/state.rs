@@ -1,7 +1,8 @@
-use oxc_str::Str;
+use std::borrow::Cow;
+
 use rustc_hash::FxHashSet;
 
-use crate::parser::reader::Reader;
+use crate::{ast_impl::support::normalize_group_name, parser::reader::Reader};
 
 /// NOTE: Currently all of properties are read-only from outside of this module.
 /// Even inside of this module, it is not changed after initialized.
@@ -13,7 +14,7 @@ pub struct State<'a> {
     pub named_capture_groups: bool,
     // Other states
     pub num_of_capturing_groups: u32,
-    pub capturing_group_names: FxHashSet<Str<'a>>,
+    pub capturing_group_names: FxHashSet<Cow<'a, str>>,
 }
 
 type DuplicatedNamedCapturingGroupOffsets = Vec<(u32, u32)>;
@@ -70,7 +71,7 @@ impl<'a> State<'a> {
 /// Returns: Result<(num_of_left_parens, capturing_group_names), duplicated_named_capturing_group_offsets>
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
-) -> Result<(u32, FxHashSet<Str<'a>>), DuplicatedNamedCapturingGroupOffsets> {
+) -> Result<(u32, FxHashSet<Cow<'a, str>>), DuplicatedNamedCapturingGroupOffsets> {
     // Count only normal CapturingGroup(named, unnamed)
     //   (?<name>...), (...)
     // IgnoreGroup, and LookaroundAssertions are ignored
@@ -80,7 +81,7 @@ fn parse_capturing_groups<'a>(
 
     // Track all named groups with their depth and alternative path
     let mut named_groups: Vec<NamedGroupInfo<'a>> = Vec::new();
-    let mut group_names: FxHashSet<Str<'a>> = FxHashSet::default();
+    let mut group_names: FxHashSet<Cow<'a, str>> = FxHashSet::default();
 
     // Track alternatives and depth
     let mut tracker = AlternativeTracker::new();
@@ -131,7 +132,8 @@ fn parse_capturing_groups<'a>(
                 let span_end = reader.offset();
 
                 if reader.eat('>') {
-                    let group_name = reader.str(span_start, span_end);
+                    let raw_group_name = reader.str(span_start, span_end);
+                    let group_name = normalize_group_name(raw_group_name.as_str());
                     let alternative_path = tracker.get_alternative_path();
 
                     // Check for duplicates with existing groups
@@ -149,7 +151,7 @@ fn parse_capturing_groups<'a>(
                     }
 
                     named_groups.push(NamedGroupInfo {
-                        name: group_name,
+                        name: group_name.clone(),
                         span: (span_start, span_end),
                         alternative_path,
                     });
@@ -225,7 +227,7 @@ impl AlternativeTracker {
 /// Tracks information about a named capturing group
 #[derive(Debug, Clone)]
 struct NamedGroupInfo<'a> {
-    name: Str<'a>,
+    name: Cow<'a, str>,
     span: (u32, u32),
     alternative_path: Vec<u32>,
 }
@@ -250,6 +252,7 @@ mod tests {
             ("(foo)(?=...)(?!...)(?<=...)(?<!...)(?:...)", (1, 0)),
             ("(foo)(?<n>bar)(?<nn>baz)", (3, 2)),
             ("(?<n>.)(?<m>.)|(?<n>..)|(?<m>.)", (4, 2)),
+            (r"(?<a>x)|(?<\u0061>y)", (2, 1)),
             ("(?<n>.)(?<m>.)|(?:..)|(?<m>.)", (3, 2)),
             // Test exit_group reset behavior: consecutive groups at same depth
             ("((?<a>x))((?<b>y))|(?<c>z)", (5, 3)), // 2 outer groups + 2 inner named + 1 named = 5 total
@@ -278,6 +281,7 @@ mod tests {
             // Test consecutive groups with same name in same alternative (should be error)
             "((?<a>x))((?<a>y))((?<a>z))",
             "(?<n>a)((?<n>b))",
+            r"(?<a>x)(?<\u0061>y)",
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 

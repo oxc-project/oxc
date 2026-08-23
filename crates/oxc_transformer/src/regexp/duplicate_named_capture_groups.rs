@@ -2,6 +2,7 @@ use std::fmt::Write;
 
 use oxc_regular_expression::{
     ast::{Pattern, Term},
+    normalize_group_name,
     visit::{RegExpAstKind, Visit, walk},
 };
 use oxc_span::Span;
@@ -56,11 +57,12 @@ impl<'a> Visit<'a> for Collector {
                     return;
                 };
 
-                let name = normalize_group_name(name.as_str());
-                if let Some(&group_index) = self.group_indices.get(&name) {
+                let normalized_name = normalize_group_name(name.as_str());
+                if let Some(&group_index) = self.group_indices.get(normalized_name.as_ref()) {
                     self.groups[group_index].indices.push(self.capture_index);
                     self.has_duplicate_names = true;
                 } else {
+                    let name = normalized_name.into_owned();
                     self.group_indices.insert(name.clone(), self.groups.len());
                     self.groups.push(NamedCaptureGroup { name, indices: vec![self.capture_index] });
                 }
@@ -72,7 +74,7 @@ impl<'a> Visit<'a> for Collector {
             RegExpAstKind::NamedReference(reference) => {
                 self.references.push(NamedReference {
                     span: reference.span,
-                    name: normalize_group_name(reference.name.as_str()),
+                    name: normalize_group_name(reference.name.as_str()).into_owned(),
                     quantified: self.in_quantifier,
                 });
             }
@@ -86,79 +88,6 @@ impl<'a> Visit<'a> for Collector {
         walk::walk_quantifier(self, quantifier);
         self.in_quantifier = previous;
     }
-}
-
-/// Get the string value of a `RegExpIdentifierName`.
-///
-/// The RegExp AST retains Unicode escape sequences in group names, but escaped and unescaped
-/// spellings of the same name refer to the same capture group.
-fn normalize_group_name(name: &str) -> String {
-    if !name.contains('\\') {
-        return name.to_string();
-    }
-
-    let bytes = name.as_bytes();
-    let mut normalized = String::with_capacity(name.len());
-    let mut offset = 0;
-    while offset < bytes.len() {
-        if bytes[offset] == b'\\' {
-            let Some((character, len)) = decode_unicode_escape(&bytes[offset..]) else {
-                // Group names have already been validated by the RegExp parser.
-                debug_assert!(false, "invalid Unicode escape in RegExp group name");
-                return name.to_string();
-            };
-            normalized.push(character);
-            offset += len;
-        } else {
-            let character = name[offset..].chars().next().unwrap();
-            normalized.push(character);
-            offset += character.len_utf8();
-        }
-    }
-    normalized
-}
-
-fn decode_unicode_escape(bytes: &[u8]) -> Option<(char, usize)> {
-    if !bytes.starts_with(br"\u") {
-        return None;
-    }
-
-    if bytes.get(2) == Some(&b'{') {
-        let end = bytes[3..].iter().position(|&byte| byte == b'}')? + 3;
-        let value = parse_hex(&bytes[3..end])?;
-        return char::from_u32(value).map(|character| (character, end + 1));
-    }
-
-    let first = parse_hex(bytes.get(2..6)?)?;
-    if (0xD800..=0xDBFF).contains(&first) {
-        let second_escape = bytes.get(6..12)?;
-        if !second_escape.starts_with(br"\u") {
-            return None;
-        }
-        let second = parse_hex(&second_escape[2..])?;
-        if !(0xDC00..=0xDFFF).contains(&second) {
-            return None;
-        }
-        let value = 0x1_0000 + ((first - 0xD800) << 10) + (second - 0xDC00);
-        return char::from_u32(value).map(|character| (character, 12));
-    }
-
-    char::from_u32(first).map(|character| (character, 6))
-}
-
-fn parse_hex(bytes: &[u8]) -> Option<u32> {
-    if bytes.is_empty() {
-        return None;
-    }
-    bytes.iter().try_fold(0, |value, &byte| {
-        let digit = match byte {
-            b'0'..=b'9' => u32::from(byte - b'0'),
-            b'a'..=b'f' => u32::from(byte - b'a' + 10),
-            b'A'..=b'F' => u32::from(byte - b'A' + 10),
-            _ => return None,
-        };
-        Some((value << 4) | digit)
-    })
 }
 
 struct Edit {

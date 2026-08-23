@@ -3,7 +3,7 @@ use oxc_diagnostics::Result;
 use oxc_str::Str;
 
 use crate::{
-    ast, diagnostics,
+    ast, diagnostics, normalize_group_name,
     parser::{
         pattern_parser::{character, state::State, unicode_property},
         reader::{EscapeKind, Reader},
@@ -529,9 +529,10 @@ impl<'a> PatternParser<'a> {
             if let Some(name) = self.consume_group_name()? {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
-                if !self.state.capturing_group_names.contains(name.as_str()) {
+                let normalized_name = normalize_group_name(name.as_str());
+                if !self.state.capturing_group_names.contains(normalized_name.as_ref()) {
                     let names: Vec<&str> =
-                        self.state.capturing_group_names.iter().map(Str::as_str).collect();
+                        self.state.capturing_group_names.iter().map(AsRef::as_ref).collect();
                     return Err(diagnostics::invalid_named_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
                         &names,

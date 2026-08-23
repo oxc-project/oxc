@@ -23,3 +23,8 @@ fn duplicate_named_capture_groups_target_boundary() {
     );
     assert_eq!(test(source, &options("chrome126")).unwrap(), source.to_string() + "\n");
 }
+
+#[test]
+fn duplicate_named_capture_groups_rejects_same_branch_escaped_aliases() {
+    assert!(test(r"/(?<a>x)(?<\u0061>y)/;", &options("es2024")).is_err());
+}

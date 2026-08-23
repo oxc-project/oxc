@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashSet;
 
 use crate::ast::{
@@ -21,6 +23,81 @@ pub struct RegexUnsupportedPatterns {
     pub unicode_property_escapes: bool,
     pub look_behind_assertions: bool,
     pub pattern_modifiers: bool,
+}
+
+/// Get the string value of a `RegExpIdentifierName` while retaining the source spelling when it
+/// contains no escapes.
+pub fn normalize_group_name(name: &str) -> Cow<'_, str> {
+    if !name.contains('\\') {
+        return Cow::Borrowed(name);
+    }
+
+    let Some(normalized) = try_normalize_group_name(name) else {
+        // The RegExp parser will report malformed escapes separately.
+        return Cow::Borrowed(name);
+    };
+    Cow::Owned(normalized)
+}
+
+fn try_normalize_group_name(name: &str) -> Option<String> {
+    let bytes = name.as_bytes();
+    let mut normalized = String::with_capacity(name.len());
+    let mut offset = 0;
+    while offset < bytes.len() {
+        if bytes[offset] == b'\\' {
+            let (character, len) = decode_unicode_escape(&bytes[offset..])?;
+            normalized.push(character);
+            offset += len;
+        } else {
+            let character = name[offset..].chars().next()?;
+            normalized.push(character);
+            offset += character.len_utf8();
+        }
+    }
+    Some(normalized)
+}
+
+fn decode_unicode_escape(bytes: &[u8]) -> Option<(char, usize)> {
+    if !bytes.starts_with(br"\u") {
+        return None;
+    }
+
+    if bytes.get(2) == Some(&b'{') {
+        let end = bytes[3..].iter().position(|&byte| byte == b'}')? + 3;
+        let value = parse_hex(&bytes[3..end])?;
+        return char::from_u32(value).map(|character| (character, end + 1));
+    }
+
+    let first = parse_hex(bytes.get(2..6)?)?;
+    if (0xD800..=0xDBFF).contains(&first) {
+        let second_escape = bytes.get(6..12)?;
+        if !second_escape.starts_with(br"\u") {
+            return None;
+        }
+        let second = parse_hex(&second_escape[2..])?;
+        if !(0xDC00..=0xDFFF).contains(&second) {
+            return None;
+        }
+        let value = 0x1_0000 + ((first - 0xD800) << 10) + (second - 0xDC00);
+        return char::from_u32(value).map(|character| (character, 12));
+    }
+
+    char::from_u32(first).map(|character| (character, 6))
+}
+
+fn parse_hex(bytes: &[u8]) -> Option<u32> {
+    if bytes.is_empty() {
+        return None;
+    }
+    bytes.iter().try_fold(0_u32, |value, &byte| {
+        let digit = match byte {
+            b'0'..=b'9' => u32::from(byte - b'0'),
+            b'a'..=b'f' => u32::from(byte - b'a' + 10),
+            b'A'..=b'F' => u32::from(byte - b'A' + 10),
+            _ => return None,
+        };
+        value.checked_mul(16)?.checked_add(digit)
+    })
 }
 
 /// Check if the regular expression flags are invalid or contain unsupported flags.
@@ -67,7 +144,7 @@ pub fn has_unsupported_regular_expression_pattern(
 
 fn has_duplicate_named_capture_groups(pattern: &Pattern<'_>) -> bool {
     struct DuplicateNamedCaptureGroups<'a> {
-        names: FxHashSet<&'a str>,
+        names: FxHashSet<Cow<'a, str>>,
         found: bool,
     }
 
@@ -79,7 +156,7 @@ fn has_duplicate_named_capture_groups(pattern: &Pattern<'_>) -> bool {
             let Some(name) = &group.name else {
                 return;
             };
-            if !self.names.insert(name.as_str()) {
+            if !self.names.insert(normalize_group_name(name.as_str())) {
                 self.found = true;
             }
         }
@@ -155,10 +232,21 @@ fn character_class_has_unicode_property_escape(character_class: &CharacterClass)
 
 #[cfg(test)]
 mod test {
+    use std::borrow::Cow;
+
     use oxc_allocator::Allocator;
 
     use super::*;
     use crate::{LiteralParser, Options};
+
+    #[test]
+    fn group_name_normalization() {
+        assert!(matches!(normalize_group_name("name"), Cow::Borrowed("name")));
+        assert_eq!(normalize_group_name(r"\u0061"), "a");
+        assert_eq!(normalize_group_name(r"\u{61}"), "a");
+        assert_eq!(normalize_group_name(r"\uD835\uDC9C"), "𝒜");
+        assert_eq!(normalize_group_name(r"\u{FFFFFFFFFFFFFFFF}"), r"\u{FFFFFFFFFFFFFFFF}");
+    }
 
     #[test]
     fn unsupported_flags() {
@@ -200,5 +288,11 @@ mod test {
         let unsupported =
             RegexUnsupportedPatterns { duplicate_named_capture_groups: true, ..supported };
         assert!(has_unsupported_regular_expression_pattern(&pattern, &unsupported));
+
+        let escaped_pattern =
+            LiteralParser::new(&allocator, r"(?<a>x)|(?<\u0061>y)", None, Options::default())
+                .parse()
+                .unwrap();
+        assert!(has_unsupported_regular_expression_pattern(&escaped_pattern, &unsupported));
     }
 }
