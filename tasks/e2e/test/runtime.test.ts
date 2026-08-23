@@ -21,8 +21,17 @@ describe.each([
     expect("y".replace(regexp, "$$$$<a>")).toBe("$$<a>");
     expect("y".replace(regexp, "$<a>")).toBe("y");
     expect("y".replace(regexp, "$<missing>")).toBe("");
+    expect("y".replace(regexp, "$<constructor>")).toBe("");
+    expect("y".replace(regexp, "$<hasOwnProperty>")).toBe("");
+    expect("y".replace(regexp, "$<__proto__>")).toBe("");
     expect("y".replace(regexp, "$$<missing>")).toBe("$<missing>");
     expect("y".replace(regexp, "$<missing")).toBe("$<missing");
+  });
+
+  test("supports __proto__ as a named group", () => {
+    const regexp = wrapRegExp(/(x)|(y)/, { ["__proto__"]: [1, 2] });
+
+    expect("y".replace(regexp, "$<__proto__>")).toBe("y");
   });
 
   test("keeps following digits separate from capture indices", () => {
@@ -45,5 +54,12 @@ describe.each([
     const regexp = wrapRegExp(/(x)|(y)/, { a: [1, 2] });
 
     expect(RegExp(regexp)).toBe(regexp);
+  });
+
+  test("preserves named groups in matchAll clones", () => {
+    const regexp = wrapRegExp(/(a)|(b)/g, { x: [1, 2] });
+    const matches = [..."ab".matchAll(regexp)];
+
+    expect(matches.map((match) => match.groups?.x)).toEqual(["a", "b"]);
   });
 });

@@ -6,7 +6,8 @@ function _wrapRegExp() {
     return new BabelRegExp(e, void 0, r);
   };
   var e = RegExp.prototype,
-    r = new WeakMap();
+    r = new WeakMap(),
+    n = Object.prototype.hasOwnProperty;
   function BabelRegExp(e, t, p) {
     var o = RegExp(e, t);
     return r.set(o, p || r.get(e)), setPrototypeOf(o, BabelRegExp.prototype);
@@ -25,6 +26,13 @@ function _wrapRegExp() {
   function buildGroupReplacement(e) {
     return "number" == typeof e ? "$" + (e < 10 ? "0" : "") + e : e.map(buildGroupReplacement).join("");
   }
+  function getGroupReplacement(e, r) {
+    return n.call(e, r) ? buildGroupReplacement(e[r]) : "";
+  }
+  function cloneForMatchAll(e) {
+    var t = new BabelRegExp(e, e.flags);
+    return t.lastIndex = e.lastIndex, t.constructor = BabelRegExp, t;
+  }
   return inherits(BabelRegExp, RegExp), BabelRegExp.prototype.constructor = RegExp, BabelRegExp.prototype.exec = function (t) {
     var p = e.exec.call(this, t);
     if (p && r.get(this)) {
@@ -33,15 +41,16 @@ function _wrapRegExp() {
       o && (o.groups = buildGroups(o, this));
     }
     return p;
-  }, BabelRegExp.prototype[Symbol.replace] = function (t, p) {
+  }, Symbol.matchAll && (BabelRegExp.prototype[Symbol.matchAll] = function (t) {
+    return e[Symbol.matchAll].call(cloneForMatchAll(this), t);
+  }), BabelRegExp.prototype[Symbol.replace] = function (t, p) {
     var o = r.get(this);
     if (!o) return e[Symbol.replace].call(this, t, p);
     if ("string" == typeof p) {
       return e[Symbol.replace].call(this, t, p.replace(/\$\$|\$<([^>]+)(>|$)/g, function (e, r, t) {
         if ("$$" === e) return e;
         if ("" === t) return e;
-        var p = o[r];
-        return void 0 === p ? "" : buildGroupReplacement(p);
+        return getGroupReplacement(o, r);
       }));
     }
     if ("function" == typeof p) {
