@@ -35,6 +35,64 @@ pub fn format_description_mdast(
     format_options: &JsFormatOptions,
     session: &FormatSession<'_>,
 ) -> String {
+    format_description_mdast_impl(
+        text,
+        max_width,
+        tag_string_length,
+        capitalize,
+        format_options,
+        session,
+        true,
+    )
+}
+
+fn format_description_mdast_impl(
+    text: &str,
+    max_width: usize,
+    tag_string_length: usize,
+    capitalize: bool,
+    format_options: &JsFormatOptions,
+    session: &FormatSession<'_>,
+    allow_stabilization: bool,
+) -> String {
+    let output = format_description_mdast_once(
+        text,
+        max_width,
+        tag_string_length,
+        capitalize,
+        format_options,
+        session,
+    );
+    let is_balance = format_options.jsdoc.as_ref().is_some_and(|options| {
+        matches!(options.line_wrapping_style, crate::LineWrappingStyle::Balance)
+    });
+
+    // Greedy fallback in balance mode can move a prose dash to the start of a
+    // line after markdown parsing has already finished. Allow one explicit
+    // stabilization pass so the new list marker is recognized immediately.
+    if allow_stabilization && is_balance && contains_dash_list_marker(&output) {
+        return format_description_mdast_impl(
+            &output,
+            max_width,
+            tag_string_length,
+            capitalize,
+            format_options,
+            session,
+            false,
+        );
+    }
+
+    output
+}
+
+fn format_description_mdast_once(
+    text: &str,
+    max_width: usize,
+    tag_string_length: usize,
+    capitalize: bool,
+    format_options: &JsFormatOptions,
+    session: &FormatSession<'_>,
+) -> String {
     if text.trim().is_empty() {
         return String::new();
     }
@@ -146,26 +204,7 @@ pub fn format_description_mdast(
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
     let output = lines.into_string();
-    let output = restore_in_string(&output, &placeholders).into_owned();
-
-    // Greedy fallback in balance mode can move a prose dash to the start of a
-    // line after markdown parsing has already finished. Stabilize that newly
-    // created list marker now, rather than discovering it on the next format.
-    if matches!(line_wrapping_style, crate::LineWrappingStyle::Balance)
-        && contains_dash_list_marker(&output)
-        && !contains_dash_list_marker(text.as_ref())
-    {
-        return format_description_mdast(
-            &output,
-            max_width,
-            tag_string_length,
-            capitalize,
-            format_options,
-            session,
-        );
-    }
-
-    output
+    restore_in_string(&output, &placeholders).into_owned()
 }
 
 fn contains_dash_list_marker(text: &str) -> bool {

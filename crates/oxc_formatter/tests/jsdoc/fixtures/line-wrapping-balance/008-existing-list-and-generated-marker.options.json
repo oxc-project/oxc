@@ -1,0 +1,5 @@
+{
+  "comment_line_strategy": "multiline",
+  "line_wrapping_style": "balance",
+  "print_width": 80
+}
