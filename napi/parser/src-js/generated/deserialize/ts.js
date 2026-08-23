@@ -1905,7 +1905,8 @@ function deserializeFormalParameters(pos) {
     restFieldPos32 = (pos >> 2) + 10;
   if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
     pos = int32[restFieldPos32];
-    let end,
+    let start,
+      end,
       rest = {
         type: "RestElement",
         decorators: [],
@@ -1913,16 +1914,16 @@ function deserializeFormalParameters(pos) {
         optional: false,
         typeAnnotation: null,
         value: null,
-        start: deserializeI32(pos + 40),
+        start: (start = deserializeI32(pos + 40)),
         end: (end = deserializeI32(pos + 44)),
       };
     rest.argument = deserializeBindingPattern(pos + 56);
     rest.decorators = deserializeVecDecorator(pos + 16);
+    rest.decorators.length !== 0 && (start = rest.decorators[0].start);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
-    if (rest.typeAnnotation !== null) {
-      end = rest.typeAnnotation.end;
-      rest.end = end;
-    }
+    rest.typeAnnotation !== null && (end = rest.typeAnnotation.end);
+    rest.start = start;
+    rest.end = end;
     params.push(rest);
   }
   return params;
