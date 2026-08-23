@@ -187,8 +187,9 @@ fn try_fold_string_substring_or_slice<'a>(
         }
         None => None,
     };
-    if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
-        || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
+    let string_len = s.value.as_str().encode_utf16().count() as f64;
+    if start_idx.is_some_and(|start| start > string_len || start < 0.0)
+        || end_idx.is_some_and(|end| end > string_len || end < 0.0)
     {
         return None;
     }
@@ -198,7 +199,7 @@ fn try_fold_string_substring_or_slice<'a>(
         return None;
     }
 
-    Some(ConstantValue::String(Cow::Owned(s.value.as_str().substring(start_idx, end_idx))))
+    Some(ConstantValue::String(Cow::Owned(s.value.as_str().substring(start_idx, end_idx)?)))
 }
 
 fn try_fold_string_char_at<'a>(
