@@ -1,0 +1,256 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:20]
+ 1 │ const foo = {a: 1, u: 2};
+   ·                    ────
+ 2 │         console.log(foo.a);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:22]
+ 1 │ const foo = {"a": 1, "u": 2};
+   ·                      ──────
+ 2 │         console.log(foo.a);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:20]
+ 1 │ const foo = {a: 1, u: 2};
+   ·                    ────
+ 2 │         console.log(foo['a']);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:20]
+ 1 │ const foo = {a: 1, u: 2};
+   ·                    ────
+ 2 │         function main() {
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:20]
+ 1 │ const foo = {a: 1, u: 2};
+   ·                    ────
+ 2 │         const {a} = foo;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:20]
+ 1 │ const foo = {a: 1, u: 2};
+   ·                    ────
+ 2 │         ({a} = foo);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:14]
+ 1 │ const {a} = {u: 2};
+   ·              ────
+ 2 │         console.log(a);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:3:13]
+ 2 │                 a: 1,
+ 3 │ ╭─▶             u: {
+ 4 │ │                   b: 2,
+ 5 │ │                   c: 3
+ 6 │ ╰─▶             }
+ 7 │             };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:5:17]
+ 4 │                 c: 2,
+ 5 │                 u: 3
+   ·                 ────
+ 6 │             }
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:5:17]
+ 4 │                 c: 2,
+ 5 │                 u: 3
+   ·                 ────
+ 6 │             }
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:5:13]
+ 4 │             },
+ 5 │             u: 2
+   ·             ────
+ 6 │         };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:3:13]
+ 2 │             a: 1,
+ 3 │             [u]: 2
+   ·             ──────
+ 4 │         };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:4:13]
+ 3 │             b: 2,
+ 4 │             u: 3
+   ·             ────
+ 5 │         };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `foo.bar` is defined but never used.
+   ╭─[no_unused_properties.tsx:2:13]
+ 1 │ const foo = {
+ 2 │             [foo.bar]: 1
+   ·             ────────────
+ 3 │         };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `unused` is defined but never used.
+   ╭─[no_unused_properties.tsx:3:13]
+ 2 │             wrapper: styled('div', {}),
+ 3 │             unused: styled('div', {}),
+   ·             ─────────────────────────
+ 4 │         };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:32]
+ 1 │ function foo(args: {x: number; y: number}) {
+   ·                                ─────────
+ 2 │             return args.x * 2;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:25]
+ 1 │ const args: {x: number; y: number} = getArgs();
+   ·                         ─────────
+ 2 │         console.log(args.x);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `unused` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:49]
+ 1 │ function foo(args: {options: {enabled: boolean; unused: boolean}; label: string}) {
+   ·                                                 ───────────────
+ 2 │             return args.options.enabled && args.label.length > 0;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:34]
+ 1 │ function foo(args: {'x': number; 'y': number}) {
+   ·                                  ───────────
+ 2 │             return args['x'];
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `unused` is defined but never used.
+   ╭─[no_unused_properties.tsx:5:40]
+ 4 │         };
+ 5 │         const args: Arguments = {x: 1, unused: 2};
+   ·                                        ─────────
+ 6 │         console.log(args.x);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:48]
+ 1 │ function foo(args: {x: {a: number; b: number}; y: number}) {
+   ·                                                ─────────
+ 2 │             return args.x!.a;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:48]
+ 1 │ function foo(args: {x: {a: number; b: number}; y: number}) {
+   ·                                                ─────────
+ 2 │             return (args.x as {a: number; b: number}).a;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:21]
+ 1 │ const args = {x: 1, y: 2} as const;
+   ·                     ────
+ 2 │         console.log(args.x);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:21]
+ 1 │ const args = {x: 1, y: 2} satisfies {x: number; y: number};
+   ·                     ────
+ 2 │         console.log(args.x);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:4:17]
+ 3 │                 b: 2,
+ 4 │                 u: 3
+   ·                 ────
+ 5 │             };
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:31]
+ 1 │ function foo({x}: {x: number; y: number}) {
+   ·                               ─────────
+ 2 │             return x;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `y` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:24]
+ 1 │ const {x}: {x: number; y: number} = args;
+   ·                        ─────────
+ 2 │         console.log(x);
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `unused` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:65]
+ 1 │ function foo({options: {enabled}}: {options: {enabled: boolean; unused: boolean}}) {
+   ·                                                                 ───────────────
+ 2 │             return enabled;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `x` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:21]
+ 1 │ function foo(args: {x: number; y: number}) {
+   ·                     ──────────
+ 2 │             return args?.y;
+   ╰────
+  help: Remove the property or use it in the code.
+
+  ⚠ unicorn(no-unused-properties): Property `u` is defined but never used.
+   ╭─[no_unused_properties.tsx:1:20]
+ 1 │ const foo = {a: 1, u: 2};
+   ·                    ────
+ 2 │         console.log(foo?.a);
+   ╰────
+  help: Remove the property or use it in the code.

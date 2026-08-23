@@ -9221,6 +9221,9 @@
         "unicorn/no-unreadable-iife": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-unused-properties": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-useless-collection-argument": {
           "$ref": "#/definitions/RuleNoConfig"
         },

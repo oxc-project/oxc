@@ -684,6 +684,7 @@ pub use crate::rules::unicorn::no_unnecessary_await::NoUnnecessaryAwait as Unico
 pub use crate::rules::unicorn::no_unnecessary_slice_end::NoUnnecessarySliceEnd as UnicornNoUnnecessarySliceEnd;
 pub use crate::rules::unicorn::no_unreadable_array_destructuring::NoUnreadableArrayDestructuring as UnicornNoUnreadableArrayDestructuring;
 pub use crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife as UnicornNoUnreadableIife;
+pub use crate::rules::unicorn::no_unused_properties::NoUnusedProperties as UnicornNoUnusedProperties;
 pub use crate::rules::unicorn::no_useless_collection_argument::NoUselessCollectionArgument as UnicornNoUselessCollectionArgument;
 pub use crate::rules::unicorn::no_useless_error_capture_stack_trace::NoUselessErrorCaptureStackTrace as UnicornNoUselessErrorCaptureStackTrace;
 pub use crate::rules::unicorn::no_useless_fallback_in_spread::NoUselessFallbackInSpread as UnicornNoUselessFallbackInSpread;
@@ -1432,6 +1433,7 @@ pub enum RuleEnum {
     UnicornNoUnnecessarySliceEnd(UnicornNoUnnecessarySliceEnd),
     UnicornNoUnreadableArrayDestructuring(UnicornNoUnreadableArrayDestructuring),
     UnicornNoUnreadableIife(UnicornNoUnreadableIife),
+    UnicornNoUnusedProperties(UnicornNoUnusedProperties),
     UnicornNoUselessCollectionArgument(UnicornNoUselessCollectionArgument),
     UnicornNoUselessErrorCaptureStackTrace(UnicornNoUselessErrorCaptureStackTrace),
     UnicornNoUselessFallbackInSpread(UnicornNoUselessFallbackInSpread),
@@ -2374,7 +2376,8 @@ const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = UNICORN_NO_UNNECESSARY_AWAIT_
 const UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID: usize =
     UNICORN_NO_UNNECESSARY_SLICE_END_ID + 1usize;
 const UNICORN_NO_UNREADABLE_IIFE_ID: usize = UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID + 1usize;
-const UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID: usize = UNICORN_NO_UNREADABLE_IIFE_ID + 1usize;
+const UNICORN_NO_UNUSED_PROPERTIES_ID: usize = UNICORN_NO_UNREADABLE_IIFE_ID + 1usize;
+const UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID: usize = UNICORN_NO_UNUSED_PROPERTIES_ID + 1usize;
 const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize =
     UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID + 1usize;
 const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize =
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3289,6 +3292,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornNoUnnecessarySliceEnd::NAME,
     UnicornNoUnreadableArrayDestructuring::NAME,
     UnicornNoUnreadableIife::NAME,
+    UnicornNoUnusedProperties::NAME,
     UnicornNoUselessCollectionArgument::NAME,
     UnicornNoUselessErrorCaptureStackTrace::NAME,
     UnicornNoUselessFallbackInSpread::NAME,
@@ -4255,6 +4259,7 @@ impl RuleEnum {
                 UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID
             }
             Self::UnicornNoUnreadableIife(_) => UNICORN_NO_UNREADABLE_IIFE_ID,
+            Self::UnicornNoUnusedProperties(_) => UNICORN_NO_UNUSED_PROPERTIES_ID,
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID
             }
@@ -5288,6 +5293,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::CATEGORY
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::CATEGORY,
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::CATEGORY,
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UnicornNoUselessCollectionArgument::CATEGORY
             }
@@ -6303,6 +6309,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::FIX
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::FIX,
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::FIX,
             Self::UnicornNoUselessCollectionArgument(_) => UnicornNoUselessCollectionArgument::FIX,
             Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
                 UnicornNoUselessErrorCaptureStackTrace::FIX
@@ -7440,6 +7447,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::documentation()
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::documentation(),
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::documentation(),
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UnicornNoUselessCollectionArgument::documentation()
             }
@@ -9469,6 +9477,10 @@ impl RuleEnum {
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::config_schema(generator)
                 .or_else(|| UnicornNoUnreadableIife::schema(generator)),
+            Self::UnicornNoUnusedProperties(_) => {
+                UnicornNoUnusedProperties::config_schema(generator)
+                    .or_else(|| UnicornNoUnusedProperties::schema(generator))
+            }
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UnicornNoUselessCollectionArgument::config_schema(generator)
                     .or_else(|| UnicornNoUselessCollectionArgument::schema(generator))
@@ -10969,6 +10981,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessarySliceEnd(_) => "unicorn",
             Self::UnicornNoUnreadableArrayDestructuring(_) => "unicorn",
             Self::UnicornNoUnreadableIife(_) => "unicorn",
+            Self::UnicornNoUnusedProperties(_) => "unicorn",
             Self::UnicornNoUselessCollectionArgument(_) => "unicorn",
             Self::UnicornNoUselessErrorCaptureStackTrace(_) => "unicorn",
             Self::UnicornNoUselessFallbackInSpread(_) => "unicorn",
@@ -12974,6 +12987,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run(node, ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.run(node, ctx),
             Self::UnicornNoUnreadableIife(rule) => rule.run(node, ctx),
+            Self::UnicornNoUnusedProperties(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run(node, ctx),
@@ -13861,6 +13875,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run_once(ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.run_once(ctx),
             Self::UnicornNoUnreadableIife(rule) => rule.run_once(ctx),
+            Self::UnicornNoUnusedProperties(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_once(ctx),
@@ -14835,6 +14850,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoUnreadableIife(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoUnusedProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -15753,6 +15769,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.should_run(ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.should_run(ctx),
             Self::UnicornNoUnreadableIife(rule) => rule.should_run(ctx),
+            Self::UnicornNoUnusedProperties(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessCollectionArgument(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.should_run(ctx),
@@ -16859,6 +16876,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::IS_TSGOLINT_RULE
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::IS_TSGOLINT_RULE,
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UnicornNoUselessCollectionArgument::IS_TSGOLINT_RULE
             }
@@ -18009,6 +18027,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::VERSION
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::VERSION,
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::VERSION,
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UnicornNoUselessCollectionArgument::VERSION
             }
@@ -19082,6 +19101,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::HAS_CONFIG
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::HAS_CONFIG,
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::HAS_CONFIG,
             Self::UnicornNoUselessCollectionArgument(_) => {
                 UnicornNoUselessCollectionArgument::HAS_CONFIG
             }
@@ -20114,6 +20134,7 @@ impl RuleEnum {
                 UnicornNoUnreadableArrayDestructuring::INFO
             }
             Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::INFO,
+            Self::UnicornNoUnusedProperties(_) => UnicornNoUnusedProperties::INFO,
             Self::UnicornNoUselessCollectionArgument(_) => UnicornNoUselessCollectionArgument::INFO,
             Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
                 UnicornNoUselessErrorCaptureStackTrace::INFO
@@ -21023,6 +21044,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.types_info(),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.types_info(),
             Self::UnicornNoUnreadableIife(rule) => rule.types_info(),
+            Self::UnicornNoUnusedProperties(rule) => rule.types_info(),
             Self::UnicornNoUselessCollectionArgument(rule) => rule.types_info(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.types_info(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.types_info(),
@@ -21897,6 +21919,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run_info(),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.run_info(),
             Self::UnicornNoUnreadableIife(rule) => rule.run_info(),
+            Self::UnicornNoUnusedProperties(rule) => rule.run_info(),
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_info(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run_info(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_info(),
@@ -22877,6 +22900,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoUnreadableArrayDestructuring::default(),
         ),
         RuleEnum::UnicornNoUnreadableIife(UnicornNoUnreadableIife::default()),
+        RuleEnum::UnicornNoUnusedProperties(UnicornNoUnusedProperties::default()),
         RuleEnum::UnicornNoUselessCollectionArgument(UnicornNoUselessCollectionArgument::default()),
         RuleEnum::UnicornNoUselessErrorCaptureStackTrace(
             UnicornNoUselessErrorCaptureStackTrace::default(),
