@@ -25,6 +25,12 @@ describe.each([
     expect("y".replace(regexp, "$<missing")).toBe("$<missing");
   });
 
+  test("keeps following digits separate from capture indices", () => {
+    const regexp = wrapRegExp(/(x)()()()()()()()()()()()/, { a: 1 });
+
+    expect("x".replace(regexp, "$<a>2")).toBe("x2");
+  });
+
   test("supports ordinary construction through a wrapped instance", () => {
     const regexp = wrapRegExp(/(x)|(y)/, { a: [1, 2] });
     const Constructor = regexp.constructor as RegExpConstructor;
@@ -33,5 +39,11 @@ describe.each([
     expect(ordinary.test("z")).toBe(true);
     expect("z".replace(ordinary, "$<a>")).toBe("$<a>");
     expect("z".replace(ordinary, () => "replaced")).toBe("replaced");
+  });
+
+  test("preserves identity through the callable RegExp constructor", () => {
+    const regexp = wrapRegExp(/(x)|(y)/, { a: [1, 2] });
+
+    expect(RegExp(regexp)).toBe(regexp);
   });
 });

@@ -22,7 +22,10 @@ function _wrapRegExp() {
       return r;
     }, Object.create(null));
   }
-  return inherits(BabelRegExp, RegExp), BabelRegExp.prototype.exec = function (t) {
+  function buildGroupReplacement(e) {
+    return "number" == typeof e ? "$" + (e < 10 ? "0" : "") + e : e.map(buildGroupReplacement).join("");
+  }
+  return inherits(BabelRegExp, RegExp), BabelRegExp.prototype.constructor = RegExp, BabelRegExp.prototype.exec = function (t) {
     var p = e.exec.call(this, t);
     if (p && r.get(this)) {
       p.groups = buildGroups(p, this);
@@ -38,7 +41,7 @@ function _wrapRegExp() {
         if ("$$" === e) return e;
         if ("" === t) return e;
         var p = o[r];
-        return Array.isArray(p) ? "$" + p.join("$") : "number" == typeof p ? "$" + p : "";
+        return void 0 === p ? "" : buildGroupReplacement(p);
       }));
     }
     if ("function" == typeof p) {
