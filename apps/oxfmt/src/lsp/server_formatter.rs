@@ -4,7 +4,7 @@ use std::{
 };
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, Uri};
+use tower_lsp_server::ls_types::{MessageType, Pattern, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
@@ -57,13 +57,19 @@ impl ServerFormatterBuilder {
         let root_path = root_uri.to_file_path().unwrap();
         debug!("root_path = {:?}", root_path.display());
 
+        let mut client_messages = Vec::new();
+
         // Resolve workspace-level concerns only here.
         // Per-file config resolution is deferred to format time.
-
         let prettierignore_glob = match Self::create_prettierignore_glob(&root_path) {
             Ok(glob) => Some(glob),
             Err(err) => {
-                warn!("Failed to create gitignore globs: {err}, proceeding without ignore globs");
+                client_messages.push(ClientMessage {
+                    message: format!(
+                        "Failed to create .prettierignore globs: {err}, proceeding without ignore globs"
+                    ),
+                    r#type: MessageType::ERROR,
+                });
                 None
             }
         };
@@ -82,17 +88,16 @@ impl ServerFormatterBuilder {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services.clone()));
 
-        (
-            ServerFormatter::new(
-                root_path.to_path_buf(),
-                source_formatter,
-                JsConfigLoaderCb::clone(&self.js_config_loader),
-                prettierignore_glob,
-                explicit_config_path,
-                use_nested_config,
-            ),
-            Vec::new(),
-        )
+        let (formatter, client_message) = ServerFormatter::new(
+            root_path.to_path_buf(),
+            source_formatter,
+            JsConfigLoaderCb::clone(&self.js_config_loader),
+            prettierignore_glob,
+            explicit_config_path,
+            use_nested_config,
+        );
+
+        (formatter, client_messages.into_iter().chain(client_message).collect())
     }
 }
 
@@ -224,14 +229,18 @@ impl Tool for ServerFormatter {
         // and only the root resolver does eager file IO.
         // The trade-off is over-eviction, a config change in one nested dir also drops cached probes elsewhere.
         // But format requests are sporadic enough that lazy re-population costs nothing observable.
-        let new_state = Self::build_state(
+        let (new_state, client_message) = Self::build_state(
             &self.root_path,
             self.explicit_config_path.as_deref(),
             &self.js_config_loader,
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
+        ToolRestartChanges {
+            tool: None,
+            watch_patterns: None,
+            client_messages: client_message.into_iter().collect(),
+        }
     }
 
     fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
@@ -301,18 +310,21 @@ impl ServerFormatter {
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
-    ) -> Self {
-        let state =
+    ) -> (Self, Option<ClientMessage>) {
+        let (state, client_message) =
             Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
-        Self {
-            root_path,
-            source_formatter,
-            js_config_loader,
-            prettierignore_glob,
-            explicit_config_path,
-            use_nested_config,
-            state: RwLock::new(Arc::new(state)),
-        }
+        (
+            Self {
+                root_path,
+                source_formatter,
+                js_config_loader,
+                prettierignore_glob,
+                explicit_config_path,
+                use_nested_config,
+                state: RwLock::new(Arc::new(state)),
+            },
+            client_message,
+        )
     }
 
     /// Build a fresh [`FormatterState`] from scratch.
@@ -324,9 +336,9 @@ impl ServerFormatter {
         root_path: &Path,
         explicit_config_path: Option<&Path>,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> FormatterState {
+    ) -> (FormatterState, Option<ClientMessage>) {
         let editorconfig_path = resolve_editorconfig_path(root_path);
-        let root_resolver = Self::load_root_resolver(
+        let (root_resolver, client_message) = Self::load_root_resolver(
             root_path,
             explicit_config_path,
             editorconfig_path.as_deref(),
@@ -336,7 +348,7 @@ impl ServerFormatter {
             editorconfig_path.as_deref().map(Arc::from),
             Some(JsConfigLoaderCb::clone(js_config_loader)),
         );
-        FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }
+        (FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }, client_message)
     }
 
     /// Load the workspace-root resolver,
@@ -349,7 +361,7 @@ impl ServerFormatter {
         explicit_config_path: Option<&Path>,
         editorconfig_path: Option<&Path>,
         js_config_loader: &JsConfigLoaderCb,
-    ) -> ConfigResolver {
+    ) -> (ConfigResolver, Option<ClientMessage>) {
         let result = ConfigResolver::from_config(
             root_path,
             explicit_config_path,
@@ -358,20 +370,26 @@ impl ServerFormatter {
         )
         .and_then(|mut resolver| {
             resolver.build_and_validate()?;
-            Ok(resolver)
+            Ok((resolver, None))
         });
 
         result.unwrap_or_else(|err| {
-            warn!(
-                "Failed to load config at {}: {err}, falling back to default",
-                root_path.display()
-            );
+            // fallback to default config
             let mut resolver = ConfigResolver::from_json_config(None, None)
                 .expect("Default ConfigResolver should never fail");
             resolver
                 .build_and_validate()
                 .expect("Default ConfigResolver validation should never fail");
-            resolver
+            (
+                resolver,
+                Some(ClientMessage {
+                    message: format!(
+                        "Failed to load config at {}: {err}, falling back to default",
+                        root_path.display()
+                    ),
+                    r#type: MessageType::ERROR,
+                }),
+            )
         })
     }
 

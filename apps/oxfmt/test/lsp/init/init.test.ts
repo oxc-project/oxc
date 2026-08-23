@@ -1,6 +1,7 @@
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createLspConnection } from "../utils";
+import { createLspConnection, snapshotShowMessages } from "../utils";
 import { WatchKind } from "vscode-languageserver-protocol/node";
 
 describe("LSP initialization", () => {
@@ -31,6 +32,18 @@ describe("LSP initialization", () => {
     const initResult = await client.initialize(null);
 
     expect(initResult.serverInfo?.version).toContain(`(VP: ${vpVersion})`);
+  });
+
+  it("should show a client message when the workspace config is invalid", async () => {
+    const dirUri = pathToFileURL(join(import.meta.dirname, "fixtures", "invalid-config")).href;
+    await using client = createLspConnection();
+
+    const showMessagePromise = client.getShowMessage();
+    await client.initialize([{ uri: dirUri, name: "test" }], {}, [
+      { workspaceUri: dirUri, options: null },
+    ]);
+    const showMessage = await showMessagePromise;
+    expect(snapshotShowMessages([showMessage])).toMatchSnapshot();
   });
 
   it.each([
