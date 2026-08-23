@@ -5,10 +5,11 @@ use napi_derive::napi;
 
 use oxc_napi::OxcError;
 use serde_json::Value;
+use usage_rs as usage;
 
 use crate::{
     api::{format_api, text_to_doc_api},
-    cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_rayon},
+    cli::{FormatCommand, MigrateSource, Mode, StdinRunner, WalkRunner, init_rayon},
     core::{
         ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
         JsInitExternalServicesCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
@@ -32,7 +33,12 @@ use crate::{
 /// - `mode`: If main logic will run in JS side, use this to indicate which mode
 /// - `exitCode`: If main logic already ran in Rust side, return the exit code
 #[expect(clippy::allow_attributes)]
-#[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
+#[allow(
+    clippy::print_stderr,
+    clippy::print_stdout,
+    clippy::trailing_empty_array,
+    clippy::unused_async
+)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
 pub async fn run_cli(
     args: Vec<String>,
@@ -52,16 +58,42 @@ pub async fn run_cli(
     )]
     sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
-    // Convert `String` args to `OsString` for compatibility with `bpaf`
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
-    // Use `run_inner()` to report errors instead of panicking
-    let command = match format_command().run_inner(&*args) {
+    if let Some(spec) = FormatCommand::spec_request(&args) {
+        print!("{spec}");
+        return ("cli".to_string(), Some(0));
+    }
+    if let Some(completions) = FormatCommand::completion_request(&args) {
+        print!("{completions}");
+        return ("cli".to_string(), Some(0));
+    }
+
+    let command = match FormatCommand::parse_from(&args) {
         Ok(cmd) => cmd,
-        Err(e) => {
-            e.print_message(100);
-            // `bpaf` returns exit_code 0 for --help/--version, non-0 for parse errors
-            let exit_code = u8::from(e.exit_code() != 0);
+        Err(error) => {
+            let exit_code = match error {
+                usage::Error::Help { cmd, long } => {
+                    if let Some(help) = FormatCommand::render_help(cmd, long) {
+                        print!("{help}");
+                    }
+                    0
+                }
+                usage::Error::HelpAll { cmd } => {
+                    if let Some(help) = usage::help::render_all(FormatCommand::spec(), cmd) {
+                        print!("{help}");
+                    }
+                    0
+                }
+                usage::Error::Version { .. } => {
+                    println!("oxfmt {}", env!("CARGO_PKG_VERSION"));
+                    0
+                }
+                error => {
+                    eprint!("{}", FormatCommand::render_failure(&args, &error));
+                    1
+                }
+            };
             return ("cli".to_string(), Some(exit_code));
         }
     };

@@ -206,7 +206,6 @@ allocator-api2 = "=0.2.21" # Allocator trait
 anyhow = "1.0" # Flexible error handling
 base64 = "0.23.0" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
-bpaf = "0.9.26" # CLI parser
 bytecount = "0.6.9" # Byte counting
 compact_str = "0.10.0" # Compact string type
 console = "0.16.4" # Terminal utilities
@@ -274,6 +273,8 @@ tower-lsp-server = "0.23.0" # LSP server framework
 tracing = "0.1.44" # Tracing framework
 tracing-subscriber = "0.3.23" # Tracing implementation
 unicode-width = "0.2" # Unicode display width
+usage-rs = "6.1.0" # CLI parser
+usage-parser = { package = "usage-lib", version = "6.1.0" } # Usage spec parser and renderer
 ureq = { version = "3.3.0", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
