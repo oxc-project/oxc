@@ -2111,14 +2111,13 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let (branch_test, value) = if consequent_is_undefined {
-            let conditional_test = conditional.test.take_in(ctx);
-            let mut branch_test =
-                Self::minimize_not(conditional_test.span(), conditional_test, ctx);
+        let mut branch_test = conditional.test.take_in(ctx);
+        let value = if consequent_is_undefined {
+            branch_test = Self::minimize_not(branch_test.span(), branch_test, ctx);
             Self::minimize_expression_in_boolean_context(&mut branch_test, ctx);
-            (branch_test, conditional.alternate.take_in(ctx))
+            conditional.alternate.take_in(ctx)
         } else {
-            (conditional.test.take_in(ctx), conditional.consequent.take_in(ctx))
+            conditional.consequent.take_in(ctx)
         };
         let outer_test = if_stmt.test.take_in(ctx);
         let new_test = Self::join_with_left_associative_op(
