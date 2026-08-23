@@ -10,7 +10,7 @@ use std::{
 
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 use usage_rs as usage;
-use usage_rs::{Args, Cli, Event, Parser, ValidationError};
+use usage_rs::{ArgGroup, Args, Cli, ValidationError};
 
 use crate::output_formatter::OutputFormat;
 
@@ -148,10 +148,7 @@ pub struct SuppressionOptions {
 
 impl LintCommand {
     pub fn parse() -> Self {
-        let cli = LintCli::parse();
-        let args = std::env::args_os().skip(1).collect::<Vec<_>>();
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
-        Self::from_cli(cli, &refs)
+        Self::from_cli(LintCli::parse())
     }
 
     /// Parses linter options from an argument slice.
@@ -165,15 +162,13 @@ impl LintCommand {
     {
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
         let cli = LintCli::parse_from(&refs)?;
-        Ok(Self::from_cli(cli, &refs))
+        Ok(Self::from_cli(cli))
     }
 
-    fn from_cli(cli: LintCli, args: &[&OsStr]) -> Self {
-        let filter = lint_filters(args);
-        let _ = cli.filter_options;
+    fn from_cli(cli: LintCli) -> Self {
         Self {
             basic_options: cli.basic_options,
-            filter,
+            filter: cli.filter_options.filters.into_iter().map(LintFilter::into_tuple).collect(),
             enable_plugins: cli.enable_plugins.into(),
             fix_options: cli.fix_options,
             ignore_options: cli.ignore_options,
@@ -217,34 +212,13 @@ impl LintCommand {
     }
 
     pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
         match LintCli::embedded_outcome(args) {
             usage::embedded::Outcome::Parsed(cli) => {
-                usage::embedded::Outcome::Parsed(Self::from_cli(cli, &refs))
+                usage::embedded::Outcome::Parsed(Self::from_cli(cli))
             }
             usage::embedded::Outcome::Exit(exit) => usage::embedded::Outcome::Exit(exit),
         }
     }
-}
-
-fn lint_filters(args: &[&OsStr]) -> Vec<(AllowWarnDeny, String)> {
-    let mut filters = Vec::new();
-    let mut parser = Parser::new(LintCli::command(), args);
-    while let Some(event) = parser.next_event() {
-        let event = event.expect("LintCli already parsed the same argv successfully");
-        let Event::Flag { flag, value: Some(value), .. } = event else {
-            continue;
-        };
-        let severity = match flag.name {
-            "allow" => AllowWarnDeny::Allow,
-            "warn" => AllowWarnDeny::Warn,
-            "deny" => AllowWarnDeny::Deny,
-            _ => continue,
-        };
-        let value = usage::as_str(value).expect("String fields reject non-UTF-8 values");
-        filters.push((severity, value.to_string()));
-    }
-    filters
 }
 
 impl LintCommand {
@@ -340,17 +314,34 @@ pub struct BasicOptions {
 
 #[derive(Debug, Clone, Args)]
 struct LintFilterOptions {
+    #[usage(arg_group)]
+    filters: Vec<LintFilter>,
+}
+
+#[derive(Debug, Clone, ArgGroup)]
+#[usage(name = "lint-filter", multiple)]
+enum LintFilter {
     /// Allow the rule or category (suppress the lint)
-    #[usage(short = 'A', long, value_name = "NAME")]
-    allow: Vec<String>,
+    #[usage(short = 'A', value_name = "NAME")]
+    Allow(String),
 
     /// Warn on the rule or category (emit a warning)
-    #[usage(short = 'W', long, value_name = "NAME")]
-    warn: Vec<String>,
+    #[usage(short = 'W', value_name = "NAME")]
+    Warn(String),
 
     /// Deny the rule or category (emit an error)
-    #[usage(short = 'D', long, value_name = "NAME")]
-    deny: Vec<String>,
+    #[usage(short = 'D', value_name = "NAME")]
+    Deny(String),
+}
+
+impl LintFilter {
+    fn into_tuple(self) -> (AllowWarnDeny, String) {
+        match self {
+            Self::Allow(name) => (AllowWarnDeny::Allow, name),
+            Self::Warn(name) => (AllowWarnDeny::Warn, name),
+            Self::Deny(name) => (AllowWarnDeny::Deny, name),
+        }
+    }
 }
 
 /// Fix Problems
@@ -448,6 +439,7 @@ pub struct OutputOptions {
         long,
         value_name = "OPTIONS",
         choices("files", "timings"),
+        choices_strict = false,
         default_fn = DebugOptions::default
     )]
     pub debug: DebugOptions,
@@ -893,14 +885,14 @@ mod lint_options {
     #[test]
     fn filter() {
         let options =
-            get_lint_options("-D suspicious --deny pedantic -A no-debugger --allow no-var src");
+            get_lint_options("-D suspicious -A no-debugger --warn pedantic --deny no-var src");
         assert_eq!(
             options.filter,
             [
                 (AllowWarnDeny::Deny, "suspicious".into()),
-                (AllowWarnDeny::Deny, "pedantic".into()),
                 (AllowWarnDeny::Allow, "no-debugger".into()),
-                (AllowWarnDeny::Allow, "no-var".into())
+                (AllowWarnDeny::Warn, "pedantic".into()),
+                (AllowWarnDeny::Deny, "no-var".into())
             ]
         );
     }
@@ -1108,6 +1100,7 @@ mod usage_integration {
     #[test]
     fn spec_exposes_output_and_completion_contracts() {
         let spec = LintCommand::to_kdl();
+        assert!(spec.contains("group lint-filter --allow --warn --deny multiple=#true"));
         assert!(spec.contains("output json framing=json"));
         assert!(spec.contains("output sarif framing=json"));
         assert!(spec.contains("select \"--format\""));
