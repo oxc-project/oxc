@@ -8,10 +8,6 @@
 //! For useMemo: replaces `Call useMemo(fn, deps)` with `Call fn()`
 //! For useCallback: replaces `Call useCallback(fn, deps)` with `LoadLocal fn`
 //!
-//! Accessor-bearing functions retain the original calls because their inferred
-//! reactive scopes are emitted without caching. React must continue to provide
-//! the explicit memoization guarantees in that case.
-//!
 //! When validation flags are set, inserts `StartMemoize`/`FinishMemoize` markers.
 //!
 //! Analogous to TS `Inference/DropManualMemoization.ts`.
@@ -98,12 +94,11 @@ struct ExtractedMemoArgs<'a> {
 // Main pass
 // =============================================================================
 
-/// Drop manual memoization (useMemo/useCallback calls), replacing them with
-/// direct invocations/references unless the function contains object accessors.
+/// Drop manual memoization when compiler caching replaces its guarantees.
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
-    has_object_accessors: bool,
+    preserve_manual_memoization: bool,
 ) -> Result<(), OxcDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
@@ -121,8 +116,7 @@ pub fn drop_manual_memoization<'a>(
     let mut next_manual_memo_id: u32 = 0;
 
     // Phase 1:
-    // - Overwrite manual memoization CallExpression/MethodCall when compiler
-    //   memoization will replace their guarantees
+    // - Overwrite manual memoization CallExpression/MethodCall
     // - (if validation is enabled) collect manual memoization markers
     //
     // queued_inserts maps InstructionId -> new Instruction to insert after that instruction
@@ -156,7 +150,7 @@ pub fn drop_manual_memoization<'a>(
                     is_validation_enabled,
                     &mut next_manual_memo_id,
                     &mut queued_inserts,
-                    has_object_accessors,
+                    preserve_manual_memoization,
                 );
             } else {
                 collect_temporaries(func, env, instr_id, &mut sidemap);
@@ -217,7 +211,7 @@ fn process_manual_memo_call<'a>(
     is_validation_enabled: bool,
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
-    has_object_accessors: bool,
+    preserve_manual_memoization: bool,
 ) {
     let instr = &func.instructions[instr_id.index()];
 
@@ -232,10 +226,7 @@ fn process_manual_memo_call<'a>(
     let span = func.instructions[instr_id.index()].value.span().cloned();
     let callee_span = func.instructions[manual_memo.load_instr_id.index()].value.span().copied();
 
-    // Accessor reads and writes may invoke arbitrary user code, so accessor-bearing
-    // functions later emit inferred reactive scopes without caching. Keep React's
-    // manual memo call intact rather than dropping its semantic guarantee.
-    if !has_object_accessors {
+    if !preserve_manual_memoization {
         let replacement =
             get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
         func.instructions[instr_id.index()].value = replacement;
@@ -271,7 +262,7 @@ fn process_manual_memo_call<'a>(
             callee_span,
             &memo_decl,
             manual_memo_id,
-            has_object_accessors,
+            preserve_manual_memoization,
         );
 
         queued_inserts.insert(manual_memo.load_instr_id, start_marker);
@@ -477,7 +468,7 @@ fn make_manual_memoization_markers<'a>(
     callee_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
-    has_object_accessors: bool,
+    preserve_manual_memoization: bool,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
         id: EvaluationOrder::UNSET,
@@ -499,10 +490,7 @@ fn make_manual_memoization_markers<'a>(
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
             decl: *memo_decl,
-            // The original hook still provides the memoization guarantee when
-            // accessor-bearing functions disable compiler caching, so the
-            // post-conversion validator has nothing to prove for this marker.
-            pruned: has_object_accessors,
+            pruned: preserve_manual_memoization,
             span: fn_expr.span,
         },
         span: fn_expr.span,

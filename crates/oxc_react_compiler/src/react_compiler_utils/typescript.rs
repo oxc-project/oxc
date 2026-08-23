@@ -1,8 +1,7 @@
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::ast::FormalParameters;
 
-/// Copy TypeScript-only parameter metadata onto parameters rebuilt by compiler
-/// codegen. Parameter bindings are intentionally left unchanged.
+/// Copy TypeScript metadata onto parameters rebuilt by codegen.
 pub fn copy_param_ts_metadata<'a>(
     allocator: &'a Allocator,
     new_params: &mut FormalParameters<'a>,

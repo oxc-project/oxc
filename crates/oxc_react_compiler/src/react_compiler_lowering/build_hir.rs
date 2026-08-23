@@ -5516,16 +5516,11 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
     }
 }
 
-/// Lower an oxc object getter/setter/method (`ObjectProperty` whose value is a
-/// `FunctionExpression`). Lowers the key and nested function
-/// (`lower_function_for_object_method`) and emits an `ObjectMethod` instruction
-/// value while preserving the property's accessor/method kind for codegen.
+/// Lower an object method, getter, or setter.
 fn lower_object_method<'a>(
     builder: &mut HirBuilder<'a, '_>,
     method: &oxc::ObjectProperty<'a>,
 ) -> Result<Option<ObjectProperty<'a>>, OxcDiagnostic> {
-    // In oxc, a shorthand method is encoded as `kind: Init, method: true`;
-    // getters/setters carry a non-`Init` `PropertyKind`.
     let property_type = match method.kind {
         oxc::PropertyKind::Init => ObjectPropertyType::Method,
         oxc::PropertyKind::Get => ObjectPropertyType::Getter,

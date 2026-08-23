@@ -132,9 +132,7 @@ pub fn compile_fn<'a, const EMIT: bool>(
         return Ok(None);
     }
 
-    // Accessors may invoke arbitrary user code. Until property effects can identify
-    // statically known accessors, compile the entire function without inferred
-    // caches, including when the accessor appears in a nested function.
+    // Accessor calls are not yet modeled by property effects, so disable inferred caches.
     let has_object_accessors = std::iter::once(&hir)
         .chain(env.functions.iter())
         .flat_map(|func| func.instructions.iter())
