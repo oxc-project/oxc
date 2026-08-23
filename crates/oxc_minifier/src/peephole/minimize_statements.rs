@@ -159,7 +159,12 @@ impl<'a> PeepholeOptimizations {
                                 ctx.is_closest_function_scope_an_async_generator();
                             let prev_return_is_bare = prev_return.argument.is_none();
                             let last_return_is_bare = last_return.argument.is_none();
-                            if prev_return_is_bare && last_return_is_bare {
+                            let is_labeled_block = ctx.parent().is_block_statement()
+                                && ctx.ancestor(1).is_labeled_statement();
+                            if prev_return_is_bare
+                                && last_return_is_bare
+                                && (is_async_generator || !is_labeled_block)
+                            {
                                 let Statement::IfStatement(if_stmt) = &mut stmts[prev_index] else {
                                     unreachable!()
                                 };
