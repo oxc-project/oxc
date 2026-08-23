@@ -1545,6 +1545,7 @@ export interface DummyRuleMap {
   "typescript/use-unknown-in-catch-callback-variable"?: RuleNoConfig;
   "unicode-bom"?: RuleNoConfig | [AllowWarnDeny, BomOptionType];
   "unicorn/catch-error-name"?: RuleNoConfig | [AllowWarnDeny, CatchErrorNameConfig];
+  "unicorn/class-reference-in-static-methods"?: RuleNoConfig | [AllowWarnDeny, ClassReferenceInStaticMethodsOptions];
   "unicorn/consistent-assert"?: RuleNoConfig;
   "unicorn/consistent-date-clone"?: RuleNoConfig;
   "unicorn/consistent-empty-array-spread"?: RuleNoConfig;
@@ -6271,6 +6272,16 @@ export interface CatchErrorNameConfig {
    * to something other than `'error'` (e.g., `'exception'`).
    */
   name?: string;
+}
+export interface ClassReferenceInStaticMethodsOptions {
+  /**
+   * Prefer `super` over the superclass name in static methods.
+   */
+  preferSuper?: boolean;
+  /**
+   * Prefer `this` over the current class name in static methods.
+   */
+  preferThis?: boolean;
 }
 export interface ConsistentFunctionScoping {
   /**
