@@ -60,15 +60,6 @@ pub async fn run_cli(
 ) -> (String, Option<u8>) {
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
-    if let Some(spec) = FormatCommand::spec_request(&args) {
-        print!("{spec}");
-        return ("cli".to_string(), Some(0));
-    }
-    if let Some(completions) = FormatCommand::completion_request(&args) {
-        print!("{completions}");
-        return ("cli".to_string(), Some(0));
-    }
-
     let command = match FormatCommand::embedded_outcome(&args) {
         usage::embedded::Outcome::Parsed(command) => command,
         usage::embedded::Outcome::Exit(exit) => {

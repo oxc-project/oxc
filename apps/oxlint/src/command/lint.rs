@@ -70,18 +70,6 @@ pub struct LintCommand {
     help_template = "{{about}}\n\n{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
     example("oxlint -D correctness src", header = "Deny a category"),
     example("oxlint --format github .", header = "GitHub Actions"),
-    output("default", default, help = "Human-readable diagnostics"),
-    output("agent", help = "Diagnostics optimized for coding agents"),
-    output("checkstyle", help = "Checkstyle XML diagnostics"),
-    output("github", help = "GitHub workflow annotations"),
-    output("gitlab", help = "GitLab Code Quality diagnostics"),
-    output("json", framing = "json", help = "JSON diagnostics"),
-    output("junit", help = "JUnit XML diagnostics"),
-    output("sarif", framing = "json", help = "SARIF diagnostics"),
-    output("stylish", help = "Stylish text diagnostics"),
-    output("unix", help = "Unix-style text diagnostics"),
-    exit_code(0, "lint completed without errors"),
-    exit_code(1, "lint errors or invalid options were found"),
     validate_with = validate_lint_cli
 )]
 struct LintCli {
@@ -97,32 +85,8 @@ struct LintCli {
     ignore_options: IgnoreOptions,
     #[usage(flatten, next_help_heading = "Handle Warnings")]
     warning_options: WarningOptions,
-    /// Use a specific output format.
-    #[usage(
-        long,
-        short,
-        value_name = "FORMAT",
-        value_enum,
-        select,
-        default_fn = default_output_format,
-        default_note = "auto-detected from the runtime environment",
-        help_heading = "Output"
-    )]
-    format: OutputFormat,
-
-    /// Enable debug output options. Options are comma-separated.
-    ///
-    ///  * `files` - Print the list of files that will be linted, then exit.
-    ///  * `timings` - Enable per-rule timing information.
-    #[usage(
-        long,
-        value_name = "OPTIONS",
-        choices("files", "timings"),
-        choices_strict = false,
-        default_fn = DebugOptions::default,
-        help_heading = "Output"
-    )]
-    debug: DebugOptions,
+    #[usage(flatten, next_help_heading = "Output")]
+    output_options: OutputOptions,
 
     /// List all the rules that are currently registered
     #[usage(long = "rules")]
@@ -214,7 +178,7 @@ impl LintCommand {
             fix_options: cli.fix_options,
             ignore_options: cli.ignore_options,
             warning_options: cli.warning_options,
-            output_options: OutputOptions { format: cli.format, debug: cli.debug },
+            output_options: cli.output_options,
             list_rules: cli.list_rules,
             lsp: cli.lsp,
             misc_options: cli.misc_options,
@@ -252,20 +216,14 @@ impl LintCommand {
         LintCli::to_kdl()
     }
 
-    pub fn spec_request<T: AsRef<OsStr>>(args: &[T]) -> Option<String> {
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        LintCli::spec_request(&refs)
-    }
-
-    pub fn completion_request(args: &[OsString]) -> Option<String> {
-        LintCli::completion_request(args)
-    }
-
     pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
-        usage::embedded::outcome(LintCli::spec(), LintCli::command(), &refs, |argv| {
-            LintCli::parse_from(argv).map(|cli| Self::from_cli(cli, argv))
-        })
+        match LintCli::embedded_outcome(args) {
+            usage::embedded::Outcome::Parsed(cli) => {
+                usage::embedded::Outcome::Parsed(Self::from_cli(cli, &refs))
+            }
+            usage::embedded::Outcome::Exit(exit) => usage::embedded::Outcome::Exit(exit),
+        }
     }
 }
 
@@ -453,9 +411,45 @@ pub struct WarningOptions {
 }
 
 /// Output
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Args)]
+#[allow(clippy::duplicated_attributes)]
+#[usage(
+    output("default", default, help = "Human-readable diagnostics"),
+    output("agent", help = "Diagnostics optimized for coding agents"),
+    output("checkstyle", help = "Checkstyle XML diagnostics"),
+    output("github", help = "GitHub workflow annotations"),
+    output("gitlab", help = "GitLab Code Quality diagnostics"),
+    output("json", framing = "json", help = "JSON diagnostics"),
+    output("junit", help = "JUnit XML diagnostics"),
+    output("sarif", framing = "json", help = "SARIF diagnostics"),
+    output("stylish", help = "Stylish text diagnostics"),
+    output("unix", help = "Unix-style text diagnostics"),
+    exit_code(0, "lint completed without errors"),
+    exit_code(1, "lint errors or invalid options were found")
+)]
 pub struct OutputOptions {
+    /// Use a specific output format.
+    #[usage(
+        long,
+        short,
+        value_name = "FORMAT",
+        value_enum,
+        select,
+        default_fn = default_output_format,
+        default_note = "auto-detected from the runtime environment"
+    )]
     pub format: OutputFormat,
+
+    /// Enable debug output options. Options are comma-separated.
+    ///
+    ///  * `files` - Print the list of files that will be linted, then exit.
+    ///  * `timings` - Enable per-rule timing information.
+    #[usage(
+        long,
+        value_name = "OPTIONS",
+        choices("files", "timings"),
+        default_fn = DebugOptions::default
+    )]
     pub debug: DebugOptions,
 }
 
@@ -1118,5 +1112,22 @@ mod usage_integration {
         assert!(spec.contains("output sarif framing=json"));
         assert!(spec.contains("select \"--format\""));
         assert!(spec.contains("complete path type=path"));
+    }
+
+    #[test]
+    fn embedded_dispatch_handles_control_requests() {
+        let spec = LintCommand::embedded_outcome(&[OsString::from(usage_rs::SPEC_REQUEST)]);
+        let exit = spec.exit().expect("spec request should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+        assert!(exit.text.contains("name oxlint"));
+
+        let args =
+            ["__complete_word__", "--shell", "bash", "--line", "oxlint --fo"].map(OsString::from);
+        let completions = LintCommand::embedded_outcome(&args);
+        let exit = completions.exit().expect("completion request should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+        assert!(exit.text.contains("--format"));
     }
 }

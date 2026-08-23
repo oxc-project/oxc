@@ -107,17 +107,22 @@ impl FormatCommand {
         FormatCli::to_kdl()
     }
 
-    pub fn spec_request<T: AsRef<OsStr>>(args: &[T]) -> Option<String> {
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        FormatCli::spec_request(&refs)
-    }
-
-    pub fn completion_request(args: &[OsString]) -> Option<String> {
-        FormatCli::completion_request(args)
-    }
-
     pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
+        if let Some(text) = FormatCli::spec_request(&refs) {
+            return usage::embedded::Outcome::Exit(usage::embedded::Exit {
+                text,
+                stderr: false,
+                code: 0,
+            });
+        }
+        if let Some(text) = FormatCli::completion_request(args) {
+            return usage::embedded::Outcome::Exit(usage::embedded::Exit {
+                text,
+                stderr: false,
+                code: 0,
+            });
+        }
         usage::embedded::outcome(
             FormatCli::spec(),
             FormatCli::command(),
