@@ -48,8 +48,8 @@ oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
 
 anyhow = { workspace = true }
-bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 indexmap = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
+usage-rs = { workspace = true, features = ["completions"] }
