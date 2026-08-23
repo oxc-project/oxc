@@ -24,8 +24,31 @@ describe.each([
     expect("y".replace(regexp, "$<constructor>")).toBe("");
     expect("y".replace(regexp, "$<hasOwnProperty>")).toBe("");
     expect("y".replace(regexp, "$<__proto__>")).toBe("");
+    expect("y".replace(regexp, "$<>")).toBe("");
     expect("y".replace(regexp, "$$<missing>")).toBe("$<missing>");
     expect("y".replace(regexp, "$<missing")).toBe("$<missing");
+  });
+
+  test("preserves standard replacement tokens", () => {
+    const native = /(x)|(y)/;
+    const regexp = wrapRegExp(native, { a: [1, 2] });
+
+    for (const replacement of [
+      "$$",
+      "$&",
+      "$`",
+      "$'",
+      "$0",
+      "$00",
+      "$01",
+      "$1",
+      "$2",
+      "$10",
+      "$99",
+      "$100",
+    ]) {
+      expect("ayb".replace(regexp, replacement)).toBe("ayb".replace(native, replacement));
+    }
   });
 
   test("supports __proto__ as a named group", () => {
@@ -38,6 +61,12 @@ describe.each([
     const regexp = wrapRegExp(/(x)()()()()()()()()()()()/, { a: 1 });
 
     expect("x".replace(regexp, "$<a>2")).toBe("x2");
+  });
+
+  test("supports named captures above numeric replacement limits", () => {
+    const regexp = wrapRegExp(new RegExp(`${"()".repeat(99)}(x)`), { a: 100 });
+
+    expect("x".replace(regexp, "[$<a>]")).toBe("[x]");
   });
 
   test("supports ordinary construction through a wrapped instance", () => {

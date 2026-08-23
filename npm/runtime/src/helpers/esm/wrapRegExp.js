@@ -23,11 +23,23 @@ function _wrapRegExp() {
       return r;
     }, Object.create(null));
   }
-  function buildGroupReplacement(e) {
-    return "number" == typeof e ? "$" + (e < 10 ? "0" : "") + e : e.map(buildGroupReplacement).join("");
-  }
-  function getGroupReplacement(e, r) {
-    return n.call(e, r) ? buildGroupReplacement(e[r]) : "";
+  function getSubstitution(e, r, t, p, o, i, a) {
+    return i.replace(/\$(\$|&|`|'|<([^>]*)>|(\d{1,2}))/g, function (i, c, l, s) {
+      if ("$" == c) return "$";
+      if ("&" == c) return e;
+      if ("`" == c) return r.slice(0, t);
+      if ("'" == c) return r.slice(t + e.length);
+      if (void 0 !== l) {
+        var u = n.call(a, l) ? a[l] : void 0;
+        return void 0 === u ? "" : u;
+      }
+      var f = +s,
+        g = "";
+      if (f > o && 2 == s.length) f = +s[0], g = s[1];
+      if (0 == f || f > o) return "$" + s;
+      var h = p[f];
+      return (void 0 === h ? "" : h) + g;
+    });
   }
   function cloneForMatchAll(e) {
     var t = new BabelRegExp(e, e.flags);
@@ -47,17 +59,19 @@ function _wrapRegExp() {
     var o = r.get(this);
     if (!o) return e[Symbol.replace].call(this, t, p);
     if ("string" == typeof p) {
-      return e[Symbol.replace].call(this, t, p.replace(/\$\$|\$<([^>]+)(>|$)/g, function (e, r, t) {
-        if ("$$" === e) return e;
-        if ("" === t) return e;
-        return getGroupReplacement(o, r);
-      }));
-    }
-    if ("function" == typeof p) {
       var i = this;
       return e[Symbol.replace].call(this, t, function () {
+        var e = arguments,
+          r = e.length - 1,
+          t = "object" == _typeof(e[r]) ? e[r--] : buildGroups(e, i);
+        return getSubstitution(e[0], e[r], e[r - 1], e, r - 2, p, t);
+      });
+    }
+    if ("function" == typeof p) {
+      var a = this;
+      return e[Symbol.replace].call(this, t, function () {
         var e = arguments;
-        return "object" != _typeof(e[e.length - 1]) && (e = [].slice.call(e)).push(buildGroups(e, i)), p.apply(this, e);
+        return "object" != _typeof(e[e.length - 1]) && (e = [].slice.call(e)).push(buildGroups(e, a)), p.apply(this, e);
       });
     }
     return e[Symbol.replace].call(this, t, p);
