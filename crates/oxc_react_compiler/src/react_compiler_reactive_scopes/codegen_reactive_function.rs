@@ -35,7 +35,6 @@ use crate::react_compiler_hir::Place;
 use crate::react_compiler_hir::PlaceOrSpread;
 use crate::react_compiler_hir::PrimitiveValue;
 use crate::react_compiler_hir::PropertyLiteral;
-use crate::react_compiler_hir::ReactiveScopeDeclaration;
 use crate::react_compiler_hir::ScopeId;
 use crate::react_compiler_hir::TypeCast;
 use crate::react_compiler_hir::environment::{Environment, OutputMode};
@@ -89,7 +88,6 @@ pub fn codegen_function<'a>(
         env,
         unique_identifiers,
         fbt_operands,
-        func.has_object_accessors,
     );
 
     let mut compiled = ox_codegen_reactive_function(&mut cx, func)?;
@@ -165,8 +163,7 @@ pub fn codegen_function<'a>(
     // compiled with fresh contexts (mirrors TS `codegenFunction`).
     drop(cx);
 
-    let outlined =
-        ox_codegen_outlined(ast, env, fbt_operands_for_outlined, func.has_object_accessors)?;
+    let outlined = ox_codegen_outlined(ast, env, fbt_operands_for_outlined)?;
 
     Ok(OxcCodegenFunction {
         span: func.span,
@@ -188,7 +185,6 @@ fn ox_codegen_outlined<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     env: &mut Environment<'a>,
     fbt_operands: FxHashSet<IdentifierId>,
-    has_object_accessors: bool,
 ) -> Result<
     Vec<crate::react_compiler::entrypoint::compile_result::OutlinedFunction<'a>>,
     OxcDiagnostic,
@@ -199,7 +195,6 @@ fn ox_codegen_outlined<'a>(
     let mut outlined = Vec::with_capacity(entries.len());
     for entry in entries {
         let mut reactive_function = build_reactive_function(&entry.func, env)?;
-        reactive_function.has_object_accessors |= has_object_accessors;
         prune_unused_labels(&mut reactive_function, env)?;
         prune_unused_lvalues(&mut reactive_function, env);
         prune_hoisted_contexts(&mut reactive_function, env)?;
@@ -274,7 +269,6 @@ struct OxcContext<'a, 'env> {
     unique_identifiers: IdentHashSet<'a>,
     fbt_operands: FxHashSet<IdentifierId>,
     synthesized_names: IdentHashMap<'a, Ident<'a>>,
-    has_object_accessors: bool,
 }
 
 impl<'a, 'env> OxcContext<'a, 'env> {
@@ -283,7 +277,6 @@ impl<'a, 'env> OxcContext<'a, 'env> {
         env: &'env mut Environment<'a>,
         unique_identifiers: IdentHashSet<'a>,
         fbt_operands: FxHashSet<IdentifierId>,
-        has_object_accessors: bool,
     ) -> Self {
         OxcContext {
             ast,
@@ -295,7 +288,6 @@ impl<'a, 'env> OxcContext<'a, 'env> {
             unique_identifiers,
             fbt_operands,
             synthesized_names: IdentHashMap::default(),
-            has_object_accessors,
         }
     }
 
@@ -724,30 +716,8 @@ fn ox_codegen_reactive_scope<'a>(
     scope_id: ScopeId,
     block: &ReactiveBlock<'a>,
 ) -> Result<(), OxcDiagnostic> {
-    let mut scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
-    scope_decls.sort_unstable_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
-
-    if cx.has_object_accessors {
-        // Property reads and writes may invoke an accessor and therefore run
-        // arbitrary user code. Until property effects reference statically known
-        // accessors, emitting dependency guards could duplicate getter calls or
-        // skip setter calls. Preserve source semantics by executing the scope on
-        // every invocation, while retaining the declaration bookkeeping and
-        // lexical block boundary needed by block codegen.
-        for (_ident_id, decl) in &scope_decls {
-            ox_codegen_scope_declaration(cx, statements, decl)?;
-        }
-        let computation_body = ox_codegen_block(cx, block)?;
-        statements.push(oxc_ast::ast::Statement::new_block_statement(
-            SPAN,
-            computation_body,
-            &cx.ast,
-        ));
-        ox_codegen_scope_early_return(cx, statements, scope_id)?;
-        return Ok(());
-    }
-
     let scope_deps = cx.env.scopes[scope_id].dependencies.clone_in(cx.env.allocator);
+    let scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
     let scope_reassignments =
         cx.env.scopes[scope_id].reassignments.iter().copied().collect::<Vec<_>>();
 
@@ -792,13 +762,31 @@ fn ox_codegen_reactive_scope<'a>(
 
     let mut first_output_index: Option<u32> = None;
 
-    for (_ident_id, decl) in &scope_decls {
+    let mut decls = scope_decls;
+    decls.sort_unstable_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
+
+    for (_ident_id, decl) in &decls {
         let index = cx.alloc_cache_index();
         if first_output_index.is_none() {
             first_output_index = Some(index);
         }
-        let name = ox_codegen_scope_declaration(cx, statements, decl)?;
+        let name = ox_identifier_name(cx.env, decl.identifier)?;
+        if !cx.has_declared(decl.identifier) {
+            let binding = ox_binding_for_identifier(cx, decl.identifier, None)?;
+            let declarator =
+                oxc_ast::ast::VariableDeclarator::new(SPAN, binding, None, None, false, &cx.ast);
+            statements.push(oxc::Statement::VariableDeclaration(
+                oxc_ast::ast::VariableDeclaration::boxed(
+                    SPAN,
+                    oxc::VariableDeclarationKind::Let,
+                    [declarator],
+                    false,
+                    &cx.ast,
+                ),
+            ));
+        }
         cache_loads.push((name, index));
+        cx.declare(decl.identifier);
     }
 
     for reassignment_id in scope_reassignments {
@@ -880,40 +868,7 @@ fn ox_codegen_reactive_scope<'a>(
     );
     statements.push(memo_stmt);
 
-    ox_codegen_scope_early_return(cx, statements, scope_id)?;
-
-    Ok(())
-}
-
-fn ox_codegen_scope_declaration<'a>(
-    cx: &mut OxcContext<'a, '_>,
-    statements: &mut oxc_allocator::Vec<'a, oxc::Statement<'a>>,
-    declaration: &ReactiveScopeDeclaration,
-) -> Result<Ident<'a>, OxcDiagnostic> {
-    let name = ox_identifier_name(cx.env, declaration.identifier)?;
-    if !cx.has_declared(declaration.identifier) {
-        let binding = ox_binding_for_identifier(cx, declaration.identifier, None)?;
-        let declarator =
-            oxc_ast::ast::VariableDeclarator::new(SPAN, binding, None, None, false, &cx.ast);
-        statements.push(oxc::Statement::VariableDeclaration(
-            oxc_ast::ast::VariableDeclaration::boxed(
-                SPAN,
-                oxc::VariableDeclarationKind::Let,
-                [declarator],
-                false,
-                &cx.ast,
-            ),
-        ));
-    }
-    cx.declare(declaration.identifier);
-    Ok(name)
-}
-
-fn ox_codegen_scope_early_return<'a>(
-    cx: &mut OxcContext<'a, '_>,
-    statements: &mut oxc_allocator::Vec<'a, oxc::Statement<'a>>,
-    scope_id: ScopeId,
-) -> Result<(), OxcDiagnostic> {
+    // Early return
     let early_return_value = cx.env.scopes[scope_id].early_return_value.clone();
     if let Some(ref early_return) = early_return_value {
         let early_ident = &cx.env.identifiers[early_return.value];
@@ -3040,7 +2995,6 @@ fn ox_codegen_inner_function<'a>(
         cx.env,
         cx.unique_identifiers.clone(),
         cx.fbt_operands.clone(),
-        cx.has_object_accessors,
     );
     inner_cx.temp = cx.temp.clone();
     ox_codegen_reactive_function(&mut inner_cx, reactive_fn)

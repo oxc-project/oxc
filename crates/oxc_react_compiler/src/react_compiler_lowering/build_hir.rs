@@ -812,8 +812,7 @@ fn lower_inner<'a>(
     );
 
     // Build the HIR
-    let (hir_body, instructions, used_names, child_bindings, has_object_accessors) =
-        builder.build()?;
+    let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
     let instructions = ArenaVec::from_iter_in(instructions, &env.allocator);
 
     // Create the returns place
@@ -837,7 +836,6 @@ fn lower_inner<'a>(
             generator,
             is_async,
             directives,
-            has_object_accessors,
             aliasing_effects: None,
         },
         used_names,
@@ -3177,7 +3175,6 @@ fn lower_function<'a>(
         ident_spans,
     )?;
 
-    builder.record_object_accessors(hir_func.has_object_accessors);
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3240,7 +3237,6 @@ fn lower_function_declaration<'a>(
         ident_spans,
     )?;
 
-    builder.record_object_accessors(hir_func.has_object_accessors);
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3410,7 +3406,6 @@ fn lower_function_for_object_method<'a>(
         ident_spans,
     )?;
 
-    builder.record_object_accessors(hir_func.has_object_accessors);
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -5533,14 +5528,8 @@ fn lower_object_method<'a>(
     // getters/setters carry a non-`Init` `PropertyKind`.
     let property_type = match method.kind {
         oxc::PropertyKind::Init => ObjectPropertyType::Method,
-        oxc::PropertyKind::Get => {
-            builder.record_object_accessors(true);
-            ObjectPropertyType::Getter
-        }
-        oxc::PropertyKind::Set => {
-            builder.record_object_accessors(true);
-            ObjectPropertyType::Setter
-        }
+        oxc::PropertyKind::Get => ObjectPropertyType::Getter,
+        oxc::PropertyKind::Set => ObjectPropertyType::Setter,
     };
 
     let key = lower_object_property_key(builder, &method.key, method.computed)?

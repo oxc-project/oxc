@@ -8,11 +8,7 @@ function Component(props) {
 		value = v;
 	} };
 	object.value = props.value;
-	let t0;
-	{
-		t0 = <div>{value}</div>;
-	}
-	return t0;
+	return <div>{value}</div>;
 }
 export const FIXTURE_ENTRYPOINT = {
 	fn: Component,

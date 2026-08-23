@@ -47,7 +47,6 @@ pub fn build_reactive_function<'a>(
         params: hir.params.iter().copied().collect(),
         generator: hir.generator,
         is_async: hir.is_async,
-        has_object_accessors: hir.has_object_accessors,
         body,
         directives: hir.directives.iter().copied().collect(),
     })

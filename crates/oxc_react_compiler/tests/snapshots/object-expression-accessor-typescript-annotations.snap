@@ -11,21 +11,13 @@ function Component(t0: {
 	const { value } = t0;
 	const identity = _temp;
 	const x_0 = value;
-	let t1;
-	{
-		const object = {
-			get value(this: Model): typeof x_0 {
-				return x_0;
-			},
-			set value(this: Model, next: number) {}
-		};
-		t1 = identity(object.value);
-	}
-	let t2;
-	{
-		t2 = <div>{t1}</div>;
-	}
-	return t2;
+	const object = {
+		get value(this: Model): typeof x_0 {
+			return x_0;
+		},
+		set value(this: Model, next: number) {}
+	};
+	return <div>{identity(object.value)}</div>;
 }
 function _temp(x) {
 	return x;

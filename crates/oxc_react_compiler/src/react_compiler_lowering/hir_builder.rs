@@ -27,7 +27,6 @@ type BuildResult<'a> = Result<
         Vec<Instruction<'a>>,
         IdentIndexMap<'a, SymbolId>,
         FxIndexMap<SymbolId, IdentifierId>,
-        bool,
     ),
     OxcDiagnostic,
 >;
@@ -155,7 +154,6 @@ pub struct HirBuilder<'a, 'b> {
     context_identifiers: rustc_hash::FxHashSet<SymbolId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_spans: &'b IdentifierLocIndex,
-    has_object_accessors: bool,
 }
 
 impl<'a, 'b> HirBuilder<'a, 'b> {
@@ -203,7 +201,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             component_scope,
             context_identifiers,
             identifier_spans,
-            has_object_accessors: false,
         }
     }
 
@@ -304,10 +301,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         for (symbol_id, identifier_id) in child_bindings {
             self.bindings.entry(symbol_id).or_insert(identifier_id);
         }
-    }
-
-    pub fn record_object_accessors(&mut self, has_object_accessors: bool) {
-        self.has_object_accessors |= has_object_accessors;
     }
 
     /// Push an instruction onto the current block.
@@ -648,7 +641,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         mark_instruction_ids(&mut hir, &mut instructions);
         mark_predecessors(&mut hir);
 
-        Ok((hir, instructions, self.used_names, self.bindings, self.has_object_accessors))
+        Ok((hir, instructions, self.used_names, self.bindings))
     }
 
     // -----------------------------------------------------------------------

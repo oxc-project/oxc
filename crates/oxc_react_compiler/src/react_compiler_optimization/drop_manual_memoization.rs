@@ -103,6 +103,7 @@ struct ExtractedMemoArgs<'a> {
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
+    has_object_accessors: bool,
 ) -> Result<(), OxcDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
@@ -155,6 +156,7 @@ pub fn drop_manual_memoization<'a>(
                     is_validation_enabled,
                     &mut next_manual_memo_id,
                     &mut queued_inserts,
+                    has_object_accessors,
                 );
             } else {
                 collect_temporaries(func, env, instr_id, &mut sidemap);
@@ -215,8 +217,8 @@ fn process_manual_memo_call<'a>(
     is_validation_enabled: bool,
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
+    has_object_accessors: bool,
 ) {
-    let has_object_accessors = func.has_object_accessors;
     let instr = &func.instructions[instr_id.index()];
 
     let memo_details = extract_manual_memoization_args(instr, manual_memo.kind, sidemap, env);

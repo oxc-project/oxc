@@ -201,9 +201,6 @@ pub struct HirFunction<'a> {
     pub generator: bool,
     pub is_async: bool,
     pub directives: ArenaVec<'a, FunctionDirective<'a>>,
-    /// Whether this function or one of its nested functions contains an object
-    /// getter or setter. Such functions conservatively disable inferred caches.
-    pub has_object_accessors: bool,
     pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
 }
 
@@ -1578,7 +1575,6 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             generator: self.generator,
             is_async: self.is_async,
             directives: self.directives.clone_in_impl(sem, alloc),
-            has_object_accessors: self.has_object_accessors,
             aliasing_effects: self.aliasing_effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
         }
     }

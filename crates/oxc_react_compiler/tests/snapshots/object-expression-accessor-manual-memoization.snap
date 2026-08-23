@@ -5,32 +5,12 @@ input_file: crates/oxc_react_compiler/fixtures/object-expression-accessor-manual
 import { useCallback, useMemo } from "react";
 function Component(t0) {
 	const { value } = t0;
-	let t1;
-	let t2;
-	{
-		t1 = () => value;
-		t2 = [value];
-	}
-	const callback = useCallback(t1, t2);
-	let t3;
-	let t4;
-	{
-		t3 = () => ({ value });
-		t4 = [value];
-	}
-	const memo = useMemo(t3, t4);
-	let t5;
-	{
-		t5 = { get value() {
-			return memo.value;
-		} };
-	}
-	const object = t5;
-	let t6;
-	{
-		t6 = <button onClick={callback}>{object.value}</button>;
-	}
-	return t6;
+	const callback = useCallback(() => value, [value]);
+	const memo = useMemo(() => ({ value }), [value]);
+	const object = { get value() {
+		return memo.value;
+	} };
+	return <button onClick={callback}>{object.value}</button>;
 }
 export const FIXTURE_ENTRYPOINT = {
 	fn: Component,
