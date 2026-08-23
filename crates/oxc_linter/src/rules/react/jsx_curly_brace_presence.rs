@@ -1047,6 +1047,10 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            r#"<Markdown content={`\\* Want to learn more`} />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
         ("<App prop={`foo`} />", Some(json!([{ "props": "never" }]))),
         ("<App>{<myApp></myApp>}</App>", Some(json!([{ "children": "never" }]))),
         ("<App>{<myApp></myApp>}</App>", None),
@@ -1199,6 +1203,16 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            r#"<Markdown content={`\\* Want to learn more`} />"#,
+            r#"<Markdown content="\* Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            "<Markdown content={`Want to learn more`} />",
+            r#"<Markdown content="Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
         ("<App prop={`foo`} />", r#"<App prop="foo" />"#, Some(json!([{ "props": "never" }]))),
         (
             "<App>{<myApp></myApp>}</App>",
