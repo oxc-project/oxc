@@ -8,6 +8,7 @@ expect("b".match(regexp).indices.groups).toEqual({ named: [0, 1] });
 expect("a".replace(regexp, "[$<named>]")).toBe("[a]");
 expect("b".replace(regexp, "[$<named>]")).toBe("[b]");
 expect("c".replace(regexp, "[$<named>]")).toBe("[]");
+expect("x".replace(/(?<a>x)|(?<a>y)/, "$<missing>")).toBe("");
 
 expect(/(?:(?<named>a)|(?<named>b))\k<named>/.test("aa")).toBe(true);
 expect(/(?:(?<named>a)|(?<named>b))\k<named>/.test("bb")).toBe(true);
