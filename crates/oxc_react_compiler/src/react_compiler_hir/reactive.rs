@@ -41,6 +41,7 @@ pub struct ReactiveFunction<'a> {
     pub params: Vec<ParamPattern>,
     pub generator: bool,
     pub is_async: bool,
+    pub has_object_accessors: bool,
     pub body: ReactiveBlock<'a>,
     pub directives: Vec<FunctionDirective<'a>>,
     // No env field — passed separately per established Rust convention
@@ -289,6 +290,7 @@ impl<'a> CloneIn<'a> for ReactiveFunction<'a> {
             params: self.params.clone(),
             generator: self.generator,
             is_async: self.is_async,
+            has_object_accessors: self.has_object_accessors,
             body: clone_reactive_block_in(&self.body, sem, alloc),
             directives: self.directives.clone(),
         }

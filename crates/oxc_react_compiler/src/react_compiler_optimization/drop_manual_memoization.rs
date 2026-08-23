@@ -216,6 +216,7 @@ fn process_manual_memo_call<'a>(
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
 ) {
+    let has_object_accessors = func.has_object_accessors;
     let instr = &func.instructions[instr_id.index()];
 
     let memo_details = extract_manual_memoization_args(instr, manual_memo.kind, sidemap, env);
@@ -232,7 +233,7 @@ fn process_manual_memo_call<'a>(
     // Accessor reads and writes may invoke arbitrary user code, so accessor-bearing
     // functions later emit inferred reactive scopes without caching. Keep React's
     // manual memo call intact rather than dropping its semantic guarantee.
-    if !env.has_object_accessors {
+    if !has_object_accessors {
         let replacement =
             get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
         func.instructions[instr_id.index()].value = replacement;
@@ -268,6 +269,7 @@ fn process_manual_memo_call<'a>(
             callee_span,
             &memo_decl,
             manual_memo_id,
+            has_object_accessors,
         );
 
         queued_inserts.insert(manual_memo.load_instr_id, start_marker);
@@ -464,6 +466,7 @@ fn get_manual_memoization_replacement<'a>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn make_manual_memoization_markers<'a>(
     fn_expr: &Place,
     env: &mut Environment<'a>,
@@ -472,6 +475,7 @@ fn make_manual_memoization_markers<'a>(
     callee_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
+    has_object_accessors: bool,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
         id: EvaluationOrder::UNSET,
@@ -496,7 +500,7 @@ fn make_manual_memoization_markers<'a>(
             // The original hook still provides the memoization guarantee when
             // accessor-bearing functions disable compiler caching, so the
             // post-conversion validator has nothing to prove for this marker.
-            pruned: env.has_object_accessors,
+            pruned: has_object_accessors,
             span: fn_expr.span,
         },
         span: fn_expr.span,

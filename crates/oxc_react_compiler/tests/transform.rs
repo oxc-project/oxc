@@ -169,6 +169,39 @@ export function Component({ value }) {
 }
 
 #[test]
+fn nested_object_accessors_disable_parent_caching() {
+    let source = "\
+import { useMemo } from 'react';
+export function Component({ value }) {
+  const memo = useMemo(() => value, [value]);
+  const read = () => {
+    const object = {
+      get value() {
+        return value;
+      },
+    };
+    return object.value;
+  };
+  return <div>{memo + read()}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("useMemo("), "manual memoization must be retained:\n{output}");
+    assert!(
+        !output.contains("react/compiler-runtime"),
+        "nested accessors must disable parent compiler caching:\n{output}"
+    );
+}
+
+#[test]
 fn object_accessors_keep_generated_names_unique() {
     let source = "\
 export function Component({ value }) {

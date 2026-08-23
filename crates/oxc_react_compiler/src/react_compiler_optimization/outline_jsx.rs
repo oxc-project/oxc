@@ -464,6 +464,7 @@ fn emit_outlined_fn<'a>(
         generator: false,
         is_async: false,
         directives: ArenaVec::new_in(&env.allocator),
+        has_object_accessors: false,
         aliasing_effects: Some(ArenaVec::new_in(&env.allocator)),
         span: None,
     };

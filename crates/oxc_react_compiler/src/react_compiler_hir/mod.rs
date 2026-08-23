@@ -22,7 +22,7 @@ pub use assert_terminal_blocks_exist::{
 };
 pub use assert_valid_block_nesting::assert_valid_block_nesting;
 pub(crate) use assert_valid_block_nesting::{get_scopes, recursively_traverse_items};
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
@@ -201,6 +201,9 @@ pub struct HirFunction<'a> {
     pub generator: bool,
     pub is_async: bool,
     pub directives: ArenaVec<'a, FunctionDirective<'a>>,
+    /// Whether this function or one of its nested functions contains an object
+    /// getter or setter. Such functions conservatively disable inferred caches.
+    pub has_object_accessors: bool,
     pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
 }
 
@@ -646,6 +649,13 @@ pub enum Pattern<'a> {
     Object(ObjectPattern<'a>),
 }
 
+#[derive(Debug)]
+pub struct ObjectAccessorSignature<'a> {
+    pub this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+    pub params: ArenaBox<'a, FormalParameters<'a>>,
+    pub return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+}
+
 // =============================================================================
 // InstructionValue enum
 // =============================================================================
@@ -743,6 +753,7 @@ pub enum InstructionValue<'a> {
     ObjectMethod {
         span: Option<Span>,
         lowered_func: LoweredFunction,
+        signature: Option<ObjectAccessorSignature<'a>>,
     },
     ArrayExpression {
         elements: ArenaVec<'a, ArrayElement>,
@@ -1567,7 +1578,19 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             generator: self.generator,
             is_async: self.is_async,
             directives: self.directives.clone_in_impl(sem, alloc),
+            has_object_accessors: self.has_object_accessors,
             aliasing_effects: self.aliasing_effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for ObjectAccessorSignature<'a> {
+    type Cloned = ObjectAccessorSignature<'a>;
+    fn clone_in_impl(&self, _sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        ObjectAccessorSignature {
+            this_param: self.this_param.as_ref().map(|v| v.clone_in_with_semantic_ids(alloc)),
+            params: self.params.clone_in_with_semantic_ids(alloc),
+            return_type: self.return_type.as_ref().map(|v| v.clone_in_with_semantic_ids(alloc)),
         }
     }
 }
@@ -1886,8 +1909,12 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::TypeCastExpression { value, cast, span } => {
                 InstructionValue::TypeCastExpression { value: *value, cast: *cast, span: *span }
             }
-            InstructionValue::ObjectMethod { span, lowered_func } => {
-                InstructionValue::ObjectMethod { span: *span, lowered_func: *lowered_func }
+            InstructionValue::ObjectMethod { span, lowered_func, signature } => {
+                InstructionValue::ObjectMethod {
+                    span: *span,
+                    lowered_func: *lowered_func,
+                    signature: signature.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+                }
             }
             InstructionValue::RegExpLiteral { pattern, flags, span } => {
                 InstructionValue::RegExpLiteral { pattern: *pattern, flags: *flags, span: *span }

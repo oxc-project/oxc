@@ -812,7 +812,8 @@ fn lower_inner<'a>(
     );
 
     // Build the HIR
-    let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
+    let (hir_body, instructions, used_names, child_bindings, has_object_accessors) =
+        builder.build()?;
     let instructions = ArenaVec::from_iter_in(instructions, &env.allocator);
 
     // Create the returns place
@@ -836,6 +837,7 @@ fn lower_inner<'a>(
             generator,
             is_async,
             directives,
+            has_object_accessors,
             aliasing_effects: None,
         },
         used_names,
@@ -3175,6 +3177,7 @@ fn lower_function<'a>(
         ident_spans,
     )?;
 
+    builder.record_object_accessors(hir_func.has_object_accessors);
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3237,6 +3240,7 @@ fn lower_function_declaration<'a>(
         ident_spans,
     )?;
 
+    builder.record_object_accessors(hir_func.has_object_accessors);
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3406,6 +3410,7 @@ fn lower_function_for_object_method<'a>(
         ident_spans,
     )?;
 
+    builder.record_object_accessors(hir_func.has_object_accessors);
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -5529,11 +5534,11 @@ fn lower_object_method<'a>(
     let property_type = match method.kind {
         oxc::PropertyKind::Init => ObjectPropertyType::Method,
         oxc::PropertyKind::Get => {
-            builder.environment_mut().has_object_accessors = true;
+            builder.record_object_accessors(true);
             ObjectPropertyType::Getter
         }
         oxc::PropertyKind::Set => {
-            builder.environment_mut().has_object_accessors = true;
+            builder.record_object_accessors(true);
             ObjectPropertyType::Setter
         }
     };
@@ -5555,9 +5560,11 @@ fn lower_object_method<'a>(
         func.generator,
         func.r#async,
     )?;
-    if !matches!(property_type, ObjectPropertyType::Method) {
+    let signature = if matches!(property_type, ObjectPropertyType::Method) {
+        None
+    } else {
         let allocator = builder.environment().allocator;
-        let signature = crate::react_compiler_hir::environment::ObjectAccessorSignature {
+        Some(crate::react_compiler_hir::ObjectAccessorSignature {
             this_param: func
                 .this_param
                 .as_ref()
@@ -5567,12 +5574,11 @@ fn lower_object_method<'a>(
                 .return_type
                 .as_ref()
                 .map(|return_type| return_type.clone_in_with_semantic_ids(allocator)),
-        };
-        builder.environment_mut().object_accessor_signatures.insert(lowered_func.func, signature);
-    }
+        })
+    };
 
     let span = Some(method.span);
-    let method_value = InstructionValue::ObjectMethod { span, lowered_func };
+    let method_value = InstructionValue::ObjectMethod { span, lowered_func, signature };
     let method_place = lower_value_to_temporary(builder, method_value)?;
 
     Ok(Some(ObjectProperty { key, property_type, place: method_place }))

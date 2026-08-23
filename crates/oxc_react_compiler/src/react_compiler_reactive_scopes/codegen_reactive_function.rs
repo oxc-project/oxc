@@ -89,6 +89,7 @@ pub fn codegen_function<'a>(
         env,
         unique_identifiers,
         fbt_operands,
+        func.has_object_accessors,
     );
 
     let mut compiled = ox_codegen_reactive_function(&mut cx, func)?;
@@ -164,7 +165,8 @@ pub fn codegen_function<'a>(
     // compiled with fresh contexts (mirrors TS `codegenFunction`).
     drop(cx);
 
-    let outlined = ox_codegen_outlined(ast, env, fbt_operands_for_outlined)?;
+    let outlined =
+        ox_codegen_outlined(ast, env, fbt_operands_for_outlined, func.has_object_accessors)?;
 
     Ok(OxcCodegenFunction {
         span: func.span,
@@ -186,6 +188,7 @@ fn ox_codegen_outlined<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     env: &mut Environment<'a>,
     fbt_operands: FxHashSet<IdentifierId>,
+    has_object_accessors: bool,
 ) -> Result<
     Vec<crate::react_compiler::entrypoint::compile_result::OutlinedFunction<'a>>,
     OxcDiagnostic,
@@ -196,6 +199,7 @@ fn ox_codegen_outlined<'a>(
     let mut outlined = Vec::with_capacity(entries.len());
     for entry in entries {
         let mut reactive_function = build_reactive_function(&entry.func, env)?;
+        reactive_function.has_object_accessors |= has_object_accessors;
         prune_unused_labels(&mut reactive_function, env)?;
         prune_unused_lvalues(&mut reactive_function, env);
         prune_hoisted_contexts(&mut reactive_function, env)?;
@@ -270,6 +274,7 @@ struct OxcContext<'a, 'env> {
     unique_identifiers: IdentHashSet<'a>,
     fbt_operands: FxHashSet<IdentifierId>,
     synthesized_names: IdentHashMap<'a, Ident<'a>>,
+    has_object_accessors: bool,
 }
 
 impl<'a, 'env> OxcContext<'a, 'env> {
@@ -278,6 +283,7 @@ impl<'a, 'env> OxcContext<'a, 'env> {
         env: &'env mut Environment<'a>,
         unique_identifiers: IdentHashSet<'a>,
         fbt_operands: FxHashSet<IdentifierId>,
+        has_object_accessors: bool,
     ) -> Self {
         OxcContext {
             ast,
@@ -289,6 +295,7 @@ impl<'a, 'env> OxcContext<'a, 'env> {
             unique_identifiers,
             fbt_operands,
             synthesized_names: IdentHashMap::default(),
+            has_object_accessors,
         }
     }
 
@@ -720,7 +727,7 @@ fn ox_codegen_reactive_scope<'a>(
     let mut scope_decls = cx.env.scopes[scope_id].declarations.iter().copied().collect::<Vec<_>>();
     scope_decls.sort_unstable_by(|(_id_a, a), (_id_b, b)| compare_scope_declaration(a, b, cx.env));
 
-    if cx.env.has_object_accessors {
+    if cx.has_object_accessors {
         // Property reads and writes may invoke an accessor and therefore run
         // arbitrary user code. Until property effects reference statically known
         // accessors, emitting dependency guards could duplicate getter calls or
@@ -3033,6 +3040,7 @@ fn ox_codegen_inner_function<'a>(
         cx.env,
         cx.unique_identifiers.clone(),
         cx.fbt_operands.clone(),
+        cx.has_object_accessors,
     );
     inner_cx.temp = cx.temp.clone();
     ox_codegen_reactive_function(&mut inner_cx, reactive_fn)
@@ -3083,8 +3091,10 @@ fn ox_codegen_object_expression<'a>(
                             .object_methods
                             .get(&obj_prop.place.identifier)
                             .map(|(v, s)| (v.clone_in(cx.env.allocator), *s));
-                        let Some((InstructionValue::ObjectMethod { lowered_func, .. }, _)) =
-                            method_data
+                        let Some((
+                            InstructionValue::ObjectMethod { lowered_func, signature, .. },
+                            _,
+                        )) = method_data
                         else {
                             return Err(diagnostics::invariant_expected_object_method_instruction(
                                 None,
@@ -3100,9 +3110,7 @@ fn ox_codegen_object_expression<'a>(
                         let mut this_param = None;
                         let mut params = fn_result.params;
                         let mut return_type = None;
-                        if let Some(signature) =
-                            cx.env.object_accessor_signatures.get(&lowered_func.func)
-                        {
+                        if let Some(signature) = &signature {
                             this_param = signature.this_param.as_ref().map(|this_param| {
                                 this_param.clone_in_with_semantic_ids(cx.ast.allocator())
                             });

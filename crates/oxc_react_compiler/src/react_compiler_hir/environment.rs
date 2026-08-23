@@ -6,8 +6,7 @@ use cow_utils::CowUtils;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, ArenaBox, GetAllocator, Vec as ArenaVec};
-use oxc_ast::ast::{FormalParameters, TSThisParameter, TSTypeAnnotation};
+use oxc_allocator::{Allocator, GetAllocator, Vec as ArenaVec};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexVec;
 use oxc_span::Span;
@@ -126,15 +125,6 @@ pub struct Environment<'a> {
     // preserved). Signals the pipeline to skip compiling this function silently —
     // no diagnostic — while other functions in the file still compile.
     pub skip_compilation: bool,
-
-    // Accessor reads and writes may invoke user code. Until property effects can
-    // reference a statically known accessor function, compile the function
-    // without inferred memoization so those operations are never duplicated or
-    // skipped by a reactive scope.
-    pub has_object_accessors: bool,
-
-    // Original TS signatures for accessor functions rebuilt during codegen.
-    pub object_accessor_signatures: FxHashMap<FunctionId, ObjectAccessorSignature<'a>>,
 
     // Function type classification (Component, Hook, Other)
     pub fn_type: ReactFunctionType,
@@ -256,8 +246,6 @@ impl<'a> Environment<'a> {
             aliasing_diagnostic_instances: RefCell::new(IndexVec::new()),
             aliasing_diagnostic_instance_dedup: RefCell::new(FxHashMap::default()),
             skip_compilation: false,
-            has_object_accessors: false,
-            object_accessor_signatures: FxHashMap::default(),
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
             instrument_fn_name: None,
@@ -832,12 +820,6 @@ impl<'a> Environment<'a> {
         let ty = &self.types[self.identifiers[identifier_id].type_];
         self.get_hook_kind_for_type(ty)
     }
-}
-
-pub struct ObjectAccessorSignature<'a> {
-    pub this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
-    pub params: ArenaBox<'a, FormalParameters<'a>>,
-    pub return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
 }
 
 /// Check if a name matches the React hook naming convention: `use[A-Z0-9]`.
