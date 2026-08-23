@@ -174,15 +174,6 @@ async fn lint_impl(
 ) -> CliRunResult {
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
 
-    if let Some(spec) = crate::cli::LintCommand::spec_request(&args) {
-        print!("{spec}");
-        return CliRunResult::LintSucceeded;
-    }
-    if let Some(completions) = crate::cli::LintCommand::completion_request(&args) {
-        print!("{completions}");
-        return CliRunResult::LintSucceeded;
-    }
-
     let command = match crate::cli::LintCommand::embedded_outcome(&args) {
         usage::embedded::Outcome::Parsed(command) => command,
         usage::embedded::Outcome::Exit(exit) => {
