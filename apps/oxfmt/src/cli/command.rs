@@ -1,15 +1,13 @@
 // `usage_rs::Args` generates public partial structs with underscore-prefixed fields.
 #![allow(clippy::allow_attributes, clippy::pub_underscore_fields)]
 
-#[cfg(feature = "napi")]
-use std::str::FromStr;
 use std::{
     ffi::{OsStr, OsString},
     path::PathBuf,
 };
 
 use usage_rs as usage;
-use usage_rs::{Args, Cli};
+use usage_rs::{Args, Cli, ValidationError};
 
 fn invalid_path(paths: &[PathBuf]) -> Option<&PathBuf> {
     paths.iter().find(|path| {
@@ -40,7 +38,14 @@ pub struct FormatCommand {
     completion,
     unknown_flags = "error",
     args_override_self = false,
-    usage = "oxfmt [-c=PATH] [PATH]..."
+    usage = "oxfmt [-c=PATH] [PATH]...",
+    help_template = "{{about}}\n\n{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
+    example("oxfmt --check .", header = "Check formatting"),
+    example("oxfmt --write src", header = "Format files"),
+    exit_code(0, "files are formatted or were formatted successfully"),
+    exit_code(1, "invalid configuration or formatting differences were found"),
+    exit_code(2, "no files were found or formatting failed"),
+    try_into = FormatCommand
 )]
 struct FormatCli {
     #[usage(flatten)]
@@ -56,23 +61,13 @@ struct FormatCli {
     /// (Be sure to quote them, otherwise your shell may expand them before passing.)
     /// Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported.
     /// If not provided, current working directory is used.
-    #[usage(name = "PATH")]
+    #[usage(name = "PATH", value_hint = usage::ValueHint::AnyPath)]
     paths: Vec<PathBuf>,
 }
 
 impl FormatCommand {
-    #[expect(clippy::print_stderr)]
     pub fn parse() -> Self {
-        let cli = FormatCli::parse();
-        match Self::from_cli(cli) {
-            Ok(command) => command,
-            Err(error) => {
-                let args = std::env::args_os().skip(1).collect::<Vec<_>>();
-                let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
-                eprint!("{}", FormatCli::render_failure(&refs, &error));
-                usage::__usage_process_exit(2);
-            }
-        }
+        FormatCli::parse_into()
     }
 
     /// Parses formatter options from an argument slice.
@@ -85,8 +80,7 @@ impl FormatCommand {
         T: AsRef<OsStr> + 'v,
     {
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        let cli = FormatCli::parse_from(&refs)?;
-        Self::from_cli(cli)
+        FormatCli::parse_into_from(&refs)
     }
 
     pub fn command() -> &'static usage::Command<'static> {
@@ -122,13 +116,25 @@ impl FormatCommand {
         FormatCli::completion_request(args)
     }
 
-    fn from_cli<'v>(cli: FormatCli) -> Result<Self, usage::Error<'static, 'v>> {
+    pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
+        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
+        usage::embedded::outcome(
+            FormatCli::spec(),
+            FormatCli::command(),
+            &refs,
+            FormatCli::parse_into_from,
+        )
+    }
+}
+
+impl TryFrom<FormatCli> for FormatCommand {
+    type Error = ValidationError;
+
+    fn try_from(cli: FormatCli) -> Result<Self, Self::Error> {
         if let Some(path) = invalid_path(&cli.paths) {
-            return Err(usage::Error::InvalidValue(Box::new(usage::InvalidValue {
-                name: "PATH",
-                value: path.display().to_string(),
-                reason: PATHS_ERROR_MESSAGE.to_string(),
-            })));
+            return Err(ValidationError::field("PATH")
+                .value(path.display().to_string())
+                .reason(PATHS_ERROR_MESSAGE));
         }
 
         Ok(Self {
@@ -175,7 +181,13 @@ struct ModeOptions {
     /// Migrate configuration to `.oxfmtrc.json` from specified source.
     /// Available sources: prettier, biome.
     #[cfg(feature = "napi")]
-    #[usage(long, value_name = "SOURCE", group = "mode", help_heading = "Mode Options")]
+    #[usage(
+        long,
+        value_name = "SOURCE",
+        value_enum,
+        group = "mode",
+        help_heading = "Mode Options"
+    )]
     migrate: Option<MigrateSource>,
 
     /// Start language server protocol (LSP) server
@@ -185,7 +197,13 @@ struct ModeOptions {
 
     /// Specify the file name to use to infer which parser to use
     #[cfg(feature = "napi")]
-    #[usage(long, value_name = "PATH", group = "mode", help_heading = "Mode Options")]
+    #[usage(
+        long,
+        value_name = "PATH",
+        value_hint = usage::ValueHint::FilePath,
+        group = "mode",
+        help_heading = "Mode Options"
+    )]
     stdin_filepath: Option<PathBuf>,
 
     /// Format and write files in place (default)
@@ -243,27 +261,13 @@ pub enum OutputMode {
 
 /// Migration Source
 #[cfg(feature = "napi")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, usage::ValueEnum)]
+#[usage(ignore_case)]
 pub enum MigrateSource {
     /// Migrate from Prettier configuration
     Prettier,
     /// Migrate from Biome configuration
     Biome,
-}
-
-#[cfg(feature = "napi")]
-impl FromStr for MigrateSource {
-    type Err = String;
-
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        if source.eq_ignore_ascii_case("prettier") {
-            Ok(Self::Prettier)
-        } else if source.eq_ignore_ascii_case("biome") {
-            Ok(Self::Biome)
-        } else {
-            Err(format!("Unknown migration source: {source}. Supported: prettier, biome."))
-        }
-    }
 }
 
 // ---
@@ -272,7 +276,7 @@ impl FromStr for MigrateSource {
 #[derive(Debug, Clone, Args)]
 pub struct ConfigOptions {
     /// Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)
-    #[usage(short, long, value_name = "PATH")]
+    #[usage(short, long, value_name = "PATH", value_hint = usage::ValueHint::FilePath)]
     pub config: Option<PathBuf>,
     /// Do not search for configuration files in subdirectories
     #[usage(long)]
@@ -284,7 +288,7 @@ pub struct ConfigOptions {
 pub struct IgnoreOptions {
     /// Path to ignore file(s). Can be specified multiple times.
     /// If not specified, .gitignore and .prettierignore in the current directory are used.
-    #[usage(long, value_name = "PATH")]
+    #[usage(long, value_name = "PATH", value_hint = usage::ValueHint::FilePath)]
     pub ignore_path: Vec<PathBuf>,
     /// Format code in node_modules directory (skipped by default)
     #[usage(long)]
@@ -300,4 +304,43 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[usage(long, value_name = "INT")]
     pub threads: Option<usize>,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::OsString;
+
+    use usage_rs as usage;
+
+    use super::FormatCommand;
+
+    #[test]
+    fn typed_finalization_reports_invalid_paths() {
+        let error = FormatCommand::parse_from(&["../src"]).unwrap_err();
+        let usage::Error::InvalidValue(error) = error else {
+            panic!("expected invalid path value");
+        };
+        assert_eq!(error.name, "PATH");
+        assert_eq!(error.value, "../src");
+    }
+
+    #[test]
+    fn embedded_help_preserves_section_order() {
+        let args = [OsString::from("--help")];
+        let outcome = FormatCommand::embedded_outcome(&args);
+        let exit = outcome.exit().expect("help should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+
+        let output_options = exit.text.find("Output Options:").expect("output options heading");
+        let arguments = exit.text.find("Arguments:").expect("arguments heading");
+        let flags = exit.text.find("Flags:").expect("flags heading");
+        assert!(output_options < arguments && arguments < flags);
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn migration_source_remains_case_insensitive() {
+        assert!(FormatCommand::parse_from(&["--migrate", "PRETTIER"]).is_ok());
+    }
 }

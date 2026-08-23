@@ -1,5 +1,6 @@
 ---
 source: tasks/website_formatter/src/cli.rs
+assertion_line: 9
 expression: snapshot
 ---
 ---
@@ -7,6 +8,20 @@ search: false
 ---
 
 - **version**: 0.64.0
+
+## Examples
+
+**Check formatting**
+
+```
+oxfmt --check .
+```
+
+**Format files**
+
+```
+oxfmt --write src
+```
 
 ## Usage
 
@@ -27,6 +42,11 @@ Initialize `.oxfmtrc.json` with default values
 ### `--migrate <SOURCE>`
 
 Migrate configuration to `.oxfmtrc.json` from specified source. Available sources: prettier, biome.
+
+**Choices:**
+
+- `prettier`
+- `biome`
 
 ### `--lsp`
 
@@ -79,3 +99,11 @@ Do not exit with error when pattern is unmatched
 ### `--threads <INT>`
 
 Number of threads to use. Set to 1 for using only 1 CPU core.
+
+## Exit Status
+
+| Code | Meaning |
+| ---- | ------- |
+| `0` | files are formatted or were formatted successfully |
+| `1` | invalid configuration or formatting differences were found |
+| `2` | no files were found or formatting failed |

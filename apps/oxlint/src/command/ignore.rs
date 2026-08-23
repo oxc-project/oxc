@@ -9,7 +9,13 @@ use usage_rs::Args;
 #[derive(Debug, Clone, Args)]
 pub struct IgnoreOptions {
     /// Specify the file to use as your `.eslintignore`
-    #[usage(long, value_name = "PATH", default = ".eslintignore")]
+    #[usage(
+        long,
+        value_name = "PATH",
+        value_hint = usage_rs::ValueHint::FilePath,
+        default = ".eslintignore",
+        hide_default_value
+    )]
     pub ignore_path: OsString,
 
     /// Specify patterns of files to ignore (in addition to those in `.eslintignore`)
