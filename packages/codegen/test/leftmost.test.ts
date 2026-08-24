@@ -333,8 +333,8 @@ const CONTEXTS: Context[] = [
       if (ambiguity === "declaration") {
         return {
           skip:
-            "a statement starting `function` or `class` is a declaration, not an expression - " +
-            "the `function-parenthesized` and `class-parenthesized` cases cover this construct instead",
+            "a statement starting `function` or `class` is a declaration, not an expression - "
+            + "the `function-parenthesized` and `class-parenthesized` cases cover this construct instead",
         };
       }
       return { source: enclose(needs, `${ambiguity === "block" ? `(${expr})` : expr};`) };
@@ -362,9 +362,9 @@ const CONTEXTS: Context[] = [
       if (ambiguity === "declaration") {
         return {
           skip:
-            "`export default function () {}` is a `FunctionDeclaration` and `export default class {}` a " +
-            "`ClassDeclaration`, neither of which records an offset - the `function-parenthesized` and " +
-            "`class-parenthesized` cases cover this construct instead",
+            "`export default function () {}` is a `FunctionDeclaration` and `export default class {}` a "
+            + "`ClassDeclaration`, neither of which records an offset - the `function-parenthesized` and "
+            + "`class-parenthesized` cases cover this construct instead",
         };
       }
       // `await` needs nothing: a module allows it at the top level
@@ -379,28 +379,17 @@ const CONTEXTS: Context[] = [
 // --- Tests ------------------------------------------------------------------------------------
 
 describe.concurrent("leftmost position", () => {
-  for (const context of CONTEXTS) {
-    // oxlint-disable-next-line vitest/valid-title
-    describe(context.name, () => {
-      for (const testCase of CASES) {
-        const built = context.build(testCase);
+  describe.for(CONTEXTS)("$name", (context) => {
+    it.for(CASES)("$name", (testCase, ctx) => {
+      const built = context.build(testCase);
 
-        // Reported as skipped, carrying the reason, rather than left out of the run
-        // oxlint-disable-next-line vitest/no-conditional-tests
-        if ("skip" in built) {
-          // oxlint-disable-next-line vitest/valid-title, vitest/expect-expect
-          it(testCase.name, (ctx) => ctx.skip(built.skip));
-          continue;
-        }
+      // Reported as skipped, carrying the reason, rather than left out of the run
+      if ("skip" in built) return ctx.skip(built.skip);
 
-        // oxlint-disable-next-line vitest/valid-title
-        it(testCase.name, () => {
-          const lang = testCase.lang ?? "js";
-          const sourceType = context.module || testCase.module ? "module" : "script";
-          const checked = checkFixture(`leftmost.${lang}`, built.source, lang, sourceType);
-          expect(checked, `snippet does not parse:\n${built.source}`).toBe(true);
-        });
-      }
+      const lang = testCase.lang ?? "js";
+      const sourceType = context.module || testCase.module ? "module" : "script";
+      const checked = checkFixture(`leftmost.${lang}`, built.source, lang, sourceType);
+      expect(checked, `snippet does not parse:\n${built.source}`).toBe(true);
     });
-  }
+  });
 });

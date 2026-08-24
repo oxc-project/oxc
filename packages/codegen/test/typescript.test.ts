@@ -45,35 +45,34 @@ const SKIPPED_PATHS = new Set([
 ]);
 
 describe.concurrent("TypeScript", () => {
-  for (const path of fixturePaths) {
-    const itFixture = SKIPPED_PATHS.has(path) ? it.skip : it;
+  // oxlint-disable-next-line vitest/expect-expect
+  it.for(fixturePaths)("%s", async (path, ctx) => {
+    if (SKIPPED_PATHS.has(path)) ctx.skip();
 
-    itFixture(path, async (ctx) => {
-      let sourceText = await readFile(pathJoin(TS_CASES_DIR_PATH, path), "utf8");
-      // Trim off UTF-8 BOM
-      if (sourceText.charCodeAt(0) === 0xfeff) sourceText = sourceText.slice(1);
+    let sourceText = await readFile(pathJoin(TS_CASES_DIR_PATH, path), "utf8");
+    // Trim off UTF-8 BOM
+    if (sourceText.charCodeAt(0) === 0xfeff) sourceText = sourceText.slice(1);
 
-      const { tests } = makeUnitsFromTest(path, sourceText);
+    const { tests } = makeUnitsFromTest(path, sourceText);
 
-      let checked = 0;
-      for (const { name, content, sourceType } of tests) {
-        const lang = langOf(sourceType.typescript, sourceType.jsx);
+    let checked = 0;
+    for (const { name, content, sourceType } of tests) {
+      const lang = langOf(sourceType.typescript, sourceType.jsx);
 
-        // Always a TS-shaped AST, even for the `.js` units. The TypeScript suite has fixtures
-        // which put TS syntax in a `.js` file on purpose, and Oxc's Rust parser keeps and prints it,
-        // so the JS side has to be able to see it too.
-        const checkedUnit = checkFixture(
-          name,
-          content,
-          lang,
-          sourceType.module ? "module" : "unambiguous",
-          "ts",
-        );
-        if (checkedUnit) checked++;
-      }
+      // Always a TS-shaped AST, even for the `.js` units. The TypeScript suite has fixtures
+      // which put TS syntax in a `.js` file on purpose, and Oxc's Rust parser keeps and prints it,
+      // so the JS side has to be able to see it too.
+      const checkedUnit = checkFixture(
+        name,
+        content,
+        lang,
+        sourceType.module ? "module" : "unambiguous",
+        "ts",
+      );
+      if (checkedUnit) checked++;
+    }
 
-      // Every unit failed to parse, so the fixture contributed nothing to check
-      if (checked === 0) ctx.skip();
-    });
-  }
+    // Every unit failed to parse, so the fixture contributed nothing to check
+    if (checked === 0) ctx.skip();
+  });
 });

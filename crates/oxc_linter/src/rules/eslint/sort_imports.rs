@@ -1,4 +1,7 @@
-use std::fmt::{Display, Write};
+use std::{
+    borrow::Cow,
+    fmt::{Display, Write},
+};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
@@ -286,14 +289,13 @@ impl SortImports {
                     // add a empty string for zip with specifiers
                     paddings.push("");
 
-                    let specifiers = specifiers.iter().sorted_by(|a, b| {
-                        let a = a.local.name.as_str();
-                        let b = b.local.name.as_str();
-
+                    // Compute each sort key once instead of once per comparison.
+                    let specifiers = specifiers.iter().sorted_by_cached_key(|specifier| {
+                        let name = specifier.local.name.as_str();
                         if self.ignore_case {
-                            a.cow_to_ascii_lowercase().cmp(&b.cow_to_ascii_lowercase())
+                            name.cow_to_ascii_lowercase()
                         } else {
-                            a.cmp(b)
+                            Cow::Borrowed(name)
                         }
                     });
 

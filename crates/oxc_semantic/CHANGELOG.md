@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- 059784d semantic: Respect shadowed `Infinity` and `NaN` in enum evaluation (#25604) (camc314)
+- 509931b semantic: Classify global references per identifier (#25608) (camc314)
+- cdf1846 semantic: Allow legacy escapes in JSX attributes (#25576) (Boshen)
+
+### ⚡ Performance
+
+- 757f3d4 mangler: Share allocated names across reused slots (#25605) (camc314)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

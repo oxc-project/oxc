@@ -112,9 +112,9 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
  */
 function printSpaceBeforeOperatorSlow(state: State, prev: Category, next: Category): void {
   if (
-    (prev === CAT_OP_UN_PLUS && (next === CAT_OP_UN_PLUS || next === CAT_OP_UPD_INC)) ||
-    (prev === CAT_OP_UN_NEG && (next === CAT_OP_UN_NEG || next === CAT_OP_UPD_DEC)) ||
-    (prev === CAT_OP_UN_NOT_AFTER_LT && next === CAT_OP_UPD_DEC)
+    (prev === CAT_OP_UN_PLUS && (next === CAT_OP_UN_PLUS || next === CAT_OP_UPD_INC))
+    || (prev === CAT_OP_UN_NEG && (next === CAT_OP_UN_NEG || next === CAT_OP_UPD_DEC))
+    || (prev === CAT_OP_UN_NOT_AFTER_LT && next === CAT_OP_UPD_DEC)
   ) {
     write(state, " ", CAT_OTHER);
   }

@@ -226,8 +226,9 @@ impl OxlintRules {
         }
 
         if !errors.is_empty() {
-            // Sort by the error message so output is stable
-            errors.sort_unstable_by_key(std::string::ToString::to_string);
+            // Sort by the error message so output is stable. The key is computed once per error
+            // rather than once per comparison, which also keeps the `Display` impl out of the sort.
+            errors.sort_by_cached_key(std::string::ToString::to_string);
             return Err(errors);
         }
 

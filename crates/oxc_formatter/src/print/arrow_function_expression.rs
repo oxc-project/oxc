@@ -18,18 +18,14 @@ use crate::{
 
 use super::{FormatWrite, parameters::has_only_simple_parameters};
 
-impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
-    for AstNode<'a, ArrowFunctionExpression<'a>>
-{
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        FormatJsArrowFunctionExpression::new(self).fmt(f);
-    }
-
-    fn write_with_options(
-        &self,
-        options: FormatJsArrowFunctionExpressionOptions,
-        f: &mut JsFormatter<'_, 'a>,
-    ) {
+        let options = FormatJsArrowFunctionExpressionOptions {
+            // Handed over by `WithAssignmentLayout` when this arrow is the RHS of an assignment-like;
+            // the span key ensures only this arrow can consume it.
+            assignment_layout: f.context_mut().take_arrow_assignment_layout(self.span()),
+            ..FormatJsArrowFunctionExpressionOptions::default()
+        };
         FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f);
     }
 }
@@ -78,10 +74,6 @@ pub enum FunctionCacheMode {
 }
 
 impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
-    pub fn new(arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>) -> Self {
-        Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
-    }
-
     pub fn new_with_options(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,

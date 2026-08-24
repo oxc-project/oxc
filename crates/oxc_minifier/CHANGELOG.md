@@ -4,6 +4,62 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🚀 Features
+
+- b6e9e5e minifier: Fold switch stmt whose parent is not block stmt (#25403) (Armano)
+
+### 🐛 Bug Fixes
+
+- 6f0c7cf minifier: Avoid merging `if` to `for` in sloppy mode when containing function declaration (#25638) (sapphi-red)
+- 58ba651 minifier: Avoid merging `if` to `for` when the body contains a function declaration (#25637) (sapphi-red)
+- af82a07 minifier: Keep unary `+` when the other operand has side effects (#25645) (Kotaro Chikuba)
+
+### ⚡ Performance
+
+- a0aee81 minifier: Do not rebuild expression when substituting void to null (#25964) (Armano)
+- f09c8ab minifier: Avoid creation of unnecessary conditional expressions (#25931) (Armano)
+
+## [0.146.0] - 2026-08-19
+
+### 🚀 Features
+
+- 83cb516 minifier: Improve negation of expressions in boolean context (#25755) (Armano)
+
+### ⚡ Performance
+
+- 5ef0c93 minifier: Unwrap all unary exprs without creating dummy expressions (#25891) (Armano)
+
+## [0.145.0] - 2026-08-18
+
+### 🚀 Features
+
+- 2f5cdb1 minifier: Add property name mangling (#24740) (Dunqing)
+- 4922141 mangler: Deduplicate private accessor names (#25601) (camc314)
+
+### 🐛 Bug Fixes
+
+- ab81f3f minifier: Drop side-effect-free additions (#25639) (Dunqing)
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- b13fd48 minifier: Model uninitialized module vars as undefined (#25497) (Dunqing)
+- f6000ac ecmascript: Fold `**` with `Number::exponentiate`, not IEEE `pow` (#25644) (Kotaro Chikuba)
+- bb5a232 minifier: Keep variable declaration initilized with class when keepNames is enabled (#25584) (sapphi-red)
+- f49229d minifier: Keep side effects when rotating bitwise operands (#25596) (Kotaro Chikuba)
+- e82495b ecmascript: Derive `ToNumber` of `!x` from `ToBoolean` (#25595) (Kotaro Chikuba)
+- c1369a7 codegen: Resolve private names in class heritage (#25588) (camc314)
+- e75e102 minifier: Preserve block statement in labeled iteration statements (#25162) (Armano)
+- 771d79a mangler: Exclude non-manglable symbols from slot assignment (#25539) (sapphi-red)
+- 76b19f5 minifier: Avoid duplicating large folded strings (#25532) (Dunqing)
+- c3e99d1 minifier: Avoid invalid octal escapes in template folds (#25495) (Dunqing)
+- 5fcf683 minifier: Correct issue with try finally termination (#25185) (Armano)
+
+### ⚡ Performance
+
+- 9a6e862 minifier: Move owned statements directly (#25835) (Dunqing)
+- 61b2aef minifier: Move owned AST nodes directly (#25837) (Dunqing)
+- 673b04b minifier: Replace expressions without take_in dummies (#25836) (Dunqing)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

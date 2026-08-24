@@ -48,7 +48,7 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.95), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.96), Node.js, pnpm, just
 
 **Setup Notes:**
 
@@ -190,6 +190,7 @@ fn test() {
 - **Command**: `cargo test -p <crate>` (conformance only: `--test conformance`)
 - **Debug**: `PRETTIER_FILTER=<name> cargo test -p <crate> --test conformance -- --nocapture`
 - Conformance compares output with Prettier's snapshots (suite self-provisioned by `oxc_formatter_tests`); reports are pinned with `insta`
+- Both harnesses re-format every output and record idempotency violations in the snapshots/reports (tracked, not asserted); adding a fixture automatically covers idempotency
 
 #### oxc_minifier
 

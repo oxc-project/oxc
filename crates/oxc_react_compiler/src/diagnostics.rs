@@ -519,20 +519,6 @@ pub fn todo_codegen_reactive_function_codegen_instruction_value_handle_conversio
 }
 
 #[cold]
-pub fn effect_derivations_of_state_values_derived_from_props_and_state_should_calculated_during_render_not(
-    label: impl Into<oxc_diagnostics::LabeledSpan>,
-) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::EffectDerivationsOfState,
-        "Values derived from props and state should be calculated during render, not in an effect",
-    )
-    .with_help(
-        "Calculate the derived value while rendering instead of storing it in state from an effect",
-    )
-    .with_label(primary_label(label))
-}
-
-#[cold]
 pub fn invariant_could_not_find_binding_declaration(
     label: impl Into<oxc_diagnostics::LabeledSpan>,
 ) -> OxcDiagnostic {
@@ -1069,16 +1055,6 @@ where
         "(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement",
     )
     .with_labels(labels)
-}
-
-#[cold]
-pub fn todo_build_hir_lower_statement_handle_empty_test_statement<L, T>(labels: T) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(ErrorCategory::Todo, "(BuildHIR::lowerStatement) Handle empty test in ForStatement")
-        .with_labels(labels)
 }
 
 #[cold]
@@ -2044,15 +2020,6 @@ pub fn missing_function_declaration_binding(name: &str, span: Span) -> OxcDiagno
 }
 
 #[cold]
-pub fn jsx_attribute_colon(name: &str, span: Span) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!("(BuildHIR::lowerExpression) Unexpected colon in attribute name `{name}`"),
-    )
-    .with_label(span.primary_label(format!("`{name}` contains an unsupported colon")))
-}
-
-#[cold]
 pub fn local_fbt_tag(tag_name: &str, span: Option<Span>) -> OxcDiagnostic {
     let reason = format!("<{tag_name}> tags should be module-level imports");
     diagnostic(ErrorCategory::Invariant, &reason)
@@ -2508,6 +2475,33 @@ pub fn derived_state_in_effect(description: String, span: Option<Span>) -> OxcDi
             span.primary_label("This should be computed during render, not in an effect")
         }),
     )
+}
+
+#[cold]
+pub fn derived_state_in_effect_from_dependencies(
+    description: String,
+    span: Option<Span>,
+    dependency_spans: impl IntoIterator<Item = Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
+        ErrorCategory::EffectDerivationsOfState,
+        "Values derived from props and state should be calculated during render, not in an effect",
+    )
+    .with_help(description)
+    .with_labels(span.map(|span| {
+        span.primary_label("This state update stores a value that can be calculated during render")
+    }));
+    let mut dependency_spans = dependency_spans.into_iter().peekable();
+    if let Some(span) = dependency_spans.next() {
+        let label = if dependency_spans.peek().is_some() {
+            "These reactive values contribute to the derived state"
+        } else {
+            "This reactive value contributes to the derived state"
+        };
+        diagnostic.labels.push(span.label(label));
+        diagnostic.labels.extend(dependency_spans.map(Into::into));
+    }
+    diagnostic
 }
 
 #[cold]

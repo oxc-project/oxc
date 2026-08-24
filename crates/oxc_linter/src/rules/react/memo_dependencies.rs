@@ -15,15 +15,7 @@ declare_react_compiler_lint!(
     /// Validates that `useMemo()` and `useCallback()` declare comprehensive
     /// dependency lists without extraneous values.
     ///
-    upstream = "memo-dependencies",
-    ///
-    /// ::: warning
-    /// This rule is currently inactive: the underlying validation
-    /// (`validateExhaustiveMemoizationDependencies`) is disabled in the fixed
-    /// options oxlint compiles with, matching the upstream ESLint plugin's
-    /// defaults. It will activate once React Compiler options become
-    /// configurable in oxlint.
-    /// :::
+    unlinked_upstream = "memo-dependencies",
     ///
     /// ### Why is this bad?
     ///
@@ -31,8 +23,8 @@ declare_react_compiler_lint!(
     /// cause unnecessary recomputation.
     MemoDependencies,
     react,
-    correctness,
-    version = "next",
+    suspicious,
+    version = "1.79.0",
     short_description = "Validates that `useMemo()` and `useCallback()` dependencies are comprehensive, without extraneous values.",
 );
 
@@ -56,9 +48,30 @@ function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
+        "
+import {useMemo} from 'react';
+function Component({value}) {
+  return useMemo(() => value, [value]);
+}
+",
     ];
 
-    let fail = vec![];
+    let fail = vec![
+        // Missing dependency.
+        "
+import {useMemo} from 'react';
+function Component({value}) {
+  return useMemo(() => value, []);
+}
+",
+        // Extraneous dependency.
+        "
+import {useMemo} from 'react';
+function Component({value, extra}) {
+  return useMemo(() => value, [value, extra]);
+}
+",
+    ];
 
     Tester::new(MemoDependencies::NAME, MemoDependencies::PLUGIN, pass, fail).test_and_snapshot();
 }

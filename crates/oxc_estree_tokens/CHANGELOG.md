@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-18
+
+### ⚡ Performance
+
+- c84ede3 estree_tokens: Share JS token update entry point (#25826) (Boshen)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

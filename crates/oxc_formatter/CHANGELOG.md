@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.65.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- bf37dd5 formatter: Preserve class decorators before export when the statement is suppressed (#26034) (leaysgur)
+
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- 2adb8fb formatter: Implement `operatorPosition` option (#25581) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 44231fb formatter: Fix comment and indent issues around unions (#25665) (leaysgur)
+- 2465e87 formatter: Keep comments in place when dropping `EmptyStatement` (#25730) (leaysgur)
+- 7e4f3b7 formatter: Print `JSDocUnknownType` (#25729) (leaysgur)
+- 5238d9e formatter: Keep nested awaited-paren member chain grouped in call arguments (#25646) (leaysgur)
+- 7f350d1 formatter: Keep unary comment and print only needed parens (#25526) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

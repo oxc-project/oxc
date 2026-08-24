@@ -970,10 +970,10 @@ pub fn validate_no_derived_computations_in_effects(
 ) -> Result<(), OxcDiagnostic> {
     // Phase 1: Collect effect call sites (func_id + resolved deps).
     // Done with only immutable borrows of env fields.
-    let effects_to_validate: Vec<(FunctionId, Vec<IdentifierId>)> = {
+    let effects_to_validate: Vec<(FunctionId, Vec<DepElement>)> = {
         let ids = &env.identifiers;
         let tys = &env.types;
-        let mut candidate_deps: FxHashMap<IdentifierId, Vec<IdentifierId>> = FxHashMap::default();
+        let mut candidate_deps: FxHashMap<IdentifierId, Vec<DepElement>> = FxHashMap::default();
         let mut functions_map: FxHashMap<IdentifierId, FunctionId> = FxHashMap::default();
         let mut locals_map: FxHashMap<IdentifierId, IdentifierId> = FxHashMap::default();
         let mut result = Vec::new();
@@ -986,15 +986,17 @@ pub fn validate_no_derived_computations_in_effects(
                         locals_map.insert(instr.lvalue.identifier, place.identifier);
                     }
                     InstructionValue::ArrayExpression { elements, .. } => {
-                        let elem_ids: Vec<IdentifierId> = elements
+                        let deps: Vec<DepElement> = elements
                             .iter()
                             .filter_map(|e| match e {
-                                ArrayElement::Place(p) => Some(p.identifier),
+                                ArrayElement::Place(p) => {
+                                    Some(DepElement { identifier: p.identifier, span: p.span })
+                                }
                                 _ => None,
                             })
                             .collect();
-                        if elem_ids.len() == elements.len() {
-                            candidate_deps.insert(instr.lvalue.identifier, elem_ids);
+                        if deps.len() == elements.len() {
+                            candidate_deps.insert(instr.lvalue.identifier, deps);
                         }
                     }
                     InstructionValue::FunctionExpression { lowered_func, .. } => {
@@ -1012,9 +1014,15 @@ pub fn validate_no_derived_computations_in_effects(
                             )
                             && !dep_elements.is_empty()
                         {
-                            let resolved: Vec<IdentifierId> = dep_elements
+                            let resolved: Vec<DepElement> = dep_elements
                                 .iter()
-                                .map(|d| locals_map.get(d).copied().unwrap_or(*d))
+                                .map(|dep| DepElement {
+                                    identifier: locals_map
+                                        .get(&dep.identifier)
+                                        .copied()
+                                        .unwrap_or(dep.identifier),
+                                    span: dep.span,
+                                })
                                 .collect();
                             result.push((func_id, resolved));
                         }
@@ -1031,9 +1039,15 @@ pub fn validate_no_derived_computations_in_effects(
                             )
                             && !dep_elements.is_empty()
                         {
-                            let resolved: Vec<IdentifierId> = dep_elements
+                            let resolved: Vec<DepElement> = dep_elements
                                 .iter()
-                                .map(|d| locals_map.get(d).copied().unwrap_or(*d))
+                                .map(|dep| DepElement {
+                                    identifier: locals_map
+                                        .get(&dep.identifier)
+                                        .copied()
+                                        .unwrap_or(dep.identifier),
+                                    span: dep.span,
+                                })
                                 .collect();
                             result.push((func_id, resolved));
                         }
@@ -1063,14 +1077,16 @@ pub fn validate_no_derived_computations_in_effects(
 
 fn validate_effect_non_exp(
     effect_func: &HirFunction,
-    effect_deps: &[IdentifierId],
+    effect_deps: &[DepElement],
     ids: &IndexSlice<IdentifierId, [Identifier]>,
     tys: &IndexSlice<TypeId, [Type]>,
 ) -> Vec<OxcDiagnostic> {
     // Check that the effect function only captures effect deps and setState
     for ctx in &effect_func.context {
         let ctx_ty = &tys[ids[ctx.identifier].type_];
-        if is_set_state_type(ctx_ty) || effect_deps.contains(&ctx.identifier) {
+        if is_set_state_type(ctx_ty)
+            || effect_deps.iter().any(|dep| dep.identifier == ctx.identifier)
+        {
             continue;
         } else {
             return Vec::new();
@@ -1079,7 +1095,7 @@ fn validate_effect_non_exp(
 
     // Check that all effect deps are actually used in the function
     for dep in effect_deps {
-        if !effect_func.context.iter().any(|c| c.identifier == *dep) {
+        if !effect_func.context.iter().any(|c| c.identifier == dep.identifier) {
             return Vec::new();
         }
     }
@@ -1087,7 +1103,7 @@ fn validate_effect_non_exp(
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
     let mut dep_values: FxHashMap<IdentifierId, Vec<IdentifierId>> = FxHashMap::default();
     for dep in effect_deps {
-        dep_values.insert(*dep, vec![*dep]);
+        dep_values.insert(dep.identifier, vec![dep.identifier]);
     }
 
     let mut set_state_spans: Vec<Span> = Vec::new();
@@ -1189,10 +1205,39 @@ fn validate_effect_non_exp(
         seen_blocks.insert(block.id);
     }
 
+    if set_state_spans.is_empty() {
+        return Vec::new();
+    }
+
+    let mut dependency_names: IdentIndexSet = IdentIndexSet::default();
+    for dep in effect_deps {
+        if let Some(IdentifierName::Named(name)) = ids[dep.identifier].name {
+            dependency_names.insert(name);
+        }
+    }
+    let dependency_description = if dependency_names.is_empty() {
+        "the effect's reactive dependencies".to_string()
+    } else {
+        let names = dependency_names.iter().map(|name| name.as_str()).collect::<Vec<_>>();
+        format!(
+            "the reactive value{} `{}`",
+            if names.len() == 1 { "" } else { "s" },
+            names.join("`, `")
+        )
+    };
+    let help = format!(
+        "This effect derives state from {dependency_description}, causing an extra render and potentially showing a stale value. Calculate the derived value during render, then remove the redundant state and effect."
+    );
+    let dependency_spans = effect_deps.iter().filter_map(|dep| dep.span).collect::<Vec<_>>();
+
     set_state_spans
         .into_iter()
         .map(|span| {
-            diagnostics::effect_derivations_of_state_values_derived_from_props_and_state_should_calculated_during_render_not(span)
+            diagnostics::derived_state_in_effect_from_dependencies(
+                help.clone(),
+                Some(span),
+                dependency_spans.iter().copied(),
+            )
         })
         .collect()
 }

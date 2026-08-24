@@ -474,13 +474,14 @@ impl<'a> PatternParser<'a> {
             if self.state.unicode_mode {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
-                if self.state.num_of_capturing_groups < index {
+                if u64::from(self.state.num_of_capturing_groups) < index {
                     return Err(diagnostics::invalid_indexed_reference(
                         self.span_factory.create(span_start, self.reader.offset()),
                         self.state.num_of_capturing_groups as usize,
                     ));
                 }
 
+                let index = u32::try_from(index).expect("validated capture index must fit in u32");
                 return Ok(Some(ast::Term::IndexedReference(ArenaBox::new_in(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -490,7 +491,8 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            if index <= self.state.num_of_capturing_groups {
+            if index <= u64::from(self.state.num_of_capturing_groups) {
+                let index = u32::try_from(index).expect("validated capture index must fit in u32");
                 return Ok(Some(ast::Term::IndexedReference(ArenaBox::new_in(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -1776,14 +1778,13 @@ impl<'a> PatternParser<'a> {
     // DecimalEscape ::
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
-    fn consume_decimal_escape(&mut self) -> Result<Option<u32>> {
+    fn consume_decimal_escape(&mut self) -> Result<Option<u64>> {
         let checkpoint = self.reader.checkpoint();
 
         if let Some(index) = self.consume_decimal_digits()? {
             // \0 is CharacterEscape, not DecimalEscape
             if index != 0 {
-                #[expect(clippy::cast_possible_truncation)]
-                return Ok(Some(index as u32));
+                return Ok(Some(index));
             }
 
             self.reader.rewind(checkpoint);

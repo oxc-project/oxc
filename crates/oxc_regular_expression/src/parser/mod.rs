@@ -290,6 +290,33 @@ mod test {
     }
 
     #[test]
+    fn oversized_decimal_backreferences() {
+        let allocator = Allocator::default();
+        let patterns = [r"()\4294967295", r"()\4294967296", r"()\4294967297"];
+
+        for pattern_text in patterns {
+            for flags_text in ["u", "v"] {
+                assert!(
+                    LiteralParser::new(
+                        &allocator,
+                        pattern_text,
+                        Some(flags_text),
+                        Options::default(),
+                    )
+                    .parse()
+                    .is_err(),
+                    "/{pattern_text}/{flags_text} should reject an out-of-range backreference"
+                );
+            }
+
+            let pattern = LiteralParser::new(&allocator, pattern_text, None, Options::default())
+                .parse()
+                .expect("Annex B decimal escape fallback should parse");
+            assert_eq!(pattern.to_string(), pattern_text);
+        }
+    }
+
+    #[test]
     fn should_handle_empty() {
         let allocator = Allocator::default();
         let pattern1 =

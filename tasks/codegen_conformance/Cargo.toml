@@ -23,9 +23,10 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
-oxc_codegen = { workspace = true }
+oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
+oxc_sourcemap = { workspace = true, features = ["napi"] }
 oxc_syntax = { workspace = true }
 
 napi = { workspace = true }
@@ -33,8 +34,3 @@ napi-derive = { workspace = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
-
-# `napi` is not named in the source - the `#[napi]` macro expands to code which uses it, which
-# `cargo-shear` cannot see through.
-[package.metadata.cargo-shear]
-ignored = ["napi"]
