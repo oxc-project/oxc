@@ -631,6 +631,37 @@ fn test_remove_unary_plus() {
     test_same("v = +a | b");
 }
 
+/// `+a` converts `a` as soon as `a` is evaluated, while `a - n` converts it only
+/// after `n` has been evaluated too. A right operand with a side effect can
+/// therefore change what the conversion sees:
+///
+/// ```js
+/// var xs = [];
+/// (+xs) - (xs.push(1), 0); // 0, converted while `xs` was still empty
+/// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
+/// ```
+///
+/// The right operand is evaluated before either conversion happens, so `+` in
+/// that position can still go.
+#[test]
+fn test_remove_unary_plus_evaluation_order() {
+    // The right operand affects the conversion.
+    test_same("v = +xs - (xs.push(1), 0)");
+    test_same("v = +xs * f()");
+    test_same("v = +xs | g.h");
+    test_same("v = +xs - obj.n");
+
+    // A side-effect-free right operand cannot.
+    test("v = +xs - 1", "v = xs - 1");
+    test("v = +xs * 1e3", "v = xs * 1e3");
+    test("v = +xs - (2 * 3)", "v = xs - 6");
+    test("function f(x, a) { return +a - +!!x }", "function f(x, a) { return a - +!!x }");
+    test("function f(x, a) { return +a * +(x > 1) }", "function f(x, a) { return a * +(x > 1) }");
+
+    // The left operand is evaluated first either way.
+    test("v = (xs.push(1), 0) - +xs", "v = (xs.push(1), 0 - xs)");
+}
+
 #[test]
 fn test_fold_loose_equals_undefined() {
     test_same("v = foo != null");

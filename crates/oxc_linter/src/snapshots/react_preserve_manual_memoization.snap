@@ -3,21 +3,6 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(preserve-manual-memoization): Existing memoization could not be preserved
-   ╭─[preserve_manual_memoization.tsx:6:6]
- 4 │   return useMemo(() => {
- 5 │     return propA.x();
-   ·            ──┬──
-   ·              ╰── This dependency is inferred here
- 6 │   }, [propA.x]);
-   ·      ────┬────
-   ·          ╰── This dependency list does not match the dependencies inferred from the callback
- 7 │ }
-   ╰────
-  help: React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `propA`, but the source dependencies were [propA.x]. Inferred less specific property
-        than source
-  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization
-
-  ⚠ react(preserve-manual-memoization): Existing memoization could not be preserved
    ╭─[preserve_manual_memoization.tsx:7:10]
  6 │   x.push(props);
  7 │   return useCallback(() => {

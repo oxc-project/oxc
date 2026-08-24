@@ -55,8 +55,6 @@ use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted
 use crate::react_compiler_reactive_scopes::prune_unused_labels::prune_unused_labels;
 use crate::react_compiler_reactive_scopes::prune_unused_lvalues::prune_unused_lvalues;
 use crate::react_compiler_reactive_scopes::rename_variables::rename_variables;
-use crate::react_compiler_reactive_scopes::visitors::ReactiveFunctionVisitor;
-use crate::react_compiler_reactive_scopes::visitors::visit_reactive_function;
 
 // =============================================================================
 // Public API
@@ -169,16 +167,11 @@ pub fn codegen_function<'a>(
     Ok(OxcCodegenFunction {
         span: func.span,
         id,
-        name_hint: func.name_hint,
         params: compiled.params,
         body: compiled.body,
         generator: func.generator,
         is_async: func.is_async,
         memo_slots_used: compiled.memo_slots_used,
-        memo_blocks: compiled.memo_blocks,
-        memo_values: compiled.memo_values,
-        pruned_memo_blocks: compiled.pruned_memo_blocks,
-        pruned_memo_values: compiled.pruned_memo_values,
         outlined,
     })
 }
@@ -342,10 +335,6 @@ struct OxcCompiledFunction<'a> {
     generator: bool,
     is_async: bool,
     memo_slots_used: u32,
-    memo_blocks: u32,
-    memo_values: u32,
-    pruned_memo_blocks: u32,
-    pruned_memo_values: u32,
 }
 
 /// JSX text children containing any of these characters must be wrapped in an
@@ -514,9 +503,6 @@ fn ox_codegen_reactive_function<'a>(
         statements.pop();
     }
 
-    let (memo_blocks, memo_values, pruned_memo_blocks, pruned_memo_values) =
-        count_memo_blocks(func, cx.env);
-
     let body_span = func.body_span.or_else(|| ox_statements_span(&statements)).unwrap_or_default();
     let body = oxc_ast::ast::FunctionBody::boxed(body_span, directives, statements, &cx.ast);
 
@@ -526,10 +512,6 @@ fn ox_codegen_reactive_function<'a>(
         generator: func.generator,
         is_async: func.is_async,
         memo_slots_used: cx.next_cache_index,
-        memo_blocks,
-        memo_values,
-        pruned_memo_blocks,
-        pruned_memo_values,
     })
 }
 
@@ -1333,6 +1315,20 @@ fn ox_codegen_for_init<'a>(
     init: &ReactiveValue<'a>,
 ) -> Result<Option<oxc::ForStatementInit<'a>>, OxcDiagnostic> {
     if let ReactiveValue::SequenceExpression { instructions, .. } = init {
+        // An omitted initializer is represented by a synthetic `undefined`
+        // instruction so the HIR block is not empty.
+        if instructions.len() == 1
+            && matches!(
+                &instructions[0].value,
+                ReactiveValue::Instruction(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    ..
+                })
+            )
+        {
+            return Ok(None);
+        }
+
         let block_items = oxc_allocator::Vec::from_iter_in(
             instructions
                 .iter()
@@ -2011,14 +2007,21 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::ObjectExpression { properties, .. } => {
             ox_codegen_object_expression(cx, properties, span)
         }
-        InstructionValue::PropertyLoad { object, property, property_span, .. } => {
+        InstructionValue::PropertyLoad { object, property, computed, property_span, .. } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, *computed, span, *property_span);
             Ok(OxValue::Expression(oxc::Expression::from(member)))
         }
-        InstructionValue::PropertyStore { object, property, property_span, value, .. } => {
+        InstructionValue::PropertyStore {
+            object,
+            property,
+            computed,
+            property_span,
+            value,
+            ..
+        } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, *computed, span, *property_span);
             let val = ox_codegen_place_to_expression(cx, value)?;
             let target = oxc::AssignmentTarget::from(oxc::SimpleAssignmentTarget::from(member));
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
@@ -2031,7 +2034,7 @@ fn ox_codegen_base_instruction_value<'a>(
         }
         InstructionValue::PropertyDelete { object, property, property_span, .. } => {
             let obj = ox_codegen_place_to_expression(cx, object)?;
-            let member = ox_property_member(cx, obj, property, span, *property_span);
+            let member = ox_property_member(cx, obj, property, false, span, *property_span);
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_unary_expression(
                 span,
                 oxc::UnaryOperator::Delete,
@@ -2281,11 +2284,26 @@ fn ox_property_member<'a>(
     cx: &OxcContext<'a, '_>,
     object: oxc::Expression<'a>,
     property: &PropertyLiteral,
+    computed: bool,
     span: Span,
     property_span: Option<Span>,
 ) -> oxc::MemberExpression<'a> {
     let property_span = property_span.unwrap_or(span);
     match property {
+        PropertyLiteral::String(s) if computed => {
+            oxc_ast::ast::MemberExpression::new_computed_member_expression(
+                span,
+                object,
+                oxc_ast::ast::Expression::new_string_literal(
+                    property_span,
+                    ox_str(&cx.ast, s),
+                    None,
+                    &cx.ast,
+                ),
+                false,
+                &cx.ast,
+            )
+        }
         PropertyLiteral::String(s) => oxc_ast::ast::MemberExpression::new_static_member_expression(
             span,
             object,
@@ -2614,8 +2632,14 @@ fn ox_codegen_dependency<'a>(
         // plain members whose `optional` flags are preserved. Wrapping each step in
         // its own `ChainExpression` would force spurious parens such as `(((a.b)?.c).d)?.e`.
         for path_entry in &dep.path {
-            let member =
-                ox_property_member(cx, object, &path_entry.property, span, path_entry.span);
+            let member = ox_property_member(
+                cx,
+                object,
+                &path_entry.property,
+                path_entry.computed,
+                span,
+                path_entry.span,
+            );
             object = match member {
                 oxc::MemberExpression::StaticMemberExpression(m) => {
                     let m = m.unbox();
@@ -3608,64 +3632,6 @@ fn ox_parse_regexp_flags(flags_str: &str) -> oxc::RegExpFlags {
         }
     }
     flags
-}
-
-// =============================================================================
-// CountMemoBlockVisitor — uses ReactiveFunctionVisitor trait
-// =============================================================================
-
-/// Counts memo blocks and pruned memo blocks in a reactive function.
-/// TS: `class CountMemoBlockVisitor extends ReactiveFunctionVisitor<void>`
-struct CountMemoBlockVisitor<'a, 'e> {
-    env: &'e Environment<'a>,
-}
-
-struct CountMemoBlockState {
-    memo_blocks: u32,
-    memo_values: u32,
-    pruned_memo_blocks: u32,
-    pruned_memo_values: u32,
-}
-
-impl<'a, 'e> ReactiveFunctionVisitor<'a> for CountMemoBlockVisitor<'a, 'e> {
-    type State = CountMemoBlockState;
-
-    fn env(&self) -> &Environment<'a> {
-        self.env
-    }
-
-    fn visit_scope(&self, scope_block: &ReactiveScopeBlock<'a>, state: &mut CountMemoBlockState) {
-        state.memo_blocks += 1;
-        let scope = &self.env.scopes[scope_block.scope];
-        state.memo_values += scope.declarations.len() as u32;
-        self.traverse_scope(scope_block, state);
-    }
-
-    fn visit_pruned_scope(
-        &self,
-        scope_block: &PrunedReactiveScopeBlock<'a>,
-        state: &mut CountMemoBlockState,
-    ) {
-        state.pruned_memo_blocks += 1;
-        let scope = &self.env.scopes[scope_block.scope];
-        state.pruned_memo_values += scope.declarations.len() as u32;
-        self.traverse_pruned_scope(scope_block, state);
-    }
-}
-
-fn count_memo_blocks<'a>(
-    func: &ReactiveFunction<'a>,
-    env: &Environment<'a>,
-) -> (u32, u32, u32, u32) {
-    let visitor = CountMemoBlockVisitor { env };
-    let mut state = CountMemoBlockState {
-        memo_blocks: 0,
-        memo_values: 0,
-        pruned_memo_blocks: 0,
-        pruned_memo_values: 0,
-    };
-    visit_reactive_function(func, &visitor, &mut state);
-    (state.memo_blocks, state.memo_values, state.pruned_memo_blocks, state.pruned_memo_values)
 }
 
 fn codegen_label(id: BlockId) -> String {

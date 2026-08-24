@@ -11,7 +11,6 @@
 //    in a handful of places. The `*Node` aliases widen the properties where they do, and the branches
 //    which read a property Oxc's AST doesn't have at all assert its type at the point of use.
 
-import type { Position } from "./options.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /** A node whose type the printer doesn't handle. */
@@ -58,64 +57,45 @@ export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "de
 };
 
 /**
- * Oxc keeps a module's kind in `kind`, using `global: true` for `declare global`.
- * Older producers have no `kind`, and only the `global` flag distinguishes the two.
- */
-export type TSModuleDeclarationNode = Omit<
-  ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
-  "kind"
-> & {
-  kind?: ESTree.TSModuleDeclarationKind | "global" | null;
-};
-
-/**
- * Oxc puts a mapped type's parameter in `key` and `constraint`, where TS-ESLint < 6 used `typeParameter`.
- */
-export type TSMappedTypeNode = Omit<ESTree.TSMappedType, "key"> & {
-  key?: ESTree.BindingIdentifier | null;
-};
-
-/**
- * The pre-TS-ESLint-6 shape `TSMappedTypeNode` falls back to reading.
- */
-export interface TSMappedTypeLegacyParameter {
-  typeParameter: Omit<ESTree.TSTypeParameter, "constraint"> & { constraint: ESTree.TSType };
-}
-
-/**
- * Oxc's `TSImportType` names the module in `source`, where TS-ESLint < 8 used `argument`.
- */
-export type TSImportTypeNode = Omit<ESTree.TSImportType, "source"> & {
-  source?: ESTree.StringLiteral | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSImportTypeNode` falls back to reading.
- */
-export interface TSImportTypeLegacyArgument {
-  argument: ESTree.StringLiteral | ESTree.TSLiteralType | ESTree.TSType;
-}
-
-/**
- * Oxc wraps enum members in a `TSEnumBody`, where TS-ESLint < 8 put them on the declaration itself.
- */
-export type TSEnumDeclarationNode = Omit<ESTree.TSEnumDeclaration, "body"> & {
-  body?: ESTree.TSEnumBody | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSEnumDeclarationNode` falls back to reading.
- */
-export interface TSEnumDeclarationLegacyMembers {
-  members: ESTree.TSEnumMember[];
-}
-
-/**
- * A node, as passed to `writeWithMap` / `writeWithMapNoLast`, which record where the node started for source maps.
+ * A node carrying the offsets needed for source mappings.
  *
- * `loc` is not part of Oxc's AST - that records byte spans - but producers such as Acorn add it.
+ * No `name` - a mapping recorded for one of these carries none. `NamedMappableNode` below is the
+ * shape the named forms take, and requiring `name` on it is what steers a named call which cannot
+ * produce a name to the plain form instead.
  */
 export interface MappableNode {
   type: string;
-  loc?: { start: Position } | null;
+  start?: number;
+  end?: number;
+}
+
+/**
+ * A node whose mapping records the name it had in the source.
+ *
+ * These are the identifier kinds Rust `oxc_codegen` names mappings for - identifier references and
+ * names, binding, label, JSX and private identifiers.
+ */
+export interface NamedMappableNode extends MappableNode {
+  name: string;
+}
+
+/**
+ * An `Identifier` node.
+ *
+ * This does not include `JSXIdentifier` or `PrivateIdentifier`. A `JSXIdentifier`'s or `PrivateIdentifier`'s name
+ * is recovered from the source by a different scan, so it goes to a write function of its own.
+ */
+export interface IdentMappableNode extends NamedMappableNode {
+  type: "Identifier";
+}
+
+/**
+ * A node whose mapping records no name, because it has no string `name` to record.
+ *
+ * `name?: object` is how a node which does have one is rejected - `string` is not assignable to it.
+ * A `name` holding a node rather than a string, as a JSX element's does, is not a name a mapping could record,
+ * and stays allowed.
+ */
+export interface UnnamedMappableNode extends MappableNode {
+  name?: object;
 }

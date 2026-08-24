@@ -44,7 +44,7 @@ declare_react_compiler_lint!(
     Purity,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates that components and hooks do not call known-impure functions.",
 );
 
@@ -86,4 +86,20 @@ function Component() {
     ];
 
     Tester::new(Purity::NAME, Purity::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn skips_node_modules() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    let pass = vec![(
+        "function Component() { return <div>{Date.now()}</div>; }",
+        None,
+        None,
+        Some(PathBuf::from("node_modules/package/Component.tsx")),
+    )];
+
+    Tester::new(Purity::NAME, Purity::PLUGIN, pass, vec![]).test();
 }

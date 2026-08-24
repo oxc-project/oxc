@@ -22,12 +22,36 @@ impl<'a> PeepholeOptimizations {
         let Statement::IfStatement(if_stmt) = first else {
             return;
         };
+
+        // Moving the condition into the `for` test changes its scope from the
+        // loop body's block scope to the surrounding scope. Block function
+        // declarations are initialized on entry, so the condition can observe
+        // them before their declaration statement. Other lexical declarations
+        // only differ through TDZ behavior, which the minifier intentionally
+        // ignores.
+        let body_has_function_declaration = match &for_stmt.body {
+            Statement::BlockStatement(block_stmt) => {
+                block_stmt.body.iter().skip(1).any(Self::statement_has_function_declaration)
+            }
+            _ => false,
+        };
+        if body_has_function_declaration {
+            return;
+        }
+        let is_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
+
         // "for (;;) if (x) break;" => "for (; !x;) ;"
         // "for (; a;) if (x) break;" => "for (; a && !x;) ;"
         // "for (;;) if (x) break; else y();" => "for (; !x;) y();"
         // "for (; a;) if (x) break; else y();" => "for (; a && !x;) y();"
         if let Some(Statement::BreakStatement(break_stmt)) = if_stmt.consequent.get_one_child() {
             if break_stmt.label.is_some() {
+                return;
+            }
+            // Annex B gives a direct function declaration in an `if` branch an implicit scope.
+            if is_sloppy_mode
+                && if_stmt.alternate.as_ref().is_some_and(Self::statement_has_function_declaration)
+            {
                 return;
             }
 
@@ -40,14 +64,9 @@ impl<'a> PeepholeOptimizations {
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
-
-            let expr = match if_stmt.test.take_in(ctx) {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    unary_expr.unbox().argument
-                }
-                e => Self::minimize_not(e.span(), e, ctx),
-            };
+            let Statement::IfStatement(if_stmt) = first else { unreachable!() };
+            let IfStatement { test, alternate, .. } = if_stmt.unbox();
+            let expr = Self::minimize_not(test.span(), test, ctx, true);
 
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);
@@ -61,7 +80,6 @@ impl<'a> PeepholeOptimizations {
                 for_stmt.test = Some(expr);
             }
 
-            let alternate = if_stmt.alternate.take();
             let new_body = Self::drop_first_statement(span, body, alternate, ctx);
             ctx.replace_statement(&mut for_stmt.body, new_body);
             return;
@@ -74,6 +92,10 @@ impl<'a> PeepholeOptimizations {
             if break_stmt.label.is_some() {
                 return;
             }
+            // Annex B gives a direct function declaration in an `if` branch an implicit scope.
+            if is_sloppy_mode && Self::statement_has_function_declaration(&if_stmt.consequent) {
+                return;
+            }
 
             let span = for_stmt.body.span();
             let (first, body) = match for_stmt.body.take_in(ctx) {
@@ -84,9 +106,10 @@ impl<'a> PeepholeOptimizations {
                 stmt => (stmt, None),
             };
 
-            let Statement::IfStatement(mut if_stmt) = first else { unreachable!() };
+            let Statement::IfStatement(if_stmt) = first else { unreachable!() };
+            let IfStatement { test, consequent, .. } = if_stmt.unbox();
 
-            let expr = if_stmt.test.take_in(ctx);
+            let expr = test;
 
             if let Some(test) = &mut for_stmt.test {
                 let left = test.take_in(ctx);
@@ -100,9 +123,18 @@ impl<'a> PeepholeOptimizations {
                 for_stmt.test = Some(expr);
             }
 
-            let consequent = if_stmt.consequent.take_in(ctx);
             let new_body = Self::drop_first_statement(span, body, Some(consequent), ctx);
             ctx.replace_statement(&mut for_stmt.body, new_body);
+        }
+    }
+
+    fn statement_has_function_declaration(stmt: &Statement<'a>) -> bool {
+        match stmt {
+            Statement::FunctionDeclaration(_) => true,
+            Statement::LabeledStatement(label) => {
+                Self::statement_has_function_declaration(&label.body)
+            }
+            _ => false,
         }
     }
 
@@ -119,7 +151,7 @@ impl<'a> PeepholeOptimizations {
                 } else if block_stmt.body.len() == 2
                     && !Self::statement_cares_about_scope(&block_stmt.body[1])
                 {
-                    return block_stmt.body[1].take_in(ctx);
+                    return block_stmt.body.pop().unwrap();
                 } else {
                     block_stmt.body.remove(0);
                 }

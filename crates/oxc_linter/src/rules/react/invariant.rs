@@ -16,7 +16,7 @@ declare_react_compiler_lint!(
     /// bug in the compiler itself, not in your code — consider reporting them
     /// to the oxc or React teams.
     ///
-    upstream = "invariant",
+    unlinked_upstream = "invariant",
     ///
     /// ### Why is this bad?
     ///
@@ -25,7 +25,7 @@ declare_react_compiler_lint!(
     Invariant,
     react,
     restriction,
-    version = "next",
+    version = "1.79.0",
     short_description = "Reports internal React Compiler invariant violations, which indicate a compiler bug.",
 );
 

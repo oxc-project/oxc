@@ -16,6 +16,9 @@ use crate::{
         import_declaration::format_source_with_clause_and_semicolon,
         semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
     },
+    utils::{
+        decorators_before_export_start, export_declaration_span, export_default_declaration_span,
+    },
     write,
 };
 
@@ -40,7 +43,7 @@ fn format_export_keyword_with_class_decorators<'a>(
     {
         // `@decorator export class Cls {}`
         // decorators are placed before the export keyword
-        if class.decorators[0].span.end < span.start {
+        if decorators_before_export_start(&class.decorators, span).is_some() {
             write!(
                 f,
                 [class.decorators(), hard_line_break(), format_leading_comments, keyword, space()]
@@ -114,6 +117,10 @@ fn format_export_specifiers_block<'a>(
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
+    fn suppressed_span(&self) -> Span {
+        export_default_declaration_span(self)
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
         format_export_keyword_with_class_decorators(
@@ -156,6 +163,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportDeclaration<'a>> {
+    fn suppressed_span(&self) -> Span {
+        export_declaration_span(self)
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
         format_export_keyword_with_class_decorators(

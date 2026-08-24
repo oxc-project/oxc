@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 
 use oxc_ast::{
     Comment, CommentKind,
@@ -11,7 +12,9 @@ use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
-pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+type CommentList = SmallVec<[Comment; 1]>;
+
+pub type CommentsMap = FxHashMap</* attached_to */ u32, CommentList>;
 
 /// Whether a comment remains meaningful if its original AST anchor is removed.
 fn preserve_when_orphaned(comment: Comment) -> bool {
@@ -72,6 +75,9 @@ impl Codegen<'_> {
         if self.options.comments == CommentOptions::disabled() {
             return;
         }
+        // Each retained comment can create at most one map entry. Reserving
+        // this upper bound avoids incremental map growth while preprocessing.
+        self.comments.reserve(comments.len());
         for comment in comments {
             // Stash pure / no-side-effects comments by `attached_to` so the
             // emission site can recover the verbatim source text instead of
@@ -85,21 +91,15 @@ impl Codegen<'_> {
                 }
                 continue;
             }
+
             let mut add = false;
             if comment.is_leading() {
-                if comment.is_legal() && self.options.print_legal_comment() {
-                    add = true;
-                }
-                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
-                    add = true;
-                }
-                if comment.is_annotation() && self.options.print_annotation_comment() {
-                    add = true;
-                }
-                if comment.is_normal() && self.options.print_normal_comment() {
-                    add = true;
-                }
+                add = (comment.is_legal() && self.options.print_legal_comment())
+                    || (comment.is_jsdoc() && self.options.print_jsdoc_comment())
+                    || (comment.is_annotation() && self.options.print_annotation_comment())
+                    || (comment.is_normal() && self.options.print_normal_comment());
             }
+
             if add {
                 self.has_property_key_annotations |= comment.is_property_key_annotation();
                 if preserve_when_orphaned(*comment)
@@ -164,7 +164,7 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn get_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
+    pub(crate) fn get_comments(&mut self, start: u32) -> Option<CommentList> {
         if self.comments.is_empty() {
             return None;
         }
@@ -289,7 +289,14 @@ impl Codegen<'_> {
         for k in self.orphan_comment_keys.drain(..idx) {
             let Some(entry) = comments.get_mut(&k) else { continue };
             debug_assert!(entry.iter().any(|c| preserve_when_orphaned(*c)));
-            orphans.extend(entry.extract_if(.., |c| preserve_when_orphaned(*c)));
+            entry.retain(|comment| {
+                if preserve_when_orphaned(*comment) {
+                    orphans.push(*comment);
+                    false
+                } else {
+                    true
+                }
+            });
             if entry.is_empty() {
                 comments.remove(&k);
             }

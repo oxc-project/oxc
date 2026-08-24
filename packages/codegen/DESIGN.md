@@ -68,7 +68,6 @@ The conformance suites check this on every fixture. It is what makes the two pri
 - No minify mode.
 - No support for comments.
 - No symbol mangling.
-- Source map support is implemented, but not well-tested.
 
 Many of these features can be added in future, and we should be able to do so without _much_ impact on performance.
 
@@ -256,16 +255,44 @@ No operator merges with a plain `!`, so storing it must not cost `printSpaceBefo
 Not every write needs to update `last`.
 
 When one token is written in pieces - a string's opening quote, its contents, its closing quote -
-only the last piece's category can possibly be read. Hence four write primitives in [`print/write.ts`]:
+only the last piece's category can possibly be read. Hence eleven write primitives in [`print/write.ts`]:
 
-| Function             | Updates `last` | Records a source mapping |
-| :------------------- | :------------- | :----------------------- |
-| `write`              | Yes            | No                       |
-| `writeWithMap`       | Yes            | Yes                      |
-| `writeNoLast`        | No             | No                       |
-| `writeWithMapNoLast` | No             | Yes                      |
+| Function                     | Updates `last` | Records a source mapping       |
+| :--------------------------- | :------------- | :----------------------------- |
+| `write`                      | Yes            | No                             |
+| `writeIdent`                 | Yes            | No                             |
+| `writePrivate`               | Yes            | No                             |
+| `writeWithMap`               | Yes            | At the node's start            |
+| `writeWithMapNamed`          | Yes            | At the node's start, with name |
+| `writeWithMapNamedPrivate`   | Yes            | At the node's start, with name |
+| `writeWithMapEnd`            | Yes            | At the node's last character   |
+| `writeNoLast`                | No             | No                             |
+| `writeWithMapNoLast`         | No             | At the node's start            |
+| `writeWithMapNamedNoLast`    | No             | At the node's start, with name |
+| `writeWithMapNamedJSXNoLast` | No             | At the node's start, with name |
 
-- The `*NoLast` pair is used at 89 sites, against 596 for the other two.
+- Every `writeWithMap*` and `markMap*` function takes the node's `start` and `end` offsets, extracted by the caller.
+  The node itself is still passed, last, but only debug asserts read it - which is what checks the offsets
+  against the node they claim to describe. The point is where the read happens - in a caller the node's type is known,
+  so `node.start` is a monomorphic load, whereas inside the write functions the same read is megamorphic,
+  because the printer reaches them from every node type there is. Release builds have the parameter and every argument
+  removed by the TSDown plugin.
+- The `*Named` functions record the name the node had in the source, and take a `NamedMappableNode`,
+  which covers nodes with a string `name`. What they record is the text they print -
+  debug builds assert the two are the same string.
+- The other `writeWithMap*` functions take an `UnnamedMappableNode` which covers nodes without a string `name`.
+- There is a `*Named` function per way of recovering the original name from the source, because the scan differs -
+  a JSX identifier may hold a `-`, and a private identifier's span covers a `#` which is not part of its name.
+  Which one applies is settled at the call site, where the node's type is known statically, rather than read back
+  off a `node` which is megamorphic by the time it arrives.
+- `writeIdent` is `write` with the category fixed at `CAT_IDENT` - an identifier, a keyword, or the trailing digits
+  of a number. It is the commonest category by far, so every call which passed it was spending an argument
+  on a value which could never be anything else.
+- `writeWithMapNamed` and `writeWithMapNamedPrivate` take no category for the same reason, which is why their
+  plain forms are `writeIdent` and `writePrivate` rather than `write`.
+- The two `Private` forms write the `#` themselves, so the name they are given is what follows it,
+  and `last` is always `CAT_IDENT` - the caller passes neither.
+- The three `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
 - The rule is exact: **only sound where the value of `last` is provably dead**.
   Another real write must follow before anything reads it.
 - JSX carries the longest runs. Printing `<a.b x="1">hi</a.b>` updates `last` exactly once, on the final `>`.
@@ -300,7 +327,7 @@ This is why the debug build is the one to run the conformance suites against - `
 | `print_ts.js`      | true  | false        | 39 KB |
 | `print_ts_maps.js` | true  | true         | 40 KB |
 
-`index.ts` picks one from the caller's `ts` and `sourceMap` options and `require`s it on first use -
+`index.ts` picks one from the caller's `ts` and `sourcemap` options and `require`s it on first use -
 `require` rather than `import()`, because `printSync` is synchronous.
 
 A caller printing only JavaScript never loads, parses or compiles the TypeScript printers at all.
@@ -364,13 +391,31 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 
 #### `unmap_writes`
 
-Rewrites `writeWithMap(state, code, cat, node)` into `write(state, code, cat)` in non-sourcemap builds,
-drops the `node` argument, and rewrites the import to match.
+Runs in two modes, one per build flavour (sourcemaps / no sourcemaps), in both cases stripping arguments
+nothing in that build reads.
 
-Without it, the node argument would still be evaluated and held live across a call which ignores it.
+**Without source maps**, rewrites every mapped write into the plain one it becomes with no mapping to record -
+so `writeWithMap(state, code, cat, node.start, node.end, node)` turns into `write(state, code, cat)` -
+and rewrites the import to match.
+`writeWithMapEnd` becomes `write` too, and every `NoLast` form becomes `writeNoLast`.
+`writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate`, which fix the category
+instead of taking it. `writePrivate` exists only for the rewrite to land on.
 
-It re-parses its own output and fails the build if anything still reaches a mapped write, or calls a name
-it did not bring into scope.
+`printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to a mapped write.
+They keep their names, but the arguments come off every call, and the parameters off their declarations -
+which, unlike the mapped writes, survive into the build.
+
+**With source maps**, in release builds only, just the trailing `node` comes off - from every call,
+and from every declaration. The mappings are real in these builds so the offsets stay, but `node` isn't read
+except by debug asserts. Debug builds get neither mode - the `node` parameter stays for the debug asserts to read.
+
+Without it, the offsets would still be read and held live across a call which ignores them.
+
+The three `markMap*` calls write nothing, so they have no plain form to become, and keep their names -
+the arguments come off, and a body which opens `if (!SOURCEMAPS) return` lets the minifier remove what is left.
+
+It fails the build if a mapped write is called with the wrong number of arguments, if a declaration it transforms
+has the wrong number of parameters, or if a call it rewrote had no matching import to rewrite.
 
 #### `const_functions`
 
@@ -505,12 +550,14 @@ Each of these produced a small perf bump individually, ~10% gain in aggregate.
 
 ### Source maps computed at the end
 
-During printing, a mapped write records only an output _offset_ and the node's original position.
+During printing, a mapped write records only an output offset and the node's original UTF-16 offset
+from `start` / `end`. Nodes without offsets are not mapped, and `sourceText` is required to convert
+source offsets to line/column positions.
 
-`emitMappings` then walks the output once at the end, counting newlines, to turn those offsets into
-generated line/column. Tracking a line and column throughout would cost every write in every build.
-
-The `Mapping` objects handed to `addMapping` are reused across calls rather than allocated per mapping.
+`generateSourceMap` then walks the output once at the end, counting ECMAScript line terminators,
+builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column,
+and encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write
+in every build.
 
 #### Potential future improvement
 
@@ -564,6 +611,7 @@ so that arm can run.
 - `import "m";` versus `import {} from "m";`
 - An absent `with` clause versus an empty `with {}`
 - `assert {...}` versus `with {...}`
+- The span of a `with {...}` clause (only its individual attributes have ESTree locations)
 
 The conformance harness normalizes the Rust AST down to what ESTree can express before printing,
 rather than expecting the JS side to reproduce information it was never given.
@@ -571,24 +619,25 @@ See `Normalize` in `tasks/codegen_conformance/src/lib.rs`.
 
 ### Positions, and other producers
 
-- **`loc`, not spans.** Oxc's AST records byte spans. Source mappings need line/column, which other
-  producers put in `loc`. Mapped writes check the node for `loc` rather than checking the build.
-- **Acorn and TS-ESLint ASTs are accepted**, and differ from Oxc's in a handful of places
-  (`TSMappedType`, `TSImportType`, `TSEnumDeclaration`, `TSModuleDeclaration`).
-  [`print/types.ts`] holds the widened node types and documents each difference.
+- **Oxc offsets only.** `start` / `end` offsets are converted to UTF-16 line/column once at the end.
+  Source maps require `sourceText`; `loc` and `range` are not supported inputs.
 
 ## How it is tested
 
 `oxc-codegen` is tested against all Test262, Acorn-JSX, and TypeScript test cases - about 62,000 fixtures.
 
-Every fixture is printed twice, and the two must agree byte for byte:
+Every fixture is printed three times:
 
-1. In Rust, via the `oxc-codegen-conformance` NAPI addon (`tasks/codegen_conformance`).
-2. In JS, by this package.
+1. In Rust, with a source map, via the `oxc-codegen-conformance` NAPI addon (`tasks/codegen_conformance`).
+2. In JS, through the no-maps build.
+3. In JS, through the separately compiled maps build.
 
-Both sides parse the same source text with the same `SourceType`, derived by the same function,
-so the only thing under test is the printing. Fixtures which do not parse cleanly are skipped,
-rather than passing quietly.
+All three generated outputs must agree byte for byte. Every decoded generated/original line, column,
+and optional original name from the maps build must also agree with Rust, including ordering and
+duplicate suppression.
+
+Both sides parse the same source text with the same `SourceType`, derived by the same function.
+Fixtures which do not parse cleanly are skipped, rather than passing quietly.
 
 Every fixture is checked in **both `preserveParens` modes**. They are different paths through the printer -
 with the wrappers present it must decide what to re-emit, without them it must re-derive every parenthesis
