@@ -976,6 +976,12 @@ parser_diagnostics! {
             .with_allowed_modifier_help(allowed)
     };
 
+    a_parameter_property_is_only_allowed_in_a_constructor_implementation(modifier: Modifier) => {
+        ts_error("2369", "A parameter property is only allowed in a constructor implementation.")
+            .with_label(modifier.span())
+            .with_help(format!("Remove the '{}' modifier.", modifier.kind))
+    };
+
     parameter_property_cannot_be_binding_pattern(span: Span) => {
         ts_error("1187", "A parameter property may not be declared using a binding pattern.")
             .with_label(span)
