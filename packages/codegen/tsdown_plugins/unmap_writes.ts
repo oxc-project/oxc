@@ -49,6 +49,8 @@ const REWRITES = {
   markMapStart: { arity: 4, remove: 3, rename: null },
   markMapAfter: { arity: 4, remove: 3, rename: null },
   markMapAtStartOffset: { arity: 5, remove: 4, rename: null },
+  markMapEnd: { arity: 4, remove: 3, rename: null },
+  markMapNamed: { arity: 7, remove: 6, rename: null },
   // `rename: null` to transform the function declarations, removing the dropped params
   printString: { arity: 5, remove: 3, rename: null },
   printNonNegativeFloat: { arity: 5, remove: 3, rename: null },
@@ -59,11 +61,13 @@ const WRITE_MODULE = "./write.ts";
 type MappedName = keyof typeof REWRITES;
 
 /**
- * Create the plugin.
+ * Create the plugin for one build flavour.
  *
+ * @param sourcemaps - `true` to strip only `node`, `false` to unmap the writes entirely
+ * @param debug - `true` if is a debug build
  * @returns The plugin
  */
-export default function unmapWritesPlugin(): Plugin {
+export default function unmapWritesPlugin(sourcemaps: boolean, debug: boolean): Plugin {
   return {
     name: "unmap-writes",
     transform: {
@@ -71,6 +75,10 @@ export default function unmapWritesPlugin(): Plugin {
       filter: { id: /\/src-js\/print\/.+\.ts$/ },
 
       handler(code, path, meta) {
+        // Don't alter anything in debug sourcemap builds.
+        // No functions are renamed and no arguments to those functions are removed.
+        if (sourcemaps && debug) return;
+
         // Parse file
         const magicString = meta.magicString!;
         const { program, errors } = parseSync(path, code);
@@ -92,7 +100,7 @@ export default function unmapWritesPlugin(): Plugin {
             const rewrite = REWRITES[name];
             if (rewrite === undefined) return;
 
-            const { arity, remove, rename } = rewrite;
+            const { arity, rename } = rewrite;
             const args = node.arguments;
             if (args.length !== arity) {
               throw new Error(
@@ -101,11 +109,14 @@ export default function unmapWritesPlugin(): Plugin {
               );
             }
 
-            // Remove the dropped arguments, from the end of the last kept one to the end of the last
+            // Remove the dropped arguments, from the end of the last kept one to the end of the last.
+            // In sourcemaps builds, remove only the last argument (`node`).
+            const remove = sourcemaps ? 1 : rewrite.remove;
             magicString.remove(args[arity - remove - 1].end, args[arity - 1].end);
 
-            // If callee needs to be renamed, rename it, and record that it needs to be imported under new name
-            if (rename !== null) {
+            // If callee needs to be renamed, rename it, and record that it needs to be imported under new name.
+            // Nothing is renamed in sourcemap builds.
+            if (!sourcemaps && rename !== null) {
               magicString.overwrite(callee.start, callee.end, rename);
               neededImportReplacements.add(name);
             }
@@ -120,7 +131,7 @@ export default function unmapWritesPlugin(): Plugin {
             const rewrite = REWRITES[name];
             if (rewrite === undefined) return;
 
-            const { arity, remove } = rewrite;
+            const { arity } = rewrite;
             const { params } = node;
             if (params.length !== arity) {
               throw new Error(
@@ -129,7 +140,9 @@ export default function unmapWritesPlugin(): Plugin {
               );
             }
 
-            // Remove the dropped params, from the end of the last kept one to the end of the last
+            // Remove the dropped params, from the end of the last kept one to the end of the last.
+            // In sourcemaps builds, remove only the last param (`node`).
+            const remove = sourcemaps ? 1 : rewrite.remove;
             magicString.remove(params[arity - remove - 1].end, params[arity - 1].end);
           },
 
@@ -158,13 +171,17 @@ export default function unmapWritesPlugin(): Plugin {
               }
 
               const name = specifier.imported.name as MappedName;
-              const rewrite = REWRITES[name];
-              if (rewrite !== undefined) {
-                const { rename } = rewrite;
-                if (rename !== null) {
-                  specifierNames.add(rename);
-                  importReplacements.push(name);
-                  continue;
+
+              // Only rename imports in no-sourcemap builds
+              if (!sourcemaps) {
+                const rewrite = REWRITES[name];
+                if (rewrite !== undefined) {
+                  const { rename } = rewrite;
+                  if (rename !== null) {
+                    specifierNames.add(rename);
+                    importReplacements.push(name);
+                    continue;
+                  }
                 }
               }
 
