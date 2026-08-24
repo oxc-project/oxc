@@ -612,6 +612,30 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/7936>
         "[ ...Uint8Array([ 1, 2, 3 ]) ].map(byte => byte.toString())",
         "[ ...new Uint8Array([ 1, 2, 3 ]) ].map(byte => byte.toString())",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25868>
+        // A clone method on a typed array returns a typed array, so the
+        // surrounding spread converts to a plain array rather than cloning one.
+        "[...new Uint8Array(buf).slice(0, 12)].map((b) => b.toString(16))",
+        "[...new Uint8Array(buf).map(f)]",
+        "[...new Uint8Array(buf).filter(f)]",
+        "[...new Uint8Array(buf).toReversed()]",
+        "[...new Uint8Array(buf).toSorted()]",
+        "[...new Uint8Array(buf).with(0, 1)]",
+        "[...Uint8Array.from([1, 2, 3])]",
+        "[...Uint8Array.from([1, 2, 3]).slice(0)]",
+        // the typed-array hint survives a chain of clone methods
+        "[...new Uint8Array(buf).slice(0, 12).map(f)]",
+        // every typed array constructor
+        "[...new Int8Array(buf).slice(0)]",
+        "[...new Uint8ClampedArray(buf).slice(0)]",
+        "[...new Int16Array(buf).slice(0)]",
+        "[...new Uint16Array(buf).slice(0)]",
+        "[...new Int32Array(buf).slice(0)]",
+        "[...new Uint32Array(buf).slice(0)]",
+        "[...new Float32Array(buf).slice(0)]",
+        "[...new Float64Array(buf).slice(0)]",
+        "[...new BigInt64Array(buf).slice(0)]",
+        "[...new BigUint64Array(buf).slice(0)]",
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]

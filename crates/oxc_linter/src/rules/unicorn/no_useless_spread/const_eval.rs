@@ -12,6 +12,13 @@ pub(super) enum ValueHint {
     ///
     /// Note that typed arrays are considered arrays, not iterables.
     NewIterable,
+    /// A typed array: `new Uint8Array(x)`, `Uint8Array.from(x)`, or a clone
+    /// method called on either.
+    ///
+    /// Deliberately distinct from [`ValueHint::NewArray`]. Spreading a typed
+    /// array produces a plain array, so `[...typedArray.slice()]` performs a
+    /// real conversion rather than a useless clone.
+    NewTypedArray,
     Promise(Box<ValueHint>),
     Unknown,
 }
@@ -33,6 +40,11 @@ impl ValueHint {
     pub fn is_array(&self) -> bool {
         matches!(self, Self::NewArray)
     }
+
+    #[inline]
+    pub fn is_typed_array(&self) -> bool {
+        matches!(self, Self::NewTypedArray)
+    }
 }
 
 impl std::ops::BitAnd for ValueHint {
@@ -45,6 +57,7 @@ impl std::ops::BitAnd for ValueHint {
             (Self::NewArray, Self::NewArray) => Self::NewArray,
             (Self::NewObject, Self::NewObject) => Self::NewObject,
             (Self::NewIterable, Self::NewIterable) => Self::NewIterable,
+            (Self::NewTypedArray, Self::NewTypedArray) => Self::NewTypedArray,
             _ => Self::Unknown,
         }
     }
@@ -91,6 +104,8 @@ impl ConstEval for NewExpression<'_> {
     fn const_eval(&self) -> ValueHint {
         if is_new_array(self) {
             ValueHint::NewArray
+        } else if is_new_typed_array(self) {
+            ValueHint::NewTypedArray
         } else if is_new_map_or_set(self) {
             ValueHint::NewIterable
         } else if is_new_object(self) {
@@ -115,32 +130,51 @@ fn is_new_object(new_expr: &NewExpression) -> bool {
     is_new_expression(new_expr, &["Object"], None, None)
 }
 
+/// Every typed array constructor.
+const TYPED_ARRAY_NAMES: [&str; 11] = [
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+];
+
 /// Matches `new <TypedArray>(a, [other args])` with >= 1 arg
 pub fn is_new_typed_array(new_expr: &NewExpression) -> bool {
-    is_new_expression(
-        new_expr,
-        &[
-            "Int8Array",
-            "Uint8Array",
-            "Uint8ClampedArray",
-            "Int16Array",
-            "Uint16Array",
-            "Int32Array",
-            "Uint32Array",
-            "Float32Array",
-            "Float64Array",
-            "BigInt64Array",
-            "BigUint64Array",
-        ],
-        Some(1),
-        None,
-    )
+    is_new_expression(new_expr, &TYPED_ARRAY_NAMES, Some(1), None)
+}
+
+/// Matches `<TypedArray>.from(x)`, whose result is a typed array.
+fn is_typed_array_from(call_expr: &CallExpression) -> bool {
+    is_method_call(call_expr, Some(&TYPED_ARRAY_NAMES), Some(&["from"]), Some(1), Some(1))
+}
+
+/// Matches a clone method called on a typed array, e.g.
+/// `new Uint8Array(buf).slice(0, 12)` or `Uint8Array.from(x).map(f)`.
+///
+/// These return a typed array rather than a plain array, so the surrounding
+/// spread converts and cannot be removed.
+fn is_typed_array_method(call_expr: &CallExpression) -> bool {
+    if !is_functional_array_method(call_expr) {
+        return false;
+    }
+    call_expr
+        .callee
+        .get_member_expr()
+        .is_some_and(|member_expr| member_expr.object().const_eval().is_typed_array())
 }
 
 impl ConstEval for CallExpression<'_> {
     fn const_eval(&self) -> ValueHint {
-        if is_array_from(self)
-            || is_split_method(self)
+        if is_typed_array_from(self) || is_typed_array_method(self) {
+            ValueHint::NewTypedArray
+        } else if is_split_method(self)
             || is_array_factory(self)
             || is_functional_array_method(self)
             || is_array_producing_obj_method(self)
@@ -162,6 +196,11 @@ impl ConstEval for CallExpression<'_> {
 /// - `Array.from(x)`
 /// - `Int8Array.from(x)`
 /// - plus all other typed arrays
+///
+/// Used to decide whether a spread passed *into* `from` is useless, which it is
+/// for every constructor here because they all accept an iterable. Do NOT use
+/// this to infer the type of the *result*: `Uint8Array.from(x)` returns a typed
+/// array. See [`is_typed_array_from`].
 pub fn is_array_from(call_expr: &CallExpression) -> bool {
     is_method_call(
         call_expr,
