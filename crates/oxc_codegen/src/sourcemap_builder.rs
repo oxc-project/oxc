@@ -54,6 +54,7 @@ pub struct SourcemapBuilder<'a> {
     tokens: Vec<oxc_sourcemap::Token>,
     last_generated_update: usize,
     last_position: Option<u32>,
+    last_token_name: Option<u32>,
     line_offset_tables: LineOffsetTables,
     generated_line: u32,
     generated_column: u32,
@@ -74,6 +75,7 @@ impl<'a> SourcemapBuilder<'a> {
             tokens: Vec::new(),
             last_generated_update: 0,
             last_position: None,
+            last_token_name: None,
             line_offset_tables,
             generated_line: 0,
             generated_column: 0,
@@ -135,6 +137,21 @@ impl<'a> SourcemapBuilder<'a> {
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&'a str>) {
         if self.last_position == Some(position) {
+            if let Some(name) = name
+                && self.last_token_name.is_none()
+            {
+                let name_id = self.add_name(name);
+                let token = self.tokens.last_mut().unwrap();
+                *token = oxc_sourcemap::Token::new(
+                    token.get_dst_line(),
+                    token.get_dst_col(),
+                    token.get_src_line(),
+                    token.get_src_col(),
+                    token.get_source_id(),
+                    Some(name_id),
+                );
+                self.last_token_name = Some(name_id);
+            }
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
@@ -149,6 +166,7 @@ impl<'a> SourcemapBuilder<'a> {
             name_id,
         ));
         self.last_position = Some(position);
+        self.last_token_name = name_id;
     }
 
     fn add_name(&mut self, name: &'a str) -> u32 {

@@ -42,6 +42,7 @@ smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
 
