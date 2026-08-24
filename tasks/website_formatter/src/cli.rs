@@ -1,5 +1,5 @@
 use oxfmt::cli::FormatCommand;
-use usage_parser::docs::markdown::MarkdownRenderer;
+use usage_parser::docs::markdown::{MarkdownRenderer, MarkdownTheme};
 use website_common::generate_cli_docs;
 
 #[test]
@@ -26,6 +26,10 @@ pub fn print_cli() {
 
 fn generate_cli() -> String {
     let spec: usage_parser::Spec = FormatCommand::to_kdl().parse().unwrap();
-    let markdown = MarkdownRenderer::new(spec).with_html_encode(false).render_spec().unwrap();
+    let markdown = MarkdownRenderer::new(spec)
+        .with_theme(MarkdownTheme::Compact)
+        .with_html_encode(false)
+        .render_spec()
+        .unwrap();
     generate_cli_docs(&markdown, "oxfmt")
 }
