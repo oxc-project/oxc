@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2dad1e0 parser: Track irregular line terminators in trivia (#25947) (camc314)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

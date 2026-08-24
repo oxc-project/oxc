@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 6c5ad1b codegen: Only add mapping names for `PrivateIdentifier`s which have changed (#25958) (overlookmotel)
+- a185ac3 codegen: Print `#` before private identifier in TS signature key (#25938) (overlookmotel)
+
+### ⚡ Performance
+
+- 53f6270 packages/codegen: Eagerly initialize `mapNames` (#25979) (overlookmotel)
+- 5b43c60 packages/codegen: Split recording mappings into multiple functions (#25978) (overlookmotel)
+- cc947b5 packages/codegen: Reduce property lookups (#25977) (overlookmotel)
+- c22a9cc packages/codegen: Combine condition checks (#25976) (overlookmotel)
+- 215a6a5 packages/codegen: Add functions for writing/marking unnamed mappings (#25975) (overlookmotel)
+- 1004439 packages/codegen: Merge `mark` and `write` calls in `printImportAttributes` (#25972) (overlookmotel)
+- 94c8a34 packages/codegen: Remove `node` param from `printString` and `printNonNegativeFloat` (#25971) (overlookmotel)
+- 7e2b4b3 packages/codegen: `printNonNegativeFloat` write mapping directly (#25968) (overlookmotel)
+- 53ff080 packages/codegen: Remove `lastWasPostfixClose` (#25888) (overlookmotel)
+
+### 📚 Documentation
+
+- 07de646 packages/codegen: Fix JSDoc comments on `write*` methods (#25966) (overlookmotel)
+- 3b09c04 packages/codegen: Clarify comment (#25959) (overlookmotel)
+
 ## [0.146.0] - 2026-08-19
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🚀 Features
+
+- b6e9e5e minifier: Fold switch stmt whose parent is not block stmt (#25403) (Armano)
+
+### 🐛 Bug Fixes
+
+- 6f0c7cf minifier: Avoid merging `if` to `for` in sloppy mode when containing function declaration (#25638) (sapphi-red)
+- 58ba651 minifier: Avoid merging `if` to `for` when the body contains a function declaration (#25637) (sapphi-red)
+- af82a07 minifier: Keep unary `+` when the other operand has side effects (#25645) (Kotaro Chikuba)
+
+### ⚡ Performance
+
+- a0aee81 minifier: Do not rebuild expression when substituting void to null (#25964) (Armano)
+- f09c8ab minifier: Avoid creation of unnecessary conditional expressions (#25931) (Armano)
+
 ## [0.146.0] - 2026-08-19
 
 ### 🚀 Features
