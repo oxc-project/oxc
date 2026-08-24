@@ -6,7 +6,6 @@ expression: snapshot
 search: false
 ---
 
-- **Version:** 1.79.0
 
 Lint filters accumulate from left to right on the command line.
 For example: `-D correctness -A no-debugger` or `-A all -D no-debugger`.
