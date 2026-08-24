@@ -218,11 +218,15 @@ fn generate_struct_implementation(
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
+        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
+        //
+        // The check, the suppressed leading comments, and the verbatim range are all bounded by
+        // `FormatWrite::suppressed_span` (default: the node's span),
+        // which nodes override when the ignored range starts before their span (class decorators before `export`).
         let suppressed_check = (!matches!(struct_name, "Program" | "JSXElement" | "JSXFragment"))
             .then(|| {
                 quote! {
-                    let is_suppressed = f.comments().is_suppressed(self.span().start);
+                    let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
                 }
             });
 
@@ -233,13 +237,13 @@ fn generate_struct_implementation(
                 if AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING.contains(&struct_name) {
                     quote! { self.write_suppressed(f); }
                 } else {
-                    quote! { FormatSuppressedNode(self.span()).fmt(f); }
+                    quote! { FormatSuppressedNode(self.suppressed_span()).fmt(f); }
                 };
             // When `fmt` doesn't print leading/trailing comments itself,
             // the suppressed path still has to print them, or the suppression comment would be lost.
             let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
                 quote! {
-                    self.format_leading_comments(f);
+                    format_leading_comments(self.suppressed_span()).fmt(f);
                 }
             });
             let suppressed_trailing_comments = do_not_print_comment.then(|| {

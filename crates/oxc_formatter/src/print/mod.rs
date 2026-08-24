@@ -107,10 +107,20 @@ pub trait FormatWrite<'ast, T = ()> {
     fn write_with_options(&self, _options: T, _f: &mut JsFormatter<'_, 'ast>) {
         unreachable!("Please implement it first.");
     }
+    /// The source range printed verbatim when the node is suppressed (`oxfmt-ignore` / `prettier-ignore`),
+    /// also the bound for the suppression check and the suppressed leading comments in the generated `fmt`.
+    /// Defaults to the node's span; overridden when the range starts earlier
+    /// (class decorators before export (`@deco export class X {}`) sit outside the export node's span).
+    fn suppressed_span(&self) -> Span
+    where
+        Self: GetSpan,
+    {
+        self.span()
+    }
     /// Formats the node when it is suppressed (`oxfmt-ignore` / `prettier-ignore`).
     /// Only called for statements whose ignored range must exclude the trailing semicolon,
     /// so the formatter prints its own terminator, like Prettier;
-    /// every other node prints its whole span verbatim in the generated `fmt`.
+    /// every other node prints its whole `suppressed_span` verbatim in the generated `fmt`.
     fn write_suppressed(&self, _f: &mut JsFormatter<'_, 'ast>) {
         unreachable!(
             "Implement `write_suppressed` for every node listed in \
