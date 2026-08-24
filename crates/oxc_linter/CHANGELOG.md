@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.80.0] - 2026-08-24
+
+### 🚀 Features
+
+- 70c3e35 linter/typescript/no-confusing-non-null-assertion: Implement suggestion (#26012) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 8a353a7 linter/eslint/no-control-regex: Refine help message text (#25996) (Rahul Mishra)
+- 8d94cd1 linter/eslint/no-useless-rename: Preserve type modifiers (#26020) (Cameron)
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+- 51d36d7 linter/vue: Resolve `vue` imports via shared import helpers (#25903) (Connor Shea)
+- 83a68d2 linter/react/no-react-children: Resolve `react` imports by symbol (#25901) (Connor Shea)
+- 124e196 linter: Resolve globals by reference, not by name (#25905) (Connor Shea)
+- a701bcc linter: Remove invalid React compiler doc links (#25900) (Boshen)
+
+### 📚 Documentation
+
+- 9b7e153 linter: Set `version` to 1.79.0 for rules shipped in 1.79.0 (#25902) (connorshea)
+
 ## [1.79.0] - 2026-08-18
 
 ### 💥 BREAKING CHANGES

@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.146.0",
+  "version": "0.147.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "ast",
@@ -20,7 +20,7 @@
     "directory": "napi/parser"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "src-js/bindings.js",
@@ -86,8 +86,8 @@
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.54.0",
-    "@vitest/browser": "4.1.10",
-    "@vitest/browser-playwright": "4.1.10",
+    "@vitest/browser": "4.1.11",
+    "@vitest/browser-playwright": "4.1.11",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "rolldown": "catalog:",

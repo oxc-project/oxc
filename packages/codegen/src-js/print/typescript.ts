@@ -9,11 +9,15 @@ import {
   CAT_OTHER,
   CAT_QUESTION,
   debugAssertLastFresh,
-  markWithMapAtStartOffset,
+  markMapAtStartOffset,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
+  writeWithMapNamedNoLast,
+  writeWithMapNamedPrivate,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
@@ -34,7 +38,7 @@ import { printDirectivesAndStatements } from "./statement.ts";
 import { printString } from "./string.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, UnknownNode } from "./types.ts";
+import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -81,59 +85,59 @@ function printTSType(
       break;
     case "TSStringKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "string", CAT_IDENT);
+      writeIdent(state, "string");
       break;
     case "TSNumberKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "number", CAT_IDENT);
+      writeIdent(state, "number");
       break;
     case "TSBooleanKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "boolean", CAT_IDENT);
+      writeIdent(state, "boolean");
       break;
     case "TSAnyKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "any", CAT_IDENT);
+      writeIdent(state, "any");
       break;
     case "TSVoidKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "void", CAT_IDENT);
+      writeIdent(state, "void");
       break;
     case "TSUnknownKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "unknown", CAT_IDENT);
+      writeIdent(state, "unknown");
       break;
     case "TSNeverKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "never", CAT_IDENT);
+      writeIdent(state, "never");
       break;
     case "TSUndefinedKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "undefined", CAT_IDENT);
+      writeIdent(state, "undefined");
       break;
     case "TSNullKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "null", CAT_IDENT);
+      writeIdent(state, "null");
       break;
     case "TSObjectKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "object", CAT_IDENT);
+      writeIdent(state, "object");
       break;
     case "TSSymbolKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "symbol", CAT_IDENT);
+      writeIdent(state, "symbol");
       break;
     case "TSBigIntKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "bigint", CAT_IDENT);
+      writeIdent(state, "bigint");
       break;
     case "TSIntrinsicKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "intrinsic", CAT_IDENT);
+      writeIdent(state, "intrinsic");
       break;
     case "TSThisType":
       printSpaceBeforeIdentifier(state);
-      write(state, "this", CAT_IDENT);
+      writeIdent(state, "this");
       break;
     case "TSLiteralType":
       printTSLiteral(node.literal, state);
@@ -242,7 +246,7 @@ function printTSType(
       break;
     case "TSJSDocUnknownType":
       printSpaceBeforeIdentifier(state);
-      write(state, "unknown", CAT_IDENT);
+      writeIdent(state, "unknown");
       break;
     case "TSJSDocNullableType":
       if (node.postfix) {
@@ -282,13 +286,13 @@ function printTSTypeName(
   if (node.type === "TSQualifiedName") {
     printTSTypeName(node.left, state);
     write(state, ".", CAT_OTHER);
-    writeWithMap(state, node.right.name, CAT_IDENT, node.right);
+    writeWithMapNamed(state, node.right.name, node.right.start, node.right.end, node.right);
   } else if (node.type === "ThisExpression") {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, "this", CAT_IDENT, node);
+    writeWithMap(state, "this", CAT_IDENT, node.start, node.end, node);
   } else {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, node.name, CAT_IDENT, node);
+    writeWithMapNamed(state, node.name, node.start, node.end, node);
   }
 }
 
@@ -432,12 +436,12 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
   const { members } = node;
   const { length } = members;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", node);
-    writeWithMapEnd(state, "}", CAT_OTHER, node);
+    writeWithMapNoLast(state, "{", node.start, node.end, node);
+    writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, node);
+  writeWithMap(state, "{\n", CAT_OTHER, node.start, node.end, node);
   state.indentLevel++;
 
   for (let i = 0; i < length; i++) {
@@ -448,7 +452,7 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
 
   state.indentLevel--;
   printIndent(state);
-  writeWithMapEnd(state, "}", CAT_OTHER, node);
+  writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
 }
 
 /**
@@ -522,16 +526,14 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, key.name, CAT_IDENT, key);
+      writeWithMapNamed(state, key.name, key.start, key.end, key);
       break;
     case "PrivateIdentifier":
-      writeWithMapNoLast(state, "#", key);
-      write(state, key.name, CAT_IDENT);
+      writeWithMapNamedPrivate(state, key.name, key.start, key.end, key);
       break;
     case "Literal":
-      typeAssertIs<LiteralExtras>(key);
       if (typeof key.value === "string") {
-        printString(state, key.value, key);
+        printString(state, key.value, key.start, key.end, key);
       } else {
         printLiteral(key, state, PREC_COMMA, ctx);
       }
@@ -574,7 +576,7 @@ export function printTSIndexSignature(node: ESTree.TSIndexSignature, state: Stat
   write(state, "[", CAT_OTHER);
 
   const parameter = node.parameters[0];
-  write(state, parameter.name, CAT_IDENT);
+  writeIdent(state, parameter.name);
 
   write(state, ": ", CAT_OTHER);
 
@@ -648,7 +650,7 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
   if (node.in) writeNoLast(state, "in ");
   if (node.out) writeNoLast(state, "out ");
 
-  writeWithMap(state, node.name.name, CAT_IDENT, node.name);
+  writeWithMapNamed(state, node.name.name, node.name.start, node.name.end, node.name);
 
   if (node.constraint != null) {
     write(state, " extends ", CAT_OTHER);
@@ -693,7 +695,7 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
       printTSType(node.typeAnnotation, state);
       break;
     case "TSNamedTupleMember":
-      writeWithMap(state, node.label.name, CAT_IDENT, node.label);
+      writeWithMapNamed(state, node.label.name, node.label.start, node.label.end, node.label);
       if (node.optional) write(state, "?", CAT_QUESTION);
       write(state, ": ", CAT_OTHER);
       printTSType(node.elementType, state);
@@ -755,7 +757,7 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
 
   writeNoLast(state, "[");
 
-  writeWithMapNoLast(state, node.key.name, node.key);
+  writeWithMapNamedNoLast(state, node.key.name, node.key.start, node.key.end, node.key);
   write(state, " in ", CAT_OTHER);
   printTSType(node.constraint, state);
 
@@ -789,7 +791,7 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
  * bind to only part of it.
  */
 function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
-  write(state, node.operator, CAT_IDENT);
+  writeIdent(state, node.operator);
 
   write(state, " ", CAT_OTHER);
 
@@ -816,10 +818,16 @@ function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void 
 
   const { parameterName } = node;
   if (parameterName.type === "TSThisType") {
-    write(state, "this", CAT_IDENT);
+    writeIdent(state, "this");
   } else {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, parameterName.name, CAT_IDENT, parameterName);
+    writeWithMapNamed(
+      state,
+      parameterName.name,
+      parameterName.start,
+      parameterName.end,
+      parameterName,
+    );
   }
 
   if (node.typeAnnotation != null) {
@@ -852,7 +860,7 @@ function printTSTypeQueryExprName(node: ESTree.TSTypeQueryExprName, state: State
 function printTSImportType(node: ESTree.TSImportType, state: State): void {
   write(state, "import(", CAT_OTHER);
 
-  printString(state, node.source.value, node.source);
+  printString(state, node.source.value, node.source.start, node.source.end, node.source);
 
   if (node.options != null) {
     write(state, ", ", CAT_OTHER);
@@ -878,9 +886,9 @@ function printTSImportTypeQualifier(node: ESTree.TSImportTypeQualifier, state: S
   if (node.type === "TSQualifiedName") {
     printTSImportTypeQualifier(node.left, state);
     write(state, ".", CAT_OTHER);
-    write(state, node.right.name, CAT_IDENT);
+    writeIdent(state, node.right.name);
   } else {
-    write(state, node.name, CAT_IDENT);
+    writeIdent(state, node.name);
   }
 }
 
@@ -928,13 +936,13 @@ export function printTSModuleDeclaration(
   if (node.declare) write(state, "declare ", CAT_OTHER);
 
   const { kind } = node;
-  write(state, kind, CAT_IDENT);
+  writeIdent(state, kind);
 
   if (kind !== "global") {
     write(state, " ", CAT_OTHER);
     const { id } = node;
     if (id.type === "Literal") {
-      printString(state, id.value, id);
+      printString(state, id.value, id.start, id.end, id);
     } else {
       printTSTypeName(id, state);
     }
@@ -958,19 +966,19 @@ export function printTSModuleDeclaration(
 function printModuleBlock(body: ESTree.TSModuleBlock, state: State): void {
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMapNoLast(state, "{", body);
-    writeWithMapEnd(state, "}", CAT_OTHER, body);
+    writeWithMapNoLast(state, "{", body.start, body.end, body);
+    writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body.start, body.end, body);
 
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
   state.indentLevel--;
 
   printIndent(state);
-  writeWithMapEnd(state, "}", CAT_OTHER, body);
+  writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
 }
 
 /**
@@ -991,7 +999,7 @@ export function printTSInterfaceDeclaration(
 
   write(state, "interface ", CAT_OTHER);
 
-  writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
 
   printTypeParameters(node.typeParameters, state);
 
@@ -1013,12 +1021,12 @@ export function printTSInterfaceDeclaration(
   const members = node.body.body;
   const { length } = members;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", node.body);
-    writeWithMapEnd(state, "}", CAT_OTHER, node.body);
+    writeWithMapNoLast(state, "{", node.body.start, node.body.end, node.body);
+    writeWithMapEnd(state, "}", CAT_OTHER, node.body.start, node.body.end, node.body);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, node.body);
+  writeWithMap(state, "{\n", CAT_OTHER, node.body.start, node.body.end, node.body);
   state.indentLevel++;
 
   for (let i = 0; i < length; i++) {
@@ -1029,7 +1037,7 @@ export function printTSInterfaceDeclaration(
 
   state.indentLevel--;
   printIndent(state);
-  writeWithMapEnd(state, "}", CAT_OTHER, node.body);
+  writeWithMapEnd(state, "}", CAT_OTHER, node.body.start, node.body.end, node.body);
 }
 
 /**
@@ -1045,7 +1053,7 @@ export function printTSTypeAliasDeclaration(
 
   write(state, "type ", CAT_OTHER);
 
-  writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
 
   printTypeParameters(node.typeParameters, state);
 
@@ -1110,7 +1118,7 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
 
   write(state, "enum ", CAT_OTHER);
 
-  writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
 
   write(state, " ", CAT_OTHER);
 
@@ -1118,12 +1126,12 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
   const { members } = body;
   const { length } = members;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", body);
-    writeWithMapEnd(state, "}", CAT_OTHER, body);
+    writeWithMapNoLast(state, "{", body.start, body.end, body);
+    writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body.start, body.end, body);
   state.indentLevel++;
 
   const lastIndex = length - 1;
@@ -1135,7 +1143,7 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
 
   state.indentLevel--;
   printIndent(state);
-  writeWithMapEnd(state, "}", CAT_OTHER, body);
+  writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
 }
 
 /**
@@ -1147,13 +1155,13 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
   const { id } = node;
   if (id.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, id.name, CAT_IDENT, id);
+    writeWithMapNamed(state, id.name, id.start, id.end, id);
   } else if (id.type === "Literal") {
-    printString(state, id.value, id);
+    printString(state, id.value, id.start, id.end, id);
   } else {
     // Computed string/template member name
     if (id.type === "TemplateLiteral") {
-      markWithMapAtStartOffset(state, id.quasis[0], 1);
+      markMapAtStartOffset(state, 1, id.quasis[0].start, id.quasis[0].end, id.quasis[0]);
       writeNoLast(state, "[`");
       writeNoLast(state, id.quasis[0].value.raw);
       write(state, "`", CAT_OTHER);
@@ -1183,14 +1191,20 @@ export function printTSImportEqualsDeclaration(
 
   if (node.importKind === "type") write(state, "type ", CAT_OTHER);
 
-  writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+  writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
 
   write(state, " = ", CAT_OTHER);
 
   const ref = node.moduleReference;
   if (ref.type === "TSExternalModuleReference") {
     write(state, "require(", CAT_OTHER);
-    printString(state, ref.expression.value, ref.expression);
+    printString(
+      state,
+      ref.expression.value,
+      ref.expression.start,
+      ref.expression.end,
+      ref.expression,
+    );
     write(state, ")", CAT_CLOSE_BRACKET);
   } else {
     printTSTypeName(ref, state);

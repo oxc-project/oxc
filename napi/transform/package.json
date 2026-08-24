@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.146.0",
+  "version": "0.147.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
     "babel",
@@ -22,7 +22,7 @@
     "directory": "napi/transform"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "browser.js",

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.80.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a353a7 linter/eslint/no-control-regex: Refine help message text (#25996) (Rahul Mishra)
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+
 ## [1.79.0] - 2026-08-18
 
 ### 💥 BREAKING CHANGES

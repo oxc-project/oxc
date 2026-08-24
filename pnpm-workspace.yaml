@@ -18,14 +18,14 @@ catalog:
   "@napi-rs/wasm-runtime": 1.2.3
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.7.0
+  degit: 3.8.0
   eslint: 10.8.1
   json-schema-to-typescript: ^15.0.4
-  publint: 0.3.23
+  publint: 0.3.24
   rolldown: 1.2.5
   tsdown: 0.22.14
-  vite-plus: 0.2.9
-  vitest: 4.1.10
+  vite-plus: 0.3.0
+  vitest: 4.1.11
 
 overrides:
   rolldown: "catalog:"

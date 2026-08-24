@@ -10,11 +10,13 @@ import {
   CAT_QUESTION,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
-  markWithMap,
+  markMapStart,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
@@ -64,23 +66,23 @@ export function printClass(node: ESTree.Class, state: State): void {
   const abstract = TS && node.abstract;
 
   // The node's mapping goes on whichever of these is written first
-  if (declare) writeWithMap(state, "declare ", CAT_OTHER, node);
+  if (declare) writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
   if (abstract) {
     if (declare) {
       write(state, "abstract ", CAT_OTHER);
     } else {
-      writeWithMap(state, "abstract ", CAT_OTHER, node);
+      writeWithMap(state, "abstract ", CAT_OTHER, node.start, node.end, node);
     }
   }
   if (declare || abstract) {
-    write(state, "class", CAT_IDENT);
+    writeIdent(state, "class");
   } else {
-    writeWithMap(state, "class", CAT_IDENT, node);
+    writeWithMap(state, "class", CAT_IDENT, node.start, node.end, node);
   }
 
   if (node.id != null) {
     write(state, " ", CAT_OTHER);
-    writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+    writeWithMapNamed(state, node.id.name, node.id.start, node.id.end, node.id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -119,7 +121,7 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
   for (let i = 0; i < length; i++) {
     const decorator = decorators[i];
 
-    writeWithMap(state, "@", CAT_OTHER, decorator);
+    writeWithMap(state, "@", CAT_OTHER, decorator.start, decorator.end, decorator);
 
     const { expression } = decorator;
     const wrap = decoratorNeedsWrap(expression);
@@ -161,12 +163,12 @@ function printClassBody(node: ClassBodyNode, state: State): void {
   const { body } = node;
   const { length } = body;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", node);
-    writeWithMapEnd(state, "}", CAT_OTHER, node);
+    writeWithMapNoLast(state, "{", node.start, node.end, node);
+    writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, node);
+  writeWithMap(state, "{\n", CAT_OTHER, node.start, node.end, node);
 
   state.indentLevel++;
 
@@ -214,14 +216,14 @@ function printClassBody(node: ClassBodyNode, state: State): void {
   state.indentLevel--;
 
   printIndent(state);
-  writeWithMapEnd(state, "}", CAT_OTHER, node);
+  writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
 }
 
 /**
  * Print a method, including getters, setters, constructors and their modifiers.
  */
 function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
-  markWithMap(state, node);
+  markMapStart(state, node.start, node.end, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -293,7 +295,7 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
  * Print a class field, with its modifiers and initializer.
  */
 function printPropertyDefinition(node: PropertyDefinitionNode, state: State): void {
-  markWithMap(state, node);
+  markMapStart(state, node.start, node.end, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -356,17 +358,17 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
 function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
   printSpaceBeforeIdentifier(state);
 
-  writeWithMap(state, "static ", CAT_OTHER, node);
+  writeWithMap(state, "static ", CAT_OTHER, node.start, node.end, node);
 
   const { body } = node;
   const { length } = body;
   if (length === 0) {
-    writeWithMapNoLast(state, "{", node);
-    writeWithMapEnd(state, "}", CAT_OTHER, node);
+    writeWithMapNoLast(state, "{", node.start, node.end, node);
+    writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, node);
+  writeWithMap(state, "{\n", CAT_OTHER, node.start, node.end, node);
 
   state.indentLevel++;
 
@@ -377,14 +379,14 @@ function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
   state.indentLevel--;
 
   printIndent(state);
-  writeWithMapEnd(state, "}", CAT_OTHER, node);
+  writeWithMapEnd(state, "}", CAT_OTHER, node.start, node.end, node);
 }
 
 /**
  * Print an `accessor` field.
  */
 function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
-  markWithMap(state, node);
+  markMapStart(state, node.start, node.end, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -410,7 +412,7 @@ function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
   }
 
   printSpaceBeforeIdentifier(state);
-  write(state, "accessor", CAT_IDENT);
+  writeIdent(state, "accessor");
 
   if (node.computed) {
     write(state, " [", CAT_OTHER);

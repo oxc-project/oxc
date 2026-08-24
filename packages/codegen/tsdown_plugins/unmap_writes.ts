@@ -7,19 +7,25 @@ import type { Plugin } from "rolldown";
  *
  * ```ts
  * // Original code
- * writeWithMap(state, "declare ", CAT_OTHER, node);
+ * writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
  *
  * // After transform
  * write(state, "declare ", CAT_OTHER);
  * ```
  *
- * The mapped writes and `markWithMap*` exist to record a source mapping for the node they are given.
+ * The mapped writes and `markMap*` exist to record a source mapping at the offsets they are given.
  * A build without source map support has nothing to record, so the call becomes the plain write
- * it would otherwise be, and the node argument goes with it - it would still be evaluated,
- * and held live across the call, for a function which ignores it.
+ * it would otherwise be, and the offsets and the node go with it - they would still be read,
+ * for a function which ignores them.
  *
- * The import is rewritten to match, which both keeps the plain name in scope and leaves the two
- * mapped functions unreferenced for the minifier to remove.
+ * `remove` is how many trailing arguments are dropped from the call.
+ *
+ * The import is rewritten to match, which both keeps the plain name in scope and leaves the mapped functions
+ * unreferenced for the minifier to remove.
+ *
+ * `printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to their
+ * mapped writes. So they are rewritten the same way, but keep their names - the arguments come off every call.
+ * The parameters also come off their declarations which, unlike the mapped writes, survive into the build.
  *
  * Only valid where `SOURCEMAPS` is `false`, which is where the config includes it.
  *
@@ -28,154 +34,186 @@ import type { Plugin } from "rolldown";
  * everywhere or subtly wrong everywhere, and nothing downstream names the plugin as the cause.
  */
 const REWRITES = {
-  // `write` takes the `last` category between the code and the node, `writeNoLast` does not
-  writeWithMap: { arity: 4, plain: "write" },
-  writeWithMapNoLast: { arity: 3, plain: "writeNoLast" },
-  writeWithMapEnd: { arity: 4, plain: "write" },
-  // A standalone mark has no non-sourcemap equivalent. `void 0` is removed by the minifier.
-  markWithMap: { arity: 2, plain: null },
-  markWithMapNoName: { arity: 2, plain: null },
-  markWithMapAfter: { arity: 2, plain: null },
-  markWithMapAtStartOffset: { arity: 3, plain: null },
+  // Every mapped write ends `..., start, end, node`, so 3 arguments come off.
+  // `write` takes the `last` category before them, `writeNoLast` does not.
+  writeWithMap: { arity: 6, remove: 3, rename: "write" },
+  writeWithMapNamed: { arity: 5, remove: 3, rename: "writeIdent" },
+  writeWithMapNoLast: { arity: 5, remove: 3, rename: "writeNoLast" },
+  writeWithMapNamedNoLast: { arity: 5, remove: 3, rename: "writeNoLast" },
+  writeWithMapNamedJSXNoLast: { arity: 5, remove: 3, rename: "writeNoLast" },
+  // A private identifier writes its own `#`, so its plain form is not `write`
+  writeWithMapNamedPrivate: { arity: 5, remove: 3, rename: "writePrivate" },
+  writeWithMapEnd: { arity: 6, remove: 3, rename: "write" },
+  // `rename: null` because a standalone mark has no non-sourcemap equivalent.
+  // Everything but `state` comes off - `markMapAtStartOffset`'s column offset included.
+  markMapStart: { arity: 4, remove: 3, rename: null },
+  markMapAfter: { arity: 4, remove: 3, rename: null },
+  markMapAtStartOffset: { arity: 5, remove: 4, rename: null },
+  markMapEnd: { arity: 4, remove: 3, rename: null },
+  markMapNamed: { arity: 7, remove: 6, rename: null },
+  // `rename: null` to transform the function declarations, removing the dropped params
+  printString: { arity: 5, remove: 3, rename: null },
+  printNonNegativeFloat: { arity: 5, remove: 3, rename: null },
 } as const;
 
 const WRITE_MODULE = "./write.ts";
 
 type MappedName = keyof typeof REWRITES;
 
-const isMapped = (name: string): name is MappedName => name in REWRITES;
+/**
+ * Create the plugin for one build flavour.
+ *
+ * @param sourcemaps - `true` to strip only `node`, `false` to unmap the writes entirely
+ * @param debug - `true` if is a debug build
+ * @returns The plugin
+ */
+export default function unmapWritesPlugin(sourcemaps: boolean, debug: boolean): Plugin {
+  return {
+    name: "unmap-writes",
+    transform: {
+      // Only process TS files in `src-js/print` directory
+      filter: { id: /\/src-js\/print\/.+\.ts$/ },
 
-const plugin: Plugin = {
-  name: "unmap-writes",
-  transform: {
-    // Only process TS files in `src-js/print` directory
-    filter: { id: /\/src-js\/print\/.+\.ts$/ },
+      handler(code, path, meta) {
+        // Don't alter anything in debug sourcemap builds.
+        // No functions are renamed and no arguments to those functions are removed.
+        if (sourcemaps && debug) return;
 
-    handler(code, path, meta) {
-      const magicString = meta.magicString!;
-      const { program, errors } = parseSync(path, code);
-      if (errors.length !== 0) throw new Error(`Failed to parse ${path}: ${errors[0].message}`);
+        // Parse file
+        const magicString = meta.magicString!;
+        const { program, errors } = parseSync(path, code);
+        if (errors.length !== 0) throw new Error(`Failed to parse ${path}: ${errors[0].message}`);
 
-      // Plain names this file will need in scope once its calls are rewritten
-      const needed = new Set<string>();
-      let rewrote = false;
+        // Imports from `write.ts` which have been replaced, and which need to be replaced.
+        // The 2 are compared and ensured equal at the end of the visitation pass.
+        const importReplacements: string[] = [];
+        const neededImportReplacements = new Set<string>();
+        let importIsTransformed = false;
 
-      new Visitor({
-        CallExpression(node) {
-          const { callee } = node;
-          if (callee.type !== "Identifier" || !isMapped(callee.name)) return;
+        new Visitor({
+          // Remove the dropped args from calls, and rename callees where required
+          CallExpression(node) {
+            const { callee } = node;
+            if (callee.type !== "Identifier") return;
 
-          const { arity, plain } = REWRITES[callee.name];
-          const args = node.arguments;
-          if (args.length !== arity) {
+            const name = callee.name as MappedName;
+            const rewrite = REWRITES[name];
+            if (rewrite === undefined) return;
+
+            const { arity, rename } = rewrite;
+            const args = node.arguments;
+            if (args.length !== arity) {
+              throw new Error(
+                `\`${callee.name}\` takes ${arity} arguments, found ${args.length}: `
+                  + `${path}:${node.start}`,
+              );
+            }
+
+            // Remove the dropped arguments, from the end of the last kept one to the end of the last.
+            // In sourcemaps builds, remove only the last argument (`node`).
+            const remove = sourcemaps ? 1 : rewrite.remove;
+            magicString.remove(args[arity - remove - 1].end, args[arity - 1].end);
+
+            // If callee needs to be renamed, rename it, and record that it needs to be imported under new name.
+            // Nothing is renamed in sourcemap builds.
+            if (!sourcemaps && rename !== null) {
+              magicString.overwrite(callee.start, callee.end, rename);
+              neededImportReplacements.add(name);
+            }
+          },
+
+          // Remove the dropped params from declarations
+          FunctionDeclaration(node) {
+            const { id } = node;
+            if (id === null) return;
+
+            const name = id.name as MappedName;
+            const rewrite = REWRITES[name];
+            if (rewrite === undefined) return;
+
+            const { arity } = rewrite;
+            const { params } = node;
+            if (params.length !== arity) {
+              throw new Error(
+                `\`${id.name}\` defined with ${params.length} parameters, expected ${arity}: `
+                  + `${path}:${node.start}`,
+              );
+            }
+
+            // Remove the dropped params, from the end of the last kept one to the end of the last.
+            // In sourcemaps builds, remove only the last param (`node`).
+            const remove = sourcemaps ? 1 : rewrite.remove;
+            magicString.remove(params[arity - remove - 1].end, params[arity - 1].end);
+          },
+
+          // Replace import of functions whose calls are renamed or removed
+          ImportDeclaration(node) {
+            // Skip imports not from `write.ts`, and type imports
+            if (node.source.value !== WRITE_MODULE || node.importKind === "type") return;
+
+            // For simplicity, we only support a single import from `write.ts` (not including type imports)
+            if (importIsTransformed) {
+              throw new Error(`Multiple imports from \`${WRITE_MODULE}\`: ${path}`);
+            }
+            importIsTransformed = true;
+
+            // Collect all specifiers, replacing any that need to be
+            const specifierNames = new Set<string>();
+            for (const specifier of node.specifiers) {
+              if (
+                specifier.type !== "ImportSpecifier"
+                || specifier.importKind === "type"
+                || specifier.imported.type !== "Identifier"
+              ) {
+                throw new Error(
+                  `Only simple imports from \`${WRITE_MODULE}\` are supported: ${path}`,
+                );
+              }
+
+              const name = specifier.imported.name as MappedName;
+
+              // Only rename imports in no-sourcemap builds
+              if (!sourcemaps) {
+                const rewrite = REWRITES[name];
+                if (rewrite !== undefined) {
+                  const { rename } = rewrite;
+                  if (rename !== null) {
+                    specifierNames.add(rename);
+                    importReplacements.push(name);
+                    continue;
+                  }
+                }
+              }
+
+              specifierNames.add(name);
+            }
+
+            if (importReplacements.length > 0) {
+              magicString.overwrite(
+                node.start,
+                node.end,
+                `import { ${[...specifierNames].join(", ")} } from "${WRITE_MODULE}";`,
+              );
+            }
+          },
+        }).visit(program);
+
+        // Check that replaced callees also had the corresponding import replaced
+        if (importReplacements.length !== neededImportReplacements.size) {
+          const missing = [];
+          for (const name of neededImportReplacements) {
+            if (!importReplacements.includes(name)) missing.push(name);
+          }
+
+          if (missing.length > 0) {
             throw new Error(
-              `\`${callee.name}\` takes ${arity} arguments, found ${args.length}: `
-                + `${path}:${node.start}`,
+              `Missing import of ${missing.map((name) => `\`${name}\``).join(", ")}: ${path}`,
             );
           }
-
-          rewrote = true;
-          if (plain === null) {
-            magicString.overwrite(node.start, node.end, "void 0");
-          } else {
-            magicString.overwrite(callee.start, callee.end, plain);
-            // Remove `, node`, from the end of the argument before it to the end of it
-            magicString.remove(args[arity - 2].end, args[arity - 1].end);
-            needed.add(plain);
-          }
-        },
-      }).visit(program);
-
-      if (rewrote) {
-        // Rewrite the import to drop the mapped names and carry whatever the rewrites now need.
-        // `write.ts` declares them itself and imports nothing, so it never reaches this.
-        // A file may import from `write.ts` more than once - the types separately from the values.
-        // The one to rewrite is whichever brought the mapped names in.
-        const imports = program.body.filter(
-          (statement) =>
-            statement.type === "ImportDeclaration"
-            && statement.source.value === WRITE_MODULE
-            && statement.specifiers.some(
-              (specifier) =>
-                specifier.type === "ImportSpecifier"
-                && specifier.imported.type === "Identifier"
-                && isMapped(specifier.imported.name),
-            ),
-        );
-
-        if (imports.length !== 1) {
-          throw new Error(
-            `Expected 1 \`${WRITE_MODULE}\` import bringing in mapped writes, found `
-              + `${imports.length}: ${path}`,
-          );
         }
 
-        const importNode = imports[0];
-        if (importNode.type !== "ImportDeclaration") throw new Error(`Unreachable: ${path}`);
-
-        const names = new Set(needed);
-        for (const specifier of importNode.specifiers) {
-          if (specifier.type !== "ImportSpecifier" || specifier.imported.type !== "Identifier") {
-            throw new Error(`Unexpected \`${WRITE_MODULE}\` import specifier: ${path}`);
-          }
-          if (!isMapped(specifier.imported.name)) names.add(specifier.local.name);
-        }
-
-        const sorted = [...names].sort();
-        magicString.overwrite(
-          importNode.start,
-          importNode.end,
-          `import { ${sorted.join(", ")} } from "${WRITE_MODULE}";`,
-        );
-      }
-
-      const transformed = magicString.toString();
-      const { program: after, errors: afterErrors } = parseSync(path, transformed);
-      if (afterErrors.length !== 0) {
-        throw new Error(`Transform produced invalid code: ${path}: ${afterErrors[0].message}`);
-      }
-
-      // Nothing may still reach a mapped write.
-      // Their declarations stay, for the minifier to remove once nothing imports them.
-      const bound = new Set<string>();
-      const problems: string[] = [];
-
-      new Visitor({
-        ImportSpecifier(node) {
-          if (node.imported.type !== "Identifier") return;
-          if (isMapped(node.imported.name)) {
-            problems.push(`import of ${node.imported.name} at ${node.start}`);
-          }
-          bound.add(node.local.name);
-        },
-        FunctionDeclaration(node) {
-          if (node.id !== null) bound.add(node.id.name);
-        },
-      }).visit(after);
-
-      const called = new Set<string>();
-      new Visitor({
-        CallExpression(node) {
-          const { callee } = node;
-          if (callee.type !== "Identifier") return;
-          if (isMapped(callee.name)) problems.push(`call to ${callee.name} at ${node.start}`);
-          if (callee.name === "write" || callee.name === "writeNoLast") called.add(callee.name);
-        },
-      }).visit(after);
-
-      // A rewritten call to a name this file does not have in scope would be a `ReferenceError`
-      // on the first print, so check rather than assume the import rewrite above got it right
-      for (const name of called) {
-        if (!bound.has(name)) problems.push(`\`${name}\` is called but not in scope`);
-      }
-
-      if (problems.length !== 0) {
-        throw new Error(`unmap-writes left ${path} broken: ${problems.join(", ")}`);
-      }
-
-      return { code: magicString };
+        return { code: magicString };
+      },
     },
-  },
-};
-
-export default plugin;
+  };
+}

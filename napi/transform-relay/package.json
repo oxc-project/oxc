@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform-relay",
-  "version": "0.146.0",
+  "version": "0.147.0",
   "description": "Oxc Relay Transform Node API",
   "keywords": [
     "graphql",
@@ -20,7 +20,7 @@
     "directory": "napi/transform-relay"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "browser.js",

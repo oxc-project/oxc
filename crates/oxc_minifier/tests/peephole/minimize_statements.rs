@@ -1,6 +1,8 @@
 use std::fmt::Write;
 
-use crate::{test, test_same};
+use oxc_span::SourceType;
+
+use crate::{default_options, test, test_options_source_type, test_same};
 
 #[test]
 fn test_for_variable_declaration() {
@@ -48,6 +50,62 @@ fn test_for_break_preserves_block_function_scope_in_module() {
     test(
         "for (;;) { if (x) break; let y = foo(); bar(y); bar(y); }",
         "for (; !x;) { let y = foo(); bar(y), bar(y); }",
+    );
+}
+
+#[test]
+fn test_for_break_preserves_annex_b_function_scope() {
+    let options = default_options();
+    test_options_source_type(
+        "for (var i = 0; i++ < 1;) {
+            if (x) break;
+            else function f() {}
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        "for (var i = 0; i++ < 1;) {
+            if (x) break;
+            else function f() {}
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        SourceType::script(),
+        &options,
+    );
+    test_options_source_type(
+        "for (var i = 0; i++ < 1;) {
+            if (x) function f() {}
+            else break;
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        "for (var i = 0; i++ < 1;) {
+            if (x) function f() {}
+            else break;
+            f = 0;
+        }
+        console.log(typeof f, f);",
+        SourceType::script(),
+        &options,
+    );
+
+    test_options_source_type(
+        "for (;;) {
+            if (x) break;
+            else { function f() {} }
+        }",
+        "for (; !x;) { function f() {} }",
+        SourceType::mjs(),
+        &options,
+    );
+    test_options_source_type(
+        "for (;;) {
+            if (x) { function f() {} }
+            else break;
+        }",
+        "for (; x;) { function f() {} }",
+        SourceType::mjs(),
+        &options,
     );
 }
 
@@ -288,6 +346,15 @@ fn test_handle_switch_statement() {
         "if (b === 2) switch (a) { case 2: a();break;case 3: foo();}",
     ); // ;
     test("switch (b) { case 2: switch (a) { case 2: foo()}}", "b === 2 && a === 2 && foo();");
+
+    test(
+        "if (a) { b(); if (c) switch (d) { case 1: case 2: break; } c(); }",
+        "a && (b(), c && d, c());",
+    );
+    test(
+        "if (a) { if (c) switch (b) { case 2: switch (a) { case 2: foo()}}; b() }",
+        "if (a) { if (c) switch (b) { case 2: a===2 && foo() } b() }",
+    );
 
     // TODO: expected TDZ issue, when folding if without body https://github.com/oxc-project/oxc/issues/24589
     test(
