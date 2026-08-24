@@ -84,20 +84,8 @@ impl FormatCommand {
         FormatCli::command()
     }
 
-    pub fn spec() -> &'static usage::spec::Spec<'static> {
-        FormatCli::spec()
-    }
-
     pub fn render_help(cmd: &usage::Command<'_>, long: bool) -> Option<String> {
         FormatCli::render_help(cmd, long)
-    }
-
-    pub fn render_failure<'v, T>(args: &'v [T], error: &usage::Error<'static, 'v>) -> String
-    where
-        T: AsRef<OsStr> + 'v,
-    {
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        FormatCli::render_failure(&refs, error)
     }
 
     pub fn to_kdl() -> String {
@@ -105,27 +93,7 @@ impl FormatCommand {
     }
 
     pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<&OsStr>>();
-        if let Some(text) = FormatCli::spec_request(&refs) {
-            return usage::embedded::Outcome::Exit(usage::embedded::Exit {
-                text,
-                stderr: false,
-                code: 0,
-            });
-        }
-        if let Some(text) = FormatCli::completion_request(args) {
-            return usage::embedded::Outcome::Exit(usage::embedded::Exit {
-                text,
-                stderr: false,
-                code: 0,
-            });
-        }
-        usage::embedded::outcome(
-            FormatCli::spec(),
-            FormatCli::command(),
-            &refs,
-            FormatCli::parse_into_from,
-        )
+        FormatCli::embedded_outcome_into(args)
     }
 }
 

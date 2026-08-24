@@ -7,20 +7,6 @@ search: false
 ---
 
 
-Lint filters accumulate from left to right on the command line.
-For example: `-D correctness -A no-debugger` or `-A all -D no-debugger`.
-Categories:
-
-* `correctness` - Code that is outright wrong or useless (default)
-* `suspicious` - Code that is most likely wrong or useless
-* `pedantic` - Lints which are rather strict or have occasional false positives
-* `perf` - Code that could be written in a more performant way
-* `style` - Code that should be written in a more idiomatic way
-* `restriction` - Lints which prevent the use of language and library features
-* `nursery` - New lints that are still under development
-* `all` - All categories listed above except `nursery`. Does not enable plugins automatically.
-
-
 ## Examples
 
 **Deny a category**
@@ -65,6 +51,19 @@ oxlint --format github .
 - **`--init`** — Initialize oxlint configuration with default values
 
 ## Allowing / Denying Multiple Lints
+
+Lint filters accumulate from left to right on the command line.
+For example: `-D correctness -A no-debugger` or `-A all -D no-debugger`.
+Categories:
+
+* `correctness` - Code that is outright wrong or useless (default)
+* `suspicious` - Code that is most likely wrong or useless
+* `pedantic` - Lints which are rather strict or have occasional false positives
+* `perf` - Code that could be written in a more performant way
+* `style` - Code that should be written in a more idiomatic way
+* `restriction` - Lints which prevent the use of language and library features
+* `nursery` - New lints that are still under development
+* `all` - All categories listed above except `nursery`. Does not enable plugins automatically.
 - **`-A --allow… <NAME>`** — Allow the rule or category (suppress the lint)
 - **`-W --warn… <NAME>`** — Warn on the rule or category (emit a warning)
 - **`-D --deny… <NAME>`** — Deny the rule or category (emit an error)

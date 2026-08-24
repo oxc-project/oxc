@@ -62,12 +62,12 @@ pub struct LintCommand {
     unknown_flags = "error",
     args_override_self = false,
     next_line_help,
-    long_about = LINT_FILTERS_HELP,
+    heading("Allowing / Denying Multiple Lints", help = LINT_FILTERS_HELP),
     usage = "oxlint [-c=./.oxlintrc.json] [PATH]...",
     help_template = "{{about}}\n\n{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
     example("oxlint -D correctness src", header = "Deny a category"),
     example("oxlint --format github .", header = "GitHub Actions"),
-    validate_with = validate_lint_cli
+    try_into = LintCommand
 )]
 struct LintCli {
     #[usage(flatten, next_help_heading = "Basic Configuration")]
@@ -123,15 +123,6 @@ struct LintCli {
     paths: Vec<PathBuf>,
 }
 
-fn validate_lint_cli(cli: &LintCli) -> Result<(), ValidationError> {
-    if let Some(path) = invalid_path(&cli.paths) {
-        return Err(ValidationError::field("PATH")
-            .value(path.display().to_string())
-            .reason(PATHS_ERROR_MESSAGE));
-    }
-    Ok(())
-}
-
 #[derive(Debug, Clone, Args)]
 pub struct SuppressionOptions {
     /// Generate suppressions for all current violations
@@ -145,7 +136,7 @@ pub struct SuppressionOptions {
 
 impl LintCommand {
     pub fn parse() -> Self {
-        Self::from_cli(LintCli::parse())
+        LintCli::parse_into()
     }
 
     /// Parses linter options from an argument slice.
@@ -158,12 +149,37 @@ impl LintCommand {
         T: AsRef<OsStr> + 'v,
     {
         let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        let cli = LintCli::parse_from(&refs)?;
-        Ok(Self::from_cli(cli))
+        LintCli::parse_into_from(&refs)
     }
 
-    fn from_cli(cli: LintCli) -> Self {
-        Self {
+    pub fn command() -> &'static usage::Command<'static> {
+        LintCli::command()
+    }
+
+    pub fn render_help(cmd: &usage::Command<'_>, long: bool) -> Option<String> {
+        LintCli::render_help(cmd, long)
+    }
+
+    pub fn to_kdl() -> String {
+        LintCli::to_kdl()
+    }
+
+    pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
+        LintCli::embedded_outcome_into(args)
+    }
+}
+
+impl TryFrom<LintCli> for LintCommand {
+    type Error = ValidationError;
+
+    fn try_from(cli: LintCli) -> Result<Self, Self::Error> {
+        if let Some(path) = invalid_path(&cli.paths) {
+            return Err(ValidationError::field("PATH")
+                .value(path.display().to_string())
+                .reason(PATHS_ERROR_MESSAGE));
+        }
+
+        Ok(Self {
             basic_options: cli.basic_options,
             filter: cli.filter_options.filters.into_iter().map(LintFilter::into_tuple).collect(),
             enable_plugins: cli.enable_plugins.into(),
@@ -181,40 +197,7 @@ impl LintCommand {
             inline_config_options: cli.inline_config_options.into(),
             suppression_options: cli.suppression_options,
             paths: cli.paths,
-        }
-    }
-
-    pub fn command() -> &'static usage::Command<'static> {
-        LintCli::command()
-    }
-
-    pub fn spec() -> &'static usage::spec::Spec<'static> {
-        LintCli::spec()
-    }
-
-    pub fn render_help(cmd: &usage::Command<'_>, long: bool) -> Option<String> {
-        LintCli::render_help(cmd, long)
-    }
-
-    pub fn render_failure<'v, T>(args: &'v [T], error: &usage::Error<'static, 'v>) -> String
-    where
-        T: AsRef<OsStr> + 'v,
-    {
-        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        LintCli::render_failure(&refs, error)
-    }
-
-    pub fn to_kdl() -> String {
-        LintCli::to_kdl()
-    }
-
-    pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
-        match LintCli::embedded_outcome(args) {
-            usage::embedded::Outcome::Parsed(cli) => {
-                usage::embedded::Outcome::Parsed(Self::from_cli(cli))
-            }
-            usage::embedded::Outcome::Exit(exit) => usage::embedded::Outcome::Exit(exit),
-        }
+        })
     }
 }
 
