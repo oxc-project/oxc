@@ -16,8 +16,7 @@ use crate::{
         trivia::format_dangling_comments,
     },
     print::{
-        FormatFunctionOptions, FormatJsArrowFunctionExpression,
-        FormatJsArrowFunctionExpressionOptions,
+        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
         arrow_function_expression::{
             FunctionCacheMode, GroupedCallArgumentLayout, is_huggable_html_embed,
@@ -639,19 +638,7 @@ fn write_grouped_arguments<'a>(
                                     || function_has_only_simple_parameters(&function.params)) =>
                         {
                             has_cached = true;
-                            return write!(
-                                f,
-                                [
-                                    FormatFunction::new_with_options(
-                                        function,
-                                        FormatFunctionOptions {
-                                            cache_mode: FunctionCacheMode::Cache,
-                                            ..FormatFunctionOptions::default()
-                                        },
-                                    ),
-                                    comma
-                                ]
-                            );
+                            return write!(f, [FormatFunction::new_cached(function), comma]);
                         }
                         AstNodes::ArrowFunctionExpression(arrow) => {
                             has_cached = true;
@@ -894,14 +881,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
-                FormatFunction::new_with_options(
-                    function,
-                    FormatFunctionOptions {
-                        cache_mode: FunctionCacheMode::Cache,
-                        call_argument_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
-                    },
-                )
-                .fmt(f);
+                FormatFunction::new_cached(function).fmt(f);
             }
             AstNodes::ArrowFunctionExpression(arrow) => {
                 FormatJsArrowFunctionExpression::new_with_options(

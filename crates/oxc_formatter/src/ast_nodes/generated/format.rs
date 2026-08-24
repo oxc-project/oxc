@@ -13,7 +13,7 @@ use crate::{
         trivia::{format_leading_comments, format_trailing_comments},
     },
     parentheses::NeedsParentheses,
-    print::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
+    print::FormatWrite,
     utils::{
         suppressed::FormatSuppressedNode,
         typecast::{
@@ -2415,26 +2415,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Function<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Function<'a>> {
-    pub fn fmt_with_options(&self, options: FormatFunctionOptions, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
-            return;
-        }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
-        if is_suppressed {
-            self.write_suppressed(f);
-        } else {
-            self.write_with_options(options, f);
-        }
-        if needs_parentheses {
-            ")".fmt(f);
-        }
-        self.format_trailing_comments(f);
-    }
-}
-
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameters<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
@@ -2530,30 +2510,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionExpression
             self.write_suppressed(f);
         } else {
             self.write(f);
-        }
-        if needs_parentheses {
-            ")".fmt(f);
-        }
-        self.format_trailing_comments(f);
-    }
-}
-
-impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
-    pub fn fmt_with_options(
-        &self,
-        options: FormatJsArrowFunctionExpressionOptions,
-        f: &mut JsFormatter<'_, 'a>,
-    ) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
-            return;
-        }
-        let needs_parentheses = self.needs_parentheses(f);
-        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
-        if is_suppressed {
-            self.write_suppressed(f);
-        } else {
-            self.write_with_options(options, f);
         }
         if needs_parentheses {
             ")".fmt(f);

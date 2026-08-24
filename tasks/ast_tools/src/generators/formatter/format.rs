@@ -1,5 +1,14 @@
 //! Generator for `oxc_formatter`.
 //!
+//! Boundary with the handwritten side:
+//!
+//! - The node lists here decide which fragments of the `fmt` skeleton are EMITTED (comment-printing ownership, parentheses frames)
+//!   - they change the shape of the generated code, nothing else
+//! - Behavior the skeleton queries per node lives on `FormatWrite` (`write`, `suppressed_span`, `write_suppressed`)
+//!   - defaults cover the common case, overrides sit next to the node's `write` and need no regeneration
+//!
+//! Add a new list only for a variation the emitted shape must express;
+//! for anything a node merely answers, add a trait method with a total default.
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -50,11 +59,6 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeOperator",
 ];
 
-const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
-    "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",
-    "Function" => "FormatFunctionOptions",
-};
-
 pub struct FormatterFormatGenerator;
 
 define_generator!(FormatterFormatGenerator);
@@ -78,11 +82,6 @@ impl Generator for FormatterFormatGenerator {
             })
             .collect::<TokenStream>();
 
-        let options = NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.values().map(|o| {
-            let ident = format_ident!("{}", o);
-            quote! { , #ident }
-        });
-
         let output = quote! {
             #![expect(clippy::match_same_arms)]
             use oxc_ast::ast::*;
@@ -95,7 +94,7 @@ impl Generator for FormatterFormatGenerator {
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
-                print::{FormatWrite #(#options)*},
+                print::FormatWrite,
             };
 
             #impls
@@ -177,15 +176,9 @@ fn generate_struct_implementation(
         quote! {}
     };
 
-    let generate_fmt_implementation = |has_options: bool| {
-        let write_call = if has_options {
-            quote! {
-                self.write_with_options(options, f);
-            }
-        } else {
-            quote! {
-                self.write(f);
-            }
+    let fmt_implementation = {
+        let write_call = quote! {
+            self.write(f);
         };
 
         // `Program` can't be suppressed.
@@ -271,23 +264,6 @@ fn generate_struct_implementation(
         }
     };
 
-    let fmt_implementation = generate_fmt_implementation(false);
-    let fmt_options =
-        NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
-        let implementation = generate_fmt_implementation(true);
-        quote! {
-            ///@@line_break
-            impl<'a> #type_ty {
-                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut JsFormatter<'_, 'a>) {
-                    #implementation
-                }
-            }
-        }
-    } else {
-        quote! {}
-    };
-
     quote! {
         ///@@line_break
         impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
@@ -295,8 +271,6 @@ fn generate_struct_implementation(
                 #fmt_implementation
             }
         }
-
-        #fmt_with_options_inherent
     }
 }
 
