@@ -53,7 +53,7 @@ export function printLiteral(
   const { value } = node;
   switch (typeof value) {
     case "string":
-      printString(state, value, node);
+      printString(state, value, node.start, node.end, node);
       break;
     case "number":
       typeAssertIs<ESTree.NumericLiteral>(node);
@@ -61,7 +61,7 @@ export function printLiteral(
       break;
     case "boolean":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, value ? "true" : "false", CAT_IDENT, node);
+      writeWithMap(state, value ? "true" : "false", CAT_IDENT, node.start, node.end, node);
       break;
     default:
       typeAssertIs<LiteralExtras>(node);
@@ -74,7 +74,7 @@ export function printLiteral(
       } else {
         // `null`
         printSpaceBeforeIdentifier(state);
-        writeWithMap(state, "null", CAT_IDENT, node);
+        writeWithMap(state, "null", CAT_IDENT, node.start, node.end, node);
       }
       break;
   }
@@ -103,7 +103,14 @@ function printNumericLiteral(
     // `CAT_IDENT` rather than `CAT_INT_DIGIT` - raw text only prints inside a TS type,
     // where no member `.` can follow, so there is no `0 .toExponential()` hazard to separate.
     const { raw } = node;
-    writeWithMap(state, raw, raw[raw.length - 1] === "." ? CAT_OTHER : CAT_IDENT, node);
+    writeWithMap(
+      state,
+      raw,
+      raw[raw.length - 1] === "." ? CAT_OTHER : CAT_IDENT,
+      node.start,
+      node.end,
+      node,
+    );
     return;
   }
 
@@ -111,10 +118,10 @@ function printNumericLiteral(
     // Finite and positive: the common case, and the same branch the chain
     // below would reach, without the two builtin calls.
     printSpaceBeforeIdentifier(state);
-    printNonNegativeFloat(state, value, node);
+    printNonNegativeFloat(state, value, node.start, node.end, node);
   } else if (Number.isNaN(value)) {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, "NaN", CAT_IDENT, node);
+    writeWithMap(state, "NaN", CAT_IDENT, node.start, node.end, node);
   } else if (!Number.isFinite(value)) {
     const negative = value < 0;
     const wrap = negative && precedence >= PREC_PREFIX;
@@ -126,21 +133,21 @@ function printNumericLiteral(
     } else {
       printSpaceBeforeIdentifier(state);
     }
-    writeWithMap(state, "Infinity", CAT_IDENT, node);
+    writeWithMap(state, "Infinity", CAT_IDENT, node.start, node.end, node);
 
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
   } else if (Object.is(value, 0)) {
     // +0 exactly - `Object.is` rejects `-0`, which the negative paths below print as `-0`
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, "0", CAT_INT_DIGIT, node);
+    writeWithMap(state, "0", CAT_INT_DIGIT, node.start, node.end, node);
   } else if (precedence >= PREC_PREFIX) {
     writeNoLast(state, "(-");
-    printNonNegativeFloat(state, -value, node);
+    printNonNegativeFloat(state, -value, node.start, node.end, node);
     write(state, ")", CAT_CLOSE_BRACKET);
   } else {
     printSpaceBeforeOperator(state, CAT_OP_UN_NEG);
     writeNoLast(state, "-");
-    printNonNegativeFloat(state, -value, node);
+    printNonNegativeFloat(state, -value, node.start, node.end, node);
   }
 }
 
@@ -170,7 +177,7 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
   // * `last === CAT_REGEX_SLASH` keeps `/a//b/` from lexing as a line comment
   // * `CAT_LT` arm keeps `<` followed by `/script...` from closing a host `<script>` element.
 
-  writeWithMapNoLast(state, "/", node);
+  writeWithMapNoLast(state, "/", node.start, node.end, node);
   writeNoLast(state, node.regex.pattern);
 
   // `CAT_REGEX_SLASH` rather than `CAT_OTHER`. It means "a regex just closed", which is what the
@@ -193,11 +200,11 @@ function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence
 
   const value = node.bigint;
   if (value.startsWith("-") && precedence >= PREC_PREFIX) {
-    writeWithMapNoLast(state, "(", node);
+    writeWithMapNoLast(state, "(", node.start, node.end, node);
     writeNoLast(state, value);
     write(state, "n)", CAT_CLOSE_BRACKET);
   } else {
-    writeWithMapNoLast(state, value, node);
+    writeWithMapNoLast(state, value, node.start, node.end, node);
     writeIdent(state, "n");
   }
 }

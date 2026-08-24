@@ -39,7 +39,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, node.name, node);
+      writeWithMapNamed(state, node.name, node.start, node.end, node);
       if (TS && node.optional) write(state, "?", CAT_QUESTION);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -59,7 +59,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
       printExpression(node.right, state, PREC_COMMA, CTX_NONE);
       break;
     case "RestElement":
-      writeWithMap(state, "...", CAT_OTHER, node);
+      writeWithMap(state, "...", CAT_OTHER, node.start, node.end, node);
       printBindingPattern(node.argument, state);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -76,17 +76,17 @@ function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): vo
   const { length } = properties;
 
   if (length === 0) {
-    writeWithMap(state, "{}", CAT_OTHER, node);
+    writeWithMap(state, "{}", CAT_OTHER, node.start, node.end, node);
     return;
   }
 
-  writeWithMap(state, "{ ", CAT_OTHER, node);
+  writeWithMap(state, "{ ", CAT_OTHER, node.start, node.end, node);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
     const property = properties[i];
     if (property.type === "RestElement") {
-      writeWithMap(state, "...", CAT_OTHER, property);
+      writeWithMap(state, "...", CAT_OTHER, property.start, property.end, property);
       printBindingPattern(property.argument, state);
     } else {
       printBindingProperty(property, state);
@@ -141,14 +141,14 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, key.name, key);
+      writeWithMapNamed(state, key.name, key.start, key.end, key);
       break;
     case "PrivateIdentifier":
-      writeWithMapNamedPrivate(state, key.name, key);
+      writeWithMapNamedPrivate(state, key.name, key.start, key.end, key);
       break;
     case "Literal":
       if (typeof key.value === "string") {
-        printString(state, key.value, key);
+        printString(state, key.value, key.start, key.end, key);
       } else {
         printLiteral(key, state, PREC_COMMA, CTX_NONE);
       }
@@ -176,7 +176,7 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
     }
   }
 
-  writeWithMap(state, "[", CAT_OTHER, node);
+  writeWithMap(state, "[", CAT_OTHER, node.start, node.end, node);
 
   for (let i = 0; i < length; i++) {
     if (i !== 0) write(state, ", ", CAT_OTHER);

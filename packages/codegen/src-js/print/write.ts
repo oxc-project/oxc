@@ -305,23 +305,27 @@ export function writePrivate(state: State, name: string): void {
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `write` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
  * @param code - Text to append, never empty
  * @param last - Category of the last character of `code`
- * @param node - Node this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
 export function writeWithMap(
   state: State,
   code: string,
   last: Category,
+  start: number,
+  end: number,
   node: UnnamedMappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  markMapStart(state, node);
+  markMapStart(state, start, end, node);
 
   state.last = last;
   state.output += code;
@@ -340,18 +344,27 @@ export function writeWithMap(
  * `last` is always `CAT_IDENT`, since a name ends in an identifier character, so the caller does not pass it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeIdent` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeIdent` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param name - Name to append, never empty
- * @param node - Node this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
-export function writeWithMapNamed(state: State, name: string, node: IdentMappableNode): void {
+export function writeWithMapNamed(
+  state: State,
+  name: string,
+  start: number,
+  end: number,
+  node: IdentMappableNode,
+): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
   debugAssertCategoryMatches(state, name, CAT_IDENT);
   debugAssertNameMatches(node, name);
 
-  markMapNamed(state, name, false, 0, node);
+  markMapNamed(state, name, false, 0, start, end, node);
 
   state.last = CAT_IDENT;
   state.output += name;
@@ -371,22 +384,27 @@ export function writeWithMapNamed(state: State, name: string, node: IdentMappabl
  * `last` is always `CAT_IDENT`, since the name is what is written last, so the caller does not pass it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writePrivate` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writePrivate` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param name - The identifier's name, which is what follows the `#`, so never empty
- * @param node - Private identifier this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Private identifier this text came from. Read only by debug asserts.
  */
 export function writeWithMapNamedPrivate(
   state: State,
   name: string,
+  start: number,
+  end: number,
   node: ESTree.PrivateIdentifier,
 ): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
   debugAssertCategoryMatches(state, name, CAT_IDENT);
   debugAssertNameMatches(node, name);
 
-  markMapNamed(state, name, false, 1, node);
+  markMapNamed(state, name, false, 1, start, end, node);
 
   state.last = CAT_IDENT;
   state.output += "#";
@@ -430,14 +448,23 @@ export function writeNoLast(state: State, code: string): void {
  * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param code - Text to append, which unlike `writeWithMap` may be empty
- * @param node - Node this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
-export function writeWithMapNoLast(state: State, code: string, node: UnnamedMappableNode): void {
-  markMapStart(state, node);
+export function writeWithMapNoLast(
+  state: State,
+  code: string,
+  start: number,
+  end: number,
+  node: UnnamedMappableNode,
+): void {
+  markMapStart(state, start, end, node);
 
   state.output += code;
 
@@ -455,17 +482,26 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
  * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param name - The identifier's name, so never empty, unlike the plain `NoLast` forms
- * @param node - Node this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
-export function writeWithMapNamedNoLast(state: State, name: string, node: IdentMappableNode): void {
+export function writeWithMapNamedNoLast(
+  state: State,
+  name: string,
+  start: number,
+  end: number,
+  node: IdentMappableNode,
+): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
   debugAssertNameMatches(node, name);
 
-  markMapNamed(state, name, false, 0, node);
+  markMapNamed(state, name, false, 0, start, end, node);
 
   state.output += name;
 
@@ -482,21 +518,26 @@ export function writeWithMapNamedNoLast(state: State, name: string, node: IdentM
  * so recovering its original name takes a different scan of the source.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param name - The identifier's name, so never empty, unlike the other `NoLast` forms
- * @param node - JSX identifier this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - JSX identifier this text came from. Read only by debug asserts.
  */
 export function writeWithMapNamedJSXNoLast(
   state: State,
   name: string,
+  start: number,
+  end: number,
   node: ESTree.JSXIdentifier,
 ): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
   debugAssertNameMatches(node, name);
 
-  markMapNamed(state, name, true, 0, node);
+  markMapNamed(state, name, true, 0, start, end, node);
 
   state.output += name;
 
@@ -516,23 +557,27 @@ export function writeWithMapNamedJSXNoLast(
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `write` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
  * @param code - Text to append, never empty
  * @param last - Category of the last character of `code`
- * @param node - Node whose last source character this text maps to
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node whose last source character this text maps to. Read only by debug asserts.
  */
 export function writeWithMapEnd(
   state: State,
   code: string,
   last: Category,
+  start: number,
+  end: number,
   node: MappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  markMapEnd(state, node);
+  markMapEnd(state, start, end, node);
 
   state.last = last;
   state.output += code;
@@ -550,10 +595,16 @@ export function writeWithMapEnd(
  * Builds without source map support have no use for this. In those builds, minifier removes it.
  *
  * @param state - Printer state
- * @param node - Node the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node the mapping points at. Read only by debug asserts.
  */
-export function markMapStart(state: State, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start);
+export function markMapStart(state: State, start: number, end: number, node: MappableNode): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) recordMapping(state, start);
 }
 
 /**
@@ -563,10 +614,16 @@ export function markMapStart(state: State, node: MappableNode): void {
  * Builds without source map support have no use for this. In those builds, minifier removes it.
  *
  * @param state - Printer state
- * @param node - Node whose end offset the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node whose end offset the mapping points at. Read only by debug asserts.
  */
-export function markMapAfter(state: State, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.end);
+export function markMapAfter(state: State, start: number, end: number, node: MappableNode): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) recordMapping(state, end);
 }
 
 /**
@@ -577,10 +634,22 @@ export function markMapAfter(state: State, node: MappableNode): void {
  *
  * @param state - Printer state
  * @param columnOffset - Number of UTF-16 units to add to `node`'s start offset
- * @param node - Node the mapping points into
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node the mapping points into. Read only by debug asserts.
  */
-export function markMapAtStartOffset(state: State, columnOffset: number, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start + columnOffset);
+export function markMapAtStartOffset(
+  state: State,
+  columnOffset: number,
+  start: number,
+  end: number,
+  node: MappableNode,
+): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) recordMapping(state, start + columnOffset);
 }
 
 /**
@@ -590,12 +659,18 @@ export function markMapAtStartOffset(state: State, columnOffset: number, node: M
  * `generateSourceMap` normalizes a landing on a low surrogate back to its code point.
  *
  * @param state - Printer state
- * @param node - Node whose last source character the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node whose last source character the mapping points at. Read only by debug asserts.
  */
-function markMapEnd(state: State, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) {
+function markMapEnd(state: State, start: number, end: number, node: MappableNode): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) {
     // `hasMappableSpan` ensured span is non-empty, so `end` is at least 1. `end - 1` cannot go negative.
-    recordMapping(state, node.end - 1);
+    recordMapping(state, end - 1);
   }
 }
 
@@ -613,16 +688,24 @@ function markMapEnd(state: State, node: MappableNode): void {
  * @param isJSXIdentifier - `true` if the node is a `JSXIdentifier`
  * @param hashLength - Length of the `#` the token is printed behind.
  *   1 if the node is a `PrivateIdentifier`, 0 otherwise.
- * @param node - Node the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node the mapping points at. Read only by debug asserts.
  */
 function markMapNamed(
   state: State,
   printedName: string,
   isJSXIdentifier: boolean,
   hashLength: 0 | 1,
+  start: number,
+  end: number,
   node: NamedMappableNode,
 ): void {
-  if (!SOURCEMAPS || !hasMappableSpan(node)) return;
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (!hasMappableSpan(start, end)) return;
 
   debugAssert(
     state.mapPositions !== null && state.mapNames !== null && state.sourceText !== null,
@@ -633,7 +716,6 @@ function markMapNamed(
     "A node cannot be both a `JSXIdentifier` and a `PrivateIdentifier`",
   );
 
-  const { start, end } = node;
   const { sourceText } = state;
   if (start > sourceText.length) return;
 
@@ -691,19 +773,18 @@ function markMapNamed(
 }
 
 /**
- * Whether `node` carries a span a mapping can be recorded for.
+ * Whether the offsets given describe a span a mapping can be recorded for.
  *
- * A transformed or hand-authored AST can carry anything at all, so the offsets are checked rather
- * than trusted. Proving `start` and `end` here is what lets each recorder below skip the lower half
- * of its own bounds check - `start` is not negative, and `end` is greater than it.
+ * A transformed or hand-authored AST can carry anything at all - including nodes with no offsets,
+ * which arrive here as `undefined` however the parameters are typed - so they are checked rather than trusted.
+ * Proving them here is what lets each recorder skip the lower half of its own bounds check -
+ * `start` is not negative, and `end` is greater than it.
  *
- * @param node - Node the mapping is for
- * @returns `true` if `node` has a non-empty span of safe integer offsets
+ * @param start - Start offset of the node the mapping is for
+ * @param end - End offset of that node
+ * @returns `true` if the offsets are a non-empty span of safe integers
  */
-function hasMappableSpan(
-  node: MappableNode,
-): node is MappableNode & { start: number; end: number } {
-  const { start, end } = node;
+function hasMappableSpan(start: number, end: number): boolean {
   return (
     typeof start === "number"
     && typeof end === "number"
@@ -882,6 +963,25 @@ function isDefinitelyIdentifierBoundary(code: number): boolean {
     && code !== 45 // `-` in JSX identifiers
     && code !== 92 // `\` starting a Unicode escape
     && code !== 95 // `_`
+  );
+}
+
+/**
+ * Assert that the offsets a mapping is recorded from are the node's own.
+ *
+ * Callers extract `start` and `end` themselves, where the node's type is known statically and the reads
+ * are monomorphic. This is what holds them to the node they claim to describe.
+ *
+ * Debug builds only. Removed by minifier in release builds.
+ *
+ * @param node - Node the mapping is for
+ * @param start - Start offset passed for it
+ * @param end - End offset passed for it
+ */
+function debugAssertSpanMatches(node: MappableNode, start: number, end: number): void {
+  debugAssert(
+    start === node.start && end === node.end,
+    () => `\`${node.type}\` spans ${node.start}-${node.end}, but ${start}-${end} was passed`,
   );
 }
 
