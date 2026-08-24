@@ -1118,7 +1118,11 @@ mod usage_integration {
     #[test]
     fn spec_exposes_output_and_completion_contracts() {
         let spec = LintCommand::to_kdl();
-        assert!(spec.contains("group lint-filter --allow --warn --deny multiple=#true"));
+        let lint_filter_group = spec.lines().find(|line| line.contains("group lint-filter"));
+        assert_eq!(
+            lint_filter_group,
+            Some("group lint-filter \"--allow\" \"--warn\" \"--deny\" multiple=#true")
+        );
         assert!(spec.contains("warning \"Avoid using this option."));
         assert!(spec.contains("flag \"-h --help\"") && spec.contains("builtin=#true"));
         assert!(spec.contains("flag \"-V --version\""));
