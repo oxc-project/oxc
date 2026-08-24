@@ -36,7 +36,7 @@ pub struct FormatCommand {
     unknown_flags = "error",
     args_override_self = false,
     usage = "oxfmt [-c=PATH] [PATH]...",
-    help_template = "{{about}}\n\n{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
+    help_template = "{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
     example("oxfmt --check .", header = "Check formatting"),
     example("oxfmt --write src", header = "Format files"),
     exit_code(0, "files are formatted or were formatted successfully"),

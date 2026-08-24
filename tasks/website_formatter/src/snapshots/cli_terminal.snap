@@ -3,8 +3,6 @@ source: tasks/website_formatter/src/cli.rs
 assertion_line: 17
 expression: snapshot
 ---
-oxfmt 0.64.0
-
 oxfmt [-c=PATH] [PATH]...
 
 Mode Options:
