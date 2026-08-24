@@ -19,6 +19,10 @@ workspace = true
 [lib]
 doctest = true
 
+[[example]]
+name = "codegen"
+required-features = ["sourcemap"]
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
