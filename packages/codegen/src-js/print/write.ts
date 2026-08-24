@@ -5,8 +5,14 @@
 
 import { debugAssert } from "../asserts.ts";
 
-import type { MappableNode, NamedMappableNode, UnnamedMappableNode } from "./types.ts";
+import type {
+  MappableNode,
+  NamedMappableNode,
+  IdentMappableNode,
+  UnnamedMappableNode,
+} from "./types.ts";
 import type { State } from "../state.ts";
+import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 // `state.last` records what was written last, by category, not the last character itself.
 //
@@ -295,12 +301,12 @@ export function writeWithMapNamed(
   state: State,
   code: string,
   last: Category,
-  node: NamedMappableNode,
+  node: IdentMappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  markMapNamed(state, node);
+  markMapNamed(state, false, node);
 
   state.last = last;
   state.output += code;
@@ -374,14 +380,44 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
  * @param code - Text to append, which unlike `writeWithMapNamed` may be empty
  * @param node - Node this text came from
  */
-export function writeWithMapNamedNoLast(state: State, code: string, node: NamedMappableNode): void {
-  markMapNamed(state, node);
+export function writeWithMapNamedNoLast(state: State, code: string, node: IdentMappableNode): void {
+  markMapNamed(state, false, node);
 
   state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = true;
     if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append `name` and record a named source mapping for a JSX identifier, leaving `state.last` alone.
+ *
+ * The JSX form of `writeWithMapNamedNoLast`. A JSX identifier's name can hold a `-`,
+ * so recovering its original name takes a different scan of the source.
+ *
+ * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
+ * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ *
+ * @param state - Printer state
+ * @param name - The identifier's name, so never empty, unlike the other `NoLast` forms
+ * @param node - JSX identifier this text came from
+ */
+export function writeWithMapNamedJSXNoLast(
+  state: State,
+  name: string,
+  node: ESTree.JSXIdentifier,
+): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+
+  markMapNamed(state, true, node);
+
+  state.output += name;
+
+  if (DEBUG) {
+    state.lastIsStale = true;
+    if (name.length > 0) state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -484,9 +520,10 @@ function markMapEnd(state: State, node: MappableNode): void {
  * The name is only recorded for the mapping where it differs from the text which is printed.
  *
  * @param state - Printer state
+ * @param isJSXIdentifier - `true` if the node is a `JSXIdentifier`
  * @param node - Node the mapping points at
  */
-function markMapNamed(state: State, node: NamedMappableNode): void {
+function markMapNamed(state: State, isJSXIdentifier: boolean, node: NamedMappableNode): void {
   if (!SOURCEMAPS || !hasMappableSpan(node)) return;
 
   debugAssert(
@@ -536,7 +573,9 @@ function markMapNamed(state: State, node: NamedMappableNode): void {
   if (!matchesSource) {
     // Read the name out of the source.
     // We can use it for a definitive comparison, which the quick check above couldn't.
-    const originalName = originalNameFromSource(sourceText, node, start, end);
+    const originalName = isJSXIdentifier
+      ? originalJSXNameFromSource(sourceText, start, end)
+      : originalNameFromSource(sourceText, start, end);
 
     // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
@@ -616,25 +655,16 @@ function isSameToken(originalName: string, printedName: string, hashLength: 0 | 
  * and the `#` is part of what is returned - the token is `#name`.
  *
  * @param sourceText - Original source text
- * @param node - Node the offsets came from
  * @param start - Start offset of `node`, already validated
  * @param end - End offset of `node`, already validated
  * @returns The identifier as it appears in the source, or `undefined` if the offsets do not span one
  */
 function originalNameFromSource(
   sourceText: string,
-  node: MappableNode,
   start: number,
   end: number,
 ): string | undefined {
   if (end > sourceText.length) return undefined;
-
-  // JSX identifiers admit `-`, which is not an ECMAScript identifier character. Their spans do
-  // not absorb TypeScript annotations, so the ESTree end offset is already exact.
-  if (node.type === "JSXIdentifier") {
-    const originalName = sourceText.slice(start, end);
-    return JSX_IDENTIFIER_REGEX.test(originalName) ? originalName : undefined;
-  }
 
   let index = start;
   if (index < end && sourceText.charCodeAt(index) === 35) index++; // `#` in a private identifier
@@ -658,6 +688,29 @@ function originalNameFromSource(
   }
 
   return index === identifierStart ? undefined : sourceText.slice(start, index);
+}
+
+/**
+ * Recover a JSX identifier's original spelling from validated source offsets.
+ *
+ * JSX identifiers admit `-`, which is not an ECMAScript identifier character, so the scan in
+ * `originalNameFromSource` would stop short of one. Their spans also do not absorb TypeScript
+ * annotations, so the ESTree end offset is already exact and the whole span is the name.
+ *
+ * @param sourceText - Original source text
+ * @param start - Start offset of the node, already validated
+ * @param end - End offset of the node, already validated
+ * @returns The identifier as it was spelled in the source, or `undefined` if the offsets do not span one
+ */
+function originalJSXNameFromSource(
+  sourceText: string,
+  start: number,
+  end: number,
+): string | undefined {
+  if (end > sourceText.length) return undefined;
+
+  const originalName = sourceText.slice(start, end);
+  return JSX_IDENTIFIER_REGEX.test(originalName) ? originalName : undefined;
 }
 
 /**
