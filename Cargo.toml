@@ -274,8 +274,8 @@ tracing = "0.1.44" # Tracing framework
 tracing-subscriber = "0.3.23" # Tracing implementation
 unicode-width = "0.2" # Unicode display width
 # Pin the post-6.1.1 Oxc migration work until its next crates.io release.
-usage-rs = { git = "https://github.com/jdx/usage.git", rev = "d68aed987a905681f729502d09e6b362c3bb57ad" } # CLI parser
-usage-parser = { package = "usage-lib", git = "https://github.com/jdx/usage.git", rev = "d68aed987a905681f729502d09e6b362c3bb57ad" } # Usage spec parser and renderer
+usage-rs = { git = "https://github.com/jdx/usage.git", rev = "a5fadb1778a80738dff8752b6e25e93fbb0291cf" } # CLI parser
+usage-parser = { package = "usage-lib", git = "https://github.com/jdx/usage.git", rev = "a5fadb1778a80738dff8752b6e25e93fbb0291cf" } # Usage spec parser and renderer
 ureq = { version = "3.3.0", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
