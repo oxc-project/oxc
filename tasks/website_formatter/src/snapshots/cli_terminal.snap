@@ -11,7 +11,7 @@ Mode Options:
       --migrate <SOURCE>               Migrate configuration to `.oxfmtrc.json`
                                        from specified source. Available sources:
                                        prettier, biome.
-    [possible values: prettier, biome]
+                                       [possible values: prettier, biome]
       --lsp                            Start language server protocol (LSP)
                                        server
       --stdin-filepath <PATH>          Specify the file name to use to infer
