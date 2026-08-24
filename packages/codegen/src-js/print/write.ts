@@ -310,7 +310,7 @@ export function writeWithMap(
 }
 
 /**
- * Append `code` to the output, record what it ends with, and record a named source mapping for `node`.
+ * Append `name` to the output, record what it ends with, and record a named source mapping for `node`.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
@@ -318,28 +318,28 @@ export function writeWithMap(
  * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
- * @param code - Text to append, never empty
- * @param last - Category of the last character of `code`
+ * @param name - Name to append, never empty
+ * @param last - Category of the last character of `name`
  * @param node - Node this text came from
  */
 export function writeWithMapNamed(
   state: State,
-  code: string,
+  name: string,
   last: Category,
   node: IdentMappableNode,
 ): void {
-  debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertCategoryMatches(state, code, last);
-  debugAssertNameMatches(node, code);
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, last);
+  debugAssertNameMatches(node, name);
 
-  markMapNamed(state, code, false, 0, node);
+  markMapNamed(state, name, false, 0, node);
 
   state.last = last;
-  state.output += code;
+  state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = false;
-    state.lastCharWritten = code[code.length - 1];
+    state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -429,7 +429,7 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
 }
 
 /**
- * Append `code` and record a named source mapping for `node`, leaving `state.last` alone.
+ * Append `name` and record a named source mapping for `node`, leaving `state.last` alone.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
@@ -439,20 +439,20 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
  * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
- * @param code - The identifier's name, so never empty, unlike the plain `NoLast` forms
+ * @param name - The identifier's name, so never empty, unlike the plain `NoLast` forms
  * @param node - Node this text came from
  */
-export function writeWithMapNamedNoLast(state: State, code: string, node: IdentMappableNode): void {
-  debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertNameMatches(node, code);
+export function writeWithMapNamedNoLast(state: State, name: string, node: IdentMappableNode): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertNameMatches(node, name);
 
-  markMapNamed(state, code, false, 0, node);
+  markMapNamed(state, name, false, 0, node);
 
-  state.output += code;
+  state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = true;
-    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+    if (name.length > 0) state.lastCharWritten = name[name.length - 1];
   }
 }
 
