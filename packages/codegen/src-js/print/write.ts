@@ -490,8 +490,8 @@ function markMapNamed(state: State, node: NamedMappableNode): void {
   if (!SOURCEMAPS || !hasMappableSpan(node)) return;
 
   debugAssert(
-    state.mapPositions !== null && state.sourceText !== null,
-    "`mapPositions` and `sourceText` should be defined when source maps are enabled",
+    state.mapPositions !== null && state.mapNames !== null && state.sourceText !== null,
+    "`mapPositions`, `mapNames` and `sourceText` should be defined when source maps are enabled",
   );
 
   const { start, end } = node;
@@ -541,7 +541,7 @@ function markMapNamed(state: State, node: NamedMappableNode): void {
     // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
     if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
-      (state.mapNames ??= []).push(
+      state.mapNames.push(
         mapPositions.length >> 1,
         originalName === undefined ? printedName : originalName,
       );

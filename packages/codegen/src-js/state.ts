@@ -146,7 +146,7 @@ export class State {
       debugAssert(options.sourceText != null);
       this.sourceText = options.sourceText;
       this.mapPositions = [];
-      this.mapNames = null;
+      this.mapNames = [];
     }
   }
 }
