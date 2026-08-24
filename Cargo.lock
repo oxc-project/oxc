@@ -1905,6 +1905,7 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
+ "smallvec",
 ]
 
 [[package]]
