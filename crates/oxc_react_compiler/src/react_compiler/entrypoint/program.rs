@@ -1161,7 +1161,7 @@ fn compile_outlined_functions<'a, 'b, 'p, 's, const EMIT: bool>(
             break 'queue;
         }
         let semantic = semantic_ret.semantic;
-        let scope = ScopeResolver::new(&semantic, ast.allocator());
+        let scope = ScopeResolver::new(&semantic, ast.allocator(), &program);
         let sources = program
             .body
             .iter()
@@ -3174,7 +3174,7 @@ pub fn compile_program<'a, const EMIT: bool>(
     // The codegen back-end builds oxc nodes directly via this `AstBuilder`; `scope`
     // is a read-through view over `Semantic` for binding/reference lookups.
     let ast = AstBuilder::new(allocator);
-    let scope = ScopeResolver::new(semantic, allocator);
+    let scope = ScopeResolver::new(semantic, allocator, program);
 
     // Initialize known referenced names from scope bindings for UID collision detection
     context.init_from_scope(&scope);

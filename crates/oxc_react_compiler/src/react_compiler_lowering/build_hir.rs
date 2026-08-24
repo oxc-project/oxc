@@ -1,6 +1,3 @@
-use std::borrow::Cow;
-
-use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 
 use crate::diagnostics;
@@ -14,14 +11,14 @@ use crate::scope::ScopeKind;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
-use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{ArenaStringBuilder, CloneIn};
 use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str, format_ident, static_ident};
+use oxc_str::{Ident, Str, format_ident, format_str, static_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
@@ -3590,7 +3587,7 @@ fn lower_expression<'a>(
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
             pattern: regexp.regex.pattern.text,
             flags: Str::from_str_in(
-                &regexp.regex.flags.to_string(),
+                regexp.regex.flags.to_inline_string().as_str(),
                 &builder.environment().allocator,
             ),
             span: Some(regexp.span),
@@ -4646,12 +4643,8 @@ fn lower_jsx_element_expr<'a>(
                 let value = match &attr.value {
                     Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
                         let str_span = Some(s.span);
-                        let decoded = match decode_jsx_entities(s.value.as_str()) {
-                            Cow::Borrowed(text) => Str::from(text),
-                            Cow::Owned(text) => {
-                                Str::from_str_in(&text, &builder.environment().allocator)
-                            }
-                        };
+                        let decoded =
+                            decode_jsx_entities(s.value.as_str(), builder.environment().allocator);
                         lower_value_to_temporary(
                             builder,
                             InstructionValue::Primitive {
@@ -4881,7 +4874,6 @@ fn lower_jsx_element_name<'a>(
         oxc::JSXElementName::NamespacedName(ns) => {
             let namespace = ns.namespace.name.as_str();
             let name = ns.name.name.as_str();
-            let tag = format!("{}:{}", namespace, name);
             let span = Some(ns.span);
             if namespace.contains(':') || name.contains(':') {
                 builder.record_error(diagnostics::invalid_jsx_namespace(namespace, name, span))?;
@@ -4889,9 +4881,9 @@ fn lower_jsx_element_name<'a>(
             let place = lower_value_to_temporary(
                 builder,
                 InstructionValue::Primitive {
-                    value: PrimitiveValue::String(Str::from_str_in(
-                        &tag,
-                        &builder.environment().allocator,
+                    value: PrimitiveValue::String(format_str!(
+                        builder.environment().allocator,
+                        "{namespace}:{name}"
                     )),
                     span,
                 },
@@ -4971,24 +4963,15 @@ fn lower_jsx_element<'a>(
         oxc::JSXChild::Text(text) => {
             // oxc keeps JSX text raw; decode entities first so the value matches
             // Babel's `JSXText.value` (the Babel bridge decoded in convert_ast).
-            let decoded = decode_jsx_entities(text.value.as_str());
+            let allocator = builder.environment().allocator;
+            let decoded = decode_jsx_entities(text.value.as_str(), allocator);
             // FBT whitespace normalization differs from standard JSX.
             // Since the fbt transform runs after, preserve all whitespace
             // in FBT subtrees as is.
             let value = if builder.fbt_depth > 0 {
-                Some((
-                    match decoded {
-                        Cow::Borrowed(text) => Str::from(text),
-                        Cow::Owned(ref text) => {
-                            Str::from_str_in(text, &builder.environment().allocator)
-                        }
-                    },
-                    0,
-                ))
+                Some((decoded, 0))
             } else {
-                trim_jsx_text(&decoded).map(|(text, start)| {
-                    (Str::from_str_in(&text, &builder.environment().allocator), start)
-                })
+                trim_jsx_text(decoded.as_str(), allocator)
             };
             match value {
                 None => Ok(None),
@@ -5279,95 +5262,91 @@ fn collect_fbt_sub_tags_from_stmts(
     }
 }
 
-/// Split a string on line endings, handling \r\n, \n, and \r.
-fn split_line_endings(s: &str) -> Vec<&str> {
-    let mut lines = Vec::new();
-    let mut start = 0;
-    let bytes = s.as_bytes();
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'\r' {
-            lines.push(&s[start..i]);
-            if i + 1 < bytes.len() && bytes[i + 1] == b'\n' {
-                i += 2;
-            } else {
-                i += 1;
-            }
-            start = i;
-        } else if bytes[i] == b'\n' {
-            lines.push(&s[start..i]);
-            i += 1;
-            start = i;
+/// Split a string on line endings, handling \r\n, \n, and \r without allocating.
+/// The second tuple element is the byte length of the line ending.
+fn split_line_endings(s: &str) -> impl Iterator<Item = (&str, usize)> {
+    let mut remaining = Some(s);
+    std::iter::from_fn(move || {
+        let line = remaining.take()?;
+        let bytes = line.as_bytes();
+        let end = bytes.iter().position(|byte| matches!(byte, b'\r' | b'\n'));
+        if let Some(end) = end {
+            let line_ending_len =
+                if bytes[end] == b'\r' && bytes.get(end + 1) == Some(&b'\n') { 2 } else { 1 };
+            remaining = Some(&line[end + line_ending_len..]);
+            Some((&line[..end], line_ending_len))
         } else {
-            i += 1;
+            Some((line, 0))
         }
-    }
-    lines.push(&s[start..]);
-    lines
+    })
 }
 
 /// Trims whitespace according to the JSX spec.
 /// Implementation ported from Babel's cleanJSXElementLiteralChild.
-fn trim_jsx_text(original: &str) -> Option<(String, usize)> {
-    // Split on \r\n, \n, or \r to handle all line ending styles (matching TS split(/\r\n|\n|\r/))
-    let lines: Vec<&str> = split_line_endings(original);
+fn trim_jsx_text<'a>(
+    original: &'a str,
+    allocator: &'a oxc_allocator::Allocator,
+) -> Option<(Str<'a>, usize)> {
+    if !original.bytes().any(|byte| matches!(byte, b'\r' | b'\n' | b'\t')) {
+        return (!original.is_empty()).then_some((Str::from(original), 0));
+    }
+
+    // Split on \r\n, \n, or \r to handle all line ending styles (matching TS split(/\r\n|\n|\r/)).
+    let mut line_count = 0;
+    let mut last_non_empty_line = None;
+    for (i, (line, _)) in split_line_endings(original).enumerate() {
+        line_count += 1;
+        if line.bytes().any(|byte| !matches!(byte, b' ' | b'\t')) {
+            last_non_empty_line = Some(i);
+        }
+    }
+    let last_non_empty_line = match last_non_empty_line {
+        Some(line) => line,
+        None if line_count == 1 => 0,
+        None => return None,
+    };
 
     // NOTE: when builder.fbt_depth > 0, the TS skips whitespace trimming entirely.
     // That check is handled by the caller (lower_jsx_element) before calling this function.
 
-    let mut last_non_empty_line = 0;
-    for (i, line) in lines.iter().enumerate() {
-        if line.contains(|c: char| c != ' ' && c != '\t') {
-            last_non_empty_line = i;
-        }
-    }
-
-    let mut str = String::new();
+    let mut str = ArenaStringBuilder::with_capacity_in(original.len(), allocator);
     let mut first_retained_offset = None;
     let mut line_offset = 0;
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, (line, line_ending_len)) in split_line_endings(original).enumerate() {
         let is_first_line = i == 0;
-        let is_last_line = i == lines.len() - 1;
+        let is_last_line = i == line_count - 1;
         let is_last_non_empty_line = i == last_non_empty_line;
 
-        // Replace rendered whitespace tabs with spaces
-        let mut trimmed_line = line.cow_replace('\t', " ").into_owned();
+        let mut trimmed_line = line;
         let mut leading_trimmed = 0;
 
         // Trim whitespace touching a newline (leading whitespace on non-first lines)
         if !is_first_line {
             let original_len = trimmed_line.len();
-            trimmed_line = trimmed_line.trim_start_matches(' ').to_string();
+            trimmed_line = trimmed_line.trim_start_matches([' ', '\t']);
             leading_trimmed = original_len - trimmed_line.len();
         }
 
         // Trim whitespace touching an endline (trailing whitespace on non-last lines)
         if !is_last_line {
-            trimmed_line = trimmed_line.trim_end_matches(' ').to_string();
+            trimmed_line = trimmed_line.trim_end_matches([' ', '\t']);
         }
 
         if !trimmed_line.is_empty() {
             first_retained_offset.get_or_insert(line_offset + leading_trimmed);
-            if !is_last_non_empty_line {
-                trimmed_line.push(' ');
+            for c in trimmed_line.chars() {
+                str.push(if c == '\t' { ' ' } else { c });
             }
-            str.push_str(&trimmed_line);
+            if !is_last_non_empty_line {
+                str.push(' ');
+            }
         }
 
-        line_offset += line.len();
-        if !is_last_line {
-            line_offset += if original.as_bytes().get(line_offset) == Some(&b'\r')
-                && original.as_bytes().get(line_offset + 1) == Some(&b'\n')
-            {
-                2
-            } else {
-                1
-            };
-        }
+        line_offset += line.len() + line_ending_len;
     }
 
-    first_retained_offset.map(|offset| (str, offset))
+    first_retained_offset.map(|offset| (Str::from(str), offset))
 }
 
 fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usize {
@@ -5412,11 +5391,11 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
 /// Babel's decoded text. oxc keeps JSX text raw in the AST. Mirrors the
 /// `decode_jsx_entities` helper in `convert_ast.rs`. Unrecognized `&…;` sequences
 /// are kept verbatim.
-fn decode_jsx_entities(s: &str) -> Cow<'_, str> {
+fn decode_jsx_entities<'a>(s: &'a str, allocator: &'a oxc_allocator::Allocator) -> Str<'a> {
     if !s.contains('&') {
-        return Cow::Borrowed(s);
+        return Str::from(s);
     }
-    let mut out = String::with_capacity(s.len());
+    let mut out = ArenaStringBuilder::with_capacity_in(s.len(), allocator);
     let mut chars = s.char_indices();
     let mut prev = 0;
     while let Some((i, c)) = chars.next() {
@@ -5448,7 +5427,7 @@ fn decode_jsx_entities(s: &str) -> Cow<'_, str> {
         }
     }
     out.push_str(&s[prev..]);
-    Cow::Owned(out)
+    Str::from(out)
 }
 
 fn decode_jsx_entity(word: &str) -> Option<char> {

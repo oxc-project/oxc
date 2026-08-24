@@ -50,8 +50,8 @@ struct BindingInfo {
     referenced_by_inner_fn: bool,
 }
 
-struct ContextIdentifierVisitor<'a> {
-    scope: &'a ScopeResolver<'a, 'a>,
+struct ContextIdentifierVisitor<'r, 's, 'alloc> {
+    scope: &'r ScopeResolver<'s, 'alloc>,
     /// The active scope stack. Initialized with the function-being-compiled's
     /// scope and pushed/popped for every scope-creating node, mirroring the
     /// original `AstWalker`.
@@ -62,7 +62,7 @@ struct ContextIdentifierVisitor<'a> {
     binding_info: FxHashMap<SymbolId, BindingInfo>,
 }
 
-impl<'a> ContextIdentifierVisitor<'a> {
+impl<'r, 's, 'alloc> ContextIdentifierVisitor<'r, 's, 'alloc> {
     fn current_scope(&self) -> ScopeId {
         self.scope_stack.last().copied().unwrap_or_else(|| self.scope.program_scope())
     }
@@ -127,7 +127,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
     }
 }
 
-impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
+impl<'a, 'r, 's, 'alloc> VisitJs<'a> for ContextIdentifierVisitor<'r, 's, 'alloc> {
     // ---- function scopes (push BOTH the generic scope and the function stack) ----
 
     fn visit_function(&mut self, it: &Function<'a>, _flags: ScopeFlags) {
@@ -281,10 +281,10 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
     fn visit_ts_namespace_declaration(&mut self, _it: &TSNamespaceDeclaration<'a>) {}
 }
 
-impl<'a> ContextIdentifierVisitor<'a> {
+impl<'r, 's, 'alloc> ContextIdentifierVisitor<'r, 's, 'alloc> {
     /// Recursively walk an assignment target to find all reassignment target
     /// identifiers, mirroring the original `walk_lval_for_reassignment`.
-    fn walk_assignment_target_for_reassignment(
+    fn walk_assignment_target_for_reassignment<'a>(
         &mut self,
         target: &AssignmentTarget<'a>,
         current_scope: ScopeId,
@@ -348,7 +348,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
         }
     }
 
-    fn walk_assignment_target_expression_for_reassignment(
+    fn walk_assignment_target_expression_for_reassignment<'a>(
         &mut self,
         expression: &Expression<'a>,
         current_scope: ScopeId,
@@ -364,7 +364,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
         }
     }
 
-    fn walk_simple_assignment_target_for_reassignment(
+    fn walk_simple_assignment_target_for_reassignment<'a>(
         &mut self,
         target: &SimpleAssignmentTarget<'a>,
         current_scope: ScopeId,
@@ -403,7 +403,7 @@ impl<'a> ContextIdentifierVisitor<'a> {
         }
     }
 
-    fn walk_maybe_default_for_reassignment(
+    fn walk_maybe_default_for_reassignment<'a>(
         &mut self,
         target: &AssignmentTargetMaybeDefault<'a>,
         current_scope: ScopeId,

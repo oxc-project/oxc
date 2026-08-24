@@ -1,8 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
-    PropertyKind,
+    BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclarationSpecifier,
+    ModuleExportName, Program, PropertyKind, Statement,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_span::{GetSpan, Span};
@@ -10,6 +10,7 @@ use oxc_str::{Ident, Str};
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
 use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 pub use oxc_syntax::reference::ReferenceId;
 pub use oxc_syntax::scope::ScopeId;
@@ -87,7 +88,7 @@ impl DeclKind {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct ImportBindingData<'a> {
     /// The module specifier string (e.g., "react" in `import {useState} from 'react'`).
     pub source: Str<'a>,
@@ -97,21 +98,75 @@ pub struct ImportBindingData<'a> {
     pub imported: Option<Ident<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum ImportBindingKind {
     Default,
     Named,
     Namespace,
 }
 
+type ImportBindings<'a> = SmallVec<[(SymbolId, ImportBindingData<'a>); 4]>;
+
+fn collect_imports<'a>(program: &Program<'a>) -> ImportBindings<'a> {
+    let import_count = program
+        .body
+        .iter()
+        .filter_map(|statement| match statement {
+            Statement::ImportDeclaration(declaration) => declaration.specifiers.as_ref(),
+            _ => None,
+        })
+        .map(|specifiers| specifiers.len())
+        .sum();
+    let mut imports = SmallVec::with_capacity(import_count);
+    for statement in &program.body {
+        let Statement::ImportDeclaration(declaration) = statement else {
+            continue;
+        };
+        let Some(specifiers) = &declaration.specifiers else {
+            continue;
+        };
+
+        for specifier in specifiers {
+            let (local, kind, imported) = match specifier {
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                    (&specifier.local, ImportBindingKind::Default, None)
+                }
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                    (&specifier.local, ImportBindingKind::Namespace, None)
+                }
+                ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                    let imported = match &specifier.imported {
+                        ModuleExportName::IdentifierName(identifier) => identifier.name,
+                        ModuleExportName::IdentifierReference(identifier) => identifier.name,
+                        ModuleExportName::StringLiteral(literal) => literal.value.into(),
+                    };
+                    (&specifier.local, ImportBindingKind::Named, Some(imported))
+                }
+            };
+            if let Some(symbol_id) = local.symbol_id.get() {
+                imports.push((
+                    symbol_id,
+                    ImportBindingData { source: declaration.source.value, kind, imported },
+                ));
+            }
+        }
+    }
+    imports.sort_unstable_by_key(|(symbol_id, _)| *symbol_id);
+    imports
+}
+
 /// Read-through view over `Semantic`, replacing the old materialized
 /// `ScopeInfo` copy. Scope and symbol identity comes from the semantic ID
 /// cells on the AST (`scope_id`/`symbol_id`/`reference_id`); everything else
-/// is derived from `Scoping` on demand.
+/// is derived from `Scoping` on demand. Import strings are cached as zero-copy
+/// arena views because their AST lifetime outlives the `Semantic` borrow.
 pub struct ScopeResolver<'s, 'a> {
     scoping: &'s Scoping,
     nodes: &'s AstNodes<'s>,
     allocator: &'a Allocator,
+    /// Import metadata copied from the arena-backed AST. The strings themselves
+    /// remain zero-copy views into the arena, independent of the `Semantic` borrow.
+    imports: ImportBindings<'a>,
     /// All Function-kind scopes, in scope-tree order.
     function_scopes: Vec<ScopeId>,
     /// `(start, end)` source windows of Function-kind scopes, used by the
@@ -122,7 +177,11 @@ pub struct ScopeResolver<'s, 'a> {
 }
 
 impl<'s, 'a> ScopeResolver<'s, 'a> {
-    pub fn new<'ast>(semantic: &'s Semantic<'ast>, allocator: &'a Allocator) -> Self {
+    pub fn new<'ast>(
+        semantic: &'s Semantic<'ast>,
+        allocator: &'a Allocator,
+        program: &Program<'a>,
+    ) -> Self {
         let scoping = semantic.scoping();
         // `AstNodes` is covariant in its lifetime; shrink the AST references to
         // the `Semantic` borrow so the resolver needs no third lifetime.
@@ -132,6 +191,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             scoping,
             nodes,
             allocator,
+            imports: collect_imports(program),
             function_scopes: Vec::new(),
             function_scope_ranges: Vec::new(),
         };
@@ -336,60 +396,10 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
 
     /// For import bindings: the source module and import details.
     pub fn import_data(&self, symbol_id: SymbolId) -> Option<ImportBindingData<'a>> {
-        let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
-        match decl_node.kind() {
-            AstKind::ImportDefaultSpecifier(_) => {
-                let import_decl = self.find_import_declaration(decl_node.id())?;
-                Some(ImportBindingData {
-                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
-                    kind: ImportBindingKind::Default,
-                    imported: None,
-                })
-            }
-            AstKind::ImportNamespaceSpecifier(_) => {
-                let import_decl = self.find_import_declaration(decl_node.id())?;
-                Some(ImportBindingData {
-                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
-                    kind: ImportBindingKind::Namespace,
-                    imported: None,
-                })
-            }
-            AstKind::ImportSpecifier(spec) => {
-                let import_decl = self.find_import_declaration(decl_node.id())?;
-                let imported_name = match &spec.imported {
-                    ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-                    ModuleExportName::IdentifierReference(ident) => ident.name.as_str(),
-                    ModuleExportName::StringLiteral(lit) => lit.value.as_str(),
-                };
-                Some(ImportBindingData {
-                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
-                    kind: ImportBindingKind::Named,
-                    imported: Some(Ident::from_str_in(imported_name, &self.allocator)),
-                })
-            }
-            _ => None,
-        }
-    }
-
-    /// Find the ImportDeclaration node that contains the given import specifier.
-    fn find_import_declaration(
-        &self,
-        specifier_node_id: NodeId,
-    ) -> Option<&'s ImportDeclaration<'s>> {
-        let mut current_id = specifier_node_id;
-        // Walk up the parent chain (max 10 levels to avoid infinite loop)
-        for _ in 0..10 {
-            let parent_id = self.nodes.parent_id(current_id);
-            if parent_id == current_id {
-                // Root node, no more parents
-                return None;
-            }
-            if let AstKind::ImportDeclaration(decl) = self.nodes.get_node(parent_id).kind() {
-                return Some(decl);
-            }
-            current_id = parent_id;
-        }
-        None
+        self.imports
+            .binary_search_by_key(&symbol_id, |(symbol_id, _)| *symbol_id)
+            .ok()
+            .map(|index| self.imports[index].1)
     }
 
     /// The symbol's resolved reference IDs (including TS type references).

@@ -28,7 +28,7 @@ use std::mem::replace;
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{StringToNumber, ToInt32, ToUint32};
 use oxc_str::{Ident, Str};
@@ -507,14 +507,26 @@ fn evaluate_instruction<'a>(
         }
         InstructionValue::TemplateLiteral { subexprs, quasis, span } => {
             if subexprs.is_empty() {
-                // No subexpressions: join all cooked quasis
-                let mut result_string = String::new();
-                for q in quasis {
-                    result_string.push_str(q.cooked.as_ref()?);
-                }
+                // A template without substitutions normally has one quasi, whose
+                // arena-backed string can be reused directly.
+                let value = match quasis.as_slice() {
+                    [] => Str::empty(),
+                    [quasi] => quasi.cooked?,
+                    quasis => {
+                        let capacity = quasis
+                            .iter()
+                            .map(|quasi| quasi.cooked.map(|value| value.len()))
+                            .sum::<Option<usize>>()?;
+                        let mut result =
+                            ArenaStringBuilder::with_capacity_in(capacity, env.allocator);
+                        for quasi in quasis {
+                            result.push_str(quasi.cooked.unwrap().as_str());
+                        }
+                        Str::from(result)
+                    }
+                };
                 let span = *span;
-                let value =
-                    PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
+                let value = PrimitiveValue::String(value);
                 let result = Constant::Primitive { value, span };
                 func.instructions[instr_id.index()].value =
                     InstructionValue::Primitive { value, span };
@@ -529,36 +541,54 @@ fn evaluate_instruction<'a>(
                 return None;
             }
 
+            let mut capacity = quasis.iter().map(|quasi| quasi.cooked.unwrap().len()).sum();
+            for sub_expr in subexprs {
+                let Some(Constant::Primitive { value, .. }) = constants.get(&sub_expr.identifier)
+                else {
+                    return None;
+                };
+                capacity += match value {
+                    PrimitiveValue::Null => 4,
+                    PrimitiveValue::Boolean(true) => 4,
+                    PrimitiveValue::Boolean(false) => 5,
+                    // Longest possible ECMAScript number representation is below 32 bytes.
+                    PrimitiveValue::Number(_) => 32,
+                    PrimitiveValue::String(value) => value.len(),
+                    // TS rejects undefined subexpression values.
+                    PrimitiveValue::Undefined => return None,
+                };
+            }
+
             let mut quasi_index = 0usize;
-            let mut result_string =
-                quasis[quasi_index].cooked.as_ref().unwrap().as_str().to_string();
+            let mut result_string = ArenaStringBuilder::with_capacity_in(capacity, env.allocator);
+            result_string.push_str(quasis[quasi_index].cooked.unwrap().as_str());
             quasi_index += 1;
 
             for sub_expr in subexprs {
-                let sub_expr_value = read(constants, sub_expr);
-                let sub_prim = match sub_expr_value {
-                    Some(Constant::Primitive { ref value, .. }) => value,
-                    _ => return None,
+                let Some(Constant::Primitive { value, .. }) = constants.get(&sub_expr.identifier)
+                else {
+                    unreachable!();
                 };
-
-                let expression_str = match sub_prim {
-                    PrimitiveValue::Null => "null".to_string(),
-                    PrimitiveValue::Boolean(b) => b.to_string(),
-                    PrimitiveValue::Number(n) => n.value().to_js_string(),
-                    PrimitiveValue::String(s) => s.as_str().to_string(),
-                    // TS rejects undefined subexpression values
-                    PrimitiveValue::Undefined => return None,
-                };
+                match value {
+                    PrimitiveValue::Null => result_string.push_str("null"),
+                    PrimitiveValue::Boolean(value) => {
+                        result_string.push_str(if *value { "true" } else { "false" });
+                    }
+                    PrimitiveValue::Number(value) => {
+                        result_string.push_str(&value.value().to_js_string());
+                    }
+                    PrimitiveValue::String(value) => result_string.push_str(value),
+                    PrimitiveValue::Undefined => unreachable!(),
+                }
 
                 let suffix = quasis[quasi_index].cooked?;
                 quasi_index += 1;
 
-                result_string.push_str(&expression_str);
                 result_string.push_str(&suffix);
             }
 
             let span = *span;
-            let value = PrimitiveValue::String(Str::from_str_in(&result_string, &env.allocator));
+            let value = PrimitiveValue::String(Str::from(result_string));
             let result = Constant::Primitive { value, span };
             func.instructions[instr_id.index()].value = InstructionValue::Primitive { value, span };
             Some(result)
