@@ -864,7 +864,7 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
     const raw = templateQuasiRaw(quasi);
     // A TS-shaped Oxc ESTree quasi includes the substitution's closing `}` in its span.
     // The JS-shaped ESTree quasi and Oxc's Rust AST both start at the raw template text.
-    if (raw.length > 0) markMapAtStartOffset(state, quasi, TS ? 1 : 0);
+    if (raw.length > 0) markMapAtStartOffset(state, TS ? 1 : 0, quasi);
     writeNoLast(state, raw);
   }
 

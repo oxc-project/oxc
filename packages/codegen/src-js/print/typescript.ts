@@ -1155,7 +1155,7 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
   } else {
     // Computed string/template member name
     if (id.type === "TemplateLiteral") {
-      markMapAtStartOffset(state, id.quasis[0], 1);
+      markMapAtStartOffset(state, 1, id.quasis[0]);
       writeNoLast(state, "[`");
       writeNoLast(state, id.quasis[0].value.raw);
       write(state, "`", CAT_OTHER);
