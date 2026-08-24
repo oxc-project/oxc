@@ -64,7 +64,7 @@ pub struct LintCommand {
     next_line_help,
     heading("Allowing / Denying Multiple Lints", help = LINT_FILTERS_HELP),
     usage = "oxlint [-c=./.oxlintrc.json] [PATH]...",
-    help_template = "{{about}}\n\n{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
+    help_template = "{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
     example("oxlint -D correctness src", header = "Deny a category"),
     example("oxlint --format github .", header = "GitHub Actions"),
     try_into = LintCommand

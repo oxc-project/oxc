@@ -2,8 +2,6 @@
 source: tasks/website_linter/src/cli.rs
 expression: snapshot
 ---
-oxlint 1.79.0
-
 oxlint [-c=./.oxlintrc.json] [PATH]...
 
 Basic Configuration:
