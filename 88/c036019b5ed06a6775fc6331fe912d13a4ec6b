@@ -1,0 +1,21 @@
+crates/oxc_codegen/Cargo.toml
+  s_19ee55ef9303cd::t_adda6e9c6ea11b 22-25
+crates/oxc_codegen/examples/codegen.rs
+  s_19ee55ef9303cd::t_d937ea7efe5c2c 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "88c036019b5ed06a6775fc6331fe912d13a4ec6b",
+  "prompts": {},
+  "sessions": {
+    "s_19ee55ef9303cd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03325-5c44-7c20-b04c-884ea23d11b1",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
