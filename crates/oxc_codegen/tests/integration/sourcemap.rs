@@ -444,7 +444,7 @@ make().prop",
     // The identifier is first mapped by its enclosing AssignmentExpression. The map must retain
     // the later identifier mapping's original name so Node can restore the inferred function name.
     // `export {}` makes this a module, allowing the enclosing function to be mangled as well.
-    let mangled_case = r#"
+    let mangled_case = r"
 export {};
 function longFunctionName(longName) {
     (longName = () => {
@@ -453,7 +453,7 @@ function longFunctionName(longName) {
     })();
 }
 longFunctionName(0);
-"#;
+";
     let (mangled_output, mangled_sourcemap_url, mangled_names) = codegen_mangled(mangled_case);
     assert_eq!(mangled_names, ["longFunctionName", "longName"]);
 
