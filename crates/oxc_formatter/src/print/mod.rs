@@ -117,15 +117,17 @@ pub trait FormatWrite<'ast, T = ()> {
     {
         self.span()
     }
-    /// Formats the node when it is suppressed (`oxfmt-ignore` / `prettier-ignore`).
-    /// Only called for statements whose ignored range must exclude the trailing semicolon,
-    /// so the formatter prints its own terminator, like Prettier;
-    /// every other node prints its whole `suppressed_span` verbatim in the generated `fmt`.
-    fn write_suppressed(&self, _f: &mut JsFormatter<'_, 'ast>) {
-        unreachable!(
-            "Implement `write_suppressed` for every node listed in \
-             `AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING` (tasks/ast_tools)."
-        );
+    /// Formats the node when it is suppressed (`oxfmt-ignore` / `prettier-ignore`):
+    /// prints `suppressed_span` verbatim.
+    ///
+    /// NOTE: `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
+    /// but no confirmed divergence against Prettier 3.9 yet.
+    /// Extend the overrides one statement at a time, verifying each against Prettier first.
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'ast>)
+    where
+        Self: GetSpan,
+    {
+        FormatSuppressedNode(self.suppressed_span()).fmt(f);
     }
 }
 

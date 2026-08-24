@@ -38,35 +38,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
     &["TSUnionType", "ExpressionStatement"];
 
-// Statements whose suppressed (`oxfmt-ignore`d) range must exclude the trailing semicolon,
-// so the formatter prints its own terminator like Prettier's ignored range.
-// Every node listed here MUST implement `FormatWrite::write_suppressed`
-// (the default implementation panics at runtime).
-//
-// Mirrors Prettier's `locEnd` overrides (`language-js/location/overrides.js`) +
-// `shouldIgnoredNodePrintSemicolon`: keyword statements end at their keyword/label,
-// content-terminated ones at their content, body-ended ones recurse into the rightmost body.
-//
-// `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
-// but no confirmed divergence against Prettier 3.9 yet.
-//
-// Extend the list one statement at a time, verifying each against Prettier first.
-const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] = &[
-    "BreakStatement",
-    "ContinueStatement",
-    "DebuggerStatement",
-    "DoWhileStatement",
-    "ForInStatement",
-    "ForOfStatement",
-    "ForStatement",
-    "IfStatement",
-    "LabeledStatement",
-    "ReturnStatement",
-    "ThrowStatement",
-    "WhileStatement",
-    "WithStatement",
-];
-
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -220,9 +191,11 @@ fn generate_struct_implementation(
         // `Program` can't be suppressed.
         // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
         //
-        // The check, the suppressed leading comments, and the verbatim range are all bounded by
+        // The check, the suppressed leading comments, and the printed range are all bounded by
         // `FormatWrite::suppressed_span` (default: the node's span),
         // which nodes override when the ignored range starts before their span (class decorators before `export`).
+        // `FormatWrite::write_suppressed` (default: print `suppressed_span` verbatim) is overridden by
+        // statements whose ignored range excludes the trailing semicolon.
         let suppressed_check = (!matches!(struct_name, "Program" | "JSXElement" | "JSXFragment"))
             .then(|| {
                 quote! {
@@ -233,12 +206,6 @@ fn generate_struct_implementation(
         let write_implementation = if suppressed_check.is_none() {
             write_call
         } else {
-            let suppressed_write =
-                if AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING.contains(&struct_name) {
-                    quote! { self.write_suppressed(f); }
-                } else {
-                    quote! { FormatSuppressedNode(self.suppressed_span()).fmt(f); }
-                };
             // When `fmt` doesn't print leading/trailing comments itself,
             // the suppressed path still has to print them, or the suppression comment would be lost.
             let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
@@ -254,7 +221,7 @@ fn generate_struct_implementation(
             quote! {
                 if is_suppressed {
                     #suppressed_leading_comments
-                    #suppressed_write
+                    self.write_suppressed(f);
                     #suppressed_trailing_comments
                 } else {
                     #write_call
