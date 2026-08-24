@@ -1186,15 +1186,6 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc"
@@ -1543,15 +1534,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
-name = "nom"
-version = "8.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df9761775871bdef83bee530e60050f7e54b1105350d6884eb0fb4f46c2f9405"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "nonmax"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1830,7 +1812,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "indexmap",
- "itertools 0.15.0",
+ "itertools",
  "javascript-globals",
  "lazy-regex",
  "oxc_allocator",
@@ -1900,7 +1882,7 @@ name = "oxc_cfg"
 version = "0.146.0"
 dependencies = [
  "bitflags",
- "itertools 0.15.0",
+ "itertools",
  "oxc_index",
  "oxc_syntax",
  "petgraph",
@@ -1993,7 +1975,7 @@ dependencies = [
  "cow-utils",
  "encoding_rs",
  "encoding_rs_io",
- "itertools 0.15.0",
+ "itertools",
  "lazy-regex",
  "oxc",
  "oxc_estree_tokens",
@@ -2283,7 +2265,7 @@ dependencies = [
  "ignore",
  "indexmap",
  "insta",
- "itertools 0.15.0",
+ "itertools",
  "javascript-globals",
  "json-strip-comments",
  "language-tags",
@@ -2344,7 +2326,7 @@ name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
  "convert_case",
- "itertools 0.15.0",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn 3.0.3",
@@ -2354,7 +2336,7 @@ dependencies = [
 name = "oxc_mangler"
 version = "0.146.0"
 dependencies = [
- "itertools 0.15.0",
+ "itertools",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
@@ -2612,7 +2594,7 @@ name = "oxc_semantic"
 version = "0.146.0"
 dependencies = [
  "insta",
- "itertools 0.15.0",
+ "itertools",
  "memchr",
  "oxc_allocator",
  "oxc_ast",
@@ -4213,13 +4195,15 @@ dependencies = [
 
 [[package]]
 name = "usage-argv"
-version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0#9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "857c0a155957d220665b2257ac7c58e168476ff7de09286940055ff78f622fb0"
 
 [[package]]
 name = "usage-derive"
-version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0#9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9b6be9a69c5659c8002ac46be4262fd6e3ef57db53787df0f85b2d116c9e790"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4228,29 +4212,31 @@ dependencies = [
 
 [[package]]
 name = "usage-lib"
-version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0#9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c007fd68b51ac507e13b005cfab6a7f519a722f036d62af2726969fc0e4fbd2"
 dependencies = [
  "heck",
  "indexmap",
- "itertools 0.15.0",
+ "itertools",
  "kdl",
  "log",
  "miette",
  "regex",
  "roff",
+ "semver",
  "serde",
  "shell-words",
  "strum",
  "tera",
  "thiserror",
- "versions",
 ]
 
 [[package]]
 name = "usage-rs"
-version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0#9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "689ff9bfcf0c894d94a44171b27f6533db7d44a9615b17cef9b846590df13463"
 dependencies = [
  "usage-argv",
  "usage-derive",
@@ -4259,8 +4245,9 @@ dependencies = [
 
 [[package]]
 name = "usage-test"
-version = "6.1.1"
-source = "git+https://github.com/jdx/usage.git?rev=9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0#9e2a2a4cad726432157bd2fcd01f6e5ced1ddfe0"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f73ccbe6b9a1023436ffecd83a52d8a74b9e825ce593fc07641f0359d13f427f"
 dependencies = [
  "usage-argv",
 ]
@@ -4306,16 +4293,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "versions"
-version = "7.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80a7e511ce1795821207a837b7b1c8d8aca0c648810966ad200446ae58f6667f"
-dependencies = [
- "itertools 0.14.0",
- "nom",
-]
 
 [[package]]
 name = "vsimd"
@@ -4407,7 +4384,7 @@ name = "website_common"
 version = "0.0.0"
 dependencies = [
  "handlebars",
- "itertools 0.15.0",
+ "itertools",
  "oxc-schemars",
  "serde",
  "serde_json",
@@ -4431,7 +4408,7 @@ name = "website_linter"
 version = "0.0.0"
 dependencies = [
  "insta",
- "itertools 0.15.0",
+ "itertools",
  "oxc-schemars",
  "oxc_linter",
  "oxlint",
