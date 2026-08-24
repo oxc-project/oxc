@@ -1,0 +1,29 @@
+crates/oxc_linter/src/snapshots/oxc_double_comparisons.snap
+  s_ac7cfa1e3a7eef::t_ea8589ae0d9b9d 116-143
+crates/oxc_linter/src/rules/oxc/double_comparisons.rs
+  s_746ba1a9112797::t_5d31c722046f8a 57-66,69-80,109-119,121-122,151-153,173-176,197-200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c95f7471561dd074774d6908d081c7afbce3ea49",
+  "prompts": {},
+  "sessions": {
+    "s_746ba1a9112797": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a032fb-01a4-75c0-a3ca-5f73c5195f3b",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_ac7cfa1e3a7eef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a032fd-8d7d-75e2-bf6f-000166cd7485",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
