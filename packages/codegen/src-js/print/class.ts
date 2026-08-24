@@ -10,11 +10,12 @@ import {
   CAT_QUESTION,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
-  markWithMap,
+  markMapStart,
   write,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
@@ -80,7 +81,7 @@ export function printClass(node: ESTree.Class, state: State): void {
 
   if (node.id != null) {
     write(state, " ", CAT_OTHER);
-    writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+    writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -221,7 +222,7 @@ function printClassBody(node: ClassBodyNode, state: State): void {
  * Print a method, including getters, setters, constructors and their modifiers.
  */
 function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
-  markWithMap(state, node);
+  markMapStart(state, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -293,7 +294,7 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
  * Print a class field, with its modifiers and initializer.
  */
 function printPropertyDefinition(node: PropertyDefinitionNode, state: State): void {
-  markWithMap(state, node);
+  markMapStart(state, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
@@ -384,7 +385,7 @@ function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
  * Print an `accessor` field.
  */
 function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
-  markWithMap(state, node);
+  markMapStart(state, node);
 
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);

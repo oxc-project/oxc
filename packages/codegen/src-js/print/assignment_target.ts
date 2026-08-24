@@ -2,7 +2,14 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
-import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, write, writeWithMap } from "./write.ts";
+import {
+  CAT_CLOSE_BRACKET,
+  CAT_IDENT,
+  CAT_OTHER,
+  write,
+  writeWithMap,
+  writeWithMapNamed,
+} from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";
@@ -23,7 +30,7 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
     // For speed, the two common ones are printed here instead of through the expression printer's own dispatch.
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, CAT_IDENT, node);
       break;
     case "MemberExpression":
       printMemberExpression(node, state, CTX_NONE);
@@ -83,12 +90,12 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     if (value.type === "AssignmentPattern") {
       typeAssertIs<ESTree.IdentifierReference>(value.left);
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, value.left.name, CAT_IDENT, value.left);
+      writeWithMapNamed(state, value.left.name, CAT_IDENT, value.left);
       write(state, " = ", CAT_OTHER);
       printExpression(value.right, state, PREC_COMMA, CTX_NONE);
     } else {
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, value.name, CAT_IDENT, value);
+      writeWithMapNamed(state, value.name, CAT_IDENT, value);
     }
   } else {
     const { key } = node;

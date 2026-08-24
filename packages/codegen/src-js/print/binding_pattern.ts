@@ -8,7 +8,8 @@ import {
   CAT_QUESTION,
   write,
   writeWithMap,
-  writeWithMapNoLast,
+  writeWithMapNamed,
+  writeWithMapNamedNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
@@ -19,7 +20,7 @@ import { printString } from "./string.ts";
 import { printTypeAnnotation } from "./typescript.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, UnknownNode } from "./types.ts";
+import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -39,7 +40,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, CAT_IDENT, node);
       if (TS && node.optional) write(state, "?", CAT_QUESTION);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -108,9 +109,9 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
     if (value.type === "Identifier" && key.name === value.name) {
       shorthand = true;
     } else if (
-      value.type === "AssignmentPattern" &&
-      value.left.type === "Identifier" &&
-      key.name === value.left.name
+      value.type === "AssignmentPattern"
+      && value.left.type === "Identifier"
+      && key.name === value.left.name
     ) {
       shorthand = true;
     }
@@ -141,14 +142,13 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, key.name, CAT_IDENT, key);
+      writeWithMapNamed(state, key.name, CAT_IDENT, key);
       break;
     case "PrivateIdentifier":
-      writeWithMapNoLast(state, "#", key);
+      writeWithMapNamedNoLast(state, "#", key);
       write(state, key.name, CAT_IDENT);
       break;
     case "Literal":
-      typeAssertIs<LiteralExtras>(key);
       if (typeof key.value === "string") {
         printString(state, key.value, key);
       } else {

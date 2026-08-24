@@ -4,10 +4,10 @@ import {
   CAT_IDENT,
   CAT_OTHER,
   CAT_START_OF_DEFAULT_EXPORT,
-  markWithMapAtStartOffset,
   write,
   writeNoLast,
   writeWithMap,
+  writeWithMapNamed,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import { printExpression } from "./expression.ts";
@@ -91,7 +91,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         }
 
         write(state, "* as ", CAT_OTHER);
-        writeWithMap(state, specifier.local.name, CAT_IDENT, specifier.local);
+        writeWithMapNamed(state, specifier.local.name, CAT_IDENT, specifier.local);
         write(state, " ", CAT_OTHER);
         break;
       default: {
@@ -112,7 +112,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         const { local } = specifier;
         if (importedName !== local.name) {
           write(state, " as ", CAT_OTHER);
-          writeWithMap(state, local.name, CAT_IDENT, local);
+          writeWithMapNamed(state, local.name, CAT_IDENT, local);
         }
         break;
       }
@@ -143,8 +143,7 @@ function printImportAttributes(
   // ESTree omits the `WithClause` wrapper. The Rust reference normalizes its mapping anchor
   // to the first attribute, which is the first location both representations carry.
   writeNoLast(state, " ");
-  markWithMapAtStartOffset(state, attributes[0], 0);
-  write(state, "with { ", CAT_OTHER);
+  writeWithMap(state, "with { ", CAT_OTHER, attributes[0]);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
@@ -176,7 +175,7 @@ function printImportAttributes(
 function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
   if (node.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, node.name, CAT_IDENT, node);
+    writeWithMapNamed(state, node.name, CAT_IDENT, node);
     return node.name;
   }
 

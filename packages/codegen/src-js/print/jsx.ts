@@ -7,6 +7,7 @@ import {
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamedJSXNoLast,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
@@ -74,7 +75,7 @@ function printJSXElementName(
 ): void {
   switch (node.type) {
     case "JSXIdentifier":
-      writeWithMapNoLast(state, node.name, node);
+      writeWithMapNamedJSXNoLast(state, node.name, node);
       break;
     case "JSXMemberExpression":
       printJSXElementName(node.object, state);
@@ -82,9 +83,9 @@ function printJSXElementName(
       printJSXElementName(node.property, state);
       break;
     case "JSXNamespacedName":
-      writeWithMapNoLast(state, node.namespace.name, node.namespace);
+      writeWithMapNamedJSXNoLast(state, node.namespace.name, node.namespace);
       writeNoLast(state, ":");
-      writeWithMapNoLast(state, node.name.name, node.name);
+      writeWithMapNamedJSXNoLast(state, node.name.name, node.name);
       break;
     case "ThisExpression":
       writeWithMapNoLast(state, "this", node);
@@ -104,11 +105,11 @@ function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
   // and the next real write reads `last`.
   const { name } = node;
   if (name.type === "JSXNamespacedName") {
-    writeWithMapNoLast(state, name.namespace.name, name.namespace);
+    writeWithMapNamedJSXNoLast(state, name.namespace.name, name.namespace);
     writeNoLast(state, ":");
-    writeWithMapNoLast(state, name.name.name, name.name);
+    writeWithMapNamedJSXNoLast(state, name.name.name, name.name);
   } else {
-    writeWithMapNoLast(state, name.name, name);
+    writeWithMapNamedJSXNoLast(state, name.name, name);
   }
 
   const { value } = node;

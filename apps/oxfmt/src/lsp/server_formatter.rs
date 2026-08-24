@@ -42,8 +42,8 @@ impl ServerFormatterBuilder {
     }
 
     /// Creates a new `ServerFormatter` instance based on the provided root URI and options.
-    /// Returns a tuple containing the `ServerFormatter` instance and an optional message to be sent to the client.
-    /// This message will be used to inform about misconfiguration.
+    /// Returns a tuple containing the `ServerFormatter` instance and optional messages to be sent to the client.
+    /// These messages will be used to inform about misconfiguration.
     ///
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
@@ -51,7 +51,7 @@ impl ServerFormatterBuilder {
         &self,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> (ServerFormatter, Option<ClientMessage>) {
+    ) -> (ServerFormatter, Vec<ClientMessage>) {
         let options = deserialize_lsp_options(options);
 
         let root_path = root_uri.to_file_path().unwrap();
@@ -91,7 +91,7 @@ impl ServerFormatterBuilder {
                 explicit_config_path,
                 use_nested_config,
             ),
-            None,
+            Vec::new(),
         )
     }
 }
@@ -107,8 +107,8 @@ impl ToolBuilder for ServerFormatterBuilder {
     }
 
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
-        let (tool, client_message) = self.build(root_uri, options);
-        ToolBuildResult { tool: Box::new(tool), client_message }
+        let (tool, client_messages) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_messages }
     }
 }
 
@@ -172,17 +172,21 @@ impl Tool for ServerFormatter {
         let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
-            return ToolRestartChanges { tool: None, watch_patterns: None, client_message: None };
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: Vec::new(),
+            };
         }
 
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_message } =
+        let ToolBuildResult { tool, client_messages } =
             builder.build(root_uri, new_options_json.clone());
         let watch_patterns = tool.get_watcher_patterns(new_options_json);
         ToolRestartChanges {
             tool: Some(tool),
             watch_patterns: Some(watch_patterns),
-            client_message,
+            client_messages,
         }
     }
 
@@ -227,7 +231,7 @@ impl Tool for ServerFormatter {
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
     fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {

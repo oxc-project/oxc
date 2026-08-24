@@ -8,11 +8,12 @@ import {
   CAT_OTHER,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
-  markWithMapNoName,
+  markMapStart,
   write,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printDecorators } from "./class.ts";
@@ -55,7 +56,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
 
   if (node.id != null) {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+    writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -114,7 +115,7 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     if (decorators != null && decorators.length > 0) {
       printDecorators(decorators, state);
     } else {
-      markWithMapNoName(state, param);
+      markMapStart(state, param);
     }
 
     if (TS && param.type === "TSParameterProperty") {

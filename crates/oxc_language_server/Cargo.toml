@@ -31,4 +31,4 @@ tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["rt-multi-thread", "io-util", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-util", "macros", "time"] }

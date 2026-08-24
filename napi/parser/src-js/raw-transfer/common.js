@@ -19,9 +19,9 @@ import { rawTransferSupported } from "./supported.js";
 // `experimentalRawTransfer` or `experimentalLazy` options, or calls `experimentalGetLazyVisitor`.
 if (!rawTransferSupported()) {
   throw new Error(
-    "`experimentalRawTransfer` and `experimentalLazy` options are not supported " +
-      "on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, " +
-      "versions of Deno prior to v2.0.0, or other runtimes",
+    "`experimentalRawTransfer` and `experimentalLazy` options are not supported "
+      + "on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, "
+      + "versions of Deno prior to v2.0.0, or other runtimes",
   );
 }
 

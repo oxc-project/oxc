@@ -71,8 +71,8 @@ const minifyConfig = DEBUG
 // `src-js/index.ts` loads whichever build the caller's options call for.
 //
 // In builds without source maps, nothing reads the `node` argument the mapping writes take,
-// so `unmap_writes` rewrites every `writeWithMap` / `writeWithMapNoLast` call, and the imports
-// which bring them in, into the plain `write` / `writeNoLast` they become without it.
+// so `unmap_writes` rewrites every mapped write call, and the imports which bring them in,
+// into the plain `write` / `writeNoLast` they become without it.
 const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; ts: boolean }) => ({
   ...commonConfig,
   minify: minifyConfig,

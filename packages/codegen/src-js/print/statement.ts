@@ -9,11 +9,12 @@ import {
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_START_OF_STMT,
-  markWithMap,
+  markMapStart,
   write,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
@@ -41,7 +42,7 @@ import {
 } from "./typescript.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, UnknownNode } from "./types.ts";
+import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -84,11 +85,10 @@ export function printDirectivesAndStatements(
       // Ensure a string literal (only possible via parentheses, since a bare one would be a directive)
       // as 1st statement or after other real directives, is not re-parsed as a directive
       const inner = withoutParens(stmt.expression);
-      typeAssertIs<LiteralExtras>(inner);
       if (inner.type === "Literal" && typeof inner.value === "string") {
         const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
         printIndent(state);
-        if (mapsIndent) markWithMap(state, stmt);
+        if (mapsIndent) markMapStart(state, stmt);
         writeNoLast(state, "(");
         printString(state, inner.value, inner);
         write(state, ");\n", CAT_OTHER);
@@ -189,7 +189,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       writeWithMap(state, "break", CAT_IDENT, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
-        writeWithMap(state, node.label.name, CAT_IDENT, node.label);
+        writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
       }
       write(state, ";\n", CAT_OTHER);
       break;
@@ -199,7 +199,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       writeWithMap(state, "continue", CAT_IDENT, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
-        writeWithMap(state, node.label.name, CAT_IDENT, node.label);
+        writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
       }
       write(state, ";\n", CAT_OTHER);
       break;
@@ -227,8 +227,8 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "LabeledStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      markWithMap(state, node);
-      writeWithMap(state, node.label.name, CAT_IDENT, node.label);
+      markMapStart(state, node);
+      writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
       write(state, ":", CAT_OTHER);
       printBody(node.body, state);
       break;
@@ -301,7 +301,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "TSNamespaceExportDeclaration":
       printIndent(state);
       write(state, "export as namespace ", CAT_OTHER);
-      writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+      writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
       write(state, ";\n", CAT_OTHER);
       break;
     /* END_IF */
@@ -319,7 +319,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
 function printExpressionStatement(node: ESTree.ExpressionStatement, state: State): void {
   const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
   printIndent(state);
-  if (mapsIndent) markWithMap(state, node);
+  if (mapsIndent) markMapStart(state, node);
   state.last = CAT_START_OF_STMT;
   printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
   write(state, ";\n", CAT_OTHER);
@@ -361,7 +361,7 @@ export function printVariableDeclaration(
       // `let x!: T` - the `!` sits between the name and its annotation
       typeAssertIs<ESTree.BindingIdentifier>(id);
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, id.name, CAT_IDENT, id);
+      writeWithMapNamed(state, id.name, CAT_IDENT, id);
       write(state, "!", CAT_OP_UN_NOT);
       if (id.typeAnnotation != null) {
         printTypeAnnotation(id.typeAnnotation, state);
@@ -741,8 +741,8 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
     typeAssertIs<ESTree.Expression>(left);
     const bare = withoutParens(left);
     const wrap =
-      forOfHeadStartsWithLet(left) ||
-      (!node.await && bare.type === "Identifier" && bare.name === "async");
+      forOfHeadStartsWithLet(left)
+      || (!node.await && bare.type === "Identifier" && bare.name === "async");
     if (wrap) write(state, "(", CAT_OTHER);
     printAssignmentTarget(left, state);
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);

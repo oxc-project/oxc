@@ -15,6 +15,17 @@ import {
   CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
+  debugAssertLastFresh,
+  markMapAfter,
+  markMapAtStartOffset,
+  markMapStart,
+  write,
+  writeNoLast,
+  writeWithMap,
+  writeWithMapEnd,
+  writeWithMapNamed,
+  writeWithMapNamedNoLast,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import {
@@ -50,17 +61,6 @@ import {
   PREC_PREFIX,
   PREC_YIELD,
 } from "./precedence.ts";
-import {
-  debugAssertLastFresh,
-  markWithMap,
-  markWithMapAfter,
-  markWithMapAtStartOffset,
-  write,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapEnd,
-  writeWithMapNoLast,
-} from "./write.ts";
 import { escapeScriptCloseTag } from "./string.ts";
 import {
   printTSAsOrSatisfiesExpression,
@@ -98,7 +98,7 @@ export function printExpression(
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, CAT_IDENT, node);
       break;
     case "MemberExpression":
       printMemberExpression(node, state, ctx);
@@ -163,7 +163,7 @@ export function printExpression(
       printTemplateLiteral(node, state);
       break;
     case "TaggedTemplateExpression":
-      markWithMap(state, node);
+      markMapStart(state, node);
       printExpression(node.tag, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
       if (TS) printTypeArguments(node.typeArguments, state);
       printTemplateLiteral(node.quasi, state);
@@ -198,7 +198,7 @@ export function printExpression(
         printExpression(inner, state, PREC_LOWEST, CTX_NONE);
         write(state, ")", CAT_CLOSE_BRACKET);
         if (SOURCEMAPS && precedence === PREC_POSTFIX) {
-          markWithMapAfter(state, inner);
+          markMapAfter(state, inner);
           const wrappers: ESTree.ParenthesizedExpression[] = [];
           let wrapper = expression;
           while (wrapper.type === "ParenthesizedExpression") {
@@ -206,7 +206,7 @@ export function printExpression(
             wrapper = wrapper.expression;
           }
           for (let index = wrappers.length - 1; index >= 0; index--) {
-            markWithMapAfter(state, wrappers[index]);
+            markMapAfter(state, wrappers[index]);
           }
         }
       } else {
@@ -246,7 +246,7 @@ export function printExpression(
   // rather than one character to its left
   debugAssertLastFresh(state);
   if (SOURCEMAPS && precedence === PREC_POSTFIX && state.last === CAT_CLOSE_BRACKET) {
-    markWithMapAfter(state, node);
+    markMapAfter(state, node);
   }
 }
 
@@ -293,10 +293,10 @@ export function printMemberExpression(
 
     const { property } = node;
     if (property.type === "PrivateIdentifier") {
-      writeWithMapNoLast(state, "#", property);
+      writeWithMapNamedNoLast(state, "#", property);
       write(state, property.name, CAT_IDENT);
     } else {
-      writeWithMap(state, property.name, CAT_IDENT, property);
+      writeWithMapNamed(state, property.name, CAT_IDENT, property);
     }
   }
 }
@@ -390,8 +390,8 @@ export function printPrivateInExpression(
   const wrap = precedence >= PREC_COMPARE;
   if (wrap) write(state, "(", CAT_OTHER);
 
-  markWithMap(state, node);
-  writeWithMapNoLast(state, "#", node.left);
+  markMapStart(state, node);
+  writeWithMapNamedNoLast(state, "#", node.left);
   write(state, node.left.name, CAT_IDENT);
   write(state, " in ", CAT_OTHER);
   printExpression(node.right, state, PREC_EQUALS, CTX_FORBID_IN);
@@ -457,10 +457,10 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
 
   const { key, value } = node;
   if (
-    value.type === "FunctionExpression" ||
-    (TS && value.type === "TSEmptyBodyFunctionExpression")
+    value.type === "FunctionExpression"
+    || (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
-    markWithMap(state, node);
+    markMapStart(state, node);
 
     const { kind } = node;
     const isGetter = kind === "get";
@@ -520,10 +520,10 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   let { computed } = node;
   // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
   if (
-    !computed &&
-    key.type === "Literal" &&
-    typeof key.value === "number" &&
-    (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+    !computed
+    && key.type === "Literal"
+    && typeof key.value === "number"
+    && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
   ) {
     computed = true;
   }
@@ -531,7 +531,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   if (shorthand) {
     if (shorthandIdentifier !== null) {
       printSpaceBeforeIdentifier(state);
-      writeWithMap(state, shorthandIdentifier.name, CAT_IDENT, shorthandIdentifier);
+      writeWithMapNamed(state, shorthandIdentifier.name, CAT_IDENT, shorthandIdentifier);
     } else {
       // `__proto__` shorthand, whose value can be anything. Print through any parens around it.
       printExpression(withoutParens(value), state, PREC_COMMA, CTX_NONE);
@@ -623,7 +623,7 @@ function printAssignmentExpression(
 
   if (wrap) write(state, "(", CAT_OTHER);
 
-  markWithMap(state, node);
+  markMapStart(state, node);
 
   printAssignmentTarget(left, state);
   write(state, PADDED_ASSIGN_OPERATORS[node.operator], CAT_OTHER);
@@ -656,7 +656,7 @@ function printUpdateExpression(
     writeWithMap(state, node.operator, operatorCode, node);
     printExpression(node.argument, state, PREC_PREFIX, ctx);
   } else {
-    markWithMap(state, node);
+    markMapStart(state, node);
     printExpression(node.argument, state, PREC_POSTFIX, ctx);
     printSpaceBeforeOperator(state, operatorCode);
     write(state, node.operator, operatorCode);
@@ -865,7 +865,7 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
     const raw = templateQuasiRaw(quasi);
     // A TS-shaped Oxc ESTree quasi includes the substitution's closing `}` in its span.
     // The JS-shaped ESTree quasi and Oxc's Rust AST both start at the raw template text.
-    if (raw.length > 0) markWithMapAtStartOffset(state, quasi, TS ? 1 : 0);
+    if (raw.length > 0) markMapAtStartOffset(state, quasi, TS ? 1 : 0);
     writeNoLast(state, raw);
   }
 
