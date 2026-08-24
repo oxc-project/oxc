@@ -98,7 +98,7 @@ export function printExpression(
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, node);
       break;
     case "MemberExpression":
       printMemberExpression(node, state, ctx);
@@ -295,7 +295,7 @@ export function printMemberExpression(
     if (property.type === "PrivateIdentifier") {
       writeWithMapNamedPrivate(state, property.name, property);
     } else {
-      writeWithMapNamed(state, property.name, CAT_IDENT, property);
+      writeWithMapNamed(state, property.name, property);
     }
   }
 }
@@ -529,7 +529,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   if (shorthand) {
     if (shorthandIdentifier !== null) {
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, shorthandIdentifier.name, CAT_IDENT, shorthandIdentifier);
+      writeWithMapNamed(state, shorthandIdentifier.name, shorthandIdentifier);
     } else {
       // `__proto__` shorthand, whose value can be anything. Print through any parens around it.
       printExpression(withoutParens(value), state, PREC_COMMA, CTX_NONE);

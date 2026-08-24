@@ -252,6 +252,28 @@ export function write(state: State, code: string, last: Category): void {
 }
 
 /**
+ * Append `name` to the output, and record what it ends with as `CAT_IDENT`.
+ *
+ * The plain form of `writeWithMapNamed`.
+ * Nothing calls it directly - the TSDown plugin rewrites the mapped calls to it for builds without source map support.
+ *
+ * @param state - Printer state
+ * @param name - The identifier's name, never empty
+ */
+export function writeIdent(state: State, name: string): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
+
+  state.last = CAT_IDENT;
+  state.output += name;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
+  }
+}
+
+/**
  * Append a private identifier - `#` and `name` - to the output, and record what it ends with.
  *
  * The plain form of `writeWithMapNamedPrivate`.
@@ -314,27 +336,23 @@ export function writeWithMap(
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
+ * `last` is always `CAT_IDENT`, since a name ends in an identifier character, so the caller does not pass it.
+ *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeIdent` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
  * @param name - Name to append, never empty
- * @param last - Category of the last character of `name`
  * @param node - Node this text came from
  */
-export function writeWithMapNamed(
-  state: State,
-  name: string,
-  last: Category,
-  node: IdentMappableNode,
-): void {
+export function writeWithMapNamed(state: State, name: string, node: IdentMappableNode): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
-  debugAssertCategoryMatches(state, name, last);
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
   debugAssertNameMatches(node, name);
 
   markMapNamed(state, name, false, 0, node);
 
-  state.last = last;
+  state.last = CAT_IDENT;
   state.output += name;
 
   if (DEBUG) {

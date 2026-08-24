@@ -91,7 +91,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         }
 
         write(state, "* as ", CAT_OTHER);
-        writeWithMapNamed(state, specifier.local.name, CAT_IDENT, specifier.local);
+        writeWithMapNamed(state, specifier.local.name, specifier.local);
         write(state, " ", CAT_OTHER);
         break;
       default: {
@@ -112,7 +112,7 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
         const { local } = specifier;
         if (importedName !== local.name) {
           write(state, " as ", CAT_OTHER);
-          writeWithMapNamed(state, local.name, CAT_IDENT, local);
+          writeWithMapNamed(state, local.name, local);
         }
         break;
       }
@@ -175,7 +175,7 @@ function printImportAttributes(
 function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
   if (node.type === "Identifier") {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, node.name, CAT_IDENT, node);
+    writeWithMapNamed(state, node.name, node);
     return node.name;
   }
 

@@ -3,7 +3,6 @@
 import { typeAssertIs } from "../asserts.ts";
 import {
   CAT_CLOSE_BRACKET,
-  CAT_IDENT,
   CAT_OTHER,
   CAT_QUESTION,
   write,
@@ -40,7 +39,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, node.name, CAT_IDENT, node);
+      writeWithMapNamed(state, node.name, node);
       if (TS && node.optional) write(state, "?", CAT_QUESTION);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -142,7 +141,7 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
   switch (key.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, key.name, CAT_IDENT, key);
+      writeWithMapNamed(state, key.name, key);
       break;
     case "PrivateIdentifier":
       writeWithMapNamedPrivate(state, key.name, key);

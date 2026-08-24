@@ -255,11 +255,12 @@ No operator merges with a plain `!`, so storing it must not cost `printSpaceBefo
 Not every write needs to update `last`.
 
 When one token is written in pieces - a string's opening quote, its contents, its closing quote -
-only the last piece's category can possibly be read. Hence ten write primitives in [`print/write.ts`]:
+only the last piece's category can possibly be read. Hence eleven write primitives in [`print/write.ts`]:
 
 | Function                     | Updates `last` | Records a source mapping       |
 | :--------------------------- | :------------- | :----------------------------- |
 | `write`                      | Yes            | No                             |
+| `writeIdent`                 | Yes            | No                             |
 | `writePrivate`               | Yes            | No                             |
 | `writeWithMap`               | Yes            | At the node's start            |
 | `writeWithMapNamed`          | Yes            | At the node's start, with name |
@@ -278,6 +279,9 @@ only the last piece's category can possibly be read. Hence ten write primitives 
   a JSX identifier may hold a `-`, and a private identifier's span covers a `#` which is not part of its name.
   Which one applies is settled at the call site, where the node's type is known statically, rather than read back
   off a `node` which is megamorphic by the time it arrives.
+- `writeWithMapNamed` and `writeWithMapNamedPrivate` take no category, because a name ends in an identifier
+  character and so `last` is always `CAT_IDENT`. The private form writes its own `#`, so what it takes is
+  the name which follows it. That is why their plain forms are `writeIdent` and `writePrivate`, not `write`.
 - The two `Private` forms write the `#` themselves, so the name they are given is what follows it,
   and `last` is always `CAT_IDENT` - the caller passes neither.
 - The three `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
@@ -381,8 +385,9 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 
 Rewrites every mapped write into the plain one it becomes with no mapping to record - so
 `writeWithMap(state, code, cat, node)` turns into `write(state, code, cat)` - and rewrites the import to match.
-`writeWithMapNamed` and `writeWithMapEnd` become `write` too, every `NoLast` form becomes `writeNoLast`,
-and `writeWithMapNamedPrivate` becomes `writePrivate`, the one plain form nothing calls directly.
+`writeWithMapEnd` becomes `write` too, and every `NoLast` form becomes `writeNoLast`.
+`writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate` -
+the two plain forms nothing calls directly, which exist only for these rewrites to land on.
 
 `printString` and `printNonNegativeFloat` take a node only to hand on to a mapped write. They keep their names,
 but the argument comes off every call, and the parameter off their declarations - which, unlike the mapped writes,

@@ -189,7 +189,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       writeWithMap(state, "break", CAT_IDENT, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
-        writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
+        writeWithMapNamed(state, node.label.name, node.label);
       }
       write(state, ";\n", CAT_OTHER);
       break;
@@ -199,7 +199,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       writeWithMap(state, "continue", CAT_IDENT, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
-        writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
+        writeWithMapNamed(state, node.label.name, node.label);
       }
       write(state, ";\n", CAT_OTHER);
       break;
@@ -228,7 +228,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       printIndent(state);
       printSpaceBeforeIdentifier(state);
       markMapStart(state, node);
-      writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
+      writeWithMapNamed(state, node.label.name, node.label);
       write(state, ":", CAT_OTHER);
       printBody(node.body, state);
       break;
@@ -301,7 +301,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "TSNamespaceExportDeclaration":
       printIndent(state);
       write(state, "export as namespace ", CAT_OTHER);
-      writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
+      writeWithMapNamed(state, node.id.name, node.id);
       write(state, ";\n", CAT_OTHER);
       break;
     /* END_IF */
@@ -361,7 +361,7 @@ export function printVariableDeclaration(
       // `let x!: T` - the `!` sits between the name and its annotation
       typeAssertIs<ESTree.BindingIdentifier>(id);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, id.name, CAT_IDENT, id);
+      writeWithMapNamed(state, id.name, id);
       write(state, "!", CAT_OP_UN_NOT);
       if (id.typeAnnotation != null) {
         printTypeAnnotation(id.typeAnnotation, state);

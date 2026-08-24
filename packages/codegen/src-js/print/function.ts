@@ -56,7 +56,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
 
   if (node.id != null) {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, node.id.name, CAT_IDENT, node.id);
+    writeWithMapNamed(state, node.id.name, node.id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
