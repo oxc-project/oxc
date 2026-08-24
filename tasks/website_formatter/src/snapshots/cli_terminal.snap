@@ -1,6 +1,5 @@
 ---
 source: tasks/website_formatter/src/cli.rs
-assertion_line: 17
 expression: snapshot
 ---
 oxfmt [-c=PATH] [PATH]...
@@ -36,8 +35,8 @@ Ignore Options:
                                   by default)
 
 Runtime Options:
-      --no-error-on-unmatched-pattern
-    Do not exit with error when pattern is unmatched
+      --no-error-on-unmatched-pattern  Do not exit with error when pattern is
+                                  unmatched
       --threads <INT>             Number of threads to use. Set to 1 for using
                                   only 1 CPU core.
 

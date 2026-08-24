@@ -289,7 +289,7 @@ checksum = "4fe5f465a4f6fee88fad41b85d990f84c835335e85b5d9e6e63e0d06d28cba7c"
 dependencies = [
  "encode_unicode",
  "libc",
- "unicode-width 0.2.2",
+ "unicode-width",
  "windows-sys 0.61.2",
 ]
 
@@ -994,12 +994,6 @@ checksum = "a5081f264ed7adee96ea4b4778b6bb9da0a7228b084587aa3bd3ff05da7c5a3b"
 dependencies = [
  "hashbrown 0.17.1",
 ]
-
-[[package]]
-name = "heck"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hmac-sha1-compact"
@@ -1982,7 +1976,7 @@ dependencies = [
  "smallvec",
  "textwrap",
  "unicode-segmentation",
- "unicode-width 0.2.2",
+ "unicode-width",
 ]
 
 [[package]]
@@ -2056,7 +2050,7 @@ dependencies = [
  "serde_json",
  "similar 3.2.0",
  "smallvec",
- "unicode-width 0.2.2",
+ "unicode-width",
  "walkdir",
 ]
 
@@ -2069,7 +2063,7 @@ dependencies = [
  "oxc_data_structures",
  "oxc_span",
  "rustc-hash",
- "unicode-width 0.2.2",
+ "unicode-width",
 ]
 
 [[package]]
@@ -3576,12 +3570,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shell-words"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc6fe69c597f9c37bfeeeeeb33da3530379845f10be461a66d16d03eca2ded77"
-
-[[package]]
 name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3709,27 +3697,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
-name = "strum"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9628de9b8791db39ceda2b119bbe13134770b56c138ec1d3af810d045c04f9bd"
-dependencies = [
- "strum_macros",
-]
-
-[[package]]
-name = "strum_macros"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab85eea0270ee17587ed4156089e10b9e6880ee688791d45a905f5b1ca36f664"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
 name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3804,7 +3771,7 @@ checksum = "c13547615a44dc9c452a8a534638acdf07120d4b6847c8178705da06306a3057"
 dependencies = [
  "smawk",
  "unicode-linebreak",
- "unicode-width 0.2.2",
+ "unicode-width",
 ]
 
 [[package]]
@@ -4097,12 +4064,6 @@ checksum = "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8"
 
 [[package]]
 name = "unicode-width"
-version = "0.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
-
-[[package]]
-name = "unicode-width"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
@@ -4161,15 +4122,15 @@ dependencies = [
 
 [[package]]
 name = "usage-argv"
-version = "6.3.0"
+version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecb8bc2270df585912b1c3eca56c1319c441b6c4e4f977a107e93e709d5e7650"
+checksum = "832f849be4b8046c843219bc92d067a6689530df53f56e3c0a52ff5ebbd2f89b"
 
 [[package]]
 name = "usage-derive"
-version = "6.3.0"
+version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11ba84e10f41a34ec00b52e8a4f1c875b2811a0a4c65b0d352ab180138d6e491"
+checksum = "5634bb965ae075c5cedfc27942f7e6110bf5e7e169cba04de86346f4aeee41e7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4178,11 +4139,10 @@ dependencies = [
 
 [[package]]
 name = "usage-lib"
-version = "6.3.0"
+version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99f22374ac72c68f17772d8b11d5b16df6d7db58306ec37d4808ef9f057199c3"
+checksum = "15e691c1357342d8b85caf17b776e6f09b25a4a5a4887b3723ac4f9450063aa4"
 dependencies = [
- "heck",
  "indexmap",
  "itertools",
  "log",
@@ -4191,19 +4151,17 @@ dependencies = [
  "roff",
  "semver",
  "serde",
- "shell-words",
- "strum",
  "tera",
  "thiserror",
- "unicode-width 0.1.14",
+ "unicode-width",
  "winnow 0.7.15",
 ]
 
 [[package]]
 name = "usage-rs"
-version = "6.3.0"
+version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da081ad5fff1d9a3e5d8ef4e2cb90a212fe23387682c99302f6562cb641b896f"
+checksum = "12a8c2b63902582429527f21cd91d2da0065fb9222b8a2a5b87d8f77c7daf71e"
 dependencies = [
  "usage-argv",
  "usage-derive",
@@ -4212,9 +4170,9 @@ dependencies = [
 
 [[package]]
 name = "usage-test"
-version = "6.3.0"
+version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3fb4d31f839c1cd9fb2d93ef5051e357f3882540aa40713aaa01fbb7a213d02"
+checksum = "574ec714315c7acd46b892ae156d105e346cb1a27b53759eb6cc6b0a45256adb"
 dependencies = [
  "usage-argv",
 ]
