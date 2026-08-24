@@ -1,0 +1,25 @@
+Cargo.lock
+  s_04ac9f1eb85f42::t_d099c201459cc0 1900
+crates/oxc_codegen/Cargo.toml
+  s_04ac9f1eb85f42::t_bfad102031ed8a 40
+crates/oxc_codegen/tests/integration/snapshots/stacktrace_is_correct.snap
+  s_04ac9f1eb85f42::t_51aea6e8600fa9 3,266-299
+crates/oxc_codegen/tests/integration/sourcemap.rs
+  s_04ac9f1eb85f42::t_fe6b15fdf1adce 7,446-461,471-477,496-516
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2246752d07de2f83afd038382f942e2f6ba99bf4",
+  "prompts": {},
+  "sessions": {
+    "s_04ac9f1eb85f42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02516-c23b-76a1-a4ad-428238775b5f",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
