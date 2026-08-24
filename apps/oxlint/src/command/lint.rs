@@ -61,7 +61,6 @@ pub struct LintCommand {
     completion,
     unknown_flags = "error",
     args_override_self = false,
-    next_line_help,
     heading("Allowing / Denying Multiple Lints", help = LINT_FILTERS_HELP),
     usage = "oxlint [-c=./.oxlintrc.json] [PATH]...",
     help_template = "{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
