@@ -25,7 +25,8 @@ pub fn print_cli() {
 }
 
 fn generate_cli() -> String {
-    let spec: usage_parser::Spec = FormatCommand::to_kdl().parse().unwrap();
+    let mut spec: usage_parser::Spec = FormatCommand::to_kdl().parse().unwrap();
+    spec.version = None;
     let markdown = MarkdownRenderer::new(spec).with_html_encode(false).render_spec().unwrap();
     generate_cli_docs(&markdown, "oxfmt")
 }
