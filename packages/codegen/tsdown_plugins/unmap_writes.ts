@@ -58,140 +58,145 @@ const WRITE_MODULE = "./write.ts";
 
 type MappedName = keyof typeof REWRITES;
 
-const plugin: Plugin = {
-  name: "unmap-writes",
-  transform: {
-    // Only process TS files in `src-js/print` directory
-    filter: { id: /\/src-js\/print\/.+\.ts$/ },
+/**
+ * Create the plugin.
+ *
+ * @returns The plugin
+ */
+export default function unmapWritesPlugin(): Plugin {
+  return {
+    name: "unmap-writes",
+    transform: {
+      // Only process TS files in `src-js/print` directory
+      filter: { id: /\/src-js\/print\/.+\.ts$/ },
 
-    handler(code, path, meta) {
-      // Parse file
-      const magicString = meta.magicString!;
-      const { program, errors } = parseSync(path, code);
-      if (errors.length !== 0) throw new Error(`Failed to parse ${path}: ${errors[0].message}`);
+      handler(code, path, meta) {
+        // Parse file
+        const magicString = meta.magicString!;
+        const { program, errors } = parseSync(path, code);
+        if (errors.length !== 0) throw new Error(`Failed to parse ${path}: ${errors[0].message}`);
 
-      // Imports from `write.ts` which have been replaced, and which need to be replaced.
-      // The 2 are compared and ensured equal at the end of the visitation pass.
-      const importReplacements: string[] = [];
-      const neededImportReplacements = new Set<string>();
-      let importIsTransformed = false;
+        // Imports from `write.ts` which have been replaced, and which need to be replaced.
+        // The 2 are compared and ensured equal at the end of the visitation pass.
+        const importReplacements: string[] = [];
+        const neededImportReplacements = new Set<string>();
+        let importIsTransformed = false;
 
-      new Visitor({
-        // Remove the dropped args from calls, and rename callees where required
-        CallExpression(node) {
-          const { callee } = node;
-          if (callee.type !== "Identifier") return;
+        new Visitor({
+          // Remove the dropped args from calls, and rename callees where required
+          CallExpression(node) {
+            const { callee } = node;
+            if (callee.type !== "Identifier") return;
 
-          const name = callee.name as MappedName;
-          const rewrite = REWRITES[name];
-          if (rewrite === undefined) return;
+            const name = callee.name as MappedName;
+            const rewrite = REWRITES[name];
+            if (rewrite === undefined) return;
 
-          const { arity, remove, rename } = rewrite;
-          const args = node.arguments;
-          if (args.length !== arity) {
-            throw new Error(
-              `\`${callee.name}\` takes ${arity} arguments, found ${args.length}: `
-                + `${path}:${node.start}`,
-            );
-          }
-
-          // Remove the dropped arguments, from the end of the last kept one to the end of the last
-          magicString.remove(args[arity - remove - 1].end, args[arity - 1].end);
-
-          // If callee needs to be renamed, rename it, and record that it needs to be imported under new name
-          if (rename !== null) {
-            magicString.overwrite(callee.start, callee.end, rename);
-            neededImportReplacements.add(name);
-          }
-        },
-
-        // Remove the dropped params from declarations
-        FunctionDeclaration(node) {
-          const { id } = node;
-          if (id === null) return;
-
-          const name = id.name as MappedName;
-          const rewrite = REWRITES[name];
-          if (rewrite === undefined) return;
-
-          const { arity, remove } = rewrite;
-          const { params } = node;
-          if (params.length !== arity) {
-            throw new Error(
-              `\`${id.name}\` defined with ${params.length} parameters, expected ${arity}: `
-                + `${path}:${node.start}`,
-            );
-          }
-
-          // Remove the dropped params, from the end of the last kept one to the end of the last
-          magicString.remove(params[arity - remove - 1].end, params[arity - 1].end);
-        },
-
-        // Replace import of functions whose calls are renamed or removed
-        ImportDeclaration(node) {
-          // Skip imports not from `write.ts`, and type imports
-          if (node.source.value !== WRITE_MODULE || node.importKind === "type") return;
-
-          // For simplicity, we only support a single import from `write.ts` (not including type imports)
-          if (importIsTransformed) {
-            throw new Error(`Multiple imports from \`${WRITE_MODULE}\`: ${path}`);
-          }
-          importIsTransformed = true;
-
-          // Collect all specifiers, replacing any that need to be
-          const specifierNames = new Set<string>();
-          for (const specifier of node.specifiers) {
-            if (
-              specifier.type !== "ImportSpecifier"
-              || specifier.importKind === "type"
-              || specifier.imported.type !== "Identifier"
-            ) {
+            const { arity, remove, rename } = rewrite;
+            const args = node.arguments;
+            if (args.length !== arity) {
               throw new Error(
-                `Only simple imports from \`${WRITE_MODULE}\` are supported: ${path}`,
+                `\`${callee.name}\` takes ${arity} arguments, found ${args.length}: `
+                  + `${path}:${node.start}`,
               );
             }
 
-            const name = specifier.imported.name as MappedName;
+            // Remove the dropped arguments, from the end of the last kept one to the end of the last
+            magicString.remove(args[arity - remove - 1].end, args[arity - 1].end);
+
+            // If callee needs to be renamed, rename it, and record that it needs to be imported under new name
+            if (rename !== null) {
+              magicString.overwrite(callee.start, callee.end, rename);
+              neededImportReplacements.add(name);
+            }
+          },
+
+          // Remove the dropped params from declarations
+          FunctionDeclaration(node) {
+            const { id } = node;
+            if (id === null) return;
+
+            const name = id.name as MappedName;
             const rewrite = REWRITES[name];
-            if (rewrite !== undefined) {
-              const { rename } = rewrite;
-              if (rename !== null) {
-                specifierNames.add(rename);
-                importReplacements.push(name);
-                continue;
-              }
+            if (rewrite === undefined) return;
+
+            const { arity, remove } = rewrite;
+            const { params } = node;
+            if (params.length !== arity) {
+              throw new Error(
+                `\`${id.name}\` defined with ${params.length} parameters, expected ${arity}: `
+                  + `${path}:${node.start}`,
+              );
             }
 
-            specifierNames.add(name);
+            // Remove the dropped params, from the end of the last kept one to the end of the last
+            magicString.remove(params[arity - remove - 1].end, params[arity - 1].end);
+          },
+
+          // Replace import of functions whose calls are renamed or removed
+          ImportDeclaration(node) {
+            // Skip imports not from `write.ts`, and type imports
+            if (node.source.value !== WRITE_MODULE || node.importKind === "type") return;
+
+            // For simplicity, we only support a single import from `write.ts` (not including type imports)
+            if (importIsTransformed) {
+              throw new Error(`Multiple imports from \`${WRITE_MODULE}\`: ${path}`);
+            }
+            importIsTransformed = true;
+
+            // Collect all specifiers, replacing any that need to be
+            const specifierNames = new Set<string>();
+            for (const specifier of node.specifiers) {
+              if (
+                specifier.type !== "ImportSpecifier"
+                || specifier.importKind === "type"
+                || specifier.imported.type !== "Identifier"
+              ) {
+                throw new Error(
+                  `Only simple imports from \`${WRITE_MODULE}\` are supported: ${path}`,
+                );
+              }
+
+              const name = specifier.imported.name as MappedName;
+              const rewrite = REWRITES[name];
+              if (rewrite !== undefined) {
+                const { rename } = rewrite;
+                if (rename !== null) {
+                  specifierNames.add(rename);
+                  importReplacements.push(name);
+                  continue;
+                }
+              }
+
+              specifierNames.add(name);
+            }
+
+            if (importReplacements.length > 0) {
+              magicString.overwrite(
+                node.start,
+                node.end,
+                `import { ${[...specifierNames].join(", ")} } from "${WRITE_MODULE}";`,
+              );
+            }
+          },
+        }).visit(program);
+
+        // Check that replaced callees also had the corresponding import replaced
+        if (importReplacements.length !== neededImportReplacements.size) {
+          const missing = [];
+          for (const name of neededImportReplacements) {
+            if (!importReplacements.includes(name)) missing.push(name);
           }
 
-          if (importReplacements.length > 0) {
-            magicString.overwrite(
-              node.start,
-              node.end,
-              `import { ${[...specifierNames].join(", ")} } from "${WRITE_MODULE}";`,
+          if (missing.length > 0) {
+            throw new Error(
+              `Missing import of ${missing.map((name) => `\`${name}\``).join(", ")}: ${path}`,
             );
           }
-        },
-      }).visit(program);
-
-      // Check that replaced callees also had the corresponding import replaced
-      if (importReplacements.length !== neededImportReplacements.size) {
-        const missing = [];
-        for (const name of neededImportReplacements) {
-          if (!importReplacements.includes(name)) missing.push(name);
         }
 
-        if (missing.length > 0) {
-          throw new Error(
-            `Missing import of ${missing.map((name) => `\`${name}\``).join(", ")}: ${path}`,
-          );
-        }
-      }
-
-      return { code: magicString };
+        return { code: magicString };
+      },
     },
-  },
-};
-
-export default plugin;
+  };
+}
