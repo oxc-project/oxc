@@ -24,5 +24,5 @@ pub fn generate_cli_docs(raw_markdown: &str, tool_name: &str) -> String {
     // Add ---\nsearch: false\n---\n at the top to prevent Vitepress from indexing this file.
     let markdown = format!("---\nsearch: false\n---\n\n{markdown}");
 
-    markdown.replacen("- **Usage**: ", "## Usage\n\n", 1)
+    markdown.replacen("- **Usage:** ", "## Usage\n\n", 1)
 }
