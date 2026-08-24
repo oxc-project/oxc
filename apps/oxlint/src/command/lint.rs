@@ -730,22 +730,38 @@ struct InlineConfigOptionsCli {
 
     /// Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors.
     /// Only one of these two options can be used at a time.
-    #[usage(
-        long,
-        value_name = "SEVERITY",
-        choices("allow", "off", "deny", "error", "warn"),
-        group = "unused-directives"
-    )]
-    report_unused_disable_directives_severity: Option<String>,
+    #[usage(long, value_name = "SEVERITY", value_enum, group = "unused-directives")]
+    report_unused_disable_directives_severity: Option<UnusedDirectivesSeverity>,
+}
+
+/// The severities `--report-unused-disable-directives-severity` accepts.
+///
+/// Spelled as a type so the accepted words and their meanings are declared together,
+/// rather than as a list of strings that has to stay in step with `AllowWarnDeny`.
+#[derive(Debug, Clone, Copy, usage::ValueEnum)]
+enum UnusedDirectivesSeverity {
+    Allow,
+    Off,
+    Deny,
+    Error,
+    Warn,
+}
+
+impl From<UnusedDirectivesSeverity> for AllowWarnDeny {
+    fn from(severity: UnusedDirectivesSeverity) -> Self {
+        match severity {
+            UnusedDirectivesSeverity::Allow | UnusedDirectivesSeverity::Off => Self::Allow,
+            UnusedDirectivesSeverity::Warn => Self::Warn,
+            UnusedDirectivesSeverity::Deny | UnusedDirectivesSeverity::Error => Self::Deny,
+        }
+    }
 }
 
 impl From<InlineConfigOptionsCli> for InlineConfigOptions {
     fn from(options: InlineConfigOptionsCli) -> Self {
         let report_unused_directives =
             if let Some(severity) = options.report_unused_disable_directives_severity {
-                ReportUnusedDirectives::WithSeverity(Some(
-                    AllowWarnDeny::try_from(severity.as_str()).unwrap(),
-                ))
+                ReportUnusedDirectives::WithSeverity(Some(severity.into()))
             } else {
                 ReportUnusedDirectives::WithoutSeverity(options.report_unused_disable_directives)
             };
@@ -888,6 +904,21 @@ mod lint_options {
 
     #[test]
     fn filter() {
+        let options =
+            get_lint_options("-D suspicious --deny pedantic -A no-debugger --allow no-var src");
+        assert_eq!(
+            options.filter,
+            [
+                (AllowWarnDeny::Deny, "suspicious".into()),
+                (AllowWarnDeny::Deny, "pedantic".into()),
+                (AllowWarnDeny::Allow, "no-debugger".into()),
+                (AllowWarnDeny::Allow, "no-var".into())
+            ]
+        );
+    }
+
+    #[test]
+    fn filter_interleaves_every_severity() {
         let options =
             get_lint_options("-D suspicious -A no-debugger --warn pedantic --deny no-var src");
         assert_eq!(
