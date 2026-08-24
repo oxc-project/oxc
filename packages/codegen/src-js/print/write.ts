@@ -719,10 +719,12 @@ function markMapNamed(
   const { sourceText } = state;
   if (start > sourceText.length) return;
 
-  // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
-  // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
-  const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === start) return;
+  // `oxc_codegen` suppresses consecutive source positions as it records them. A named child can
+  // still enrich its unnamed parent mapping, but a mapping which already has a name is complete.
+  const { mapNames, mapPositions } = state;
+  const mappingIndex = mapPositions.length >> 1;
+  const duplicatePosition = mapPositions[mapPositions.length - 1] === start;
+  if (duplicatePosition && mapNames[mapNames.length - 2] === mappingIndex - 1) return;
 
   // A mapping carries a name only when the identifier printed differs from the one in the source.
   // When possible, the mapping records the name from source, but if the source range is invalid,
@@ -762,14 +764,14 @@ function markMapNamed(
     // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
     if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
-      state.mapNames.push(
-        mapPositions.length >> 1,
+      mapNames.push(
+        duplicatePosition ? mappingIndex - 1 : mappingIndex,
         originalName === undefined ? printedName : originalName,
       );
     }
   }
 
-  mapPositions.push(state.output.length, start);
+  if (!duplicatePosition) mapPositions.push(state.output.length, start);
 }
 
 /**
