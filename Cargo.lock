@@ -1235,18 +1235,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kdl"
-version = "6.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "082ddf81b2acd76fe04412655d17befedfff1837db772f8e74c38050d25ed670"
-dependencies = [
- "miette",
- "num-traits",
- "serde",
- "winnow 0.7.15",
-]
-
-[[package]]
 name = "language-tags"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1374,28 +1362,6 @@ name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
-
-[[package]]
-name = "miette"
-version = "7.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f98efec8807c63c752b5bd61f862c165c115b0a35685bdcfd9238c7aeb592b7"
-dependencies = [
- "cfg-if",
- "miette-derive",
- "unicode-width 0.1.14",
-]
-
-[[package]]
-name = "miette-derive"
-version = "7.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db5b29714e950dbb20d5e6f74f9dcec4edbcc1067bb7f8ed198c097b8c1a818b"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
 
 [[package]]
 name = "mimalloc-safe"
@@ -4195,15 +4161,15 @@ dependencies = [
 
 [[package]]
 name = "usage-argv"
-version = "6.2.0"
+version = "6.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "857c0a155957d220665b2257ac7c58e168476ff7de09286940055ff78f622fb0"
+checksum = "ecb8bc2270df585912b1c3eca56c1319c441b6c4e4f977a107e93e709d5e7650"
 
 [[package]]
 name = "usage-derive"
-version = "6.2.0"
+version = "6.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9b6be9a69c5659c8002ac46be4262fd6e3ef57db53787df0f85b2d116c9e790"
+checksum = "11ba84e10f41a34ec00b52e8a4f1c875b2811a0a4c65b0d352ab180138d6e491"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4212,16 +4178,15 @@ dependencies = [
 
 [[package]]
 name = "usage-lib"
-version = "6.2.0"
+version = "6.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c007fd68b51ac507e13b005cfab6a7f519a722f036d62af2726969fc0e4fbd2"
+checksum = "99f22374ac72c68f17772d8b11d5b16df6d7db58306ec37d4808ef9f057199c3"
 dependencies = [
  "heck",
  "indexmap",
  "itertools",
- "kdl",
  "log",
- "miette",
+ "num-traits",
  "regex",
  "roff",
  "semver",
@@ -4230,13 +4195,15 @@ dependencies = [
  "strum",
  "tera",
  "thiserror",
+ "unicode-width 0.1.14",
+ "winnow 0.7.15",
 ]
 
 [[package]]
 name = "usage-rs"
-version = "6.2.0"
+version = "6.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "689ff9bfcf0c894d94a44171b27f6533db7d44a9615b17cef9b846590df13463"
+checksum = "da081ad5fff1d9a3e5d8ef4e2cb90a212fe23387682c99302f6562cb641b896f"
 dependencies = [
  "usage-argv",
  "usage-derive",
@@ -4245,9 +4212,9 @@ dependencies = [
 
 [[package]]
 name = "usage-test"
-version = "6.2.0"
+version = "6.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f73ccbe6b9a1023436ffecd83a52d8a74b9e825ce593fc07641f0359d13f427f"
+checksum = "e3fb4d31f839c1cd9fb2d93ef5051e357f3882540aa40713aaa01fbb7a213d02"
 dependencies = [
  "usage-argv",
 ]

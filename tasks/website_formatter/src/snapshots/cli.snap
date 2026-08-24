@@ -50,7 +50,7 @@ oxfmt --write src
 - **`--disable-nested-config`** — Do not search for configuration files in subdirectories
 
 ## Ignore Options
-- **`--ignore-path… <PATH>`** — Path to ignore file(s). Can be specified multiple times. If not specified, .gitignore and .prettierignore in the current directory are used.
+- **`--ignore-path <PATH>`** — Path to ignore file(s). Can be specified multiple times. If not specified, .gitignore and .prettierignore in the current directory are used.
 - **`--with-node-modules`** — Format code in node_modules directory (skipped by default)
 
 ## Runtime Options
