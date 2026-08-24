@@ -12,9 +12,11 @@ import {
   markMapAtStartOffset,
   write,
   writeNoLast,
-  writeWithMapNamed,
+  writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNamedNoLast,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { printParenParams, printParenParamsArrow } from "./function.ts";
@@ -285,7 +287,7 @@ function printTSTypeName(
     writeWithMapNamed(state, node.right.name, CAT_IDENT, node.right);
   } else if (node.type === "ThisExpression") {
     printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, "this", CAT_IDENT, node);
+    writeWithMap(state, "this", CAT_IDENT, node);
   } else {
     printSpaceBeforeIdentifier(state);
     writeWithMapNamed(state, node.name, CAT_IDENT, node);
@@ -432,12 +434,12 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
   const { members } = node;
   const { length } = members;
   if (length === 0) {
-    writeWithMapNamedNoLast(state, "{", node);
+    writeWithMapNoLast(state, "{", node);
     writeWithMapEnd(state, "}", CAT_OTHER, node);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, node);
+  writeWithMap(state, "{\n", CAT_OTHER, node);
   state.indentLevel++;
 
   for (let i = 0; i < length; i++) {
@@ -957,12 +959,12 @@ export function printTSModuleDeclaration(
 function printModuleBlock(body: ESTree.TSModuleBlock, state: State): void {
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMapNamedNoLast(state, "{", body);
+    writeWithMapNoLast(state, "{", body);
     writeWithMapEnd(state, "}", CAT_OTHER, body);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body);
 
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
@@ -1012,12 +1014,12 @@ export function printTSInterfaceDeclaration(
   const members = node.body.body;
   const { length } = members;
   if (length === 0) {
-    writeWithMapNamedNoLast(state, "{", node.body);
+    writeWithMapNoLast(state, "{", node.body);
     writeWithMapEnd(state, "}", CAT_OTHER, node.body);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, node.body);
+  writeWithMap(state, "{\n", CAT_OTHER, node.body);
   state.indentLevel++;
 
   for (let i = 0; i < length; i++) {
@@ -1117,12 +1119,12 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
   const { members } = body;
   const { length } = members;
   if (length === 0) {
-    writeWithMapNamedNoLast(state, "{", body);
+    writeWithMapNoLast(state, "{", body);
     writeWithMapEnd(state, "}", CAT_OTHER, body);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body);
   state.indentLevel++;
 
   const lastIndex = length - 1;

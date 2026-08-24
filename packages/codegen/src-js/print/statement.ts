@@ -9,12 +9,13 @@ import {
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_START_OF_STMT,
-  markMapNamed,
+  markMapStart,
   write,
   writeNoLast,
-  writeWithMapNamed,
+  writeWithMap,
   writeWithMapEnd,
-  writeWithMapNamedNoLast,
+  writeWithMapNamed,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printClass } from "./class.ts";
 import { printExpression } from "./expression.ts";
@@ -87,7 +88,7 @@ export function printDirectivesAndStatements(
       if (inner.type === "Literal" && typeof inner.value === "string") {
         const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
         printIndent(state);
-        if (mapsIndent) markMapNamed(state, stmt);
+        if (mapsIndent) markMapStart(state, stmt);
         writeNoLast(state, "(");
         printString(state, inner.value, inner);
         write(state, ");\n", CAT_OTHER);
@@ -128,7 +129,7 @@ function printDirective(stmt: ESTree.Directive, state: State): void {
     }
   }
 
-  writeWithMapNamedNoLast(state, quote, stmt);
+  writeWithMapNoLast(state, quote, stmt);
   writeNoLast(state, directive);
   writeNoLast(state, quote);
   write(state, ";\n", CAT_OTHER);
@@ -185,7 +186,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "BreakStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "break", CAT_IDENT, node);
+      writeWithMap(state, "break", CAT_IDENT, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
         writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
@@ -195,7 +196,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "ContinueStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "continue", CAT_IDENT, node);
+      writeWithMap(state, "continue", CAT_IDENT, node);
       if (node.label != null) {
         write(state, " ", CAT_OTHER);
         writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
@@ -208,7 +209,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "ThrowStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "throw ", CAT_OTHER, node);
+      writeWithMap(state, "throw ", CAT_OTHER, node);
       printExpression(node.argument, state, PREC_LOWEST, CTX_NONE);
       write(state, ";\n", CAT_OTHER);
       break;
@@ -226,14 +227,14 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "LabeledStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      markMapNamed(state, node);
+      markMapStart(state, node);
       writeWithMapNamed(state, node.label.name, CAT_IDENT, node.label);
       write(state, ":", CAT_OTHER);
       printBody(node.body, state);
       break;
     case "EmptyStatement":
       printIndent(state);
-      writeWithMapNamed(state, ";\n", CAT_OTHER, node);
+      writeWithMap(state, ";\n", CAT_OTHER, node);
       break;
     case "ImportDeclaration":
       printImportDeclaration(node, state);
@@ -250,7 +251,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "WithStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "with(", CAT_OTHER, node);
+      writeWithMap(state, "with(", CAT_OTHER, node);
       printExpression(node.object, state, PREC_LOWEST, CTX_NONE);
       write(state, ")", CAT_CLOSE_BRACKET);
       printBody(node.body, state);
@@ -258,7 +259,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
     case "DebuggerStatement":
       printIndent(state);
       printSpaceBeforeIdentifier(state);
-      writeWithMapNamed(state, "debugger;\n", CAT_OTHER, node);
+      writeWithMap(state, "debugger;\n", CAT_OTHER, node);
       break;
     /* IF TS */
     case "TSModuleDeclaration":
@@ -318,7 +319,7 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
 function printExpressionStatement(node: ESTree.ExpressionStatement, state: State): void {
   const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
   printIndent(state);
-  if (mapsIndent) markMapNamed(state, node);
+  if (mapsIndent) markMapStart(state, node);
   state.last = CAT_START_OF_STMT;
   printExpression(node.expression, state, PREC_LOWEST, CTX_NONE);
   write(state, ";\n", CAT_OTHER);
@@ -341,10 +342,10 @@ export function printVariableDeclaration(
   // The node's mapping goes on whichever of these is written first
   const declare = TS && node.declare;
   if (declare) {
-    writeWithMapNamed(state, "declare ", CAT_OTHER, node);
+    writeWithMap(state, "declare ", CAT_OTHER, node);
     write(state, node.kind, CAT_IDENT);
   } else {
-    writeWithMapNamed(state, node.kind, CAT_IDENT, node);
+    writeWithMap(state, node.kind, CAT_IDENT, node);
   }
 
   const { declarations } = node;
@@ -387,12 +388,12 @@ function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
   const { body } = block;
   const { length } = body;
   if (length === 0) {
-    writeWithMapNamedNoLast(state, "{", block);
+    writeWithMapNoLast(state, "{", block);
     writeWithMapEnd(state, "}", CAT_OTHER, block);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, block);
+  writeWithMap(state, "{\n", CAT_OTHER, block);
   state.indentLevel++;
 
   for (let i = 0; i < length; i++) {
@@ -414,7 +415,7 @@ function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
 function printIf(node: ESTree.IfStatement, state: State): void {
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "if (", CAT_OTHER, node);
+  writeWithMap(state, "if (", CAT_OTHER, node);
 
   printExpression(node.test, state, PREC_LOWEST, CTX_NONE);
 
@@ -425,7 +426,7 @@ function printIf(node: ESTree.IfStatement, state: State): void {
     write(state, alternate != null ? " " : "\n", CAT_OTHER);
   } else if (wrapToAvoidAmbiguousElse(consequent)) {
     writeNoLast(state, ") ");
-    writeWithMapNamed(state, "{\n", CAT_OTHER, consequent);
+    writeWithMap(state, "{\n", CAT_OTHER, consequent);
     state.indentLevel++;
     printStatement(consequent, state);
     state.indentLevel--;
@@ -493,10 +494,10 @@ function printReturnStatement(node: ESTree.ReturnStatement, state: State): void 
 
   const { argument } = node;
   if (argument != null) {
-    writeWithMapNamed(state, "return ", CAT_OTHER, node);
+    writeWithMap(state, "return ", CAT_OTHER, node);
     printExpression(argument, state, PREC_LOWEST, CTX_NONE);
   } else {
-    writeWithMapNamed(state, "return", CAT_IDENT, node);
+    writeWithMap(state, "return", CAT_IDENT, node);
   }
 
   write(state, ";\n", CAT_OTHER);
@@ -510,7 +511,7 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "try ", CAT_OTHER, node);
+  writeWithMap(state, "try ", CAT_OTHER, node);
 
   printBlockStatement(node.block, state);
 
@@ -544,19 +545,19 @@ function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void 
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "switch (", CAT_OTHER, node);
+  writeWithMap(state, "switch (", CAT_OTHER, node);
   printExpression(node.discriminant, state, PREC_LOWEST, CTX_NONE);
   write(state, ") ", CAT_OTHER);
 
   const { cases } = node;
   const { length } = cases;
   if (length === 0) {
-    writeWithMapNamedNoLast(state, "{", node);
+    writeWithMapNoLast(state, "{", node);
     writeWithMapEnd(state, "}\n", CAT_OTHER, node);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, node);
+  writeWithMap(state, "{\n", CAT_OTHER, node);
   state.indentLevel++;
 
   for (let i = 0; i < length; i++) {
@@ -576,10 +577,10 @@ function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
   printIndent(state);
 
   if (node.test != null) {
-    writeWithMapNamed(state, "case ", CAT_OTHER, node);
+    writeWithMap(state, "case ", CAT_OTHER, node);
     printExpression(node.test, state, PREC_LOWEST, CTX_NONE);
   } else {
-    writeWithMapNamed(state, "default", CAT_IDENT, node);
+    writeWithMap(state, "default", CAT_IDENT, node);
   }
 
   write(state, ":", CAT_OTHER);
@@ -609,7 +610,7 @@ function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "while (", CAT_OTHER, node);
+  writeWithMap(state, "while (", CAT_OTHER, node);
   printExpression(node.test, state, PREC_LOWEST, CTX_NONE);
   write(state, ")", CAT_CLOSE_BRACKET);
 
@@ -627,7 +628,7 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "do", CAT_IDENT, node);
+  writeWithMap(state, "do", CAT_IDENT, node);
 
   const { body } = node;
   if (body.type === "BlockStatement") {
@@ -636,7 +637,7 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
     write(state, " ", CAT_OTHER);
   } else if (body.type === "EmptyStatement") {
     printIndent(state);
-    writeWithMapNamed(state, ";\n", CAT_OTHER, body);
+    writeWithMap(state, ";\n", CAT_OTHER, body);
   } else {
     write(state, "\n", CAT_OTHER);
     state.indentLevel++;
@@ -661,7 +662,7 @@ function printForStatement(node: ESTree.ForStatement, state: State): void {
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "for (", CAT_OTHER, node);
+  writeWithMap(state, "for (", CAT_OTHER, node);
 
   const { init } = node;
   if (init != null) {
@@ -699,7 +700,7 @@ function printForInStatement(node: ESTree.ForInStatement, state: State): void {
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "for (", CAT_OTHER, node);
+  writeWithMap(state, "for (", CAT_OTHER, node);
 
   const { left } = node;
   if (left.type === "VariableDeclaration") {
@@ -727,7 +728,7 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMapNamed(state, "for", CAT_IDENT, node);
+  writeWithMap(state, "for", CAT_IDENT, node);
 
   if (node.await) write(state, " await", CAT_IDENT);
 

@@ -58,10 +58,34 @@ export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "de
 
 /**
  * A node carrying the offsets needed for source mappings.
+ *
+ * No `name` - a mapping recorded for one of these carries none. `NamedMappableNode` below is the
+ * shape the named forms take, and requiring `name` on it is what steers a named call which cannot
+ * produce a name to the plain form instead.
  */
 export interface MappableNode {
   type: string;
-  name?: unknown;
   start?: number;
   end?: number;
+}
+
+/**
+ * A node whose mapping records the name it had in the source.
+ *
+ * These are the identifier kinds Rust `oxc_codegen` names mappings for - identifier references and
+ * names, binding, label, JSX and private identifiers.
+ */
+export interface NamedMappableNode extends MappableNode {
+  name: string;
+}
+
+/**
+ * A node whose mapping records no name, because it has no string `name` to record.
+ *
+ * `name?: object` is how a node which does have one is rejected - `string` is not assignable to it.
+ * A `name` holding a node rather than a string, as a JSX element's does, is not a name a mapping could record,
+ * and stays allowed.
+ */
+export interface UnnamedMappableNode extends MappableNode {
+  name?: object;
 }

@@ -7,6 +7,7 @@ import {
   CAT_OTHER,
   CAT_QUESTION,
   write,
+  writeWithMap,
   writeWithMapNamed,
   writeWithMapNamedNoLast,
 } from "./write.ts";
@@ -59,7 +60,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
       printExpression(node.right, state, PREC_COMMA, CTX_NONE);
       break;
     case "RestElement":
-      writeWithMapNamed(state, "...", CAT_OTHER, node);
+      writeWithMap(state, "...", CAT_OTHER, node);
       printBindingPattern(node.argument, state);
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
@@ -76,17 +77,17 @@ function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): vo
   const { length } = properties;
 
   if (length === 0) {
-    writeWithMapNamed(state, "{}", CAT_OTHER, node);
+    writeWithMap(state, "{}", CAT_OTHER, node);
     return;
   }
 
-  writeWithMapNamed(state, "{ ", CAT_OTHER, node);
+  writeWithMap(state, "{ ", CAT_OTHER, node);
 
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
     const property = properties[i];
     if (property.type === "RestElement") {
-      writeWithMapNamed(state, "...", CAT_OTHER, property);
+      writeWithMap(state, "...", CAT_OTHER, property);
       printBindingPattern(property.argument, state);
     } else {
       printBindingProperty(property, state);
@@ -177,7 +178,7 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
     }
   }
 
-  writeWithMapNamed(state, "[", CAT_OTHER, node);
+  writeWithMap(state, "[", CAT_OTHER, node);
 
   for (let i = 0; i < length; i++) {
     if (i !== 0) write(state, ", ", CAT_OTHER);

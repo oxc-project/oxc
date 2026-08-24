@@ -11,9 +11,10 @@ import {
   markMapStart,
   write,
   writeNoLast,
-  writeWithMapNamed,
+  writeWithMap,
   writeWithMapEnd,
-  writeWithMapNamedNoLast,
+  writeWithMapNamed,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printDecorators } from "./class.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
@@ -45,10 +46,10 @@ export function printFunction(node: ESTree.Function, state: State): void {
   // The node's mapping goes on whichever of these is written first
   const declare = TS && node.declare;
   if (declare) {
-    writeWithMapNamed(state, "declare ", CAT_OTHER, node);
+    writeWithMap(state, "declare ", CAT_OTHER, node);
     write(state, node.async ? "async function" : "function", CAT_IDENT);
   } else {
-    writeWithMapNamed(state, node.async ? "async function" : "function", CAT_IDENT, node);
+    writeWithMap(state, node.async ? "async function" : "function", CAT_IDENT, node);
   }
 
   if (node.generator) write(state, "* ", CAT_OTHER);
@@ -152,12 +153,12 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   // `body` is a BlockStatement holding directives + statements.
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMapNamedNoLast(state, "{", body);
+    writeWithMapNoLast(state, "{", body);
     writeWithMapEnd(state, "}", CAT_OTHER, body);
     return;
   }
 
-  writeWithMapNamed(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body);
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
   state.indentLevel--;

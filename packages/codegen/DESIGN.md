@@ -255,17 +255,22 @@ No operator merges with a plain `!`, so storing it must not cost `printSpaceBefo
 Not every write needs to update `last`.
 
 When one token is written in pieces - a string's opening quote, its contents, its closing quote -
-only the last piece's category can possibly be read. Hence five write primitives in [`print/write.ts`]:
+only the last piece's category can possibly be read. Hence seven write primitives in [`print/write.ts`]:
 
-| Function                  | Updates `last` | Records a source mapping     |
-| :------------------------ | :------------- | :--------------------------- |
-| `write`                   | Yes            | No                           |
-| `writeWithMapNamed`       | Yes            | At the node's start          |
-| `writeWithMapEnd`         | Yes            | At the node's last character |
-| `writeNoLast`             | No             | No                           |
-| `writeWithMapNamedNoLast` | No             | At the node's start          |
+| Function                  | Updates `last` | Records a source mapping       |
+| :------------------------ | :------------- | :----------------------------- |
+| `write`                   | Yes            | No                             |
+| `writeWithMap`            | Yes            | At the node's start            |
+| `writeWithMapNamed`       | Yes            | At the node's start, with name |
+| `writeWithMapEnd`         | Yes            | At the node's last character   |
+| `writeNoLast`             | No             | No                             |
+| `writeWithMapNoLast`      | No             | At the node's start            |
+| `writeWithMapNamedNoLast` | No             | At the node's start, with name |
 
-- The four `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
+- The `*Named` functions record the name the node had in the source, and take a `NamedMappableNode`,
+  which covers nodes with a string `name`.
+- The other `writeWithMap*` functions take an `UnnamedMappableNode` which covers nodes without a string `name`.
+- The three `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
 - The rule is exact: **only sound where the value of `last` is provably dead**.
   Another real write must follow before anything reads it.
 - JSX carries the longest runs. Printing `<a.b x="1">hi</a.b>` updates `last` exactly once, on the final `>`.
@@ -365,8 +370,8 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 #### `unmap_writes`
 
 Rewrites every mapped write into the plain one it becomes with no mapping to record - so
-`writeWithMapNamed(state, code, cat, node)` turns into `write(state, code, cat)` - and rewrites the import
-to match. `writeWithMapEnd` becomes `write` too, and `writeWithMapNamedNoLast` becomes `writeNoLast`.
+`writeWithMap(state, code, cat, node)` turns into `write(state, code, cat)` - and rewrites the import to match.
+`writeWithMapNamed` and `writeWithMapEnd` become `write` too, and both `NoLast` forms become `writeNoLast`.
 
 `printString` and `printNonNegativeFloat` take a node only to hand on to a mapped write. They keep their names,
 but the argument comes off every call, and the parameter off their declarations - which, unlike the mapped writes,

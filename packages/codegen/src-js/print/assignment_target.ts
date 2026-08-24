@@ -2,7 +2,14 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
-import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, write, writeWithMapNamed } from "./write.ts";
+import {
+  CAT_CLOSE_BRACKET,
+  CAT_IDENT,
+  CAT_OTHER,
+  write,
+  writeWithMap,
+  writeWithMapNamed,
+} from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";
@@ -53,7 +60,7 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
  * Print an object destructuring target, as in `({ a, b: c } = obj)`.
  */
 function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state: State): void {
-  writeWithMapNamed(state, "{", CAT_OTHER, node);
+  writeWithMap(state, "{", CAT_OTHER, node);
 
   const { properties } = node;
   const { length } = properties;
@@ -62,7 +69,7 @@ function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state:
 
     const property = properties[i];
     if (property.type === "RestElement") {
-      writeWithMapNamed(state, "...", CAT_OTHER, property);
+      writeWithMap(state, "...", CAT_OTHER, property);
       printAssignmentTarget(property.argument, state);
     } else {
       printAssignmentTargetProperty(property, state);
@@ -139,7 +146,7 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
     }
   }
 
-  writeWithMapNamed(state, "[", CAT_OTHER, node);
+  writeWithMap(state, "[", CAT_OTHER, node);
 
   for (let i = 0; i < length; i++) {
     if (i !== 0) write(state, ", ", CAT_OTHER);
@@ -155,7 +162,7 @@ function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: S
 
   if (rest !== null) {
     if (length > 0) write(state, " ", CAT_OTHER);
-    writeWithMapNamed(state, "...", CAT_OTHER, rest);
+    writeWithMap(state, "...", CAT_OTHER, rest);
     printAssignmentTarget(rest.argument, state);
   }
 
