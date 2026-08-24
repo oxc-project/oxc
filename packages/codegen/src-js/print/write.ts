@@ -252,24 +252,25 @@ export function write(state: State, code: string, last: Category): void {
 }
 
 /**
- * Append `name` to the output, and record what it ends with as `CAT_IDENT`.
+ * Append `name` to the output, and record what it ends with as `CAT_IDENT` -
+ * an identifier, a keyword, or the trailing digits of a number.
  *
- * The plain form of `writeWithMapNamed`.
- * Nothing calls it directly - the TSDown plugin rewrites the mapped calls to it for builds without source map support.
+ * This is `write` with the category fixed. `CAT_IDENT` one of the most common categories,
+ * so passing it at every call site is an argument spent on a value which is never anything else.
  *
  * @param state - Printer state
- * @param name - The identifier's name, never empty
+ * @param code - Text to append, never empty
  */
-export function writeIdent(state: State, name: string): void {
-  debugAssert(name.length > 0, "`name` should not be an empty string");
-  debugAssertCategoryMatches(state, name, CAT_IDENT);
+export function writeIdent(state: State, code: string): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, CAT_IDENT);
 
   state.last = CAT_IDENT;
-  state.output += name;
+  state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = false;
-    state.lastCharWritten = name[name.length - 1];
+    state.lastCharWritten = code[code.length - 1];
   }
 }
 

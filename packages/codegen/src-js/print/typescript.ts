@@ -11,6 +11,7 @@ import {
   debugAssertLastFresh,
   markMapAtStartOffset,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -84,59 +85,59 @@ function printTSType(
       break;
     case "TSStringKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "string", CAT_IDENT);
+      writeIdent(state, "string");
       break;
     case "TSNumberKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "number", CAT_IDENT);
+      writeIdent(state, "number");
       break;
     case "TSBooleanKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "boolean", CAT_IDENT);
+      writeIdent(state, "boolean");
       break;
     case "TSAnyKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "any", CAT_IDENT);
+      writeIdent(state, "any");
       break;
     case "TSVoidKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "void", CAT_IDENT);
+      writeIdent(state, "void");
       break;
     case "TSUnknownKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "unknown", CAT_IDENT);
+      writeIdent(state, "unknown");
       break;
     case "TSNeverKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "never", CAT_IDENT);
+      writeIdent(state, "never");
       break;
     case "TSUndefinedKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "undefined", CAT_IDENT);
+      writeIdent(state, "undefined");
       break;
     case "TSNullKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "null", CAT_IDENT);
+      writeIdent(state, "null");
       break;
     case "TSObjectKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "object", CAT_IDENT);
+      writeIdent(state, "object");
       break;
     case "TSSymbolKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "symbol", CAT_IDENT);
+      writeIdent(state, "symbol");
       break;
     case "TSBigIntKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "bigint", CAT_IDENT);
+      writeIdent(state, "bigint");
       break;
     case "TSIntrinsicKeyword":
       printSpaceBeforeIdentifier(state);
-      write(state, "intrinsic", CAT_IDENT);
+      writeIdent(state, "intrinsic");
       break;
     case "TSThisType":
       printSpaceBeforeIdentifier(state);
-      write(state, "this", CAT_IDENT);
+      writeIdent(state, "this");
       break;
     case "TSLiteralType":
       printTSLiteral(node.literal, state);
@@ -245,7 +246,7 @@ function printTSType(
       break;
     case "TSJSDocUnknownType":
       printSpaceBeforeIdentifier(state);
-      write(state, "unknown", CAT_IDENT);
+      writeIdent(state, "unknown");
       break;
     case "TSJSDocNullableType":
       if (node.postfix) {
@@ -575,7 +576,7 @@ export function printTSIndexSignature(node: ESTree.TSIndexSignature, state: Stat
   write(state, "[", CAT_OTHER);
 
   const parameter = node.parameters[0];
-  write(state, parameter.name, CAT_IDENT);
+  writeIdent(state, parameter.name);
 
   write(state, ": ", CAT_OTHER);
 
@@ -790,7 +791,7 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
  * bind to only part of it.
  */
 function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
-  write(state, node.operator, CAT_IDENT);
+  writeIdent(state, node.operator);
 
   write(state, " ", CAT_OTHER);
 
@@ -817,7 +818,7 @@ function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void 
 
   const { parameterName } = node;
   if (parameterName.type === "TSThisType") {
-    write(state, "this", CAT_IDENT);
+    writeIdent(state, "this");
   } else {
     printSpaceBeforeIdentifier(state);
     writeWithMapNamed(state, parameterName.name, parameterName);
@@ -879,9 +880,9 @@ function printTSImportTypeQualifier(node: ESTree.TSImportTypeQualifier, state: S
   if (node.type === "TSQualifiedName") {
     printTSImportTypeQualifier(node.left, state);
     write(state, ".", CAT_OTHER);
-    write(state, node.right.name, CAT_IDENT);
+    writeIdent(state, node.right.name);
   } else {
-    write(state, node.name, CAT_IDENT);
+    writeIdent(state, node.name);
   }
 }
 
@@ -929,7 +930,7 @@ export function printTSModuleDeclaration(
   if (node.declare) write(state, "declare ", CAT_OTHER);
 
   const { kind } = node;
-  write(state, kind, CAT_IDENT);
+  writeIdent(state, kind);
 
   if (kind !== "global") {
     write(state, " ", CAT_OTHER);

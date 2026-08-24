@@ -9,6 +9,7 @@ import {
   CAT_OTHER,
   CAT_REGEX_SLASH,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapNoLast,
@@ -179,7 +180,7 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
     write(state, "/", CAT_REGEX_SLASH);
   } else {
     writeNoLast(state, "/");
-    write(state, flags, CAT_IDENT);
+    writeIdent(state, flags);
   }
 }
 
@@ -197,6 +198,6 @@ function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence
     write(state, "n)", CAT_CLOSE_BRACKET);
   } else {
     writeWithMapNoLast(state, value, node);
-    write(state, "n", CAT_IDENT);
+    writeIdent(state, "n");
   }
 }

@@ -5,6 +5,7 @@ import {
   CAT_OTHER,
   CAT_START_OF_DEFAULT_EXPORT,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapNamed,
@@ -42,11 +43,11 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
   printSpaceBeforeIdentifier(state);
   writeWithMap(state, "import", CAT_IDENT, node);
 
-  if (TS && node.importKind === "type") write(state, " type", CAT_IDENT);
+  if (TS && node.importKind === "type") writeIdent(state, " type");
 
   if (node.phase != null) {
     writeNoLast(state, " ");
-    write(state, node.phase, CAT_IDENT);
+    writeIdent(state, node.phase);
   }
 
   const { specifiers } = node;
@@ -151,7 +152,7 @@ function printImportAttributes(
     const attribute = attributes[i];
     const { key } = attribute;
     if (key.type === "Identifier") {
-      write(state, key.name, CAT_IDENT);
+      writeIdent(state, key.name);
     } else {
       printString(state, key.value, key);
     }
