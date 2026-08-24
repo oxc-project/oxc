@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_codegen/tests/integration/sourcemap.rs
-assertion_line: 466
 ---
 Node.js version: v26.5.0
 
