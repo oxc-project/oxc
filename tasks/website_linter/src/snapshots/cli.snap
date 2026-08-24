@@ -64,9 +64,9 @@ Categories:
 * `restriction` - Lints which prevent the use of language and library features
 * `nursery` - New lints that are still under development
 * `all` - All categories listed above except `nursery`. Does not enable plugins automatically.
-- **`-A --allow… <NAME>`** — Allow the rule or category (suppress the lint)
-- **`-W --warn… <NAME>`** — Warn on the rule or category (emit a warning)
-- **`-D --deny… <NAME>`** — Deny the rule or category (emit an error)
+- **`-A --allow <NAME>`** — Allow the rule or category (suppress the lint)
+- **`-W --warn <NAME>`** — Warn on the rule or category (emit a warning)
+- **`-D --deny <NAME>`** — Deny the rule or category (emit an error)
 
 ## Enable/Disable Plugins
 - **`--disable-unicorn-plugin`** — Disable unicorn plugin, which is turned on by default
@@ -93,7 +93,7 @@ Categories:
 - **`--ignore-path <PATH>`** — Specify the file to use as your `.eslintignore`
 
   **Default:** `.eslintignore`
-- **`--ignore-pattern… <PAT>`** — Specify patterns of files to ignore (in addition to those in `.eslintignore`)
+- **`--ignore-pattern <PAT>`** — Specify patterns of files to ignore (in addition to those in `.eslintignore`)
 
   The supported syntax is the same as for `.eslintignore` and `.gitignore` files. You should quote your patterns in order to avoid shell interpretation of glob patterns.
 - **`--no-ignore`** — Disable excluding files from `.eslintignore` files, `--ignore-path` flags and `--ignore-pattern` flags
