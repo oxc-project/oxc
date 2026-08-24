@@ -16,12 +16,19 @@ const isEnabled = (env: string | undefined) => env === "true" || env === "1";
 // It replaces the release build in `dist`, so rebuild with `pnpm run build` before benchmarking.
 const DEBUG = isEnabled(process.env.DEBUG);
 
+// When run with `pnpm run bench`, generate a build which honors the `skipSourcemapGeneration` option,
+// so the benchmarks can measure the print pass without source map generation.
+const BENCHMARKS = isEnabled(process.env.BENCHMARKS);
+
 // Only remove assertions in release build. Debug builds keep `debugAssert` calls live.
 const assertPlugins = DEBUG ? [] : [removeAssertsPlugin];
 
 // Global constants defined at build time. See `src-js/globals.d.ts`.
 // `DEBUG: false` lets the minifier remove the body of `debugAssert` and any other debug-only code.
-const definedGlobals = { DEBUG: DEBUG ? "true" : "false" };
+const definedGlobals = {
+  DEBUG: DEBUG ? "true" : "false",
+  BENCHMARKS: BENCHMARKS ? "true" : "false",
+};
 
 // Base config.
 // `platform: "node"` because the entry point loads the printer with `createRequire`.
@@ -63,9 +70,12 @@ const minifyConfig = DEBUG
 //
 // `src-js/index.ts` loads whichever build the caller's options call for.
 //
-// In builds without source maps, nothing reads the `node` argument the mapping writes take,
-// so `unmap_writes` rewrites every `writeWithMap` / `writeWithMapNoLast` call, and the imports
-// which bring them in, into the plain `write` / `writeNoLast` they become without it.
+// In builds without source maps, nothing reads the mapping arguments the mapped writes take,
+// so `unmap_writes` rewrites every mapped write call, and the imports which bring them in,
+// into the plain `write` / `writeNoLast` they become without the mapping arguments.
+//
+// In sourcemap release builds the same plugin removes only the trailing `node` argument,
+// which nothing but the debug asserts those builds have lost ever read.
 const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; ts: boolean }) => ({
   ...commonConfig,
   minify: minifyConfig,
@@ -78,11 +88,12 @@ const printerConfig = (name: string, { sourcemaps, ts }: { sourcemaps: boolean; 
     TS: ts ? "true" : "false",
   },
   plugins: [
-    // `strip_ts` is a text transform, so must run before the AST-based plugins
+    // `strip_ts` is a text transform, so must run before the AST-based plugins.
+    // `const_functions` runs last, so the plugins before it still see function declarations.
     ...(ts ? [] : [stripTsPlugin()]),
-    ...(sourcemaps ? [] : [unmapWritesPlugin]),
-    constFunctionsPlugin,
     ...assertPlugins,
+    unmapWritesPlugin(sourcemaps, DEBUG),
+    constFunctionsPlugin,
   ],
 });
 

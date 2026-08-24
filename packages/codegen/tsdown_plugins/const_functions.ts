@@ -44,8 +44,8 @@ const plugin: Plugin = {
         if (statement.type === "FunctionDeclaration") {
           fn = statement;
         } else if (
-          statement.type === "ExportNamedDeclaration" &&
-          statement.declaration?.type === "FunctionDeclaration"
+          statement.type === "ExportNamedDeclaration"
+          && statement.declaration?.type === "FunctionDeclaration"
         ) {
           fn = statement.declaration;
         } else {

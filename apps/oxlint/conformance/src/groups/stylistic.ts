@@ -48,21 +48,21 @@ const group: TestGroup = {
 
     // Invalid code, cannot parse
     if (
-      err.message === "Parsing failed" &&
-      ruleName === "comma-spacing" &&
-      ["let foo,", "let foo ,"].includes(code)
+      err.message === "Parsing failed"
+      && ruleName === "comma-spacing"
+      && ["let foo,", "let foo ,"].includes(code)
     ) {
       return true;
     }
 
     // Test cases should be parsed as Flow. AST is different when parsed as TS.
     if (
-      ruleName === "object-curly-newline" &&
-      test._parser?.specifier === "@babel/eslint-parser" &&
-      (test.languageOptions?.parserOptions as any)?.babelOptions?.parserOpts?.plugins?.includes(
+      ruleName === "object-curly-newline"
+      && test._parser?.specifier === "@babel/eslint-parser"
+      && (test.languageOptions?.parserOptions as any)?.babelOptions?.parserOpts?.plugins?.includes(
         "flow",
-      ) &&
-      [
+      )
+      && [
         "function foo({\n a,\n b\n} : { a : string, b : string }) {}",
         "function foo({ a, b } : { a : string, b : string }) {}",
       ].includes(code)
@@ -72,33 +72,33 @@ const group: TestGroup = {
 
     // Invalid code, Oxc's AST does not match TS-ESLint
     if (
-      ruleName === "space-infix-ops" &&
-      compact(code) === "class Test {\n accessor optional?= false;\n }"
+      ruleName === "space-infix-ops"
+      && compact(code) === "class Test {\n accessor optional?= false;\n }"
     ) {
       return true;
     }
 
     // Code contains `do` expressions which Oxc parser does not support
     if (
-      ruleName === "jsx-indent" &&
-      err.message === "Parsing failed" &&
-      code.match(/^\s*<span>\s*\{\(?do \{/)
+      ruleName === "jsx-indent"
+      && err.message === "Parsing failed"
+      && code.match(/^\s*<span>\s*\{\(?do \{/)
     ) {
       return true;
     }
 
     // Use custom language plugin
     if (
-      (ruleName === "eol-last" || ruleName === "linebreak-style") &&
-      (test as any).configs?.plugins !== undefined
+      (ruleName === "eol-last" || ruleName === "linebreak-style")
+      && (test as any).configs?.plugins !== undefined
     ) {
       return true;
     }
 
     // Faulty test cases - no message or message ID provided for the errors
     if (
-      ruleName === "one-var-declaration-per-line" &&
-      err.message === "Test error must specify either a `messageId` or `message`"
+      ruleName === "one-var-declaration-per-line"
+      && err.message === "Test error must specify either a `messageId` or `message`"
     ) {
       return true;
     }

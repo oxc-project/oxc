@@ -6702,9 +6702,6 @@
             }
           ]
         },
-        "react/gating": {
-          "$ref": "#/definitions/RuleNoConfig"
-        },
         "react/globals": {
           "$ref": "#/definitions/RuleNoConfig"
         },

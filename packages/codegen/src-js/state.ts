@@ -9,9 +9,10 @@
 // Nothing in `print/` constructs one, and none of the 4 printer builds bundles this file.
 
 import { CAT_OTHER } from "./print/write.ts";
+import { debugAssert } from "./asserts.ts";
 
 import type { Category } from "./print/write.ts";
-import type { Options, Position } from "./print/options.ts";
+import type { Options } from "./print/options.ts";
 
 /**
  * The string one level of indentation prints as. Set from the `indent` option, a tab by default.
@@ -28,10 +29,7 @@ let indentString = "\t";
  */
 const indents = [""];
 
-/**
- * The `indent` option must be made up of only spaces and tabs, and not empty string.
- * Anything else falls back to a tab.
- */
+/** The `indent` option must be a non-empty string made up of only spaces and tabs. */
 const INDENT_REGEX = /^[ \t]+$/;
 
 /** Upper bound for the process-wide indentation cache. */
@@ -79,11 +77,13 @@ export class State {
   // Only used in debug builds. See `debugAssertCategoryMatches`.
   declare lastCharWritten: string;
 
-  // Deferred source mappings.
-  // Either all 3 are arrays, or all 3 are `null` (when the printer was given no `sourceMap`).
-  declare mapOffsets: number[] | null;
-  declare mapPositions: Position[] | null;
-  declare mapNames: (string | undefined)[] | null;
+  // Deferred source mappings. Generated/source offset pairs exist when source maps are enabled.
+  // Names are sparse, so their index/name pairs exist only if a mapping carries an original name.
+  declare mapPositions: number[] | null;
+  declare mapNames: (number | string)[] | null;
+
+  // Original source text, used to preserve names in source maps when the caller provides it.
+  declare sourceText: string | null;
 
   constructor(options: Options) {
     this.output = "";
@@ -92,9 +92,9 @@ export class State {
     if (indentLevel === undefined) {
       indentLevel = 0;
     } else if (
-      !Number.isSafeInteger(indentLevel) ||
-      indentLevel < 0 ||
-      indentLevel > MAX_STARTING_INDENT_LEVEL
+      !Number.isSafeInteger(indentLevel)
+      || indentLevel < 0
+      || indentLevel > MAX_STARTING_INDENT_LEVEL
     ) {
       throw new RangeError(
         "`startingIndentLevel` must be a non-negative safe integer no greater than 1000",
@@ -105,8 +105,13 @@ export class State {
     // The `indent` option is validated here, not in the printer, and changing of it discards
     // the cache grown for the old `indentString`.
     // That should be rare - most users have an indent style they prefer, and use it consistently.
-    let { indent } = options;
-    if (typeof indent !== "string" || !INDENT_REGEX.test(indent)) indent = "\t";
+    const { indent: indentOption } = options;
+    let indent = indentOption;
+    if (indent === undefined) {
+      indent = "\t";
+    } else if (typeof indent !== "string" || !INDENT_REGEX.test(indent)) {
+      throw new TypeError("`indent` must be a non-empty string containing only spaces and tabs");
+    }
     if (indent !== indentString) {
       indentString = indent;
       indents.length = 1;
@@ -131,14 +136,15 @@ export class State {
       this.lastCharWritten = "";
     }
 
-    // `writeWithMap` records the output offset and original position of every mapped node,
-    // and `emitMappings` converts the offsets to generated line/column in one pass at the end
-    if (options.sourceMap == null) {
-      this.mapOffsets = null;
+    // `writeWithMap*` functions record the output offset and original position of every mapped node,
+    // and `generateSourceMap` encodes them in one pass at the end
+    if (options.sourcemap !== true) {
+      this.sourceText = null;
       this.mapPositions = null;
       this.mapNames = null;
     } else {
-      this.mapOffsets = [];
+      debugAssert(options.sourceText != null);
+      this.sourceText = options.sourceText;
       this.mapPositions = [];
       this.mapNames = [];
     }

@@ -1,6 +1,6 @@
 {
   "name": "@oxc-project/types",
-  "version": "0.144.0",
+  "version": "0.147.0",
   "description": "Types for Oxc AST nodes",
   "keywords": [
     "AST",
@@ -16,7 +16,7 @@
     "directory": "npm/oxc-types"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "types.d.ts"

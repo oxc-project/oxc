@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-eslint",
-  "version": "1.78.0",
+  "version": "1.80.0",
   "description": "ESLint's built-in rules as an Oxlint plugin",
   "keywords": [
     "eslint",
@@ -18,7 +18,7 @@
     "directory": "npm/oxlint-plugin-eslint"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "index.js",

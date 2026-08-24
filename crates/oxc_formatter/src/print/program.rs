@@ -11,7 +11,7 @@ use crate::{
     ir_transform::sort_imports_chunk,
     print::semicolon::OptionalSemicolon,
     utils::{
-        is_dropped_statement,
+        export_declaration_span, export_default_declaration_span, is_dropped_statement,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
     },
     write,
@@ -80,30 +80,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
             }
 
             let span = match stmt.as_ref() {
-                // `@decorator export class A {}`
-                // Get the span of the decorator.
-                Statement::ExportDeclaration(export) => {
-                    if let Declaration::ClassDeclaration(decl) = &export.declaration
-                        && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
-                    {
-                        decorator.span()
-                    } else {
-                        export.span
-                    }
-                }
-                // `@decorator export default class A {}`
-                // Get the span of the decorator.
+                // `@decorator export class A {}`: Start the span at the decorator
+                Statement::ExportDeclaration(export) => export_declaration_span(export),
                 Statement::ExportDefaultDeclaration(export) => {
-                    if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
-                        &export.declaration
-                        && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
-                    {
-                        decorator.span()
-                    } else {
-                        export.span
-                    }
+                    export_default_declaration_span(export)
                 }
                 _ => stmt.span(),
             };

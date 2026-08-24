@@ -47,7 +47,7 @@ declare_react_compiler_lint!(
     UseMemo,
     react,
     correctness,
-    version = "next",
+    version = "1.79.0",
     short_description = "Validates usage of the `useMemo()` hook against common mistakes.",
 );
 

@@ -1,41 +1,18 @@
-// Printing options, and the source map types the `sourceMap` option brings with it.
+// Printing options and returned output types.
 
-/**
- * Source map generator, compatible with `SourceMapGenerator` from the `source-map` package.
- */
-export interface SourceMapGenerator {
-  addMapping(mapping: Mapping): void;
-  file?: string;
-  _file?: string;
+/** Standard Source Map v3 output, compatible with Rollup and other JavaScript tooling. */
+export interface SourceMap {
+  version: 3;
+  mappings: string;
+  names: string[];
+  sources: string[];
+  sourcesContent?: string[];
 }
 
-/**
- * Source map mapping emitted through `Options["sourceMap"]`.
- *
- * Note: the `Mapping` objects passed to `addMapping` are reused across calls;
- * implementations must copy any values they need to retain.
- */
-export interface Mapping {
-  original: Position;
-  generated: Position;
-  name: string | undefined;
-  source: string;
-}
-
-/**
- * A `Mapping` before the per-mapping fields are filled in.
- */
-export type MutableMapping = Omit<Mapping, "original" | "source"> & {
-  original: Position | null;
-  source: string | undefined;
-};
-
-/**
- * Position in the original source, as found on a node's `loc.start`.
- */
-export interface Position {
-  line: number;
-  column: number;
+/** Result returned by `printSync`. */
+export interface CodegenResult {
+  code: string;
+  map: SourceMap | null;
 }
 
 /**
@@ -44,7 +21,8 @@ export interface Position {
 export interface Options {
   /**
    * String to use for indentation, defaults to `"\t"`.
-   * Must consist only of spaces and/or tabs - anything else falls back to a tab.
+   * Must be a non-empty string consisting only of spaces and/or tabs.
+   * Throws a `TypeError` otherwise.
    */
   indent?: string;
 
@@ -66,7 +44,17 @@ export interface Options {
   ts?: boolean;
 
   /**
-   * If present, source mappings are emitted through it.
+   * Generate and return a source map in `CodegenResult.map`.
    */
-  sourceMap?: SourceMapGenerator;
+  sourcemap?: boolean;
+
+  /**
+   * Original source text. Required when `sourcemap` is `true`.
+   */
+  sourceText?: string;
+
+  /**
+   * Original source filename recorded in the returned source map.
+   */
+  sourceFilename?: string;
 }

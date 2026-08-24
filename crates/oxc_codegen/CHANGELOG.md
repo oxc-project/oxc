@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+- 6c5ad1b codegen: Only add mapping names for `PrivateIdentifier`s which have changed (#25958) (overlookmotel)
+- a185ac3 codegen: Print `#` before private identifier in TS signature key (#25938) (overlookmotel)
+
+### ⚡ Performance
+
+- fe444cc codegen: Avoid allocations for single comment anchors (#25598) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- c1369a7 codegen: Resolve private names in class heritage (#25588) (camc314)
+- c002f29 codegen: Escape sources for empty import specifiers (#25586) (camc314)
+- b4e6a9e codegen: Output newline after `export default interface` (#25487) (overlookmotel)
+- 1645d93 react_compiler: Preserve source spans (#25462) (Boshen)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

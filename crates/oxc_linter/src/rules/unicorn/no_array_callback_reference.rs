@@ -7,7 +7,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_import_symbol,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::is_import_from_module,
 };
 
 fn no_array_callback_reference_diagnostic(span: Span) -> OxcDiagnostic {
@@ -203,10 +204,9 @@ fn is_allowed_builtin(name: &str) -> bool {
 fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
     match expr {
         Expression::Identifier(ident) => {
-            if is_import_symbol(ident, "effect", "Effect", ctx) {
+            if is_import_from_module(ident, "effect", ctx) {
                 return true;
             }
-
             matches!(
                 ident.name.as_str(),
                 "Promise"
@@ -307,6 +307,7 @@ fn test() {
         "foo.every(_ ? Boolean : _ ? Boolean : Boolean)",
         "foo.map(_ ? String : _ ? Number : Boolean)",
         r#"import { Effect as E } from "effect"; const foo = "boo"; E.some(foo)"#,
+        r#"import { Option as O } from "effect"; const foo = "boo"; O.some(foo)"#,
     ];
 
     let fail = vec![
