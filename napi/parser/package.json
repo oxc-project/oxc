@@ -20,7 +20,7 @@
     "directory": "napi/parser"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "src-js/bindings.js",

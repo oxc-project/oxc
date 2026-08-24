@@ -16,7 +16,7 @@
     "directory": "npm/oxc-types"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "types.d.ts"

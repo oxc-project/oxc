@@ -21,7 +21,7 @@
     "directory": "napi/minify"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "browser.js",
