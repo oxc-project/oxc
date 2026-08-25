@@ -1,6 +1,4 @@
-use std::hash;
-#[cfg(not(test))]
-use std::path::Path;
+use std::{hash, path::Path};
 
 use bitflags::bitflags;
 
@@ -75,7 +73,9 @@ impl FrameworkFlags {
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
-#[cfg(not(test))]
+///
+/// Also matches hyphenated markers like NestJS' `app.e2e-spec.ts`, which projects configure
+/// through `testRegex` rather than `testMatch`.
 pub fn is_jestlike_file(path: &Path) -> bool {
     use std::ffi::OsStr;
 
@@ -88,8 +88,19 @@ pub fn is_jestlike_file(path: &Path) -> bool {
 
     path.file_name() // foo/bar/baz.test.ts -> baz.test.ts
         .and_then(OsStr::to_str)
-        .and_then(|filename| filename.split('.').rev().nth(1)) // baz.test.ts -> test
-        .is_some_and(|name_or_first_ext| name_or_first_ext == "test" || name_or_first_ext == "spec")
+        .is_some_and(is_test_file_name)
+}
+
+fn is_test_file_name(filename: &str) -> bool {
+    let mut segments = filename.rsplit('.').skip(1); // baz.e2e-spec.ts -> e2e-spec, baz
+    match segments.next() {
+        Some("test" | "spec") => true,
+        // Mirrors the `(\.|/)` Jest's default `testRegex` requires in front of the marker.
+        Some(segment) => {
+            (segment.ends_with("-test") || segment.ends_with("-spec")) && segments.next().is_some()
+        }
+        None => false,
+    }
 }
 
 #[cfg(not(test))]
@@ -110,4 +121,45 @@ pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
 pub enum FrameworkOptions {
     Default,  // default
     VueSetup, // context is inside `<script setup>`
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use super::is_jestlike_file;
+
+    #[test]
+    fn test_is_jestlike_file() {
+        let cases = [
+            ("foo.spec.ts", true),
+            ("foo.test.tsx", true),
+            ("foo.spec.mjs", true),
+            ("foo.test.cts", true),
+            ("foo.e2e.spec.ts", true),
+            ("src/nested/foo.spec.ts", true),
+            ("foo.ts", false),
+            ("foo.d.ts", false),
+            ("foo", false),
+            ("foo.e2e-spec.ts", true),
+            ("foo.int-spec.ts", true),
+            ("foo.e2e-aws-spec.ts", true),
+            ("foo.integration-test.ts", true),
+            ("foo.myspec.ts", false),
+            ("foo.latest.ts", false),
+            ("foo.spec-e2e.ts", false),
+            ("spec.ts", true),
+            ("test.ts", true),
+            ("ab-test.ts", false),
+            ("unit-spec.ts", false),
+            ("homepage.ab-test.ts", true),
+            ("__tests__/foo.ts", true),
+            ("src/__tests__/nested/foo.ts", true),
+            ("src/nested/foo.ts", false),
+        ];
+
+        for (path, expected) in cases {
+            assert_eq!(is_jestlike_file(Path::new(path)), expected, "path: {path}");
+        }
+    }
 }

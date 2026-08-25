@@ -1250,6 +1250,17 @@ mod test {
     }
 
     #[test]
+    fn test_enable_vitest_plugin_on_hyphenated_test_file() {
+        let args = &[
+            "--vitest-plugin",
+            "-c",
+            "fixtures/cli/eslintrc_vitest_replace/eslintrc.json",
+            "fixtures/cli/eslintrc_vitest_replace/foo.e2e-spec.js",
+        ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_import_plugin_enabled_in_config() {
         let args_1 = &["-c", ".oxlintrc.json", "test.js"];
         // support import-x namespace see #8779
