@@ -1,0 +1,19 @@
+crates/oxc_regular_expression/src/parser/mod.rs
+  s_16171edbec7fcd::t_fce8802c5a8cbb 294-301
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f8a609cd7c5e0fe15bf5ce1f58ace99cd5dc0924",
+  "prompts": {},
+  "sessions": {
+    "s_16171edbec7fcd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03672-9d9d-74f2-802b-6d0989d2b91d",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
