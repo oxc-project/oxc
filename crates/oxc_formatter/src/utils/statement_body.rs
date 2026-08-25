@@ -59,8 +59,37 @@ pub fn write_node_with_trailing_comments_before<'a, T>(
     T: Format<'a, JsFormatContext<'a>> + GetSpan,
 {
     FormatNodeWithoutTrailingComments(node).fmt(f);
-    let comments = f.context().comments().comments_before_character(node.span().end, character);
-    FormatTrailingComments::Comments(comments).fmt(f);
+    write_trailing_comments_before(node.span().end, character, f);
+}
+
+/// The node-less half of [`write_node_with_trailing_comments_before`]:
+/// prints the pending comments bounded at the next `character` as trailing comments
+/// (e.g. an empty for-head slot's comments before its `;`).
+pub fn write_trailing_comments_before(start: u32, character: u8, f: &mut JsFormatter<'_, '_>) {
+    let comments = f.context().comments().comments_before_character(start, character);
+    let same_line_count =
+        comments.iter().take_while(|comment| !comment.preceded_by_newline()).count();
+    let (same_line, own_line) = comments.split_at(same_line_count);
+
+    FormatTrailingComments::Comments(same_line).fmt(f);
+    // Own-line comments print in place, never via `line_suffix`:
+    // deferred, they would escape past the caller's token (and whatever follows before the flush).
+    // The hard break both flushes a pending same-line line comment and expands the enclosing group,
+    // as the own-line invariant requires;
+    // the caller's token follows a block comment directly (`/* c */;`),
+    // the stable form its own broken output re-parses to.
+    for comment in own_line {
+        if f.lines_before(comment.span) > 1 {
+            write!(f, empty_line());
+        } else {
+            write!(f, hard_line_break());
+        }
+        f.context_mut().comments_mut().increment_printed_count();
+        write!(f, comment);
+        if comment.is_line() {
+            write!(f, hard_line_break());
+        }
+    }
 }
 
 /// Comments between a block's `}` and a following keyword (`else`/`catch`/`finally`)
@@ -123,11 +152,10 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
-            // Add space before empty statement if it has leading comments
-            // e.g., `for (x of y) /*comment*/ ;`
-            let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
-            if has_leading_comments {
-                write!(f, [space()]);
+            // The `;` IS the body (content), so the head-body separator applies before it too;
+            // without comments no separator is written (`while (x);`).
+            if f.context().comments().has_comment_before(empty.span.start) {
+                write_head_body_separator(empty.span.start, f);
             }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {

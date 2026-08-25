@@ -1,0 +1,66 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments in a classic for-head keep their slot: they never cross the head's
+// `;`s or its `)` in either direction, with or without a node in the slot.
+// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Prettier moves empty-slot comments backward across the `;`s onto the init
+// (`for (a /*8*/ /*9*/;;)`) -- an attachment artifact of the kind prettier is
+// currently fixing elsewhere (prettier#19894 family).
+for (a; /*8*/; /*9*/) ;
+for (a;; /* c */) ;
+for (a;; /* c */) {}
+for (a /* c */;;) ;
+for (a; b /* c */;) {}
+for (; /*t*/ b;) ;
+for (/*s0*/;;) ;
+for (;/*s1*/;) {}
+for (;;/*s2*/) ;
+for (/*s0*/; /*s1*/; /*s2*/) ;
+for (;;) /* after */ ;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments in a classic for-head keep their slot: they never cross the head's
+// `;`s or its `)` in either direction, with or without a node in the slot.
+// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Prettier moves empty-slot comments backward across the `;`s onto the init
+// (`for (a /*8*/ /*9*/;;)`) -- an attachment artifact of the kind prettier is
+// currently fixing elsewhere (prettier#19894 family).
+for (a; /*8*/; /*9*/);
+for (a; ; /* c */);
+for (a; ; /* c */) {}
+for (a /* c */; ;);
+for (a; b /* c */;) {}
+for (; /*t*/ b;);
+for ( /*s0*/;;);
+for (; /*s1*/;) {}
+for (;; /*s2*/);
+for ( /*s0*/; /*s1*/; /*s2*/);
+for (;;) /* after */ ;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments in a classic for-head keep their slot: they never cross the head's
+// `;`s or its `)` in either direction, with or without a node in the slot.
+// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Prettier moves empty-slot comments backward across the `;`s onto the init
+// (`for (a /*8*/ /*9*/;;)`) -- an attachment artifact of the kind prettier is
+// currently fixing elsewhere (prettier#19894 family).
+for (a; /*8*/; /*9*/);
+for (a; ; /* c */);
+for (a; ; /* c */) {}
+for (a /* c */; ;);
+for (a; b /* c */;) {}
+for (; /*t*/ b;);
+for ( /*s0*/;;);
+for (; /*s1*/;) {}
+for (;; /*s2*/);
+for ( /*s0*/; /*s1*/; /*s2*/);
+for (;;) /* after */ ;
+
+===================== End =====================

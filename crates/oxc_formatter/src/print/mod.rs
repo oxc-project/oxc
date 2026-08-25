@@ -81,7 +81,7 @@ use crate::{
         },
         statement_body::{
             FormatStatementBody, write_comments_between_blocks, write_head_body_separator,
-            write_node_with_trailing_comments_before,
+            write_node_with_trailing_comments_before, write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
@@ -808,11 +808,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
 
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let body = self.body();
-        write!(f, group(&format_args!("do", FormatStatementBody::new(body))));
-        if matches!(body.as_ref(), Statement::BlockStatement(_)) {
-            write!(f, space());
+        let is_block_body = matches!(body.as_ref(), Statement::BlockStatement(_));
+        if is_block_body {
+            // The block's trailing pass would claim a comment past the `while` keyword;
+            // the keyword site splits the comments instead.
+            write!(f, "do");
+            write_head_body_separator(body.span().start, f);
+            FormatNodeWithoutTrailingComments(body).fmt(f);
         } else {
-            write!(f, hard_line_break());
+            write!(f, group(&format_args!("do", FormatStatementBody::new(body))));
+        }
+
+        // Lexical scan for the keyword's first byte: the gap holds only trivia and `while`
+        let comments = f.context().comments().comments_before_character(body.span().end, b'w');
+        if write_comments_between_blocks(comments, f) {
+            if is_block_body {
+                write!(f, space());
+            } else {
+                write!(f, hard_line_break());
+            }
         }
 
         // Comments inside the parens belong to the test and stay there;
@@ -833,44 +847,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
     }
 }
 
-/// Formats comments that appear before empty statements in control structures.
-///
-/// Example:
-/// ```js
-/// // Input:
-/// for (init;;) /* comment */ ;
-/// for (init;;update) /* comment */ ;
-/// for (init of iterable) /* comment */ ;
-/// for (init in iterable) /* comment */ ;
-/// while (test) /* comment */ ;
-/// if (test) /* comment */ ;
-///
-/// // Output:
-/// for (init /* comment */;; );
-/// for (init; ; update /* comment */);
-/// for (init of iterable /* comment */) ;
-/// for (init in iterable /* comment */) ;
-/// while (test /* comment */) ;
-/// if (test /* comment */) ;
-/// ```
-///
-/// This ensures compatibility with [Prettier's comment handling for empty statements](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/printer-methods.js#L15).
-struct FormatCommentForEmptyStatement<'a, 'b>(&'b AstNode<'a, Statement<'a>>);
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentForEmptyStatement<'a, '_> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let AstNodes::EmptyStatement(empty) = self.0.as_ast_nodes() {
-            let comments = f.context().comments().comments_before(empty.span.start);
-            FormatTrailingComments::Comments(comments).fmt(f);
-            empty.format_trailing_comments(f);
-        }
-    }
-}
-
 /// The rightmost expression inside a statement head's parentheses
 /// (if/while test, for-in/for-of right, with object),
 /// printed without its generic trailing pass so the head's `)` bounds its comments.
-/// Comments past the `)` are left pending: for the statement body's leading pass,
-/// or the caller's `FormatCommentForEmptyStatement` where one applies.
+/// Comments past the `)` are left pending for the statement body's leading pass.
 struct FormatParenHeadExpression<'a, 'b> {
     expression: &'b AstNode<'a, Expression<'a>>,
     /// Start of the statement's body;
@@ -878,6 +858,7 @@ struct FormatParenHeadExpression<'a, 'b> {
     /// and it bounds the lexical scan (see `Comments::end_including_source_parens`).
     body_start: u32,
 }
+
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatParenHeadExpression<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // `FormatNodeWithoutTrailingComments` already handles suppression comments internally,
@@ -907,6 +888,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatParenHeadExpression<'a, '_> {
         }
     }
 }
+
 impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
         let (content_end, print_semicolon) = suppressed_statement_content_end(&self.body, f);
@@ -921,18 +903,37 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
                 "while",
                 space(),
                 "(",
-                group(&soft_block_indent(&format_args!(
-                    FormatParenHeadExpression {
-                        expression: self.test(),
-                        body_start: body.span().start
-                    },
-                    FormatCommentForEmptyStatement(body)
-                ))),
+                group(&soft_block_indent(&FormatParenHeadExpression {
+                    expression: self.test(),
+                    body_start: body.span().start
+                })),
                 ")",
                 FormatStatementBody::new(body)
             ))
         );
     }
+}
+
+/// A for-head `;`-bounded slot (init/test):
+/// the node (if any) with its trailing comments bounded at the slot's closing `;`,
+/// or the slot's pending comments alone when it is empty.
+/// Returns the scan cursor advanced past the `;`
+/// (the next slot's anchor when that slot has no node).
+///
+/// The update slot is different:
+/// its closing token is the head's `)`, which a parenthesized update's own `)` would false-match.
+/// It reuses `FormatParenHeadExpression` (whose `end_including_source_parens` scan resolves the right `)`) instead.
+fn write_for_head_slot<'a, T>(node: Option<&T>, cursor: u32, f: &mut JsFormatter<'_, 'a>) -> u32
+where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    let anchor = node.map_or(cursor, |node| node.span().end);
+    if let Some(node) = node {
+        write_node_with_trailing_comments_before(node, b';', f);
+    } else {
+        write_trailing_comments_before(anchor, b';', f);
+    }
+    f.comments().position_after_character(anchor, b';')
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
@@ -946,37 +947,55 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
         let test = self.test();
         let update = self.update();
         let body = self.body();
-        let format_body = FormatStatementBody::new(body);
-        if init.is_none() && test.is_none() && update.is_none() {
-            return write!(f, [group(&format_args!("for", space(), "(;;)", format_body))]);
-        }
+        // `for (;;)` prints without the slot separator spaces
+        let is_headless = init.is_none() && test.is_none() && update.is_none();
 
-        let format_inner = format_with(|f| {
-            write!(
-                f,
-                [
-                    "for",
-                    space(),
-                    "(",
-                    group(&soft_block_indent(&format_args!(
-                        init,
-                        (test.is_none() && update.is_none())
-                            .then_some(FormatCommentForEmptyStatement(body)),
-                        ";",
-                        soft_line_break_or_space(),
-                        test,
-                        (update.is_none()).then_some(FormatCommentForEmptyStatement(body)),
-                        ";",
-                        update.is_some().then_some(soft_line_break_or_space()),
-                        update,
-                        FormatCommentForEmptyStatement(body)
-                    ))),
-                    ")",
-                    format_body
-                ]
-            );
+        let format_head = format_once(|f| {
+            // Comments keep their side of the head's `;`s and its `)` (comments after the `)` lead the body);
+            // each slot owns the comments before its closing token, with or without a node to anchor on.
+            // Lexical scans: each gap holds only trivia and `;`.
+            if f.comments().has_comment_before(body.span().start) {
+                let mut cursor = f.comments().position_after_character(self.span().start, b'(');
+                cursor = write_for_head_slot(init, cursor, f);
+                write!(f, ";");
+                if !is_headless {
+                    write!(f, soft_line_break_or_space());
+                }
+                cursor = write_for_head_slot(test, cursor, f);
+                write!(f, ";");
+                if update.is_some() {
+                    write!(f, soft_line_break_or_space());
+                }
+                if let Some(update) = update {
+                    FormatParenHeadExpression { expression: update, body_start: body.span().start }
+                        .fmt(f);
+                } else {
+                    write_trailing_comments_before(cursor, b')', f);
+                }
+            } else {
+                // No comment can need placing; skip the lexical scans
+                write!(f, [init, ";"]);
+                if !is_headless {
+                    write!(f, soft_line_break_or_space());
+                }
+                write!(f, [test, ";"]);
+                if update.is_some() {
+                    write!(f, soft_line_break_or_space());
+                }
+                write!(f, update);
+            }
         });
-        write!(f, group(&format_inner));
+        write!(
+            f,
+            group(&format_args!(
+                "for",
+                space(),
+                "(",
+                group(&soft_block_indent(&format_head)),
+                ")",
+                FormatStatementBody::new(body)
+            ))
+        );
     }
 }
 
@@ -1015,7 +1034,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
                     expression: self.right(),
                     body_start: body.span().start
                 },
-                FormatCommentForEmptyStatement(body),
                 // Flushes a pending in-paren line comment before the `)`
                 // (this head is ungrouped, so no break would flush it otherwise)
                 line_suffix_boundary(),

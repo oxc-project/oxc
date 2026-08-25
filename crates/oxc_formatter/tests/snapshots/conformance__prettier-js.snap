@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 767/810 (94.69%), 23 files skipped
+js compatibility: 766/810 (94.57%), 23 files skipped
 
 # Failed
 
@@ -22,17 +22,18 @@ js compatibility: 767/810 (94.69%), 23 files skipped
 | js/comments/tagged-template-literal.js | 💥💥 | 89.66% |
 | js/comments/try.js | 💥💥 | 66.67% |
 | js/comments/assignment/variable-declarator.js | 💥 | 88.00% |
-| js/comments/between-head-and-body/between-head-and-body.js | 💥 | 92.83% |
-| js/comments/between-head-and-body/empty-statement.js | 💥 | 77.38% |
+| js/comments/between-head-and-body/between-head-and-body.js | 💥 | 90.85% |
+| js/comments/between-head-and-body/empty-statement.js | 💥 | 86.05% |
 | js/comments/first-argument/first-argument.js | 💥 | 92.98% |
 | js/comments/function/18146.js | 💥 | 51.80% |
 | js/comments/function/between-parentheses-and-function-body.js | 💥 | 47.62% |
 | js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
-| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 85.71% |
+| js/explicit-resource-management/valid-await-using-comments.js | 💥 | 88.24% |
+| js/for/9812-2.js | 💥 | 88.89% |
 | js/for/continue-and-break-comment-without-blocks.js | 💥 | 74.24% |
-| js/for-of/comments.js | 💥 | 42.11% |
+| js/for-of/comments.js | 💥 | 44.83% |
 | js/function/iife.js | 💥 | 14.89% |
 | js/function/issue-12967.js | 💥 | 0.00% |
 | js/if/expr_and_same_line_comments.js | 💥 | 81.93% |
