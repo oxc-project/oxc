@@ -4,10 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::context::LintContext;
+use crate::frameworks::is_jestlike_file;
 use crate::rule::Rule;
 use crate::utils::{
-    JestFnKind, JestGeneralFnKind, is_jest_file, iter_possible_jest_call_node,
-    parse_general_jest_fn_call,
+    JestFnKind, JestGeneralFnKind, iter_possible_jest_call_node, parse_general_jest_fn_call,
 };
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
@@ -53,7 +53,7 @@ declare_oxc_lint!(
 impl Rule for NoExport {
     fn run_once(&self, ctx: &LintContext) {
         // only used in jest files
-        if !is_jest_file(ctx) {
+        if !is_jestlike_file(ctx.file_path()) {
             return;
         }
 
@@ -99,6 +99,24 @@ fn test() {
         ("module.somethingElse = 'foo';", None, None, None),
         ("export const myThing = 'valid'", None, None, Some(PathBuf::from("foo.test.js"))),
         ("export const myThing = 'valid'", None, None, Some(PathBuf::from("foo.js"))),
+        (
+            "export const myThing = 'valid'; test('a test', () => { expect(1).toBe(1); })",
+            None,
+            None,
+            Some(PathBuf::from("foo.js")),
+        ),
+        (
+            "export const myThing = 'valid'; test('a test', () => { expect(1).toBe(1); })",
+            None,
+            None,
+            Some(PathBuf::from("latest.js")),
+        ),
+        (
+            "export const myThing = 'valid'; test('a test', () => { expect(1).toBe(1); })",
+            None,
+            None,
+            Some(PathBuf::from("foo.myspec.ts")),
+        ),
         ("export default function () {}", None, None, Some(PathBuf::from("foo.js"))),
         ("module.exports = function(){}", None, None, None),
         ("module.exports.myThing = 'valid';", None, None, None),
@@ -110,6 +128,12 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("foo.test.js")),
+        ),
+        (
+            "export const myThing = 'invalid'; test('a test', () => { expect(1).toBe(1);});",
+            None,
+            None,
+            Some(PathBuf::from("app.e2e-spec.ts")),
         ),
         (
             "
