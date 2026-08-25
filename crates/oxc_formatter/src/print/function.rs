@@ -7,11 +7,8 @@ use super::{
     FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,
 };
 use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{prelude::*, trivia::FormatLeadingComments},
-    print::semicolon::OptionalSemicolon,
-    write,
+    ast_nodes::AstNode, format_args, formatter::prelude::*, print::semicolon::OptionalSemicolon,
+    utils::statement_body::write_head_body_separator, write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Function<'a>> {
@@ -120,8 +117,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let comments = f.context().comments().block_comments_before(self.span.start);
-        write!(f, [space(), FormatLeadingComments::Comments(comments)]);
+        write_head_body_separator(self.span.start, f);
 
         let statements = self.statements();
         let directives = self.directives();

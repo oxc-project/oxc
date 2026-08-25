@@ -14,7 +14,13 @@ use super::FormatWrite;
 /// The sequence spans from the first element's source `(` when it is parenthesized,
 /// so a comment inside those dropped parentheses sits within the sequence's span but leads the sequence,
 /// not the element: it prints OUTSIDE the formatter-added parentheses
-/// (`((/* c */ a), b);` -> `/* c */ (a, b);`, prettier#19894's fixpoint).
+/// (prettier#19894's fixpoint):
+///
+/// ```js
+/// ((/* c */ a), b);
+/// // ->
+/// /* c */ (a, b);
+/// ```
 pub fn sequence_leading_comments_start(sequence: &SequenceExpression<'_>) -> u32 {
     sequence.expressions.first().map_or(sequence.span.start, |e| e.span().start)
 }

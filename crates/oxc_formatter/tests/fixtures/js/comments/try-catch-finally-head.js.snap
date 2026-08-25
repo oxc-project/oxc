@@ -1,0 +1,219 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments between try/catch/finally heads and their `{` stay outside the
+// braces (head-body comment policy), and comments before the `finally`
+// keyword never cross it.
+// Known divergence (js/try/try.js, js/comments/try.js): Prettier pulls
+// line and own-line comments into the following block instead -- attachment
+// artifacts of the kind prettier is currently fixing elsewhere
+// (prettier#19894 family).
+try /* c */ {} catch {}
+try // c
+{} catch {}
+try
+// c
+{} catch {}
+
+try {} catch (e) /* c */ {}
+try {} catch (e) // c
+{}
+try {} catch (e)
+// c
+{}
+
+try {} finally /* c */ {}
+try {} finally // c
+{}
+try {} finally
+// c
+{}
+
+// Before the `finally` keyword: trailing the previous block
+try {} /* a */ finally {}
+try {} // a
+finally {}
+try {}
+// a
+finally {}
+try {} catch {} // a
+finally {}
+
+// Before the `catch` keyword: same rule
+// (divergence: Prettier pulls all but the inline-block shape into the catch block)
+try {} /* a */ catch {}
+try {} /* a */
+catch {}
+try {} // a
+catch {}
+try {}
+// a
+catch {}
+try {} // a
+catch (e) {} finally {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments between try/catch/finally heads and their `{` stay outside the
+// braces (head-body comment policy), and comments before the `finally`
+// keyword never cross it.
+// Known divergence (js/try/try.js, js/comments/try.js): Prettier pulls
+// line and own-line comments into the following block instead -- attachment
+// artifacts of the kind prettier is currently fixing elsewhere
+// (prettier#19894 family).
+try /* c */ {
+} catch {}
+try // c
+{
+} catch {}
+try
+// c
+{
+} catch {}
+
+try {
+} catch (e) /* c */ {}
+try {
+} catch (e) // c
+{}
+try {
+} catch (e)
+// c
+{}
+
+try {
+} finally /* c */ {
+}
+try {
+} finally // c
+{
+}
+try {
+} finally
+// c
+{
+}
+
+// Before the `finally` keyword: trailing the previous block
+try {
+} /* a */ finally {
+}
+try {
+} // a
+finally {
+}
+try {
+}
+// a
+finally {
+}
+try {
+} catch {
+} // a
+finally {
+}
+
+// Before the `catch` keyword: same rule
+// (divergence: Prettier pulls all but the inline-block shape into the catch block)
+try {
+} /* a */ catch {}
+try {
+} /* a */ catch {}
+try {
+} // a
+catch {}
+try {
+}
+// a
+catch {}
+try {
+} // a
+catch (e) {
+} finally {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments between try/catch/finally heads and their `{` stay outside the
+// braces (head-body comment policy), and comments before the `finally`
+// keyword never cross it.
+// Known divergence (js/try/try.js, js/comments/try.js): Prettier pulls
+// line and own-line comments into the following block instead -- attachment
+// artifacts of the kind prettier is currently fixing elsewhere
+// (prettier#19894 family).
+try /* c */ {
+} catch {}
+try // c
+{
+} catch {}
+try
+// c
+{
+} catch {}
+
+try {
+} catch (e) /* c */ {}
+try {
+} catch (e) // c
+{}
+try {
+} catch (e)
+// c
+{}
+
+try {
+} finally /* c */ {
+}
+try {
+} finally // c
+{
+}
+try {
+} finally
+// c
+{
+}
+
+// Before the `finally` keyword: trailing the previous block
+try {
+} /* a */ finally {
+}
+try {
+} // a
+finally {
+}
+try {
+}
+// a
+finally {
+}
+try {
+} catch {
+} // a
+finally {
+}
+
+// Before the `catch` keyword: same rule
+// (divergence: Prettier pulls all but the inline-block shape into the catch block)
+try {
+} /* a */ catch {}
+try {
+} /* a */ catch {}
+try {
+} // a
+catch {}
+try {
+}
+// a
+catch {}
+try {
+} // a
+catch (e) {
+} finally {
+}
+
+===================== End =====================

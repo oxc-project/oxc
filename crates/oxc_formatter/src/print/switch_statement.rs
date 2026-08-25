@@ -1,6 +1,5 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 
 use crate::{
     Format,
@@ -9,11 +8,11 @@ use crate::{
     formatter::{
         JsFormatter,
         prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     utils::{
-        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        is_dropped_statement, statement_body::FormatStatementBody,
+        is_dropped_statement,
+        statement_body::{FormatStatementBody, write_node_with_trailing_comments_before},
     },
     write,
 };
@@ -72,17 +71,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         let is_default = if let Some(test) = self.test() {
             write!(f, ["case", space()]);
             if is_single_block_statement {
-                // The test's generic trailing pass would claim an end-of-line comment
-                // after the `:` as a `line_suffix` and flush it past the block's `{`;
-                // bound the test's comments at the `:` (comments after it lead the block).
-                // For non-block consequents the flush lands before their line break,
-                // keeping the comment on the clause line, so the generic pass is correct there.
-                write!(f, FormatNodeWithoutTrailingComments(test));
-                let comments =
-                    f.context().comments().comments_before_character(test.span().end, b':');
-                if !comments.is_empty() {
-                    write!(f, [space(), FormatTrailingComments::Comments(comments)]);
-                }
+                // For non-block consequents the generic pass's `line_suffix` flush lands
+                // before their line break, keeping the comment on the clause line,
+                // so the bound is only needed before a block's `{`.
+                write_node_with_trailing_comments_before(test, b':', f);
             } else {
                 write!(f, test);
             }
@@ -94,14 +86,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         };
 
         // When the case block is empty, the case becomes a fallthrough, so it
-        // is collapsed directly on top of the next case (just a single
-        // hardline).
+        // is collapsed directly on top of the next case (just a single hardline).
         // When the block is a single statement _and_ it's a block statement,
-        // then the opening brace of the block can hug the same line as the
-        // case. But, if there's more than one statement, then the block
-        // _cannot_ hug. This distinction helps clarify that the case continues
-        // past the end of the block statement, despite the braces making it
-        // seem like it might end.
+        // then the opening brace of the block can hug the same line as the case.
+        // But, if there's more than one statement, then the block _cannot_ hug.
+        // This distinction helps clarify that the case continues past the end of the block statement,
+        // despite the braces making it seem like it might end.
         // Lastly, the default case is just to break and indent the body.
         //
         // switch (key) {
@@ -133,8 +123,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
 
         let consequent = self.consequent();
         if is_single_block_statement {
-            // The head-body comment policy applies:
-            // comments between the `:` and the `{` stay outside the braces.
             // `unwrap` is safe: the empty consequent returned above.
             write!(f, FormatStatementBody::new(consequent.first().unwrap()));
             return;

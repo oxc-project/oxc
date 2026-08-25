@@ -169,7 +169,21 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     });
 
                 if body_has_soft_line_break {
-                    write!(f, [space(), format_body]);
+                    // A block body pushed down by its head-side comments is indented under the arrow:
+                    // ```js
+                    // g = () =>
+                    //   // c
+                    //   {};
+                    // ```
+                    // Without comments no break exists and the indent would be inert,
+                    // but it must not wrap the block's own inner breaks.
+                    if arrow.get_expression().is_none()
+                        && f.comments().has_comment_before(body.span().start)
+                    {
+                        write!(f, [space(), indent(&format_body)]);
+                    } else {
+                        write!(f, [space(), format_body]);
+                    }
                 } else {
                     let should_add_parens = body.as_expression().is_some_and(should_add_parens);
 

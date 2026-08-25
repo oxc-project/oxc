@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-ts compatibility: 629/659 (95.45%), 16 files skipped
+ts compatibility: 624/659 (94.69%), 16 files skipped
 
 # Failed
 
@@ -13,12 +13,17 @@ ts compatibility: 629/659 (95.45%), 16 files skipped
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
+| typescript/class-comment/class-implements.ts | 💥 | 93.33% |
+| typescript/class-comment/declare.ts | 💥 | 72.00% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/comments/type-parameters.ts | 💥 | 81.82% |
 | typescript/comments/first-argument/first-argument.ts | 💥 | 81.16% |
 | typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 85.25% |
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 91.62% |
 | typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 83.64% |
+| typescript/interface/comments-generic.ts | 💥💥 | 91.80% |
+| typescript/interface2/comments-declare.ts | 💥 | 60.00% |
+| typescript/interface2/comments.ts | 💥 | 65.79% |
 | typescript/intersection/intersection-parens.ts | 💥💥✨ | 65.96% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 97.67% |
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 88.24% |

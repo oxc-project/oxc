@@ -25,7 +25,8 @@ else if (x) {
 }
 
 if (cond) stuff;
-/* comment*/ else stuff;
+/* comment*/
+else stuff;
 
 -------------------
 { printWidth: 100 }
@@ -38,6 +39,7 @@ else if (x) {
 }
 
 if (cond) stuff;
-/* comment*/ else stuff;
+/* comment*/
+else stuff;
 
 ===================== End =====================

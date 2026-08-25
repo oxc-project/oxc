@@ -59,8 +59,8 @@ use crate::{
         separated::FormatSeparatedIter,
         token::number::{format_number_token, format_trimmed_number, is_simple_number},
         trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments, format_leading_comments, format_trailing_comments,
+            FormatLeadingComments, FormatTrailingComments, format_leading_comments,
+            format_trailing_comments,
         },
     },
     options::{FormatTrailingCommas, Semicolons, TrailingSeparator},
@@ -71,13 +71,18 @@ use crate::{
         assignment_like::AssignmentLike,
         conditional::ConditionalLike,
         expression::ExpressionLeftSide,
-        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        format_node_without_trailing_comments::{
+            FormatNodeWithoutTrailingComments, format_content_without_comments_after,
+        },
         is_keyword_property_key,
         object::{
             format_property_key, is_quoted_new_method_signature, should_preserve_quote,
             should_preserve_quote_for_enum_member,
         },
-        statement_body::FormatStatementBody,
+        statement_body::{
+            FormatStatementBody, write_comments_between_blocks, write_head_body_separator,
+            write_node_with_trailing_comments_before,
+        },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
@@ -1081,6 +1086,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
         let consequent = self.consequent();
         let alternate = self.alternate();
 
+        let format_consequent = format_with(|f| {
+            let body = FormatStatementBody::new(consequent);
+            // The consequent's trailing pass would claim a comment past the `else` keyword;
+            // leave everything after it for the split below.
+            // A trailing suppression comment must stay visible to the consequent,
+            // so it preserves its original text.
+            if alternate.is_some()
+                && !f.comments().has_trailing_suppression_comment(consequent.span().end)
+            {
+                format_content_without_comments_after(&body, consequent.span().end, f);
+            } else {
+                body.fmt(f);
+            }
+        });
         write!(
             f,
             group(&format_args!(
@@ -1092,44 +1111,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                     body_start: consequent.span().start
                 })),
                 ")",
-                FormatStatementBody::new(consequent),
+                format_consequent,
             ))
         );
         if let Some(alternate) = alternate {
-            let alternate_start = alternate.span().start;
-            let comments = f.context().comments().comments_before(alternate_start);
-
-            let has_line_comment = comments.iter().any(|comment| comment.is_line());
-            let has_dangling_comments = comments
-                .last()
-                .or(f.comments().printed_comments().last())
-                .is_some_and(|last_comment| {
-                    // Ensure the comments are placed before the else keyword or on a new line
-                    f.source_text().slice_range(last_comment.span.end, alternate_start).trim()
-                        == "else"
-                });
-
-            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_))
-                && (!has_line_comment || !has_dangling_comments);
-
-            if else_on_same_line {
-                write!(f, [space(), has_dangling_comments.then(line_suffix_boundary)]);
-            } else {
-                write!(f, hard_line_break());
-            }
-
-            if has_dangling_comments && let Some(first_comment) = comments.first() {
-                if f.lines_before(first_comment.span) > 1 {
-                    write!(f, empty_line());
-                }
-                write!(
-                    f,
-                    FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
-                );
-                if has_line_comment {
-                    write!(f, hard_line_break());
-                } else {
+            // Lexical scan for the keyword's first byte: the gap holds only trivia and `else`.
+            let comments =
+                f.context().comments().comments_before_character(consequent.span().end, b'e');
+            if write_comments_between_blocks(comments, f) {
+                if matches!(consequent.as_ref(), Statement::BlockStatement(_)) {
                     write!(f, space());
+                } else {
+                    write!(f, hard_line_break());
                 }
             }
 
@@ -1216,12 +1209,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     }
 
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let comments = f.context().comments().line_comments_before(self.body.span().start);
-        FormatLeadingComments::Comments(comments).fmt(f);
-
         let label = self.label();
         let body = self.body();
-        write!(f, [label, ":"]);
+        write_node_with_trailing_comments_before(label, b':', f);
+        write!(f, ":");
         if matches!(body.as_ref(), Statement::EmptyStatement(_)) {
             let empty_comments = f.context().comments().comments_before(self.span.end);
             write!(
@@ -1234,7 +1225,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
                 ]
             );
         } else {
-            write!(f, [space(), body]);
+            write_head_body_separator(body.span().start, f);
+            write!(f, body);
         }
     }
 }
@@ -1448,7 +1440,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
         if self.r#const() {
             write!(f, ["const", space()]);
         }
-        write!(f, ["enum", space(), self.id(), space(), "{", self.body(), "}"]);
+        let body = self.body();
+        write!(f, ["enum", space(), FormatNodeWithoutTrailingComments(self.id())]);
+        write_head_body_separator(body.span().start, f);
+        write!(f, ["{", body, "}"]);
     }
 }
 
@@ -1840,14 +1835,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                     write!(f, [space(), format_extends]);
                 }
             }
-
-            let has_leading_own_line_comment =
-                f.context().comments().has_leading_own_line_comment(self.body.span().start);
-
-            if !has_leading_own_line_comment {
-                write!(f, [space()]);
-                body.format_leading_comments(f);
-            }
         });
 
         let content = format_with(|f| {
@@ -1867,8 +1854,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                 write!(f, [&format_args!(format_id, format_extends)]);
             }
 
-            write!(f, [space()]);
-            // Avoid printing leading comments of body
+            write_head_body_separator(body.span().start, f);
+            // Leading comments are printed by the separator above
             body.write(f);
         });
 
@@ -2044,12 +2031,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
             write!(f, ["declare", space()]);
         }
 
-        write!(f, ["module", space(), self.id()]);
-
+        write!(f, ["module", space()]);
         if let Some(body) = self.body() {
-            write!(f, [space(), body]);
+            write!(f, FormatNodeWithoutTrailingComments(self.id()));
+            write_head_body_separator(body.span().start, f);
+            write!(f, body);
         } else {
-            write!(f, OptionalSemicolon);
+            write!(f, [self.id(), OptionalSemicolon]);
         }
     }
 }
@@ -2060,19 +2048,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceDeclaration<'a>> {
             write!(f, ["declare", space()]);
         }
 
-        write!(f, self.kind().as_str());
+        write!(f, [self.kind().as_str(), space()]);
 
-        write!(f, [space(), self.id()]);
-
+        let mut id = self.id();
         let mut body = self.body();
         loop {
             match body.as_ast_nodes() {
                 AstNodes::TSNamespaceDeclaration(namespace) => {
-                    write!(f, [".", namespace.id()]);
+                    write!(f, [id, "."]);
+                    id = namespace.id();
                     body = namespace.body();
                 }
-                AstNodes::TSModuleBlock(body) => {
-                    write!(f, [space(), body]);
+                AstNodes::TSModuleBlock(block) => {
+                    write!(f, FormatNodeWithoutTrailingComments(id));
+                    write_head_body_separator(block.span().start, f);
+                    write!(f, block);
                     break;
                 }
                 _ => {
@@ -2090,7 +2080,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSGlobalDeclaration<'a>> {
         }
         let comments_before_global = f.context().comments().comments_before(self.global_span.start);
         write!(f, FormatLeadingComments::Comments(comments_before_global));
-        write!(f, ["global", space(), self.body()]);
+        let body = self.body();
+        write!(f, "global");
+        write_head_body_separator(body.span().start, f);
+        write!(f, body);
     }
 }
 

@@ -1,18 +1,106 @@
-use oxc_ast::ast::Statement;
+use oxc_ast::{Comment, ast::Statement};
 use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        JsFormatContext, JsFormatter,
-        prelude::{format_once, hard_line_break, soft_line_indent_or_space, space},
-        trivia::{FormatTrailingComments, format_leading_comments},
+        JsFormatContext, JsFormatter, JsFormatterExt as _,
+        prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
+        trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-    utils::suppressed::FormatSuppressedNode,
     write,
 };
+
+/// The separator between a construct's head and its `{`-delimited body,
+/// followed by the pending head-side comments, which stay OUTSIDE the braces (head-body comment policy):
+/// a same-line comment follows the space,
+/// a line comment then forces the `{` onto the next line via its own break,
+/// and an own-line comment keeps its own line:
+///
+/// ```js
+/// while (x) /* c */ {}
+///
+/// while (x) // c
+/// {}
+///
+/// if (x)
+/// // c
+/// {
+/// }
+/// ```
+///
+/// The caller prints the body (or its `{`) right after;
+/// when the head ends with a node, print it via `FormatNodeWithoutTrailingComments`,
+/// so its generic trailing pass cannot claim a line comment first.
+/// A pending `space()` a caller has already emitted is safe:
+/// the printer coalesces consecutive spaces and drops them at a line start.
+pub fn write_head_body_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
+    let comments = f.context().comments().comments_before(body_start);
+    if comments.first().is_some_and(|comment| comment.preceded_by_newline()) {
+        write!(f, hard_line_break());
+    } else {
+        write!(f, space());
+    }
+    FormatLeadingComments::Comments(comments).fmt(f);
+}
+
+/// Prints `node` with its generic trailing pass suppressed, then its trailing
+/// comments bounded at the next `character` (a `:` clause colon, a head's `)`).
+/// The caller prints that token next; comments past it are left pending
+/// (they lead whatever follows). Without the bound, the generic pass would
+/// claim an end-of-line comment and flush it past the following body's `{`.
+pub fn write_node_with_trailing_comments_before<'a, T>(
+    node: &T,
+    character: u8,
+    f: &mut JsFormatter<'_, 'a>,
+) where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    FormatNodeWithoutTrailingComments(node).fmt(f);
+    let comments = f.context().comments().comments_before_character(node.span().end, character);
+    FormatTrailingComments::Comments(comments).fmt(f);
+}
+
+/// Comments between a block's `}` and a following keyword (`else`/`catch`/`finally`)
+/// keep their positions: the same-line prefix trails the previous block,
+/// own-line comments keep their own lines (ending with their own break or space).
+///
+/// A same-line line comment rides a `line_suffix` and flushes at the emitted
+/// hard break — NEVER at a `line_suffix_boundary`, whose presence would
+/// poison the preceding group's fits measurement and expand content that fits.
+///
+/// Returns whether the caller still has to write its default separator
+/// before the keyword (`false` when the comments ended with their own).
+pub fn write_comments_between_blocks<'a>(
+    comments: &'a [Comment],
+    f: &mut JsFormatter<'_, 'a>,
+) -> bool {
+    let same_line_count =
+        comments.iter().take_while(|comment| !comment.preceded_by_newline()).count();
+    let (same_line, own_line) = comments.split_at(same_line_count);
+
+    if !same_line.is_empty() {
+        FormatTrailingComments::Comments(same_line).fmt(f);
+    }
+    if let Some(first) = own_line.first() {
+        // Flushes a pending same-line line comment, then starts the own-line run
+        write!(f, hard_line_break());
+        if f.lines_before(first.span) > 1 {
+            write!(f, empty_line());
+        }
+        FormatLeadingComments::Comments(own_line).fmt(f);
+        false
+    } else if same_line.last().is_some_and(|comment| comment.is_line()) {
+        // Only the last same-line comment can be a line comment
+        // (anything after one starts a new line, landing in `own_line`)
+        write!(f, hard_line_break());
+        false
+    } else {
+        true
+    }
+}
 
 pub struct FormatStatementBody<'a, 'b> {
     body: &'b AstNode<'a, Statement<'a>>,
@@ -43,14 +131,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
             }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
-            // Comments between the parent's head and the `{` lead the block and stay
-            // outside the braces (`while (x) /* c */ {}`);
-            // an own-line comment keeps its own line (`if (x)\n// c\n{}`).
-            if f.context().comments().own_line_comments_before(block.span().start).is_empty() {
-                write!(f, [space()]);
-            } else {
-                write!(f, [hard_line_break()]);
-            }
+            write_head_body_separator(block.span().start, f);
             write!(f, [block]);
         } else if self.force_space {
             write!(f, [space(), self.body]);
@@ -58,15 +139,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
             write!(
                 f,
                 [soft_line_indent_or_space(&format_once(|f| {
-                    // ```js
-                    // if (condition)
-                    //     statement; // comment1
-                    // // comment2
-                    // else {}
-                    // ```
-                    // The following logic is to ensure that `comment1` is printed as a trailing comment of the
-                    // statement, and leave `comment2` to be printed in the IfStatement's alternate.
-
+                    // Only live for a suppressed `if` consequent (`stuff() // oxfmt-ignore` before `else`):
+                    // print it verbatim, then flush its end-of-line comments.
+                    // Otherwise the `IfStatement` wrapper has hidden everything past the consequent already,
+                    // and this reduces to the `else` arm.
                     let body_span = self.body.span();
                     let is_consequent_of_if_statement_parent = matches!(
                         self.body.parent(),
@@ -74,12 +150,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        if f.context().comments().has_trailing_suppression_comment(body_span.end) {
-                            write!(f, format_leading_comments(body_span));
-                            write!(f, FormatSuppressedNode(body_span));
-                        } else {
-                            write!(f, FormatNodeWithoutTrailingComments(self.body));
-                        }
+                        write!(f, FormatNodeWithoutTrailingComments(self.body));
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);
