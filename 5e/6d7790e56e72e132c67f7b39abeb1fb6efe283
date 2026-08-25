@@ -1,0 +1,29 @@
+crates/oxc_parser/src/js/expression.rs
+  s_dc6c2dc5c7b9f4::t_1d1f562ead5f01 747,752-754,765-770,1000,1077-1086,1095,1150-1156,1178,1193-1195,1201,1309,1324
+crates/oxc_parser/src/lexer/mod.rs
+  s_896e7ea80c20ab::t_cd647ca151230f 56,201,219,234,479,547
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5e6d7790e56e72e132c67f7b39abeb1fb6efe283",
+  "prompts": {},
+  "sessions": {
+    "s_896e7ea80c20ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03933-885b-7c81-ba60-4999905a5515",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_dc6c2dc5c7b9f4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03906-292c-7a22-bd55-f559c5827ef9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
