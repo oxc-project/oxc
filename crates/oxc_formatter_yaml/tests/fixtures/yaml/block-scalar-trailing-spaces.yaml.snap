@@ -2,15 +2,25 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# The LAST content line drops its trailing spaces even when a kept blank
-# follows (the raw-text blank emission bypasses the printer's end-of-line
-# trimming); intermediate lines keep theirs - they are part of the value.
-last-line-before-kept-blank: |
+# Trailing whitespace in a block scalar is part of the VALUE and is preserved:
+# last-line spaces/tabs, and space-only lines more-indented than the block.
+# DIVERGES from the pinned Prettier (drops them, corrupting the value);
+# see AGENTS.md "Known divergences" (prettier#19764).
+strip-chomped-last-line: |-
+  value  
+folded-tab: >-
+  value	
+ws-only-line: >
+  x
+   
+# The blank line after `last  ` stays: trailing spaces and the blank are
+# independent (the unified blank-line rule).
+last-line-before-blank: |
   mid  
   last  
 
 after: 1
-# Keep chomping is verbatim: the last content line keeps its trailing spaces.
+# `|+` additionally keeps its trailing blank run as value.
 keep-is-verbatim: |+
   kept  
 
@@ -20,15 +30,25 @@ tail: 2
 ------------------
 { printWidth: 80 }
 ------------------
-# The LAST content line drops its trailing spaces even when a kept blank
-# follows (the raw-text blank emission bypasses the printer's end-of-line
-# trimming); intermediate lines keep theirs - they are part of the value.
-last-line-before-kept-blank: |
+# Trailing whitespace in a block scalar is part of the VALUE and is preserved:
+# last-line spaces/tabs, and space-only lines more-indented than the block.
+# DIVERGES from the pinned Prettier (drops them, corrupting the value);
+# see AGENTS.md "Known divergences" (prettier#19764).
+strip-chomped-last-line: |-
+  value  
+folded-tab: >-
+  value	
+ws-only-line: >
+  x
+   
+# The blank line after `last  ` stays: trailing spaces and the blank are
+# independent (the unified blank-line rule).
+last-line-before-blank: |
   mid  
-  last
+  last  
 
 after: 1
-# Keep chomping is verbatim: the last content line keeps its trailing spaces.
+# `|+` additionally keeps its trailing blank run as value.
 keep-is-verbatim: |+
   kept  
 
@@ -37,15 +57,25 @@ tail: 2
 -------------------
 { printWidth: 100 }
 -------------------
-# The LAST content line drops its trailing spaces even when a kept blank
-# follows (the raw-text blank emission bypasses the printer's end-of-line
-# trimming); intermediate lines keep theirs - they are part of the value.
-last-line-before-kept-blank: |
+# Trailing whitespace in a block scalar is part of the VALUE and is preserved:
+# last-line spaces/tabs, and space-only lines more-indented than the block.
+# DIVERGES from the pinned Prettier (drops them, corrupting the value);
+# see AGENTS.md "Known divergences" (prettier#19764).
+strip-chomped-last-line: |-
+  value  
+folded-tab: >-
+  value	
+ws-only-line: >
+  x
+   
+# The blank line after `last  ` stays: trailing spaces and the blank are
+# independent (the unified blank-line rule).
+last-line-before-blank: |
   mid  
-  last
+  last  
 
 after: 1
-# Keep chomping is verbatim: the last content line keeps its trailing spaces.
+# `|+` additionally keeps its trailing blank run as value.
 keep-is-verbatim: |+
   kept  
 

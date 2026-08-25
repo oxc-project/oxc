@@ -38,10 +38,15 @@ const NOTE_EOL_LINE_COMMENT_WIDTH =
   "Allowed: trailing `// comment` rides a line_suffix, never counts toward print width; Prettier only treats CSS-family `//` inline and breaks the value. See crates/oxc_formatter_css/AGENTS.md";
 const NOTE_CALC_VAR_FILL =
   "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md";
+
 const NOTE_EMBEDDED_EXPRESSION_INDENT =
   "We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently";
+
 const NOTE_UNION_ANNOTATION_FLAT =
   "Union broken out of its `:`/`as` position: Prettier retries the whole union flat on the indented next line, we expand to leading-`|` members right away. Core oxc_formatter (plain `.ts` too), not embed-specific";
+
+const NOTE_BLOCK_SCALAR_TRAILING_WS =
+  "We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md";
 
 const categories: Category[] = [
   {
@@ -279,6 +284,18 @@ const categories: Category[] = [
     notes: {
       "externals/aws-cloudformation-templates/RainModules/load-balancer.yml":
         "Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md",
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/RainModules/bucket.yml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
     },
   },
   {
@@ -330,6 +347,16 @@ for (const category of categories) {
   for (const r of categoryResult.optionSetResults) {
     const pct = ((r.passed / r.total) * 100).toFixed(2);
     console.log(`  ${JSON.stringify(r.options)}: ${r.passed}/${r.total} (${pct}%)`);
+  }
+
+  // A note whose fixture no longer fails is stale (e.g. resolved by a Prettier pin bump) — surface it for cleanup
+  const failedNames = new Set(
+    categoryResult.optionSetResults.flatMap((r) => r.failures.map((f) => f.name)),
+  );
+  for (const name of Object.keys(category.notes ?? {})) {
+    if (!failedNames.has(name)) {
+      console.warn(`  WARNING: note for "${name}" matched no failure, remove it?`);
+    }
   }
 }
 

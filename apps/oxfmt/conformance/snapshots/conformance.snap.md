@@ -251,7 +251,7 @@
 
 ## yaml
 
-### Option 1: 301/302 (99.67%)
+### Option 1: 295/302 (97.68%)
 
 ```json
 {"printWidth":80}
@@ -259,9 +259,15 @@
 
 | File | Note |
 | :--- | :--- |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELB_Access_Logs_And_Connection_Draining.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBGuidedAutoScalingRollingUpgrade.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBStickinessSample.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBWithLockedDownAutoScaledInstances.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/RainModules/bucket.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__bucket.yml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
 | [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md) | Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml](diffs/yaml/externals__aws-cloudformation-templates__Solutions__OperatingSystems__ubuntu20.04_cfn-hup.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
 
-### Option 2: 301/302 (99.67%)
+### Option 2: 295/302 (97.68%)
 
 ```json
 {"printWidth":100,"tabWidth":4,"proseWrap":"always"}
@@ -269,9 +275,15 @@
 
 | File | Note |
 | :--- | :--- |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELB_Access_Logs_And_Connection_Draining.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBGuidedAutoScalingRollingUpgrade.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBStickinessSample.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBWithLockedDownAutoScaledInstances.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/RainModules/bucket.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__bucket.yml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
 | [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md) | Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml](diffs/yaml/externals__aws-cloudformation-templates__Solutions__OperatingSystems__ubuntu20.04_cfn-hup.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
 
-### Option 3: 301/302 (99.67%)
+### Option 3: 295/302 (97.68%)
 
 ```json
 {"printWidth":120,"singleQuote":true,"bracketSpacing":false,"trailingComma":"none"}
@@ -279,7 +291,13 @@
 
 | File | Note |
 | :--- | :--- |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELB_Access_Logs_And_Connection_Draining.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBGuidedAutoScalingRollingUpgrade.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBStickinessSample.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBWithLockedDownAutoScaledInstances.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/RainModules/bucket.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__bucket.yml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
 | [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md) | Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md |
+| [externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml](diffs/yaml/externals__aws-cloudformation-templates__Solutions__OperatingSystems__ubuntu20.04_cfn-hup.yaml.md) | We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md |
 
 ## scss
 

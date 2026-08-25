@@ -46,9 +46,16 @@ Stream-tail end comments (`write_end_comments`) are the one document-layer excep
 Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Current divergences:
 
 - anchor/tag order (prettier#19524): source order is preserved, never reordered
-- EOF blank lines: the file always ends with exactly one newline, like every other formatter crate
-  (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines verbatim
-- keep-chomped tail at a space-only EOF line (no final newline): the line holds no line break, so it adds nothing to the kept tail;
+  (fixed upstream by prettier#19599, unreleased; drop this entry when the pin catches up)
+- block scalar trailing whitespace is part of the VALUE and preserved
+  - the last content line's spaces/tabs, and space-only lines more-indented than the block (content per YAML)
+  - The pinned Prettier drops both, corrupting the value; fixed upstream by prettier#19764 (unreleased), so `block-folded-strip.yml` stays a conformance failure until the pin catches up
+  - When converging, keep the blank line after such a scalar
+    - post-#19764 Prettier eats it; the unified blank-line rule (below) wins.
+- EOF blank lines: the file always ends with exactly one newline, like every other formatter crate (`|+` keep-chomped verbatim tails excepted)
+  - Prettier YAML alone preserves EOF blank lines verbatim
+- keep-chomped tail at a space-only EOF line (no final newline):
+  - its at-or-below-indent spaces hold no line break, so they add nothing to the kept tail;
   - Prettier counts it and prints one newline too many, changing the value `"\n"` → `"\n\n"` (prettier#19256 is the nearest issue)
 - `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
 - anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
