@@ -93,25 +93,6 @@ pub enum JestGeneralFnKind {
     Bench,
 }
 
-/// <https://jestjs.io/docs/configuration#testmatch-arraystring>
-pub fn is_jest_file(ctx: &LintContext) -> bool {
-    if ctx.file_path().components().any(|c| match c {
-        std::path::Component::Normal(p) => p == std::ffi::OsStr::new("__tests__"),
-        _ => false,
-    }) {
-        return true;
-    }
-
-    let file_path = ctx.file_path().to_string_lossy();
-    [
-        "spec.js", "spec.jsx", "spec.ts", "spec.tsx", "spec.mjs", "spec.cjs", "spec.mts",
-        "spec.cts", "test.js", "test.jsx", "test.ts", "test.tsx", "test.mjs", "test.cjs",
-        "test.mts", "test.cts",
-    ]
-    .iter()
-    .any(|ext| file_path.ends_with(ext))
-}
-
 pub fn is_type_of_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
@@ -342,54 +323,4 @@ pub fn convert_pattern(pattern: &str) -> CompactStr {
 
     // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
     format!("(?ui)^{pattern}(\\.|$)").into()
-}
-
-#[cfg(test)]
-mod test {
-    use std::{rc::Rc, sync::Arc};
-
-    use oxc_allocator::Allocator;
-    use oxc_parser::Parser;
-    use oxc_semantic::SemanticBuilder;
-    use oxc_span::SourceType;
-
-    use crate::{
-        ContextHost, ModuleRecord,
-        context::{ContextSubHost, ContextSubHostOptions},
-        options::LintOptions,
-    };
-
-    #[test]
-    fn test_is_jest_file() {
-        let allocator = Allocator::default();
-
-        let build_ctx = |path: &'static str| {
-            let source_type = SourceType::default();
-            let parser_ret = Parser::new(&allocator, "", source_type).parse();
-            let program = allocator.alloc(parser_ret.program);
-            let semantic = SemanticBuilder::new_linter().build(program).semantic;
-            Rc::new(ContextHost::new(
-                path,
-                vec![ContextSubHost::new(
-                    semantic,
-                    Arc::new(ModuleRecord::default()),
-                    0,
-                    ContextSubHostOptions::default(),
-                )],
-                &allocator,
-                LintOptions::default(),
-                Arc::default(),
-            ))
-            .spawn_for_test()
-        };
-
-        let ctx = build_ctx("foo.js");
-        assert!(!super::is_jest_file(&ctx));
-
-        let ctx = build_ctx("foo.test.js");
-        assert!(super::is_jest_file(&ctx));
-
-        let ctx = build_ctx("__tests__/foo/test.spec.js");
-        assert!(super::is_jest_file(&ctx));
-    }
 }

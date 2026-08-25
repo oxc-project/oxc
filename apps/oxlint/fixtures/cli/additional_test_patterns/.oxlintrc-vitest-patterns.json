@@ -1,0 +1,14 @@
+{
+  "plugins": ["vitest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "vitest/expect-expect": "error"
+  },
+  "settings": {
+    "vitest": {
+      "additionalTestPatterns": ["**/*.steps.ts"]
+    }
+  }
+}

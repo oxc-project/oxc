@@ -60,3 +60,17 @@ source: crates/oxc_linter/src/tester.rs
  7 │             
    ╰────
   help: If you want to share code between tests, move it into a separate file and import it from there.
+
+  ⚠ jest(no-export): Do not export from a test file.
+   ╭─[no_export.tsx:1:14]
+ 1 │ export const myThing = 'valid'; test('a test', () => {});
+   ·              ───────
+   ╰────
+  help: If you want to share code between tests, move it into a separate file and import it from there.
+
+  ⚠ jest(no-export): Do not export from a test file.
+   ╭─[no_export.tsx:1:14]
+ 1 │ export const myThing = 'valid'; test('a test', () => {});
+   ·              ───────
+   ╰────
+  help: If you want to share code between tests, move it into a separate file and import it from there.

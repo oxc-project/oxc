@@ -549,6 +549,11 @@ impl<'a> LintContext<'a> {
         self.parent.frameworks_options()
     }
 
+    /// See [`ContextHost::is_test_file_by_path`].
+    pub fn is_test_file_by_path(&self) -> bool {
+        self.parent.is_test_file_by_path()
+    }
+
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
     }

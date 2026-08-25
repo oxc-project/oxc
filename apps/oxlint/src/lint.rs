@@ -1266,6 +1266,27 @@ mod test {
         Tester::new().test_and_snapshot(args);
     }
 
+    // `sniff_for_frameworks` is stubbed out in `oxc_linter`'s test build, so path-based
+    // framework detection can only be tested end to end here.
+    #[test]
+    fn test_additional_test_patterns() {
+        let args_1 = &["-c", ".oxlintrc.json", "login.test.ts", "login.steps.ts"];
+        let args_2 = &["-c", ".oxlintrc-jest-patterns.json", "login.test.ts", "login.steps.ts"];
+        let args_3 = &["-c", ".oxlintrc-vitest-patterns.json", "login.test.ts", "login.steps.ts"];
+        Tester::new()
+            .with_cwd("fixtures/cli/additional_test_patterns".into())
+            .test_and_snapshot_multiple(&[args_1, args_2, args_3]);
+    }
+
+    // Separate test because a combined snapshot file name would exceed the OS limit.
+    #[test]
+    fn test_additional_test_patterns_anchored() {
+        let args = &["-c", ".oxlintrc-anchored.json", "e2e/a.steps.ts", "src/a.steps.ts"];
+        Tester::new()
+            .with_cwd("fixtures/cli/additional_test_patterns".into())
+            .test_and_snapshot(args);
+    }
+
     #[test]
     fn test_import_plugin_enabled_in_config() {
         let args_1 = &["-c", ".oxlintrc.json", "test.js"];

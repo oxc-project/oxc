@@ -6,8 +6,7 @@ use oxc_span::Span;
 use crate::context::LintContext;
 use crate::rule::Rule;
 use crate::utils::{
-    JestFnKind, JestGeneralFnKind, is_jest_file, iter_possible_jest_call_node,
-    parse_general_jest_fn_call,
+    JestFnKind, JestGeneralFnKind, iter_possible_jest_call_node, parse_general_jest_fn_call,
 };
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
@@ -47,13 +46,13 @@ declare_oxc_lint!(
 );
 
 // Emits a diagnostic if the file matches all of these criteria:
-// 1. name ends with test.ts, spec.ts, or similar
+// 1. the path marks it as a test file: a `__tests__` segment, a `.test.`/`.spec.` segment
+//    before the extension, or a `settings.{jest,vitest}.additionalTestPatterns` match
 // 2. at least one test fn call: it, test, etc.
 // 3. at least one export
 impl Rule for NoExport {
     fn run_once(&self, ctx: &LintContext) {
-        // only used in jest files
-        if !is_jest_file(ctx) {
+        if !ctx.is_test_file_by_path() {
             return;
         }
 
@@ -86,7 +85,11 @@ impl Rule for NoExport {
 fn test() {
     use std::path::PathBuf;
 
+    use serde_json::json;
+
     use crate::tester::Tester;
+
+    let exports_and_tests = "export const myThing = 'valid'; test('a test', () => {});";
 
     let pass = vec![
         (
@@ -102,6 +105,16 @@ fn test() {
         ("export default function () {}", None, None, Some(PathBuf::from("foo.js"))),
         ("module.exports = function(){}", None, None, None),
         ("module.exports.myThing = 'valid';", None, None, None),
+        (exports_and_tests, None, None, Some(PathBuf::from("latest.js"))),
+        (exports_and_tests, None, None, Some(PathBuf::from("e2e/login.steps.ts"))),
+        (
+            exports_and_tests,
+            None,
+            Some(
+                json!({ "settings": { "jest": { "additionalTestPatterns": ["**/*.helper.ts"] } } }),
+            ),
+            Some(PathBuf::from("e2e/login.steps.ts")),
+        ),
     ];
 
     let fail = vec![
@@ -163,6 +176,22 @@ fn test() {
             None,
             None,
             Some(PathBuf::from("foo.test.js")),
+        ),
+        (
+            exports_and_tests,
+            None,
+            Some(
+                json!({ "settings": { "jest": { "additionalTestPatterns": ["**/*.steps.ts"] } } }),
+            ),
+            Some(PathBuf::from("e2e/login.steps.ts")),
+        ),
+        (
+            exports_and_tests,
+            None,
+            Some(
+                json!({ "settings": { "vitest": { "additionalTestPatterns": ["**/*.steps.ts"] } } }),
+            ),
+            Some(PathBuf::from("e2e/login.steps.ts")),
         ),
         // TODO: support `module.exports`
         // ("module.exports['invalid'] = function() {};  test('a test', () => { expect(1).toBe(1);});", None),
