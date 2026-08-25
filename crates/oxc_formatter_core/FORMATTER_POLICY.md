@@ -110,6 +110,8 @@ node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print
 
 NOTE: Prettier's default `printWidth` is `80`, but Oxfmt is `100`.
 
+Fixture tests and Prettier conformance re-format every output and record idempotency violations in their snapshots/reports.
+
 ### Fixture tests
 
 Snapshot tests driven by fixture files under `tests/fixtures/`; they cover what the Prettier conformance suite does not (suppression, divergence pins, embedded shapes, ...).
@@ -135,10 +137,14 @@ cargo test -p <crate> --test conformance
 PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
 ```
 
+The Prettier suite lives under `crates/oxc_formatter_tests/prettier/` and is self-provisioned on the first conformance run. It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.
+
 JSDoc formatting is covered by plain fixture-pair tests in `oxc_formatter` (`--test jsdoc`, committed input/expected pairs — a mismatch is a failing test, not a tracked report entry).
 
 Failures must be either fixed or classified under "Known divergences".
 
-### Embedded conformance (`apps/oxfmt`)
+### E2E conformance (`apps/oxfmt`)
 
 The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt. Requires a dev build first.
+
+There are also conformance tests for each language that use real-world repositories.
