@@ -97,13 +97,6 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         Self::new_impl(start_ptr, cursor_ptr, Some(chunk_footer_ptr))
     }
 
-    /// Get the current cursor pointer for this [`Arena`]'s current chunk.
-    ///
-    /// If the `Arena` is empty (has no chunks), this returns a dangling pointer aligned to `CHUNK_ALIGN`.
-    pub fn cursor_ptr(&self) -> NonNull<u8> {
-        self.cursor_ptr.get()
-    }
-
     /// Set cursor pointer for this [`Arena`]'s current chunk.
     ///
     /// This is dangerous, and this method should not ordinarily be used.
