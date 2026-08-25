@@ -118,6 +118,15 @@ impl<'a> Semantic<'a> {
         (self.scoping, self.nodes)
     }
 
+    /// Discard all references to AST nodes and comments held by this `Semantic`.
+    ///
+    /// This should not ordinarily be used. It leaves [`Semantic`] in an inconsistent state.
+    /// This method is only present to support some unsafe code in `oxc_linter`.
+    pub fn clear_ast_references(&mut self) {
+        self.nodes = AstNodes::default();
+        self.comments = &[];
+    }
+
     /// Source code of the JavaScript/TypeScript program being analyzed.
     pub fn source_text(&self) -> &'a str {
         self.source_text

@@ -7,7 +7,7 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
-    iter, mem,
+    iter,
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
@@ -513,39 +513,43 @@ impl Linter {
             return;
         }
 
-        // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
-        //
-        // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
-        // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
-        // an immutable `&` ref to an AST node.
-        // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
-        //
-        // So instead we get a pointer to `Program`.
-        // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
-        // has no provenance for mutation, so can't be converted to `&mut Program`.
-        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance, which does allow mutation.
-        //
-        // We then drop `Semantic`, after which no references to any AST nodes remain.
-        // We can then safely convert the pointer to `&mut Program`.
-        //
-        // `Program` was created in `allocator`, and `Program` is the last thing to be allocated, so is in current chunk.
-        // So `cursor_ptr` and `Program` are within the same allocation.
-        // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
-        // which ensure they are in same allocation.
-        // However, we have no static guarantee of this, so strictly speaking it's unsound.
-        // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
-        // sketchy behavior.
         let ctx_host = Rc::get_mut(ctx_host).unwrap();
-        let semantic = mem::take(ctx_host.semantic_mut());
-        let program_addr = NonNull::from(semantic.nodes().program()).addr();
-        // Check `Program` is in `Allocator`'s current chunk
-        debug_assert!(program_addr >= allocator.cursor_ptr().addr());
-        debug_assert!(program_addr < allocator.data_end_ptr().addr());
-        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
-        drop(semantic);
-        // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-        // so can get a mutable reference to `Program` without aliasing violations
-        let program = unsafe { program_ptr.as_mut() };
+
+        // We need a `&mut Program` here, but `Semantic` only contains a `&Program`, along with `&` references
+        // to all other nodes in the AST.
+        //
+        // Use a very dodgy hack to achieve this.
+        //
+        // 1. Get an immutable reference to `&Program` from the `AstNodes` contained in `Semantic`.
+        // 2. Call `Semantic::clear_ast_references` to discard all references it holds to AST nodes and comments.
+        // 3. Make a bitwise copy of the `Program`.
+        // 4. Allocate it back into arena, yielding a `&mut Program`.
+        //
+        // Within this function, this is sound.
+        // The dangerous part is copying the `ArenaVec`s (`program.body` etc), but `ArenaVec` only contains a pointer
+        // which has no ownership semantics, and they cannot contain `Drop` types. So as long as we don't hold
+        // references to any of the *contents* of the original `ArenaVec`, and don't use it after its been copied,
+        // we can't violate aliasing rules.
+        //
+        // Here we create the `&Program` in a block from which it doesn't escape, ensuring the reference doesn't live
+        // while the copy lives, and we empty all AST node/comment references from `Semantic`, ensuring there's no way
+        // to access references to AST nodes after this point, which could alias the `&mut Program` we've created.
+        //
+        // What we CAN'T protect against is if some other references to AST nodes have been already stashed somewhere,
+        // and that would be UB. At present, we don't do that, but there is nothing statically preventing that,
+        // so it'd be easy for someone add code which inadvertently causes UB, without any idea they were doing that.
+        //
+        // TODO: We need to fix this. We should avoid the need for a mutable AST here by converting AST node spans
+        // to UTF-16 during deserialization on JS side - but that is not easy to achieve without a heavy perf penalty.
+        // This current hack *is* unsound, but is unlikely to bite in practice, so we can live with it for now.
+        let program = {
+            let semantic = ctx_host.semantic_mut();
+            let program = semantic.nodes().program();
+            semantic.clear_ast_references();
+            // SAFETY: Only somewhat safe! See above.
+            let program = unsafe { NonNull::from(program).read() };
+            allocator.alloc(program)
+        };
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
         if let Some(js_allocator_pool) = js_allocator_pool {
