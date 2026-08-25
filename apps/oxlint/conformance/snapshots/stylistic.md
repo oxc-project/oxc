@@ -9,8 +9,8 @@ Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-s
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   129 | 100.0% |
-| Fully passing     |   128 |  99.2% |
-| Partially passing |     1 |   0.8% |
+| Fully passing     |   127 |  98.4% |
+| Partially passing |     2 |   1.6% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -20,8 +20,8 @@ Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-s
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 18416 | 100.0% |
-| Passing     | 18309 |  99.4% |
-| Failing     |     1 |   0.0% |
+| Passing     | 18308 |  99.4% |
+| Failing     |     2 |   0.0% |
 | Skipped     |   106 |   0.6% |
 
 ## Fully Passing Rules
@@ -38,7 +38,6 @@ Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-s
 - `comma-dangle` (74 tests)
 - `comma-spacing` (173 tests)
 - `comma-spacing` (13 tests) (2 skipped)
-- `comma-style` (140 tests) (10 skipped)
 - `computed-property-spacing` (126 tests)
 - `computed-property-spacing` (10 tests)
 - `curly-newline` (111 tests)
@@ -157,9 +156,121 @@ Tested against: [stylistic@5c4b512](https://github.com/eslint-stylistic/eslint-s
 
 ## Rules with Failures
 
+- `comma-style` - 139 / 140 (99.3%)
 - `jsx-props-no-multi-spaces` - 81 / 82 (98.8%)
 
 ## Rules with Failures Detail
+
+### `comma-style`
+
+Pass: 129 / 140 (92.1%)
+Fail: 1 / 140 (0.7%)
+Skip: 10 / 140 (7.1%)
+
+#### comma-style > invalid
+
+```js
+type foo = {
+  new (
+    a,
+    b
+    , c
+  ): any,
+  (
+    a,
+    b
+    , c
+  ): any,
+  [
+    a: string,
+    b: string
+    , c: string
+  ]: string,
+
+  f(
+    a: string,
+    b: string
+    , c: string
+  ): number,
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "type foo = {\n  new (\n    a,\n    b,\n     c\n  ): any,\n  (\n    a,\n    b,\n     c\n  ): any,\n  [\n    a: string,\n    b: string,\n     c: string\n  ]: string,\n\n  f(\n    a: string,\n    b: string,\n     c: string\n  ): number,\n}",
+  "errors": [
+    {
+      "messageId": "expectedCommaLast"
+    },
+    {
+      "messageId": "expectedCommaLast"
+    },
+    {
+      "messageId": "expectedCommaLast"
+    },
+    {
+      "messageId": "expectedCommaLast"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have 4 errors but had 3: [
+  {
+    ruleId: 'rule-to-test/comma-style',
+    message: "',' should be placed last.",
+    messageId: 'expectedCommaLast',
+    severity: 1,
+    nodeType: 'TSConstructSignatureDeclaration',
+    line: 5,
+    column: 4,
+    endLine: 5,
+    endColumn: 5,
+    fixes: [ [Object] ],
+    suggestions: null
+  },
+  {
+    ruleId: 'rule-to-test/comma-style',
+    message: "',' should be placed last.",
+    messageId: 'expectedCommaLast',
+    severity: 1,
+    nodeType: 'TSCallSignatureDeclaration',
+    line: 10,
+    column: 4,
+    endLine: 10,
+    endColumn: 5,
+    fixes: [ [Object] ],
+    suggestions: null
+  },
+  {
+    ruleId: 'rule-to-test/comma-style',
+    message: "',' should be placed last.",
+    messageId: 'expectedCommaLast',
+    severity: 1,
+    nodeType: 'TSMethodSignature',
+    line: 21,
+    column: 4,
+    endLine: 21,
+    endColumn: 5,
+    fixes: [ [Object] ],
+    suggestions: null
+  }
+]
+
+3 !== 4
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/plugins-dev.js)
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+
 
 ### `jsx-props-no-multi-spaces`
 
