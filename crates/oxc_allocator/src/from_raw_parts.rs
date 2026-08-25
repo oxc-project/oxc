@@ -1,9 +1,9 @@
 //! Define additional methods, used only by raw transfer:
 //!
 //! * [`Allocator::from_raw_parts`]
-//! * [`Allocator::cursor_ptr`]
+//! * [`Allocator::cursor_ptr`] (private within crate)
 //! * [`Allocator::set_cursor_ptr`]
-//! * [`Allocator::data_end_ptr`]
+//! * [`Allocator::data_end_ptr`] (private within crate)
 
 use std::{alloc::Layout, ptr::NonNull};
 
@@ -71,7 +71,7 @@ impl Allocator {
     /// Get the current cursor pointer for this [`Allocator`]'s current chunk.
     ///
     /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
-    pub fn cursor_ptr(&self) -> NonNull<u8> {
+    pub(crate) fn cursor_ptr(&self) -> NonNull<u8> {
         self.arena().cursor_ptr()
     }
 
@@ -100,7 +100,7 @@ impl Allocator {
     /// i.e to the start of the `ChunkFooter`.
     ///
     /// If the `Allocator` is empty (has no chunks), this returns a dangling pointer.
-    pub fn data_end_ptr(&self) -> NonNull<u8> {
+    pub(crate) fn data_end_ptr(&self) -> NonNull<u8> {
         self.arena().data_end_ptr()
     }
 }
