@@ -7255,6 +7255,33 @@ export interface OxlintPluginSettings {
  */
 export interface JestPluginSettings {
   /**
+   * Extra glob patterns that mark a file as a Jest test file, on top of the built-in
+   * conventions (a `__tests__` directory, or a `.test.` / `.spec.` file name).
+   *
+   * Most Jest rules only run on test files. Use this for helpers that call `test()` or
+   * `expect()` under another name, such as BDD step definitions:
+   *
+   * ```json
+   * {
+   *   "settings": {
+   *     "jest": {
+   *       "additionalTestPatterns": [
+   *         "** /*.steps.ts",
+   *         "** /*.helper.ts"
+   *       ]
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * Patterns are matched against the file path relative to the directory holding the
+   * config file, the same way `overrides[].files` is matched. A pattern without a `/`
+   * is made recursive, so `"*.steps.ts"` and `"** /*.steps.ts"` are equivalent.
+   *
+   * Only adds files; it never stops a file from being recognized.
+   */
+  additionalTestPatterns?: GlobSet;
+  /**
    * Jest version — accepts a number (`29`) or a semver string (`"29.1.0"` or `"v29.1.0"`),
    * storing only the major version.
    * ::: warning
@@ -7488,6 +7515,32 @@ export interface ReactPluginSettings {
  * configuration for a full reference.
  */
 export interface VitestPluginSettings {
+  /**
+   * Extra glob patterns that mark a file as a Vitest test file.
+   *
+   * Without an import from `vitest`, a file is only recognized as a Jest test file, if at
+   * all. Use this for helpers that call `test()` or `expect()` without importing them:
+   *
+   * ```json
+   * {
+   *   "settings": {
+   *     "vitest": {
+   *       "additionalTestPatterns": [
+   *         "** /*.steps.ts",
+   *         "** /*.helper.ts"
+   *       ]
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * Patterns are matched against the file path relative to the directory holding the
+   * config file, the same way `overrides[].files` is matched. A pattern without a `/`
+   * is made recursive, so `"*.steps.ts"` and `"** /*.steps.ts"` are equivalent.
+   *
+   * Only adds files; a file that is also recognized as Jest is treated as both.
+   */
+  additionalTestPatterns?: GlobSet;
   /**
    * Whether to enable typecheck mode for Vitest rules.
    * When enabled, some rules will skip certain checks for describe blocks

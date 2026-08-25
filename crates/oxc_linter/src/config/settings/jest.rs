@@ -4,6 +4,8 @@ use schemars::JsonSchema;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize};
 
+use oxc_config::GlobSet;
+
 /// Configure Jest plugin rules.
 ///
 /// See [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s
@@ -18,6 +20,30 @@ pub struct JestPluginSettings {
     #[serde(default, deserialize_with = "jest_version_deserialize")]
     #[schemars(with = "Option<JestVersionSchema>")]
     pub version: Option<usize>,
+
+    /// Extra glob patterns that mark a file as a Jest test file, on top of the built-in
+    /// conventions (a `__tests__` directory, or a `.test.` / `.spec.` file name).
+    ///
+    /// Most Jest rules only run on test files. Use this for helpers that call `test()` or
+    /// `expect()` under another name, such as BDD step definitions:
+    ///
+    /// ```json
+    /// {
+    ///   "settings": {
+    ///     "jest": {
+    ///       "additionalTestPatterns": ["**/*.steps.ts", "**/*.helper.ts"]
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Patterns are matched against the file path relative to the directory holding the
+    /// config file, the same way `overrides[].files` is matched. A pattern without a `/`
+    /// is made recursive, so `"*.steps.ts"` and `"**/*.steps.ts"` are equivalent.
+    ///
+    /// Only adds files; it never stops a file from being recognized.
+    #[serde(default, rename = "additionalTestPatterns")]
+    pub additional_test_patterns: GlobSet,
 }
 
 #[derive(JsonSchema)]

@@ -138,10 +138,12 @@
           "tagNamePreference": {}
         },
         "vitest": {
-          "typecheck": false
+          "typecheck": false,
+          "additionalTestPatterns": []
         },
         "jest": {
-          "version": null
+          "version": null,
+          "additionalTestPatterns": []
         }
       },
       "allOf": [
@@ -12213,6 +12215,16 @@
       "description": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
+        "additionalTestPatterns": {
+          "description": "Extra glob patterns that mark a file as a Jest test file, on top of the built-in\nconventions (a `__tests__` directory, or a `.test.` / `.spec.` file name).\n\nMost Jest rules only run on test files. Use this for helpers that call `test()` or\n`expect()` under another name, such as BDD step definitions:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nOnly adds files; it never stops a file from being recognized.",
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Extra glob patterns that mark a file as a Jest test file, on top of the built-in\nconventions (a `__tests__` directory, or a `.test.` / `.spec.` file name).\n\nMost Jest rules only run on test files. Use this for helpers that call `test()` or\n`expect()` under another name, such as BDD step definitions:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nOnly adds files; it never stops a file from being recognized."
+        },
         "version": {
           "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
           "default": null,
@@ -17247,7 +17259,8 @@
       "properties": {
         "jest": {
           "default": {
-            "version": null
+            "version": null,
+            "additionalTestPatterns": []
           },
           "allOf": [
             {
@@ -17309,7 +17322,8 @@
         },
         "vitest": {
           "default": {
-            "typecheck": false
+            "typecheck": false,
+            "additionalTestPatterns": []
           },
           "allOf": [
             {
@@ -19727,6 +19741,16 @@
       "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
+        "additionalTestPatterns": {
+          "description": "Extra glob patterns that mark a file as a Vitest test file.\n\nWithout an import from `vitest`, a file is only recognized as a Jest test file, if at\nall. Use this for helpers that call `test()` or `expect()` without importing them:\n\n```json\n{\n\"settings\": {\n\"vitest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nOnly adds files; a file that is also recognized as Jest is treated as both.",
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Extra glob patterns that mark a file as a Vitest test file.\n\nWithout an import from `vitest`, a file is only recognized as a Jest test file, if at\nall. Use this for helpers that call `test()` or `expect()` without importing them:\n\n```json\n{\n\"settings\": {\n\"vitest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nOnly adds files; a file that is also recognized as Jest is treated as both."
+        },
         "typecheck": {
           "description": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios.",
           "default": false,

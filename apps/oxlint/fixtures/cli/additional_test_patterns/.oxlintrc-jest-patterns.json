@@ -1,0 +1,14 @@
+{
+  "plugins": ["jest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "jest/expect-expect": "error"
+  },
+  "settings": {
+    "jest": {
+      "additionalTestPatterns": ["**/*.steps.ts"]
+    }
+  }
+}
