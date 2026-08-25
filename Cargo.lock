@@ -1883,6 +1883,7 @@ dependencies = [
  "oxc_data_structures",
  "oxc_ecmascript",
  "oxc_index",
+ "oxc_mangler",
  "oxc_parser",
  "oxc_semantic",
  "oxc_sourcemap",

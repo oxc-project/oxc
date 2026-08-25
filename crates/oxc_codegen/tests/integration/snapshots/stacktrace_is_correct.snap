@@ -262,3 +262,37 @@ make().prop;
 Error
     at Object.get prop (/project/input.js:4:15)
     at <anonymous> (/project/input.js:7:7)
+
+------------------------------------------------------
+## Mangled identifier source-map names
+["longFunctionName", "longName"]
+
+## Input
+export {};
+function longFunctionName(longName) {
+    (longName = () => {
+        Error.stackTraceLimit = 2;
+        throw new Error();
+    })();
+}
+longFunctionName(0);
+
+## Output
+export {};
+function e(e) {
+	(e = () => {
+		Error.stackTraceLimit = 2;
+		throw new Error();
+	})();
+}
+e(0);
+
+
+## Stderr
+/project/input.js:6
+        throw new Error();
+              ^
+
+Error
+    at longName (/project/input.js:6:15)
+    at e (/project/input.js:7:7)
