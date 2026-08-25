@@ -1,0 +1,19 @@
+AGENTS.md
+  s_17c91bf7a0f6a3::t_130ff5af4fa141 189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3e8db071f3ab23169bbe81c83f8ed4a605093b7e",
+  "prompts": {},
+  "sessions": {
+    "s_17c91bf7a0f6a3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03670-fde8-7e61-ab95-d9639128dca1",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
