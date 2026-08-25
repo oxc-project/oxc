@@ -138,10 +138,12 @@
           "tagNamePreference": {}
         },
         "vitest": {
-          "typecheck": false
+          "typecheck": false,
+          "additionalTestPatterns": []
         },
         "jest": {
-          "version": null
+          "version": null,
+          "additionalTestPatterns": []
         }
       },
       "allOf": [
@@ -12193,6 +12195,16 @@
       "description": "Configure Jest plugin rules.\n\nSee [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
+        "additionalTestPatterns": {
+          "description": "Extra glob patterns that mark a file as a Jest test file, on top of the built-in\nconventions: a `__tests__` path segment, or a file name whose second-to-last\ndot-separated segment is `test` or `spec` (`foo.test.ts`, `foo.spec.tsx`).\n\nMost Jest rules only run on files recognized as test files, so a helper module that\ncalls `test()` or `expect()` under a project-specific name — BDD step definitions,\nshared assertion helpers — is skipped by most of them. List such files here to lint\nthem:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nPurely additive: it never stops a file from being recognized, and it takes effect only\nwhen the `jest` or `vitest` plugin is enabled. Use\n`settings.vitest.additionalTestPatterns` to mark a file as Vitest instead.",
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Extra glob patterns that mark a file as a Jest test file, on top of the built-in\nconventions: a `__tests__` path segment, or a file name whose second-to-last\ndot-separated segment is `test` or `spec` (`foo.test.ts`, `foo.spec.tsx`).\n\nMost Jest rules only run on files recognized as test files, so a helper module that\ncalls `test()` or `expect()` under a project-specific name — BDD step definitions,\nshared assertion helpers — is skipped by most of them. List such files here to lint\nthem:\n\n```json\n{\n\"settings\": {\n\"jest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nPurely additive: it never stops a file from being recognized, and it takes effect only\nwhen the `jest` or `vitest` plugin is enabled. Use\n`settings.vitest.additionalTestPatterns` to mark a file as Vitest instead."
+        },
         "version": {
           "description": "Jest version — accepts a number (`29`) or a semver string (`\"29.1.0\"` or `\"v29.1.0\"`),\nstoring only the major version.\n::: warning\nUsing this config will override the `no-deprecated-functions` config set.\n:::",
           "default": null,
@@ -17188,7 +17200,8 @@
       "properties": {
         "jest": {
           "default": {
-            "version": null
+            "version": null,
+            "additionalTestPatterns": []
           },
           "allOf": [
             {
@@ -17250,7 +17263,8 @@
         },
         "vitest": {
           "default": {
-            "typecheck": false
+            "typecheck": false,
+            "additionalTestPatterns": []
           },
           "allOf": [
             {
@@ -19656,6 +19670,16 @@
       "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
+        "additionalTestPatterns": {
+          "description": "Extra glob patterns that mark a file as a Vitest test file.\n\nThe built-in conventions — a `__tests__` path segment, or a file name whose\nsecond-to-last dot-separated segment is `test` or `spec` — already make a file a test\nfile, but they imply the *Jest* dialect. Vitest itself is recognized only through a\nstatic import with bindings from `vitest`, `vite-plus/test`, or `@effect/vitest`, so a\nhelper module that pulls `expect` in from elsewhere is skipped by most Vitest rules.\nList such files here to lint them:\n\n```json\n{\n\"settings\": {\n\"vitest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nMatching here sets the Vitest flag, which the rules shared between the two plugins\nconsult to pick the dialect they enforce. It does not clear Jest — a path that also\nfollows the built-in conventions, or that a `settings.jest.additionalTestPatterns`\nentry matches, is treated as both. Takes effect only when the `jest` or `vitest`\nplugin is enabled.",
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/GlobSet"
+            }
+          ],
+          "markdownDescription": "Extra glob patterns that mark a file as a Vitest test file.\n\nThe built-in conventions — a `__tests__` path segment, or a file name whose\nsecond-to-last dot-separated segment is `test` or `spec` — already make a file a test\nfile, but they imply the *Jest* dialect. Vitest itself is recognized only through a\nstatic import with bindings from `vitest`, `vite-plus/test`, or `@effect/vitest`, so a\nhelper module that pulls `expect` in from elsewhere is skipped by most Vitest rules.\nList such files here to lint them:\n\n```json\n{\n\"settings\": {\n\"vitest\": {\n\"additionalTestPatterns\": [\"**/*.steps.ts\", \"**/*.helper.ts\"]\n}\n}\n}\n```\n\nPatterns are matched against the file path relative to the directory holding the\nconfig file, the same way `overrides[].files` is matched. A pattern without a `/`\nis made recursive, so `\"*.steps.ts\"` and `\"**/*.steps.ts\"` are equivalent.\n\nMatching here sets the Vitest flag, which the rules shared between the two plugins\nconsult to pick the dialect they enforce. It does not clear Jest — a path that also\nfollows the built-in conventions, or that a `settings.jest.additionalTestPatterns`\nentry matches, is treated as both. Takes effect only when the `jest` or `vitest`\nplugin is enabled."
+        },
         "typecheck": {
           "description": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios.",
           "default": false,
