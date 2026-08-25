@@ -48,9 +48,6 @@ pub struct ContextSubHost<'a> {
     /// Parser tokens collected during parsing.
     /// Empty if parsing failed, or tokens are disabled (no JS plugins).
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
-    /// Stable source text for this script section
-    /// which remains available even after `semantic` is taken while running JS plugins.
-    pub(super) source_text: &'a str,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -75,8 +72,6 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
-        let source_text = semantic.source_text();
-
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
@@ -84,7 +79,6 @@ impl<'a> ContextSubHost<'a> {
         Self {
             semantic,
             module_record,
-            source_text,
             source_text_offset,
             disable_directives,
             framework_options: options.framework_options,
@@ -114,9 +108,10 @@ impl<'a> ContextSubHost<'a> {
         self.framework_options
     }
 
+    /// Source text of this script block.
     #[inline]
     pub fn source_text(&self) -> &'a str {
-        self.source_text
+        self.semantic.source_text()
     }
 }
 
