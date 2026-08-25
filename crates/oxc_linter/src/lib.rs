@@ -367,6 +367,24 @@ impl Linter {
             .file_extension()
             .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
 
+        // Linting is done in 3 passes over the sub hosts.
+        //
+        // 1. Native rules
+        // 2. JS plugin rules
+        // 3. Unused directives
+        //
+        // Each pass must be complete before the next can start:
+        //
+        // `run_external_rules` (JS plugins) destroys the AST of the sub host it runs on - it clears the AST references
+        // from that sub host's `Semantic`, and converts that AST's spans to UTF-16 in place.
+        // Some native rules read the ASTs of *other* sub hosts via `ContextHost::other_file_hosts`
+        // (e.g. `vue/valid-define-emits` checks the `<script>` block for `export default { emits }`
+        // while linting the `<script setup>` block), so no AST can be destroyed or mutated until pass 1 is complete.
+        //
+        // A directive counts as used if it suppressed a diagnostic from either a native rule or a JS plugin rule,
+        // so this has to come after both passes above.
+
+        // Pass 1: Run native rules on every sub host in turn
         loop {
             let semantic = ctx_host.semantic();
             let rules = rules
@@ -445,10 +463,20 @@ impl Linter {
                 });
             }
 
-            // Drop `rules` to release its `Rc` clones of `ctx_host`, ensuring `run_external_rules`
-            // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
-            drop(rules);
+            // If no next `<script>` block found, the complete file is finished linting
+            if !ctx_host.next_sub_host() {
+                break;
+            }
 
+            #[cfg(debug_assertions)]
+            {
+                current_diagnostic_index = ctx_host.diagnostic_count();
+            }
+        }
+
+        // Pass 2: Run JS plugin rules on every sub host in turn
+        ctx_host.rewind_sub_hosts();
+        loop {
             self.run_external_rules(
                 &external_rules,
                 path,
@@ -457,23 +485,25 @@ impl Linter {
                 js_allocator_pool,
             );
 
-            // Report unused directives is now handled differently with type-aware linting
-
-            if let Some(severity) = self.options.report_unused_directive
-                && severity.is_warn_deny()
-                && is_partial_loader_file
-            {
-                ctx_host.report_unused_directives(severity.into());
-            }
-
-            // no next `<script>` block found, the complete file is finished linting
             if !ctx_host.next_sub_host() {
                 break;
             }
+        }
 
-            #[cfg(debug_assertions)]
-            {
-                current_diagnostic_index = ctx_host.diagnostic_count();
+        // Pass 3: Report unused enable/disable directives for every sub host.
+        // Reporting unused directives is handled differently with type-aware linting,
+        // so this only applies to partial loader files (Vue/Astro/Svelte).
+        if let Some(severity) = self.options.report_unused_directive
+            && severity.is_warn_deny()
+            && is_partial_loader_file
+        {
+            ctx_host.rewind_sub_hosts();
+            loop {
+                ctx_host.report_unused_directives(severity.into());
+
+                if !ctx_host.next_sub_host() {
+                    break;
+                }
             }
         }
 

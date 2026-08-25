@@ -361,6 +361,11 @@ impl<'a> ContextHost<'a> {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 
+    // move the context back to the first sub host, so they can be iterated over again
+    pub fn rewind_sub_hosts(&self) {
+        self.current_sub_host_index.set(0);
+    }
+
     // move the context to the next sub host
     pub fn next_sub_host(&self) -> bool {
         let next_index = self.current_sub_host_index.get() + 1;
