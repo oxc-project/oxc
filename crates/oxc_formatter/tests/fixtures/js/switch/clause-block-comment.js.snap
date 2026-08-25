@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A block comment between a clause's `:` and its single-block body prints
+// outside the `{`, for case and default alike
+// (the conformance suite covers only the default clause).
+switch (x) {
+  case a: /* c */ {
+    break;
+  }
+  default: /* d */ {
+    break;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A block comment between a clause's `:` and its single-block body prints
+// outside the `{`, for case and default alike
+// (the conformance suite covers only the default clause).
+switch (x) {
+  case a: /* c */ {
+    break;
+  }
+  default: /* d */ {
+    break;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A block comment between a clause's `:` and its single-block body prints
+// outside the `{`, for case and default alike
+// (the conformance suite covers only the default clause).
+switch (x) {
+  case a: /* c */ {
+    break;
+  }
+  default: /* d */ {
+    break;
+  }
+}
+
+===================== End =====================

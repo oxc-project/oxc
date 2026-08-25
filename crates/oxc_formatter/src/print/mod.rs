@@ -861,13 +861,32 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentForEmptyStatement<'a, 
     }
 }
 
-struct FormatTestOfIfAndWhileStatement<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
+struct FormatTestOfIfAndWhileStatement<'a, 'b> {
+    test: &'b AstNode<'a, Expression<'a>>,
+    /// Start of the statement's body;
+    /// the last `)` before it is the condition's closing paren,
+    /// and it bounds the lexical scan (see `Comments::end_including_source_parens`).
+    body_start: u32,
+}
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatTestOfIfAndWhileStatement<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // FormatNodeWithoutTrailingComments already handles suppression comments internally,
         // so no separate has_trailing_suppression_comment check is needed here.
-        write!(f, FormatNodeWithoutTrailingComments(self.0));
-        let comments = f.context().comments().comments_before_character(self.0.span().end, b')');
+        write!(f, FormatNodeWithoutTrailingComments(self.test));
+        // Comments before the condition's closing paren print inside the parens,
+        // also from between a parenthesized test's re-printed `)` and it
+        // (`if ((0, 0) /* c */) {}` keeps the comment inside);
+        // comments after it lead the body instead.
+        let test_end = self.test.span().end;
+        if !f.comments().has_comment_in_range(test_end, self.body_start) {
+            return;
+        }
+
+        let rparen_end = f.comments().end_including_source_parens(test_end, self.body_start);
+        // `comments_before` returns a prefix of the unprinted comments,
+        // as the printed-count cursor requires;
+        // the range check above fences out stale pre-`test_end` entries.
+        let comments = f.context().comments().comments_before(rparen_end);
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
         }
@@ -888,8 +907,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
                 space(),
                 "(",
                 group(&soft_block_indent(&format_args!(
-                    FormatTestOfIfAndWhileStatement(self.test()),
-                    FormatCommentForEmptyStatement(self.body())
+                    FormatTestOfIfAndWhileStatement {
+                        test: self.test(),
+                        body_start: body.span().start
+                    },
+                    FormatCommentForEmptyStatement(body)
                 ))),
                 ")",
                 FormatStatementBody::new(body)
@@ -1043,7 +1065,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatTestOfIfAndWhileStatement(test))),
+                group(&soft_block_indent(&FormatTestOfIfAndWhileStatement {
+                    test,
+                    body_start: consequent.span().start
+                })),
                 ")",
                 FormatStatementBody::new(consequent),
             ))

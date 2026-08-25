@@ -4,14 +4,14 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         JsFormatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    utils::{is_dropped_statement, statement_body::FormatStatementBody},
+    utils::is_dropped_statement,
     write,
 };
 
@@ -106,44 +106,55 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
             return;
         }
 
-        // Whether the first statement in the clause is a BlockStatement, and
-        // there are no other non-empty statements. Empties may show up when
-        // parsing depending on if the input code includes certain newlines.
+        // The first statement in the clause when it is a `BlockStatement`
+        // and there are no other non-empty statements.
+        // Empties may show up when parsing depending on if the input code includes certain newlines.
         let first_statement = consequent.first().unwrap();
-        let is_single_block_statement =
-            matches!(first_statement.as_ref(), Statement::BlockStatement(_))
-                && consequent
+        let single_block_statement = match first_statement.as_ast_nodes() {
+            AstNodes::BlockStatement(block)
+                if consequent
                     .iter()
                     .skip(1)
-                    .all(|statement| is_dropped_statement(statement.as_ref()));
-
-        // Format dangling comments before default case body.
-        if is_default {
-            let comments = f.context().comments();
-            let comments = if is_single_block_statement {
-                comments.block_comments_before(first_statement.span().start)
-            } else {
-                #[expect(clippy::cast_possible_truncation)]
-                const DEFAULT_LEN: u32 = "default".len() as u32;
-                comments.end_of_line_comments_after(self.span.start + DEFAULT_LEN)
-            };
-
-            if !comments.is_empty() {
-                write!(
-                    f,
-                    [
-                        space(),
-                        FormatDanglingComments::Comments {
-                            comments,
-                            indent: DanglingIndentMode::None
-                        },
-                    ]
-                );
+                    .all(|statement| is_dropped_statement(statement.as_ref())) =>
+            {
+                Some(block)
             }
+            _ => None,
+        };
+        let is_single_block_statement = single_block_statement.is_some();
+
+        // Comments between the `:` and the clause body:
+        // block comments before a single-block body print outside its `{` for every clause;
+        // the end-of-line handling stays default-only
+        // (after `case a:` they belong to the consequent's leading pass instead).
+        let comments = f.context().comments();
+        let comments = if is_single_block_statement {
+            comments.block_comments_before(first_statement.span().start)
+        } else if is_default {
+            #[expect(clippy::cast_possible_truncation)]
+            const DEFAULT_LEN: u32 = "default".len() as u32;
+            comments.end_of_line_comments_after(self.span.start + DEFAULT_LEN)
+        } else {
+            &[]
+        };
+
+        if !comments.is_empty() {
+            write!(
+                f,
+                [
+                    space(),
+                    FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None },
+                ]
+            );
         }
 
-        if is_single_block_statement {
-            write!(f, [FormatStatementBody::new(first_statement)]);
+        if let Some(block) = single_block_statement {
+            // The clause pulls pending line comments between the `:` and the `{`
+            // INSIDE the block (`default: // c` + `{` -> `default: { // c`);
+            // its block comments are printed outside above.
+            // Use `write` to skip the block's leading-comments pass.
+            write!(f, [space()]);
+            block.write(f);
         } else {
             // no line break needed after because it is added by the indent in the switch statement
             write!(f, indent(&format_args!(hard_line_break(), consequent)));

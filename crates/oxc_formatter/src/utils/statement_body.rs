@@ -6,10 +6,9 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter,
-        prelude::{format_once, soft_line_indent_or_space, space},
+        prelude::{format_once, hard_line_break, soft_line_indent_or_space, space},
         trivia::{FormatTrailingComments, format_leading_comments},
     },
-    print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     utils::suppressed::FormatSuppressedNode,
     write,
@@ -44,14 +43,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
             }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
-            write!(f, [space()]);
-            if matches!(self.body.parent(), AstNodes::IfStatement(_)) {
-                write!(f, [block]);
+            // Comments between the parent's head and the `{` lead the block and stay
+            // outside the braces (`while (x) /* c */ {}`);
+            // an own-line comment keeps its own line (`if (x)\n// c\n{}`).
+            if f.context().comments().own_line_comments_before(block.span().start).is_empty() {
+                write!(f, [space()]);
             } else {
-                // Use `write` instead of `format` to avoid printing leading comments of the block.
-                // Those comments should be printed inside the block statement.
-                block.write(f);
+                write!(f, [hard_line_break()]);
             }
+            write!(f, [block]);
         } else if self.force_space {
             write!(f, [space(), self.body]);
         } else {
