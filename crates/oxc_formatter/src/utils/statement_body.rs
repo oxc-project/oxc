@@ -51,21 +51,52 @@ pub fn write_head_body_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
 /// The caller prints that token next; comments past it are left pending
 /// (they lead whatever follows). Without the bound, the generic pass would
 /// claim an end-of-line comment and flush it past the following body's `{`.
+///
+/// Returns whether a claimed line comment is riding a `line_suffix`:
+/// the caller must guarantee a line break RIGHT AFTER its token (write one, or already have one),
+/// or the flush drags the comment past whatever else follows.
+/// [`write_node_with_terminator`] wraps the token-plus-flush half.
+#[must_use = "a riding line comment needs a line break right after the caller's token"]
 pub fn write_node_with_trailing_comments_before<'a, T>(
     node: &T,
     character: u8,
     f: &mut JsFormatter<'_, 'a>,
-) where
+) -> bool
+where
     T: Format<'a, JsFormatContext<'a>> + GetSpan,
 {
     FormatNodeWithoutTrailingComments(node).fmt(f);
-    write_trailing_comments_before(node.span().end, character, f);
+    write_trailing_comments_before(node.span().end, character, f)
+}
+
+/// [`write_node_with_trailing_comments_before`] plus the terminator itself
+/// and the flush break a riding line comment requires.
+/// For an in-head terminator whose following content brings no break of its own
+/// (a label's or a single-block case test's `:`).
+pub fn write_node_with_terminator<'a, T>(
+    node: &T,
+    terminator: &'static str,
+    f: &mut JsFormatter<'_, 'a>,
+) where
+    T: Format<'a, JsFormatContext<'a>> + GetSpan,
+{
+    let needs_flush = write_node_with_trailing_comments_before(node, terminator.as_bytes()[0], f);
+    write!(f, terminator);
+    if needs_flush {
+        write!(f, hard_line_break());
+    }
 }
 
 /// The node-less half of [`write_node_with_trailing_comments_before`]:
 /// prints the pending comments bounded at the next `character` as trailing comments
-/// (e.g. an empty for-head slot's comments before its `;`).
-pub fn write_trailing_comments_before(start: u32, character: u8, f: &mut JsFormatter<'_, '_>) {
+/// (e.g. an empty for-head slot's comments before its `;`),
+/// with the same returned flush obligation.
+#[must_use = "a riding line comment needs a line break right after the caller's token"]
+pub fn write_trailing_comments_before(
+    start: u32,
+    character: u8,
+    f: &mut JsFormatter<'_, '_>,
+) -> bool {
     let comments = f.context().comments().comments_before_character(start, character);
     let same_line_count =
         comments.iter().take_while(|comment| !comment.preceded_by_newline()).count();
@@ -90,6 +121,8 @@ pub fn write_trailing_comments_before(start: u32, character: u8, f: &mut JsForma
             write!(f, hard_line_break());
         }
     }
+    // The own-line loop's breaks have already flushed a pending same-line line comment
+    own_line.is_empty() && same_line.last().is_some_and(|comment| comment.is_line())
 }
 
 /// Comments between a block's `}` and a following keyword (`else`/`catch`/`finally`)

@@ -47,6 +47,17 @@ foo2: // c
 }
 foo3: // c
 bar();
+// A line comment between the label and its `:` moves just behind the `:`
+// (terminator move-behind) and flushes there, never reaching the body;
+// a block comment stays before the `:` (divergence: Prettier hoists both above the label)
+foo4 // lc
+: bar();
+foo5 /* bc */
+: bar();
+// An empty-statement body's `;` is content: the comment stays before it
+foo6 // ec
+: ;
+foo7: /* c */ ;
 
 // An `if` consequent's trailing line comment rides the line without forcing
 // the consequent onto its own line, and `else` comments keep their positions

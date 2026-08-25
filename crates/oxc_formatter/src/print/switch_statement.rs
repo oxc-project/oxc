@@ -12,7 +12,7 @@ use crate::{
     },
     utils::{
         is_dropped_statement,
-        statement_body::{FormatStatementBody, write_node_with_trailing_comments_before},
+        statement_body::{FormatStatementBody, write_node_with_terminator},
     },
     write,
 };
@@ -74,11 +74,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                 // For non-block consequents the generic pass's `line_suffix` flush lands
                 // before their line break, keeping the comment on the clause line,
                 // so the bound is only needed before a block's `{`.
-                write_node_with_trailing_comments_before(test, b':', f);
+                write_node_with_terminator(test, ":", f);
             } else {
-                write!(f, test);
+                write!(f, [test, ":"]);
             }
-            write!(f, ":");
             false
         } else {
             write!(f, ["default", ":"]);

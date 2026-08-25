@@ -81,7 +81,8 @@ use crate::{
         },
         statement_body::{
             FormatStatementBody, write_comments_between_blocks, write_head_body_separator,
-            write_node_with_trailing_comments_before, write_trailing_comments_before,
+            write_node_with_terminator, write_node_with_trailing_comments_before,
+            write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
@@ -548,6 +549,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
                 | AstNodes::ForInStatement(_)
                 | AstNodes::ForOfStatement(_)
                 | AstNodes::WithStatement(_)
+                | AstNodes::LabeledStatement(_)
         ) {
             write!(f, ";");
         }
@@ -914,9 +916,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     }
 }
 
-/// A for-head `;`-bounded slot (init/test):
+/// A for-head `;`-terminated slot (init/test):
 /// the node (if any) with its trailing comments bounded at the slot's closing `;`,
-/// or the slot's pending comments alone when it is empty.
+/// the `;` itself, and the `;`'s end-of-line trail
+/// (`for (a; // c`: this very shape's re-parse must keep the comment on the slot's line,
+/// not lead the next slot's node).
 /// Returns the scan cursor advanced past the `;`
 /// (the next slot's anchor when that slot has no node).
 ///
@@ -928,12 +932,19 @@ where
     T: Format<'a, JsFormatContext<'a>> + GetSpan,
 {
     let anchor = node.map_or(cursor, |node| node.span().end);
-    if let Some(node) = node {
-        write_node_with_trailing_comments_before(node, b';', f);
+    // Discarded flush obligation:
+    // a riding line comment's `expand_parent` breaks the head group,
+    // so a real break already follows this slot's `;`
+    let _line_comment_riding = if let Some(node) = node {
+        write_node_with_trailing_comments_before(node, b';', f)
     } else {
-        write_trailing_comments_before(anchor, b';', f);
-    }
-    f.comments().position_after_character(anchor, b';')
+        write_trailing_comments_before(anchor, b';', f)
+    };
+    write!(f, ";");
+    let cursor = f.comments().position_after_character(anchor, b';');
+    let end_of_line = f.context().comments().end_of_line_comments_after(cursor);
+    FormatTrailingComments::Comments(end_of_line).fmt(f);
+    cursor
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
@@ -957,12 +968,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
             if f.comments().has_comment_before(body.span().start) {
                 let mut cursor = f.comments().position_after_character(self.span().start, b'(');
                 cursor = write_for_head_slot(init, cursor, f);
-                write!(f, ";");
                 if !is_headless {
                     write!(f, soft_line_break_or_space());
                 }
                 cursor = write_for_head_slot(test, cursor, f);
-                write!(f, ";");
                 if update.is_some() {
                     write!(f, soft_line_break_or_space());
                 }
@@ -970,7 +979,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                     FormatParenHeadExpression { expression: update, body_start: body.span().start }
                         .fmt(f);
                 } else {
-                    write_trailing_comments_before(cursor, b')', f);
+                    // Discarded flush obligation:
+                    // a riding line comment flushes at the expanded head's closing break,
+                    // still before the `)`.
+                    let _line_comment_riding = write_trailing_comments_before(cursor, b')', f);
                 }
             } else {
                 // No comment can need placing; skip the lexical scans
@@ -1229,20 +1241,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let label = self.label();
         let body = self.body();
-        write_node_with_trailing_comments_before(label, b':', f);
-        write!(f, ":");
+        write_node_with_terminator(label, ":", f);
         if matches!(body.as_ref(), Statement::EmptyStatement(_)) {
-            let empty_comments = f.context().comments().comments_before(self.span.end);
-            write!(
-                f,
-                [
-                    FormatTrailingComments::Comments(empty_comments),
-                    maybe_space(!empty_comments.is_empty()),
-                    // If the body is an empty statement, force semicolon insertion
-                    ";"
-                ]
-            );
+            write!(f, FormatStatementBody::new(body));
         } else {
+            // Not `FormatStatementBody`:
+            // a labeled non-block body stays on the label's line instead of soft-indenting.
             write_head_body_separator(body.span().start, f);
             write!(f, body);
         }

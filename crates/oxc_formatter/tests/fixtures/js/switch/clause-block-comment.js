@@ -42,3 +42,17 @@ switch (x) {
   default: // dangling
     g();
 }
+// A line comment between the test and its `:` moves just behind the `:`
+// (terminator move-behind) and flushes there, never reaching the `{`;
+// a block comment stays before the `:`.
+// (divergence: Prettier pulls the line comment past the `{`: `case g: { // c`)
+switch (x) {
+  case g // c
+  : {
+    break;
+  }
+  case h /* c */
+  : {
+    break;
+  }
+}
