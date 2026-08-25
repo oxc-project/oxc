@@ -66,9 +66,19 @@ function afterCloseParenReturn() {
     anotherLongLongLongLongCondition
   ) /* moves */;
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = (someValue /* stays */);
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = (someValue /* moves */);
+parenthesizedChain = (inner = someValue /* moves */);
+parenthesizedNested = (inner = (someValue /* moves */));
+parenthesizedTernary = (cond ? someValue : other /* moves */);
+parenthesizedLine = (inner = someValue // moves
+);
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */);
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed
@@ -222,9 +232,18 @@ function afterCloseParenReturn() {
     aLongLongLongLongLongCondition && anotherLongLongLongLongCondition
   ) /* moves */
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = someValue /* stays */
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = someValue /* moves */
+parenthesizedChain = inner = someValue /* moves */
+parenthesizedNested = inner = someValue /* moves */
+parenthesizedTernary = cond ? someValue : other /* moves */
+parenthesizedLine = inner = someValue // moves
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */)
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed
@@ -370,9 +389,18 @@ function ownLineCommentReturn() {
 function afterCloseParenReturn() {
   return aLongLongLongLongLongCondition && anotherLongLongLongLongCondition /* moves */
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = someValue /* stays */
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = someValue /* moves */
+parenthesizedChain = inner = someValue /* moves */
+parenthesizedNested = inner = someValue /* moves */
+parenthesizedTernary = cond ? someValue : other /* moves */
+parenthesizedLine = inner = someValue // moves
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */)
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed
@@ -517,9 +545,18 @@ function afterCloseParenReturn() {
     aLongLongLongLongLongCondition && anotherLongLongLongLongCondition
   ); /* moves */
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = someValue /* stays */;
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = someValue; /* moves */
+parenthesizedChain = inner = someValue; /* moves */
+parenthesizedNested = inner = someValue; /* moves */
+parenthesizedTernary = cond ? someValue : other; /* moves */
+parenthesizedLine = inner = someValue; // moves
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */);
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed
@@ -665,9 +702,18 @@ function afterCloseParenReturn() {
     aLongLongLongLongLongCondition && anotherLongLongLongLongCondition
   ); /* moves */
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = someValue; /* stays */
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = someValue; /* moves */
+parenthesizedChain = inner = someValue; /* moves */
+parenthesizedNested = inner = someValue; /* moves */
+parenthesizedTernary = cond ? someValue : other; /* moves */
+parenthesizedLine = inner = someValue; // moves
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */);
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed
@@ -813,9 +859,18 @@ function ownLineCommentReturn() {
 function afterCloseParenReturn() {
   return aLongLongLongLongLongCondition && anotherLongLongLongLongCondition; /* moves */
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = someValue /* stays */;
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = someValue; /* moves */
+parenthesizedChain = inner = someValue; /* moves */
+parenthesizedNested = inner = someValue; /* moves */
+parenthesizedTernary = cond ? someValue : other; /* moves */
+parenthesizedLine = inner = someValue; // moves
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */);
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed
@@ -956,9 +1011,18 @@ function ownLineCommentReturn() {
 function afterCloseParenReturn() {
   return aLongLongLongLongLongCondition && anotherLongLongLongLongCondition; /* moves */
 }
-// A comment inside a parenthesized sub-expression belongs to that expression
-// and stays attached, like Prettier
-parenthesized = someValue; /* stays */
+// In an expression statement the parentheses are dropped, so the semicolon
+// directly follows the content: a comment inside them also moves behind it,
+// even from a nested assignment's dropped parentheses.
+// (Prettier 3.9 moves these only on its second pass; oxfmt prints that
+// fixpoint directly, see prettier#19893)
+parenthesized = someValue; /* moves */
+parenthesizedChain = inner = someValue; /* moves */
+parenthesizedNested = inner = someValue; /* moves */
+parenthesizedTernary = cond ? someValue : other; /* moves */
+parenthesizedLine = inner = someValue; // moves
+// ... but not where the parentheses survive in the output (`keeps_trailing_comment_inside_parens`)
+const parenthesizedInit = (inner = someValue /* stays */);
 
 // The `;` on a later line still moves the comment: in the output the semicolon
 // directly follows the content, so nothing is crossed

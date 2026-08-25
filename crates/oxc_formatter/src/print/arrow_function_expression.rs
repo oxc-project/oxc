@@ -16,7 +16,10 @@ use crate::{
     write,
 };
 
-use super::{FormatWrite, parameters::has_only_simple_parameters};
+use super::{
+    FormatWrite, parameters::has_only_simple_parameters,
+    sequence_expression::sequence_leading_comments_start,
+};
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -132,7 +135,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
                     return if let Some(format_sequence) =
-                        format_sequence_with_leading_comment(sequence.span(), &format_body, f)
+                        format_sequence_with_leading_comment(sequence, &format_body, f)
                     {
                         write!(f, [group(&format_args!(formatted_signature, format_sequence))]);
                     } else {
@@ -629,7 +632,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
                 if let Some(format_sequence) =
-                    format_sequence_with_leading_comment(sequence.span(), &format_tail_body, f)
+                    format_sequence_with_leading_comment(sequence, &format_tail_body, f)
                 {
                     write!(f, format_sequence);
                 } else {
@@ -834,18 +837,22 @@ fn format_signature<'a, 'b>(
 ///
 /// Handles `oxfmt-ignore` by preserving original source text when suppressed.
 fn format_sequence_with_leading_comment<'a, 'b>(
-    sequence_span: Span,
+    sequence: &SequenceExpression<'a>,
     format_body: &'b impl Format<'a, JsFormatContext<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> Option<impl Format<'a, JsFormatContext<'a>> + 'b> {
-    if !f.comments().has_comment_before(sequence_span.start) {
+    let sequence_span = sequence.span;
+    // Comments inside the first element's dropped source parentheses lead the sequence
+    // (see `sequence_leading_comments_start`), so they take this path too.
+    let leading_comments_start = sequence_leading_comments_start(sequence);
+    if !f.comments().has_comment_before(leading_comments_start) {
         return None;
     }
 
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        format_leading_comments_and_open_paren(sequence_span, true, f);
+        format_leading_comments_and_open_paren(sequence_span, leading_comments_start, true, f);
         if is_suppressed {
             write!(f, FormatSuppressedNode(sequence_span));
         } else {

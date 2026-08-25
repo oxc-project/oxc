@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 773/810 (95.43%), 23 files skipped
+js compatibility: 771/810 (95.19%), 23 files skipped
 
 # Failed
 
@@ -42,6 +42,8 @@ js compatibility: 773/810 (95.43%), 23 files skipped
 | js/if/condition-break/unary-expression.js | 💥 | 61.38% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/logical-expressions/in-unary-expression.js | 💥 | 79.49% |
+| js/sequence-expression/parenthesized-trailing-comment-unstable.js | 💥 | 66.67% |
+| js/sequence-expression/parenthesized.js | 💥 | 85.71% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
@@ -88,7 +90,5 @@ js compatibility: 773/810 (95.43%), 23 files skipped
 - js/for/continue-and-break-comment-without-blocks.js
 - js/function/issue-12967.js
 - js/object-prop-break-in/short-keys.js
-- js/sequence-expression/parenthesized-trailing-comment-unstable.js
-- js/sequence-expression/parenthesized.js
 - jsx/comments/in-attributes.js
 - jsx/spread/child.js

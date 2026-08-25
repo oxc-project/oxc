@@ -172,6 +172,9 @@ The entries documented so far are not yet an exhaustive audit against the confor
 - A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape
   - Prettier does the same except for nested single-member paren sources (`| (/* c */ | A ...`) and multiline block comments starting their line, where it keeps `/* c */ | A`
     - An output it then reformats into `| /* c */ A` itself for the first shape, not idempotent
+- Two comment placements print Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent (fixed upstream in prettier#19893/#19894; converge and drop when the pin catches up):
+  - a trailing comment inside an expression statement's dropped parentheses moves behind the `;` (`assigned = (a = c /* c */);` -> `assigned = a = c; /* c */`), including the chain-leaf shapes prettier#19893 left out
+  - a comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens (`((/* c */ a), b);` -> `/* c */ (a, b);`)
 
 ## Verification
 

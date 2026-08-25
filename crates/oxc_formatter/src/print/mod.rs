@@ -95,8 +95,8 @@ use self::{
     program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
     semicolon::{
-        FormatContentWithSemicolon, OptionalSemicolon, keeps_trailing_comment_inside_parens,
-        write_trailing_comments_inside_parens,
+        FormatContentWithSemicolon, OptionalSemicolon, assignment_chain_leaf_end,
+        keeps_trailing_comment_inside_parens, write_trailing_comments_inside_parens,
     },
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
@@ -112,6 +112,18 @@ pub trait FormatWrite<'ast> {
         Self: GetSpan,
     {
         self.span()
+    }
+    /// Position bounding the node's leading comments in the generated `fmt`:
+    /// pending comments ending at or before it print as the node's leading comments,
+    /// OUTSIDE any formatter-added parentheses.
+    /// Defaults to the node's span start; overridden when the span starts at a leftmost
+    /// descendant's dropped source parenthesis whose inner comments lead the node itself
+    /// (`((/* c */ a), b)`: the sequence spans from the dropped `(`, the comment leads the sequence).
+    fn leading_comments_start(&self) -> u32
+    where
+        Self: GetSpan,
+    {
+        self.span().start
     }
     /// Formats the node when it is suppressed (`oxfmt-ignore` / `prettier-ignore`):
     /// prints `suppressed_span` verbatim.
@@ -665,11 +677,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
         // sequence/assignment stays inside the parentheses;
         // extend the content past the closing paren so the comment is not moved behind the semicolon
         // (the sub-expression prints it, see `keeps_trailing_comment_inside_parens`).
-        let expression_end = expression.span().end;
         let content_end = if keeps_trailing_comment_inside_parens(expression.as_ref(), false) {
-            f.comments().end_including_source_parens(expression_end, self.span().end)
+            f.comments().end_including_source_parens(expression.span().end, self.span().end)
         } else {
-            expression_end
+            assignment_chain_leaf_end(expression.as_ref())
         };
         write!(f, FormatContentWithSemicolon::new(expression, content_end, self.span().end));
     }

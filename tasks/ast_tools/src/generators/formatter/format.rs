@@ -159,7 +159,7 @@ fn generate_struct_implementation(
             // or the cast would rebind to them.
             quote! {
                 let needs_parentheses = self.needs_parentheses(f);
-                format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+                format_leading_comments_and_open_paren(self.span(), self.leading_comments_start(), needs_parentheses, f);
             }
         }
     } else {
