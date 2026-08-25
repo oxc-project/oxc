@@ -8,10 +8,10 @@
 // The printers only ever receive it, so they import it as a type.
 // Nothing in `print/` constructs one, and none of the 4 printer builds bundles this file.
 
-import { CAT_OTHER } from "./print/write.ts";
+import { CAT_OTHER } from "./print/categories.ts";
 import { debugAssert } from "./asserts.ts";
 
-import type { Category } from "./print/write.ts";
+import type { Category } from "./print/categories.ts";
 import type { Options } from "./print/options.ts";
 
 /**

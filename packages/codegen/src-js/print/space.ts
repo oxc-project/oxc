@@ -16,11 +16,10 @@ import {
   CAT_OP_UPD_INC,
   CAT_OTHER,
   CAT_REGEX_SLASH,
-  debugAssertLastFresh,
-  write,
-} from "./write.ts";
+} from "./categories.ts";
+import { debugAssertLastFresh, write } from "./write.ts";
 
-import type { Category } from "./write.ts";
+import type { Category } from "./categories.ts";
 import type { State } from "../state.ts";
 
 // `printSpaceBeforeIdentifier` selects the categories needing a space by their position in `Category` numbering.

@@ -1,8 +1,8 @@
 // JSX.
 // Port of `gen.rs` JSX section.
 
+import { CAT_OTHER } from "./categories.ts";
 import {
-  CAT_OTHER,
   write,
   writeNoLast,
   writeWithMap,

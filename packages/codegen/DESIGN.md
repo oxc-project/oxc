@@ -224,7 +224,7 @@ for crazy edge cases and a bug sneaks through, it can't produce invalid JavaScri
 
 ### Why category numbering is load bearing
 
-The full table is at the top of [`print/write.ts`] and is the authority.
+The full table is at the top of [`print/categories.ts`] and is the authority.
 
 Three properties are relied on. Adding a code without preserving them will silently space output wrongly.
 
@@ -242,7 +242,7 @@ Three properties are relied on. Adding a code without preserving them will silen
    ```
 
 Each property has an `if (DEBUG)` block which iterates every category and asserts the compare selects
-exactly the intended set and nothing else - in [`print/write.ts`] for the `|` identities, and in [`print/space.ts`]
+exactly the intended set and nothing else - in [`print/categories.ts`] for the `|` identities, and in [`print/space.ts`]
 for the two range checks.
 
 Renumber freely. The assertions will tell you what you broke, and cost release builds nothing.
@@ -662,6 +662,7 @@ A checklist, all of it argued for above.
    `debugAssert` calls and does not represent shipped performance.
 
 [`oxc_codegen`]: https://github.com/oxc-project/oxc/tree/main/crates/oxc_codegen
+[`print/categories.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/categories.ts
 [`print/write.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/write.ts
 [`print/space.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/space.ts
 [`print/operators.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/operators.ts

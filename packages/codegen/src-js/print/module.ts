@@ -1,15 +1,7 @@
 // Modules.
 
-import {
-  CAT_IDENT,
-  CAT_OTHER,
-  CAT_START_OF_DEFAULT_EXPORT,
-  write,
-  writeIdent,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapNamed,
-} from "./write.ts";
+import { CAT_IDENT, CAT_OTHER, CAT_START_OF_DEFAULT_EXPORT } from "./categories.ts";
+import { write, writeIdent, writeNoLast, writeWithMap, writeWithMapNamed } from "./write.ts";
 import { printClass } from "./class.ts";
 import { printExpression } from "./expression.ts";
 import { printFunction } from "./function.ts";
