@@ -1,0 +1,19 @@
+crates/oxc_parser/src/js/expression.rs
+  s_dc6c2dc5c7b9f4::t_02af0729d6b750 1357,1386,1543
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "395da35b366fce93e6c34c341f1505356654c3a2",
+  "prompts": {},
+  "sessions": {
+    "s_dc6c2dc5c7b9f4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03906-292c-7a22-bd55-f559c5827ef9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
