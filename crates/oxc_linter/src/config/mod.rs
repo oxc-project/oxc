@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 mod categories;
 mod config_builder;
@@ -39,6 +39,16 @@ pub struct LintConfig {
     pub(crate) path: Option<PathBuf>,
     /// Options for the linter.
     pub(crate) options: OxlintOptions,
+}
+
+impl LintConfig {
+    /// `path` relative to this config file's directory, or `path` unchanged if that is not possible.
+    pub(crate) fn relative_path<'p>(&self, path: &'p Path) -> &'p Path {
+        self.path
+            .as_deref()
+            .and_then(Path::parent)
+            .map_or(path, |dir| path.strip_prefix(dir).unwrap_or(path))
+    }
 }
 
 impl From<Oxlintrc> for LintConfig {
