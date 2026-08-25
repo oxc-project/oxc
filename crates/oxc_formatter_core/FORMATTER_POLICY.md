@@ -75,8 +75,10 @@ The invariants:
   - Line comments print via `line_suffix`; own-line comments stay own-line
 - A suppression comment (`prettier-ignore` / `oxfmt-ignore`) never loses its target, and its original text is preserved
 - Repositioning is allowed only relative to formatter-OWNED punctuation: the formatter owns terminators (e.g. a statement's `;`) and the trivia up to them; the user owns content
-  - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,`/`;` between interface members)
+  - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,` / `;` between TS interface members)
+    - The replaceability test only separates these two
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
+  - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
 

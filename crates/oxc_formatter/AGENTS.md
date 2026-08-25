@@ -77,19 +77,28 @@ this section records their JS/TS translation and the measured compat tables.
 Repositioning a comment is allowed only relative to formatter-owned punctuation
 (e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
 
-The `;` rule applies to statement terminators only, never to member separators:
+Four token classes decide a comment's freedom of movement.
+Replaceability does not separate them (only the separator is replaceable); the guaranteed flush point does:
+a delimiter flushes on the comment's own side, a terminator only right BEHIND itself, so a riding line comment lands just past it and nothing else:
 
-- Terminator: the `;` cannot be replaced by `,` — statements, class members
+- (1) Statement terminator: `;` after statements and class members
   (property/accessor via `FormatClassElementWithSemicolon`, bodyless methods in `MethodDefinition`).
-  A same-line trailing comment moves behind it
-- Separator: interface / type literal members and index signatures (`;` is interchangeable with `,`),
-  enum members' `,` — the comment stays before it, same as any list separator.
+  Formatter-owned: a same-line trailing comment moves behind it, block and line comments alike (the move-behind table below)
+- (2) In-head terminator: the for-head's `;`s, a label's or a single-block case test's `:`.
+  Block and own-line comments keep their slot (the uniform rule);
+  only a same-line line comment moves, just behind the token (`for (a // c\n; b;)` -> `a; // c`, `foo // c\n: b();` -> `foo: // c` + break)
+- (3) Separator: interchangeable with another token (interface / type literal members and index signatures
+  (`;` ⇄ `,`), enum members' `,`) the comment stays before it, same as any list separator.
   This matches Prettier and is the principled line, not an emulated quirk
-- Known gap, intentionally not covered: TS-only statements
-  (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
-  They are terminators by the rule above, but Prettier does not move their comments (yet);
-  we follow Prettier for now. If Prettier extends the rule to them, follow;
-  each is a small mechanical `FormatContentWithSemicolon` adoption
+- (4) Delimiter: bounds a region, a body's `{` `}`, a head's `(` `)`, the `}`-to-keyword gap.
+  User content: comments never cross it in either direction (the head-body comment policy below)
+
+Known gap, intentionally not covered: TS-only statements
+(`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
+
+They are terminators by the rule above, but Prettier does not move their comments (yet);
+we follow Prettier for now. If Prettier extends the rule to them, follow;
+each is a small mechanical `FormatContentWithSemicolon` adoption.
 
 When the content's source parentheses survive in the output (return/throw arguments, sequence/assignment in the prettier#19263 positions), comments inside them belong to the content and stay there;
 only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
@@ -118,6 +127,16 @@ JS-side mechanics of the shared "never cross" invariants:
   - Both are structural guarantees, keep them
 - User content: e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element — an attachment artifact, we keep the comment in place and diverge intentionally
 - Suppression: when hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+
+Head-body comment policy ("never cross user content" applied to statement/declaration heads):
+a body's `{` `}` and a head's `(` `)` are delimiters, and an empty-statement body's `;` is content, not a terminator (the verbatim empty-statement note in "Statement terminators and suppression"), so a comment between a head and its body keeps its side of each, uniformly across constructs:
+
+- same-line block comment stays inline (`while (x) /* c */ {`)
+- same-line line comment keeps its line, forcing the `{` onto the next line (`while (x) // c` + break)
+- own-line comment keeps its own line
+- comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
+
+Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`); their rustdocs cover the trailing-pass suppression mechanics.
 
 Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
 (e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
@@ -175,6 +194,15 @@ The entries documented so far are not yet an exhaustive audit against the confor
 - Two comment placements print Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent (fixed upstream in prettier#19893/#19894; converge and drop when the pin catches up):
   - a trailing comment inside an expression statement's dropped parentheses moves behind the `;` (`assigned = (a = c /* c */);` -> `assigned = a = c; /* c */`), including the chain-leaf shapes prettier#19893 left out
   - a comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens (`((/* c */ a), b);` -> `/* c */ (a, b);`)
+- The head-body comment policy family (see "Comment placement invariants"): comments between a head and its body keep their position, where Prettier's attachment relocates them — artifacts of the class prettier is fixing elsewhere (prettier#19894 family, open prettier#12880/#7745/#5900):
+  - line and own-line comments before a body's `{` stay outside the braces; Prettier pulls them inside (function/arrow/method/class/try/catch/finally/interface/switch clauses), past the braces entirely (enum/namespace/module), into the catch parameter's parens, or hoists a labeled statement's comment above the label
+  - the same before an empty-statement body's `;`; Prettier pulls the comment backward inside the head's parens (`while (x /* c */);`) or hoists an own-line one onto the head line
+  - comments in a classic for-head keep their slot between the `;`s; Prettier moves empty-slot comments backward across the `;`s onto the init, or forward out of the parens entirely when every slot is empty (`for (/*c*/;;)` -> `for (;;) /*c*/`)
+  - comments between a `}` and a following `else`/`catch`/`finally`/`while` keep their side of the keyword; Prettier pulls them into the next block (or past a do-while's whole `while (x);` head)
+  - a line comment inside a for-in/for-of head stays before the `)` (the head flushes it); Prettier moves it past the body's `{` and is not idempotent there (prettier#12880)
+  - a blank line between an own-line comment and a following `else` is preserved like any other leading position; Prettier collapses it
+  - an `if` consequent's trailing line comment rides the line; Prettier's attachment marks the consequent multiline and breaks it onto its own line — only with an `else`: every sibling shape (plain statement, no-`else` `if`, `while`/`for` bodies) stays inline in both formatters
+  - a multiline block comment before the `{` stays inline like any same-line block comment; Prettier own-lines it for while/do/else heads only, keeping it inline everywhere else
 
 ## Verification
 
