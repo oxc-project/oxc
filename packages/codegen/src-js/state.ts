@@ -35,6 +35,27 @@ const INDENT_REGEX = /^[ \t]+$/;
 /** Upper bound for the process-wide indentation cache. */
 const MAX_STARTING_INDENT_LEVEL = 1_000;
 
+/**
+ * Initial capacity of the process-wide mapping-positions buffer.
+ * Must be even - positions are recorded in pairs, and the buffer only grows between pairs.
+ */
+const MIN_MAP_POSITIONS_LENGTH = 1024;
+
+debugAssert(
+  MIN_MAP_POSITIONS_LENGTH % 2 === 0,
+  "`MIN_MAP_POSITIONS_LENGTH` must be an even number",
+);
+
+/**
+ * Deferred source mapping positions - pairs of output offset and source offset.
+ *
+ * Like `indents`, there is one buffer per process, and every maps-enabled `State` carries it,
+ * so both sourcemap builds record into the same buffer.
+ *
+ * `growMapPositions` doubles it when a print fills it.
+ */
+let mapPositions = new Int32Array(MIN_MAP_POSITIONS_LENGTH);
+
 export class State {
   // Current output.
   // A string which is appended to as the printing process proceeds.
@@ -77,9 +98,12 @@ export class State {
   // Only used in debug builds. See `debugAssertCategoryMatches`.
   declare lastCharWritten: string;
 
-  // Deferred source mappings. Generated/source offset pairs exist when source maps are enabled.
+  // Deferred source mappings. When source maps are enabled, `mapPositions` is the process-wide
+  // buffer above, holding generated/source offset pairs, and `mapPositionsLen` is how much of it
+  // this print has filled.
   // Names are sparse, so their index/name pairs exist only if a mapping carries an original name.
-  declare mapPositions: number[] | null;
+  declare mapPositions: Int32Array | null;
+  declare mapPositionsLen: number;
   declare mapNames: (number | string)[] | null;
 
   // Original source text, used to preserve names in source maps when the caller provides it.
@@ -145,8 +169,29 @@ export class State {
     } else {
       debugAssert(options.sourceText != null);
       this.sourceText = options.sourceText;
-      this.mapPositions = [];
+      this.mapPositions = mapPositions;
       this.mapNames = [];
     }
+    this.mapPositionsLen = 0;
+  }
+
+  /**
+   * Replace the full mapping-positions buffer with one twice the size, copying its contents over.
+   *
+   * The new buffer also replaces the process-wide one, so later prints start at the new size.
+   *
+   * @returns The new buffer
+   */
+  growMapPositions(): Int32Array {
+    const oldBuffer = this.mapPositions;
+    debugAssert(
+      oldBuffer === mapPositions,
+      "`growMapPositions` should only be called on a `State` with source maps enabled",
+    );
+    const newBuffer = new Int32Array(oldBuffer.length * 2);
+    newBuffer.set(oldBuffer);
+    mapPositions = newBuffer;
+    this.mapPositions = newBuffer;
+    return newBuffer;
   }
 }

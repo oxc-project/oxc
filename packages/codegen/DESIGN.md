@@ -554,6 +554,10 @@ During printing, a mapped write records only an output offset and the node's ori
 from `start` / `end`. Nodes without offsets are not mapped, and `sourceText` is required to convert
 source offsets to line/column positions.
 
+The offset pairs go into an `Int32Array` which, like the indent cache, is created once per process
+and reused by every print - each `State` tracks how much of it that print has filled, and the buffer
+doubles when a print fills it, so a steady-state print allocates nothing to record its mappings.
+
 `generateSourceMap` then walks the output once at the end, counting ECMAScript line terminators,
 builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column,
 and encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write
@@ -565,8 +569,8 @@ Producing source maps is exactly the kind of raw number-crunching that native co
 And, unlike the AST, it's just small integers - the kind of data that transfers across the JS-native
 boundary cheaply.
 
-It might be worthwhile assembling all the offsets on JS side in an `Int32Array`, instead of a plain `Array`,
-and making a single JS-Rust-JS round-trip, with the sourcemap generation (VLQ encoding etc) happening on Rust side.
+The offsets are already assembled on the JS side in an `Int32Array`, so it might be worthwhile making
+a single JS-Rust-JS round-trip with it, with the sourcemap generation (VLQ encoding etc) happening on Rust side.
 
 WASM might also be a good option for this.
 

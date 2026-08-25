@@ -520,8 +520,10 @@ function markMapNamed(
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
-  const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === start) return;
+  // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal.
+  let { mapPositions } = state;
+  const { mapPositionsLen } = state;
+  if (mapPositions[mapPositionsLen - 1] === start) return;
 
   // A mapping carries a name only when the identifier printed differs from the one in the source.
   // When possible, the mapping records the name from source, but if the source range is invalid,
@@ -562,13 +564,16 @@ function markMapNamed(
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
     if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
       state.mapNames.push(
-        mapPositions.length >> 1,
+        mapPositionsLen >> 1,
         originalName === undefined ? printedName : originalName,
       );
     }
   }
 
-  mapPositions.push(state.output.length, start);
+  if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
+  mapPositions[mapPositionsLen] = state.output.length;
+  mapPositions[mapPositionsLen + 1] = start;
+  state.mapPositionsLen = mapPositionsLen + 2;
 }
 
 /**
@@ -608,9 +613,15 @@ function recordMapping(state: State, sourceOffset: number): void {
 
   if (sourceOffset > state.sourceText.length) return;
 
-  const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
-  mapPositions.push(state.output.length, sourceOffset);
+  // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal
+  let { mapPositions } = state;
+  const { mapPositionsLen } = state;
+  if (mapPositions[mapPositionsLen - 1] === sourceOffset) return;
+
+  if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
+  mapPositions[mapPositionsLen] = state.output.length;
+  mapPositions[mapPositionsLen + 1] = sourceOffset;
+  state.mapPositionsLen = mapPositionsLen + 2;
 }
 
 /**

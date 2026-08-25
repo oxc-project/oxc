@@ -43,8 +43,8 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     "`mapPositions`, `mapNames` and `sourceText` should be defined when source maps are enabled",
   );
 
-  const { output, mapPositions, mapNames, sourceText } = state;
-  const mappingCount = mapPositions.length >> 1;
+  const { output, mapPositions, mapPositionsLen, mapNames, sourceText } = state;
+  const mappingCount = mapPositionsLen >> 1;
 
   if (mappingCount === 0) {
     return {
@@ -84,7 +84,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
   const useSourceLineBoundaryCache =
     mappingCount >= MIN_LF_FAST_PATH_MAPPINGS
     && sourceText.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING
-    && mapPositions[mapPositions.length - 1] * 2 >= sourceText.length;
+    && mapPositions[mapPositionsLen - 1] * 2 >= sourceText.length;
   const useSourceLineFeedFastPath =
     useSourceLineBoundaryCache && hasOnlyLineFeedsAndCrLf(sourceText);
   let nextLineStart = findNextLineStart(output, 0, useOutputLineFeedFastPath);
