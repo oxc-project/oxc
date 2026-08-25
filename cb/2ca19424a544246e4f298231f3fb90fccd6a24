@@ -1,0 +1,19 @@
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_896e7ea80c20ab::t_d49447a9d93244 951,961-963,965,967
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cb2ca19424a544246e4f298231f3fb90fccd6a24",
+  "prompts": {},
+  "sessions": {
+    "s_896e7ea80c20ab": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03933-885b-7c81-ba60-4999905a5515",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
