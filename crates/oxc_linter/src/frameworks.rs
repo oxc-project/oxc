@@ -1,6 +1,4 @@
-use std::hash;
-#[cfg(not(test))]
-use std::path::Path;
+use std::{hash, path::Path};
 
 use bitflags::bitflags;
 
@@ -75,7 +73,6 @@ impl FrameworkFlags {
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
-#[cfg(not(test))]
 pub fn is_jestlike_file(path: &Path) -> bool {
     use std::ffi::OsStr;
 
