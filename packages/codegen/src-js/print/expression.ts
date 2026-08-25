@@ -15,6 +15,8 @@ import {
   CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
+} from "./categories.ts";
+import {
   debugAssertLastFresh,
   markMapAfter,
   markMapAtStartOffset,
@@ -326,7 +328,7 @@ function printCallExpression(
     // A concise arrow body's mark is deliberately left to die at the paren, as `oxc_codegen` does.
     writeNoLast(state, "(");
 
-    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `write.ts`
+    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `categories.ts`
     if ((state.last | 1) !== CAT_START_OF_STMT) state.last = CAT_OTHER;
     if (DEBUG) state.lastIsStale = false;
   }
@@ -408,7 +410,7 @@ export function printPrivateInExpression(
  */
 function printObjectExpression(node: ESTree.ObjectExpression, state: State): void {
   debugAssertLastFresh(state);
-  // `CAT_START_OF_STMT` or `CAT_START_OF_ARROW_EXPR`, which are adjacent - see `write.ts`
+  // `CAT_START_OF_STMT` or `CAT_START_OF_ARROW_EXPR`, which are adjacent - see `categories.ts`
   const wrap = ((state.last - 1) | 1) === CAT_START_OF_STMT;
 
   if (wrap) write(state, "(", CAT_OTHER);
@@ -623,7 +625,7 @@ function printAssignmentExpression(
   let wrap = precedence >= PREC_ASSIGN;
   if (!wrap && left.type === "ObjectPattern") {
     debugAssertLastFresh(state);
-    // `CAT_START_OF_STMT` or `CAT_START_OF_ARROW_EXPR`, which are adjacent - see `write.ts`
+    // `CAT_START_OF_STMT` or `CAT_START_OF_ARROW_EXPR`, which are adjacent - see `categories.ts`
     wrap = ((state.last - 1) | 1) === CAT_START_OF_STMT;
   }
 

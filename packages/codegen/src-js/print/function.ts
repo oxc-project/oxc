@@ -2,11 +2,8 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
+import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, CAT_START_OF_STMT } from "./categories.ts";
 import {
-  CAT_CLOSE_BRACKET,
-  CAT_IDENT,
-  CAT_OTHER,
-  CAT_START_OF_STMT,
   debugAssertLastFresh,
   markMapStart,
   write,
@@ -36,7 +33,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
   let wrap = false;
   if (node.type === "FunctionExpression") {
     debugAssertLastFresh(state);
-    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `write.ts`
+    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `categories.ts`
     wrap = (state.last | 1) === CAT_START_OF_STMT;
   }
 

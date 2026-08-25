@@ -75,8 +75,10 @@ The invariants:
   - Line comments print via `line_suffix`; own-line comments stay own-line
 - A suppression comment (`prettier-ignore` / `oxfmt-ignore`) never loses its target, and its original text is preserved
 - Repositioning is allowed only relative to formatter-OWNED punctuation: the formatter owns terminators (e.g. a statement's `;`) and the trivia up to them; the user owns content
-  - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,`/`;` between interface members)
+  - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,` / `;` between TS interface members)
+    - The replaceability test only separates these two
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
+  - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
 
@@ -110,6 +112,8 @@ node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print
 
 NOTE: Prettier's default `printWidth` is `80`, but Oxfmt is `100`.
 
+Fixture tests and Prettier conformance re-format every output and record idempotency violations in their snapshots/reports.
+
 ### Fixture tests
 
 Snapshot tests driven by fixture files under `tests/fixtures/`; they cover what the Prettier conformance suite does not (suppression, divergence pins, embedded shapes, ...).
@@ -135,10 +139,14 @@ cargo test -p <crate> --test conformance
 PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
 ```
 
+The Prettier suite lives under `crates/oxc_formatter_tests/prettier/` and is self-provisioned on the first conformance run. It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.
+
 JSDoc formatting is covered by plain fixture-pair tests in `oxc_formatter` (`--test jsdoc`, committed input/expected pairs — a mismatch is a failing test, not a tracked report entry).
 
 Failures must be either fixed or classified under "Known divergences".
 
-### Embedded conformance (`apps/oxfmt`)
+### E2E conformance (`apps/oxfmt`)
 
 The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt. Requires a dev build first.
+
+There are also conformance tests for each language that use real-world repositories.

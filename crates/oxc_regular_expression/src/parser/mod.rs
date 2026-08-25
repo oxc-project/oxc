@@ -151,7 +151,6 @@ mod test {
             ("x{9007199254740992}", ""),
             ("x{9007199254740991,9007199254740992}", ""),
             ("x{99999999999999999999999999999999999999999999999999}", ""),
-            (r"\99999999999999999999999999999999999999999999999999", ""),
             (r"\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}", "u"),
             ("(?=a", ""),
             ("(?<!a", ""),
@@ -292,7 +291,14 @@ mod test {
     #[test]
     fn oversized_decimal_backreferences() {
         let allocator = Allocator::default();
-        let patterns = [r"()\4294967295", r"()\4294967296", r"()\4294967297"];
+        let patterns = [
+            r"()\4294967295",                           // u32::MAX
+            r"()\4294967296",                           // u32::MAX + 1, previously wrapped to 0
+            r"()\4294967297",                           // u32::MAX + 2, previously wrapped to 1
+            r"()\18446744073709551615",                 // u64::MAX
+            r"()\18446744073709551616",                 // u64::MAX + 1
+            r"()\999999999999999999999999999999999999", // Arbitrarily large
+        ];
 
         for pattern_text in patterns {
             for flags_text in ["u", "v"] {

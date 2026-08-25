@@ -470,7 +470,7 @@ impl<'a> PatternParser<'a> {
         let checkpoint = self.reader.checkpoint();
 
         // DecimalEscape: \1 means indexed reference
-        if let Some(index) = self.consume_decimal_escape()? {
+        if let Some(index) = self.consume_decimal_escape() {
             if self.state.unicode_mode {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
@@ -1778,19 +1778,28 @@ impl<'a> PatternParser<'a> {
     // DecimalEscape ::
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
-    fn consume_decimal_escape(&mut self) -> Result<Option<u64>> {
+    fn consume_decimal_escape(&mut self) -> Option<u64> {
         let checkpoint = self.reader.checkpoint();
 
-        if let Some(index) = self.consume_decimal_digits()? {
-            // \0 is CharacterEscape, not DecimalEscape
-            if index != 0 {
-                return Ok(Some(index));
-            }
+        let mut index = 0_u64;
+        while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
+            // `- '0' as u32`: convert code point to digit
+            #[expect(clippy::cast_lossless)]
+            let digit = (cp - '0' as u32) as u64;
 
-            self.reader.rewind(checkpoint);
+            // The exact value is irrelevant once it exceeds the capture count.
+            // Saturate instead of erroring so Annex B can rewind and reinterpret the entire escape.
+            index = index.saturating_mul(10).saturating_add(digit);
+            self.reader.advance();
         }
 
-        Ok(None)
+        // \0 is CharacterEscape, not DecimalEscape
+        if index != 0 {
+            return Some(index);
+        }
+
+        self.reader.rewind(checkpoint);
+        None
     }
 
     // ```

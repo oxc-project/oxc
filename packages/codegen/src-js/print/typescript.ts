@@ -8,6 +8,8 @@ import {
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_QUESTION,
+} from "./categories.ts";
+import {
   debugAssertLastFresh,
   markMapAtStartOffset,
   write,

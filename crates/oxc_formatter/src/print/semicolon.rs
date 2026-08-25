@@ -1,5 +1,6 @@
 use oxc_ast::ast::{Comment, Expression};
 use oxc_formatter_core::{Buffer, Format};
+use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNodes,
@@ -77,6 +78,25 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
             .is_some_and(|body| keeps_trailing_comment_inside_parens(body, true)),
         _ => false,
     }
+}
+
+/// The opposite outcome of [`keeps_trailing_comment_inside_parens`]:
+/// where that table says the parentheses do NOT survive, the semicolon directly follows the content,
+/// so trailing comments move behind it even from inside the dropped parentheses.
+/// Those parentheses are excluded from the chain's rightmost leaf's span but included in the chain's,
+/// so the leaf's end bounds the content (prettier#19893):
+///
+/// ```js
+/// assigned = (a = c /* c */);
+/// // ->
+/// assigned = a = c; /* c */
+/// ```
+pub fn assignment_chain_leaf_end(expr: &Expression<'_>) -> u32 {
+    let mut leaf = expr;
+    while let Expression::AssignmentExpression(assignment) = leaf {
+        leaf = &assignment.right;
+    }
+    leaf.span().end
 }
 
 /// The printing half of [`keeps_trailing_comment_inside_parens`]:

@@ -9,6 +9,8 @@ import {
   CAT_OTHER,
   CAT_QUESTION,
   CAT_START_OF_STMT,
+} from "./categories.ts";
+import {
   debugAssertLastFresh,
   markMapStart,
   write,
@@ -52,7 +54,7 @@ export function printClass(node: ESTree.Class, state: State): void {
   let wrap = false;
   if (node.type === "ClassExpression") {
     debugAssertLastFresh(state);
-    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `write.ts`
+    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `categories.ts`
     wrap = (state.last | 1) === CAT_START_OF_STMT;
   }
   if (wrap) write(state, "(", CAT_OTHER);

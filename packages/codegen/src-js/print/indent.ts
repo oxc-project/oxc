@@ -6,7 +6,8 @@
 // The cache is not this build's. It is created once per process alongside `State`, which carries it here,
 // so the levels one build has grown are there for the next one - see `state.ts`.
 
-import { CAT_OTHER, write } from "./write.ts";
+import { CAT_OTHER } from "./categories.ts";
+import { write } from "./write.ts";
 
 import type { State } from "../state.ts";
 

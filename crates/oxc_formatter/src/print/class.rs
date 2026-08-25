@@ -27,6 +27,7 @@ use crate::{
         },
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
+        statement_body::write_head_body_separator,
     },
     write,
 };
@@ -305,7 +306,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
 
         let head = format_with(|f| {
             if let Some(id) = self.id() {
-                write!(f, [space(), id]);
+                write!(f, space());
+                if type_parameters.is_none() && super_class.is_none() && implements.is_empty() {
+                    // The id's trailing pass would claim an end-of-line comment
+                    // and flush it past the body's `{`; leave it for the head-body separator.
+                    FormatNodeWithoutTrailingComments(id).fmt(f);
+                } else {
+                    write!(f, id);
+                }
             }
 
             if let Some(type_parameters) = &type_parameters {
@@ -463,10 +471,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             write!(f, [head, format_heritage_clauses, space()]);
         }
 
-        let leading_comments = f.context().comments().comments_before(self.body.span.start);
-        if leading_comments.iter().any(|c| !c.is_line()) {
-            write!(f, FormatLeadingComments::Comments(leading_comments));
-        }
+        write_head_body_separator(self.body.span.start, f);
 
         if body.body.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);

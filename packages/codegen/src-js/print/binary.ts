@@ -1,7 +1,8 @@
 // Binary/logical expressions (port of `binary_expr_visitor.rs`).
 
 import { typeAssertIs } from "../asserts.ts";
-import { CAT_CLOSE_BRACKET, CAT_OTHER, write } from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
+import { write } from "./write.ts";
 import { printPrivateInExpression, printExpression } from "./expression.ts";
 import { BIN_PRECEDENCE, CTX_FORBID_IN, PADDED_BIN_OPERATORS } from "./operators.ts";
 import { withoutParens } from "./parens.ts";

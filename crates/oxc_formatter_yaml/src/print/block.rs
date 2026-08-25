@@ -94,21 +94,8 @@ pub fn write_block_scalar<'a>(
         write_comment_line_suffix(comment.span, f);
     }
 
-    // Words fold to the arena lifetime: borrowed words already slice the arena-backed source,
-    // only owned (merged) words need an arena copy.
     let line_groups: Vec<Vec<&'a str>> =
-        block_value_line_contents(block, is_folded, parent_indent, is_last_descendant, f)
-            .into_iter()
-            .map(|words| {
-                words
-                    .into_iter()
-                    .map(|word| match word {
-                        Cow::Borrowed(word) => word,
-                        Cow::Owned(word) => f.allocator().alloc_str(&word),
-                    })
-                    .collect()
-            })
-            .collect();
+        block_value_line_contents(block, is_folded, parent_indent, is_last_descendant, f);
 
     // Blank runs are the scalar's VALUE
     let chomping_keep = block.chomping == Chomping::Keep;
@@ -142,7 +129,6 @@ pub fn write_block_scalar<'a>(
             // (plus the final newline for a last descendant, which `FormatYamlRoot` skips after a keep tail).
             // Raw text keeps them exempt from EVERY layout normalization,
             // including the state effects a line element would have on the following separator.
-            // NOT `exact_line_breaks`: the tail may hold space-only lines, which are part of the value too.
             // `ends_with_keep_chomped_block` mirrors this guard for the root's final newline.
             if blanks > 0 || (is_last_descendant && wrote_any) {
                 write!(f, dedent_to_root(&text(arena_newlines(blanks + 1, f))));
@@ -163,13 +149,18 @@ pub fn write_block_scalar<'a>(
 }
 
 /// Ports Prettier's `getBlockValueLineContents`.
+///
+/// Return contract: an EMPTY word group IS a blank line, and nothing else is.
+/// A line still holding spaces/tabs after indentation stripping is more-indented,
+/// hence CONTENT per YAML: its whitespace is part of the value (prettier#19764),
+/// and the core printer never trims it away.
 fn block_value_line_contents<'s>(
     block: &BlockScalar,
     is_folded: bool,
     parent_indent: u32,
     is_last_descendant: bool,
     f: &YamlFormatter<'_, 's>,
-) -> Vec<Vec<Cow<'s, str>>> {
+) -> Vec<Vec<&'s str>> {
     if block.content_start >= block.span.end {
         return Vec::new();
     }
@@ -179,14 +170,12 @@ fn block_value_line_contents<'s>(
         end: block.span.end,
     }));
 
-    let raw_lines: Vec<&str> = content.split('\n').collect();
-
     // Leading indentation to strip from every line
     let leading_space_count = if let Some(indent) = block.indent {
         (indent - 1 + parent_indent) as usize
     } else {
-        raw_lines
-            .iter()
+        content
+            .split('\n')
             .find_map(|l| {
                 let spaces = l.len() - l.trim_start_matches(' ').len();
                 // First line containing a non-space, non-CR character
@@ -194,61 +183,48 @@ fn block_value_line_contents<'s>(
             })
             .unwrap_or(usize::MAX)
     };
-
-    let stripped: Vec<&str> =
-        raw_lines.iter().map(|l| l.get(leading_space_count.min(l.len())..).unwrap_or("")).collect();
+    let strip = |l: &'s str| l.get(leading_space_count.min(l.len())..).unwrap_or("");
 
     let prose_wrap = f.options().prose_wrap;
     // Literal blocks (`|`) are never re-flowed;
     // folded blocks only under `proseWrap` always/never.
     let no_reflow = prose_wrap == ProseWrap::Preserve || !is_folded;
 
-    let lines: Vec<Vec<Cow<'s, str>>> = if no_reflow {
-        stripped
-            .iter()
-            .map(|l| if l.is_empty() { vec![] } else { vec![Cow::Borrowed(*l)] })
+    let lines: Vec<Vec<&'s str>> = if no_reflow {
+        content
+            .split('\n')
+            .map(strip)
+            .map(|l| if l.is_empty() { vec![] } else { vec![l] })
             .collect()
     } else {
+        // Borrowed words already slice the arena-backed source;
+        // only the words fold_lines merged into owned strings need an arena copy.
+        let stripped: Vec<&'s str> = content.split('\n').map(strip).collect();
         fold_lines(&stripped, prose_wrap)
+            .into_iter()
+            .map(|words| {
+                words
+                    .into_iter()
+                    .map(|word| match word {
+                        Cow::Borrowed(word) => word,
+                        Cow::Owned(word) => f.allocator().alloc_str(&word),
+                    })
+                    .collect()
+            })
+            .collect()
     };
 
-    let mut lines = remove_unnecessary_trailing_newlines(block, is_last_descendant, lines);
-    // Trailing spaces on the LAST content line are dropped (Prettier does the same);
-    // intermediate lines keep theirs, they are part of the value under every chomping mode.
-    // The core printer never trims, so drop them here.
-    if block.chomping != Chomping::Keep {
-        trim_trailing_spaces_of_last_content_line(&mut lines);
-    }
-    lines
-}
-
-/// A block-scalar line with no non-whitespace content (no words, or spaces/tabs only).
-fn is_blank_line(words: &[Cow<'_, str>]) -> bool {
-    words.iter().all(|w| w.trim_end_matches([' ', '\t']).is_empty())
-}
-
-/// Trims the trailing spaces/tabs of the last line holding non-whitespace content.
-/// Whitespace-only lines after it (a preserved trailing blank) are left as-is.
-fn trim_trailing_spaces_of_last_content_line(lines: &mut [Vec<Cow<'_, str>>]) {
-    let Some(words) = lines.iter_mut().rev().find(|words| !is_blank_line(words)) else {
-        return;
-    };
-    if let Some(last) = words.last_mut() {
-        match last {
-            Cow::Borrowed(word) => *last = Cow::Borrowed(word.trim_end_matches([' ', '\t'])),
-            Cow::Owned(word) => word.truncate(word.trim_end_matches([' ', '\t']).len()),
-        }
-    }
+    remove_unnecessary_trailing_newlines(block, is_last_descendant, lines)
 }
 
 fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s, str>>> {
     let mut lines: Vec<Vec<&'s str>> = Vec::with_capacity(stripped.len());
-    for (index, line) in stripped.iter().enumerate() {
+    for line in stripped {
         // NOTE: a more-indented line keeps its line breaks literally per YAML folding,
         // so re-flowing it at the print width would change the parsed value (and break idempotency).
-        // Prettier wraps it like any other paragraph; here it stays one unbreakable word.
-        // The guards below already keep such a line in its own group, so this only removes the soft breaks inside it.
-        if line.starts_with(char::is_whitespace) && !line.trim().is_empty() {
+        // Prettier wraps it like any other paragraph; here it stays one unbreakable word
+        // (space-only lines included: their whitespace is value).
+        if line.starts_with(char::is_whitespace) {
             lines.push(vec![*line]);
             continue;
         }
@@ -257,9 +233,8 @@ fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s
             prev.first().is_some_and(|w| w.starts_with(char::is_whitespace))
                 || prev.last().is_some_and(|w| w.ends_with(char::is_whitespace))
         });
-        let merge = index > 0
-            && !line.is_empty()
-            && !stripped[index - 1].is_empty()
+        let merge = !line.is_empty()
+            && lines.last().is_some_and(|prev| !prev.is_empty())
             && !words.peek().is_some_and(|w| w.starts_with(char::is_whitespace))
             && !prev_group_has_boundary_space;
         if merge {
@@ -269,7 +244,8 @@ fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s
         }
     }
 
-    // Merge words into their predecessor when it ends with whitespace (trailing spaces are not allowed at a soft break)
+    // Merge words into their predecessor when it ends with whitespace
+    // (a soft break after it would re-fold to a different value).
     let mut merged: Vec<Vec<Cow<'s, str>>> = lines
         .into_iter()
         .map(|original| {
@@ -301,31 +277,22 @@ fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s
 fn remove_unnecessary_trailing_newlines<'s>(
     block: &BlockScalar,
     is_last_descendant: bool,
-    mut lines: Vec<Vec<Cow<'s, str>>>,
-) -> Vec<Vec<Cow<'s, str>>> {
+    mut lines: Vec<Vec<&'s str>>,
+) -> Vec<Vec<&'s str>> {
     if block.chomping == Chomping::Keep {
         // NOTE: The fragment after the last break holds no line break, so it is not a kept line:
         // either the empty artifact `split('\n')` yields after a final break,
-        // or a break-less space-only EOF line (a known divergence: Prettier counts it).
-        if lines.last().is_some_and(|words| is_blank_line(words)) {
-            lines.pop();
-        }
+        // or a break-less EOF line of at-or-below-indent spaces (a known divergence: Prettier counts it);
+        // a more-indented space run stays a content group.
+        lines.pop_if(|words| words.is_empty());
         return lines;
     }
 
-    let trailing_newline_count =
-        lines.iter().rev().take_while(|words| is_blank_line(words)).count();
-
-    if trailing_newline_count == 0 {
-        return lines;
-    }
-    let keep = if trailing_newline_count >= 2 && !is_last_descendant {
-        // Preserve one blank line
-        lines.len() - (trailing_newline_count - 1)
-    } else {
-        lines.len() - trailing_newline_count
-    };
-    lines.truncate(keep);
+    let trailing_blanks = lines.iter().rev().take_while(|words| words.is_empty()).count();
+    // Preserve one blank line when the source had two or more
+    lines.truncate(
+        lines.len() - trailing_blanks + usize::from(trailing_blanks >= 2 && !is_last_descendant),
+    );
     lines
 }
 
@@ -335,7 +302,7 @@ fn remove_unnecessary_trailing_newlines<'s>(
 /// (mirrors Prettier's `shouldPrintHardline` gate).
 ///
 /// Returns `false` when the scalar emits no tail of its own,
-/// no content characters and no kept line break (empty, or one break-less space-only EOF line);
+/// no content characters and no kept line break (empty, or one break-less EOF line of at-or-below-indent spaces);
 /// the caller's final newline stands.
 pub fn ends_with_keep_chomped_block(root: &Root<'_>, f: &YamlFormatter<'_, '_>) -> bool {
     root.children

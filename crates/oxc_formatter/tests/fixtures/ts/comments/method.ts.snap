@@ -34,12 +34,12 @@ class A {
   ): void /* block comment */ {
     // method body
   }
-  m3(tagName: string, rect: number[]): void {
-    // line comment
+  m3(tagName: string, rect: number[]): void // line comment
+  {
     // method body
   }
-  m4(tagName: string, rect: number[]) {
-    // line comment
+  m4(tagName: string, rect: number[]) // line comment
+  {
     // method body
   }
 }
@@ -54,12 +54,12 @@ class A {
   m2(element: Element, key: string, undefined: undefined): void /* block comment */ {
     // method body
   }
-  m3(tagName: string, rect: number[]): void {
-    // line comment
+  m3(tagName: string, rect: number[]): void // line comment
+  {
     // method body
   }
-  m4(tagName: string, rect: number[]) {
-    // line comment
+  m4(tagName: string, rect: number[]) // line comment
+  {
     // method body
   }
 }

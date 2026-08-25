@@ -141,6 +141,10 @@ pub fn format_type_cast_comment_node<'a>(
 /// Prints a node's leading comments and the formatter-added `(` in the correct order.
 /// The caller prints the matching `)` when `needs_parentheses` is true.
 ///
+/// `leading_comments_start` bounds the leading-comments query
+/// (see `FormatWrite::leading_comments_start`; usually `span.start`).
+/// Type-cast classification always uses the node's real `span`.
+///
 /// When the leading comments end with a cast comment binding into the node (see [`TypeCast::BindsInner`]),
 /// printing them all first would insert the added `(` between the comment and its cast target,
 /// rebinding the cast and changing the type semantics:
@@ -158,9 +162,11 @@ pub fn format_type_cast_comment_node<'a>(
 /// So the cast comment is printed inside the added parenthesis.
 pub fn format_leading_comments_and_open_paren(
     span: Span,
+    leading_comments_start: u32,
     needs_parentheses: bool,
     f: &mut JsFormatter<'_, '_>,
 ) {
+    let leading_span = Span::new(leading_comments_start, span.end);
     if needs_parentheses {
         if let TypeCast::BindsInner(comments) = classify_type_cast(span, f)
             && let Some((cast_comment, rest)) = comments.split_last()
@@ -175,10 +181,10 @@ pub fn format_leading_comments_and_open_paren(
                 ]
             );
         } else {
-            write!(f, [format_leading_comments(span), "("]);
+            write!(f, [format_leading_comments(leading_span), "("]);
         }
     } else {
-        write!(f, format_leading_comments(span));
+        write!(f, format_leading_comments(leading_span));
     }
 }
 
