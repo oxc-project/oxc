@@ -21,7 +21,7 @@ use crate::{
     },
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
-    frameworks::FrameworkOptions,
+    frameworks::{FrameworkOptions, is_jestlike_file},
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
@@ -29,7 +29,7 @@ use crate::{
 };
 
 #[cfg(not(test))]
-use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
+use crate::frameworks::{has_jest_imports, has_vitest_imports};
 
 use super::LintContext;
 
@@ -526,17 +526,67 @@ impl<'a> ContextHost<'a> {
     #[cfg(not(test))]
     fn sniff_for_frameworks(mut self) -> Self {
         if self.plugins().has_test() {
-            // let mut test_flags = FrameworkFlags::empty();
+            let from_path = self.test_frameworks_from_path();
 
-            let vitest_like = has_vitest_imports(self.module_record());
-            let jest_like =
-                is_jestlike_file(&self.file_path) || has_jest_imports(self.module_record());
+            let vitest_like = from_path.is_vitest() || has_vitest_imports(self.module_record());
+            let jest_like = from_path.is_jest() || has_jest_imports(self.module_record());
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
         }
 
         self
+    }
+
+    /// Which test frameworks the file's *path* points to, ignoring what it imports.
+    ///
+    /// Only ever returns bits within [`FrameworkFlags::Test`]. The built-in naming conventions
+    /// imply Jest, which is what a bare `foo.test.ts` has always meant here;
+    /// `settings.{jest,vitest}.additionalTestPatterns` let a project name further paths under
+    /// either framework. The result is a union, never a replacement — a path matched by a
+    /// Vitest pattern that also follows the built-in conventions comes back as both.
+    fn test_frameworks_from_path(&self) -> FrameworkFlags {
+        let mut flags = FrameworkFlags::empty();
+
+        if is_jestlike_file(&self.file_path) {
+            flags |= FrameworkFlags::Jest;
+        }
+
+        let settings = self.settings();
+        let jest_patterns = &settings.jest.additional_test_patterns;
+        let vitest_patterns = &settings.vitest.additional_test_patterns;
+        // Nothing to match against, so skip anchoring the path. This is the common case:
+        // `sniff_for_frameworks` runs once per linted file.
+        if jest_patterns.is_empty() && vitest_patterns.is_empty() {
+            return flags;
+        }
+
+        let path = self.config.relative_path(&self.file_path).to_string_lossy();
+        if jest_patterns.is_match(&path) {
+            flags |= FrameworkFlags::Jest;
+        }
+        if vitest_patterns.is_match(&path) {
+            flags |= FrameworkFlags::Vitest;
+        }
+
+        debug_assert!(flags.difference(FrameworkFlags::Test).is_empty());
+        flags
+    }
+
+    /// Whether the *path* of the file being linted marks it as a test file — a built-in naming
+    /// convention, or a `settings.{jest,vitest}.additionalTestPatterns` match.
+    ///
+    /// Deliberately narrower than `frameworks().is_test()`, which gates every
+    /// `run_on_jest_node` rule: that also counts an `@jest/globals` or `vitest` import, so a
+    /// `src/helpers.ts` importing `@jest/globals` is a test file to those rules but not to
+    /// this method. Imports are excluded here because [`Self::sniff_for_frameworks`] is
+    /// stubbed out in the test build, which would leave anything reading `frameworks()`
+    /// untestable in-crate.
+    ///
+    /// Exists for `run_once` rules, which the `run_on_jest_node` gate never reaches and which
+    /// therefore have to ask for themselves.
+    pub fn is_test_file_by_path(&self) -> bool {
+        self.test_frameworks_from_path().is_test()
     }
 
     /// Currently Oxlint isn't searching if Jest or Vitest is in `package.json`.
@@ -577,5 +627,196 @@ impl<'a> ContextHost<'a> {
 impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{path::PathBuf, sync::Arc};
+
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    use oxc_config::GlobSet;
+
+    use crate::{
+        ContextHost, FrameworkFlags, ModuleRecord, OxlintSettings,
+        config::LintConfig,
+        context::{ContextSubHost, ContextSubHostOptions},
+        options::LintOptions,
+    };
+
+    /// Build a host for `path` whose config lives at `config_path` and declares
+    /// `jest_patterns` / `vitest_patterns`.
+    fn frameworks_from_path_full(
+        allocator: &Allocator,
+        path: &str,
+        config_path: Option<&str>,
+        jest_patterns: &[&str],
+        vitest_patterns: &[&str],
+    ) -> FrameworkFlags {
+        let parser_ret = Parser::new(allocator, "", SourceType::default()).parse();
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new_linter().build(program).semantic;
+
+        let mut settings = OxlintSettings::default();
+        settings.jest.additional_test_patterns = GlobSet::new(jest_patterns);
+        settings.vitest.additional_test_patterns = GlobSet::new(vitest_patterns);
+        let config =
+            LintConfig { path: config_path.map(PathBuf::from), settings, ..Default::default() };
+
+        ContextHost::new(
+            path,
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            allocator,
+            LintOptions::default(),
+            Arc::new(config),
+        )
+        .test_frameworks_from_path()
+    }
+
+    /// No config file on disk, so patterns are matched against `path` verbatim.
+    fn frameworks_from_path(
+        allocator: &Allocator,
+        path: &str,
+        jest_patterns: &[&str],
+        vitest_patterns: &[&str],
+    ) -> FrameworkFlags {
+        frameworks_from_path_full(allocator, path, None, jest_patterns, vitest_patterns)
+    }
+
+    /// Jest patterns only, resolved against the directory holding `config_path`.
+    fn frameworks_from_path_with_config(
+        allocator: &Allocator,
+        path: &str,
+        config_path: Option<&str>,
+        jest_patterns: &[&str],
+    ) -> FrameworkFlags {
+        frameworks_from_path_full(allocator, path, config_path, jest_patterns, &[])
+    }
+
+    #[test]
+    fn built_in_conventions_imply_jest() {
+        let allocator = Allocator::default();
+        let flags = |path| frameworks_from_path(&allocator, path, &[], &[]);
+
+        assert_eq!(flags("foo.test.js"), FrameworkFlags::Jest);
+        assert_eq!(flags("__tests__/foo/bar.js"), FrameworkFlags::Jest);
+        assert_eq!(flags("foo.js"), FrameworkFlags::empty());
+        // `is_jest_file` used to match this by suffix, against the whole path.
+        assert_eq!(flags("latest.js"), FrameworkFlags::empty());
+    }
+
+    #[test]
+    fn additional_patterns_add_the_framework_they_are_configured_under() {
+        let allocator = Allocator::default();
+
+        assert_eq!(
+            frameworks_from_path(&allocator, "e2e/login.steps.ts", &["**/*.steps.ts"], &[]),
+            FrameworkFlags::Jest
+        );
+        assert_eq!(
+            frameworks_from_path(&allocator, "e2e/login.steps.ts", &[], &["**/*.steps.ts"]),
+            FrameworkFlags::Vitest
+        );
+        assert_eq!(
+            frameworks_from_path(
+                &allocator,
+                "e2e/login.steps.ts",
+                &["**/*.steps.ts"],
+                &["**/*.steps.ts"]
+            ),
+            FrameworkFlags::Jest | FrameworkFlags::Vitest
+        );
+    }
+
+    #[test]
+    fn additional_patterns_are_additive() {
+        let allocator = Allocator::default();
+
+        // A built-in match still counts as Jest when the patterns name another framework.
+        assert_eq!(
+            frameworks_from_path(&allocator, "foo.test.ts", &[], &["**/*.steps.ts"]),
+            FrameworkFlags::Jest
+        );
+        // A non-matching pattern set never withdraws recognition.
+        assert_eq!(
+            frameworks_from_path(&allocator, "foo.test.ts", &["**/*.steps.ts"], &[]),
+            FrameworkFlags::Jest
+        );
+        // Nor does it grant it to unrelated files.
+        assert_eq!(
+            frameworks_from_path(&allocator, "src/foo.ts", &["**/*.steps.ts"], &[]),
+            FrameworkFlags::empty()
+        );
+        // A Vitest pattern over a built-in-named file *adds* Vitest rather than replacing
+        // Jest, so the file carries both and shared rules accept either dialect. Pointing
+        // `settings.vitest.additionalTestPatterns` at `**/*.test.ts` does not convert an
+        // existing Jest project.
+        assert_eq!(
+            frameworks_from_path(&allocator, "foo.test.ts", &[], &["**/*.test.ts"]),
+            FrameworkFlags::Jest | FrameworkFlags::Vitest
+        );
+    }
+
+    #[test]
+    fn patterns_anchor_to_the_config_directory() {
+        let allocator = Allocator::default();
+
+        // With a config on disk, an anchored pattern resolves against *its* directory, not
+        // against the leading components of the absolute file path.
+        assert_eq!(
+            frameworks_from_path_with_config(
+                &allocator,
+                "/repo/pkg/e2e/login.steps.ts",
+                Some("/repo/pkg/.oxlintrc.json"),
+                &["e2e/*.steps.ts"],
+            ),
+            FrameworkFlags::Jest
+        );
+        // The same pattern must not match the same file name one directory up.
+        assert_eq!(
+            frameworks_from_path_with_config(
+                &allocator,
+                "/repo/pkg/src/login.steps.ts",
+                Some("/repo/pkg/.oxlintrc.json"),
+                &["e2e/*.steps.ts"],
+            ),
+            FrameworkFlags::empty()
+        );
+        // A file outside the config's directory cannot be made relative, so it is matched as
+        // given — an anchored pattern then does not match it.
+        assert_eq!(
+            frameworks_from_path_with_config(
+                &allocator,
+                "/other/e2e/login.steps.ts",
+                Some("/repo/pkg/.oxlintrc.json"),
+                &["e2e/*.steps.ts"],
+            ),
+            FrameworkFlags::empty()
+        );
+    }
+
+    #[test]
+    fn bare_patterns_match_recursively() {
+        let allocator = Allocator::default();
+
+        // `GlobSet` rewrites a separator-free pattern to `**/<pattern>`.
+        assert_eq!(
+            frameworks_from_path(&allocator, "deeply/nested/login.steps.ts", &["*.steps.ts"], &[]),
+            FrameworkFlags::Jest
+        );
+        // One anchored to a directory does not.
+        assert_eq!(
+            frameworks_from_path(&allocator, "src/login.steps.ts", &["e2e/*.steps.ts"], &[]),
+            FrameworkFlags::empty()
+        );
     }
 }

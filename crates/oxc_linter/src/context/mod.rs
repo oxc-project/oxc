@@ -549,6 +549,14 @@ impl<'a> LintContext<'a> {
         self.parent.frameworks_options()
     }
 
+    /// Whether the *path* of the file being linted marks it as a test file. For `run_once`
+    /// rules that should only fire inside test files; see
+    /// [`ContextHost::is_test_file_by_path`] for why it is narrower than the
+    /// [`Self::frameworks`] test bits that gate `run_on_jest_node` rules.
+    pub fn is_test_file_by_path(&self) -> bool {
+        self.parent.is_test_file_by_path()
+    }
+
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
     }

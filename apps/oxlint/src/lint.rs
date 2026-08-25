@@ -1259,6 +1259,34 @@ mod test {
         Tester::new().test_and_snapshot(args);
     }
 
+    // `sniff_for_frameworks` is stubbed out in `oxc_linter`'s own test build, so this is the
+    // only seam where path-based detection actually reaches `FrameworkFlags` and gates a
+    // `run_on_jest_node` rule. Every fixture file holds the same source; only names differ,
+    // so the diff between the snapshots is what carries the proof.
+    #[test]
+    fn test_additional_test_patterns() {
+        // Without the setting, `login.steps.ts` is not recognized and `jest/expect-expect`
+        // never runs on it.
+        let args_1 = &["-c", ".oxlintrc.json", "login.test.ts", "login.steps.ts"];
+        let args_2 = &["-c", ".oxlintrc-jest-patterns.json", "login.test.ts", "login.steps.ts"];
+        let args_3 = &["-c", ".oxlintrc-vitest-patterns.json", "login.test.ts", "login.steps.ts"];
+        Tester::new()
+            .with_cwd("fixtures/cli/additional_test_patterns".into())
+            .test_and_snapshot_multiple(&[args_1, args_2, args_3]);
+    }
+
+    // A directory-anchored pattern resolves against the config file's directory rather than
+    // the absolute path, so `e2e/*.steps.ts` picks up `e2e/checkout.steps.ts` and leaves the
+    // identically named file under `src/` alone. Separate test because the snapshot file name
+    // is derived from the arguments and would otherwise exceed the OS limit.
+    #[test]
+    fn test_additional_test_patterns_anchored() {
+        let args = &["-c", ".oxlintrc-anchored.json", "e2e/a.steps.ts", "src/a.steps.ts"];
+        Tester::new()
+            .with_cwd("fixtures/cli/additional_test_patterns".into())
+            .test_and_snapshot(args);
+    }
+
     #[test]
     fn test_import_plugin_enabled_in_config() {
         let args_1 = &["-c", ".oxlintrc.json", "test.js"];

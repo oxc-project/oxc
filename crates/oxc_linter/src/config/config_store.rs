@@ -128,17 +128,7 @@ impl Config {
             return self.base.clone();
         }
 
-        let relative_path = self
-            .base
-            .config
-            .path
-            .as_ref()
-            .and_then(|config_path| {
-                config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
-            })
-            .unwrap_or(path);
-
-        let path = relative_path.to_string_lossy();
+        let path = self.base.config.relative_path(path).to_string_lossy();
         let path = path.as_ref();
         let overrides_to_apply = self
             .overrides
