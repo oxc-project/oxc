@@ -4,14 +4,17 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::AstNode,
     format_args,
     formatter::{
         JsFormatter,
         prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments},
+        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
-    utils::is_dropped_statement,
+    utils::{
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        is_dropped_statement, statement_body::FormatStatementBody,
+    },
     write,
 };
 
@@ -59,15 +62,37 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, SwitchCase
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Whether the first statement in the clause is a `BlockStatement`
+        // and there are no other non-empty statements.
+        // Empties may show up when parsing depending on if the input code includes certain newlines.
+        let is_single_block_statement =
+            matches!(self.consequent.first(), Some(Statement::BlockStatement(_)))
+                && self.consequent.iter().skip(1).all(is_dropped_statement);
+
         let is_default = if let Some(test) = self.test() {
-            write!(f, ["case", space(), test, ":"]);
+            write!(f, ["case", space()]);
+            if is_single_block_statement {
+                // The test's generic trailing pass would claim an end-of-line comment
+                // after the `:` as a `line_suffix` and flush it past the block's `{`;
+                // bound the test's comments at the `:` (comments after it lead the block).
+                // For non-block consequents the flush lands before their line break,
+                // keeping the comment on the clause line, so the generic pass is correct there.
+                write!(f, FormatNodeWithoutTrailingComments(test));
+                let comments =
+                    f.context().comments().comments_before_character(test.span().end, b':');
+                if !comments.is_empty() {
+                    write!(f, [space(), FormatTrailingComments::Comments(comments)]);
+                }
+            } else {
+                write!(f, test);
+            }
+            write!(f, ":");
             false
         } else {
             write!(f, ["default", ":"]);
             true
         };
 
-        let consequent = self.consequent();
         // When the case block is empty, the case becomes a fallthrough, so it
         // is collapsed directly on top of the next case (just a single
         // hardline).
@@ -99,65 +124,44 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         //   default:
         //     break;
         // }
-        if consequent.is_empty() {
+        if self.consequent.is_empty() {
             // Print nothing to ensure that trailing comments on the same line
             // are printed on the same line. The parent list formatter takes
             // care of inserting a hard line break between cases.
             return;
         }
 
-        // The first statement in the clause when it is a `BlockStatement`
-        // and there are no other non-empty statements.
-        // Empties may show up when parsing depending on if the input code includes certain newlines.
-        let first_statement = consequent.first().unwrap();
-        let single_block_statement = match first_statement.as_ast_nodes() {
-            AstNodes::BlockStatement(block)
-                if consequent
-                    .iter()
-                    .skip(1)
-                    .all(|statement| is_dropped_statement(statement.as_ref())) =>
-            {
-                Some(block)
-            }
-            _ => None,
-        };
-        let is_single_block_statement = single_block_statement.is_some();
+        let consequent = self.consequent();
+        if is_single_block_statement {
+            // The head-body comment policy applies:
+            // comments between the `:` and the `{` stay outside the braces.
+            // `unwrap` is safe: the empty consequent returned above.
+            write!(f, FormatStatementBody::new(consequent.first().unwrap()));
+            return;
+        }
 
-        // Comments between the `:` and the clause body:
-        // block comments before a single-block body print outside its `{` for every clause;
-        // the end-of-line handling stays default-only
-        // (after `case a:` they belong to the consequent's leading pass instead).
-        let comments = f.context().comments();
-        let comments = if is_single_block_statement {
-            comments.block_comments_before(first_statement.span().start)
-        } else if is_default {
+        if is_default {
+            // No test node to carry a trailing comment,
+            // so synthesize the head's end from the keyword (escapes are illegal in keywords).
+            // NOTE: relies on `:` being in `end_of_line_comments_after`'s trivia allowlist.
             #[expect(clippy::cast_possible_truncation)]
             const DEFAULT_LEN: u32 = "default".len() as u32;
-            comments.end_of_line_comments_after(self.span.start + DEFAULT_LEN)
-        } else {
-            &[]
-        };
-
-        if !comments.is_empty() {
-            write!(
-                f,
-                [
-                    space(),
-                    FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None },
-                ]
-            );
+            let comments =
+                f.context().comments().end_of_line_comments_after(self.span.start + DEFAULT_LEN);
+            if !comments.is_empty() {
+                write!(
+                    f,
+                    [
+                        space(),
+                        FormatDanglingComments::Comments {
+                            comments,
+                            indent: DanglingIndentMode::None
+                        },
+                    ]
+                );
+            }
         }
-
-        if let Some(block) = single_block_statement {
-            // The clause pulls pending line comments between the `:` and the `{`
-            // INSIDE the block (`default: // c` + `{` -> `default: { // c`);
-            // its block comments are printed outside above.
-            // Use `write` to skip the block's leading-comments pass.
-            write!(f, [space()]);
-            block.write(f);
-        } else {
-            // no line break needed after because it is added by the indent in the switch statement
-            write!(f, indent(&format_args!(hard_line_break(), consequent)));
-        }
+        // No line break needed after because it is added by the indent in the switch statement
+        write!(f, indent(&format_args!(hard_line_break(), consequent)));
     }
 }

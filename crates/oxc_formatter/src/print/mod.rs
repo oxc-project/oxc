@@ -861,33 +861,43 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentForEmptyStatement<'a, 
     }
 }
 
-struct FormatTestOfIfAndWhileStatement<'a, 'b> {
-    test: &'b AstNode<'a, Expression<'a>>,
+/// The rightmost expression inside a statement head's parentheses
+/// (if/while test, for-in/for-of right, with object),
+/// printed without its generic trailing pass so the head's `)` bounds its comments.
+/// Comments past the `)` are left pending: for the statement body's leading pass,
+/// or the caller's `FormatCommentForEmptyStatement` where one applies.
+struct FormatParenHeadExpression<'a, 'b> {
+    expression: &'b AstNode<'a, Expression<'a>>,
     /// Start of the statement's body;
-    /// the last `)` before it is the condition's closing paren,
+    /// the last `)` before it is the head's closing paren,
     /// and it bounds the lexical scan (see `Comments::end_including_source_parens`).
     body_start: u32,
 }
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatTestOfIfAndWhileStatement<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatParenHeadExpression<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        // FormatNodeWithoutTrailingComments already handles suppression comments internally,
-        // so no separate has_trailing_suppression_comment check is needed here.
-        write!(f, FormatNodeWithoutTrailingComments(self.test));
-        // Comments before the condition's closing paren print inside the parens,
-        // also from between a parenthesized test's re-printed `)` and it
+        // `FormatNodeWithoutTrailingComments` already handles suppression comments internally,
+        // so no separate `has_trailing_suppression_comment` check is needed here.
+        write!(f, FormatNodeWithoutTrailingComments(self.expression));
+        // Comments before the head's closing paren print inside the parens,
+        // also from between a parenthesized expression's re-printed `)` and it
         // (`if ((0, 0) /* c */) {}` keeps the comment inside);
         // comments after it lead the body instead.
-        let test_end = self.test.span().end;
-        if !f.comments().has_comment_in_range(test_end, self.body_start) {
+        let expression_end = self.expression.span().end;
+        if !f.comments().has_comment_in_range(expression_end, self.body_start) {
             return;
         }
 
-        let rparen_end = f.comments().end_including_source_parens(test_end, self.body_start);
+        let rparen_end = f.comments().end_including_source_parens(expression_end, self.body_start);
         // `comments_before` returns a prefix of the unprinted comments,
         // as the printed-count cursor requires;
-        // the range check above fences out stale pre-`test_end` entries.
+        // the range check above fences out stale pre-`expression_end` entries.
         let comments = f.context().comments().comments_before(rparen_end);
         if !comments.is_empty() {
+            // Nothing may escape the head's `)`:
+            // a grouped head (if/while/with) flushes a pending line comment at its own break;
+            // an ungrouped head (for-in/for-of) must emit `line_suffix_boundary()` before its `)` instead.
+            // (The boundary must NOT be emitted here for grouped heads:
+            // its presence poisons the enclosing fits measurement, breaking content that fits.)
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
         }
     }
@@ -907,8 +917,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
                 space(),
                 "(",
                 group(&soft_block_indent(&format_args!(
-                    FormatTestOfIfAndWhileStatement {
-                        test: self.test(),
+                    FormatParenHeadExpression {
+                        expression: self.test(),
                         body_start: body.span().start
                     },
                     FormatCommentForEmptyStatement(body)
@@ -992,8 +1002,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
                 space(),
                 "in",
                 space(),
-                self.right(),
+                // NOTE: The head is deliberately not grouped, unlike if/while/with:
+                // Prettier never breaks a for-in/for-of head at its parens,
+                // and a plain `group` would expand on multiline content (arrow bodies, array literals),
+                // breaking the hugged layout.
+                FormatParenHeadExpression {
+                    expression: self.right(),
+                    body_start: body.span().start
+                },
                 FormatCommentForEmptyStatement(body),
+                // Flushes a pending in-paren line comment before the `)`
+                // (this head is ungrouped, so no break would flush it otherwise)
+                line_suffix_boundary(),
                 ")",
                 FormatStatementBody::new(body)
             ))
@@ -1028,7 +1048,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                     space(),
                     "of",
                     space(),
-                    right,
+                    // NOTE: Not grouped, like the for-in head above.
+                    FormatParenHeadExpression { expression: right, body_start: body.span().start },
+                    line_suffix_boundary(),
                     ")",
                     FormatStatementBody::new(body)
                 ]
@@ -1065,8 +1087,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(&FormatTestOfIfAndWhileStatement {
-                    test,
+                group(&soft_block_indent(&FormatParenHeadExpression {
+                    expression: test,
                     body_start: consequent.span().start
                 })),
                 ")",
@@ -1169,15 +1191,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
     }
 
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        let body = self.body();
         write!(
             f,
             group(&format_args!(
                 "with",
                 space(),
                 "(",
-                self.object(),
+                group(&soft_block_indent(&FormatParenHeadExpression {
+                    expression: self.object(),
+                    body_start: body.span().start
+                })),
                 ")",
-                FormatStatementBody::new(self.body())
+                FormatStatementBody::new(body)
             ))
         );
     }

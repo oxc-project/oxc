@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
-assertion_line: 172
 expression: report
 ---
-js compatibility: 777/810 (95.93%), 23 files skipped
+js compatibility: 778/810 (96.05%), 23 files skipped
 
 # Failed
 
@@ -19,17 +18,15 @@ js compatibility: 777/810 (95.93%), 23 files skipped
 | js/comments/return-statement.js | 💥💥 | 97.25% |
 | js/comments/tagged-template-literal.js | 💥💥 | 89.66% |
 | js/comments/assignment/variable-declarator.js | 💥 | 88.00% |
-| js/comments/between-head-and-body/between-head-and-body.js | 💥 | 68.61% |
-| js/comments/between-head-and-body/empty-statement.js | 💥 | 51.25% |
-| js/comments/between-head-and-body/non-block.js | 💥 | 82.86% |
+| js/comments/between-head-and-body/between-head-and-body.js | 💥 | 87.89% |
+| js/comments/between-head-and-body/empty-statement.js | 💥 | 66.27% |
 | js/comments/first-argument/first-argument.js | 💥 | 92.98% |
 | js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
-| js/comments/while-like/with.js | 💥 | 80.00% |
 | js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 85.71% |
 | js/for/continue-and-break-comment-without-blocks.js | 💥 | 74.24% |
-| js/for-of/comments.js | 💥 | 50.00% |
+| js/for-of/comments.js | 💥 | 42.11% |
 | js/function/iife.js | 💥 | 14.89% |
 | js/function/issue-12967.js | 💥 | 0.00% |
 | js/if/blank-lines.js | 💥 | 94.83% |
@@ -39,6 +36,7 @@ js compatibility: 777/810 (95.93%), 23 files skipped
 | js/logical-expressions/in-unary-expression.js | 💥 | 79.49% |
 | js/sequence-expression/parenthesized-trailing-comment-unstable.js | 💥 | 66.67% |
 | js/sequence-expression/parenthesized.js | 💥 | 85.71% |
+| js/switch/comments.js | 💥 | 94.74% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
@@ -75,11 +73,8 @@ js compatibility: 777/810 (95.93%), 23 files skipped
 - js/arrays/numbers-with-holes.js
 - js/arrows/arrow-chain-with-trailing-comments.js
 - js/comments/return-statement.js
-- js/comments/between-head-and-body/between-head-and-body.js
 - js/comments/between-head-and-body/empty-statement.js
 - js/comments/first-argument/first-argument.js
-- js/comments/while-like/with.js
-- js/for/9812-2.js
 - js/for/continue-and-break-comment-without-blocks.js
 - js/function/issue-12967.js
 - js/object-prop-break-in/short-keys.js
