@@ -140,6 +140,19 @@ describe("async minify", () => {
   });
 });
 
+describe("identifier mangling", () => {
+  it("mangles class private members", () => {
+    const ret = minifySync(
+      "test.js",
+      "class Foo { #privateField = 1; method() { return this.#privateField; } }",
+      { compress: false, mangle: true },
+    );
+
+    expect(ret.errors).toHaveLength(0);
+    expect(ret.code).toBe("class Foo{#e=1;method(){return this.#e}}");
+  });
+});
+
 describe("property mangling", () => {
   it("is independent from identifier mangling and returns a reusable cache", () => {
     const ret = minifySync("test.js", "let local; obj._often; obj._rare; obj._often;", {
