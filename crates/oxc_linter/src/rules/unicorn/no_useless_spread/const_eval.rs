@@ -131,7 +131,7 @@ fn is_new_object(new_expr: &NewExpression) -> bool {
 }
 
 /// Every typed array constructor.
-const TYPED_ARRAY_NAMES: [&str; 11] = [
+const TYPED_ARRAY_NAMES: [&str; 12] = [
     "Int8Array",
     "Uint8Array",
     "Uint8ClampedArray",
@@ -139,6 +139,7 @@ const TYPED_ARRAY_NAMES: [&str; 11] = [
     "Uint16Array",
     "Int32Array",
     "Uint32Array",
+    "Float16Array",
     "Float32Array",
     "Float64Array",
     "BigInt64Array",
@@ -213,6 +214,7 @@ pub fn is_array_from(call_expr: &CallExpression) -> bool {
             "Uint16Array",
             "Int32Array",
             "Uint32Array",
+            "Float16Array",
             "Float32Array",
             "Float64Array",
             "BigInt64Array",
