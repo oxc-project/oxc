@@ -19247,9 +19247,9 @@
           "markdownDescription": "Whether to consider `default` cases exhaustive for union types.\nWhen true, a switch statement with a `default` case is considered exhaustive\neven if not all union members are handled explicitly."
         },
         "defaultCaseCommentPattern": {
-          "description": "Regular expression pattern that when matched in a default case comment,\nwill suppress the exhaustiveness check.\nExample: `\"@skip-exhaustive-check\"` to allow `default: // @skip-exhaustive-check`",
+          "description": "Regular expression pattern for a comment that acts as an omitted `default` case.\nThe comment must appear after the final case and the switch must not have a `default` case.\nFor union types, it suppresses the exhaustiveness check only when\n`considerDefaultExhaustiveForUnions` is enabled.\nExample: `\"^skip default$\"` to allow a switch ending in `// skip default`.",
           "type": "string",
-          "markdownDescription": "Regular expression pattern that when matched in a default case comment,\nwill suppress the exhaustiveness check.\nExample: `\"@skip-exhaustive-check\"` to allow `default: // @skip-exhaustive-check`"
+          "markdownDescription": "Regular expression pattern for a comment that acts as an omitted `default` case.\nThe comment must appear after the final case and the switch must not have a `default` case.\nFor union types, it suppresses the exhaustiveness check only when\n`considerDefaultExhaustiveForUnions` is enabled.\nExample: `\"^skip default$\"` to allow a switch ending in `// skip default`."
         },
         "requireDefaultForNonUnion": {
           "description": "Whether to require default cases on switches over union types that are not exhaustive.\nWhen true, switches with non-exhaustive union types must have a default case.",
