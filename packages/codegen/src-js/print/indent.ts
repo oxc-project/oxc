@@ -43,10 +43,10 @@ function growIndents(state: State, level: number): string {
   let { length } = indents;
   let indent = indents[length - 1];
   for (; length <= level; length++) {
-    indent += indentString;
-    // Force the cons string flat.
-    // That costs here, but it is appended to the output many times afterwards.
-    indent.charCodeAt(0);
+    // Use `join` instead of `indent += indentString` to produce a flat string instead of a rope.
+    // That costs a little here, but is a one-time cost, and it is appended to the output many times afterwards,
+    // so reduces the number of segments in `output` rope string for every file.
+    indent = [indent, indentString].join("");
     indents.push(indent);
   }
 
