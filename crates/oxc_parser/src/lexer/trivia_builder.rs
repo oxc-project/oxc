@@ -32,7 +32,8 @@ pub struct TriviaBuilder<'a> {
     /// Range of comments preceding the current token that contains pure comments.
     pure_comments: Option<(usize, usize)>,
 
-    pub(super) has_no_side_effects_comment: bool,
+    /// Range of comments preceding the current token that contains no-side-effects comments.
+    no_side_effects_comments: Option<(usize, usize)>,
 }
 
 impl<'a> TriviaBuilder<'a> {
@@ -47,7 +48,7 @@ impl<'a> TriviaBuilder<'a> {
             saw_newline_for_comment: true,
             previous_token,
             pure_comments: None,
-            has_no_side_effects_comment: false,
+            no_side_effects_comments: None,
         }
     }
 
@@ -55,8 +56,8 @@ impl<'a> TriviaBuilder<'a> {
         self.pure_comments
     }
 
-    pub fn previous_token_has_no_side_effects_comment(&self) -> bool {
-        self.has_no_side_effects_comment
+    pub fn previous_token_no_side_effects_comments(&self) -> Option<(usize, usize)> {
+        self.no_side_effects_comments
     }
 
     pub(super) fn set_pure_comments(&mut self, pure_comments: Option<(usize, usize)>) {
@@ -67,10 +68,26 @@ impl<'a> TriviaBuilder<'a> {
         self.pure_comments = None;
     }
 
+    pub(super) fn set_no_side_effects_comments(&mut self, comments: Option<(usize, usize)>) {
+        self.no_side_effects_comments = comments;
+    }
+
+    pub(super) fn clear_no_side_effects_comments(&mut self) {
+        self.no_side_effects_comments = None;
+    }
+
     pub fn mark_pure_comments_applied(&mut self, (start, end): (usize, usize)) {
         for comment in &mut self.comments[start..end] {
             if comment.content == CommentContent::PureNotApplied {
                 comment.content = CommentContent::Pure;
+            }
+        }
+    }
+
+    pub fn mark_no_side_effects_comments_applied(&mut self, (start, end): (usize, usize)) {
+        for comment in &mut self.comments[start..end] {
+            if comment.content == CommentContent::NoSideEffectsNotApplied {
+                comment.content = CommentContent::NoSideEffects;
             }
         }
     }
@@ -249,6 +266,7 @@ impl<'a> TriviaBuilder<'a> {
                 | CommentContent::Pure
                 | CommentContent::PureNotApplied
                 | CommentContent::NoSideEffects
+                | CommentContent::NoSideEffectsNotApplied
                 | CommentContent::PropertyKey
         )
     }
@@ -261,8 +279,12 @@ impl<'a> TriviaBuilder<'a> {
             } else {
                 self.pure_comments = Some((index, index + 1));
             }
-        } else if comment.is_no_side_effects() {
-            self.has_no_side_effects_comment = true;
+        } else if comment.content == CommentContent::NoSideEffectsNotApplied {
+            if let Some((_, end)) = &mut self.no_side_effects_comments {
+                *end = index + 1;
+            } else {
+                self.no_side_effects_comments = Some((index, index + 1));
+            }
         }
     }
 
@@ -445,7 +467,7 @@ impl<'a> TriviaBuilder<'a> {
                 comment.content = CommentContent::PureNotApplied;
                 return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
-                comment.content = CommentContent::NoSideEffects;
+                comment.content = CommentContent::NoSideEffectsNotApplied;
                 return;
             }
         }
@@ -1018,6 +1040,61 @@ function bar() {}";
     }
 
     #[test]
+    fn no_side_effects_comment_not_applied() {
+        let cases = [
+            "/* #__NO_SIDE_EFFECTS__ */",
+            "/* @__NO_SIDE_EFFECTS__ */ assert.ok(true);",
+            "/* #__NO_SIDE_EFFECTS__ */ const foo = 1, bar = () => {};",
+            "/* #__NO_SIDE_EFFECTS__ */ class Foo {}",
+            "/* #__NO_SIDE_EFFECTS__ */ let foo = () => {};",
+            "/* #__NO_SIDE_EFFECTS__ */ var foo = function() {};",
+            "const foo /* #__NO_SIDE_EFFECTS__ */ = () => {};",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(
+                comments[0].content,
+                CommentContent::NoSideEffectsNotApplied,
+                "{source_text}"
+            );
+        }
+    }
+
+    #[test]
+    fn no_side_effects_comment_applied() {
+        let cases = [
+            "/* #__NO_SIDE_EFFECTS__ */ function foo() {}",
+            "/* #__NO_SIDE_EFFECTS__ */ async function foo() {}",
+            "/* #__NO_SIDE_EFFECTS__ */ export function foo() {}",
+            "export default /* #__NO_SIDE_EFFECTS__ */ function foo() {}",
+            "const foo = /* #__NO_SIDE_EFFECTS__ */ function() {};",
+            "const foo = /* #__NO_SIDE_EFFECTS__ */ () => {};",
+            "/* #__NO_SIDE_EFFECTS__ */ const foo = () => {};",
+            "/* #__NO_SIDE_EFFECTS__ */ export const foo = () => {};",
+            "[/* #__NO_SIDE_EFFECTS__ */ function() {}];",
+        ];
+        for source_text in cases {
+            let comments = get_comments(source_text);
+            assert_eq!(comments[0].content, CommentContent::NoSideEffects, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn no_side_effects_comments_are_applied_independently() {
+        let source_text = concat!(
+            "/*#__NO_SIDE_EFFECTS__*/ value;",
+            "/*#__NO_SIDE_EFFECTS__*/ /* comment */ /*@__NO_SIDE_EFFECTS__*/ function foo() {}",
+        );
+        let comments = get_comments(source_text);
+
+        assert_eq!(comments.len(), 4);
+        assert_eq!(comments[0].content, CommentContent::NoSideEffectsNotApplied);
+        assert_eq!(comments[1].content, CommentContent::NoSideEffects);
+        assert_eq!(comments[2].content, CommentContent::None);
+        assert_eq!(comments[3].content, CommentContent::NoSideEffects);
+    }
+
+    #[test]
     fn comment_parsing() {
         let data = [
             ("/*! legal */", CommentContent::Legal),
@@ -1052,9 +1129,9 @@ function bar() {}";
             ("/* webpackChunkName: 'my-chunk-name' */", CommentContent::Webpack),
             ("/* webpack */", CommentContent::None),
             ("/* @__PURE__ */", CommentContent::PureNotApplied),
-            ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffectsNotApplied),
             ("/* #__PURE__ */", CommentContent::PureNotApplied),
-            ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffectsNotApplied),
             ("/* @__KEY__ */", CommentContent::PropertyKey),
             ("/* #__KEY__ */", CommentContent::PropertyKey),
             ("/*\u{a0}@__KEY__\u{a0}*/", CommentContent::PropertyKey),
