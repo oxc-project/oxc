@@ -9,6 +9,7 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
+use usage_rs as usage;
 
 use crate::{init::init_tracing, lint::CliRunner, result::CliRunResult};
 
@@ -161,6 +162,7 @@ pub async fn lint(
 }
 
 /// Run the linter.
+#[expect(clippy::print_stderr, clippy::print_stdout)]
 async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
@@ -170,21 +172,17 @@ async fn lint_impl(
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
 ) -> CliRunResult {
-    // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
 
-    let command = {
-        let cmd = crate::cli::lint_command();
-        match cmd.run_inner(&*args) {
-            Ok(cmd) => cmd,
-            Err(e) => {
-                e.print_message(100);
-                return if e.exit_code() == 0 {
-                    CliRunResult::LintSucceeded
-                } else {
-                    CliRunResult::InvalidOptionConfig
-                };
+    let command = match crate::cli::LintCommand::embedded_outcome(&args) {
+        usage::embedded::Outcome::Parsed(command) => command,
+        usage::embedded::Outcome::Exit(exit) => {
+            if exit.stderr {
+                eprint!("{}", exit.text);
+                return CliRunResult::InvalidOptionConfig;
             }
+            print!("{}", exit.text);
+            return CliRunResult::LintSucceeded;
         }
     };
 

@@ -189,9 +189,9 @@
 
 use std::fs;
 
-use bpaf::{Bpaf, Parser};
 use quote::quote;
 use rayon::prelude::*;
+use usage_rs::Cli;
 
 mod codegen;
 mod derives;
@@ -290,19 +290,23 @@ const ATTRIBUTES: [&str; 2] = ["generate_derive", "plural"];
 type Result<R> = std::result::Result<R, ()>;
 
 /// CLI options.
-#[derive(Debug, Bpaf)]
+#[derive(Debug, Cli)]
+#[usage(bin = "oxc_ast_tools", completion, unknown_flags = "error", args_override_self = false)]
 struct CliOptions {
     /// Run all generators but don't write to disk
+    #[usage(long)]
     dry_run: bool,
     /// Run all generators in series (useful when debugging)
+    #[usage(long)]
     serial: bool,
     /// Print no logs
+    #[usage(long)]
     quiet: bool,
 }
 
 fn main() {
     // Parse CLI options
-    let options = cli_options().run();
+    let options = CliOptions::parse();
 
     // Init logger
     if options.quiet {

@@ -1,4 +1,5 @@
-use oxfmt::cli::format_command;
+use oxfmt::cli::FormatCommand;
+use usage_parser::docs::markdown::MarkdownRenderer;
 use website_common::generate_cli_docs;
 
 #[test]
@@ -11,7 +12,7 @@ fn test_cli() {
 
 #[test]
 fn test_cli_terminal() {
-    let snapshot = oxfmt::cli::format_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
+    let snapshot = FormatCommand::render_help(FormatCommand::command(), true).unwrap();
     insta::with_settings!({ prepend_module_to_snapshot => false }, {
         insta::assert_snapshot!(snapshot);
     });
@@ -24,6 +25,8 @@ pub fn print_cli() {
 }
 
 fn generate_cli() -> String {
-    let markdown = format_command().render_markdown("oxfmt");
+    let mut spec: usage_parser::Spec = FormatCommand::to_kdl().parse().unwrap();
+    spec.version = None;
+    let markdown = MarkdownRenderer::new(spec).with_html_encode(false).render_spec().unwrap();
     generate_cli_docs(&markdown, "oxfmt")
 }

@@ -13,15 +13,12 @@ name = "website_formatter"
 doctest = false
 
 [dependencies]
-bpaf = { workspace = true, features = ["docgen"] }
 oxfmt = { workspace = true }
 pico-args = { workspace = true }
 schemars = { workspace = true }
 website_common = { workspace = true }
+usage-parser = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
 project-root = { workspace = true }
-
-[package.metadata.cargo-shear]
-ignored = ["bpaf"]

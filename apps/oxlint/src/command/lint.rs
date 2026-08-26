@@ -1,87 +1,203 @@
-use std::{path::PathBuf, str::FromStr, sync::OnceLock};
+use std::{
+    ffi::{OsStr, OsString},
+    path::PathBuf,
+    str::FromStr,
+    sync::OnceLock,
+};
 
-use bpaf::{Bpaf, doc::Style};
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+use usage_rs as usage;
+use usage_rs::{ArgGroup, Args, Cli, ValidationError};
 
 use crate::output_formatter::OutputFormat;
 
-use super::{
-    MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
-    ignore::{IgnoreOptions, ignore_options},
-    misc_options, validate_paths,
-};
+use super::{MiscOptions, PATHS_ERROR_MESSAGE, ignore::IgnoreOptions, invalid_path};
 
-#[derive(Debug, Clone, Bpaf)]
-#[bpaf(options, version(VERSION))]
+const LINT_FILTERS_HELP: &str = "Lint filters accumulate from left to right on the command line.\n\
+For example: `-D correctness -A no-debugger` or `-A all -D no-debugger`.\n\
+Categories:\n\
+\n\
+* `correctness` - Code that is outright wrong or useless (default)\n\
+* `suspicious` - Code that is most likely wrong or useless\n\
+* `pedantic` - Lints which are rather strict or have occasional false positives\n\
+* `perf` - Code that could be written in a more performant way\n\
+* `style` - Code that should be written in a more idiomatic way\n\
+* `restriction` - Lints which prevent the use of language and library features\n\
+* `nursery` - New lints that are still under development\n\
+* `all` - All categories listed above except `nursery`. Does not enable plugins automatically.";
+
+#[derive(Debug, Clone)]
 pub struct LintCommand {
-    #[bpaf(external)]
     pub basic_options: BasicOptions,
-
-    #[bpaf(external(lint_filter), map(LintFilter::into_tuple), many, hide_usage)]
     pub filter: Vec<(AllowWarnDeny, String)>,
-
-    #[bpaf(external)]
     pub enable_plugins: EnablePlugins,
-
-    #[bpaf(external)]
     pub fix_options: FixOptions,
-
-    #[bpaf(external)]
     pub ignore_options: IgnoreOptions,
-
-    #[bpaf(external)]
     pub warning_options: WarningOptions,
-
-    #[bpaf(external)]
     pub output_options: OutputOptions,
-
     /// List all the rules that are currently registered
-    #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
-
     /// Start the language server
-    #[bpaf(long("lsp"), switch, hide_usage)]
     pub lsp: bool,
-
-    #[bpaf(external)]
     pub misc_options: MiscOptions,
-
     /// Disable the automatic loading of nested configuration files
-    #[bpaf(switch, hide_usage)]
     pub disable_nested_config: bool,
-
     /// Enable rules that require type information
-    #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
-
     /// Enable experimental type checking (includes TypeScript compiler diagnostics)
-    #[bpaf(switch, hide_usage)]
     pub type_check: bool,
-
     /// Run only TypeScript type checking diagnostics without regular lint diagnostics
-    #[bpaf(long("type-check-only"), switch, hide)]
     pub type_check_only: bool,
-
-    #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
-
-    #[bpaf(external)]
     pub suppression_options: SuppressionOptions,
-
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
 }
 
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Cli)]
+#[usage(
+    bin = "oxlint",
+    version,
+    completion,
+    unknown_flags = "error",
+    args_override_self = false,
+    heading("Allowing / Denying Multiple Lints", help = LINT_FILTERS_HELP),
+    usage = "oxlint [-c=./.oxlintrc.json] [PATH]...",
+    help_template = "{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
+    example("oxlint -D correctness src", header = "Deny a category"),
+    example("oxlint --format github .", header = "GitHub Actions"),
+    try_into = LintCommand
+)]
+struct LintCli {
+    #[usage(flatten, next_help_heading = "Basic Configuration")]
+    basic_options: BasicOptions,
+    #[usage(flatten, next_help_heading = "Allowing / Denying Multiple Lints")]
+    filter_options: LintFilterOptions,
+    #[usage(flatten, next_help_heading = "Enable/Disable Plugins")]
+    enable_plugins: EnablePluginsCli,
+    #[usage(flatten, next_help_heading = "Fix Problems")]
+    fix_options: FixOptions,
+    #[usage(flatten, next_help_heading = "Ignore Files")]
+    ignore_options: IgnoreOptions,
+    #[usage(flatten, next_help_heading = "Handle Warnings")]
+    warning_options: WarningOptions,
+    #[usage(flatten, next_help_heading = "Output")]
+    output_options: OutputOptions,
+
+    /// List all the rules that are currently registered
+    #[usage(long = "rules")]
+    list_rules: bool,
+
+    /// Start the language server
+    #[usage(long = "lsp")]
+    lsp: bool,
+
+    #[usage(flatten, next_help_heading = "Miscellaneous")]
+    misc_options: MiscOptions,
+
+    /// Disable the automatic loading of nested configuration files
+    #[usage(long)]
+    disable_nested_config: bool,
+
+    /// Enable rules that require type information
+    #[usage(long)]
+    type_aware: bool,
+
+    /// Enable experimental type checking (includes TypeScript compiler diagnostics)
+    #[usage(long)]
+    type_check: bool,
+
+    /// Run only TypeScript type checking diagnostics without regular lint diagnostics
+    #[usage(long, hide)]
+    type_check_only: bool,
+
+    #[usage(flatten, next_help_heading = "Inline Configuration Comments")]
+    inline_config_options: InlineConfigOptionsCli,
+
+    #[usage(flatten)]
+    suppression_options: SuppressionOptions,
+
+    /// Single file, single path or list of paths
+    #[usage(name = "PATH", value_hint = usage::ValueHint::AnyPath)]
+    paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Args)]
 pub struct SuppressionOptions {
     /// Generate suppressions for all current violations
-    #[bpaf(switch, hide)]
+    #[usage(long, hide)]
     pub suppress_all: bool,
 
     /// Remove entries for violations that no longer exist
-    #[bpaf(switch, hide)]
+    #[usage(long, hide)]
     pub prune_suppressions: bool,
+}
+
+impl LintCommand {
+    pub fn parse() -> Self {
+        LintCli::parse_into()
+    }
+
+    /// Parses linter options from an argument slice.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when an argument is invalid or conflicts with another option.
+    pub fn parse_from<'v, T>(args: &'v [T]) -> Result<Self, usage::Error<'static, 'v>>
+    where
+        T: AsRef<OsStr> + 'v,
+    {
+        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        LintCli::parse_into_from(&refs)
+    }
+
+    pub fn command() -> &'static usage::Command<'static> {
+        LintCli::command()
+    }
+
+    pub fn render_help(cmd: &usage::Command<'_>, long: bool) -> Option<String> {
+        LintCli::render_help(cmd, long)
+    }
+
+    pub fn to_kdl() -> String {
+        LintCli::to_kdl()
+    }
+
+    pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
+        LintCli::embedded_outcome_into(args)
+    }
+}
+
+impl TryFrom<LintCli> for LintCommand {
+    type Error = ValidationError;
+
+    fn try_from(cli: LintCli) -> Result<Self, Self::Error> {
+        if let Some(path) = invalid_path(&cli.paths) {
+            return Err(ValidationError::field("PATH")
+                .value(path.display().to_string())
+                .reason(PATHS_ERROR_MESSAGE));
+        }
+
+        Ok(Self {
+            basic_options: cli.basic_options,
+            filter: cli.filter_options.filters.into_iter().map(LintFilter::into_tuple).collect(),
+            enable_plugins: cli.enable_plugins.into(),
+            fix_options: cli.fix_options,
+            ignore_options: cli.ignore_options,
+            warning_options: cli.warning_options,
+            output_options: cli.output_options,
+            list_rules: cli.list_rules,
+            lsp: cli.lsp,
+            misc_options: cli.misc_options,
+            disable_nested_config: cli.disable_nested_config,
+            type_aware: cli.type_aware,
+            type_check: cli.type_check,
+            type_check_only: cli.type_check_only,
+            inline_config_options: cli.inline_config_options.into(),
+            suppression_options: cli.suppression_options,
+            paths: cli.paths,
+        })
+    }
 }
 
 impl LintCommand {
@@ -139,7 +255,7 @@ impl LintCommand {
 }
 
 /// Basic Configuration
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct BasicOptions {
     /// Oxlint configuration file
     ///  * `.json` and `.jsonc` config files are supported in all runtimes
@@ -148,87 +264,75 @@ pub struct BasicOptions {
     ///  * tries to be compatible with ESLint v8's format
     ///
     /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`, or `oxlint.config.mts` file in the current working directory.
-    #[bpaf(long, short, argument("./.oxlintrc.json"))]
+    #[usage(
+        long,
+        short,
+        value_name = "./.oxlintrc.json",
+        value_hint = usage::ValueHint::FilePath
+    )]
     pub config: Option<PathBuf>,
 
     /// Override the TypeScript config used for import resolution.
     /// Oxlint automatically discovers the relevant `tsconfig.json` for each file.
     /// Use this only when your project uses a non-standard tsconfig name or location.
-    ///
-    /// ::: warning
-    /// Avoid using this option. It can cause differences between import resolution,
-    /// and type-aware linting. Type aware linting **does not** respect this option,
-    /// and will always discover the appropriate `tsconfig.json` for each file automatically.
-    /// :::
-    #[bpaf(argument("./tsconfig.json"), hide_usage)]
+    #[usage(
+        long,
+        value_name = "./tsconfig.json",
+        value_hint = usage::ValueHint::FilePath,
+        warning = "Avoid using this option. It can cause differences between import resolution and type-aware linting. Type-aware linting does not respect this option and will always discover the appropriate tsconfig.json for each file automatically."
+    )]
     pub tsconfig: Option<PathBuf>,
 
     /// Initialize oxlint configuration with default values
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub init: bool,
 }
 
-// This is formatted according to
-// <https://docs.rs/bpaf/latest/bpaf/params/struct.NamedArg.html#method.help>
-//
-/// Allowing / Denying Multiple Lints
-///
-/// Accumulate rules and categories from left to right on the command-line.
-///   For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
-///   The categories are:
-///   * `correctness` - Code that is outright wrong or useless (default)
-///   * `suspicious`  - Code that is most likely wrong or useless
-///   * `pedantic`    - Lints which are rather strict or have occasional false positives
-///   * `perf`        - Code that could be written in a more performant way
-///   * `style`       - Code that should be written in a more idiomatic way
-///   * `restriction` - Lints which prevent the use of language and library features
-///   * `nursery`     - New lints that are still under development
-///   * `all`         - All categories listed above except `nursery`. Does not enable plugins automatically.
-///
-/// Arguments:
-//  ^ This shows up on the website but not from the cli's `--help`.
-#[derive(Debug, Clone, Bpaf)]
-pub enum LintFilter {
-    Allow(
-        /// Allow the rule or category (suppress the lint)
-        #[bpaf(short('A'), long("allow"), argument("NAME"))]
-        String,
-    ),
-    Warn(
-        /// Warn on the rule or category (emit a warning)
-        #[bpaf(short('W'), long("warn"), argument("NAME"))]
-        String,
-    ),
-    Deny(
-        /// Deny the rule or category (emit an error)
-        #[bpaf(short('D'), long("deny"), argument("NAME"))]
-        String,
-    ),
+#[derive(Debug, Clone, Args)]
+struct LintFilterOptions {
+    #[usage(arg_group)]
+    filters: Vec<LintFilter>,
+}
+
+#[derive(Debug, Clone, ArgGroup)]
+#[usage(name = "lint-filter", multiple)]
+enum LintFilter {
+    /// Allow the rule or category (suppress the lint)
+    #[usage(short = 'A', value_name = "NAME")]
+    Allow(String),
+
+    /// Warn on the rule or category (emit a warning)
+    #[usage(short = 'W', value_name = "NAME")]
+    Warn(String),
+
+    /// Deny the rule or category (emit an error)
+    #[usage(short = 'D', value_name = "NAME")]
+    Deny(String),
 }
 
 impl LintFilter {
     fn into_tuple(self) -> (AllowWarnDeny, String) {
         match self {
-            Self::Allow(s) => (AllowWarnDeny::Allow, s),
-            Self::Warn(s) => (AllowWarnDeny::Warn, s),
-            Self::Deny(s) => (AllowWarnDeny::Deny, s),
+            Self::Allow(name) => (AllowWarnDeny::Allow, name),
+            Self::Warn(name) => (AllowWarnDeny::Warn, name),
+            Self::Deny(name) => (AllowWarnDeny::Deny, name),
         }
     }
 }
 
 /// Fix Problems
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output.
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub fix: bool,
 
     /// Apply auto-fixable suggestions. May change program behavior.
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub fix_suggestions: bool,
 
     /// Apply dangerous fixes and suggestions
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub fix_dangerously: bool,
 }
 
@@ -257,36 +361,72 @@ impl FixOptions {
 }
 
 /// Handle Warnings
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct WarningOptions {
     /// Disable reporting on warnings, only errors are reported
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub quiet: bool,
 
     /// Ensure warnings produce a non-zero exit code
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub deny_warnings: bool,
 
     /// Specify a warning threshold,
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
-    #[bpaf(argument("INT"), hide_usage)]
+    #[usage(long, value_name = "INT")]
     pub max_warnings: Option<usize>,
 }
 
 /// Output
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
+#[expect(clippy::duplicated_attributes)]
+#[usage(
+    output("default", default, help = "Human-readable diagnostics"),
+    output("agent", help = "Diagnostics optimized for coding agents"),
+    output("checkstyle", media_type = "application/xml", help = "Checkstyle XML diagnostics"),
+    output("github", help = "GitHub workflow annotations"),
+    output(
+        "gitlab",
+        media_type = "application/json",
+        framing = "json",
+        help = "GitLab Code Quality diagnostics"
+    ),
+    output("json", media_type = "application/json", framing = "json", help = "JSON diagnostics"),
+    output("junit", media_type = "application/xml", help = "JUnit XML diagnostics"),
+    output(
+        "sarif",
+        media_type = "application/sarif+json",
+        framing = "json",
+        help = "SARIF diagnostics"
+    ),
+    output("stylish", help = "Stylish text diagnostics"),
+    output("unix", help = "Unix-style text diagnostics"),
+    exit_code(0, "lint completed without errors"),
+    exit_code(1, "lint errors or invalid options were found")
+)]
 pub struct OutputOptions {
-    /// Use a specific output format. Possible values:
-    /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
-    #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
+    /// Use a specific output format.
+    #[usage(
+        long,
+        short,
+        value_name = "FORMAT",
+        value_enum,
+        select,
+        default_fn = default_output_format,
+        default_note = "auto-detected from the runtime environment"
+    )]
     pub format: OutputFormat,
 
-    #[bpaf(
-        long("debug"),
-        argument::<DebugOptions>("OPTIONS"),
-        fallback(DebugOptions::default()),
-        help(DebugOptions::HELP),
-        hide_usage
+    /// Enable debug output options. Options are comma-separated.
+    ///
+    ///  * `files` - Print the list of files that will be linted, then exit.
+    ///  * `timings` - Enable per-rule timing information.
+    #[usage(
+        long,
+        value_name = "OPTIONS",
+        choices("files", "timings"),
+        choices_strict = false,
+        default_fn = DebugOptions::default
     )]
     pub debug: DebugOptions,
 }
@@ -302,9 +442,7 @@ pub enum DebugOption {
 
 impl DebugOption {
     const FILES_NAME: &str = "files";
-    const FILES_HELP: &str = "Print the list of files that will be linted, then exit";
     const TIMINGS_NAME: &str = "timings";
-    const TIMINGS_HELP: &str = "Enable per-rule timing information";
 }
 
 impl FromStr for DebugOption {
@@ -325,23 +463,6 @@ pub struct DebugOptions {
 }
 
 impl DebugOptions {
-    const HELP: &'static [(&'static str, Style)] = &[
-        (
-            "Enable debug output options. Options are comma-separated. Possible values:\n",
-            Style::Text,
-        ),
-        ("  * `", Style::Text),
-        (DebugOption::FILES_NAME, Style::Text),
-        ("` - ", Style::Text),
-        (DebugOption::FILES_HELP, Style::Text),
-        (".\n", Style::Text),
-        ("  * `", Style::Text),
-        (DebugOption::TIMINGS_NAME, Style::Text),
-        ("` - ", Style::Text),
-        (DebugOption::TIMINGS_HELP, Style::Text),
-        (".", Style::Text),
-    ];
-
     pub fn contains(&self, option: DebugOption) -> bool {
         self.options.contains(&option)
     }
@@ -367,97 +488,137 @@ impl FromStr for DebugOptions {
     }
 }
 
-#[expect(clippy::unnecessary_wraps)]
-fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
+impl std::fmt::Display for DebugOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (index, option) in self.options.iter().enumerate() {
+            if index > 0 {
+                f.write_str(",")?;
+            }
+            f.write_str(match option {
+                DebugOption::Files => DebugOption::FILES_NAME,
+                DebugOption::Timings => DebugOption::TIMINGS_NAME,
+            })?;
+        }
+        Ok(())
+    }
+}
+
+fn default_output_format() -> OutputFormat {
     if cfg!(debug_assertions) {
-        Ok(OutputFormat::Default)
+        OutputFormat::Default
     } else if !cfg!(test) && crate::agent_detection::is_agent() {
-        Ok(OutputFormat::Agent)
+        OutputFormat::Agent
     } else if std::env::var("GITHUB_ACTIONS").is_ok_and(|value| value == "true") {
-        Ok(OutputFormat::Github)
+        OutputFormat::Github
     } else {
-        Ok(OutputFormat::Default)
+        OutputFormat::Default
     }
 }
 
 /// Enable/Disable Plugins
-#[expect(clippy::struct_field_names)]
-#[derive(Debug, Default, Clone, Bpaf)]
-pub struct EnablePlugins {
+#[derive(Debug, Clone, Args)]
+struct EnablePluginsCli {
     /// Disable unicorn plugin, which is turned on by default
-    #[bpaf(
-        long("disable-unicorn-plugin"),
-        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
-        hide_usage
-    )]
-    pub unicorn_plugin: OverrideToggle,
+    #[usage(long = "disable-unicorn-plugin")]
+    unicorn_plugin: bool,
 
     /// Disable oxc unique rules, which is turned on by default
-    #[bpaf(
-        long("disable-oxc-plugin"),
-        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
-        hide_usage
-    )]
-    pub oxc_plugin: OverrideToggle,
+    #[usage(long = "disable-oxc-plugin")]
+    oxc_plugin: bool,
 
     /// Disable TypeScript plugin, which is turned on by default
-    #[bpaf(
-        long("disable-typescript-plugin"),
-        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
-        hide_usage
-    )]
-    pub typescript_plugin: OverrideToggle,
+    #[usage(long = "disable-typescript-plugin")]
+    typescript_plugin: bool,
 
     /// Enable import plugin and detect ESM problems.
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub import_plugin: OverrideToggle,
+    #[usage(long)]
+    import_plugin: bool,
 
     /// Enable react plugin, which is turned off by default
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub react_plugin: OverrideToggle,
+    #[usage(long)]
+    react_plugin: bool,
 
     /// Enable jsdoc plugin and detect JSDoc problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub jsdoc_plugin: OverrideToggle,
+    #[usage(long)]
+    jsdoc_plugin: bool,
 
     /// Enable the Jest plugin and detect test problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub jest_plugin: OverrideToggle,
+    #[usage(long)]
+    jest_plugin: bool,
 
     /// Enable the Vitest plugin and detect test problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub vitest_plugin: OverrideToggle,
+    #[usage(long)]
+    vitest_plugin: bool,
 
     /// Enable the JSX-a11y plugin and detect accessibility problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub jsx_a11y_plugin: OverrideToggle,
+    #[usage(long)]
+    jsx_a11y_plugin: bool,
 
     /// Enable the Next.js plugin and detect Next.js problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub nextjs_plugin: OverrideToggle,
+    #[usage(long)]
+    nextjs_plugin: bool,
 
     /// Enable the React performance plugin and detect rendering performance problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub react_perf_plugin: OverrideToggle,
+    #[usage(long)]
+    react_perf_plugin: bool,
 
     /// Enable the promise plugin and detect promise usage problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub promise_plugin: OverrideToggle,
+    #[usage(long)]
+    promise_plugin: bool,
 
     /// Enable the node plugin and detect node usage problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub node_plugin: OverrideToggle,
+    #[usage(long)]
+    node_plugin: bool,
 
     /// Enable the vue plugin and detect vue usage problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    #[usage(long)]
+    vue_plugin: bool,
+}
+
+#[expect(clippy::struct_field_names)]
+#[derive(Debug, Default, Clone)]
+pub struct EnablePlugins {
+    pub unicorn_plugin: OverrideToggle,
+    pub oxc_plugin: OverrideToggle,
+    pub typescript_plugin: OverrideToggle,
+    pub import_plugin: OverrideToggle,
+    pub react_plugin: OverrideToggle,
+    pub jsdoc_plugin: OverrideToggle,
+    pub jest_plugin: OverrideToggle,
+    pub vitest_plugin: OverrideToggle,
+    pub jsx_a11y_plugin: OverrideToggle,
+    pub nextjs_plugin: OverrideToggle,
+    pub react_perf_plugin: OverrideToggle,
+    pub promise_plugin: OverrideToggle,
+    pub node_plugin: OverrideToggle,
     pub vue_plugin: OverrideToggle,
+}
+
+impl From<EnablePluginsCli> for EnablePlugins {
+    fn from(options: EnablePluginsCli) -> Self {
+        Self {
+            unicorn_plugin: options.unicorn_plugin.then_some(false).into(),
+            oxc_plugin: options.oxc_plugin.then_some(false).into(),
+            typescript_plugin: options.typescript_plugin.then_some(false).into(),
+            import_plugin: options.import_plugin.then_some(true).into(),
+            react_plugin: options.react_plugin.then_some(true).into(),
+            jsdoc_plugin: options.jsdoc_plugin.then_some(true).into(),
+            jest_plugin: options.jest_plugin.then_some(true).into(),
+            vitest_plugin: options.vitest_plugin.then_some(true).into(),
+            jsx_a11y_plugin: options.jsx_a11y_plugin.then_some(true).into(),
+            nextjs_plugin: options.nextjs_plugin.then_some(true).into(),
+            react_perf_plugin: options.react_perf_plugin.then_some(true).into(),
+            promise_plugin: options.promise_plugin.then_some(true).into(),
+            node_plugin: options.node_plugin.then_some(true).into(),
+            vue_plugin: options.vue_plugin.then_some(true).into(),
+        }
+    }
 }
 
 /// Enables or disables a boolean option, or leaves it unset.
 ///
 /// We want CLI flags to modify whatever's set in the user's config file, but we don't want them
-/// changing default behavior if they're not explicitly passed by the user. This scheme is a bit
-/// convoluted, but needed due to architectural constraints imposed by `bpaf`.
+/// changing default behavior if they're not explicitly passed by the user.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OverrideToggle {
     /// Override the option to enabled
@@ -529,34 +690,65 @@ impl EnablePlugins {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Bpaf)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReportUnusedDirectives {
-    WithoutSeverity(
-        /// Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway
-        // More information at <https://eslint.org/docs/latest/use/command-line-interface#--report-unused-disable-directives>
-        #[bpaf(long("report-unused-disable-directives"), switch, hide_usage)]
-        bool,
-    ),
-    WithSeverity(
-        /// Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors.
-        /// Only one of these two options can be used at a time.
-        #[bpaf(
-            long("report-unused-disable-directives-severity"),
-            argument::<String>("SEVERITY"),
-            guard(|s| AllowWarnDeny::try_from(s.as_str()).is_ok(), "Invalid severity value"),
-            map(|s| AllowWarnDeny::try_from(s.as_str()).unwrap()), // guard ensures try_from will be Ok
-            optional,
-            hide_usage
-        )]
-        Option<AllowWarnDeny>,
-    ),
+    WithoutSeverity(bool),
+    WithSeverity(Option<AllowWarnDeny>),
 }
 
 /// Inline Configuration Comments
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone)]
 pub struct InlineConfigOptions {
-    #[bpaf(external)]
     pub report_unused_directives: ReportUnusedDirectives,
+}
+
+#[derive(Debug, Clone, Args)]
+#[usage(group("unused-directives"))]
+struct InlineConfigOptionsCli {
+    /// Report directive comments like `// oxlint-disable-line`, when no errors would have been reported on that line anyway
+    // More information at <https://eslint.org/docs/latest/use/command-line-interface#--report-unused-disable-directives>
+    #[usage(long, group = "unused-directives")]
+    report_unused_disable_directives: bool,
+
+    /// Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors.
+    /// Only one of these two options can be used at a time.
+    #[usage(long, value_name = "SEVERITY", value_enum, group = "unused-directives")]
+    report_unused_disable_directives_severity: Option<UnusedDirectivesSeverity>,
+}
+
+/// The severities `--report-unused-disable-directives-severity` accepts.
+///
+/// Spelled as a type so the accepted words and their meanings are declared together,
+/// rather than as a list of strings that has to stay in step with `AllowWarnDeny`.
+#[derive(Debug, Clone, Copy, usage::ValueEnum)]
+enum UnusedDirectivesSeverity {
+    Allow,
+    Off,
+    Deny,
+    Error,
+    Warn,
+}
+
+impl From<UnusedDirectivesSeverity> for AllowWarnDeny {
+    fn from(severity: UnusedDirectivesSeverity) -> Self {
+        match severity {
+            UnusedDirectivesSeverity::Allow | UnusedDirectivesSeverity::Off => Self::Allow,
+            UnusedDirectivesSeverity::Warn => Self::Warn,
+            UnusedDirectivesSeverity::Deny | UnusedDirectivesSeverity::Error => Self::Deny,
+        }
+    }
+}
+
+impl From<InlineConfigOptionsCli> for InlineConfigOptions {
+    fn from(options: InlineConfigOptionsCli) -> Self {
+        let report_unused_directives =
+            if let Some(severity) = options.report_unused_disable_directives_severity {
+                ReportUnusedDirectives::WithSeverity(Some(severity.into()))
+            } else {
+                ReportUnusedDirectives::WithoutSeverity(options.report_unused_disable_directives)
+            };
+        Self { report_unused_directives }
+    }
 }
 
 #[cfg(test)]
@@ -603,11 +795,11 @@ mod plugins {
 
 #[cfg(test)]
 mod warning_options {
-    use super::{WarningOptions, lint_command};
+    use super::{LintCommand, WarningOptions};
 
     fn get_warning_options(arg: &str) -> WarningOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap().warning_options
+        LintCommand::parse_from(args.as_slice()).unwrap().warning_options
     }
 
     #[test]
@@ -635,12 +827,13 @@ mod lint_options {
     use std::{fs::File, path::PathBuf};
 
     use oxc_linter::AllowWarnDeny;
+    use usage_rs as usage;
 
-    use super::{DebugOption, DebugOptions, LintCommand, OutputFormat, lint_command};
+    use super::{DebugOption, DebugOptions, LintCommand, OutputFormat};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap()
+        LintCommand::parse_from(args.as_slice()).unwrap()
     }
 
     #[test]
@@ -675,14 +868,13 @@ mod lint_options {
 
     #[test]
     fn no_parent_path() {
-        match lint_command().run_inner(&["../parent_dir"]) {
+        match LintCommand::parse_from(&["../parent_dir"]) {
             Ok(_) => panic!("Should not allow parent dir"),
-            Err(err) => match err {
-                bpaf::ParseFailure::Stderr(doc) => {
-                    assert_eq!("`../parent_dir`: PATH must not contain \"..\"", format!("{doc}"));
-                }
-                _ => unreachable!(),
-            },
+            Err(usage::Error::InvalidValue(error)) => {
+                assert_eq!(error.value, "../parent_dir");
+                assert_eq!(error.reason, "PATH must not contain \"..\"");
+            }
+            Err(_) => unreachable!(),
         }
     }
 
@@ -703,6 +895,21 @@ mod lint_options {
                 (AllowWarnDeny::Deny, "pedantic".into()),
                 (AllowWarnDeny::Allow, "no-debugger".into()),
                 (AllowWarnDeny::Allow, "no-var".into())
+            ]
+        );
+    }
+
+    #[test]
+    fn filter_interleaves_every_severity() {
+        let options =
+            get_lint_options("-D suspicious -A no-debugger --warn pedantic --deny no-var src");
+        assert_eq!(
+            options.filter,
+            [
+                (AllowWarnDeny::Deny, "suspicious".into()),
+                (AllowWarnDeny::Allow, "no-debugger".into()),
+                (AllowWarnDeny::Warn, "pedantic".into()),
+                (AllowWarnDeny::Deny, "no-var".into())
             ]
         );
     }
@@ -734,29 +941,45 @@ mod lint_options {
             .split(' ')
             .map(std::string::ToString::to_string)
             .collect::<Vec<_>>();
-        let result = lint_command().run_inner(args.as_slice());
-        assert!(result.is_err_and(|err| err.unwrap_stderr()
-            == "couldn't parse `files,timings`: debug option 'files' cannot be combined with other debug options"));
+        let result = LintCommand::parse_from(args.as_slice());
+        assert!(matches!(result, Err(usage::Error::InvalidValue(_))));
     }
 
     #[test]
     fn debug_error() {
         let args =
             "--debug foo".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        let result = lint_command().run_inner(args.as_slice());
-        assert!(
-            result.is_err_and(|err| err.unwrap_stderr()
-                == "couldn't parse `foo`: 'foo' is not a known debug option")
-        );
+        let error = LintCommand::parse_from(args.as_slice()).unwrap_err();
+        let usage::Error::InvalidValue(error) = error else {
+            panic!("expected invalid debug value");
+        };
+        assert_eq!(error.value, "foo");
+        assert_eq!(error.reason, "'foo' is not a known debug option");
     }
 
     #[test]
     fn format_error() {
         let args = "-f asdf".split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        let result = lint_command().run_inner(args.as_slice());
-        assert!(result.is_err_and(
-            |err| err.unwrap_stderr() == "couldn't parse `asdf`: 'asdf' is not a known format"
-        ));
+        let error = LintCommand::parse_from(args.as_slice()).unwrap_err();
+        let usage::Error::InvalidChoice { name, choices } = error else {
+            panic!("expected invalid output format choice");
+        };
+        assert_eq!(name, "format");
+        assert_eq!(
+            choices,
+            [
+                "default",
+                "github",
+                "gitlab",
+                "json",
+                "unix",
+                "agent",
+                "checkstyle",
+                "stylish",
+                "junit",
+                "sarif",
+            ]
+        );
     }
 
     #[test]
@@ -823,11 +1046,11 @@ mod lint_options {
 mod inline_config_options {
     use oxc_linter::AllowWarnDeny;
 
-    use super::{LintCommand, ReportUnusedDirectives, lint_command};
+    use super::{LintCommand, ReportUnusedDirectives};
 
     fn get_lint_options(arg: &str) -> LintCommand {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap()
+        LintCommand::parse_from(args.as_slice()).unwrap()
     }
 
     #[test]
@@ -864,5 +1087,75 @@ mod inline_config_options {
             options.inline_config_options.report_unused_directives,
             ReportUnusedDirectives::WithSeverity(Some(AllowWarnDeny::Deny))
         );
+    }
+}
+
+#[cfg(test)]
+mod usage_integration {
+    use std::ffi::OsString;
+
+    use super::LintCommand;
+
+    #[test]
+    fn embedded_help_preserves_sections_and_renders_markdown() {
+        let args = [OsString::from("--help")];
+        let outcome = LintCommand::embedded_outcome(&args);
+        let exit = outcome.exit().expect("help should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+
+        let basic = exit.text.find("Basic Configuration:").expect("basic options heading");
+        let arguments = exit.text.find("Arguments:").expect("arguments heading");
+        let flags = exit.text.find("Flags:").expect("flags heading");
+        assert!(basic < arguments && arguments < flags);
+        assert!(exit.text.contains("Warning: Avoid using this option."));
+        assert!(!exit.text.contains("**Warning:**"));
+        assert!(!exit.text.contains("::: warning"));
+        assert!(exit.text.contains("[possible values: default, github"));
+        assert!(exit.text.contains("Examples:"));
+    }
+
+    #[test]
+    fn spec_exposes_output_and_completion_contracts() {
+        let spec = LintCommand::to_kdl();
+        let lint_filter_group = spec.lines().find(|line| line.contains("group lint-filter"));
+        assert_eq!(
+            lint_filter_group,
+            Some("group lint-filter \"--allow\" \"--warn\" \"--deny\" multiple=#true")
+        );
+        assert!(spec.contains("warning \"Avoid using this option."));
+        assert!(spec.contains("flag \"-h --help\"") && spec.contains("builtin=#true"));
+        assert!(spec.contains("flag \"-V --version\""));
+        assert!(spec.contains("output checkstyle media_type=\"application/xml\""));
+        assert!(spec.contains("output json media_type=\"application/json\" framing=json"));
+        assert!(spec.contains("output sarif media_type=\"application/sarif+json\" framing=json"));
+        assert!(spec.contains("select \"--format\""));
+        assert!(spec.contains("complete path type=path"));
+    }
+
+    #[test]
+    fn embedded_dispatch_handles_control_requests() {
+        let spec = LintCommand::embedded_outcome(&[OsString::from(usage_rs::SPEC_REQUEST)]);
+        let exit = spec.exit().expect("spec request should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+        assert!(exit.text.contains("name oxlint"));
+
+        let args =
+            ["__complete_word__", "--shell", "bash", "--line", "oxlint --form"].map(OsString::from);
+        let completions = LintCommand::embedded_outcome(&args);
+        let exit = completions.exit().expect("completion request should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+        assert!(exit.text.contains("--format"));
+
+        let args = ["__complete_word__", "--shell", "bash", "--line", "oxlint --format=j"]
+            .map(OsString::from);
+        let completions = LintCommand::embedded_outcome(&args);
+        let exit = completions.exit().expect("completion request should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+        assert!(exit.text.contains("--format=json"));
+        assert!(exit.text.contains("--format=junit"));
     }
 }
