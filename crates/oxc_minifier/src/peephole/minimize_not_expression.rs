@@ -178,7 +178,7 @@ impl<'a> PeepholeOptimizations {
         if !Self::try_negate_expression(expr, ctx, boolean_context) {
             ctx.replace_expression_with(expr, |expr, ctx| {
                 Expression::new_unary_expression(expr.span(), UnaryOperator::LogicalNot, expr, ctx)
-            })
+            });
         }
     }
 }
