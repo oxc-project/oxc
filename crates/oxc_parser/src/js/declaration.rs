@@ -129,6 +129,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             (None, None)
         };
+        if self.at(Kind::Eq) {
+            self.lexer
+                .trivia_builder
+                .attach_current_pure_comments_to_previous_token(self.prev_token_end);
+        }
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl = VariableDeclarator::new(
             self.end_span(start),

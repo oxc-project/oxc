@@ -1388,6 +1388,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
+            self.lexer
+                .trivia_builder
+                .attach_current_pure_comments_to_previous_token(self.prev_token_end);
             self.bump_any(); // bump operator
             let rhs_parenthesized = self.at(Kind::LParen);
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
@@ -1612,6 +1615,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let operator = map_assignment_operator(self.cur_kind());
+        self.lexer
+            .trivia_builder
+            .attach_current_pure_comments_to_previous_token(self.prev_token_end);
         // 13.15.5 Destructuring Assignment
         // LeftHandSideExpression = AssignmentExpression
         // is converted to

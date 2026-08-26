@@ -160,6 +160,16 @@ impl<'a> TriviaBuilder<'a> {
         self.processed = len;
     }
 
+    pub fn attach_current_pure_comments_to_previous_token(&mut self, attached_to: u32) {
+        let Some((start, end)) = self.pure_comments else { return };
+        for comment in &mut self.comments[start..end] {
+            if comment.content == CommentContent::PureNotApplied && !comment.preceded_by_newline() {
+                comment.position = CommentPosition::Trailing;
+                comment.attached_to = attached_to;
+            }
+        }
+    }
+
     #[cold]
     fn attach_pending_comments(&mut self, position: CommentPosition, attached_to: u32, len: usize) {
         for comment in &mut self.comments[self.processed..len] {
@@ -936,6 +946,39 @@ function bar() {}";
         ];
         for source_text in cases {
             let comments = get_comments_typescript(source_text);
+            assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn pure_not_applied_comment_attachment() {
+        for source_text in [
+            "const foo /* #__PURE__ */ = pureOperation();",
+            "foo /* #__PURE__ */ = pureOperation();",
+            "foo /* #__PURE__ */ + pureOperation();",
+            "foo /* #__PURE__ */ && pureOperation();",
+        ] {
+            let comments = get_comments(source_text);
+            let foo_end = u32::try_from(source_text.find("foo").unwrap() + "foo".len()).unwrap();
+
+            assert_eq!(comments.len(), 1, "{source_text}");
+            assert_eq!(comments[0].position, CommentPosition::Trailing, "{source_text}");
+            assert_eq!(comments[0].attached_to, foo_end, "{source_text}");
+            assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
+        }
+
+        for (source_text, attached_to) in [
+            ("/* #__PURE__ */ someVariable;", "someVariable"),
+            ("foo\n/* #__PURE__ */ + bar;", "+"),
+            ("if (cond) /* #__PURE__ */ +value;", "+"),
+            ("if (cond) /* #__PURE__ */ -value;", "-"),
+        ] {
+            let comments = get_comments(source_text);
+            let attached_to = u32::try_from(source_text.find(attached_to).unwrap()).unwrap();
+
+            assert_eq!(comments.len(), 1, "{source_text}");
+            assert_eq!(comments[0].position, CommentPosition::Leading, "{source_text}");
+            assert_eq!(comments[0].attached_to, attached_to, "{source_text}");
             assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
         }
     }
