@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{Visit, comments::CommentAttachmentCollector};
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -107,6 +107,9 @@ pub struct SemanticBuilder<'a> {
     /// Should enum member values be evaluated?
     enum_eval: bool,
 
+    /// Whether to assign source comments to NodeIds for a later codegen pass.
+    build_comment_attachments: bool,
+
     /// Should additional syntax checks be performed?
     ///
     /// See: [`crate::checker::check`]
@@ -162,6 +165,7 @@ impl<'a> SemanticBuilder<'a> {
             stats: None,
             excess_capacity: 0.0,
             enum_eval: false,
+            build_comment_attachments: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -243,6 +247,15 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_enum_eval(mut self, yes: bool) -> Self {
         self.enum_eval = yes;
+        self
+    }
+
+    /// Enable or disable assigning source comments to NodeIds for codegen.
+    ///
+    /// Disabled by default because semantic-only consumers do not use this metadata.
+    #[must_use]
+    pub fn with_build_comment_attachments(mut self, yes: bool) -> Self {
+        self.build_comment_attachments = yes;
         self
     }
 
@@ -343,6 +356,14 @@ impl<'a> SemanticBuilder<'a> {
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
+        if self.build_comment_attachments
+            && let Some(attachments) = program.comment_attachments.0.as_deref()
+            && attachments.is_empty()
+        {
+            let mut collector = CommentAttachmentCollector::new(&program.comments);
+            collector.visit_program(program);
+            collector.attach(program, attachments);
+        }
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]

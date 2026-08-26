@@ -9,5 +9,7 @@ mod generated {
 
 pub use generated::{visit::*, visit_js::*, visit_js_mut::*, visit_mut::*};
 
+pub mod comments;
+
 #[cfg(feature = "serialize")]
 pub mod utf8_to_utf16;

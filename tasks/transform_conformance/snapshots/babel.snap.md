@@ -1,11 +1,10 @@
 commit: 1eac4481
 
-Passed: 731/1162
+Passed: 709/1162
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-export-namespace-from
-* babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 
@@ -369,7 +368,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (11/24)
+# babel-plugin-transform-class-static-block (9/24)
 * class-static-block/before-static-fields/input.js
 x Output mismatch
 
@@ -403,7 +402,13 @@ x Output mismatch
 * integration/in-class-heritage/input.js
 x Output mismatch
 
+* integration/preserve-comments/input.js
+x Output mismatch
+
 * integration-loose/in-class-heritage/input.js
+x Output mismatch
+
+* integration-loose/preserve-comments/input.js
 x Output mismatch
 
 * integration-loose/super-static-block/input.js
@@ -919,6 +924,17 @@ x Output mismatch
 x Output mismatch
 
 
+# babel-plugin-transform-optional-chaining (42/45)
+* assumption-noDocumentAll/optional-eval-call/input.js
+x Output mismatch
+
+* general/optional-eval-call/input.js
+x Output mismatch
+
+* general/optional-eval-call-loose/input.js
+x Output mismatch
+
+
 # babel-plugin-transform-async-generator-functions (19/20)
 * async-generators/class-private-method/input.js
 x Output mismatch
@@ -1155,7 +1171,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/155)
+# babel-plugin-transform-typescript (108/155)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1329,6 +1345,12 @@ Please consider using `export default <value>;`, or add @babel/plugin-transform-
 * exports/interface/input.ts
 x Output mismatch
 
+* exports/issue-9916-1/input.ts
+x Output mismatch
+
+* exports/issue-9916-2/input.ts
+x Output mismatch
+
 * function/overloads/input.ts
 Symbol span mismatch for "f":
 after transform: SymbolId(0): Span { start: 9, end: 10 }
@@ -1473,8 +1495,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (122/149)
+# babel-plugin-transform-react-jsx (107/149)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
+x Output mismatch
+
+* autoImport/import-source-pragma/input.js
 x Output mismatch
 
 * pure/false-default-pragma-automatic-runtime/input.js
@@ -1486,11 +1511,17 @@ x Output mismatch
 * pure/false-pragma-comment-automatic-runtime/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic
 
+* pure/false-pragma-comment-classic-runtime/input.js
+x Output mismatch
+
 * pure/false-pragma-option-automatic-runtime/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
 
 * pure/true-pragma-comment-automatic-runtime/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic
+
+* pure/true-pragma-comment-classic-runtime/input.js
+x Output mismatch
 
 * pure/true-pragma-option-automatic-runtime/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
@@ -1498,8 +1529,32 @@ x Expected transform error, but transformation succeeded: pragma and pragmaFrag 
 * pure/unset-pragma-comment-automatic-runtime/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic
 
+* pure/unset-pragma-comment-classic-runtime/input.js
+x Output mismatch
+
 * pure/unset-pragma-option-automatic-runtime/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
+
+* react/comments/input.js
+x Output mismatch
+
+* react/honor-custom-jsx-comment/input.js
+x Output mismatch
+
+* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
+x Output mismatch
+
+* react/pragma-works-with-no-space-at-the-end/input.js
+x Output mismatch
+
+* react/should-allow-jsx-docs-comment-with-pragma/input.js
+x Output mismatch
+
+* react/should-allow-no-pragmafrag-if-frag-unused/input.js
+x Output mismatch
+
+* react/should-allow-pragmafrag-and-frag/input.js
+x Output mismatch
 
 * react/should-disallow-spread-children/input.js
 x Expected transform error, but transformation succeeded: Spread children are not supported in React.
@@ -1543,8 +1598,14 @@ x Expected transform error, but transformation succeeded: importSource cannot be
 * react/should-warn-when-importSource-pragma-is-set/input.js
 x Expected transform error, but transformation succeeded: importSource cannot be set when runtime is classic.
 
+* react/weird-symbols/input.js
+x Output mismatch
+
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* react-automatic/pragma-works-with-no-space-at-the-end/input.js
+x Output mismatch
 
 * react-automatic/should-disallow-spread-children/input.js
 x Expected transform error, but transformation succeeded: Spread children are not supported in React.
@@ -1585,6 +1646,9 @@ x Expected transform error, but transformation succeeded: Spread children are no
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 x Expected transform error, but transformation succeeded: pragma and pragmaFrag cannot be set when runtime is automatic.
 
+* regression/pragma-frag-set-default-classic-runtime/input.js
+x Output mismatch
+
 * removed-options/invalid-use-builtins-false/input.js
 x Expected transform error, but transformation succeeded: @babel/plugin-transform-react-jsx: Since "useBuiltIns" is removed in Babel 8, you can remove it from the config.
 
@@ -1596,6 +1660,9 @@ x Expected transform error, but transformation succeeded: transform-react-jsx: S
 
 * removed-options/invalid-use-spread-true/input.js
 x Expected transform error, but transformation succeeded: transform-react-jsx: Since Babel 8, an inline object with spread elements is always used, and the "useSpread" option is no longer available. Please remove it from your config.
+
+* runtime/pragma-runtime-classsic/input.js
+x Output mismatch
 
 * spread-transform/transform-to-babel-extend/input.js
 

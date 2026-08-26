@@ -5,7 +5,7 @@
 #![expect(clippy::match_same_arms)]
 use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
-use crate::ast::*;
+use crate::{GetNodeId, ast::*};
 
 impl Program<'_> {
     /// Get [`NodeId`] of [`Program`].
@@ -39,6 +39,12 @@ impl Program<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for Program<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl IdentifierName<'_> {
     /// Get [`NodeId`] of [`IdentifierName`].
@@ -53,6 +59,12 @@ impl IdentifierName<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for IdentifierName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -88,6 +100,12 @@ impl IdentifierReference<'_> {
         self.reference_id.set(Some(reference_id));
     }
 }
+impl GetNodeId for IdentifierReference<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl BindingIdentifier<'_> {
     /// Get [`NodeId`] of [`BindingIdentifier`].
@@ -121,6 +139,12 @@ impl BindingIdentifier<'_> {
         self.symbol_id.set(Some(symbol_id));
     }
 }
+impl GetNodeId for BindingIdentifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl LabelIdentifier<'_> {
     /// Get [`NodeId`] of [`LabelIdentifier`].
@@ -135,6 +159,12 @@ impl LabelIdentifier<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for LabelIdentifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -153,6 +183,12 @@ impl ThisExpression {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ThisExpression {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ArrayExpression<'_> {
     /// Get [`NodeId`] of [`ArrayExpression`].
@@ -167,6 +203,12 @@ impl ArrayExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ArrayExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -185,6 +227,12 @@ impl Elision {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for Elision {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ObjectExpression<'_> {
     /// Get [`NodeId`] of [`ObjectExpression`].
@@ -199,6 +247,12 @@ impl ObjectExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ObjectExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -217,6 +271,12 @@ impl ObjectProperty<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ObjectProperty<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TemplateLiteral<'_> {
     /// Get [`NodeId`] of [`TemplateLiteral`].
@@ -231,6 +291,12 @@ impl TemplateLiteral<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TemplateLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -249,6 +315,12 @@ impl TaggedTemplateExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TaggedTemplateExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TemplateElement<'_> {
     /// Get [`NodeId`] of [`TemplateElement`].
@@ -263,6 +335,12 @@ impl TemplateElement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TemplateElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -281,6 +359,12 @@ impl ComputedMemberExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ComputedMemberExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl StaticMemberExpression<'_> {
     /// Get [`NodeId`] of [`StaticMemberExpression`].
@@ -295,6 +379,12 @@ impl StaticMemberExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for StaticMemberExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -313,6 +403,12 @@ impl PrivateFieldExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for PrivateFieldExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl CallExpression<'_> {
     /// Get [`NodeId`] of [`CallExpression`].
@@ -327,6 +423,12 @@ impl CallExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for CallExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -345,6 +447,12 @@ impl NewExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for NewExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ImportMeta {
     /// Get [`NodeId`] of [`ImportMeta`].
@@ -359,6 +467,12 @@ impl ImportMeta {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ImportMeta {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -377,6 +491,12 @@ impl NewTarget {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for NewTarget {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl SpreadElement<'_> {
     /// Get [`NodeId`] of [`SpreadElement`].
@@ -391,6 +511,12 @@ impl SpreadElement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for SpreadElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -409,6 +535,12 @@ impl UpdateExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for UpdateExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl UnaryExpression<'_> {
     /// Get [`NodeId`] of [`UnaryExpression`].
@@ -423,6 +555,12 @@ impl UnaryExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for UnaryExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -441,6 +579,12 @@ impl BinaryExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for BinaryExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl PrivateInExpression<'_> {
     /// Get [`NodeId`] of [`PrivateInExpression`].
@@ -455,6 +599,12 @@ impl PrivateInExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for PrivateInExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -473,6 +623,12 @@ impl LogicalExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for LogicalExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ConditionalExpression<'_> {
     /// Get [`NodeId`] of [`ConditionalExpression`].
@@ -487,6 +643,12 @@ impl ConditionalExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ConditionalExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -505,6 +667,12 @@ impl AssignmentExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for AssignmentExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ArrayAssignmentTarget<'_> {
     /// Get [`NodeId`] of [`ArrayAssignmentTarget`].
@@ -519,6 +687,12 @@ impl ArrayAssignmentTarget<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ArrayAssignmentTarget<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -537,6 +711,12 @@ impl ObjectAssignmentTarget<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ObjectAssignmentTarget<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AssignmentTargetRest<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetRest`].
@@ -551,6 +731,12 @@ impl AssignmentTargetRest<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for AssignmentTargetRest<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -569,6 +755,12 @@ impl AssignmentTargetWithDefault<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for AssignmentTargetWithDefault<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AssignmentTargetPropertyIdentifier<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetPropertyIdentifier`].
@@ -583,6 +775,12 @@ impl AssignmentTargetPropertyIdentifier<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for AssignmentTargetPropertyIdentifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -601,6 +799,12 @@ impl AssignmentTargetPropertyProperty<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for AssignmentTargetPropertyProperty<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl SequenceExpression<'_> {
     /// Get [`NodeId`] of [`SequenceExpression`].
@@ -615,6 +819,12 @@ impl SequenceExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for SequenceExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -633,6 +843,12 @@ impl Super {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for Super {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AwaitExpression<'_> {
     /// Get [`NodeId`] of [`AwaitExpression`].
@@ -647,6 +863,12 @@ impl AwaitExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for AwaitExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -665,6 +887,12 @@ impl ChainExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ChainExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ParenthesizedExpression<'_> {
     /// Get [`NodeId`] of [`ParenthesizedExpression`].
@@ -679,6 +907,12 @@ impl ParenthesizedExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ParenthesizedExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -697,6 +931,12 @@ impl Directive<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for Directive<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl Hashbang<'_> {
     /// Get [`NodeId`] of [`Hashbang`].
@@ -711,6 +951,12 @@ impl Hashbang<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for Hashbang<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -746,6 +992,12 @@ impl BlockStatement<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for BlockStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl VariableDeclaration<'_> {
     /// Get [`NodeId`] of [`VariableDeclaration`].
@@ -760,6 +1012,12 @@ impl VariableDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for VariableDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -778,6 +1036,12 @@ impl VariableDeclarator<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for VariableDeclarator<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl EmptyStatement {
     /// Get [`NodeId`] of [`EmptyStatement`].
@@ -792,6 +1056,12 @@ impl EmptyStatement {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for EmptyStatement {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -810,6 +1080,12 @@ impl ExpressionStatement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ExpressionStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl IfStatement<'_> {
     /// Get [`NodeId`] of [`IfStatement`].
@@ -824,6 +1100,12 @@ impl IfStatement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for IfStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -842,6 +1124,12 @@ impl DoWhileStatement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for DoWhileStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl WhileStatement<'_> {
     /// Get [`NodeId`] of [`WhileStatement`].
@@ -856,6 +1144,12 @@ impl WhileStatement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for WhileStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -891,6 +1185,12 @@ impl ForStatement<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for ForStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ForInStatement<'_> {
     /// Get [`NodeId`] of [`ForInStatement`].
@@ -922,6 +1222,12 @@ impl ForInStatement<'_> {
     #[inline]
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
+    }
+}
+impl GetNodeId for ForInStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -957,6 +1263,12 @@ impl ForOfStatement<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for ForOfStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ContinueStatement<'_> {
     /// Get [`NodeId`] of [`ContinueStatement`].
@@ -971,6 +1283,12 @@ impl ContinueStatement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ContinueStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -989,6 +1307,12 @@ impl BreakStatement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for BreakStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ReturnStatement<'_> {
     /// Get [`NodeId`] of [`ReturnStatement`].
@@ -1003,6 +1327,12 @@ impl ReturnStatement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ReturnStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1038,6 +1368,12 @@ impl WithStatement<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for WithStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl SwitchStatement<'_> {
     /// Get [`NodeId`] of [`SwitchStatement`].
@@ -1071,6 +1407,12 @@ impl SwitchStatement<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for SwitchStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl SwitchCase<'_> {
     /// Get [`NodeId`] of [`SwitchCase`].
@@ -1085,6 +1427,12 @@ impl SwitchCase<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for SwitchCase<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1103,6 +1451,12 @@ impl LabeledStatement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for LabeledStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ThrowStatement<'_> {
     /// Get [`NodeId`] of [`ThrowStatement`].
@@ -1119,6 +1473,12 @@ impl ThrowStatement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ThrowStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TryStatement<'_> {
     /// Get [`NodeId`] of [`TryStatement`].
@@ -1133,6 +1493,12 @@ impl TryStatement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TryStatement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1168,6 +1534,12 @@ impl CatchClause<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for CatchClause<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl CatchParameter<'_> {
     /// Get [`NodeId`] of [`CatchParameter`].
@@ -1182,6 +1554,12 @@ impl CatchParameter<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for CatchParameter<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1200,6 +1578,12 @@ impl DebuggerStatement {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for DebuggerStatement {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AssignmentPattern<'_> {
     /// Get [`NodeId`] of [`AssignmentPattern`].
@@ -1214,6 +1598,12 @@ impl AssignmentPattern<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for AssignmentPattern<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1232,6 +1622,12 @@ impl ObjectPattern<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ObjectPattern<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl BindingProperty<'_> {
     /// Get [`NodeId`] of [`BindingProperty`].
@@ -1246,6 +1642,12 @@ impl BindingProperty<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for BindingProperty<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1264,6 +1666,12 @@ impl ArrayPattern<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ArrayPattern<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl BindingRestElement<'_> {
     /// Get [`NodeId`] of [`BindingRestElement`].
@@ -1278,6 +1686,12 @@ impl BindingRestElement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for BindingRestElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1313,6 +1727,12 @@ impl Function<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for Function<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl FormalParameters<'_> {
     /// Get [`NodeId`] of [`FormalParameters`].
@@ -1327,6 +1747,12 @@ impl FormalParameters<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for FormalParameters<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1345,6 +1771,12 @@ impl FormalParameter<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for FormalParameter<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl FormalParameterRest<'_> {
     /// Get [`NodeId`] of [`FormalParameterRest`].
@@ -1361,6 +1793,12 @@ impl FormalParameterRest<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for FormalParameterRest<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl FunctionBody<'_> {
     /// Get [`NodeId`] of [`FunctionBody`].
@@ -1375,6 +1813,12 @@ impl FunctionBody<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for FunctionBody<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1410,6 +1854,12 @@ impl ArrowFunctionExpression<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for ArrowFunctionExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl YieldExpression<'_> {
     /// Get [`NodeId`] of [`YieldExpression`].
@@ -1424,6 +1874,12 @@ impl YieldExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for YieldExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1459,6 +1915,12 @@ impl Class<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for Class<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ClassBody<'_> {
     /// Get [`NodeId`] of [`ClassBody`].
@@ -1473,6 +1935,12 @@ impl ClassBody<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ClassBody<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1491,6 +1959,12 @@ impl MethodDefinition<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for MethodDefinition<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl PropertyDefinition<'_> {
     /// Get [`NodeId`] of [`PropertyDefinition`].
@@ -1507,6 +1981,12 @@ impl PropertyDefinition<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for PropertyDefinition<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl PrivateIdentifier<'_> {
     /// Get [`NodeId`] of [`PrivateIdentifier`].
@@ -1521,6 +2001,12 @@ impl PrivateIdentifier<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for PrivateIdentifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1556,6 +2042,12 @@ impl StaticBlock<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for StaticBlock<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AccessorProperty<'_> {
     /// Get [`NodeId`] of [`AccessorProperty`].
@@ -1570,6 +2062,12 @@ impl AccessorProperty<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for AccessorProperty<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1588,6 +2086,12 @@ impl ImportExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ImportExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ImportDeclaration<'_> {
     /// Get [`NodeId`] of [`ImportDeclaration`].
@@ -1602,6 +2106,12 @@ impl ImportDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ImportDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1620,6 +2130,12 @@ impl ImportSpecifier<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ImportSpecifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ImportDefaultSpecifier<'_> {
     /// Get [`NodeId`] of [`ImportDefaultSpecifier`].
@@ -1634,6 +2150,12 @@ impl ImportDefaultSpecifier<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ImportDefaultSpecifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1652,6 +2174,12 @@ impl ImportNamespaceSpecifier<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ImportNamespaceSpecifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl WithClause<'_> {
     /// Get [`NodeId`] of [`WithClause`].
@@ -1666,6 +2194,12 @@ impl WithClause<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for WithClause<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1684,6 +2218,12 @@ impl ImportAttribute<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ImportAttribute<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ExportDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportDeclaration`].
@@ -1698,6 +2238,12 @@ impl ExportDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ExportDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1716,6 +2262,12 @@ impl ExportNamedDeclaration<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ExportNamedDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ExportFromDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportFromDeclaration`].
@@ -1730,6 +2282,12 @@ impl ExportFromDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ExportFromDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1748,6 +2306,12 @@ impl ExportDefaultDeclaration<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ExportDefaultDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ExportAllDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportAllDeclaration`].
@@ -1762,6 +2326,12 @@ impl ExportAllDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for ExportAllDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1780,6 +2350,12 @@ impl ExportSpecifier<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for ExportSpecifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl V8IntrinsicExpression<'_> {
     /// Get [`NodeId`] of [`V8IntrinsicExpression`].
@@ -1794,6 +2370,12 @@ impl V8IntrinsicExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for V8IntrinsicExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1812,6 +2394,12 @@ impl BooleanLiteral {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for BooleanLiteral {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl NullLiteral {
     /// Get [`NodeId`] of [`NullLiteral`].
@@ -1826,6 +2414,12 @@ impl NullLiteral {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for NullLiteral {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1844,6 +2438,12 @@ impl NumericLiteral<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for NumericLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl StringLiteral<'_> {
     /// Get [`NodeId`] of [`StringLiteral`].
@@ -1858,6 +2458,12 @@ impl StringLiteral<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for StringLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1876,6 +2482,12 @@ impl BigIntLiteral<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for BigIntLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl RegExpLiteral<'_> {
     /// Get [`NodeId`] of [`RegExpLiteral`].
@@ -1890,6 +2502,12 @@ impl RegExpLiteral<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for RegExpLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1908,6 +2526,12 @@ impl JSXElement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXOpeningElement<'_> {
     /// Get [`NodeId`] of [`JSXOpeningElement`].
@@ -1922,6 +2546,12 @@ impl JSXOpeningElement<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXOpeningElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1940,6 +2570,12 @@ impl JSXClosingElement<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXClosingElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXFragment<'_> {
     /// Get [`NodeId`] of [`JSXFragment`].
@@ -1954,6 +2590,12 @@ impl JSXFragment<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXFragment<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -1972,6 +2614,12 @@ impl JSXOpeningFragment {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXOpeningFragment {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXClosingFragment {
     /// Get [`NodeId`] of [`JSXClosingFragment`].
@@ -1986,6 +2634,12 @@ impl JSXClosingFragment {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXClosingFragment {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2004,6 +2658,12 @@ impl JSXNamespacedName<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXNamespacedName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXMemberExpression<'_> {
     /// Get [`NodeId`] of [`JSXMemberExpression`].
@@ -2018,6 +2678,12 @@ impl JSXMemberExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXMemberExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2036,6 +2702,12 @@ impl JSXExpressionContainer<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXExpressionContainer<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXEmptyExpression {
     /// Get [`NodeId`] of [`JSXEmptyExpression`].
@@ -2050,6 +2722,12 @@ impl JSXEmptyExpression {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXEmptyExpression {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2068,6 +2746,12 @@ impl JSXAttribute<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXAttribute<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXSpreadAttribute<'_> {
     /// Get [`NodeId`] of [`JSXSpreadAttribute`].
@@ -2082,6 +2766,12 @@ impl JSXSpreadAttribute<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXSpreadAttribute<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2100,6 +2790,12 @@ impl JSXIdentifier<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXIdentifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXSpreadChild<'_> {
     /// Get [`NodeId`] of [`JSXSpreadChild`].
@@ -2114,6 +2810,12 @@ impl JSXSpreadChild<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSXSpreadChild<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2132,6 +2834,12 @@ impl JSXText<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSXText<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSThisParameter<'_> {
     /// Get [`NodeId`] of [`TSThisParameter`].
@@ -2148,6 +2856,12 @@ impl TSThisParameter<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSThisParameter<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSEnumDeclaration<'_> {
     /// Get [`NodeId`] of [`TSEnumDeclaration`].
@@ -2162,6 +2876,12 @@ impl TSEnumDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSEnumDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2197,6 +2917,12 @@ impl TSEnumBody<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSEnumBody<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSEnumMember<'_> {
     /// Get [`NodeId`] of [`TSEnumMember`].
@@ -2211,6 +2937,12 @@ impl TSEnumMember<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSEnumMember<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2229,6 +2961,12 @@ impl TSTypeAnnotation<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSTypeAnnotation<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSLiteralType<'_> {
     /// Get [`NodeId`] of [`TSLiteralType`].
@@ -2243,6 +2981,12 @@ impl TSLiteralType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSLiteralType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2278,6 +3022,12 @@ impl TSConditionalType<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSConditionalType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSUnionType<'_> {
     /// Get [`NodeId`] of [`TSUnionType`].
@@ -2292,6 +3042,12 @@ impl TSUnionType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSUnionType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2310,6 +3066,12 @@ impl TSIntersectionType<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSIntersectionType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSParenthesizedType<'_> {
     /// Get [`NodeId`] of [`TSParenthesizedType`].
@@ -2324,6 +3086,12 @@ impl TSParenthesizedType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSParenthesizedType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2342,6 +3110,12 @@ impl TSTypeOperator<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSTypeOperator<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSArrayType<'_> {
     /// Get [`NodeId`] of [`TSArrayType`].
@@ -2356,6 +3130,12 @@ impl TSArrayType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSArrayType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2374,6 +3154,12 @@ impl TSIndexedAccessType<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSIndexedAccessType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTupleType<'_> {
     /// Get [`NodeId`] of [`TSTupleType`].
@@ -2388,6 +3174,12 @@ impl TSTupleType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSTupleType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2406,6 +3198,12 @@ impl TSNamedTupleMember<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSNamedTupleMember<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSOptionalType<'_> {
     /// Get [`NodeId`] of [`TSOptionalType`].
@@ -2420,6 +3218,12 @@ impl TSOptionalType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSOptionalType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2438,6 +3242,12 @@ impl TSRestType<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSRestType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSAnyKeyword {
     /// Get [`NodeId`] of [`TSAnyKeyword`].
@@ -2452,6 +3262,12 @@ impl TSAnyKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSAnyKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2470,6 +3286,12 @@ impl TSStringKeyword {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSStringKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSBooleanKeyword {
     /// Get [`NodeId`] of [`TSBooleanKeyword`].
@@ -2484,6 +3306,12 @@ impl TSBooleanKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSBooleanKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2502,6 +3330,12 @@ impl TSNumberKeyword {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSNumberKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSNeverKeyword {
     /// Get [`NodeId`] of [`TSNeverKeyword`].
@@ -2516,6 +3350,12 @@ impl TSNeverKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSNeverKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2534,6 +3374,12 @@ impl TSIntrinsicKeyword {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSIntrinsicKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSUnknownKeyword {
     /// Get [`NodeId`] of [`TSUnknownKeyword`].
@@ -2548,6 +3394,12 @@ impl TSUnknownKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSUnknownKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2566,6 +3418,12 @@ impl TSNullKeyword {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSNullKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSUndefinedKeyword {
     /// Get [`NodeId`] of [`TSUndefinedKeyword`].
@@ -2580,6 +3438,12 @@ impl TSUndefinedKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSUndefinedKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2598,6 +3462,12 @@ impl TSVoidKeyword {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSVoidKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSSymbolKeyword {
     /// Get [`NodeId`] of [`TSSymbolKeyword`].
@@ -2612,6 +3482,12 @@ impl TSSymbolKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSSymbolKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2630,6 +3506,12 @@ impl TSThisType {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSThisType {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSObjectKeyword {
     /// Get [`NodeId`] of [`TSObjectKeyword`].
@@ -2644,6 +3526,12 @@ impl TSObjectKeyword {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSObjectKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2662,6 +3550,12 @@ impl TSBigIntKeyword {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSBigIntKeyword {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTypeReference<'_> {
     /// Get [`NodeId`] of [`TSTypeReference`].
@@ -2676,6 +3570,12 @@ impl TSTypeReference<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSTypeReference<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2694,6 +3594,12 @@ impl TSQualifiedName<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSQualifiedName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTypeParameterInstantiation<'_> {
     /// Get [`NodeId`] of [`TSTypeParameterInstantiation`].
@@ -2708,6 +3614,12 @@ impl TSTypeParameterInstantiation<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSTypeParameterInstantiation<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2726,6 +3638,12 @@ impl TSTypeParameter<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSTypeParameter<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTypeParameterDeclaration<'_> {
     /// Get [`NodeId`] of [`TSTypeParameterDeclaration`].
@@ -2740,6 +3658,12 @@ impl TSTypeParameterDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSTypeParameterDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2775,6 +3699,12 @@ impl TSTypeAliasDeclaration<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSTypeAliasDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSClassImplements<'_> {
     /// Get [`NodeId`] of [`TSClassImplements`].
@@ -2789,6 +3719,12 @@ impl TSClassImplements<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSClassImplements<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2824,6 +3760,12 @@ impl TSInterfaceDeclaration<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSInterfaceDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSInterfaceBody<'_> {
     /// Get [`NodeId`] of [`TSInterfaceBody`].
@@ -2838,6 +3780,12 @@ impl TSInterfaceBody<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSInterfaceBody<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2856,6 +3804,12 @@ impl TSPropertySignature<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSPropertySignature<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSIndexSignature<'_> {
     /// Get [`NodeId`] of [`TSIndexSignature`].
@@ -2870,6 +3824,12 @@ impl TSIndexSignature<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSIndexSignature<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2905,6 +3865,12 @@ impl TSCallSignatureDeclaration<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSCallSignatureDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSMethodSignature<'_> {
     /// Get [`NodeId`] of [`TSMethodSignature`].
@@ -2936,6 +3902,12 @@ impl TSMethodSignature<'_> {
     #[inline]
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
+    }
+}
+impl GetNodeId for TSMethodSignature<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -2971,6 +3943,12 @@ impl TSConstructSignatureDeclaration<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSConstructSignatureDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSIndexSignatureName<'_> {
     /// Get [`NodeId`] of [`TSIndexSignatureName`].
@@ -2985,6 +3963,12 @@ impl TSIndexSignatureName<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSIndexSignatureName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3003,6 +3987,12 @@ impl TSInterfaceHeritage<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSInterfaceHeritage<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTypePredicate<'_> {
     /// Get [`NodeId`] of [`TSTypePredicate`].
@@ -3017,6 +4007,12 @@ impl TSTypePredicate<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSTypePredicate<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3052,6 +4048,12 @@ impl TSExternalModuleDeclaration<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSExternalModuleDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSNamespaceDeclaration<'_> {
     /// Get [`NodeId`] of [`TSNamespaceDeclaration`].
@@ -3083,6 +4085,12 @@ impl TSNamespaceDeclaration<'_> {
     #[inline]
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
+    }
+}
+impl GetNodeId for TSNamespaceDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3118,6 +4126,12 @@ impl TSGlobalDeclaration<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSGlobalDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSModuleBlock<'_> {
     /// Get [`NodeId`] of [`TSModuleBlock`].
@@ -3132,6 +4146,12 @@ impl TSModuleBlock<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSModuleBlock<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3150,6 +4170,12 @@ impl TSTypeLiteral<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSTypeLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSInferType<'_> {
     /// Get [`NodeId`] of [`TSInferType`].
@@ -3164,6 +4190,12 @@ impl TSInferType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSInferType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3182,6 +4214,12 @@ impl TSTypeQuery<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSTypeQuery<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSImportType<'_> {
     /// Get [`NodeId`] of [`TSImportType`].
@@ -3198,6 +4236,12 @@ impl TSImportType<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSImportType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSImportTypeQualifiedName<'_> {
     /// Get [`NodeId`] of [`TSImportTypeQualifiedName`].
@@ -3212,6 +4256,12 @@ impl TSImportTypeQualifiedName<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSImportTypeQualifiedName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3247,6 +4297,12 @@ impl TSFunctionType<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSFunctionType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSConstructorType<'_> {
     /// Get [`NodeId`] of [`TSConstructorType`].
@@ -3278,6 +4334,12 @@ impl TSConstructorType<'_> {
     #[inline]
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));
+    }
+}
+impl GetNodeId for TSConstructorType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3313,6 +4375,12 @@ impl TSMappedType<'_> {
         self.scope_id.set(Some(scope_id));
     }
 }
+impl GetNodeId for TSMappedType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTemplateLiteralType<'_> {
     /// Get [`NodeId`] of [`TSTemplateLiteralType`].
@@ -3327,6 +4395,12 @@ impl TSTemplateLiteralType<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSTemplateLiteralType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3345,6 +4419,12 @@ impl TSAsExpression<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSAsExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSSatisfiesExpression<'_> {
     /// Get [`NodeId`] of [`TSSatisfiesExpression`].
@@ -3359,6 +4439,12 @@ impl TSSatisfiesExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSSatisfiesExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3377,6 +4463,12 @@ impl TSTypeAssertion<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSTypeAssertion<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSImportEqualsDeclaration<'_> {
     /// Get [`NodeId`] of [`TSImportEqualsDeclaration`].
@@ -3391,6 +4483,12 @@ impl TSImportEqualsDeclaration<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSImportEqualsDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3409,6 +4507,12 @@ impl TSExternalModuleReference<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSExternalModuleReference<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSNonNullExpression<'_> {
     /// Get [`NodeId`] of [`TSNonNullExpression`].
@@ -3423,6 +4527,12 @@ impl TSNonNullExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSNonNullExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3441,6 +4551,12 @@ impl Decorator<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for Decorator<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSExportAssignment<'_> {
     /// Get [`NodeId`] of [`TSExportAssignment`].
@@ -3455,6 +4571,12 @@ impl TSExportAssignment<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSExportAssignment<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3473,6 +4595,12 @@ impl TSNamespaceExportDeclaration<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for TSNamespaceExportDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSInstantiationExpression<'_> {
     /// Get [`NodeId`] of [`TSInstantiationExpression`].
@@ -3487,6 +4615,12 @@ impl TSInstantiationExpression<'_> {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for TSInstantiationExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3505,6 +4639,12 @@ impl JSDocNullableType<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSDocNullableType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSDocNonNullableType<'_> {
     /// Get [`NodeId`] of [`JSDocNonNullableType`].
@@ -3521,6 +4661,12 @@ impl JSDocNonNullableType<'_> {
         self.node_id.set(node_id);
     }
 }
+impl GetNodeId for JSDocNonNullableType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSDocUnknownType {
     /// Get [`NodeId`] of [`JSDocUnknownType`].
@@ -3535,6 +4681,12 @@ impl JSDocUnknownType {
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
+    }
+}
+impl GetNodeId for JSDocUnknownType {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3589,6 +4741,12 @@ impl Expression<'_> {
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for Expression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3647,6 +4805,12 @@ impl ArrayExpressionElement<'_> {
         }
     }
 }
+impl GetNodeId for ArrayExpressionElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ObjectPropertyKind<'_> {
     /// Get [`NodeId`] of [`ObjectPropertyKind`].
@@ -3657,6 +4821,12 @@ impl ObjectPropertyKind<'_> {
             Self::ObjectProperty(it) => it.node_id(),
             Self::SpreadProperty(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for ObjectPropertyKind<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3715,6 +4885,12 @@ impl PropertyKey<'_> {
         }
     }
 }
+impl GetNodeId for PropertyKey<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl MemberExpression<'_> {
     /// Get [`NodeId`] of [`MemberExpression`].
@@ -3726,6 +4902,12 @@ impl MemberExpression<'_> {
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for MemberExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3783,6 +4965,12 @@ impl Argument<'_> {
         }
     }
 }
+impl GetNodeId for Argument<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AssignmentTarget<'_> {
     /// Get [`NodeId`] of [`AssignmentTarget`].
@@ -3803,6 +4991,12 @@ impl AssignmentTarget<'_> {
         }
     }
 }
+impl GetNodeId for AssignmentTarget<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl SimpleAssignmentTarget<'_> {
     /// Get [`NodeId`] of [`SimpleAssignmentTarget`].
@@ -3821,6 +5015,12 @@ impl SimpleAssignmentTarget<'_> {
         }
     }
 }
+impl GetNodeId for SimpleAssignmentTarget<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AssignmentTargetPattern<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetPattern`].
@@ -3831,6 +5031,12 @@ impl AssignmentTargetPattern<'_> {
             Self::ArrayAssignmentTarget(it) => it.node_id(),
             Self::ObjectAssignmentTarget(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for AssignmentTargetPattern<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3854,6 +5060,12 @@ impl AssignmentTargetMaybeDefault<'_> {
         }
     }
 }
+impl GetNodeId for AssignmentTargetMaybeDefault<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl AssignmentTargetProperty<'_> {
     /// Get [`NodeId`] of [`AssignmentTargetProperty`].
@@ -3864,6 +5076,12 @@ impl AssignmentTargetProperty<'_> {
             Self::AssignmentTargetPropertyIdentifier(it) => it.node_id(),
             Self::AssignmentTargetPropertyProperty(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for AssignmentTargetProperty<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3879,6 +5097,12 @@ impl ChainElement<'_> {
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for ChainElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -3927,6 +5151,12 @@ impl Statement<'_> {
         }
     }
 }
+impl GetNodeId for Statement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl Declaration<'_> {
     /// Get [`NodeId`] of [`Declaration`].
@@ -3945,6 +5175,12 @@ impl Declaration<'_> {
             Self::TSGlobalDeclaration(it) => it.node_id(),
             Self::TSImportEqualsDeclaration(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for Declaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4002,6 +5238,12 @@ impl ForStatementInit<'_> {
         }
     }
 }
+impl GetNodeId for ForStatementInit<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ForStatementLeft<'_> {
     /// Get [`NodeId`] of [`ForStatementLeft`].
@@ -4023,6 +5265,12 @@ impl ForStatementLeft<'_> {
         }
     }
 }
+impl GetNodeId for ForStatementLeft<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl BindingPattern<'_> {
     /// Get [`NodeId`] of [`BindingPattern`].
@@ -4035,6 +5283,12 @@ impl BindingPattern<'_> {
             Self::ArrayPattern(it) => it.node_id(),
             Self::AssignmentPattern(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for BindingPattern<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4092,6 +5346,12 @@ impl ArrowFunctionBody<'_> {
         }
     }
 }
+impl GetNodeId for ArrowFunctionBody<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ClassElement<'_> {
     /// Get [`NodeId`] of [`ClassElement`].
@@ -4105,6 +5365,12 @@ impl ClassElement<'_> {
             Self::AccessorProperty(it) => it.node_id(),
             Self::TSIndexSignature(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for ClassElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4125,6 +5391,12 @@ impl ModuleDeclaration<'_> {
         }
     }
 }
+impl GetNodeId for ModuleDeclaration<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ImportDeclarationSpecifier<'_> {
     /// Get [`NodeId`] of [`ImportDeclarationSpecifier`].
@@ -4138,6 +5410,12 @@ impl ImportDeclarationSpecifier<'_> {
         }
     }
 }
+impl GetNodeId for ImportDeclarationSpecifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ImportAttributeKey<'_> {
     /// Get [`NodeId`] of [`ImportAttributeKey`].
@@ -4148,6 +5426,12 @@ impl ImportAttributeKey<'_> {
             Self::Identifier(it) => it.node_id(),
             Self::StringLiteral(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for ImportAttributeKey<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4207,6 +5491,12 @@ impl ExportDefaultDeclarationKind<'_> {
         }
     }
 }
+impl GetNodeId for ExportDefaultDeclarationKind<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl ModuleExportName<'_> {
     /// Get [`NodeId`] of [`ModuleExportName`].
@@ -4218,6 +5508,12 @@ impl ModuleExportName<'_> {
             Self::IdentifierReference(it) => it.node_id(),
             Self::StringLiteral(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for ModuleExportName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4235,6 +5531,12 @@ impl JSXElementName<'_> {
         }
     }
 }
+impl GetNodeId for JSXElementName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXMemberExpressionObject<'_> {
     /// Get [`NodeId`] of [`JSXMemberExpressionObject`].
@@ -4246,6 +5548,12 @@ impl JSXMemberExpressionObject<'_> {
             Self::MemberExpression(it) => it.node_id(),
             Self::ThisExpression(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for JSXMemberExpressionObject<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4303,6 +5611,12 @@ impl JSXExpression<'_> {
         }
     }
 }
+impl GetNodeId for JSXExpression<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXAttributeItem<'_> {
     /// Get [`NodeId`] of [`JSXAttributeItem`].
@@ -4313,6 +5627,12 @@ impl JSXAttributeItem<'_> {
             Self::Attribute(it) => it.node_id(),
             Self::SpreadAttribute(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for JSXAttributeItem<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4327,6 +5647,12 @@ impl JSXAttributeName<'_> {
         }
     }
 }
+impl GetNodeId for JSXAttributeName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl JSXAttributeValue<'_> {
     /// Get [`NodeId`] of [`JSXAttributeValue`].
@@ -4339,6 +5665,12 @@ impl JSXAttributeValue<'_> {
             Self::Element(it) => it.node_id(),
             Self::Fragment(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for JSXAttributeValue<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4356,6 +5688,12 @@ impl JSXChild<'_> {
         }
     }
 }
+impl GetNodeId for JSXChild<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSEnumMemberName<'_> {
     /// Get [`NodeId`] of [`TSEnumMemberName`].
@@ -4368,6 +5706,12 @@ impl TSEnumMemberName<'_> {
             Self::ComputedString(it) => it.node_id(),
             Self::ComputedTemplateString(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSEnumMemberName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4384,6 +5728,12 @@ impl TSLiteral<'_> {
             Self::TemplateLiteral(it) => it.node_id(),
             Self::UnaryExpression(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSLiteral<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4431,6 +5781,12 @@ impl TSType<'_> {
             Self::JSDocNonNullableType(it) => it.node_id(),
             Self::JSDocUnknownType(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSType<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4482,6 +5838,12 @@ impl TSTupleElement<'_> {
         }
     }
 }
+impl GetNodeId for TSTupleElement<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTypeName<'_> {
     /// Get [`NodeId`] of [`TSTypeName`].
@@ -4493,6 +5855,12 @@ impl TSTypeName<'_> {
             Self::QualifiedName(it) => it.node_id(),
             Self::ThisExpression(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSTypeName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4510,6 +5878,12 @@ impl TSSignature<'_> {
         }
     }
 }
+impl GetNodeId for TSSignature<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSTypePredicateName<'_> {
     /// Get [`NodeId`] of [`TSTypePredicateName`].
@@ -4522,6 +5896,12 @@ impl TSTypePredicateName<'_> {
         }
     }
 }
+impl GetNodeId for TSTypePredicateName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSNamespaceDeclarationBody<'_> {
     /// Get [`NodeId`] of [`TSNamespaceDeclarationBody`].
@@ -4532,6 +5912,12 @@ impl TSNamespaceDeclarationBody<'_> {
             Self::TSNamespaceDeclaration(it) => it.node_id(),
             Self::TSModuleBlock(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSNamespaceDeclarationBody<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4548,6 +5934,12 @@ impl TSTypeQueryExprName<'_> {
         }
     }
 }
+impl GetNodeId for TSTypeQueryExprName<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
+    }
+}
 
 impl TSImportTypeQualifier<'_> {
     /// Get [`NodeId`] of [`TSImportTypeQualifier`].
@@ -4558,6 +5950,12 @@ impl TSImportTypeQualifier<'_> {
             Self::Identifier(it) => it.node_id(),
             Self::QualifiedName(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSImportTypeQualifier<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }
 
@@ -4571,5 +5969,11 @@ impl TSModuleReference<'_> {
             Self::IdentifierReference(it) => it.node_id(),
             Self::QualifiedName(it) => it.node_id(),
         }
+    }
+}
+impl GetNodeId for TSModuleReference<'_> {
+    #[inline]
+    fn get_node_id(&self) -> NodeId {
+        self.node_id()
     }
 }

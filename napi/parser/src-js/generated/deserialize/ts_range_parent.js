@@ -60,16 +60,16 @@ function deserializeProgram(pos) {
     program = (parent = {
       type: "Program",
       body: null,
-      sourceType: deserializeModuleKind(pos + 137),
+      sourceType: deserializeModuleKind(pos + 145),
       hashbang: null,
       start: 0,
       end,
       range: [0, end],
       parent: null,
     });
-  program.hashbang = deserializeOptionHashbang(pos + 56);
-  let body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
+  program.hashbang = deserializeOptionHashbang(pos + 64);
+  let body = (program.body = deserializeVecDirective(pos + 96));
+  body.push(...deserializeVecStatement(pos + 120));
   {
     let start;
     if (body.length > 0) {
@@ -6115,9 +6115,9 @@ function deserializeUpdateOperator(pos) {
 function deserializeRawTransferData(pos) {
   return {
     program: deserializeProgram(pos),
-    comments: deserializeVecComment(pos + 144),
-    module: deserializeEcmaScriptModule(pos + 168),
-    errors: deserializeVecError(pos + 272),
+    comments: deserializeVecComment(pos + 152),
+    module: deserializeEcmaScriptModule(pos + 176),
+    errors: deserializeVecError(pos + 280),
   };
 }
 

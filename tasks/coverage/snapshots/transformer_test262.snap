@@ -2,4 +2,50 @@ commit: be13516f
 
 transformer_test262 Summary:
 AST Parsed     : 47435/47435 (100.00%)
-Positive Passed: 47435/47435 (100.00%)
+Positive Passed: 47412/47435 (99.95%)
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/async-iterable-async-mapped-awaits-once.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/async-iterable-input-does-not-await-input.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-array-add-to-empty.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-array-add-to-singleton.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-array-add.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-array-mutate.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-array-remove.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-arraylike-too-long.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/asyncitems-uses-intrinsic-iterator-symbols.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-input-does-not-use-array-prototype.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-input-with-thenable-async-mapped-awaits-callback-result-once.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/this-constructor-operations.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/this-constructor-with-readonly-elements.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/this-constructor.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/async-function-expression.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/async-generator-expression.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/private-method-class-statement.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/private-static-method-class-expression.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/private-static-method-class-statement.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/eval-rqstd-once.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/eval-self-once-module.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/dynamic-import/eval-self-once-script.js
+
+Mismatch: tasks/coverage/test262/test/language/module-code/top-level-await/dynamic-import-of-waiting-module.js
+

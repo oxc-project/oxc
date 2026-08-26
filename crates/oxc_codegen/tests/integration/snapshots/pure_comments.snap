@@ -157,10 +157,10 @@ export default function() {}
 ----------
 /* #__NO_SIDE_EFFECTS__ */ export var v0 = function() {}, v1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ export let l0 = function() {}, l1 = function() {};
-export const c0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
+export const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ export var v2 = () => {}, v3 = () => {};
 /* #__NO_SIDE_EFFECTS__ */ export let l2 = () => {}, l3 = () => {};
-export const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
+export const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 
 ########## 8
 
@@ -174,10 +174,10 @@ export const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ----------
 /* #__NO_SIDE_EFFECTS__ */ var v0 = function() {}, v1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ let l0 = function() {}, l1 = function() {};
-const c0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
+const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ var v2 = () => {}, v3 = () => {};
 /* #__NO_SIDE_EFFECTS__ */ let l2 = () => {}, l3 = () => {};
-const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
+const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 
 ########## 9
 
@@ -279,7 +279,7 @@ const defineSSRCustomElement = () => {
         
 ----------
 const defineSSRCustomElement = () => {
-	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
+	return /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
 };
 
 ########## 20
@@ -403,8 +403,8 @@ let single_num_yes = /* @__PURE__ */ foo(bar);
 let single_num_no = /* @__PURE__ */ foo(bar());
 let new_single_num_yes = /* @__PURE__ */ new foo(bar);
 let new_single_num_no = /* @__PURE__ */ new foo(bar());
-let bad_no = foo(bar);
-let new_bad_no = new foo(bar);
+let bad_no = /* __PURE__ */ foo(bar);
+let new_bad_no = /* __PURE__ */ new foo(bar);
 let parens_no = foo(bar);
 let new_parens_no = new foo(bar);
 let exp_no = /* @__PURE__ */ foo() ** foo();

@@ -2,7 +2,49 @@ commit: be13516f
 
 minifier_test262 Summary:
 AST Parsed     : 45024/45024 (100.00%)
-Positive Passed: 45020/45024 (99.99%)
+Positive Passed: 44999/45024 (99.94%)
+Compress: tasks/coverage/test262/test/annexB/language/comments/single-line-html-open.js
+
+Compress: tasks/coverage/test262/test/built-ins/Function/prototype/toString/async-function-expression.js
+
+Compress: tasks/coverage/test262/test/built-ins/Function/prototype/toString/async-generator-expression.js
+
+Compress: tasks/coverage/test262/test/built-ins/Function/prototype/toString/function-expression.js
+
+Compress: tasks/coverage/test262/test/built-ins/Function/prototype/toString/generator-function-expression.js
+
+Compress: tasks/coverage/test262/test/built-ins/TypedArray/prototype/copyWithin/BigInt/non-negative-target-start-and-end.js
+
+Compress: tasks/coverage/test262/test/built-ins/TypedArray/prototype/copyWithin/non-negative-target-start-and-end.js
+
+Compress: tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/buffer-arg/resizable-out-of-bounds.js
+
+Compress: tasks/coverage/test262/test/intl402/Collator/this-value-ignored.js
+
+Compress: tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/hourCycle-timeStyle.js
+
+Compress: tasks/coverage/test262/test/intl402/DateTimeFormat/this-value-ignored.js
+
+Compress: tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/formatToParts-style-default-en.js
+
+Compress: tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/formatToParts-style-digital-en.js
+
+Compress: tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/formatToParts-style-long-en.js
+
+Compress: tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/formatToParts-style-narrow-en.js
+
+Compress: tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/formatToParts-style-short-en.js
+
+Compress: tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/transformed-ext-invalid.js
+
+Compress: tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-key-with-digit.js
+
+Compress: tasks/coverage/test262/test/intl402/NumberFormat/test-option-currency.js
+
+Compress: tasks/coverage/test262/test/intl402/NumberFormat/this-value-ignored.js
+
+Compress: tasks/coverage/test262/test/language/module-code/top-level-await/while-dynamic-evaluation.js
+
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-accessor-is-visible-in-computed-properties.js
 
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-field-is-visible-in-computed-properties.js

@@ -207,7 +207,11 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
         &create_safe_ident("AstKind"),
         &quote!(AstKind<'a>),
     );
-
+    let pruning_macro = generate_comment_pruning_macro(schema);
+    let visit_output = quote! {
+        #visit_output
+        #pruning_macro
+    };
     // Generate `VisitMut` trait
     let visit_mut_output = generate_output(
         &create_safe_ident("VisitMut"),
@@ -220,6 +224,45 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
     );
 
     (visit_output, visit_mut_output)
+}
+
+/// Generate collector-only overrides which can record a node without walking
+/// its descendants. Keeping these out of the normal walk functions avoids a
+/// branch in every semantic and transform traversal.
+fn generate_comment_pruning_macro(schema: &Schema) -> TokenStream {
+    let methods = schema.structs().filter_map(|struct_def| {
+        let visitor_names = struct_def.visit.visitor_names.as_ref()?;
+        if !struct_def.kind.has_kind {
+            return None;
+        }
+        let struct_ty = struct_def.ty(schema);
+        let struct_ident = struct_def.ident();
+        let visit_fn_ident = visitor_names.visitor_ident();
+        let walk_fn_ident = visitor_names.walk_ident();
+        let extra_params = struct_def.visit.visit_args.iter().map(|(arg_name, arg_type_name)| {
+            let param_ident = create_ident(arg_name);
+            let arg_type_ident = create_ident(arg_type_name);
+            quote!( , #param_ident: #arg_type_ident )
+        });
+        Some(quote! {
+            comment_pruning_visit_method!(
+                #visit_fn_ident,
+                #walk_fn_ident,
+                #struct_ident,
+                #struct_ty
+                #(#extra_params)*
+            );
+        })
+    });
+
+    quote! {
+        macro_rules! generate_comment_pruning_visit_methods {
+            () => {
+                #(#methods)*
+            };
+        }
+        pub(crate) use generate_comment_pruning_visit_methods;
+    }
 }
 
 /// Generate output for `Visit` or `VisitMut` trait.
