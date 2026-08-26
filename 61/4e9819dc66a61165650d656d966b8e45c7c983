@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/react/no_unstable_nested_components.rs
+  s_a1fe585b00ec06::t_2b6265f29e6597 475-478,481,1203-1217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "614e9819dc66a61165650d656d966b8e45c7c983",
+  "prompts": {},
+  "sessions": {
+    "s_a1fe585b00ec06": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03d18-e76f-7770-b1f2-b515de2fc8ee",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
