@@ -68,6 +68,8 @@ fn minimize_nots_with_de_morgan_negative_cases() {
     test("var v = !!(a && !b);", "var v = !(!a || b);");
     test_same("if (!(a < b || !c)) throw x;");
     test_same("if (!(a in b || c == d)) throw x;");
+    test("if (!(a === b && (a ?? b))) throw x;", "if (!(a === b && (a ?? b))) throw x;");
+    test("if (!(a === b && !a)) throw x;", "if (a !== b || a) throw x;");
 }
 
 #[test]

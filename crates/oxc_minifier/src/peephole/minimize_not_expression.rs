@@ -62,17 +62,7 @@ impl<'a> PeepholeOptimizations {
                 if Self::de_morgan_paren_delta(logical_expr, boolean_context)
                     .is_some_and(|delta| delta <= 0) =>
             {
-                logical_expr.operator = if logical_expr.operator == LogicalOperator::And {
-                    LogicalOperator::Or
-                } else {
-                    LogicalOperator::And
-                };
-                ctx.replace_expression_with(&mut logical_expr.left, |expr, ctx| {
-                    Self::minimize_not(expr.span(), expr, ctx, boolean_context)
-                });
-                ctx.replace_expression_with(&mut logical_expr.right, |expr, ctx| {
-                    Self::minimize_not(expr.span(), expr, ctx, boolean_context)
-                });
+                Self::de_morgan_invert_logical(logical_expr, ctx, boolean_context);
                 true
             }
             // "!(a, b)" => "a, !b"
@@ -155,5 +145,40 @@ impl<'a> PeepholeOptimizations {
             }
         }
         Some(delta)
+    }
+
+    /// Apply De Morgan's law in place. Only called on chains approved by
+    /// [`Self::de_morgan_paren_delta`].
+    fn de_morgan_invert_logical(
+        e: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        boolean_context: bool,
+    ) {
+        e.operator = if e.operator == LogicalOperator::And {
+            LogicalOperator::Or
+        } else {
+            LogicalOperator::And
+        };
+        Self::de_morgan_invert(&mut e.left, ctx, boolean_context);
+        Self::de_morgan_invert(&mut e.right, ctx, boolean_context);
+    }
+
+    fn de_morgan_invert(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        boolean_context: bool,
+    ) {
+        if let Expression::LogicalExpression(e) = expr
+            && !e.operator.is_coalesce()
+        {
+            Self::de_morgan_invert_logical(e, ctx, boolean_context);
+            return;
+        }
+
+        if !Self::try_negate_expression(expr, ctx, boolean_context) {
+            ctx.replace_expression_with(expr, |expr, ctx| {
+                Expression::new_unary_expression(expr.span(), UnaryOperator::LogicalNot, expr, ctx)
+            })
+        }
     }
 }
