@@ -36,7 +36,7 @@ use crate::{
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
     scoping::{Bindings, Scoping},
     stats::Stats,
-    unresolved_stack::UnresolvedReferences,
+    unresolved_stack::{UnresolvedReference, UnresolvedReferences},
 };
 #[cfg(feature = "jsdoc")]
 use oxc_jsdoc::JSDocBuilder;
@@ -610,8 +610,13 @@ impl<'a> SemanticBuilder<'a> {
         name: Ident<'a>,
         reference: Reference,
     ) -> ReferenceId {
+        let lookup_scope_id = reference.scope_id();
         let reference_id = self.scoping.create_reference(reference);
-        self.unresolved_references.push(name, reference_id);
+        self.unresolved_references.push(UnresolvedReference {
+            name,
+            reference_id,
+            lookup_scope_id,
+        });
         reference_id
     }
 
@@ -641,24 +646,32 @@ impl<'a> SemanticBuilder<'a> {
     /// and reference creation is a simple Vec push instead of a hashmap insert.
     fn resolve_all_references(&mut self) {
         let refs = self.unresolved_references.take();
-        for (name, reference_id) in refs {
-            if !self.walk_up_resolve_reference(name, reference_id) {
+        for UnresolvedReference { name, reference_id, lookup_scope_id } in refs {
+            if !self.walk_up_resolve_reference(name, reference_id, lookup_scope_id, None) {
                 self.scoping.add_root_unresolved_reference(name, reference_id);
             }
         }
     }
 
-    /// Walk up the scope chain trying to resolve a reference.
-    /// Returns `true` if resolved.
+    /// Walk up the scope chain, stopping after `end_scope_id` when provided.
     #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
     #[inline(always)]
-    fn walk_up_resolve_reference(&mut self, name: Ident<'a>, reference_id: ReferenceId) -> bool {
-        let mut scope_id = Some(self.scoping.references[reference_id].scope_id());
+    fn walk_up_resolve_reference(
+        &mut self,
+        name: Ident<'a>,
+        reference_id: ReferenceId,
+        start_scope_id: ScopeId,
+        end_scope_id: Option<ScopeId>,
+    ) -> bool {
+        let mut scope_id = Some(start_scope_id);
         while let Some(sid) = scope_id {
             if let Some(symbol_id) = self.scoping.get_binding(sid, name)
                 && self.try_resolve_reference(reference_id, symbol_id)
             {
                 return true;
+            }
+            if end_scope_id == Some(sid) {
+                break;
             }
             scope_id = self.scoping.scope_parent_id(sid);
         }
@@ -715,19 +728,26 @@ impl<'a> SemanticBuilder<'a> {
         true
     }
 
-    /// Early-resolve references collected since the checkpoint by walking up the
-    /// full scope chain. Used for function parameters and catch parameters where
-    /// references must be resolved before entering the function body, to avoid
-    /// binding to variables declared inside the body (which share the same scope).
+    /// Early-resolve references collected since the checkpoint within the current function or
+    /// catch parameter scope.
+    ///
+    /// Function parameters and bodies currently share one scope. To emulate the separate
+    /// parameter environment, unresolved parameter references resume from the parent scope during
+    /// final resolution. Nested checkpoints advance this boundary one function at a time, so a
+    /// nested function parameter can still resolve to a later declaration in an enclosing function
+    /// body while skipping declarations in its own body.
+    ///
+    /// This is a workaround until function bodies have separate scopes:
+    /// <https://github.com/oxc-project/backlog/issues/176>.
     ///
     /// Resolved references are removed. Unresolved references stay in the flat
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self) {
         // Process in-place using a retain-style write-cursor — no temporary
-        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
-        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
-        // (which takes `&mut self`) doesn't conflict with the index read.
+        // `Vec`. Reads each entry by value out of the flat list (all fields are
+        // `Copy`), so calling `try_resolve_reference` (which takes `&mut self`)
+        // doesn't conflict with the index read.
         let checkpoint = self.unresolved_references_checkpoint;
         let end = self.unresolved_references.len();
         if end <= checkpoint {
@@ -735,14 +755,37 @@ impl<'a> SemanticBuilder<'a> {
         }
         let mut write_idx = checkpoint;
         for read_idx in checkpoint..end {
-            let (name, reference_id) = self.unresolved_references.get(read_idx);
-            if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations.
-                if write_idx != read_idx {
-                    self.unresolved_references.set(write_idx, name, reference_id);
-                }
+            let mut unresolved = self.unresolved_references.get(read_idx);
+
+            // Parameter decorators are visited in an outer class scope. Leave those references
+            // for final resolution because the current function is not on their scope chain.
+            let is_in_current_scope = unresolved.lookup_scope_id == self.current_scope_id
+                || self
+                    .scoping
+                    .scope_is_descendant_of(unresolved.lookup_scope_id, self.current_scope_id);
+            if !is_in_current_scope {
+                self.unresolved_references.set(write_idx, unresolved);
                 write_idx += 1;
+                continue;
             }
+
+            if self.walk_up_resolve_reference(
+                unresolved.name,
+                unresolved.reference_id,
+                unresolved.lookup_scope_id,
+                Some(self.current_scope_id),
+            ) {
+                continue;
+            }
+
+            // Skip this function body during final resolution. An enclosing parameter checkpoint
+            // may still resolve the reference before advancing the boundary again.
+            unresolved.lookup_scope_id = self
+                .scoping
+                .scope_parent_id(self.current_scope_id)
+                .expect("function and catch parameter scopes always have a parent");
+            self.unresolved_references.set(write_idx, unresolved);
+            write_idx += 1;
         }
         self.unresolved_references.truncate(write_idx);
     }
