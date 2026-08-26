@@ -1,0 +1,23 @@
+apps/oxlint/test/fixtures/unused_disable_directives_js_plugin_vue/output.snap.md
+  s_b897e757f95eba::t_613f1f4494d631 1-68
+apps/oxlint/test/fixtures/unused_disable_directives_js_plugin_vue/.oxlintrc.json
+  s_b897e757f95eba::t_6ce3af1ae1a92c 1-10
+apps/oxlint/test/fixtures/unused_disable_directives_js_plugin_vue/files/test.vue
+  s_b897e757f95eba::t_70113cc5a8064a 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "80fcea1ad7180a3d50e4aab756a05c9e41669582",
+  "prompts": {},
+  "sessions": {
+    "s_b897e757f95eba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03d81-4df1-7db1-a04c-0d48be653d89",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
