@@ -1,7 +1,16 @@
+use super::super::markers::{ListMarker, list_marker};
+
 /// Check if the text contains markdown constructs that require full AST parsing.
 /// Returns `false` only for pure plain-text paragraphs that `wrap_plain_paragraphs()`
 /// can handle directly (no lists, tables, code fences, headings, blockquotes, or
 /// inline markdown like emphasis/links).
+///
+/// NOTE: Marker continuation lines (`text\n- item`, no blank line) count as lists per CommonMark,
+/// matching upstream and markdown-rendering consumers (VS Code hover).
+/// A heuristic protecting wrapped prose from this conversion was tried and reverted:
+/// an 18k-file corpus scan found 5 affected comments, most misjudged by the heuristic.
+/// Author opt-outs (`\- ` escape, blank line before an intended list) are pinned in
+/// `descriptions/043-list-interrupting-continuation`.
 pub(super) fn needs_mdast_parsing(text: &str) -> bool {
     let bytes = text.as_bytes();
     let len = bytes.len();
@@ -22,8 +31,13 @@ pub(super) fn needs_mdast_parsing(text: &str) -> bool {
                 if !next.is_ascii_whitespace() || !prev.is_ascii_whitespace() {
                     return true;
                 }
-                // `* ` at line start: could be an unordered list marker
-                if bytes[i] == b'*' && next == b' ' && (i == 0 || prev == b'\n') {
+                // `* ` at line start: an unordered list marker
+                // (a list may interrupt a paragraph, so continuation lines count too).
+                // This arm sees every column-0 `*`, so the list arm below only gets indented ones
+                if bytes[i] == b'*'
+                    && (i == 0 || prev == b'\n')
+                    && list_marker(&text[i..]) == Some(ListMarker::Unordered)
+                {
                     return true;
                 }
             }
@@ -59,10 +73,10 @@ pub(super) fn needs_mdast_parsing(text: &str) -> bool {
             b' ' | b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' | b'+'
                 if i == 0 || bytes[i - 1] == b'\n' =>
             {
-                // Check if this line starts a new block context (after blank line
-                // or at text start). Lines that are paragraph continuations
-                // (preceded by non-empty line) should not trigger block detection
-                // for ambiguous markers like `-`, `+`, digits, `|`.
+                // Block context start: text start, or preceded by a blank line
+                // or a single-space line (the residue of an empty ` * ` JSDoc comment line).
+                // Indented code and non-1 ordered markers only count here;
+                // as paragraph continuations they are prose (CommonMark)
                 let is_block_start = i == 0
                     || (i >= 2 && bytes[i - 1] == b'\n' && bytes[i - 2] == b'\n')
                     || (i >= 3
@@ -86,18 +100,17 @@ pub(super) fn needs_mdast_parsing(text: &str) -> bool {
                         b'#' | b'>' => return true,
                         // Digits: ordered lists (1. foo) or legacy markers (1- foo)
                         b'0'..=b'9' => {
-                            // Only trigger if digits are followed by `. `, `) `, or `- `
-                            // to avoid false positives from prose like "...and\n1. They"
-                            let mut j = i + spaces;
-                            while j < len && bytes[j].is_ascii_digit() {
-                                j += 1;
-                            }
-                            if j < len && j + 1 < len && bytes[j + 1] == b' ' {
-                                match bytes[j] {
-                                    b'.' | b')' if is_block_start => return true,
-                                    b'-' => return true, // legacy marker always
-                                    _ => {}
+                            // Outside a block start, an ordered list may interrupt a paragraph
+                            // only when starting at 1 (CommonMark),
+                            // so "and\n1. They add" is a list while "in\n1986. What" stays prose
+                            match list_marker(&text[i + spaces..]) {
+                                Some(ListMarker::LegacyOrdered) => return true,
+                                Some(ListMarker::Ordered { starts_at_one })
+                                    if is_block_start || starts_at_one =>
+                                {
+                                    return true;
                                 }
+                                _ => {}
                             }
                         }
                         b'|' => {
@@ -121,12 +134,10 @@ pub(super) fn needs_mdast_parsing(text: &str) -> bool {
                                 }
                             }
                         }
-                        // Unordered list markers: only at block start to avoid
-                        // false positives from wrapped text like "min\n+ spacing"
+                        // Unordered list markers: a list can interrupt a paragraph (CommonMark),
+                        // so continuation lines count too.
                         b'-' | b'+' | b'*'
-                            if is_block_start
-                                && i + spaces + 1 < len
-                                && bytes[i + spaces + 1] == b' ' =>
+                            if list_marker(&text[i + spaces..]) == Some(ListMarker::Unordered) =>
                         {
                             return true;
                         }

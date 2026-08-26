@@ -1,3 +1,5 @@
+use super::markers::is_block_marker_token;
+
 /// Compute the width of a string matching JavaScript's `.length` (UTF-16 code units).
 ///
 /// `prettier-plugin-jsdoc` wraps by plain JS string length, so a CJK character counts as 1 here.
@@ -314,20 +316,21 @@ pub fn wrap_paragraph(
         let word_width = link_rendered_width(word);
         let is_inline_tag = inline_tag_overhead(word) > 0;
         let capacity = if is_first_line { first_line_max } else { effective_max };
+        // Tolerance: allow ~1 char of overflow per inline tag on the line
+        // (including the current word if it's a tag).
+        // Upstream plugin is more lenient about line width when the line contains `{@link ...}` tokens
+        // whose syntax overhead inflates the raw character count beyond the visual width.
+        let tag_count = current_line_tag_count + usize::from(is_inline_tag);
 
         if current_line.is_empty() {
             current_line.push_str(word);
             current_width = word_width;
             current_line_tag_count = usize::from(is_inline_tag);
-        } else if current_width + 1 + word_width <= capacity || {
-            // Tolerance: allow ~1 char of overflow per inline tag on the line
-            // (including the current word if it's a tag). Upstream Prettier's
-            // JSDoc plugin is more lenient about line width when the line
-            // contains `{@link ...}` tokens whose syntax overhead inflates
-            // the raw character count beyond the visual width.
-            let tag_count = current_line_tag_count + usize::from(is_inline_tag);
-            tag_count > 0 && current_width + 1 + word_width <= capacity + tag_count
-        } {
+        } else if current_width + 1 + word_width <= capacity + tag_count
+            // Never break before a block-marker word (`-`, `1.`, ...):
+            // at a line start it would re-parse as a list/heading/quote on the next pass.
+            || is_block_marker_token(word)
+        {
             current_line.push(' ');
             current_line.push_str(word);
             current_width += 1 + word_width;
@@ -357,18 +360,15 @@ pub fn wrap_paragraph(
         if !is_first_line
             && current_width == effective_max
             && let Some(last_space) = find_last_breakable_space(&current_line)
+            // Same safeguard as above: don't move a block-marker word to a line start
+            && !is_block_marker_token(&current_line[last_space + 1..])
         {
-            let overflow_start = last_space + 1;
-            {
-                let s = lines.begin_line();
-                s.push_str(&indent_s);
-                s.push_str(&current_line[..last_space]);
-            }
-            {
-                let s = lines.begin_line();
-                s.push_str(&indent_s);
-                s.push_str(&current_line[overflow_start..]);
-            }
+            let s = lines.begin_line();
+            s.push_str(&indent_s);
+            s.push_str(&current_line[..last_space]);
+            let s = lines.begin_line();
+            s.push_str(&indent_s);
+            s.push_str(&current_line[last_space + 1..]);
             return;
         }
 
@@ -661,6 +661,25 @@ mod tests {
         // even when the source has them (spread lists).
         let result = wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false);
         assert_eq!(result, "- item one\n- item two\n- item three");
+    }
+
+    #[test]
+    fn test_wrap_never_starts_line_with_block_marker() {
+        // Wrapping must never move a block-marker word (`-`, `+`, `1.`, ...) to a line start:
+        // the next format pass re-parses the comment as markdown
+        // and the word would become a list item, breaking idempotency (issue #25825).
+        let result = wrap_text(
+            "Synthetic sells a REQUEST rate - 500 per rolling 5 hours - so a dollar gauge over it would fill on the wrong axis and read full right up until the requests ran out.",
+            40,
+            0,
+            false,
+        );
+        for line in result.lines() {
+            assert!(!line.starts_with("- "), "line must not start with a list marker:\n{result}");
+        }
+        // Idempotency: re-wrapping the output yields the same result
+        let rewrapped = wrap_text(&result, 40, 0, false);
+        assert_eq!(result, rewrapped);
     }
 
     #[test]
