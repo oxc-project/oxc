@@ -22,7 +22,7 @@ catalog:
   eslint: 10.8.1
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.24
-  rolldown: 1.2.5
+  rolldown: 1.2.6
   tsdown: 0.22.14
   vite-plus: 0.3.0
   vitest: 4.1.11
