@@ -109,6 +109,10 @@ pub enum CommentContent {
     /// `/* @__KEY__ */` or `/* #__KEY__ */`
     /// <https://esbuild.github.io/api/#mangle-key>
     PropertyKey = 12,
+
+    /// `/* #__NO_SIDE_EFFECTS__ */` that could not be applied to a function
+    /// <https://github.com/oxc-project/oxc/issues/26088>
+    NoSideEffectsNotApplied = 13,
 }
 
 bitflags! {
@@ -289,6 +293,12 @@ impl Comment {
     #[inline]
     pub fn is_no_side_effects(self) -> bool {
         self.content == CommentContent::NoSideEffects
+    }
+
+    /// Is `/* @__NO_SIDE_EFFECTS__*/` that could not be applied to a function.
+    #[inline]
+    pub fn is_no_side_effects_not_applied(self) -> bool {
+        self.content == CommentContent::NoSideEffectsNotApplied
     }
 
     /// Is a leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
