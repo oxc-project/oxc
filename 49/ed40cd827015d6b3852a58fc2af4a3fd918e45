@@ -1,0 +1,27 @@
+crates/oxc_codegen/tests/integration/comments.rs
+  s_49cd06206d8aa9::t_d27ba67cb49350 2,5,32-35,41-142,343,347-350,353-354,553-554,557-561,837,846-849
+crates/oxc_codegen/tests/integration/snapshots/coverage.snap
+  s_49cd06206d8aa9::t_51ded99e59e99c 112,144
+crates/oxc_codegen/tests/integration/snapshots/pure_comments.snap
+  s_49cd06206d8aa9::t_4fc5b208aa783a 146,148,161,163-164,166,168-169,182,184-185,187,189-190,203-204,285,305,413,415,417,419,421,423,425,427-429,431,433
+crates/oxc_codegen/tests/integration/snapshots/ts.snap
+  s_49cd06206d8aa9::t_5b1a947646fb07 308,311,315-320,323,331,337
+crates/oxc_codegen/tests/integration/esbuild.rs
+  s_49cd06206d8aa9::t_402e3e92bd2cd7 207-208,275-276,707-708
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "49ed40cd827015d6b3852a58fc2af4a3fd918e45",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
