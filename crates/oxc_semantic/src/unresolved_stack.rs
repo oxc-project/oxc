@@ -39,12 +39,6 @@ impl<'a> UnresolvedReferences<'a> {
         self.references.push(reference);
     }
 
-    /// Get the current length, used as a checkpoint for early resolution.
-    #[inline]
-    pub(crate) fn checkpoint(&self) -> usize {
-        self.references.len()
-    }
-
     /// Take all collected references, leaving the list empty. O(1) pointer swap.
     #[inline]
     pub(crate) fn take(&mut self) -> Vec<UnresolvedReference<'a>> {
