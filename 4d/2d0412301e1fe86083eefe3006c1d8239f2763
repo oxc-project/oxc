@@ -1,0 +1,19 @@
+crates/oxc_isolated_declarations/src/lib.rs
+  s_49cd06206d8aa9::t_0bd34447078576 105-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4d2d0412301e1fe86083eefe3006c1d8239f2763",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
