@@ -29,8 +29,8 @@ pub struct TriviaBuilder<'a> {
     /// Previous token, used to attach trailing comments to its end.
     previous_token: Token,
 
-    /// Index of the pure comment in `comments` vec, or `None` if no pure comment for the current token.
-    pub(super) pure_comment: Option<usize>,
+    /// Range of comments preceding the current token that contains pure comments.
+    pure_comments: Option<(usize, usize)>,
 
     pub(super) has_no_side_effects_comment: bool,
 }
@@ -46,30 +46,32 @@ impl<'a> TriviaBuilder<'a> {
             saw_newline: true,
             saw_newline_for_comment: true,
             previous_token,
-            pure_comment: None,
+            pure_comments: None,
             has_no_side_effects_comment: false,
         }
     }
 
-    pub fn previous_token_has_pure_comment(&self) -> Option<usize> {
-        self.pure_comment
+    pub fn previous_token_pure_comments(&self) -> Option<(usize, usize)> {
+        self.pure_comments
     }
 
     pub fn previous_token_has_no_side_effects_comment(&self) -> bool {
         self.has_no_side_effects_comment
     }
 
-    pub fn mark_pure_comment_not_applied(&mut self, index: usize) {
-        if let Some(comment) = self.comments.get_mut(index) {
-            debug_assert!(comment.is_pure());
-            comment.content = CommentContent::PureNotApplied;
-        }
+    pub(super) fn set_pure_comments(&mut self, pure_comments: Option<(usize, usize)>) {
+        self.pure_comments = pure_comments;
     }
 
-    /// Mark the current token's pure comment (if any) as not applied.
-    pub fn mark_current_pure_comment_not_applied(&mut self) {
-        if let Some(index) = self.pure_comment {
-            self.mark_pure_comment_not_applied(index);
+    pub(super) fn clear_pure_comments(&mut self) {
+        self.pure_comments = None;
+    }
+
+    pub fn mark_pure_comments_applied(&mut self, (start, end): (usize, usize)) {
+        for comment in &mut self.comments[start..end] {
+            if comment.content == CommentContent::PureNotApplied {
+                comment.content = CommentContent::Pure;
+            }
         }
     }
 
@@ -251,10 +253,14 @@ impl<'a> TriviaBuilder<'a> {
         )
     }
 
-    /// Update `pure_comment` / `has_no_side_effects_comment` to point to the comment at `index`.
+    /// Update annotation state for the comment at `index`.
     fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
-        if comment.is_pure() {
-            self.pure_comment = Some(index);
+        if comment.content == CommentContent::PureNotApplied {
+            if let Some((_, end)) = &mut self.pure_comments {
+                *end = index + 1;
+            } else {
+                self.pure_comments = Some((index, index + 1));
+            }
         } else if comment.is_no_side_effects() {
             self.has_no_side_effects_comment = true;
         }
@@ -269,7 +275,13 @@ impl<'a> TriviaBuilder<'a> {
         {
             // Duplicate from parser lookahead/rewind — update annotation flags
             // to point to the existing comment.
-            self.set_annotation_flags(&comment, self.comments.len() - 1);
+            if let Ok(index) = self
+                .comments
+                .binary_search_by_key(&comment.span.start, |existing| existing.span.start)
+                && self.comments[index].span == comment.span
+            {
+                self.set_annotation_flags(&comment, index);
+            }
             return;
         }
 
@@ -430,7 +442,7 @@ impl<'a> TriviaBuilder<'a> {
         if start < bytes.len() && bytes[start..].starts_with(b"__") {
             let rest = &bytes[start + 2..];
             if rest.starts_with(b"PURE__") {
-                comment.content = CommentContent::Pure;
+                comment.content = CommentContent::PureNotApplied;
                 return;
             } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
                 comment.content = CommentContent::NoSideEffects;
@@ -512,6 +524,14 @@ mod test {
     fn get_comments(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        assert!(ret.diagnostics.is_empty());
+        ret.program.comments.iter().copied().collect::<Vec<_>>()
+    }
+
+    fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
@@ -889,21 +909,79 @@ function bar() {}";
             "const foo /* #__PURE__ */ = pureOperation();",
             // Pure comment before object literal (triggers parser lookahead/rewind for arrow detection)
             "export const X = /* @__PURE__ */ { a: 1 };",
+            "foo /* #__PURE__ */ = pureOperation();",
+            "foo /* #__PURE__ */ + pureOperation();",
+            "foo /* #__PURE__ */ && pureOperation();",
+            "foo /* #__PURE__ */ in pureOperation();",
+            "foo /* #__PURE__ */ as T;",
+            "foo /* #__PURE__ */ satisfies T;",
+            "foo /* #__PURE__ */ ? bar : baz;",
+            "foo /* #__PURE__ */, bar;",
+            "({ x /*#__PURE__*/: sideEffect() });",
+            "true ? x /*#__PURE__*/ : sideEffect();",
+            "foo /* #__PURE__ */++;",
+            "foo /* #__PURE__ */--;",
+            "foo /* #__PURE__ */.bar;",
+            "foo /* #__PURE__ */[bar];",
+            "foo /* #__PURE__ */();",
+            "foo /* #__PURE__ */?.bar;",
+            "foo /* #__PURE__ */!;",
+            r"foo /* #__PURE__ */ `bar`;",
+            "42 /* #__PURE__ */ + foo;",
+            "(foo) /* #__PURE__ */ + bar;",
+            "[foo] /* #__PURE__ */ + bar;",
+            "foo\n/* #__PURE__ */ + bar;",
+            "foo // #__PURE__\n+ bar;",
+            "(a = foo /* #__PURE__ */ + bar)",
         ];
         for source_text in cases {
-            let comments = get_comments(source_text);
+            let comments = get_comments_typescript(source_text);
             assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
         }
     }
 
     #[test]
     fn pure_comment_applied_after_lookahead() {
-        // `export const X = /* @__PURE__ */ foo()` triggers arrow-function lookahead
-        // due to the `{`-ambiguity path. The pure comment must still be correctly
-        // applied to the call expression after the parser rewinds.
-        let source_text = "export const X = /* @__PURE__ */ foo();";
+        // The ordinary comment is read during arrow-function lookahead before the parser rewinds.
+        // Re-lexing the pure comment must recover its index rather than the later comment's index.
+        let source_text = "export const X = /* @__PURE__ */ foo(/* comment */);";
         let comments = get_comments(source_text);
+        assert_eq!(comments.len(), 2);
         assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+        assert_eq!(comments[1].content, CommentContent::None, "{source_text}");
+    }
+
+    #[test]
+    fn pure_comment_applied() {
+        let cases = [
+            "/* #__PURE__ */ foo();",
+            "/* #__PURE__ */ (foo)();",
+            "/* #__PURE__ */ (new Foo());",
+            "a + /* #__PURE__ */ <T>foo(), bar;",
+            "x = /* #__PURE__ */ pureOperation() || y;",
+            "y || (x = /* #__PURE__ */ pureOperation());",
+            "y || /* #__PURE__ */ pureOperation();",
+            "function f() {} /* #__PURE__ */ (foo)();",
+            "/*#__PURE__*/ [foo][0]()",
+            "if (cond) /*#__PURE__*/ (foo)();",
+            "foo++\n/*#__PURE__*/ (bar)();",
+            "function f() {} /*#__PURE__*/ [foo][0]();",
+        ];
+        for source_text in cases {
+            let comments = get_comments_typescript(source_text);
+            assert_eq!(comments[0].content, CommentContent::Pure, "{source_text}");
+        }
+    }
+
+    #[test]
+    fn multiple_pure_comments_applied() {
+        let source_text = "export const X = /*#__PURE__*/ /* comment */ /*@__PURE__*/ foo();";
+        let comments = get_comments(source_text);
+
+        assert_eq!(comments.len(), 3);
+        assert_eq!(comments[0].content, CommentContent::Pure);
+        assert_eq!(comments[1].content, CommentContent::None);
+        assert_eq!(comments[2].content, CommentContent::Pure);
     }
 
     #[test]
@@ -927,9 +1005,8 @@ function bar() {}";
     }
 
     #[test]
-    fn pure_comment_not_applied_marks_correct_comment() {
+    fn pure_comments_are_applied_independently() {
         // The first pure comment is invalid (before `foo`), the second is valid (before `bar()`).
-        // `mark_pure_comment_not_applied` must retag the first comment, not the second.
         let source_text = "/*#__PURE__*/ foo + /*#__PURE__*/ bar()";
         let comments = get_comments(source_text);
         assert_eq!(
@@ -974,9 +1051,9 @@ function bar() {}";
             ("/* @vite-xxx */", CommentContent::Vite),
             ("/* webpackChunkName: 'my-chunk-name' */", CommentContent::Webpack),
             ("/* webpack */", CommentContent::None),
-            ("/* @__PURE__ */", CommentContent::Pure),
+            ("/* @__PURE__ */", CommentContent::PureNotApplied),
             ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
-            ("/* #__PURE__ */", CommentContent::Pure),
+            ("/* #__PURE__ */", CommentContent::PureNotApplied),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* @__KEY__ */", CommentContent::PropertyKey),
             ("/* #__KEY__ */", CommentContent::PropertyKey),
