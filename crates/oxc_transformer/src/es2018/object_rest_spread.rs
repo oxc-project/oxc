@@ -29,14 +29,18 @@
 
 use std::{iter, mem};
 
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
-use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::static_ident;
+use oxc_syntax::number::NumberBase;
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
@@ -58,6 +62,92 @@ pub struct ObjectRestSpread<'a> {
     options: ObjectRestSpreadOptions,
 
     excluded_variable_declarators: Vec<VariableDeclarator<'a>>,
+}
+
+struct ParameterReferenceFinder<'a, 'ctx> {
+    rest_symbols: &'ctx FxHashSet<SymbolId>,
+    ctx: &'ctx TraverseCtx<'a>,
+    found: bool,
+}
+
+impl<'a> Visit<'a> for ParameterReferenceFinder<'a, '_> {
+    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
+        self.found |= self.rest_symbols.contains(&ident.symbol_id());
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        self.found |= self
+            .ctx
+            .scoping()
+            .get_reference(ident.reference_id())
+            .symbol_id()
+            .is_some_and(|symbol_id| self.rest_symbols.contains(&symbol_id));
+    }
+
+    // Bindings referenced from nested scopes do not need to run in the parameter initializer.
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_class(&mut self, _class: &Class<'a>) {}
+
+    fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
+}
+
+struct BodyShadowFinder<'a, 'ctx> {
+    function_scope_id: ScopeId,
+    ctx: &'ctx TraverseCtx<'a>,
+    found: bool,
+}
+
+impl<'a> Visit<'a> for BodyShadowFinder<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let scoping = self.ctx.scoping();
+        let Some(body_symbol_id) = scoping.get_binding(self.function_scope_id, ident.name) else {
+            return;
+        };
+        let reference_symbol_id = scoping.get_reference(ident.reference_id()).symbol_id();
+        if reference_symbol_id == Some(body_symbol_id) {
+            return;
+        }
+
+        let resolves_inside_function = reference_symbol_id.is_some_and(|symbol_id| {
+            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
+            symbol_scope_id == self.function_scope_id
+                || scoping.scope_is_descendant_of(symbol_scope_id, self.function_scope_id)
+        });
+        self.found |= !resolves_inside_function;
+    }
+
+    fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
+}
+
+struct FunctionBodyScopeMover<'a, 'ctx> {
+    old_scope_id: ScopeId,
+    new_scope_id: ScopeId,
+    ctx: &'ctx mut TraverseCtx<'a>,
+}
+
+impl<'a> Visit<'a> for FunctionBodyScopeMover<'a, '_> {
+    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &std::cell::Cell<Option<ScopeId>>) {
+        let scope_id = scope_id.get().unwrap();
+        if scope_id != self.old_scope_id
+            && self.ctx.scoping().scope_parent_id(scope_id) == Some(self.old_scope_id)
+        {
+            self.ctx.scoping_mut().change_scope_parent_id(scope_id, Some(self.new_scope_id));
+        }
+    }
+
+    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
+        let symbol_id = ident.symbol_id();
+        if self.ctx.scoping().symbol_scope_id(symbol_id) == self.old_scope_id {
+            self.ctx.scoping_mut().move_binding_by_symbol_id(
+                self.old_scope_id,
+                self.new_scope_id,
+                symbol_id,
+            );
+        }
+    }
 }
 
 impl<'a> ObjectRestSpread<'a> {
@@ -565,34 +655,374 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
-        for param in &mut func.params.items {
-            if Self::has_nested_object_rest(&param.pattern) {
-                Self::replace_rest_element(
-                    VariableDeclarationKind::Var,
-                    &mut param.pattern,
-                    &mut body.statements,
-                    scope_id,
-                    ctx,
-                );
-            }
-        }
+        Self::transform_function_parameters(
+            &mut func.params,
+            &mut body.statements,
+            scope_id,
+            func.r#async,
+            func.generator,
+            ctx,
+        );
     }
 
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !arrow.params.items.iter().any(|param| Self::has_nested_object_rest(&param.pattern)) {
+            return;
+        }
         let scope_id = arrow.scope_id();
-        for param in &mut arrow.params.items {
-            if Self::has_nested_object_rest(&param.pattern) {
-                // `({ ...args }) => { args }`
-                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
+        // `({ ...args }) => { args }`
+        let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
+        Self::transform_function_parameters(
+            &mut arrow.params,
+            &mut body.statements,
+            scope_id,
+            arrow.r#async,
+            false,
+            ctx,
+        );
+    }
+
+    fn transform_function_parameters(
+        params: &mut FormalParameters<'a>,
+        body: &mut ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        r#async: bool,
+        generator: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let params_with_rest = params
+            .items
+            .iter()
+            .map(|param| Self::has_nested_object_rest(&param.pattern))
+            .collect::<Vec<_>>();
+        if !params_with_rest.iter().any(|has_rest| *has_rest) {
+            return;
+        }
+
+        let mut rest_symbols = FxHashSet::default();
+        for (param, has_rest) in params.items.iter().zip(&params_with_rest) {
+            if *has_rest {
+                param.pattern.bound_names(&mut |ident| {
+                    rest_symbols.insert(ident.symbol_id());
+                });
+            }
+        }
+
+        // Once a parameter references a binding moved out of the parameter list, that parameter
+        // and every parameter after it must move with the binding.
+        let first_reference = params.items.iter().enumerate().find_map(|(index, param)| {
+            (!params_with_rest[index]
+                && Self::parameter_references_rest_binding(param, &rest_symbols, ctx))
+            .then_some(index)
+        });
+
+        let Some(first_reference) = first_reference else {
+            for (param, has_rest) in params.items.iter_mut().zip(params_with_rest) {
+                if has_rest {
+                    Self::replace_rest_element(
+                        VariableDeclarationKind::Var,
+                        &mut param.pattern,
+                        body,
+                        scope_id,
+                        ctx,
+                    );
+                }
+            }
+            return;
+        };
+
+        let needs_scope_iife = Self::parameter_initializers_need_scope_iife(
+            params,
+            &params_with_rest,
+            first_reference,
+            scope_id,
+            ctx,
+        );
+
+        let mut prefix = ArenaVec::new_in(ctx);
+        let mut first_optional = None;
+        for (index, has_rest) in params_with_rest.into_iter().enumerate() {
+            if index < first_reference && !has_rest {
+                continue;
+            }
+
+            let param = &mut params.items[index];
+            let mut rest_statements = ArenaVec::new_in(ctx);
+            if has_rest {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
                     &mut param.pattern,
-                    &mut body.statements,
+                    &mut rest_statements,
                     scope_id,
                     ctx,
                 );
             }
+
+            if let Some(default) = param.initializer.take() {
+                first_optional.get_or_insert(index);
+                let pattern = param.pattern.take_in(ctx);
+                prefix.push(Self::create_default_parameter_statement(
+                    pattern,
+                    default.unbox(),
+                    index,
+                    scope_id,
+                    ctx,
+                ));
+            } else if first_optional.is_some() {
+                let pattern = param.pattern.take_in(ctx);
+                prefix
+                    .push(Self::create_trailing_parameter_statement(pattern, index, scope_id, ctx));
+            } else if matches!(
+                param.pattern,
+                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+            ) {
+                let declaration = Self::create_temporary_reference_for_binding(
+                    VariableDeclarationKind::Var,
+                    &mut param.pattern,
+                    scope_id,
+                    ctx,
+                );
+                prefix.push(Statement::VariableDeclaration(declaration));
+            }
+
+            prefix.extend(rest_statements);
+        }
+
+        if let Some(first_optional) = first_optional {
+            params.items.truncate(first_optional);
+        }
+        if needs_scope_iife {
+            // Parameter initializers cannot see declarations from the function body. Keep that
+            // boundary when a moved initializer would otherwise bind to a body declaration.
+            let original_body = body.take_in(ctx);
+            prefix.push(Self::create_scope_iife_return(
+                original_body,
+                scope_id,
+                r#async,
+                generator,
+                ctx,
+            ));
+            *body = prefix;
+        } else {
+            body.splice(0..0, prefix);
+        }
+    }
+
+    fn parameter_references_rest_binding(
+        param: &FormalParameter<'a>,
+        rest_symbols: &FxHashSet<SymbolId>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let mut finder = ParameterReferenceFinder { rest_symbols, ctx, found: false };
+        finder.visit_binding_pattern(&param.pattern);
+        if !finder.found
+            && let Some(initializer) = &param.initializer
+        {
+            finder.visit_expression(initializer);
+        }
+        finder.found
+    }
+
+    fn parameter_initializers_need_scope_iife(
+        params: &FormalParameters<'a>,
+        params_with_rest: &[bool],
+        first_reference: usize,
+        scope_id: ScopeId,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let mut finder = BodyShadowFinder { function_scope_id: scope_id, ctx, found: false };
+        for (index, param) in params.items.iter().enumerate() {
+            if index < first_reference && !params_with_rest[index] {
+                continue;
+            }
+            finder.visit_binding_pattern(&param.pattern);
+            if let Some(initializer) = &param.initializer {
+                finder.visit_expression(initializer);
+            }
+        }
+        finder.found
+    }
+
+    fn create_scope_iife_return(
+        statements: ArenaVec<'a, Statement<'a>>,
+        parent_scope_id: ScopeId,
+        r#async: bool,
+        generator: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let parent_flags = ctx.scoping().scope_flags(parent_scope_id);
+        let mut scope_flags = ScopeFlags::Function;
+        scope_flags.set(ScopeFlags::Arrow, !generator);
+        scope_flags.set(ScopeFlags::StrictMode, parent_flags.is_strict_mode());
+        scope_flags.set(ScopeFlags::DirectEval, parent_flags.contains_direct_eval());
+        let scope_id = ctx.create_child_scope(parent_scope_id, scope_flags);
+
+        FunctionBodyScopeMover { old_scope_id: parent_scope_id, new_scope_id: scope_id, ctx }
+            .visit_statements(&statements);
+
+        let params_kind = if generator {
+            FormalParameterKind::FormalParameter
+        } else {
+            FormalParameterKind::ArrowFormalParameters
+        };
+        let params = FormalParameters::boxed(SPAN, params_kind, [], None, ctx);
+        let body = FunctionBody::boxed(SPAN, [], statements, ctx);
+        let callee = if generator {
+            Expression::new_function_expression_with_scope_id_and_pure_and_pife(
+                SPAN,
+                FunctionType::FunctionExpression,
+                None,
+                true,
+                r#async,
+                false,
+                None,
+                None,
+                params,
+                None,
+                Some(body),
+                scope_id,
+                false,
+                false,
+                ctx,
+            )
+        } else {
+            Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+                SPAN,
+                r#async,
+                None,
+                params,
+                None,
+                ArrowFunctionBody::FunctionBody(body),
+                scope_id,
+                false,
+                false,
+                ctx,
+            )
+        };
+        let call = Expression::new_call_expression(SPAN, callee, None, [], false, ctx);
+        let result = if generator {
+            Expression::new_yield_expression(SPAN, true, Some(call), ctx)
+        } else {
+            call
+        };
+        Statement::new_return_statement(SPAN, Some(result), ctx)
+    }
+
+    fn create_default_parameter_statement(
+        pattern: BindingPattern<'a>,
+        default: Expression<'a>,
+        index: usize,
+        scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let length_test = Expression::new_binary_expression(
+            SPAN,
+            Self::create_arguments_length(ctx),
+            BinaryOperator::GreaterThan,
+            Self::create_parameter_index(index, ctx),
+            ctx,
+        );
+        let defined_test = Expression::new_binary_expression(
+            SPAN,
+            Self::create_arguments_access(index, ctx),
+            BinaryOperator::StrictInequality,
+            Self::create_undefined(scope_id, ctx),
+            ctx,
+        );
+        let test = Expression::new_logical_expression(
+            SPAN,
+            length_test,
+            LogicalOperator::And,
+            defined_test,
+            ctx,
+        );
+        let init = Expression::new_conditional_expression(
+            SPAN,
+            test,
+            Self::create_arguments_access(index, ctx),
+            default,
+            ctx,
+        );
+        Self::create_parameter_binding_statement(pattern, init, ctx)
+    }
+
+    fn create_trailing_parameter_statement(
+        pattern: BindingPattern<'a>,
+        index: usize,
+        scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let test = Expression::new_binary_expression(
+            SPAN,
+            Self::create_arguments_length(ctx),
+            BinaryOperator::GreaterThan,
+            Self::create_parameter_index(index, ctx),
+            ctx,
+        );
+        let init = Expression::new_conditional_expression(
+            SPAN,
+            test,
+            Self::create_arguments_access(index, ctx),
+            Self::create_undefined(scope_id, ctx),
+            ctx,
+        );
+        Self::create_parameter_binding_statement(pattern, init, ctx)
+    }
+
+    fn create_parameter_binding_statement(
+        pattern: BindingPattern<'a>,
+        init: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        pattern.bound_names(&mut |ident| {
+            *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
+                SymbolFlags::BlockScopedVariable;
+        });
+        let declaration = VariableDeclarator::new(SPAN, pattern, None, Some(init), false, ctx);
+        Statement::VariableDeclaration(VariableDeclaration::boxed(
+            SPAN,
+            VariableDeclarationKind::Let,
+            [declaration],
+            false,
+            ctx,
+        ))
+    }
+
+    fn create_arguments_length(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let arguments =
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("arguments"), ReferenceFlags::Read);
+        Expression::new_static_member_expression(
+            SPAN,
+            arguments,
+            IdentifierName::new(SPAN, static_ident!("length"), ctx),
+            false,
+            ctx,
+        )
+    }
+
+    fn create_arguments_access(index: usize, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        let arguments =
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("arguments"), ReferenceFlags::Read);
+        Expression::new_computed_member_expression(
+            SPAN,
+            arguments,
+            Self::create_parameter_index(index, ctx),
+            false,
+            ctx,
+        )
+    }
+
+    fn create_parameter_index(index: usize, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+        let index = f64::from(u32::try_from(index).unwrap());
+        Expression::new_numeric_literal(SPAN, index, None, NumberBase::Decimal, ctx)
+    }
+
+    fn create_undefined(scope_id: ScopeId, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        if ctx.scoping().find_binding(scope_id, static_ident!("undefined")).is_some() {
+            Expression::new_void_0(SPAN, ctx)
+        } else {
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("undefined"), ReferenceFlags::Read)
         }
     }
 
