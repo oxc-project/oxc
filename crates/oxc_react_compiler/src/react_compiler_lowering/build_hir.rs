@@ -3946,13 +3946,11 @@ fn lower_expression<'a>(
             property: static_ident!("meta"),
             span: Some(import_meta.span),
         }),
-        oxc::Expression::NewTarget(new_target) => {
-            let span = Some(new_target.span);
-            builder.record_error(
-                diagnostics::todo_build_hir_lower_expression_handle_meta_property_expressions_other_than_import_meta(span),
-            )?;
-            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
-        }
+        oxc::Expression::NewTarget(new_target) => Ok(InstructionValue::MetaProperty {
+            meta: static_ident!("new"),
+            property: static_ident!("target"),
+            span: Some(new_target.span),
+        }),
         oxc::Expression::ClassExpression(cls) => {
             let span = Some(cls.span);
             let diagnostic_span = Some(cls.id.as_ref().map_or_else(

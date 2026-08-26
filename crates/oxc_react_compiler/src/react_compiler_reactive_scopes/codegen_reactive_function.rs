@@ -2093,9 +2093,12 @@ fn ox_codegen_base_instruction_value<'a>(
             )))
         }
         InstructionValue::MetaProperty { meta, property, .. } => {
-            debug_assert_eq!(meta.as_str(), "import");
-            debug_assert_eq!(property.as_str(), "meta");
-            Ok(OxValue::Expression(oxc_ast::ast::Expression::new_import_meta(span, &cx.ast)))
+            let expression = match (meta.as_str(), property.as_str()) {
+                ("import", "meta") => oxc_ast::ast::Expression::new_import_meta(span, &cx.ast),
+                ("new", "target") => oxc_ast::ast::Expression::new_new_target(span, &cx.ast),
+                _ => unreachable!("unsupported meta-property {meta}.{property}"),
+            };
+            Ok(OxValue::Expression(expression))
         }
         InstructionValue::Await { value, .. } => {
             let arg = ox_codegen_place_to_expression(cx, value)?;
