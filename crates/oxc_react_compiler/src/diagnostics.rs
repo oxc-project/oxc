@@ -356,6 +356,14 @@ pub fn invariant_expected_node_all_scopes() -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invariant_expected_node_all_identifiers(id: usize) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        format!("Expected a node for all identifiers, none found for `{id}`"),
+    )
+}
+
+#[cold]
 pub fn invariant_there_should_at_least_one_operand() -> OxcDiagnostic {
     diagnostic(ErrorCategory::Invariant, "there should be at least one operand")
 }
