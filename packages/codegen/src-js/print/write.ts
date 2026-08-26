@@ -571,7 +571,7 @@ function markMapNamed(
   }
 
   if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.output.length;
+  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
   mapPositions[mapPositionsLen + 1] = start;
   state.mapPositionsLen = mapPositionsLen + 2;
 }
@@ -619,7 +619,7 @@ function recordMapping(state: State, sourceOffset: number): void {
   if (mapPositions[mapPositionsLen - 1] === sourceOffset) return;
 
   if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
-  mapPositions[mapPositionsLen] = state.output.length;
+  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
   mapPositions[mapPositionsLen + 1] = sourceOffset;
   state.mapPositionsLen = mapPositionsLen + 2;
 }
