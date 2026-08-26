@@ -10,6 +10,7 @@
 // Reference: `oxc/crates/oxc_codegen/src/{gen.rs,lib.rs,str.rs,binary_expr_visitor.rs}`
 
 import { debugAssert, typeAssertIs } from "../asserts.ts";
+import { flattenString } from "./flatten.ts";
 import { generateSourceMap } from "./source_map.ts";
 import { printProgram, printStatement } from "./statement.ts";
 
@@ -37,6 +38,10 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
     printStatement(node, state);
   }
 
+  // Flatten the output before handing it on - see `flatten.ts` for why, and why this way
+  const { output } = state;
+  flattenString(output);
+
   // This is removed by minifier in non-sourcemap builds.
   //
   // The `skipSourcemapGeneration` check exists only in benchmark builds -
@@ -45,8 +50,8 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
   // @ts-expect-error `skipSourcemapGeneration` is benchmarks-only, so is not in `Options`
   if (SOURCEMAPS && (!BENCHMARKS || !options.skipSourcemapGeneration)) {
     debugAssert(options.sourcemap === true, "`options.sourcemap` should be true in a maps build");
-    return { code: state.output, map: generateSourceMap(state, options) };
+    return { code: output, map: generateSourceMap(state, output, options) };
   }
 
-  return { code: state.output, map: null };
+  return { code: output, map: null };
 }
