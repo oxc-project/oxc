@@ -93,6 +93,9 @@ async function loadFixture(url: string): Promise<{ filename: string; code: strin
   return { filename, code };
 }
 
+// Dummy var to prevent dead code removal in benchmark functions (see below).
+let flattenSink = 0;
+
 // `tiny.js` is one line long, so its result is a comparison of the two printers' fixed overhead
 // rather than of their throughput. Fixtures are ordered by size.
 const fixtures = [
@@ -129,11 +132,18 @@ for (const { filename, code } of fixtures) {
   oxcPrintSync(program, mapOptions);
   oxcPrintSync(program, mapNoGenerationOptions);
 
+  // Each benchmark includes flattening the string as whatever user does with the returned code string
+  // (indexing into it, slicing it, writing it to a file) will involve flattening first.
+  // We don't want to hide a burden we push onto users from our benchmarks.
+  //
+  // `code.charCodeAt(0)` triggers flattening `code`. Writing the result to `flattenSink` prevents V8
+  // from optimizing out the `charCodeAt` call as dead code.
   describe(`${filename} (${code.length} bytes)`, () => {
     bench(
       "oxc-codegen",
       () => {
-        oxcPrintSync(program, options);
+        const { code } = oxcPrintSync(program, options);
+        flattenSink ^= code.charCodeAt(0);
       },
       BENCH_OPTIONS,
     );
@@ -141,7 +151,8 @@ for (const { filename, code } of fixtures) {
     bench(
       "oxc-codegen sourcemaps",
       () => {
-        oxcPrintSync(program, mapOptions);
+        const { code } = oxcPrintSync(program, mapOptions);
+        flattenSink ^= code.charCodeAt(0);
       },
       BENCH_OPTIONS,
     );
@@ -149,7 +160,8 @@ for (const { filename, code } of fixtures) {
     bench(
       "oxc-codegen sourcemaps no generation",
       () => {
-        oxcPrintSync(program, mapNoGenerationOptions);
+        const { code } = oxcPrintSync(program, mapNoGenerationOptions);
+        flattenSink ^= code.charCodeAt(0);
       },
       BENCH_OPTIONS,
     );
