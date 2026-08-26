@@ -1,0 +1,25 @@
+packages/codegen/tsdown.config.ts
+  s_a44d104854b291::t_f9ec9cd96e9730 10,97-99
+packages/codegen/tsdown_plugins/unmap_writes.ts
+  s_a44d104854b291::t_952f33b75bd639 47-50
+packages/codegen/src-js/print/write.ts
+  s_a44d104854b291::t_3492af7dd3fe6d 53-75,161-193,446-477
+packages/codegen/tsdown_plugins/specialize_write_categories.ts
+  s_a44d104854b291::t_225bb87b0f3325 1-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "86d2684635657814ceeabd91ec6fcbc7d23425c5",
+  "prompts": {},
+  "sessions": {
+    "s_a44d104854b291": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03da1-0e46-7283-8924-765e8bcbf38e",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
