@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_use_before_define.rs
+  s_36c5d9799aac7a::t_f1b44ab09534bd 18,3050-3061
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c5e6c65c8fa7ffe1b9c035b010fe7ed1be34266c",
+  "prompts": {},
+  "sessions": {
+    "s_36c5d9799aac7a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03e7d-8e73-77b0-b68b-a4c684646ee3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
