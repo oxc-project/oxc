@@ -1,0 +1,19 @@
+tasks/track_linter_timings/linter_timings.snap
+  s_f5822f1e6772c5::t_6bdc6b0936b544 143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9281e77280fdf5cfabdaa212618c31a7e8039779",
+  "prompts": {},
+  "sessions": {
+    "s_f5822f1e6772c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019a9-1e84-7d01-a632-f62b3d8320db",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
