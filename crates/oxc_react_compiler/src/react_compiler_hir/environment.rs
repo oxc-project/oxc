@@ -144,6 +144,11 @@ pub struct Environment<'a> {
     // type annotations by reference identity.
     pub renames: FxHashMap<ReferenceId, Ident<'a>>,
 
+    // Local bindings originally named `fbt`. The downstream FBT transform
+    // recognizes macros by this source spelling, so RenameVariables preserves
+    // it whenever the generated lexical scope allows it.
+    local_fbt_identifiers: FxHashSet<DeclarationId>,
+
     // Hoisted identifiers: tracks which bindings have already been hoisted
     // via DeclareContext to avoid duplicate hoisting.
     hoisted_identifiers: FxHashSet<SymbolId>,
@@ -253,6 +258,7 @@ impl<'a> Environment<'a> {
             hook_guard_name: None,
             memo_cache_name: None,
             renames: FxHashMap::default(),
+            local_fbt_identifiers: FxHashSet::default(),
             hoisted_identifiers: FxHashSet::default(),
             validate_preserve_existing_memoization_guarantees: config
                 .validate_preserve_existing_memoization_guarantees,
@@ -324,6 +330,14 @@ impl<'a> Environment<'a> {
             span: None,
         });
         id
+    }
+
+    pub fn mark_local_fbt_identifier(&mut self, id: DeclarationId) {
+        self.local_fbt_identifiers.insert(id);
+    }
+
+    pub fn is_local_fbt_identifier(&self, id: DeclarationId) -> bool {
+        self.local_fbt_identifiers.contains(&id)
     }
 
     /// Allocate a new Type in the arena, returns its TypeId.
