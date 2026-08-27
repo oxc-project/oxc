@@ -595,7 +595,7 @@ Prettier glues the sign to the number (removing the source space, a postcss word
 Matching that gluing is ad-hoc work for a torture-test-only shape.
 A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
 
-## glued-minus-paren
+## css-glued-minus-paren
 
 - Why: uniform-rule
 - Pin: `tests/fixtures/format/css/token-soup-math-glue.css` (also tracked by conformance `css/parens/parens.css`)
@@ -617,6 +617,8 @@ prop44: -(4px);
 Prettier splits only SOME source-glued `-(` (an operator-heuristic side effect: the split needs a
 binary-looking left neighbor), an internal inconsistency for the same token pair.
 Ours keeps them all glued under the one token-soup rule: never add a space the source doesn't have.
+Css mode only (hence the prefix): in Less and Scss, Prettier keeps `3px -(4px)` glued too (measured),
+so the same shape there is not a divergence.
 
 ## fill-break-position
 
@@ -688,7 +690,8 @@ For the glued `-` Prettier also diverges in value positions, via a different art
 ## value-glued-minus
 
 - Why: prettier-bug
-- Pin: `tests/fixtures/format/scss/value-glued-minus.scss`
+- Pin: `tests/fixtures/format/scss/value-glued-minus.scss` (Scss),
+  `tests/fixtures/format/less/signed-value-args.less` (Less)
 
 ```scss
 /* input */
@@ -707,14 +710,36 @@ For the glued `-` Prettier also diverges in value positions, via a different art
 }
 ```
 
-A glued `-` after a call/paren in a value position is subtraction (dart-sass); ours parses it as
-`SassBinaryExpression` and prints spaced, like every other Sass operator. Prettier's value lexer keeps the
-glued `-` verbatim (a sign-lexing artifact: `-` may start a number/ident, so no operator node forms) while
-the same glued `+` DOES get spaced; we print both ops uniformly.
-Scope: value positions parsed as `SassBinaryExpression` (property values, `$var:` declarations, SassScript function args).
-Calculation-function args (`max`, `min`, `calc`, `clamp`) parse the glued sign as a `Calc` operation instead,
-whose printer keeps the source glue verbatim — matching Prettier there,
-so that position is NOT a divergence (pin: `tests/fixtures/format/scss/calc-glued-minus.scss`).
+A glued `-` after a call/paren in a value position is subtraction (dart-sass and lessc alike);
+ours parses it as a binary operation (`SassBinaryExpression` / `LessBinaryOperation`) and prints spaced, like every other operator.
+Prettier's value lexer keeps the glued `-` verbatim
+(a sign-lexing artifact: `-` may start a number/ident, so no operator node forms) while the same glued `+` DOES get spaced;
+we print both ops uniformly.
+
+The same artifact pair exists in Less:
+
+```less
+/* input */
+p7: fade(@c, 4%)-1;
+p8: fade(@c, 4%)+1;
+
+/* ours */
+p7: fade(@c, 4%) - 1;
+p8: fade(@c, 4%) + 1;
+
+/* prettier */
+p7: fade(@c, 4%)-1;
+p8: fade(@c, 4%) + 1;
+```
+
+Scope: value positions where ours structures the glued sign as a binary operation.
+
+- In Scss, any such position (property values, `$var:` declarations, function args)
+- In Less, a call left operand only
+
+Everywhere else BOTH implementations keep the glue, so there is nothing to diverge;
+where exactly ours keeps it is printer mechanism, documented at `write_less_binary_operation` / `write_sass_binary`
+(and pinned by the same fixtures plus `tests/fixtures/format/scss/calc-glued-minus.scss` for Scss calculation args).
 
 ## map-paren-value-blank-lines
 

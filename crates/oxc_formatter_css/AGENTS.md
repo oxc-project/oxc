@@ -216,7 +216,7 @@ Two more files fail with MIXED hunks; they can't pass as files (the intentional 
   - a fill break-point inside a math-y value (`... * -1 +` vs breaking before `/ 2`);
     - the DIVERGENCES.md "fill-break-position" class (core-fill semantics)
 - `css/parens/parens.css` (~93% match) token-soup math spacing, three hunk classes:
-  - intentional: Prettier splits SOME source-glued `-(` into `- (` (`prop`/`prop44`, DIVERGENCES.md "glued-minus-paren")
+  - intentional: Prettier splits SOME source-glued `-(` into `- (` (`prop`/`prop44`, DIVERGENCES.md "css-glued-minus-paren")
     and glues a source-spaced `+ 20px` (`prop34`, DIVERGENCES.md "unary-plus-glue")
   - normalization-direction difference (open question, low value)
     - a math operator adjacent to a function/paren boundary gets uniform `op` spacing from Prettier regardless of source (`round(1.5)+2` -> `round(1.5) + 2`, calc `*`/`/`);

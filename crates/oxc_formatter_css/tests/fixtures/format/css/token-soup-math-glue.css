@@ -13,7 +13,7 @@ a {
 }
 /*
  * A source-glued `-(` stays glued in every position.
- * DIVERGES from Prettier (DIVERGENCES.md "glued-minus-paren"),
+ * DIVERGES from Prettier (DIVERGENCES.md "css-glued-minus-paren"),
  * which splits only the binary-looking `3px -(4px)` into `3px - (4px)`
  * while keeping the bare `-(4px)` glued.
  */

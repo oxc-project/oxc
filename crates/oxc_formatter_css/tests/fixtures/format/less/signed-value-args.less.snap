@@ -17,6 +17,14 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   // p6 DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"):
   // ours keeps the source-spaced `+ 20px`, Prettier glues it to `+20px`
   p6: func(+20px, + 20px);
+  // p7 DIVERGES from Prettier (DIVERGENCES.md "value-glued-minus"): a sign
+  // glued to a call is a binary op (lessc); ours spaces both, Prettier keeps
+  // `-` glued (sign-lexing artifact) but agrees on p8's spaced `+`
+  p7: fade(@c, 4%)-1;
+  p8: fade(@c, 4%)+1;
+  // NON-call left operands keep the glue (Prettier lexes them as one word)
+  p9: @a+1;
+  p10: (10px)+1;
 }
 
 ==================== Output ====================
@@ -38,6 +46,14 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   // p6 DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"):
   // ours keeps the source-spaced `+ 20px`, Prettier glues it to `+20px`
   p6: func(+20px, + 20px);
+  // p7 DIVERGES from Prettier (DIVERGENCES.md "value-glued-minus"): a sign
+  // glued to a call is a binary op (lessc); ours spaces both, Prettier keeps
+  // `-` glued (sign-lexing artifact) but agrees on p8's spaced `+`
+  p7: fade(@c, 4%) - 1;
+  p8: fade(@c, 4%) + 1;
+  // NON-call left operands keep the glue (Prettier lexes them as one word)
+  p9: @a+1;
+  p10: (10px)+1;
 }
 
 -------------------
@@ -58,6 +74,14 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   // p6 DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"):
   // ours keeps the source-spaced `+ 20px`, Prettier glues it to `+20px`
   p6: func(+20px, + 20px);
+  // p7 DIVERGES from Prettier (DIVERGENCES.md "value-glued-minus"): a sign
+  // glued to a call is a binary op (lessc); ours spaces both, Prettier keeps
+  // `-` glued (sign-lexing artifact) but agrees on p8's spaced `+`
+  p7: fade(@c, 4%) - 1;
+  p8: fade(@c, 4%) + 1;
+  // NON-call left operands keep the glue (Prettier lexes them as one word)
+  p9: @a+1;
+  p10: (10px)+1;
 }
 
 ===================== End =====================
