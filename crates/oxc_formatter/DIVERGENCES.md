@@ -24,7 +24,7 @@ Prettier's attachment relocates the comment backward across the commas to the la
 ## type-alias-trailing-comment-move
 
 - Why: uniform-rule
-- Pin: `tests/fixtures/ts/semi/trailing-comments.ts`
+- Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
 
 ```ts
 // input
@@ -216,7 +216,7 @@ Prettier does the same normalization except for nested single-member paren sourc
 ## paren-comment-fixpoint
 
 - Why: prettier-bug (fixed upstream in prettier#19893 / prettier#19894)
-- Pin: `tests/fixtures/ts/semi/trailing-comments.ts`, `tests/fixtures/js/sequence-expression/leading-comment-in-first-element-parens.js`
+- Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`, `tests/fixtures/js/sequence-expression/leading-comment-in-first-element-parens.js`
 - Drop when: the pin catches up (converge on Prettier's now-fixed output)
 
 Two comment placements print Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent:

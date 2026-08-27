@@ -12,30 +12,6 @@ export type MethodSignaturesAndPropertyOnSameLine =
   | { json(): Promise<any>; ok: true }
 
 ==================== Output ====================
--------------------------------
-{ printWidth: 80, semi: false }
--------------------------------
-export interface MethodSignatures {
-  (arg: string): void
-  (arg: number): null
-}
-
-export type MethodSignaturesAndPropertyOnSameLine =
-  | { json(): never; ok: false }
-  | { json(): Promise<any>; ok: true }
-
---------------------------------
-{ printWidth: 100, semi: false }
---------------------------------
-export interface MethodSignatures {
-  (arg: string): void
-  (arg: number): null
-}
-
-export type MethodSignaturesAndPropertyOnSameLine =
-  | { json(): never; ok: false }
-  | { json(): Promise<any>; ok: true }
-
 ------------------------------
 { printWidth: 80, semi: true }
 ------------------------------
@@ -59,5 +35,29 @@ export interface MethodSignatures {
 export type MethodSignaturesAndPropertyOnSameLine =
   | { json(): never; ok: false }
   | { json(): Promise<any>; ok: true };
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+export interface MethodSignatures {
+  (arg: string): void
+  (arg: number): null
+}
+
+export type MethodSignaturesAndPropertyOnSameLine =
+  | { json(): never; ok: false }
+  | { json(): Promise<any>; ok: true }
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+export interface MethodSignatures {
+  (arg: string): void
+  (arg: number): null
+}
+
+export type MethodSignaturesAndPropertyOnSameLine =
+  | { json(): never; ok: false }
+  | { json(): Promise<any>; ok: true }
 
 ===================== End =====================

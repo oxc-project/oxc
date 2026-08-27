@@ -161,6 +161,11 @@ interface Iface {
 type ObjType = {
   foo: string /* v */;
 };
+// A LINE comment after a `;`-less member rides the line; the added separator
+// lands before it
+interface _KeywordDef {
+  type?: JSONType | JSONType[] // data types that keyword applies to
+}
 class WithIndexSignature {
   [key: string]: unknown /* v2 */;
 }
