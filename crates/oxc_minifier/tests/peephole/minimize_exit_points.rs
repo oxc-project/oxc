@@ -68,12 +68,12 @@ fn test_function_return_optimization() {
         "function f(){if(a())b();else{c();return}}",
     ); // function f(){a()?b():c()}
     test(
-        "function f(){ if(a()) { if (a) { return } throw a; } else return 2; }",
-        "function f(){ if(a()) { if (a) return; throw a } return 2 }",
+        "function f(){if(a()){if(a){return}throw a}else return 2}",
+        "function f(){if(!a())return 2;if(!a)throw a}",
     );
     test(
         "function f(){if(a()){if(b()){d();return;}else{return;}}else{return;} c();}",
-        "function f(){if(a()){if(b()){d();return}return}}",
+        "function f(){if(a()){if(!b())return;d()}}",
     ); // function f(){a()&&b()&&d()}
     test(
         "function f(a,b,c){if(a){}else if(b){x();return}else if(c){y();return}z()}",
@@ -292,7 +292,7 @@ fn test_for_continue_optimization() {
     ); // r=async () => { for await(x of y)a()?b():c()};
     test(
         "r=async () => { for await (x of y){if(a()){b();}else{c();continue;}}}",
-        "r=async() => { for await(x of y)if(a())b();else{c();continue}};",
+        "r=async () => { for await(x of y)if(a())b();else{c();continue}};",
     ); // r=async () => { for await (x of y) a() ? b() : c() };
 
     test("for(x=0;x<y;x++){if(a()){b();continue;}else;}", "for(x=0;x<y;x++)if(a()){b();continue}"); // for(x=0;x<y;x++)a()&&b()
@@ -345,27 +345,27 @@ fn test_dont_remove_break_in_try_finally() {
 
 #[test]
 fn test_try_catch_termination() {
-    test_same("function f(){if(a)try{b}catch{c}else throw i()}");
-    test_same("function f(){if(a)try{return g()}catch{c}else throw i()}");
-    test_same("function f(){if(a)try{b}catch{return g()}else throw i()}");
+    test_same("function f(){if(a)try{b}catch{c}else i()}");
+    test_same("function f(){if(a)try{return g()}catch{c}else i()}");
+    test_same("function f(){if(a)try{b}catch{return g()}else i()}");
     test(
-        "function f(){if(a)try{return g()}catch{return g()}else throw i()}",
-        "function f(){if(a)try{return g()}catch{return g()}throw i()}",
+        "function f(){if(a)try{return g()}catch{return g()}else i()}",
+        "function f(){if(a)try{return g()}catch{return g()}i()}",
     );
 
-    test_same("function f(){if(a)try{b}finally{d}else throw i()}");
-    test_same("function f(){if(a)try{return g()}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{b}finally{d}else i()}");
+    test_same("function f(){if(a)try{return g()}finally{d}else i()}");
     test(
-        "function f(){if(a)try{b}finally{return g()}else throw i()}",
-        "function f(){if(a)try{b}finally{return g()}throw i()}",
+        "function f(){if(a)try{b}finally{return g()}else i()}",
+        "function f(){if(a)try{b}finally{return g()}i()}",
     );
 
-    test_same("function f(){if(a)try{b}catch{c}finally{d}else throw i()}");
-    test_same("function f(){if(a)try{return g()}catch{d}finally{d}else throw i()}");
-    test_same("function f(){if(a)try{b}catch{return g()}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{b}catch{c}finally{d}else i()}");
+    test_same("function f(){if(a)try{return g()}catch{d}finally{d}else i()}");
+    test_same("function f(){if(a)try{b}catch{return g()}finally{d}else i()}");
     test(
-        "function f(){if(a)try{b}catch{c}finally{return g(d)}else throw i()}",
-        "function f(){if(a)try{b}catch{c}finally{return g(d)}throw i()}",
+        "function f(){if(a)try{b}catch{c}finally{return g(d)}else i()}",
+        "function f(){if(a)try{b}catch{c}finally{return g(d)}i()}",
     );
 }
 
