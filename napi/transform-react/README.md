@@ -59,9 +59,9 @@ The asynchronous `transform` runs on a worker-pool thread. It is useful when
 processing files concurrently, but can be slower for a single small file.
 
 `TransformResult` contains `code`, an optional source `map`, `errors`, and a
-`fatal` flag. Recoverable React Compiler bail-outs appear in `errors` as
-warnings while still producing code, so use `fatal` to determine whether the
-output is usable.
+`fatal` flag. Recoverable React Compiler bail-outs are omitted in every output
+mode, matching Babel's default `logger: null`. Fatal diagnostics appear in
+`errors` without producing code.
 
 ## Options
 
