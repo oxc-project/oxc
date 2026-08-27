@@ -243,7 +243,6 @@ oxc-css-parser = "0.0.11" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `temp
 oxc-graphql-parser = "0.0.9" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 oxc-toml = "0.14.5" # TOML formatter
 oxc-yaml-parser = "0.0.5" # YAML 1.2 parser (comment-preserving typed AST, node naming from `yaml-unist-parser`)
-owo-colors = "4.3.0" # Terminal colors
 papaya = "0.2.4" # Concurrent hash map
 percent-encoding = "2.3.2" # URL encoding
 petgraph = { version = "0.8.3", default-features = false } # Graph data structures

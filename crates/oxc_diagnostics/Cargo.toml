@@ -23,7 +23,6 @@ bytecount = { workspace = true }
 cow-utils = { workspace = true }
 itoa = { workspace = true }
 memchr = { workspace = true }
-owo-colors = { workspace = true }
 percent-encoding = { workspace = true }
 smallvec = { workspace = true }
 textwrap = { workspace = true }

@@ -1992,7 +1992,6 @@ dependencies = [
  "cow-utils",
  "itoa",
  "memchr",
- "owo-colors",
  "oxc_span",
  "percent-encoding",
  "smallvec",
