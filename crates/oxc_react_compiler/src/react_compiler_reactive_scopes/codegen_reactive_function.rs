@@ -55,6 +55,7 @@ use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted
 use crate::react_compiler_reactive_scopes::prune_unused_labels::prune_unused_labels;
 use crate::react_compiler_reactive_scopes::prune_unused_lvalues::prune_unused_lvalues;
 use crate::react_compiler_reactive_scopes::rename_variables::rename_variables;
+use crate::react_compiler_utils::typescript::copy_param_ts_metadata;
 
 // =============================================================================
 // Public API
@@ -3037,13 +3038,17 @@ fn ox_codegen_object_expression<'a>(
                             oxc_allocator::ArenaBox::new_in(p, &cx.ast),
                         ));
                     }
-                    ObjectPropertyType::Method => {
+                    ObjectPropertyType::Method
+                    | ObjectPropertyType::Getter
+                    | ObjectPropertyType::Setter => {
                         let method_data = cx
                             .object_methods
                             .get(&obj_prop.place.identifier)
                             .map(|(v, s)| (v.clone_in(cx.env.allocator), *s));
-                        let Some((InstructionValue::ObjectMethod { lowered_func, .. }, _)) =
-                            method_data
+                        let Some((
+                            InstructionValue::ObjectMethod { lowered_func, signature, .. },
+                            _,
+                        )) = method_data
                         else {
                             return Err(diagnostics::invariant_expected_object_method_instruction(
                                 None,
@@ -3056,6 +3061,44 @@ fn ox_codegen_object_expression<'a>(
                         prune_unused_lvalues(&mut reactive_fn, cx.env);
 
                         let fn_result = ox_codegen_inner_function(cx, &reactive_fn)?;
+                        let mut this_param = None;
+                        let mut params = fn_result.params;
+                        let mut return_type = None;
+                        if let Some(signature) = &signature {
+                            this_param = signature.this_param.as_ref().map(|this_param| {
+                                this_param.clone_in_with_semantic_ids(cx.ast.allocator())
+                            });
+                            copy_param_ts_metadata(
+                                cx.ast.allocator(),
+                                &mut params,
+                                &signature.params,
+                            );
+                            return_type = signature.return_type.as_ref().map(|return_type| {
+                                return_type.clone_in_with_semantic_ids(cx.ast.allocator())
+                            });
+                            if !cx.env.renames.is_empty() {
+                                let mut renamer = BindingReferenceRenamer {
+                                    allocator: cx.ast.allocator(),
+                                    renames: &cx.env.renames,
+                                };
+                                if let Some(this_param) = &mut this_param {
+                                    oxc_ast_visit::VisitMut::visit_ts_this_parameter(
+                                        &mut renamer,
+                                        this_param,
+                                    );
+                                }
+                                oxc_ast_visit::VisitMut::visit_formal_parameters(
+                                    &mut renamer,
+                                    &mut params,
+                                );
+                                if let Some(return_type) = &mut return_type {
+                                    oxc_ast_visit::VisitMut::visit_ts_type_annotation(
+                                        &mut renamer,
+                                        return_type,
+                                    );
+                                }
+                            }
+                        }
                         let method = oxc_ast::ast::Function::new(
                             property_span,
                             oxc::FunctionType::FunctionExpression,
@@ -3064,21 +3107,27 @@ fn ox_codegen_object_expression<'a>(
                             fn_result.is_async,
                             false,
                             None,
-                            None,
-                            fn_result.params,
-                            None,
+                            this_param,
+                            params,
+                            return_type,
                             Some(fn_result.body),
                             &cx.ast,
                         );
                         let func_expr = oxc::Expression::FunctionExpression(
                             oxc_allocator::ArenaBox::new_in(method, &cx.ast),
                         );
+                        let (kind, method) = match obj_prop.property_type {
+                            ObjectPropertyType::Method => (oxc::PropertyKind::Init, true),
+                            ObjectPropertyType::Getter => (oxc::PropertyKind::Get, false),
+                            ObjectPropertyType::Setter => (oxc::PropertyKind::Set, false),
+                            ObjectPropertyType::Property => unreachable!(),
+                        };
                         let p = oxc_ast::ast::ObjectProperty::new(
                             obj_prop.place.span.unwrap_or_default(),
-                            oxc::PropertyKind::Init,
+                            kind,
                             key,
                             func_expr,
-                            true,
+                            method,
                             false,
                             key_computed,
                             &cx.ast,

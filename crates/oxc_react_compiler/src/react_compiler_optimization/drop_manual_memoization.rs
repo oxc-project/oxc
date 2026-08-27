@@ -94,11 +94,11 @@ struct ExtractedMemoArgs<'a> {
 // Main pass
 // =============================================================================
 
-/// Drop manual memoization (useMemo/useCallback calls), replacing them
-/// with direct invocations/references.
+/// Drop manual memoization when compiler caching replaces its guarantees.
 pub fn drop_manual_memoization<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
+    preserve_manual_memoization: bool,
 ) -> Result<(), OxcDiagnostic> {
     let is_validation_enabled = env.validate_preserve_existing_memoization_guarantees
         || env.validate_no_set_state_in_render
@@ -150,6 +150,7 @@ pub fn drop_manual_memoization<'a>(
                     is_validation_enabled,
                     &mut next_manual_memo_id,
                     &mut queued_inserts,
+                    preserve_manual_memoization,
                 );
             } else {
                 collect_temporaries(func, env, instr_id, &mut sidemap);
@@ -210,6 +211,7 @@ fn process_manual_memo_call<'a>(
     is_validation_enabled: bool,
     next_manual_memo_id: &mut u32,
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
+    preserve_manual_memoization: bool,
 ) {
     let instr = &func.instructions[instr_id.index()];
 
@@ -224,10 +226,11 @@ fn process_manual_memo_call<'a>(
     let span = func.instructions[instr_id.index()].value.span().cloned();
     let callee_span = func.instructions[manual_memo.load_instr_id.index()].value.span().copied();
 
-    // Replace the instruction value with the memoization replacement
-    let replacement =
-        get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
-    func.instructions[instr_id.index()].value = replacement;
+    if !preserve_manual_memoization {
+        let replacement =
+            get_manual_memoization_replacement(&fn_place, span, manual_memo.kind, env.allocator);
+        func.instructions[instr_id.index()].value = replacement;
+    }
 
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
@@ -259,6 +262,7 @@ fn process_manual_memo_call<'a>(
             callee_span,
             &memo_decl,
             manual_memo_id,
+            preserve_manual_memoization,
         );
 
         queued_inserts.insert(manual_memo.load_instr_id, start_marker);
@@ -455,6 +459,7 @@ fn get_manual_memoization_replacement<'a>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn make_manual_memoization_markers<'a>(
     fn_expr: &Place,
     env: &mut Environment<'a>,
@@ -463,6 +468,7 @@ fn make_manual_memoization_markers<'a>(
     callee_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
+    preserve_manual_memoization: bool,
 ) -> (Instruction<'a>, Instruction<'a>) {
     let start = Instruction {
         id: EvaluationOrder::UNSET,
@@ -484,7 +490,7 @@ fn make_manual_memoization_markers<'a>(
         value: InstructionValue::FinishMemoize {
             manual_memo_id,
             decl: *memo_decl,
-            pruned: false,
+            pruned: preserve_manual_memoization,
             span: fn_expr.span,
         },
         span: fn_expr.span,

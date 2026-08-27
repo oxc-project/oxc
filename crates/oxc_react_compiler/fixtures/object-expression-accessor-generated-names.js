@@ -1,14 +1,20 @@
 function Component({value}) {
-  const object = {
-    get value() {
-      return value;
+  const first = {
+    method(y) {
+      return y;
     },
   };
-  return <div>{object.value}</div>;
+  const x = value;
+  const object = {
+    get value() {
+      return x;
+    },
+  };
+  return <div>{object.value + first.method(1)}</div>;
 }
 
 export const FIXTURE_ENTRYPOINT = {
-  fn: foo,
+  fn: Component,
   params: [{value: 0}],
   sequentialRenders: [{value: 1}, {value: 2}],
 };

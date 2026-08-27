@@ -3,6 +3,7 @@ use rustc_hash::FxBuildHasher;
 
 pub mod disjoint_set;
 pub mod ordered_map;
+pub mod typescript;
 
 pub use disjoint_set::DisjointSet;
 pub use ordered_map::OrderedMap;

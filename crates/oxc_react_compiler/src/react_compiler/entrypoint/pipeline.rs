@@ -16,8 +16,8 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
-    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
-    assert_terminal_successors_exist, assert_valid_block_nesting,
+    InstructionValue, ReactFunctionType, Terminal, assert_consistent_identifiers,
+    assert_terminal_preds_exist, assert_terminal_successors_exist, assert_valid_block_nesting,
 };
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
@@ -132,6 +132,14 @@ pub fn compile_fn<'a, const EMIT: bool>(
         return Ok(None);
     }
 
+    // Accessor calls are not yet modeled by property effects, so disable inferred caches.
+    let has_object_accessors = std::iter::once(&hir)
+        .chain(env.functions.iter())
+        .flat_map(|func| func.instructions.iter())
+        .any(|instruction| {
+            matches!(&instruction.value, InstructionValue::ObjectMethod { signature: Some(_), .. })
+        });
+
     prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
@@ -139,7 +147,7 @@ pub fn compile_fn<'a, const EMIT: bool>(
     let void_memo_errors = validate_use_memo(&hir, &mut env);
     log_errors_as_events(&void_memo_errors, context);
 
-    drop_manual_memoization(&mut hir, &mut env)?;
+    drop_manual_memoization(&mut hir, &mut env, has_object_accessors)?;
 
     inline_immediately_invoked_function_expressions(&mut hir, &mut env);
 
@@ -271,6 +279,20 @@ pub fn compile_fn<'a, const EMIT: bool>(
     assert_valid_block_nesting(&hir, &env)?;
 
     build_reactive_scope_terminals_hir(&mut hir, &mut env)?;
+
+    if has_object_accessors {
+        for block in hir.body.blocks.values_mut() {
+            if let Terminal::Scope { block: body, fallthrough, scope, id, span } = &block.terminal {
+                block.terminal = Terminal::PrunedScope {
+                    block: *body,
+                    fallthrough: *fallthrough,
+                    scope: *scope,
+                    id: *id,
+                    span: *span,
+                };
+            }
+        }
+    }
 
     assert_valid_block_nesting(&hir, &env)?;
 
