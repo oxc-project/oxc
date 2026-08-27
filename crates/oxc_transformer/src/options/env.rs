@@ -109,6 +109,8 @@ impl EnvOptions {
                 look_behind_assertions: true,
                 match_indices: true,
                 set_notation: true,
+                duplicate_named_capture_groups: true,
+                duplicate_named_capture_groups_runtime: true,
             },
         }
     }
@@ -193,6 +195,9 @@ impl From<EngineTargets> for EnvOptions {
                 look_behind_assertions: o.has_feature(ES2018LookbehindRegex),
                 match_indices: o.has_feature(ES2022MatchIndicesRegex),
                 set_notation: o.has_feature(ES2024UnicodeSetsRegex),
+                duplicate_named_capture_groups: o
+                    .has_feature(ES2025DuplicateNamedCapturingGroupsRegex),
+                duplicate_named_capture_groups_runtime: true,
             },
         }
     }

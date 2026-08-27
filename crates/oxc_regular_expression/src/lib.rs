@@ -17,7 +17,7 @@ pub mod ast;
 pub use crate::{
     ast_impl::support::{
         RegexUnsupportedFlags, RegexUnsupportedPatterns, has_unsupported_regular_expression_flags,
-        has_unsupported_regular_expression_pattern,
+        has_unsupported_regular_expression_pattern, normalize_group_name,
     },
     ast_impl::visit,
     options::Options,
