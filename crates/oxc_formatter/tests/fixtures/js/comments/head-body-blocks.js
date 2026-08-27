@@ -76,3 +76,14 @@ if (a) {} else /* c */ if (b) {} else /* d */ {}
 // A trailing suppression comment keeps the consequent's original text
 if (a) ugly(  1  ) // prettier-ignore
 else b();
+
+// No `else`: every consequent shape stays inline in both formatters
+// (the divergence above triggers only with an `else`)
+if (base.endsWith('.js') || base === `/worker-entries`); // for dev
+if (base.endsWith('.js') || base === `/worker-entries`) base = '' // for dev
+if (base.endsWith('.js') || base === `/worker-entries`) a; // for dev
+
+// issue #16137: own-line block comment before `else`, non-block consequent
+if (cond) stuff;
+/* comment*/
+else stuff;
