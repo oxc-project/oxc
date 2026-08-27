@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 732/1162
+Passed: 731/1162
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -924,7 +924,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (29/39)
+# babel-plugin-transform-object-rest-spread (28/39)
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -945,6 +945,47 @@ x Output mismatch
 
 * object-rest/object-ref-computed/input.js
 x Output mismatch
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(6): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(10): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(7): [ReferenceId(3)]
+rebuilt        : SymbolId(16): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(13): [ReferenceId(6)]
+rebuilt        : SymbolId(20): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(15): [ReferenceId(7)]
+rebuilt        : SymbolId(23): []
+Reference symbol mismatch for "R":
+after transform: SymbolId(0) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "Y":
+after transform: SymbolId(2) "Y"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(6) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(7) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(13) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(15) "R"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["b", "babelHelpers", "f", "q"]
+rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
 * object-rest/symbol/input.js
 x Output mismatch
