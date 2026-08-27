@@ -1,3 +1,5 @@
+# Minimal smoke test: plain comment-free formatting (map nesting, seq markers).
+# Every other fixture exercises comments or edge shapes on top of this.
 key: value
 map:
   nested: 1

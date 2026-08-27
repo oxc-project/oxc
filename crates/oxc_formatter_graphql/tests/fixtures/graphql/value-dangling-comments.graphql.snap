@@ -3,6 +3,7 @@ source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 {
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
   a(x: {
     # only
   })
@@ -32,6 +33,7 @@ source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
 { printWidth: 80 }
 ------------------
 {
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
   a(
     x: {
       # only
@@ -72,6 +74,7 @@ source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
 { printWidth: 100 }
 -------------------
 {
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
   a(
     x: {
       # only
