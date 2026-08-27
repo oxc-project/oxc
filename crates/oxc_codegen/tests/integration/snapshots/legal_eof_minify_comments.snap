@@ -119,7 +119,7 @@ function foo(){(()=>{
 
 export const foo = 'foo';
 ----------
-'use strict';export const foo=`foo`;
+'use strict';export const foo="foo";
 /*!
 * legal comment
 */

@@ -714,9 +714,8 @@ impl<'a> Codegen<'a> {
         // * `"use server"; "use asm"; ("use strict");`
         //
         // The same hazard exists in minify mode.
-        // Usually strings are printed as template literals, which are not parsed as directives.
-        // But if the string contains a backtick or `${`, it's printed with `"` or `'` quotes,
-        // which *would* be re-parsed as a directive.
+        // A minified string is printed with `"` or `'` quotes unless a template literal is strictly
+        // shorter, and a quoted string here *would* be re-parsed as a directive.
         // So in minify mode, we force printing as a template literal, regardless of the string's content.
         // In almost all cases, this is shorter than wrapping in parentheses.
         if let Statement::ExpressionStatement(stmt) = first
