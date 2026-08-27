@@ -17,6 +17,13 @@
  3 | `-> debugger;
    `----
 
+  x loc-plugin(no-bugger): Misaligned location
+   ,-[files/index.js:1:4]
+ 1 | debugger;
+   :    ^
+ 2 | debugger;
+   `----
+
   x loc-plugin(no-bugger): Bugger!
    ,-[files/index.js:2:3]
  1 | debugger;
@@ -32,7 +39,7 @@
    :   ^^^^^^
    `----
 
-Found 0 warnings and 4 errors.
+Found 0 warnings and 5 errors.
 Finished in Xms on 1 file with 1 rules using X threads.
 ```
 

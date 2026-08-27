@@ -848,10 +848,12 @@ impl Linter {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8.
-                    // TODO: Validate span offsets are within bounds and `start <= end`.
+                    // ESLint permits a reported location to end before it starts. Represent those
+                    // as an empty span at the reported start, preserving its displayed position.
                     // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
                     // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                    let mut span = Span::new(diagnostic.start, diagnostic.end);
+                    let mut span =
+                        Span::new(diagnostic.start, diagnostic.end.max(diagnostic.start));
                     span_converter.convert_span_back(&mut span);
 
                     let (external_rule_id, _options_id, severity) =

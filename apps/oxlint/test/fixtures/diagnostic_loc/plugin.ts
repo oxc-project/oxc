@@ -11,6 +11,13 @@ const plugin: Plugin = {
         return {
           Program(_node) {
             context.report({
+              message: "Misaligned location",
+              loc: {
+                start: { line: 1, column: 3 },
+                end: { line: 1, column: 1 },
+              },
+            });
+            context.report({
               message: "Bugger debugger debug!",
               loc: {
                 start: { line: 1, column: 2 },
