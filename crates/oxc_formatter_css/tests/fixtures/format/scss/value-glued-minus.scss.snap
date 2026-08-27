@@ -12,6 +12,9 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 .a {
   width: map-get($grid-breakpoints, sm)-1;
   height: map-get($grid-breakpoints, sm)+1;
+  // same rule inside SassScript function args (calculation args differ:
+  // see calc-glued-minus.scss, where the glue is kept verbatim)
+  margin: foo(map-get($grid-breakpoints, sm)-1, 0);
 }
 $y: map-get($grid-breakpoints, sm)-1;
 
@@ -29,6 +32,9 @@ $y: map-get($grid-breakpoints, sm)-1;
 .a {
   width: map-get($grid-breakpoints, sm) - 1;
   height: map-get($grid-breakpoints, sm) + 1;
+  // same rule inside SassScript function args (calculation args differ:
+  // see calc-glued-minus.scss, where the glue is kept verbatim)
+  margin: foo(map-get($grid-breakpoints, sm) - 1, 0);
 }
 $y: map-get($grid-breakpoints, sm) - 1;
 
@@ -45,6 +51,9 @@ $y: map-get($grid-breakpoints, sm) - 1;
 .a {
   width: map-get($grid-breakpoints, sm) - 1;
   height: map-get($grid-breakpoints, sm) + 1;
+  // same rule inside SassScript function args (calculation args differ:
+  // see calc-glued-minus.scss, where the glue is kept verbatim)
+  margin: foo(map-get($grid-breakpoints, sm) - 1, 0);
 }
 $y: map-get($grid-breakpoints, sm) - 1;
 

@@ -572,10 +572,12 @@ fits; parens on their own lines + one selector per line on overflow, the same sh
 Prettier (3.9.5+) ALWAYS breaks multiple selectors there and never breaks a single one: postcss-less models
 the statement as a rule node, so the top-level selector-list printer (hardline commas) leaks into the parens.
 
-## less-unary-plus-glue
+## unary-plus-glue
 
 - Why: cost
-- Pin: `tests/fixtures/format/css/token-soup-math-glue.css` (also tracked by conformance `css/parens/parens.css`)
+- Pin: `tests/fixtures/format/css/token-soup-math-glue.css` (Css mode),
+  `tests/fixtures/format/less/signed-value-args.less` (Less mode);
+  also tracked by conformance `css/parens/parens.css`
 
 ```css
 /* input */
@@ -588,9 +590,10 @@ prop34: func(+20px, + 20px);
 prop34: func(+20px, +20px);
 ```
 
-Css-mode token soup: ours preserves the source spacing per token; Prettier glues the unary sign.
-`oxc-css-parser` ASTs `, +` as a comma-left binary operation (Less semantics), so matching Prettier's gluing
-is ad-hoc work for a torture-test-only shape.
+Mode-independent (measured in Css and Less alike): a unary sign the source SPACES from its number stays spaced, ours preserves the source spacing per token;
+Prettier glues the sign to the number (removing the source space, a postcss word-lexing behavior).
+Matching that gluing is ad-hoc work for a torture-test-only shape.
+A sign GLUED in the source never gains a space in either implementation (that direction is the parser's folded-sign handling, not a divergence).
 
 ## glued-minus-paren
 
@@ -708,7 +711,10 @@ A glued `-` after a call/paren in a value position is subtraction (dart-sass); o
 `SassBinaryExpression` and prints spaced, like every other Sass operator. Prettier's value lexer keeps the
 glued `-` verbatim (a sign-lexing artifact: `-` may start a number/ident, so no operator node forms) while
 the same glued `+` DOES get spaced; we print both ops uniformly.
-Scope: value positions parsed as `SassBinaryExpression` (property values, `$var:` declarations).
+Scope: value positions parsed as `SassBinaryExpression` (property values, `$var:` declarations, SassScript function args).
+Calculation-function args (`max`, `min`, `calc`, `clamp`) parse the glued sign as a `Calc` operation instead,
+whose printer keeps the source glue verbatim — matching Prettier there,
+so that position is NOT a divergence (pin: `tests/fixtures/format/scss/calc-glued-minus.scss`).
 
 ## map-paren-value-blank-lines
 

@@ -9,7 +9,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
  */
 /*
  * A source-spaced `+ 20px` argument keeps its space.
- * DIVERGES from Prettier (DIVERGENCES.md "less-unary-plus-glue"),
+ * DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"),
  * which glues it to `+20px`.
  */
 a {
@@ -37,7 +37,7 @@ a {
  */
 /*
  * A source-spaced `+ 20px` argument keeps its space.
- * DIVERGES from Prettier (DIVERGENCES.md "less-unary-plus-glue"),
+ * DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"),
  * which glues it to `+20px`.
  */
 a {
@@ -64,7 +64,7 @@ a {
  */
 /*
  * A source-spaced `+ 20px` argument keeps its space.
- * DIVERGES from Prettier (DIVERGENCES.md "less-unary-plus-glue"),
+ * DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"),
  * which glues it to `+20px`.
  */
 a {
