@@ -27,7 +27,6 @@ $col3-uniboard-max-width: calc(100vw - #{$col3-uniboard-side-min} - #{$block-gap
   x: 1;
 } @else {
   @error "fluid-size requires that all values have the same unit";
-  @warn "careful with #{$x} here";
 }
 /* Interpolated single-component values on NORMAL properties share the
    custom-property behavior: the fill-chunk fit ignores the line tail

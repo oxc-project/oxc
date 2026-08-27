@@ -1,0 +1,5 @@
+// `@import` preludes: comma lists and interpolated paths re-quote per `singleQuote`
+@import "rounded-corners", "text-shadow";
+@import 'rounded-corners', 'text-shadow';
+@import 'foo/#{$theme}.scss';
+@import "bar/#{$x}";

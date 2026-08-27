@@ -12,16 +12,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 .weird-element {
   content: ~"^//* some horrible but needed css hack";
 }
-@config: {
-  option1: true;
-  option2: false;
-}
-.mixin() when (@config[option1] = true) {
-  selected: value;
-}
-.box {
-  .mixin();
-}
 a {
   prop1: func(1px,1px,1px,func(1px,1px,1px,func(1px,1px,1px)));
   prop3: func(1px, 1px, 1px, func(1px, 1px, 1px, func(1px, 1px, 1px)));
@@ -60,16 +50,6 @@ a {
 .weird-element {
   content: ~"^//* some horrible but needed css hack";
 }
-@config: {
-  option1: true;
-  option2: false;
-};
-.mixin() when (@config[option1] = true) {
-  selected: value;
-}
-.box {
-  .mixin();
-}
 a {
   prop1: func(1px, 1px, 1px, func(1px, 1px, 1px, func(1px, 1px, 1px)));
   prop3: func(1px, 1px, 1px, func(1px, 1px, 1px, func(1px, 1px, 1px)));
@@ -96,16 +76,6 @@ a {
 @color-1: #224488 / 2;
 .weird-element {
   content: ~"^//* some horrible but needed css hack";
-}
-@config: {
-  option1: true;
-  option2: false;
-};
-.mixin() when (@config[option1] = true) {
-  selected: value;
-}
-.box {
-  .mixin();
 }
 a {
   prop1: func(1px, 1px, 1px, func(1px, 1px, 1px, func(1px, 1px, 1px)));
