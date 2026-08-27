@@ -1216,10 +1216,9 @@ fn should_skip_diagnostic(
     };
 
     if let Some(directives) = disable_directives_map.get(path) {
-        directives.contains(&tsgolint_diagnostic.rule, span)
-            || directives.contains(&format!("typescript-eslint/{}", tsgolint_diagnostic.rule), span)
-            || directives
-                .contains(&format!("@typescript-eslint/{}", tsgolint_diagnostic.rule), span)
+        directives.contains("", &tsgolint_diagnostic.rule, span)
+            || directives.contains("typescript-eslint", &tsgolint_diagnostic.rule, span)
+            || directives.contains("@typescript-eslint", &tsgolint_diagnostic.rule, span)
     } else {
         debug_assert!(
             false,
