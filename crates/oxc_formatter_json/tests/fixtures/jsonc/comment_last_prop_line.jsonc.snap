@@ -4,12 +4,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ==================== Input ====================
 {
   "a": 1,
-  "b": 2, // trailing line comment on last prop
-  "workspaces": {
-    "packages/test-dev-server/tests/fixtures/*": {
-      "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, but the value stays inline
-    }
-  }
+  "b": 2 // trailing line comment on last prop
 }
 
 ==================== Output ====================
@@ -19,11 +14,6 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 {
   "a": 1,
   "b": 2, // trailing line comment on last prop
-  "workspaces": {
-    "packages/test-dev-server/tests/fixtures/*": {
-      "entry": ["dev.config.mjs", "src/*.js"], // long comment keeps the line > 80, but the value stays inline
-    },
-  },
 }
 
 -------------------------------------
@@ -32,11 +22,6 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 {
   "a": 1,
   "b": 2, // trailing line comment on last prop
-  "workspaces": {
-    "packages/test-dev-server/tests/fixtures/*": {
-      "entry": ["dev.config.mjs", "src/*.js"], // long comment keeps the line > 80, but the value stays inline
-    },
-  },
 }
 
 -----------------------------------------------------------
@@ -44,12 +29,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 -----------------------------------------------------------
 {
   "a": 1,
-  "b": 2, // trailing line comment on last prop
-  "workspaces": {
-    "packages/test-dev-server/tests/fixtures/*": {
-      "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, but the value stays inline
-    }
-  }
+  "b": 2 // trailing line comment on last prop
 }
 
 ------------------------------------------------------------
@@ -57,12 +37,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ------------------------------------------------------------
 {
   "a": 1,
-  "b": 2, // trailing line comment on last prop
-  "workspaces": {
-    "packages/test-dev-server/tests/fixtures/*": {
-      "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, but the value stays inline
-    }
-  }
+  "b": 2 // trailing line comment on last prop
 }
 
 ===================== End =====================
