@@ -43,6 +43,15 @@ type MultilineBlock =
 type LineEnd = /* c */
   A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
 
+// The same kept-before-`|` rule when the union actually BREAKS
+// (the leading `|` is printed and the comment group stays above it):
+type LineEndBreak = | (
+  /* c1 */ /* c2 */
+  | A
+  // force break
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
+);
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -88,6 +97,14 @@ type LineEnd =
   /* c */
   A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
 
+// The same kept-before-`|` rule when the union actually BREAKS
+// (the leading `|` is printed and the comment group stays above it):
+type LineEndBreak =
+  /* c1 */ /* c2 */
+  | A
+  // force break
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -121,5 +138,13 @@ type MultilineBlock =
 // A comment that ENDS its source line stays before the `|`:
 // moving it behind would force a break between the `|` and its member.
 type LineEnd = /* c */ A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+
+// The same kept-before-`|` rule when the union actually BREAKS
+// (the leading `|` is printed and the comment group stays above it):
+type LineEndBreak =
+  /* c1 */ /* c2 */
+  | A
+  // force break
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
 
 ===================== End =====================

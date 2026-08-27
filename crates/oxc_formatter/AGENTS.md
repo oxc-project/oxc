@@ -1,7 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter`
 
 Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the JS/TS-specific rules and translations.
-Known divergences live in DIVERGENCES.md.
+Known divergences live in DIVERGENCES.md (not yet an exhaustive audit against the conformance snapshots).
 
 ## Overview
 

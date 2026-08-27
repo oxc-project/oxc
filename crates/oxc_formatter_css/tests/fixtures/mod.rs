@@ -129,6 +129,7 @@ fn parse_error_is_err() {
     let allocator = Allocator::default();
     let css = CssFormatOptions::default();
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
+    let less = CssFormatOptions { variant: CssVariant::Less, ..css };
     for (source, options) in [
         // Top-level declaration: valid only as an embedded css-in-js fragment
         // (`format_to_ir`); standalone files must reject it like Dart Sass does.
@@ -153,6 +154,8 @@ fn parse_error_is_err() {
         // `2N-1` with a glued minus is invalid An+B for oxc-css-parser
         // (postcss-selector-parser accepts and lowercases it).
         ("a:nth-child(2N-1) { color: red; }", css),
+        // Pin for crates/oxc_formatter_css/DIVERGENCES.md#less-value-interpolation-rejected
+        (".a { width: @{min-width}; }", less),
     ] {
         assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
     }

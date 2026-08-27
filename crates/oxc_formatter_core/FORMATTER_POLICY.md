@@ -67,7 +67,10 @@ Choosing the reason:
 
 Rules:
 
-- Every divergence is documented in the owning layer's `DIVERGENCES.md` (entry template below) and pinned by a fixture whose comments say which lines deviate from Prettier and why
+- Every divergence is documented in the owning layer's `DIVERGENCES.md` and pinned by a fixture whose comments say which lines deviate from Prettier and why
+  - Entry format: an H2 slug (the stable anchor external pointers use), required `Why:` (admission reason keyword + upstream issue if any) and `Pin:` lines, `Drop when:` only when a convergence condition exists; an input/ours/prettier example is the body, written with OUR behavior as the spec
+  - `prettier-bug` entries drop by default when the upstream fix reaches the pin (that is what made them (2)); write `Drop when:` only when the condition is more specific than that default
+  - No status, dates, or authors: listed = accepted, condition met = delete (git holds history)
   - The owning layer is where the behavior is decided: a language crate for single-language behavior, `apps/oxfmt` for embedding E2E behavior
   - A divergence discovered through a real-world conformance case (oxfmt externals, Prettier suite) is pinned by DISTILLING a minimal fixture into the owning layer's `tests/fixtures/`; the big source file stays in conformance as a regression net, never as the pin
   - `DIVERGENCES.md` holds entries only, opening with one back-reference line to this section; `AGENTS.md` keeps policy translations and mechanism prose;

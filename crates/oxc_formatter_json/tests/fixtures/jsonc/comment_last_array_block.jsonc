@@ -1,0 +1,2 @@
+// last element block comment stays inline; run under the jsonc option sets (trailingComma both ways)
+[1, 2 /* block */]

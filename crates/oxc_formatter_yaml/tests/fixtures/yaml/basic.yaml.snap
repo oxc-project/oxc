@@ -2,8 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# Minimal smoke test: plain comment-free formatting (map nesting, seq markers).
-# Every other fixture exercises comments or edge shapes on top of this.
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
 key: value
 map:
   nested: 1
@@ -15,8 +14,7 @@ map:
 ------------------
 { printWidth: 80 }
 ------------------
-# Minimal smoke test: plain comment-free formatting (map nesting, seq markers).
-# Every other fixture exercises comments or edge shapes on top of this.
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
 key: value
 map:
   nested: 1
@@ -27,8 +25,7 @@ map:
 -------------------
 { printWidth: 100 }
 -------------------
-# Minimal smoke test: plain comment-free formatting (map nesting, seq markers).
-# Every other fixture exercises comments or edge shapes on top of this.
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
 key: value
 map:
   nested: 1

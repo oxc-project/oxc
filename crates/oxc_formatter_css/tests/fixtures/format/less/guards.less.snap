@@ -33,6 +33,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 .box {
   .mixin();
+  // whitespace inside a lookup collapses (matching Prettier)
+  v: @config   [   option2];
 }
 
 ==================== Output ====================
@@ -70,6 +72,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 .box {
   .mixin();
+  // whitespace inside a lookup collapses (matching Prettier)
+  v: @config[option2];
 }
 
 -------------------
@@ -106,6 +110,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 .box {
   .mixin();
+  // whitespace inside a lookup collapses (matching Prettier)
+  v: @config[option2];
 }
 
 ===================== End =====================

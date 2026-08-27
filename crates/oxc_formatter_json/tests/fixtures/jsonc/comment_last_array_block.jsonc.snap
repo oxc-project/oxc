@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// last element block comment stays inline; run under the jsonc option sets (trailingComma both ways)
+[1, 2 /* block */]
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "jsonc" }
+------------------------------------
+// last element block comment stays inline; run under the jsonc option sets (trailingComma both ways)
+[1, 2 /* block */]
+
+-------------------------------------
+{ printWidth: 100, variant: "jsonc" }
+-------------------------------------
+// last element block comment stays inline; run under the jsonc option sets (trailingComma both ways)
+[1, 2 /* block */]
+
+-----------------------------------------------------------
+{ printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-----------------------------------------------------------
+// last element block comment stays inline; run under the jsonc option sets (trailingComma both ways)
+[1, 2 /* block */]
+
+------------------------------------------------------------
+{ printWidth: 100, trailingComma: "none", variant: "jsonc" }
+------------------------------------------------------------
+// last element block comment stays inline; run under the jsonc option sets (trailingComma both ways)
+[1, 2 /* block */]
+
+===================== End =====================

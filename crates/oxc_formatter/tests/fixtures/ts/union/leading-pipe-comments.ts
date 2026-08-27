@@ -38,3 +38,12 @@ type MultilineBlock =
 // moving it behind would force a break between the `|` and its member.
 type LineEnd = /* c */
   A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+
+// The same kept-before-`|` rule when the union actually BREAKS
+// (the leading `|` is printed and the comment group stays above it):
+type LineEndBreak = | (
+  /* c1 */ /* c2 */
+  | A
+  // force break
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
+);

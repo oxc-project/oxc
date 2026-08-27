@@ -1,4 +1,5 @@
-// `@import` preludes: comma lists and interpolated paths re-quote per `singleQuote`
+// `@import` preludes: comma lists and interpolated paths normalize to the
+// preferred quote (default `"`; the interpolation content stays verbatim)
 @import "rounded-corners", "text-shadow";
 @import 'rounded-corners', 'text-shadow';
 @import 'foo/#{$theme}.scss';

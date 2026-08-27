@@ -16,6 +16,12 @@ b {
 c {
   width: theme(spacing.2.5);
 }
+/* glued number-ish runs are one word too: no space injection (`is_word_glued_number`) */
+d {
+  padding: 1+1+1+1;
+  margin: 1px+1px+1px+1px;
+  width: calc(100%+2px);
+}
 
 ==================== Output ====================
 ------------------
@@ -35,6 +41,12 @@ b {
 c {
   width: theme(spacing.2.5);
 }
+/* glued number-ish runs are one word too: no space injection (`is_word_glued_number`) */
+d {
+  padding: 1+1+1+1;
+  margin: 1px+1px+1px+1px;
+  width: calc(100%+2px);
+}
 
 -------------------
 { printWidth: 100 }
@@ -52,6 +64,12 @@ b {
 /* glued number chains stay words too */
 c {
   width: theme(spacing.2.5);
+}
+/* glued number-ish runs are one word too: no space injection (`is_word_glued_number`) */
+d {
+  padding: 1+1+1+1;
+  margin: 1px+1px+1px+1px;
+  width: calc(100%+2px);
 }
 
 ===================== End =====================

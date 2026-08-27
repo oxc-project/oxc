@@ -1,7 +1,7 @@
 /* Regression set from the 2026-06-12 ecosystem-CI run (monkeytype / lila /
    mastodon shapes): grid values never re-wrap, @import paths fill, calc is a
    flat operator fill, media feature values never break, interpolated calls
-   get the chunk-isolated fit + double indent, @warn/@error stay raw. */
+   get the chunk-isolated fit + double indent, @error stays raw. */
 #app {
   grid-template-rows: [top-start] auto [content-start] 1fr [content-end] auto [top-end];
   grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1rem;

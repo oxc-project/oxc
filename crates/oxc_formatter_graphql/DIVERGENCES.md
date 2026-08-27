@@ -2,8 +2,6 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-All current entries are one class: Prettier relocates a comment (an attachment artifact of `graphql-js` node boundaries, not a layout rule), we keep it between its source tokens on its source line.
-
 ## comment-after-keyword
 
 - Why: prettier-bug (attachment artifact)

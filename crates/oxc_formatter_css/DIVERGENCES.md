@@ -301,7 +301,6 @@ verbatim. This is the policy's own reason-3 example.
 
 - Why: prettier-bug (prettier/prettier#19427)
 - Pin: `tests/fixtures/format/scss/inline-comment-before-call.scss`
-- Drop when: prettier#19427 is fixed and the pin catches up
 
 ```scss
 /* input */
@@ -552,6 +551,7 @@ intended consumer was the dropped CSS Apply Rule proposal, so the cross-mode dif
 
 - Why: prettier-bug (prettier#19550 fixed only the indentation)
 - Pin: `tests/fixtures/format/less/extend-rule.less`
+- Drop when: the selector-list leak is fully fixed and the pin catches up
 
 ```less
 /* input */
@@ -641,25 +641,28 @@ SEPARATOR instead. Layout-only. The principled fix is the shared core-fill fit-c
 ## less-value-interpolation-rejected
 
 - Why: uniform-rule
-- Pin: MISSING (parser-level: the input never reaches the formatter)
+- Pin: `tests/fixtures/mod.rs::parse_error_is_err` (parser-level: the rejection is asserted directly)
 
-Value-position `@{var}` interpolation: `oxc-css-parser` rejects it matching `lessc`; Prettier (postcss)
-accepts and prints verbatim. Per the shared error semantics, we never format what the reference compiler
-rejects (a parse error is the SAFE failure).
+```less
+/* input */
+.a { width: @{min-width}; }
 
-## less-lookup-whitespace-rejected
+/* ours: parse error, the input is left as-is */
 
-- Why: uniform-rule
-- Pin: MISSING (parser-level: the input never reaches the formatter)
+/* prettier */
+.a {
+  width: @{min-width};
+}
+```
 
-Lookup with whitespace inside (`@config   [   option1]`): `oxc-css-parser` rejects it matching `lessc`;
-Prettier accepts. Same rule as `less-value-interpolation-rejected`.
+Value-position `@{var}` interpolation: `oxc-css-parser` rejects it matching `lessc`;
+Prettier (postcss) accepts and prints verbatim. Per the shared error semantics,
+we never format what the reference compiler rejects (a parse error is the SAFE failure).
 
 ## media-query-operator-spacing
 
 - Why: prettier-bug (prettier/prettier#1811)
 - Pin: `tests/fixtures/format/scss/media-query-operator-spacing.scss` (also tracked by oxfmt's externals suite, e.g. gitlab `framework/diffs.scss`)
-- Drop when: prettier#1811 is fixed and the pin catches up
 
 ```scss
 /* input */

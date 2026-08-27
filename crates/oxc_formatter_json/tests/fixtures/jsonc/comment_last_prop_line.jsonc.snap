@@ -4,7 +4,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ==================== Input ====================
 {
   "a": 1,
-  "b": 2 // trailing line comment on last prop
+  "b": 2, // trailing line comment on a middle prop
+  "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, the value stays inline
 }
 
 ==================== Output ====================
@@ -13,7 +14,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ------------------------------------
 {
   "a": 1,
-  "b": 2, // trailing line comment on last prop
+  "b": 2, // trailing line comment on a middle prop
+  "entry": ["dev.config.mjs", "src/*.js"], // long comment keeps the line > 80, the value stays inline
 }
 
 -------------------------------------
@@ -21,7 +23,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 -------------------------------------
 {
   "a": 1,
-  "b": 2, // trailing line comment on last prop
+  "b": 2, // trailing line comment on a middle prop
+  "entry": ["dev.config.mjs", "src/*.js"], // long comment keeps the line > 80, the value stays inline
 }
 
 -----------------------------------------------------------
@@ -29,7 +32,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 -----------------------------------------------------------
 {
   "a": 1,
-  "b": 2 // trailing line comment on last prop
+  "b": 2, // trailing line comment on a middle prop
+  "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, the value stays inline
 }
 
 ------------------------------------------------------------
@@ -37,7 +41,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
 ------------------------------------------------------------
 {
   "a": 1,
-  "b": 2 // trailing line comment on last prop
+  "b": 2, // trailing line comment on a middle prop
+  "entry": ["dev.config.mjs", "src/*.js"] // long comment keeps the line > 80, the value stays inline
 }
 
 ===================== End =====================

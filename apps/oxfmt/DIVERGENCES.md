@@ -2,14 +2,6 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-This catalog holds only divergences OWNED by the oxfmt layer (embedding / dispatch behavior).
-
-Pin convention: a minimal repro lives in `conformance/fixtures/edge-cases/`,
-and any external fixture containing the same diff carries the same NOTE in `conformance/run.ts`.
-The duplication is deliberate, not a consolidation target.
-All current entries are embedding-layer decisions that outlive the Prettier delegation;
-if an entry about the Prettier-fallback boundary itself is ever added, group it under a separate heading so the removal scope stays obvious when the fallback goes away.
-
 ## template-expression-indent
 
 - Why: prettier-bug (prettier/prettier#19725)

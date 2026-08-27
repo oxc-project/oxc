@@ -1,7 +1,6 @@
 # Known divergences
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
-The entries documented so far are not yet an exhaustive audit against the conformance snapshots.
 
 ## array-hole-trailing-comment
 
@@ -242,6 +241,7 @@ assigned = a = c /* c1 */;
 
 - Why: prettier-bug (attachment artifacts of the class Prettier is fixing elsewhere: the prettier#19894 family, open prettier#12880 / prettier#7745 / prettier#5900)
 - Pin: see the per-shape list below
+- Drop when: the family fixes cover these shapes and the pin catches up
 
 The head-body comment policy family (see AGENTS.md "Comment placement invariants"): comments between a head and its body keep their position, where Prettier's attachment relocates them.
 
