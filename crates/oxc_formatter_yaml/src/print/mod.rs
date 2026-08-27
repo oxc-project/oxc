@@ -117,6 +117,20 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
     write_props(&node.props, is_block_collection && !has_middle_comments, f);
 
     // Prettier: `[middles.len() == 1 ? "" : hardline, join(hardline, middles), hardline]`.
+    //
+    // NOTE: The single-middle case is a known FORMATTER_POLICY violation
+    // ("own-line comments stay own-line"): an own-line `# c` inlines after the props
+    // ```yaml
+    // key: &a
+    //   # c
+    //   a: 1
+    //
+    // # ->
+    //
+    // key: &a # c
+    //   a: 1
+    // ```
+    // Kept for now: Prettier byte-compat outweighs the invariant.
     // A block collection's trailing suppression marker is NOT a middle comment:
     // it stays pending so the first item's check can claim it.
     let middles_bound = suppression_flush_bound(is_block_collection, content_start, f);

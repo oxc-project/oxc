@@ -126,6 +126,7 @@ JS-side mechanics of the shared "never cross" invariants:
 
 - Line boundary: line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
   - Both are structural guarantees, keep them
+  - One known violation, kept for Prettier compat: an own-line comment claimed mid-line inlines onto that line (`const // c` + break), see the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
 - User content: e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element — an attachment artifact, we keep the comment in place and diverge intentionally
 - Suppression: when hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
 

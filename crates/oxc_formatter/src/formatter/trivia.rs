@@ -104,6 +104,20 @@ pub enum FormatLeadingComments<'a> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // NOTE: Known FORMATTER_POLICY violation ("own-line comments stay own-line"):
+        // the line break BEFORE the first comment is never reproduced,
+        // so an own-line comment claimed mid-line inlines onto that line
+        // ```js
+        // const
+        //   // c
+        //   a = 1
+        //
+        // // ->
+        //
+        // const // c
+        //   a = 1
+        // ```
+        // Kept for now: Prettier byte-compat outweighs the invariant.
         fn format_leading_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
             f: &mut JsFormatter<'_, 'a>,

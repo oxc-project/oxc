@@ -44,13 +44,10 @@ This crate instead collects comment spans into a positional cursor, drained in s
 
 The shared placement invariants apply: a comment stays between the source tokens it sat between, and a same-line trailing comment stays on its line.
 
-Two bounded exceptions:
+Two known deviations, kept deliberately (details live on the helpers' doc comments):
 
-- an own-line comment claimed right after a printed literal (`type`, `:`, `=`) inlines on that literal's line
-  - `type` + break + `# c` + break + `A` prints as `type # c` + break + `A`
-  - identical to Prettier and to `oxc_formatter`'s `const // c` + break + `a = 1`; keeping it own-line would need a column-conditional break the IR does not have
-- positions no printer claims fall back to an own-line trailing comment after the node, which may cross remaining in-span tokens (e.g. a type's `!`)
-  - `flush_overlooked_inside_comments`
+- an own-line comment claimed right after a printed literal inlines on that literal's line (`write_leading_comments`)
+- positions no printer claims fall back to a trailing comment after the node, which may cross remaining in-span tokens (`flush_overlooked_inside_comments`)
 
 Where Prettier relocates a comment across tokens instead, we diverge, see DIVERGENCES.md.
 
