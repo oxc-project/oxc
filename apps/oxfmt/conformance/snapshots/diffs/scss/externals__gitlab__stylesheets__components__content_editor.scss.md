@@ -1,6 +1,6 @@
 # externals/gitlab/stylesheets/components/content_editor.scss
 
-> Allowed (layout-only): `box-shadow` with `#{}` math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
+> fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 
 ## Option 1
 

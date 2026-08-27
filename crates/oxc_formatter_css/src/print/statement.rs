@@ -176,7 +176,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
             {
                 // No `;` after a nested declaration block (`background: { ... }`),
                 // except a custom-property rule block (`--p: { ... };`).
-                // See AGENTS.md "Known divergences" for the `--*` exception.
+                // The `--*` exception is a known divergence (Prettier leaves the block `;`-less).
                 write!(f, ";");
             }
         }

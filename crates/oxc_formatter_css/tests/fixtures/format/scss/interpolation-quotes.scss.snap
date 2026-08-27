@@ -7,7 +7,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 //   (`#{'x'}` -> `#{"x"}`), matching Prettier.
 // - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
 //   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
-//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+//   which keeps selector interpolation verbatim (`#{ $name }`). See DIVERGENCES.md "selector-interpolation-spaces".
 
 .foo[data-level='#{$level}'] {
   fill: red;
@@ -30,7 +30,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 //   (`#{'x'}` -> `#{"x"}`), matching Prettier.
 // - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
 //   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
-//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+//   which keeps selector interpolation verbatim (`#{ $name }`). See DIVERGENCES.md "selector-interpolation-spaces".
 
 .foo[data-level="#{$level}"] {
   fill: red;
@@ -52,7 +52,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 //   (`#{'x'}` -> `#{"x"}`), matching Prettier.
 // - Inner spaces collapse (`#{ $name }` -> `#{$name}`) for consistency with
 //   value-position interpolation. This DELIBERATELY DIVERGES from Prettier,
-//   which keeps selector interpolation verbatim (`#{ $name }`). See AGENTS.md.
+//   which keeps selector interpolation verbatim (`#{ $name }`). See DIVERGENCES.md "selector-interpolation-spaces".
 
 .foo[data-level="#{$level}"] {
   fill: red;

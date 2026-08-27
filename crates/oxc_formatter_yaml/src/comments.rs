@@ -151,7 +151,8 @@ pub fn write_trailing_same_line_comment(
 }
 
 /// The ` # ...` emission of a same-line trailing comment: a `line_suffix`,
-/// so it never counts toward the `fits` measurement (see the "trailing comment width" divergence).
+/// so it never counts toward the `fits` measurement
+/// (known divergence: Prettier counts it for a block scalar header, and only there).
 /// Gating and consuming are the caller's.
 pub fn write_comment_line_suffix<'a>(span: Span, f: &mut YamlFormatter<'_, 'a>) {
     let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {

@@ -1,6 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter`
 
 Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the JS/TS-specific rules and translations.
+Known divergences live in DIVERGENCES.md.
 
 ## Overview
 
@@ -164,45 +165,6 @@ Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
   never from the previous statement's output;
   sound because no statement leaves its own trailing `;`,
   except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
-
-## Known divergences
-
-Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
-The entries documented so far are not yet an exhaustive audit against the conformance snapshots:
-
-- A comment after a trailing array hole stays in place; Prettier relocates it backward across commas to the last real element
-- Asymmetric attachment like `export type T = string /* c */;` (comment moved behind `;` only in the exported form): one uniform rule instead of emulating the asymmetry
-- A trailing comment before a closing paren never breaks the operand chain: `!(a &&\n b // c)` collapses to `a && b // c`, as both formatters already do in every other paren-surviving position (return/throw argument, call argument, assignment, arrow body)
-  - Prettier preserves the source break only in the unary position and only when the last operand was alone on its source line (attachment binds the comment to that operand)
-  - Internal inconsistency plus source-layout sensitivity, overridden by the uniform rule
-  - Conditions are a separate shared rule (logical operands always break)
-- `experimentalOperatorPosition: "start"`, binary-like chains: a single space before the previous operand's flushed trailing line comment (`prev // c`); Prettier emits two (`prev  // c`)
-  - Artifact of its comment-extraction doc surgery: an unconditional separator space that its end-of-line trimming can only remove when no line-suffix comment flushes behind it
-- `experimentalOperatorPosition: "start"`, intersection types: a leading own-line comment stays own-line, above the leading `&`; Prettier prints it behind `& `, losing its own-line-ness and idempotency (the second pass inlines the type with the comment behind `;`)
-  - Binary-like chains hoist the comment in both formatters; one uniform rule (and the own-line invariant) over Prettier's internal inconsistency
-- Inline comments around a union's formatter-added `(` keep their source side (`keyof /* c */ (A | B)` stays as-is)
-  - Prettier moves the comment inside for `keyof`/type-operator operands while keeping it outside in array/indexed-access positions
-- An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break)
-  - Prettier treats the same shape three ways:
-    - JS keeps it only when the right-hand side breaks and flushes it past a fitting one (prettier#14617-family attachment artifact)
-    - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
-    - simple-typed property signatures get it flushed past the member and its `;` separator
-  - Not yet covered: default parameters, destructuring defaults, enum members (different formatting paths still flush, Prettier-compatible)
-- A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape
-  - Prettier does the same except for nested single-member paren sources (`| (/* c */ | A ...`) and multiline block comments starting their line, where it keeps `/* c */ | A`
-    - An output it then reformats into `| /* c */ A` itself for the first shape, not idempotent
-- Two comment placements print Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent (fixed upstream in prettier#19893/#19894; converge and drop when the pin catches up):
-  - a trailing comment inside an expression statement's dropped parentheses moves behind the `;` (`assigned = (a = c /* c */);` -> `assigned = a = c; /* c */`), including the chain-leaf shapes prettier#19893 left out
-  - a comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens (`((/* c */ a), b);` -> `/* c */ (a, b);`)
-- The head-body comment policy family (see "Comment placement invariants"): comments between a head and its body keep their position, where Prettier's attachment relocates them — artifacts of the class prettier is fixing elsewhere (prettier#19894 family, open prettier#12880/#7745/#5900):
-  - line and own-line comments before a body's `{` stay outside the braces; Prettier pulls them inside (function/arrow/method/class/try/catch/finally/interface/switch clauses), past the braces entirely (enum/namespace/module), into the catch parameter's parens, or hoists a labeled statement's comment above the label
-  - the same before an empty-statement body's `;`; Prettier pulls the comment backward inside the head's parens (`while (x /* c */);`) or hoists an own-line one onto the head line
-  - comments in a classic for-head keep their slot between the `;`s; Prettier moves empty-slot comments backward across the `;`s onto the init, or forward out of the parens entirely when every slot is empty (`for (/*c*/;;)` -> `for (;;) /*c*/`)
-  - comments between a `}` and a following `else`/`catch`/`finally`/`while` keep their side of the keyword; Prettier pulls them into the next block (or past a do-while's whole `while (x);` head)
-  - a line comment inside a for-in/for-of head stays before the `)` (the head flushes it); Prettier moves it past the body's `{` and is not idempotent there (prettier#12880)
-  - a blank line between an own-line comment and a following `else` is preserved like any other leading position; Prettier collapses it
-  - an `if` consequent's trailing line comment rides the line; Prettier's attachment marks the consequent multiline and breaks it onto its own line — only with an `else`: every sibling shape (plain statement, no-`else` `if`, `while`/`for` bodies) stays inline in both formatters
-  - a multiline block comment before the `{` stays inline like any same-line block comment; Prettier own-lines it for while/do/else heads only, keeping it inline everywhere else
 
 ## Verification
 

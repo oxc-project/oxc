@@ -1,0 +1,47 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A `;`-less custom-property rule block followed by another declaration is two
+// separate declarations: format the inner block, add the missing `;`.
+// DIVERGES from Prettier (DIVERGENCES.md "semiless-custom-property-block"),
+// which keeps the whole run verbatim (postcss swallows everything past the `}`
+// as an opaque prelude string until a source `;`).
+:root {
+  --like-a-apply-rule: {
+  color:red;} /* no semi here*/
+  --another-prop: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A `;`-less custom-property rule block followed by another declaration is two
+// separate declarations: format the inner block, add the missing `;`.
+// DIVERGES from Prettier (DIVERGENCES.md "semiless-custom-property-block"),
+// which keeps the whole run verbatim (postcss swallows everything past the `}`
+// as an opaque prelude string until a source `;`).
+:root {
+  --like-a-apply-rule: {
+    color: red;
+  }; /* no semi here*/
+  --another-prop: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A `;`-less custom-property rule block followed by another declaration is two
+// separate declarations: format the inner block, add the missing `;`.
+// DIVERGES from Prettier (DIVERGENCES.md "semiless-custom-property-block"),
+// which keeps the whole run verbatim (postcss swallows everything past the `}`
+// as an opaque prelude string until a source `;`).
+:root {
+  --like-a-apply-rule: {
+    color: red;
+  }; /* no semi here*/
+  --another-prop: blue;
+}
+
+===================== End =====================

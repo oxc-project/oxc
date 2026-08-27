@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE: a comment right after an opening delimiter stays inline
+# (`{ # c`); Prettier moves it own-line as the first child's leading.
+# Asymmetric there: `test # t` / `} # e` stay inline in both.
+# See DIVERGENCES.md "comment-after-opening-delimiter".
+{ # c
+  test # t
+} # e
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE: a comment right after an opening delimiter stays inline
+# (`{ # c`); Prettier moves it own-line as the first child's leading.
+# Asymmetric there: `test # t` / `} # e` stay inline in both.
+# See DIVERGENCES.md "comment-after-opening-delimiter".
+{ # c
+  test # t
+} # e
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE: a comment right after an opening delimiter stays inline
+# (`{ # c`); Prettier moves it own-line as the first child's leading.
+# Asymmetric there: `test # t` / `} # e` stay inline in both.
+# See DIVERGENCES.md "comment-after-opening-delimiter".
+{ # c
+  test # t
+} # e
+
+===================== End =====================

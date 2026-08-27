@@ -78,6 +78,10 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
+### Divergence vs Prettier
+
+Known divergences live in DIVERGENCES.md (embedding / dispatch layer only; single-language ones live in the owning crate's DIVERGENCES.md).
+
 ### Embedded language formatting
 
 Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.

@@ -282,7 +282,8 @@ fn remove_unnecessary_trailing_newlines<'s>(
     if block.chomping == Chomping::Keep {
         // NOTE: The fragment after the last break holds no line break, so it is not a kept line:
         // either the empty artifact `split('\n')` yields after a final break,
-        // or a break-less EOF line of at-or-below-indent spaces (a known divergence: Prettier counts it);
+        // or a break-less EOF line of at-or-below-indent spaces
+        // (known divergence: Prettier counts it and prints one newline too many);
         // a more-indented space run stays a content group.
         lines.pop_if(|words| words.is_empty());
         return lines;

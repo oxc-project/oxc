@@ -9,7 +9,7 @@ d:nth-child(2n-1) { color: red; }
 e:nth-child(odd) { color: red; }
 f:nth-child(2n) { color: red; }
 /*
- * Deliberate divergence (see "Known divergences" in AGENTS.md): the leading `+` stays glued (`+3n`).
+ * Deliberate divergence (DIVERGENCES.md "nth-anb-leading-sign"): the leading `+` stays glued (`+3n`).
  * Prettier prints `+ 3n`, but the An+B grammar forbids whitespace between a leading sign and its term,
  * so Prettier's output no longer parses as a selector.
  */
@@ -50,7 +50,7 @@ f:nth-child(2n) {
   color: red;
 }
 /*
- * Deliberate divergence (see "Known divergences" in AGENTS.md): the leading `+` stays glued (`+3n`).
+ * Deliberate divergence (DIVERGENCES.md "nth-anb-leading-sign"): the leading `+` stays glued (`+3n`).
  * Prettier prints `+ 3n`, but the An+B grammar forbids whitespace between a leading sign and its term,
  * so Prettier's output no longer parses as a selector.
  */
@@ -116,7 +116,7 @@ f:nth-child(2n) {
   color: red;
 }
 /*
- * Deliberate divergence (see "Known divergences" in AGENTS.md): the leading `+` stays glued (`+3n`).
+ * Deliberate divergence (DIVERGENCES.md "nth-anb-leading-sign"): the leading `+` stays glued (`+3n`).
  * Prettier prints `+ 3n`, but the An+B grammar forbids whitespace between a leading sign and its term,
  * so Prettier's output no longer parses as a selector.
  */

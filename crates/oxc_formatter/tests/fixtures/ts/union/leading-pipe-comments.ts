@@ -18,7 +18,7 @@ type CommentGroup =
 // parens; multiline block comment starting its line), Prettier keeps the
 // comment before the `|`, yet reformats the first shape's own output into the
 // canonical form (not idempotent); we normalize directly
-// (see AGENTS.md "Known divergences").
+// (see DIVERGENCES.md "union-leading-pipe-comment-normalization").
 type NestedParens = | (
   /* c */ | (
     | (

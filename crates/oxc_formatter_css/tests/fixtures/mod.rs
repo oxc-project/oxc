@@ -1,4 +1,6 @@
-//! Fixture tests for cases the Prettier conformance suite does NOT cover.
+//! Fixture tests for cases the Prettier conformance suite does NOT cover,
+//! plus minimal re-pins of known divergences the suite DOES hit
+//! (a divergence needs its own pin; the big conformance file is only a regression net).
 //!
 //! Expected outputs were verified against `prettier` by hand;
 //! when adding a fixture, do the same (`npx prettier@<oxfmt-bundle-version> --parser <variant>`).

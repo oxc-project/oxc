@@ -1,0 +1,12 @@
+// A glued `-` after a call/paren in a value position is subtraction (dart-sass)
+// and prints through the structured `SassExpr` printer with spaced operators.
+// DIVERGES from Prettier (DIVERGENCES.md "value-glued-minus"):
+// its value lexer keeps the glued `-` verbatim (`-` may start a number/ident,
+// so no operator node forms), while the same glued `+` DOES get spaced.
+// The same expression in a MEDIA-PRELUDE position is a different artifact:
+// see media-query-operator-spacing.scss.
+.a {
+  width: map-get($grid-breakpoints, sm)-1;
+  height: map-get($grid-breakpoints, sm)+1;
+}
+$y: map-get($grid-breakpoints, sm)-1;

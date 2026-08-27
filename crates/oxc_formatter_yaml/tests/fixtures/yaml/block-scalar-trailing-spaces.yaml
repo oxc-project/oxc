@@ -1,7 +1,7 @@
 # Trailing whitespace in a block scalar is part of the VALUE and is preserved:
 # last-line spaces/tabs, and space-only lines more-indented than the block.
 # DIVERGES from the pinned Prettier (drops them, corrupting the value);
-# see AGENTS.md "Known divergences" (prettier#19764).
+# see DIVERGENCES.md "block-scalar-trailing-whitespace" (prettier#19764).
 strip-chomped-last-line: |-
   value  
 folded-tab: >-

@@ -5,7 +5,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // `:extend()` prints the SAME layout in both positions: inline when it fits,
 // parens on their own lines + one selector per line on overflow.
 // The statement form DIVERGES from Prettier 3.9.5, which always breaks
-// multiple selectors there (see "Known divergences" in AGENTS.md);
+// multiple selectors there (DIVERGENCES.md "less-extend-statement-break");
 // lines that fit match Prettier as-is.
 .a {
   &:extend(.b);
@@ -51,7 +51,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // `:extend()` prints the SAME layout in both positions: inline when it fits,
 // parens on their own lines + one selector per line on overflow.
 // The statement form DIVERGES from Prettier 3.9.5, which always breaks
-// multiple selectors there (see "Known divergences" in AGENTS.md);
+// multiple selectors there (DIVERGENCES.md "less-extend-statement-break");
 // lines that fit match Prettier as-is.
 .a {
   &:extend(.b);
@@ -105,7 +105,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // `:extend()` prints the SAME layout in both positions: inline when it fits,
 // parens on their own lines + one selector per line on overflow.
 // The statement form DIVERGES from Prettier 3.9.5, which always breaks
-// multiple selectors there (see "Known divergences" in AGENTS.md);
+// multiple selectors there (DIVERGENCES.md "less-extend-statement-break");
 // lines that fit match Prettier as-is.
 .a {
   &:extend(.b);

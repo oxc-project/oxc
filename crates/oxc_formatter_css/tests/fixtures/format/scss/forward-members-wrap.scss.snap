@@ -9,7 +9,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @forward "src/library" as lib-* show gray-scale-colors, brand-colors, spacing-tokens, typography;
 @forward "src/list" show aa, bb;
 @forward "module/with/very/long/path/name" show first-member-name, second-member-name, third-member-name, fourth-member-name, fifth-member-name;
-// KNOWN DIVERGENCE (members + config, see AGENTS.md): Prettier treats the whole
+// KNOWN DIVERGENCE (DIVERGENCES.md "forward-members-with-config"): Prettier treats the whole
 // prelude as one comma list, so the config's forced break spills into the member
 // commas (`show b,\n  c with (`) and the config body lands one level deeper
 // (+4 body / +2 `)`). We keep the head inline while it fits and keep the config
@@ -37,7 +37,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @forward "src/list" show aa, bb;
 @forward "module/with/very/long/path/name" show first-member-name,
   second-member-name, third-member-name, fourth-member-name, fifth-member-name;
-// KNOWN DIVERGENCE (members + config, see AGENTS.md): Prettier treats the whole
+// KNOWN DIVERGENCE (DIVERGENCES.md "forward-members-with-config"): Prettier treats the whole
 // prelude as one comma list, so the config's forced break spills into the member
 // commas (`show b,\n  c with (`) and the config body lands one level deeper
 // (+4 body / +2 `)`). We keep the head inline while it fits and keep the config
@@ -62,7 +62,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @forward "src/list" show aa, bb;
 @forward "module/with/very/long/path/name" show first-member-name, second-member-name,
   third-member-name, fourth-member-name, fifth-member-name;
-// KNOWN DIVERGENCE (members + config, see AGENTS.md): Prettier treats the whole
+// KNOWN DIVERGENCE (DIVERGENCES.md "forward-members-with-config"): Prettier treats the whole
 // prelude as one comma list, so the config's forced break spills into the member
 // commas (`show b,\n  c with (`) and the config body lands one level deeper
 // (+4 body / +2 `)`). We keep the head inline while it fits and keep the config
