@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "no-debugger": "error",
+    "print-config-plugin/no-foo": ["warn", { "bar": true }]
+  }
+}
