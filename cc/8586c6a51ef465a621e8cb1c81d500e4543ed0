@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_useless_assignment.rs
+  s_f5822f1e6772c5::t_1a9c88ab82a29b 325-334,336-354,357-368
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cc8586c6a51ef465a621e8cb1c81d500e4543ed0",
+  "prompts": {},
+  "sessions": {
+    "s_f5822f1e6772c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019a9-1e84-7d01-a632-f62b3d8320db",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
