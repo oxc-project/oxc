@@ -63,7 +63,7 @@ fn test_fold_one_child_blocks() {
     // some cases where not all descendent ifs having elses
     test(
         "v = function(x, y) { if(x) { if(y) { var x } else { var z } } else { var w } }",
-        "v = function(x, y) { if(x) { if(y) var x; else var z } else var w }",
+        "v = function(x,y) { if(!x) var w; else if(y) var x; else var z};",
     );
     test(
         "v = function(x, y) { if(x) { var x } else { if(y) { var y } } }",
@@ -122,10 +122,10 @@ fn test_fold_returns() {
 #[test]
 fn test_combine_ifs1() {
     test("function f() {if (x) return 1; if (y) return 1}", "function f() {if (x || y) return 1;}");
-    // test(
-    //     "function f() {if (x) return 1; if (y) foo(); else return 1}",
-    //     "function f() {if ((!x)&&y) foo(); else return 1;}",
-    // );
+    test(
+        "function f() {if (x) return 1; if (y) foo(); else return 1}",
+        "function f() {if (x || !y) return 1; foo();}",
+    );
 }
 
 #[test]
@@ -800,7 +800,7 @@ fn test_remove_else_cause3() {
 fn test_remove_else_cause4() {
     test(
         "function f() { if (x) { if (y) { return 1; } } else f() }",
-        "function f() { if (x) { if (y) return 1; } else f() }",
+        "function f(){ if (!x) f(); else if (y) return 1; }",
     );
 }
 
