@@ -1,0 +1,23 @@
+tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/oxc/multiple-variable-declarators/input.js
+  s_455804da42cc8d::t_80f29e1536e8de 1-3
+tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/oxc/multiple-variable-declarators/output.js
+  s_455804da42cc8d::t_b80126f0d9b2cd 1-3
+tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/oxc/options.json
+  s_455804da42cc8d::t_b08aa5cb1fc6ab 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "138a1c72a59d75c8c593e8f11245982495f6bdd0",
+  "prompts": {},
+  "sessions": {
+    "s_455804da42cc8d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a04894-b766-7423-a946-ce2fb3392df7",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
