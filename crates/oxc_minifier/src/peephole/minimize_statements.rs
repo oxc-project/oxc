@@ -1028,12 +1028,14 @@ impl<'a> PeepholeOptimizations {
                 is_block_scoped_decl,
             );
             // "var a; for (b in a = c(), d) e;" => "var a = c(); for (b in d) e;"
-            Self::merge_leading_assignments_to_declaration(
-                &mut for_in_stmt.right,
-                false,
-                result,
-                ctx,
-            );
+            if !for_in_stmt.left.is_lexical_declaration() {
+                Self::merge_leading_assignments_to_declaration(
+                    &mut for_in_stmt.right,
+                    false,
+                    result,
+                    ctx,
+                );
+            }
         }
 
         if ctx.options().sequences {
@@ -1118,8 +1120,15 @@ impl<'a> PeepholeOptimizations {
             is_block_scoped_decl,
         );
 
-        // "var a; for (b of a = c(), d) e;" => "var a = c(); for (b of d) e;"
-        Self::merge_leading_assignments_to_declaration(&mut for_of_stmt.right, false, result, ctx);
+        if !for_of_stmt.left.is_lexical_declaration() {
+            // "var a; for (b of a = c(), d) e;" => "var a = c(); for (b of d) e;"
+            Self::merge_leading_assignments_to_declaration(
+                &mut for_of_stmt.right,
+                false,
+                result,
+                ctx,
+            );
+        }
 
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()

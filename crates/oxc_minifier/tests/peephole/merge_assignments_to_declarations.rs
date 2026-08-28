@@ -102,4 +102,9 @@ fn take_leading_assignments_edge_cases() {
         "function f() { var a; while (a = 1, c) foo() }",
         "function f() { for (var a; a = 1, c;) foo() }",
     );
+    // TDZ: block-scoped loop head shadows an immediately preceding declaration
+    test_same("function f() { var a; for (let a of (a = 1, [])) foo() }");
+    test_same("function f() { var a; for (let a in (a = 1, {})) foo() }");
+    test_same("function f() { var a; for (const a of (a = 1, [])) foo() }");
+    test_same("function f() { var a; for (const a in (a = 1, {})) foo() }");
 }
