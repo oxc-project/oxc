@@ -546,12 +546,11 @@ impl<'a> PeepholeOptimizations {
                 // The value of the last expression is observed unless discarded.
                 let limit = sequence_expr.expressions.len() - usize::from(!value_is_discarded);
                 let first_non_merged_index =
-                    sequence_expr.expressions.iter_mut().take(limit).position(|expr| {
-                        if let Expression::AssignmentExpression(assign_expr) = expr {
+                    sequence_expr.expressions.iter_mut().take(limit).position(|expr| match expr {
+                        Expression::AssignmentExpression(assign_expr) => {
                             !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
-                        } else {
-                            true
                         }
+                        _ => true,
                     });
                 // `None` means every candidate merged, so the whole prefix is taken.
                 let taken = first_non_merged_index.unwrap_or(limit);
