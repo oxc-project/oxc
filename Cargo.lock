@@ -2288,6 +2288,7 @@ dependencies = [
  "smallvec",
  "unicode-segmentation",
  "url",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
