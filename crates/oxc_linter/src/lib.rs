@@ -741,6 +741,10 @@ impl Linter {
             program.source_text = source_text;
         }
 
+        #[expect(clippy::cast_possible_truncation)]
+        let source_text_utf8_end =
+            source_text.len() as u32 + if has_bom { BOM_LEN as u32 } else { trim_leading };
+
         // Create span converter.
         // If source starts with BOM, create converter which ignores the BOM.
         let span_converter = if has_bom {
@@ -751,6 +755,12 @@ impl Linter {
         } else {
             Utf8ToUtf16::new(source_text)
         };
+
+        // Convert the end of the (trimmed) source text to the UTF-16 offsets used by JS plugins.
+        let mut source_text_utf16_len = source_text_utf8_end;
+        if let Some(mut converter) = span_converter.converter() {
+            converter.convert_offset(&mut source_text_utf16_len);
+        }
 
         // Convert token spans to UTF-16 and update token kinds
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
@@ -848,12 +858,15 @@ impl Linter {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8.
-                    // ESLint permits a reported location to end before it starts. Represent those
-                    // as an empty span at the reported start, preserving its displayed position.
+                    // External plugins may report locations outside the source text, or which end
+                    // before they start. Clamp them to the end of the source, and represent
+                    // reversed locations as empty spans at their stated start.
+                    //
                     // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
                     // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                    let mut span =
-                        Span::new(diagnostic.start, diagnostic.end.max(diagnostic.start));
+                    let start = diagnostic.start.min(source_text_utf16_len);
+                    let end = diagnostic.end.min(source_text_utf16_len).max(start);
+                    let mut span = Span::new(start, end);
                     span_converter.convert_span_back(&mut span);
 
                     let (external_rule_id, _options_id, severity) =
