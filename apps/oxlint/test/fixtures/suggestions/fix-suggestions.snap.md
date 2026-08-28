@@ -3,54 +3,6 @@
 
 # stdout
 ```
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_end_negative.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_end_negative.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_end_out_of_bounds.js
-  | Invalid range: 7..7
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_end_out_of_bounds.js
-  | Invalid range: 7..7
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_end_too_large.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_end_too_large.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_start_after_end.js
-  | Negative range is invalid: Span { start: 3, end: 2 }
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_start_after_end.js
-  | Negative range is invalid: Span { start: 3, end: 2 }
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_start_negative.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_start_negative.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_start_too_large.js
-  | Invalid range: 0..0
-
-  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
-  | File path: <fixture>/files/range_start_too_large.js
-  | Invalid range: 0..0
-
   x suggestions-plugin(suggestions): Replace "a" with "daddy"
    ,-[files/bom_remove.js:1:4]
  1 | ﻿a = c;
@@ -65,6 +17,14 @@
  2 | d = b
    `----
 
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_end_negative.js
+  | Invalid range: 0..0
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_end_negative.js
+  | Invalid range: 0..0
+
   x suggestions-plugin(suggestions): end negative
    ,-[files/range_end_negative.js:1:5]
  1 | let x;
@@ -76,6 +36,14 @@
  1 | let x;
    :     ^
    `----
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_end_out_of_bounds.js
+  | Invalid range: 7..7
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_end_out_of_bounds.js
+  | Invalid range: 7..7
 
   x suggestions-plugin(suggestions): end out of bounds
    ,-[files/range_end_out_of_bounds.js:1:5]
@@ -89,6 +57,14 @@
    :     ^
    `----
 
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_end_too_large.js
+  | Invalid range: 0..0
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_end_too_large.js
+  | Invalid range: 0..0
+
   x suggestions-plugin(suggestions): end too large
    ,-[files/range_end_too_large.js:1:5]
  1 | let x;
@@ -100,6 +76,14 @@
  1 | let x;
    :     ^
    `----
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_start_after_end.js
+  | Negative range is invalid: Span { start: 3, end: 2 }
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_start_after_end.js
+  | Negative range is invalid: Span { start: 3, end: 2 }
 
   x suggestions-plugin(suggestions): start after end
    ,-[files/range_start_after_end.js:1:5]
@@ -113,6 +97,14 @@
    :     ^
    `----
 
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_start_negative.js
+  | Invalid range: 0..0
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_start_negative.js
+  | Invalid range: 0..0
+
   x suggestions-plugin(suggestions): start negative
    ,-[files/range_start_negative.js:1:5]
  1 | let x;
@@ -124,6 +116,14 @@
  1 | let x;
    :     ^
    `----
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_start_too_large.js
+  | Invalid range: 0..0
+
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/range_start_too_large.js
+  | Invalid range: 0..0
 
   x suggestions-plugin(suggestions): start too large
    ,-[files/range_start_too_large.js:1:5]

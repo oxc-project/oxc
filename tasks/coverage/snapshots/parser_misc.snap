@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 79/79 (100.00%)
-Positive Passed: 79/79 (100.00%)
-Negative Passed: 167/167 (100.00%)
+AST Parsed     : 80/80 (100.00%)
+Positive Passed: 80/80 (100.00%)
+Negative Passed: 168/168 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -198,6 +198,17 @@ Negative Passed: 167/167 (100.00%)
    · ─────
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+   ╭─[misc/fail/continue-label-chain-non-iteration.js:1:1]
+ 1 │ a: b: {
+   · ┬
+   · ╰── This is an non-iteration statement
+ 2 │     continue a;
+   ·              ┬
+   ·              ╰── for this label
+ 3 │ }
+   ╰────
 
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
