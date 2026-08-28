@@ -85,6 +85,10 @@ fn take_leading_assignments_from_statements() {
         "function f() { var a = 1; for (x in b) foo() }",
     );
     test("function f() { var a; var b = (a = 1, 2) }", "function f() { var a = 1, b = 2 }");
+    test(
+        "function f() { var a; var b = (a = 1, c) ? d : e }",
+        "function f() { var a = 1, b = c ? d : e }",
+    );
 }
 
 #[test]
