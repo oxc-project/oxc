@@ -1,5 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk::walk_call_expression};
+use oxc_semantic::Scoping;
 
 use crate::state::PassChanges;
 
@@ -38,11 +39,12 @@ pub fn as_direct_eval_call<'a, 'b>(
 /// `substitute_is_object_and_not_null`).
 pub struct DroppedSubtreeCollector<'a, 's> {
     pass_changes: &'s mut PassChanges<'a>,
+    scoping: &'s Scoping,
 }
 
 impl<'a, 's> DroppedSubtreeCollector<'a, 's> {
-    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>) -> Self {
-        Self { pass_changes }
+    pub(crate) fn new(pass_changes: &'s mut PassChanges<'a>, scoping: &'s Scoping) -> Self {
+        Self { pass_changes, scoping }
     }
 }
 
@@ -53,14 +55,7 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
         // by `take_in`) have no `reference_id` yet. Such nodes carry no
         // semantic state to mark removed, so skip them.
         let Some(reference_id) = it.reference_id.get() else { return };
-        let idx = reference_id.index();
-        // References minted mid-pass have indices beyond the bitset's capacity
-        // and are treated as live — see `PassChanges::removed_references`.
-        // This is a legal flow (a fresh ident minted by one optimization can
-        // be dropped later in the same pass by another), so no debug_assert.
-        if idx < self.pass_changes.removed_references.capacity() {
-            self.pass_changes.removed_references.set_bit(idx);
-        }
+        self.pass_changes.remove_reference(reference_id, self.scoping);
     }
 
     fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
