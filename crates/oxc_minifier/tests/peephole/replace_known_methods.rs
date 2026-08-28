@@ -18,6 +18,8 @@ fn test_string_index_of() {
     test("x = 'abcdefbe'.indexOf('b', 2)", "x = 6");
     test("x = 'abcdef'.indexOf('bcd')", "x = 1");
     test("x = 'abcdefsdfasdfbcdassd'.indexOf('bcd', 4)", "x = 13");
+    test("x = 'undefined'.indexOf()", "x = 0");
+    test("x = 'abcdef'.indexOf()", "x = -1");
     test_same("x = 'abcdef'.indexOf(...a, 1)");
     test_same("x = 'abcdef'.indexOf('b', ...a)");
     test_same("x = 'abcdef'.indexOf(a, 1)");
@@ -26,6 +28,8 @@ fn test_string_index_of() {
     test("x = 'abcdef'.lastIndexOf('b')", "x = 1");
     test("x = 'abcdefbe'.lastIndexOf('b')", "x = 6");
     test("x = 'abcdefbe'.lastIndexOf('b', 5)", "x = 1");
+    test("x = 'undefined'.lastIndexOf()", "x = 0");
+    test("x = 'abcdef'.lastIndexOf()", "x = -1");
 
     test("x = 'abc1def'.indexOf(1)", "x = 3");
     test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
