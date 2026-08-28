@@ -1,0 +1,33 @@
+crates/oxc_ast/src/generated/derive_get_node_id.rs
+  s_b019a5413f8066::t_c4ce626f6f7d0a 1-1649
+crates/oxc_ast/src/generated/get_id.rs
+  s_b019a5413f8066::t_288977b9d63770 8,2662
+crates/oxc_ast_macros/src/generated/derived_traits.rs
+  s_b019a5413f8066::t_eff57839f598a3 15
+crates/oxc_ast/src/lib.rs
+  s_b019a5413f8066::t_9f39be5eb4f513 66
+crates/oxc_syntax/src/node.rs
+  s_b019a5413f8066::t_d884c1f399373c 56-61
+tasks/ast_tools/src/derives/mod.rs
+  s_b019a5413f8066::t_7b5556478ece0e 22,33
+tasks/ast_tools/src/generators/get_id.rs
+  s_b019a5413f8066::t_51ea64c002a024 47
+tasks/ast_tools/src/main.rs
+  s_b019a5413f8066::t_59ce1dbca5a244 254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "311da02f0b3e7476f7a3df08da4e4ba77d91a2fd",
+  "prompts": {},
+  "sessions": {
+    "s_b019a5413f8066": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a047f3-0bd8-71b0-8993-ba1f1f935280",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
