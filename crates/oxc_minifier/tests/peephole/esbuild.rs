@@ -1059,9 +1059,10 @@ fn test_remove_dead_expr_nullish_related() {
 fn test_mangle_boolean_with_side_effects() {
     let falsy_no_side_effects = ["!1", "\"\"", "0", "0n", "null", "void 0"];
     for value in falsy_no_side_effects {
+        let negated = if value == "!1" { "0" } else { value };
         test(&format!("y(x && {value})"), &format!("y(x && {value});"));
         test(&format!("y(x || {value})"), &format!("y(x || {value});"));
-        test(&format!("y(!(x && {value}))"), &format!("y(!(x && {value}));"));
+        test(&format!("y(!(x && {value}))"), &format!("y(!(x && {negated}));"));
         test(&format!("y(!(x || {value}))"), "y(!x);");
         test(&format!("if (x && {value}) y"), "x;");
         test(&format!("if (x || {value}) y"), "x && y;");
@@ -1076,10 +1077,11 @@ fn test_mangle_boolean_with_side_effects() {
     let truthy_no_side_effects =
         ["!0", "\" \"", "1", "1n", "/./", "(() => {\n})", "function() {\n}", "[1, 2]", "{ a: 0 }"];
     for value in truthy_no_side_effects {
+        let negated = if value == "!0" { "1" } else { value };
         test(&format!("y(x && {value})"), &format!("y(x && {value});"));
         test(&format!("y(x || {value})"), &format!("y(x || {value});"));
         test(&format!("y(!(x && {value}))"), "y(!x);");
-        test(&format!("y(!(x || {value}))"), &format!("y(!(x || {value}));"));
+        test(&format!("y(!(x || {value}))"), &format!("y(!(x || {negated}));"));
         test(&format!("if (x && {value}) y"), "x && y;");
         test(&format!("if (x || {value}) y"), "x, y;");
         test(&format!("if (x && {value}) y; else z"), "x ? y : z;");
