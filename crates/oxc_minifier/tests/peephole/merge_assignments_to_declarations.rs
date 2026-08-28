@@ -74,9 +74,15 @@ fn take_leading_assignments_from_statements() {
         "function f() { var a; for (a = 1; c; d()) foo() }",
         "function f() { for (var a = 1; c; d()) foo() }",
     );
+    test_same("function f() { var a; for (x of a = 1) foo() }");
     test(
         "function f() { var a; for (x of (a = 1, b)) foo() }",
         "function f() { var a = 1; for (x of b) foo() }",
+    );
+    test_same("function f() { var a; for (x in a = 1) foo() }");
+    test(
+        "function f() { var a; for (x in (a = 1, b)) foo() }",
+        "function f() { var a = 1; for (x in b) foo() }",
     );
     test("function f() { var a; var b = (a = 1, 2) }", "function f() { var a = 1, b = 2 }");
 }
