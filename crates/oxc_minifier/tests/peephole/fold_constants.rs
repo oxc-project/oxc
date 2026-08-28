@@ -1097,6 +1097,53 @@ fn test_fold_division() {
 }
 
 #[test]
+fn test_reduce_integer_division_operands() {
+    fold("x = 100 / 200", "x = 1 / 2");
+    fold("x = 7 / 21", "x = 1 / 3");
+    fold("x = 1000 / 8000", "x = 1 / 8");
+    fold("x = 12345 / 55555", "x = 2469 / 11111");
+
+    // The sign is normalized onto the numerator.
+    fold("x = -100 / 200", "x = -1 / 2");
+    fold("x = 100 / -200", "x = -1 / 2");
+    fold("x = -100 / -200", "x = 1 / 2");
+    // Coprime operands only shorten when the sign itself can be dropped.
+    fold("x = -3 / -7", "x = 3 / 7");
+    fold_same("x = 3 / -7");
+    fold_same("x = -3 / 7");
+
+    // Already reduced.
+    fold_same("x = 1 / 3");
+    fold_same("x = 7 / 22");
+    // A real reduction (`gcd` is 2) that costs the same number of characters. `2 / 4`
+    // and `0.3 / 0.1` in `test_fold_division` cover the same policy from the other side.
+    fold_same("x = 40 / 62");
+    fold_same("x = 4 / 6");
+    // ... but dropping a digit from either operand pays for itself.
+    fold("x = 20 / 45", "x = 4 / 9");
+
+    // An integer quotient is still spelled out as a literal rather than reduced, so the
+    // reduction must not preempt it.
+    fold("x = 8000 / 1000", "x = 8");
+
+    // Non-integer operands are not reduced.
+    fold_same("x = 2.5 / 5");
+    fold_same("x = 7 / 21.5");
+
+    // Zero and negative zero are left to the folds that already handle them.
+    fold("x = 0 / 4", "x = 0");
+    fold("x = 4 / -0", "x = -Infinity");
+
+    // 9007199254740994 is 2^53 + 2 — exactly representable, but past the bound that
+    // keeps the `u64` conversion in `try_reduce_integer_division_operands` in range.
+    fold_same("x = 9007199254740994 / 6");
+
+    // Not numeric literals.
+    fold_same("x = 100n / 200n");
+    fold_same("x = y / 200");
+}
+
+#[test]
 fn test_fold_remainder() {
     fold("x = 3 % 2", "x = 1");
     fold("x = 3 % -2", "x = 1");

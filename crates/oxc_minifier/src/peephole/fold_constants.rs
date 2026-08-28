@@ -402,7 +402,8 @@ impl<'a> PeepholeOptimizations {
                     Self::extract_numeric_values(e, ctx)
                         .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
                         .and_then(|_| ctx.eval_binary(e))
-                }),
+                })
+                .or_else(|| Self::try_reduce_integer_division_operands(e, ctx)),
             BinaryOperator::ShiftLeft => {
                 Self::extract_numeric_values(e, ctx).and_then(|(left, right)| {
                     let result = e.evaluate_value(ctx)?.into_number()?;
@@ -515,6 +516,76 @@ impl<'a> PeepholeOptimizations {
     fn folded_numeric_expression_is_shorter(e: &BinaryExpression<'a>, result: f64) -> Option<bool> {
         let original_len = Self::binary_numeric_expression_size_lower_bound(e)?;
         Some(Self::number_literal_source_len(result)? <= original_len)
+    }
+
+    /// `100 / 200` -> `1 / 2`, `7 / 21` -> `1 / 3`, `-3 / -7` -> `3 / 7`.
+    ///
+    /// Division returns the correctly rounded value of the exact quotient, so dividing both
+    /// operands by their GCD cannot change the result: the two spellings name the same
+    /// rational and therefore round to the same double.
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+    fn try_reduce_integer_division_operands(
+        e: &BinaryExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // Yields no constant, so it can never enable a removal.
+        if ctx.is_tree_shake_only() {
+            return None;
+        }
+        let left = Self::exact_nonzero_integer_operand(&e.left)?;
+        let right = Self::exact_nonzero_integer_operand(&e.right)?;
+
+        // Bounded by `exact_nonzero_integer_operand`, so exact in both directions. Unbounded,
+        // the float -> int cast would saturate to `u64::MAX` and reduce to a wrong fraction.
+        let left_magnitude = left.abs() as u64;
+        let right_magnitude = right.abs() as u64;
+        let divisor = gcd(left_magnitude, right_magnitude);
+        // Normalizing the sign onto the numerator also shortens `-3 / -7`, where the operands
+        // are already coprime but both carry a `-`.
+        let magnitude = (left_magnitude / divisor) as f64;
+        let new_left = if left.is_sign_negative() == right.is_sign_negative() {
+            magnitude
+        } else {
+            -magnitude
+        };
+        let new_right = (right_magnitude / divisor) as f64;
+
+        debug_assert_eq!((left / right).to_bits(), (new_left / new_right).to_bits());
+
+        // Only the operands change, so the operator cancels out of the comparison.
+        let old_len =
+            Self::number_literal_source_len(left)? + Self::number_literal_source_len(right)?;
+        let new_len = Self::number_literal_source_len(new_left)?
+            + Self::number_literal_source_len(new_right)?;
+        if new_len >= old_len {
+            return None;
+        }
+
+        let new_left_expr = ctx.value_to_expr(e.left.span(), ConstantValue::Number(new_left));
+        let new_right_expr = ctx.value_to_expr(e.right.span(), ConstantValue::Number(new_right));
+        Some(Expression::new_binary_expression(
+            e.span,
+            new_left_expr,
+            BinaryOperator::Division,
+            new_right_expr,
+            ctx,
+        ))
+    }
+
+    /// A numeric literal whose value is a non-zero integer within the safe-integer range.
+    ///
+    /// `-100` needs no unary handling here: `fold_unary_expr` collapses it into a single
+    /// literal carrying the negative value before this sees the enclosing division.
+    ///
+    /// The upper bound keeps the caller's `u64` conversion in range, and keeps the reduced
+    /// operands exactly representable so the literals written back parse to the doubles
+    /// computed with.
+    fn exact_nonzero_integer_operand(e: &Expression<'a>) -> Option<f64> {
+        let Expression::NumericLiteral(lit) = e.get_inner_expression() else { return None };
+        let value = lit.value;
+        // Rejects `-0` too, and `fract` is `NaN` for the non-finite values.
+        (value != 0.0 && value.fract() == 0.0 && value.abs() <= 9_007_199_254_740_991.0)
+            .then_some(value)
     }
 
     /// Lower bound for the minified size of a string addition operand, along with
@@ -1126,6 +1197,13 @@ fn try_fold_call_expression<'a>(
                 .unwrap_or(ChainFold::Unfolded { has_optional: has_optional || call.optional })
         }
     }
+}
+
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        (a, b) = (b, a % b);
+    }
+    a
 }
 
 fn try_fold_member_expression<'a>(
