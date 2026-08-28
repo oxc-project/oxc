@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/object_shorthand.rs
+  s_7ae0754ee527ba::t_40aae9f5cb1b55 605-609,973-986,2028-2033
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d93fd2ae10950469ee1498a45f4856af7113ac6e",
+  "prompts": {},
+  "sessions": {
+    "s_7ae0754ee527ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a023a9-309a-7aa0-8554-d23c20daa3d1",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
