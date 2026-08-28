@@ -1,4 +1,6 @@
-use crate::{test, test_same};
+use oxc_span::SourceType;
+
+use crate::{default_options, test, test_options_source_type, test_same};
 
 #[test]
 fn merge_assignments_to_declarations_var() {
@@ -38,6 +40,113 @@ fn merge_assignments_to_declarations_let() {
     test_same("let a; a = foo(a)"); // `let a = foo(a)` will cause TDZ error
     test("let a; a = (() => a)()", "let a; a = a;"); // `let a = (() => a)()` will cause TDZ error
     test("let a; a = () => a", "let a = () => a");
+
+    // the initializer does not read `a`, so there is no TDZ error to introduce
+    // https://github.com/oxc-project/oxc/issues/14310
+    test(
+        "export function f() { let a; a = c(); foo(a) }",
+        "export function f() { let a = c(); foo(a) }",
+    );
+    test(
+        "export function f() { let a; a = c(b); foo(a) }",
+        "export function f() { let a = c(b); foo(a) }",
+    );
+    test(
+        "export function f() { let a; a = b.c; foo(a) }",
+        "export function f() { let a = b.c; foo(a) }",
+    );
+    // the initializer reads `a`, which `let a = <init>` would evaluate in its TDZ
+    test(
+        "export function f() { let a; a = c(a); foo(a) }",
+        "export function f() { let a; a = c(a), foo(a) }",
+    );
+    test(
+        "export function f() { let a; a = { b: a }; foo(a) }",
+        "export function f() { let a; a = { b: a }, foo(a) }",
+    );
+    test(
+        "export function f() { let a; a = (a = b()); foo(a) }",
+        "export function f() { let a; a = a = b(), foo(a) }",
+    );
+    test(
+        "export function f() { let a; a = class extends a {}; foo(a) }",
+        "export function f() { let a; a = class extends a {}, foo(a) }",
+    );
+
+    // `c` closes over `a`, so calling it during `a`'s initialization would read
+    // `a` in its TDZ, even though the initializer does not mention `a`.
+    test(
+        "export function f() { function c() { return a } let a; a = c(); foo(a) }",
+        "export function f() { function c() { return a } let a; a = c(), foo(a) }",
+    );
+    test(
+        "export function f() { let a; function c() { return a } a = c(); foo(a) }",
+        "export function f() { let a; function c() { return a } a = c(), foo(a) }",
+    );
+    test(
+        "export function f() { let a; a = (() => { const d = () => a; return d() })(); foo(a) }",
+        "export function f() { let a; a = a, foo(a) }",
+    );
+}
+
+/// Reads of the binding that are deferred past the initializer, or that this
+/// analysis cannot place, must block the merge.
+#[test]
+fn merge_assignments_to_declarations_let_deferred_reads() {
+    // A class field initializer runs at construction time, so `new D()` reads `a`
+    // while it is still uninitialized. The reference sits in the class scope, which
+    // carries no flag distinguishing it from a plain block.
+    test(
+        "export function f() { class D { x = a } let a; a = new D(); console.log(a.x) }",
+        "export function f() { class D { x = a } let a; a = new D(), console.log(a.x) }",
+    );
+    test(
+        "export function f() { const D = class { x = a }; let a; a = new D(); console.log(a.x) }",
+        "export function f() { let D = class { x = a }, a; a = new D(), console.log(a.x) }",
+    );
+
+    // A read in a nested block executes inline and would be safe to merge past, but
+    // it is not in the binding's scope, so the conservative rule rejects it.
+    //
+    // NOTE: the block here holds a `let` so it survives minification. A block that
+    // gets flattened (`if (x) { foo(a) }`) makes this transform iteration-dependent:
+    // the flattening pass removes the block but leaves the reference's `scope_id`
+    // pointing at it, so the merge is rejected on one pass and accepted on the next.
+    // The staleness only ever reports *more* scopes than exist, so it errs safe.
+    test(
+        "export function f() { let a; a = c(); { let b = a; foo(b) } }",
+        "export function f() { let a; a = c(); { let b = a; foo(b) } }",
+    );
+
+    // A direct `eval` can read the binding without producing a resolved reference.
+    test(
+        "export function f() { let a; a = c(); eval('foo'); return a }",
+        "export function f() { let a; return a = c(), eval('foo'), a }",
+    );
+}
+
+/// A program-scope lexical is reachable from code the reference scan cannot see,
+/// so the initializer must not be moved into the declaration.
+#[test]
+fn merge_assignments_to_declarations_let_program_scope() {
+    // A cyclic import can call back into this module and read the exported `a`,
+    // which is initialized (`undefined`) before the assignment but in its TDZ
+    // once the initializer moves into the declaration.
+    test_same("import { f } from './b.mjs'; let a; a = f(); export { a }");
+    test_same("import { f } from './b.mjs'; let a; a = f(); export default () => a");
+
+    // A Script root's `let` joins the global lexical environment, so a function
+    // from another script can read it while this initializer runs.
+    test_options_source_type(
+        "let a; a = f(); console.log(a)",
+        "let a; a = f(), console.log(a)",
+        SourceType::cjs(),
+        &default_options(),
+    );
+
+    // the untouched `is_literal_value` branch still merges at program scope: a
+    // literal initializer executes no code, so nothing can observe the binding
+    test("let a; a = 0; foo(a)", "let a = 0; foo(0)");
 }
 
 #[test]
@@ -45,4 +154,25 @@ fn merge_assignments_to_declarations_other() {
     test_same("const a = 0; a = 1");
     test_same("using a = 0; a = 1");
     test_same("await using a = 0; a = 1");
+}
+
+/// The two examples from <https://github.com/oxc-project/oxc/issues/14310>.
+#[test]
+fn merge_assignments_to_declarations_issue_14310() {
+    // The reported case. `deserializeBindingPatternKind` resolves outside the
+    // function, so nothing can observe `param` during its initialization; once the
+    // merge happens a later pass collapses the temporary away entirely, which is
+    // the reduction the issue asked for.
+    test(
+        "export function deserializeFormalParameter(pos) { let param; param = deserializeBindingPatternKind(pos + 32); return param; }",
+        "export function deserializeFormalParameter(pos) { return deserializeBindingPatternKind(pos + 32) }",
+    );
+    // The counter-example from the issue discussion: here
+    // `deserializeBindingPatternKind` closes over `param`, so merging would call it
+    // while `param` sits in its TDZ. The read lives in the inner function's scope,
+    // not the binding's, so the merge is rejected and the assignment stays put.
+    test(
+        "(function deserializeFormalParameter(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; param = deserializeBindingPatternKind(pos + 32); return param; })(0)",
+        "(function(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; return param = deserializeBindingPatternKind(pos + 32), param })(0)",
+    );
 }
