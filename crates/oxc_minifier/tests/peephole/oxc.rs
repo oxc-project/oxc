@@ -36,7 +36,7 @@ fn integration() {
           return isTimeDisabled === null || isTimeDisabled === void 0 ? void 0 : isTimeDisabled(value);
     }",
     "function foo() {
-        if (!(value === null || Array.isArray(value))) return isTimeDisabled == null ? void 0 : isTimeDisabled(value);
+        if (!(value === null || Array.isArray(value)) && isTimeDisabled != null) return isTimeDisabled(value);
     }");
 
     test_same(

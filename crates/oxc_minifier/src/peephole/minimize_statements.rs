@@ -125,12 +125,38 @@ impl<'a> PeepholeOptimizations {
                                 break 'return_loop;
                             }
                             // The then clause must be a return
-                            let Statement::ReturnStatement(_) = &if_stmt.consequent else {
+                            let Statement::ReturnStatement(prev_return) = &if_stmt.consequent
+                            else {
                                 break 'return_loop;
                             };
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
-                                && let Some(arg) = &last_return.argument
-                                && Self::conditional_expression_count_exceeded(arg)
+                            let Some(Statement::ReturnStatement(last_return)) = stmts.last() else {
+                                unreachable!()
+                            };
+                            let is_async_generator =
+                                ctx.is_closest_function_scope_an_async_generator();
+                            let prev_return_is_bare = prev_return.argument.is_none();
+                            let last_return_is_bare = last_return.argument.is_none();
+                            let is_labeled_block = ctx.parent().is_block_statement()
+                                && ctx.ancestor(1).is_labeled_statement();
+                            if prev_return_is_bare
+                                && last_return_is_bare
+                                && (is_async_generator || !is_labeled_block)
+                            {
+                                let Statement::IfStatement(if_stmt) = &mut stmts[prev_index] else {
+                                    unreachable!()
+                                };
+                                let span = if_stmt.span;
+                                let test = if_stmt.test.take_in(ctx);
+                                let expr_stmt =
+                                    Statement::new_expression_statement(span, test, ctx);
+                                ctx.replace_statement(&mut stmts[prev_index], expr_stmt);
+                                continue 'return_loop;
+                            }
+                            if (is_async_generator && (prev_return_is_bare || last_return_is_bare))
+                                || last_return
+                                    .argument
+                                    .as_ref()
+                                    .is_some_and(Self::conditional_expression_count_exceeded)
                             {
                                 break 'return_loop;
                             }
@@ -1920,6 +1946,56 @@ impl<'a> PeepholeOptimizations {
             }
             _ => false,
         }
+    }
+
+    /// `if (a) return b ? void 0 : c` => `if (a && !b) return c`
+    ///
+    /// This is only called for the final statement in a normal function body. `void 0` is
+    /// equivalent to falling through here, while the outer and conditional tests retain their
+    /// original short-circuit order.
+    pub(super) fn try_minimize_tail_conditional_return(
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
+        if if_stmt.alternate.is_some() {
+            return;
+        }
+        let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
+            return;
+        };
+        let Some(Expression::ConditionalExpression(conditional)) = &mut return_stmt.argument else {
+            return;
+        };
+
+        let consequent_is_undefined = conditional.consequent.is_void_0();
+        let alternate_is_undefined = conditional.alternate.is_void_0();
+        if consequent_is_undefined == alternate_is_undefined {
+            return;
+        }
+
+        let mut branch_test = conditional.test.take_in(ctx);
+        let value = if consequent_is_undefined {
+            branch_test = Self::minimize_not(branch_test.span(), branch_test, ctx, true);
+            conditional.alternate.take_in(ctx)
+        } else {
+            conditional.consequent.take_in(ctx)
+        };
+        let outer_test = if_stmt.test.take_in(ctx);
+        let new_test = Self::join_with_left_associative_op(
+            if_stmt.span,
+            LogicalOperator::And,
+            outer_test,
+            branch_test,
+            ctx,
+        );
+
+        ctx.replace_expression(&mut if_stmt.test, new_test);
+        let Statement::ReturnStatement(return_stmt) = &mut if_stmt.consequent else {
+            unreachable!()
+        };
+        let argument = return_stmt.argument.as_mut().unwrap();
+        ctx.replace_expression(argument, value);
     }
 }
 

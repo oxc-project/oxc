@@ -120,6 +120,79 @@ fn test_fold_returns() {
 }
 
 #[test]
+fn test_fold_nested_terminated_returns_at_function_tail() {
+    test("function f(){if(a)if(x)return;else return 2-x}", "function f(){if(a&&!x)return 2-x}");
+    test("function f(){if(a)if(x)return 2-x;else return}", "function f(){if(a&&x)return 2-x}");
+
+    // A return cannot become fallthrough in a loop or before later work.
+    test(
+        "function f(){for(;;)if(a)if(x)return;else return 2-x}",
+        "function f(){for(;;)if(a)return x?void 0:2-x}",
+    );
+    test(
+        "function f(){if(a)if(x)return;else return 2-x;g()}",
+        "function f(){if(a)return x?void 0:2-x;g()}",
+    );
+    test(
+        "function f(){L:if(a)if(x)return;else return 2-x;g()}",
+        "function f(){L:if(a)return x?void 0:2-x;g()}",
+    );
+    test(
+        "function f(){L:{if(a)if(x)return;else return 2-x}g()}",
+        "function f(){L:if(a)return x?void 0:2-x;g()}",
+    );
+    test(
+        "function f(){L:if(a)if(x)return;else return 2-x}",
+        "function f(){L:if(a)return x?void 0:2-x}",
+    );
+    test("function f(){L:{if(b)return;return}}", "function f(){L:return b,void 0}");
+
+    // Preserve evaluation of an undefined-valued branch with side effects.
+    test("function f(){if(a)return x?void side():y}", "function f(){if(a)return x?void side():y}");
+    test("function f(){if(a)return x?undefined:y}", "function f(){if(a&&!x)return y}");
+    test("function f(){if(a)return x?void 0:y}", "function f(){if(a&&!x)return y}");
+    test("function f(){if(a)return !x?void 0:y}", "function f(){if(a&&x)return y}");
+    test("function f(){if(a)return x?y:void 0}", "function f(){if(a&&x)return y}");
+    test("function f(){if(a||b)return c?d:void 0}", "function f(){if((a||b)&&c)return d}");
+    test("function f(){if(a)return b||c?void 0:d}", "function f(){if(a&&!(b||c))return d}");
+    test("function f(){if(a)return !!b||!!c?void 0:d}", "function f(){if(a&&!(b||c))return d}");
+
+    // Do not synthesize `return void 0` from a bare return in async generators.
+    test(
+        "async function* f(){if(a)if(x)return;else return 2-x}",
+        "async function* f(){if(a){if(x)return;return 2-x}}",
+    );
+    test(
+        "async function* f(){if(a)if(x)return 2-x;else return}",
+        "async function* f(){if(a){if(x)return 2-x;return}}",
+    );
+    test(
+        "async function* f(b){try{if(b)return;else return}finally{a='PASS'}}",
+        "async function* f(b){try{return}finally{a='PASS'}}",
+    );
+    test(
+        "async function* f(b){try{if(b)return;return}finally{a='PASS'}}",
+        "async function* f(b){try{return}finally{a='PASS'}}",
+    );
+    test(
+        "async function* f(){try{if(b)return;return}finally{a='PASS'}}",
+        "async function* f(){try{b;return}finally{a='PASS'}}",
+    );
+    test(
+        "async function* f(){try{if(b())return;return}finally{a='PASS'}}",
+        "async function* f(){try{b();return}finally{a='PASS'}}",
+    );
+    test(
+        "function f(){try{if(b())return;return}finally{a='PASS'}}",
+        "function f(){try{b();return}finally{a='PASS'}}",
+    );
+    test(
+        "function* f(){try{if(b())return;return}finally{a='PASS'}}",
+        "function* f(){try{b();return}finally{a='PASS'}}",
+    );
+}
+
+#[test]
 fn test_combine_ifs1() {
     test("function f() {if (x) return 1; if (y) return 1}", "function f() {if (x || y) return 1;}");
     // test(

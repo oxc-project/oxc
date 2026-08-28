@@ -65,6 +65,14 @@ fn test_same(source_text: &str) {
     test(source_text, source_text);
 }
 
+#[test]
+fn tail_conditional_return_minification_does_not_run_in_dce() {
+    test(
+        "export function f(){if(a)return x?undefined:y}",
+        "export function f(){if(a)return x?void 0:y}",
+    );
+}
+
 #[track_caller]
 fn test_source_type(source_text: &str, expected: &str, source_type: SourceType) {
     test_with_options_source_type(source_text, expected, source_type, CompressOptions::dce());
