@@ -523,6 +523,9 @@ fn test_fold_math_functions_round() {
     test_same_value("Math.round(Math.random())");
     test_value("Math.round(NaN)", "NaN");
     test_value("Math.round(3)", "3");
+    test_value("Math.round(0.49999999999999994)", "0");
+    test_value("Math.round(0.5)", "1");
+    test_value("Math.round(-0.5)", "-0");
     test_value("Math.round(3.5)", "4");
     test_value("Math.round(-3.5)", "-3");
 }
