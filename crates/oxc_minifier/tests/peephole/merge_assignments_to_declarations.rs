@@ -46,3 +46,50 @@ fn merge_assignments_to_declarations_other() {
     test_same("using a = 0; a = 1");
     test_same("await using a = 0; a = 1");
 }
+
+#[test]
+fn take_leading_assignments_from_statements() {
+    test("function f() { let a; return a = 0, a }", "function f() { let a = 0; return 0 }");
+    test("function f() { var a; return a = b(), a }", "function f() { return b() }");
+    test(
+        "function f() { var a, b; return a = 1, b = 2, c }",
+        "function f() { var a = 1, b = 2; return c }",
+    );
+    // only a contiguous prefix may move, `a = 1` must not be hoisted above `foo()`
+    test_same("function f() { var a; return foo(), a = 1, b }");
+    // the last expression is never taken, its value is needed
+    test_same("function f() { var a; return a = 1 }");
+
+    test("function f() { var a; throw a = 1, e }", "function f() { var a = 1; throw e }");
+    test("function f() { var a; if (a = 1, c) foo() }", "function f() { var a = 1; c && foo() }");
+    test(
+        "function f() { var a; switch (a = 1, c) { case 1: foo() } }",
+        "function f() { var a = 1; c === 1 && foo() }",
+    );
+    test(
+        "function f() { var a; for (a = 1, b(); c; d()) foo() }",
+        "function f() { var a = 1; for (b(); c; d()) foo() }",
+    );
+    test(
+        "function f() { var a; for (a = 1; c; d()) foo() }",
+        "function f() { for (var a = 1; c; d()) foo() }",
+    );
+    test(
+        "function f() { var a; for (x of (a = 1, b)) foo() }",
+        "function f() { var a = 1; for (x of b) foo() }",
+    );
+    test("function f() { var a; var b = (a = 1, 2) }", "function f() { var a = 1, b = 2 }");
+}
+
+#[test]
+fn take_leading_assignments_edge_cases() {
+    // `let` may only take a literal, otherwise a TDZ error can be introduced
+    test_same("function f(b) { let a; return a = c(), b }");
+    // Annex B initializer in a for-in head is evaluated before the right hand side
+    test_same("function f() { var a; for (var x = (a = 1) in (a = 2, obj)) foo() }");
+    // loop tests are re-evaluated per iteration, so `a = 1` must stay in place
+    test(
+        "function f() { var a; while (a = 1, c) foo() }",
+        "function f() { for (var a; a = 1, c;) foo() }",
+    );
+}

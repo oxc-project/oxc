@@ -352,13 +352,14 @@ impl<'a> PeepholeOptimizations {
     fn handle_variable_declaration(
         mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
             Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx, false);
+            // "var a; var b = (a = 1, c);" => "var a = 1; var b = c;"
+            Self::merge_leading_assignments_to_declaration(first_decl_init, false, result, ctx);
         }
         Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
@@ -455,64 +456,22 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         // "var a; a = b();" => "var a = b();"
-        match &mut expr_stmt.expression {
-            Expression::AssignmentExpression(assign_expr) => {
-                let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
-                if merged {
-                    let dropped = Statement::ExpressionStatement(expr_stmt);
-                    ctx.drop_statement(&dropped);
-                    return;
-                }
-            }
-            Expression::SequenceExpression(sequence_expr)
-                if result
-                    .last()
-                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_))) =>
-            {
-                let first_non_merged_index =
-                    sequence_expr.expressions.iter_mut().position(|expr| {
-                        if let Expression::AssignmentExpression(assign_expr) = expr {
-                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
-                        } else {
-                            true
-                        }
-                    });
-                let sequence_len = sequence_expr.expressions.len();
-                match first_non_merged_index {
-                    None => {
-                        // all elements are merged
-                        let dropped = Statement::ExpressionStatement(expr_stmt);
-                        ctx.drop_statement(&dropped);
-                        return;
-                    }
-                    Some(val) if val == sequence_len - 1 => {
-                        // all elements are merged except for the last expression
-                        let last_expr = sequence_expr.expressions.pop().unwrap();
-                        result.push(Statement::new_expression_statement(
-                            last_expr.span(),
-                            last_expr,
-                            ctx,
-                        ));
-                        let dropped = Statement::ExpressionStatement(expr_stmt);
-                        ctx.drop_statement(&dropped);
-                        return;
-                    }
-                    Some(0) => {
-                        // no elements are merged
-                    }
-                    Some(val) => {
-                        for dropped in sequence_expr.expressions.drain(0..val) {
-                            ctx.drop_expression(&dropped);
-                        }
-                    }
-                }
-            }
-            _ => {}
+        if Self::merge_leading_assignments_to_declaration(
+            &mut expr_stmt.expression,
+            true,
+            result,
+            ctx,
+        ) {
+            let dropped = Statement::ExpressionStatement(expr_stmt);
+            ctx.drop_statement(&dropped);
+            return;
         }
 
         result.push(Statement::ExpressionStatement(expr_stmt));
     }
 
+    /// Merge a single assignment into a matching uninitialized declarator of the
+    /// variable declaration that immediately precedes it in `result`.
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -566,6 +525,61 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// Fold leading assignments in `expr` into the variable declaration.
+    fn merge_leading_assignments_to_declaration(
+        expr: &mut Expression<'a>,
+        value_is_discarded: bool,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let Some(Statement::VariableDeclaration(_)) = result.last() else {
+            return false;
+        };
+
+        match expr {
+            // "var a; a = b();" => "var a = b();"
+            Expression::AssignmentExpression(assign_expr) if value_is_discarded => {
+                Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+            }
+            // "var a; return a = b(), c;" => "var a = b(); return c;"
+            Expression::SequenceExpression(sequence_expr) => {
+                // The value of the last expression is observed unless discarded.
+                let limit = sequence_expr.expressions.len() - usize::from(!value_is_discarded);
+                let first_non_merged_index =
+                    sequence_expr.expressions.iter_mut().take(limit).position(|expr| {
+                        if let Expression::AssignmentExpression(assign_expr) = expr {
+                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                        } else {
+                            true
+                        }
+                    });
+                // `None` means every candidate merged, so the whole prefix is taken.
+                let taken = first_non_merged_index.unwrap_or(limit);
+                if taken == 0 {
+                    return false;
+                }
+                match sequence_expr.expressions.len() - taken {
+                    // all elements are merged
+                    0 => true,
+                    // all elements are merged except for the last expression
+                    1 => {
+                        let only_expr = sequence_expr.expressions.pop().unwrap();
+                        ctx.replace_expression(expr, only_expr);
+                        false
+                    }
+                    // The sequence stays in the AST, so remove the targets here.
+                    _ => {
+                        for dropped in sequence_expr.expressions.drain(0..taken) {
+                            ctx.drop_expression(&dropped);
+                        }
+                        false
+                    }
+                }
+            }
+            _ => false,
+        }
+    }
+
     /// Check if a switch case can be inlined by verifying:
     /// - The test expression has no side effects
     /// - All statements can be safely inlined (no unlabeled breaks)
@@ -599,6 +613,14 @@ impl<'a> PeepholeOptimizations {
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
+
+        // "var a; switch (a = b(), c) {}" => "var a = b(); switch (c) {}"
+        Self::merge_leading_assignments_to_declaration(
+            &mut switch_stmt.discriminant,
+            false,
+            result,
+            ctx,
+        );
 
         if !ctx.is_tree_shake_only()
             && switch_stmt.cases.len() == 1
@@ -663,6 +685,9 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
+
+        // "var a; if (a = b(), c) d;" => "var a = b(); if (c) d;"
+        Self::merge_leading_assignments_to_declaration(&mut if_stmt.test, false, result, ctx);
 
         // Absorb a previous expression statement
         if ctx.options().sequences {
@@ -828,6 +853,12 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_expression(argument, new_arg);
             result.pop();
         }
+
+        // "var a; return a = b(), c;" => "var a = b(); return c;"
+        if let Some(argument) = &mut ret_stmt.argument {
+            Self::merge_leading_assignments_to_declaration(argument, false, result, ctx);
+        }
+
         result.push(Statement::ReturnStatement(ret_stmt));
     }
 
@@ -853,6 +884,15 @@ impl<'a> PeepholeOptimizations {
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
+
+        // "var a; throw a = b(), c;" => "var a = b(); throw c;"
+        Self::merge_leading_assignments_to_declaration(
+            &mut throw_stmt.argument,
+            false,
+            result,
+            ctx,
+        );
+
         result.push(Statement::ThrowStatement(throw_stmt));
     }
 
@@ -886,6 +926,12 @@ impl<'a> PeepholeOptimizations {
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
                     Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    // "var a; for (a = b(), c; ;) d;" => "var a = b(); for (c; ;) d;"
+                    if Self::merge_leading_assignments_to_declaration(init, true, result, ctx)
+                        && let Some(old_init) = for_stmt.init.take()
+                    {
+                        ctx.drop_expression(old_init.to_expression());
+                    }
                 }
             }
         }
@@ -981,6 +1027,13 @@ impl<'a> PeepholeOptimizations {
                 ctx,
                 is_block_scoped_decl,
             );
+            // "var a; for (b in a = c(), d) e;" => "var a = c(); for (b in d) e;"
+            Self::merge_leading_assignments_to_declaration(
+                &mut for_in_stmt.right,
+                false,
+                result,
+                ctx,
+            );
         }
 
         if ctx.options().sequences {
@@ -1064,6 +1117,9 @@ impl<'a> PeepholeOptimizations {
             ctx,
             is_block_scoped_decl,
         );
+
+        // "var a; for (b of a = c(), d) e;" => "var a = c(); for (b of d) e;"
+        Self::merge_leading_assignments_to_declaration(&mut for_of_stmt.right, false, result, ctx);
 
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()

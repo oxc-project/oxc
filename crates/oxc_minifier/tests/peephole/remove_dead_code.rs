@@ -252,11 +252,8 @@ fn remove_unused_expressions_in_sequence() {
 
 #[test]
 fn remove_unused_expressions_in_for() {
-    test("var i; for (i = 0, 0; i < 10; i++) foo(i);", "var i; for (i = 0; i < 10; i++) foo(i);");
-    test(
-        "var i; for (i = 0; i < 10; 0, i++, 0) foo(i);",
-        "var i; for (i = 0; i < 10; i++) foo(i);",
-    );
+    test("var i; for (i = 0, 0; i < 10; i++) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
+    test("var i; for (i = 0; i < 10; 0, i++, 0) foo(i);", "for (var i = 0; i < 10; i++) foo(i);");
 }
 
 #[test]
