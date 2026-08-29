@@ -5,6 +5,7 @@ use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
+use crate::generated::ancestor::Ancestor;
 
 use super::PeepholeOptimizations;
 
@@ -49,27 +50,23 @@ impl<'a> PeepholeOptimizations {
         // Consequent is non-empty from here on.
 
         if let Some(alternate) = &mut if_stmt.alternate {
-            if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
-                if let Statement::ExpressionStatement(alternate_expr_stmt) = alternate {
-                    // `if (a) b(); else c();` => `a ? b() : c();`
-                    let test = if_stmt.test.take_in(ctx);
-                    let consequent = expr_stmt.expression.take_in(ctx);
-                    let alternate = alternate_expr_stmt.expression.take_in(ctx);
-                    let expr =
-                        Self::minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
-                    return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
-                }
-            } else {
-                // Normalize: move the `!` out of the test by swapping branches.
-                // Avoid swapping when alternate is an `if` — that risks a worse chain.
-                // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
-                if !matches!(alternate, Statement::IfStatement(_))
-                    && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
-                    && unary_expr.operator.is_not()
-                {
-                    ctx.replace_expression_with(&mut if_stmt.test, Self::unwrap_unary);
-                    std::mem::swap(&mut if_stmt.consequent, alternate);
-                }
+            if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent
+                && let Statement::ExpressionStatement(alternate_expr_stmt) = alternate
+            {
+                // `if (a) b(); else c();` => `a ? b() : c();`
+                let test = if_stmt.test.take_in(ctx);
+                let consequent = expr_stmt.expression.take_in(ctx);
+                let alternate = alternate_expr_stmt.expression.take_in(ctx);
+                let expr =
+                    Self::minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+            }
+
+            if Self::should_invert_if(&if_stmt.consequent, alternate, &if_stmt.test, ctx) {
+                ctx.replace_expression_with(&mut if_stmt.test, |old, ctx| {
+                    Self::minimize_not(old.span(), old, ctx, true)
+                });
+                std::mem::swap(&mut if_stmt.consequent, alternate);
             }
         } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             let (op, a) = match &mut if_stmt.test {
@@ -103,6 +100,57 @@ impl<'a> PeepholeOptimizations {
 
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         None
+    }
+
+    /// Returns true when the current statement position accepts only a single
+    /// statement, so rewriting to multiple statements requires a block wrapper.
+    fn parent_requires_single_statement(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(
+            ctx.parent(),
+            Ancestor::ForStatementBody(_)
+                | Ancestor::ForInStatementBody(_)
+                | Ancestor::ForOfStatementBody(_)
+                | Ancestor::WhileStatementBody(_)
+                | Ancestor::DoWhileStatementBody(_)
+                | Ancestor::IfStatementConsequent(_)
+                | Ancestor::IfStatementAlternate(_)
+                | Ancestor::LabeledStatementBody(_)
+        )
+    }
+
+    fn should_invert_if(
+        consequent: &Statement<'a>,
+        alternate: &Statement<'a>,
+        test: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let is_alternate_terminated = alternate.is_jump_statement();
+        let is_consequent_terminated = consequent.is_jump_statement();
+
+        // When exactly one branch terminates (and parent is not `if`),
+        // place the terminating branch in the consequent.
+        // `if (a) c(); else return;` => `if (!a) return; else c();`
+        // `if (!a) c(); else return;` => `if (a) return; else c();`
+        if is_alternate_terminated != is_consequent_terminated
+            && !Self::parent_requires_single_statement(ctx)
+            && !Self::statement_cares_about_scope(consequent)
+            && !Self::statement_cares_about_scope(alternate)
+        {
+            return is_alternate_terminated;
+        }
+
+        // Normalize: move the `!` out of the test by swapping branches.
+        // `if (!a) b; else c;` => `if (a) c; else b;`
+        // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
+        // Avoid swapping when alternate is an `if` — that risks a worse chain.
+        if !matches!(alternate, Statement::IfStatement(_))
+            && let Expression::UnaryExpression(unary_expr) = test
+            && unary_expr.operator.is_not()
+        {
+            return true;
+        }
+
+        false
     }
 
     /// Wrap to avoid ambiguous else.
