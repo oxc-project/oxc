@@ -156,8 +156,8 @@ fn is_typed_array_from(call_expr: &CallExpression) -> bool {
     is_method_call(call_expr, Some(&TYPED_ARRAY_NAMES), Some(&["from"]), Some(1), Some(1))
 }
 
-/// Matches a clone method called on a typed array, e.g.
-/// `new Uint8Array(buf).slice(0, 12)` or `Uint8Array.from(x).map(f)`.
+/// Matches a functional array method called on a typed array, e.g.
+/// `Uint8Array.from(x).map(f)`.
 ///
 /// These return a typed array rather than a plain array, so the surrounding
 /// spread converts and cannot be removed.
@@ -173,7 +173,18 @@ fn is_typed_array_method(call_expr: &CallExpression) -> bool {
 
 impl ConstEval for CallExpression<'_> {
     fn const_eval(&self) -> ValueHint {
-        if is_typed_array_from(self) || is_typed_array_method(self) {
+        if is_typed_array_from(self) {
+            ValueHint::NewTypedArray
+        } else if is_slice_method(self) {
+            self.callee.get_member_expr().map_or(
+                ValueHint::Unknown,
+                |member_expr| match member_expr.object().const_eval() {
+                    ValueHint::NewArray => ValueHint::NewArray,
+                    ValueHint::NewTypedArray => ValueHint::NewTypedArray,
+                    _ => ValueHint::Unknown,
+                },
+            )
+        } else if is_typed_array_method(self) {
             ValueHint::NewTypedArray
         } else if is_split_method(self)
             || is_array_factory(self)
@@ -237,7 +248,6 @@ fn is_functional_array_method(call_expr: &CallExpression) -> bool {
             "flat",
             "flatMap",
             "map",
-            "slice",
             "splice",
             "toReversed",
             "toSorted",
@@ -247,6 +257,10 @@ fn is_functional_array_method(call_expr: &CallExpression) -> bool {
         None,
         None,
     )
+}
+
+fn is_slice_method(call_expr: &CallExpression) -> bool {
+    is_method_call(call_expr, None, Some(&["slice"]), None, None)
 }
 
 /// Matches `<expr>.reduce(a, b)`, which usually looks like
