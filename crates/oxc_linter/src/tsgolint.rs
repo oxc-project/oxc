@@ -379,10 +379,15 @@ impl TsGoLintState {
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
-            use windows_sys::Win32::System::Threading::CREATE_NO_WINDOW;
+            use windows_sys::Win32::System::{
+                Console::GetConsoleWindow, Threading::CREATE_NO_WINDOW,
+            };
 
-            // `oxlint` may be launched by a GUI process with no console attached.
-            cmd.creation_flags(CREATE_NO_WINDOW);
+            // SAFETY: `GetConsoleWindow` has no preconditions.
+            if unsafe { GetConsoleWindow() }.is_null() {
+                // `oxlint` may be launched by a GUI process with no console attached.
+                cmd.creation_flags(CREATE_NO_WINDOW);
+            }
         }
 
         let mut child = match cmd.spawn() {

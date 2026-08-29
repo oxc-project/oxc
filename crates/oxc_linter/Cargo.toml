@@ -79,7 +79,11 @@ unicode-segmentation = { workspace = true }
 url = { workspace = true }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { workspace = true, features = ["Win32_System_Threading"] }
+windows-sys = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_System_Console",
+  "Win32_System_Threading",
+] }
 
 [dev-dependencies]
 insta = { workspace = true }
