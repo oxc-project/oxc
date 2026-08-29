@@ -532,6 +532,7 @@ pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctio
 pub use crate::rules::typescript::explicit_member_accessibility::ExplicitMemberAccessibility as TypescriptExplicitMemberAccessibility;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
 pub use crate::rules::typescript::method_signature_style::MethodSignatureStyle as TypescriptMethodSignatureStyle;
+pub use crate::rules::typescript::naming_convention::NamingConvention as TypescriptNamingConvention;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
 pub use crate::rules::typescript::no_base_to_string::NoBaseToString as TypescriptNoBaseToString;
 pub use crate::rules::typescript::no_confusing_non_null_assertion::NoConfusingNonNullAssertion as TypescriptNoConfusingNonNullAssertion;
@@ -1110,6 +1111,7 @@ pub enum RuleEnum {
     EslintValidTypeof(EslintValidTypeof),
     EslintVarsOnTop(EslintVarsOnTop),
     EslintYoda(EslintYoda),
+    TypescriptNamingConvention(TypescriptNamingConvention),
     TypescriptAdjacentOverloadSignatures(TypescriptAdjacentOverloadSignatures),
     TypescriptArrayType(TypescriptArrayType),
     TypescriptAwaitThenable(TypescriptAwaitThenable),
@@ -1990,7 +1992,8 @@ const ESLINT_USE_ISNAN_ID: usize = ESLINT_UNICODE_BOM_ID + 1usize;
 const ESLINT_VALID_TYPEOF_ID: usize = ESLINT_USE_ISNAN_ID + 1usize;
 const ESLINT_VARS_ON_TOP_ID: usize = ESLINT_VALID_TYPEOF_ID + 1usize;
 const ESLINT_YODA_ID: usize = ESLINT_VARS_ON_TOP_ID + 1usize;
-const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = ESLINT_YODA_ID + 1usize;
+const TYPESCRIPT_NAMING_CONVENTION_ID: usize = ESLINT_YODA_ID + 1usize;
+const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = TYPESCRIPT_NAMING_CONVENTION_ID + 1usize;
 const TYPESCRIPT_ARRAY_TYPE_ID: usize = TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID + 1usize;
 const TYPESCRIPT_AWAIT_THENABLE_ID: usize = TYPESCRIPT_ARRAY_TYPE_ID + 1usize;
 const TYPESCRIPT_BAN_TS_COMMENT_ID: usize = TYPESCRIPT_AWAIT_THENABLE_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -2969,6 +2972,7 @@ static RULE_NAMES: [&str; 870usize] = [
     EslintValidTypeof::NAME,
     EslintVarsOnTop::NAME,
     EslintYoda::NAME,
+    TypescriptNamingConvention::NAME,
     TypescriptAdjacentOverloadSignatures::NAME,
     TypescriptArrayType::NAME,
     TypescriptAwaitThenable::NAME,
@@ -3845,6 +3849,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => ESLINT_VALID_TYPEOF_ID,
             Self::EslintVarsOnTop(_) => ESLINT_VARS_ON_TOP_ID,
             Self::EslintYoda(_) => ESLINT_YODA_ID,
+            Self::TypescriptNamingConvention(_) => TYPESCRIPT_NAMING_CONVENTION_ID,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID
             }
@@ -4856,6 +4861,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::CATEGORY,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::CATEGORY,
             Self::EslintYoda(_) => EslintYoda::CATEGORY,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::CATEGORY,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::CATEGORY
             }
@@ -5899,6 +5905,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::FIX,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::FIX,
             Self::EslintYoda(_) => EslintYoda::FIX,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::FIX,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::FIX
             }
@@ -6922,6 +6929,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::documentation(),
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::documentation(),
             Self::EslintYoda(_) => EslintYoda::documentation(),
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::documentation(),
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::documentation()
             }
@@ -8493,6 +8501,10 @@ impl RuleEnum {
                 .or_else(|| EslintVarsOnTop::schema(generator)),
             Self::EslintYoda(_) => {
                 EslintYoda::config_schema(generator).or_else(|| EslintYoda::schema(generator))
+            }
+            Self::TypescriptNamingConvention(_) => {
+                TypescriptNamingConvention::config_schema(generator)
+                    .or_else(|| TypescriptNamingConvention::schema(generator))
             }
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::config_schema(generator)
@@ -10649,6 +10661,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => "eslint",
             Self::EslintVarsOnTop(_) => "eslint",
             Self::EslintYoda(_) => "eslint",
+            Self::TypescriptNamingConvention(_) => "typescript",
             Self::TypescriptAdjacentOverloadSignatures(_) => "typescript",
             Self::TypescriptArrayType(_) => "typescript",
             Self::TypescriptAwaitThenable(_) => "typescript",
@@ -11644,6 +11657,9 @@ impl RuleEnum {
                 Ok(Self::EslintValidTypeof(EslintValidTypeof::from_configuration(value)?))
             }
             Self::EslintYoda(_) => Ok(Self::EslintYoda(EslintYoda::from_configuration(value)?)),
+            Self::TypescriptNamingConvention(_) => Ok(Self::TypescriptNamingConvention(
+                TypescriptNamingConvention::from_configuration(value)?,
+            )),
             Self::TypescriptArrayType(_) => {
                 Ok(Self::TypescriptArrayType(TypescriptArrayType::from_configuration(value)?))
             }
@@ -12654,6 +12670,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run(node, ctx),
             Self::EslintVarsOnTop(rule) => rule.run(node, ctx),
             Self::EslintYoda(rule) => rule.run(node, ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run(node, ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.run(node, ctx),
             Self::TypescriptArrayType(rule) => rule.run(node, ctx),
             Self::TypescriptAwaitThenable(rule) => rule.run(node, ctx),
@@ -13541,6 +13558,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run_once(ctx),
             Self::EslintVarsOnTop(rule) => rule.run_once(ctx),
             Self::EslintYoda(rule) => rule.run_once(ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run_once(ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.run_once(ctx),
             Self::TypescriptArrayType(rule) => rule.run_once(ctx),
             Self::TypescriptAwaitThenable(rule) => rule.run_once(ctx),
@@ -14431,6 +14449,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintVarsOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintYoda(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -15433,6 +15452,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.should_run(ctx),
             Self::EslintVarsOnTop(rule) => rule.should_run(ctx),
             Self::EslintYoda(rule) => rule.should_run(ctx),
+            Self::TypescriptNamingConvention(rule) => rule.should_run(ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.should_run(ctx),
             Self::TypescriptArrayType(rule) => rule.should_run(ctx),
             Self::TypescriptAwaitThenable(rule) => rule.should_run(ctx),
@@ -16341,6 +16361,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::IS_TSGOLINT_RULE,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::IS_TSGOLINT_RULE,
             Self::EslintYoda(_) => EslintYoda::IS_TSGOLINT_RULE,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::IS_TSGOLINT_RULE,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::IS_TSGOLINT_RULE
             }
@@ -17577,6 +17598,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::VERSION,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::VERSION,
             Self::EslintYoda(_) => EslintYoda::VERSION,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::VERSION,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::VERSION
             }
@@ -18632,6 +18654,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::HAS_CONFIG,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::HAS_CONFIG,
             Self::EslintYoda(_) => EslintYoda::HAS_CONFIG,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::HAS_CONFIG,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::HAS_CONFIG
             }
@@ -19710,6 +19733,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::INFO,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::INFO,
             Self::EslintYoda(_) => EslintYoda::INFO,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::INFO,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::INFO
             }
@@ -20703,6 +20727,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.types_info(),
             Self::EslintVarsOnTop(rule) => rule.types_info(),
             Self::EslintYoda(rule) => rule.types_info(),
+            Self::TypescriptNamingConvention(rule) => rule.types_info(),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.types_info(),
             Self::TypescriptArrayType(rule) => rule.types_info(),
             Self::TypescriptAwaitThenable(rule) => rule.types_info(),
@@ -21577,6 +21602,7 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run_info(),
             Self::EslintVarsOnTop(rule) => rule.run_info(),
             Self::EslintYoda(rule) => rule.run_info(),
+            Self::TypescriptNamingConvention(rule) => rule.run_info(),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.run_info(),
             Self::TypescriptArrayType(rule) => rule.run_info(),
             Self::TypescriptAwaitThenable(rule) => rule.run_info(),
@@ -22473,6 +22499,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintValidTypeof(EslintValidTypeof::default()),
         RuleEnum::EslintVarsOnTop(EslintVarsOnTop::default()),
         RuleEnum::EslintYoda(EslintYoda::default()),
+        RuleEnum::TypescriptNamingConvention(TypescriptNamingConvention::default()),
         RuleEnum::TypescriptAdjacentOverloadSignatures(
             TypescriptAdjacentOverloadSignatures::default(),
         ),

@@ -1,0 +1,2238 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ typescript(naming-convention): Variable name `x_x` must match one of the following formats: camelCase, UPPER_CASE
+   ╭─[naming_convention.ts:1:7]
+ 1 │ const x_x = 1;
+   ·       ───
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `x_x` must match one of the following formats: camelCase, UPPER_CASE
+   ╭─[naming_convention.ts:1:7]
+ 1 │ const x_x = 1;
+   ·       ───
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `child_process` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 const child_process = require('child_process');
+   ·                       ─────────────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `unused_foo` must not match the RegExp: /^unused_\w/u
+   ╭─[naming_convention.ts:2:21]
+ 1 │ 
+ 2 │                 let unused_foo = 'a';
+   ·                     ──────────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `_unused_foo` must not match the RegExp: /^unused_\w/u
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 const _unused_foo = 1;
+   ·                       ───────────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `IFoo` must not match the RegExp: /^I[A-Z]/u
+   ╭─[naming_convention.ts:2:27]
+ 1 │ 
+ 2 │                 interface IFoo {}
+   ·                           ────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `IBar` must not match the RegExp: /^I[A-Z]/u
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 class IBar {}
+   ·                       ────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `fooBar` must match the RegExp: /function/u
+   ╭─[naming_convention.ts:2:26]
+ 1 │ 
+ 2 │                 function fooBar() {}
+   ·                          ──────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `unused_foo` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:21]
+ 1 │ 
+ 2 │                 let unused_foo = 'a';
+   ·                     ──────────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `_unused_foo` trimmed as `unused_foo` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 const _unused_foo = 1;
+   ·                       ───────────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `foo_bar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ 
+ 2 │                 function foo_bar() {}
+   ·                          ───────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `IFoo` must not match the RegExp: /^I[A-Z]/u
+   ╭─[naming_convention.ts:2:27]
+ 1 │ 
+ 2 │                 interface IFoo {}
+   ·                           ────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `IBar` must not match the RegExp: /^I[A-Z]/u
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 class IBar {}
+   ·                       ────
+ 3 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Property name `Property Name` must match one of the following formats: strictCamelCase
+   ╭─[naming_convention.ts:3:19]
+ 2 │                 const foo = {
+ 3 │                   'Property Name': 'asdf',
+   ·                   ───────────────
+ 4 │                 };
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `fooBar` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:3:36]
+ 2 │                 class foo {
+ 3 │                   private readonly fooBar: boolean;
+   ·                                    ──────
+ 4 │                 }
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `otherConstant` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:3:26]
+ 2 │                 class SomeClass {
+ 3 │                   static otherConstant = 'hello';
+   ·                          ─────────────
+ 4 │                 }
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `Baz` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:3:23]
+ 2 │                 declare class Foo {
+ 3 │                   Bar(Baz: string): void;
+   ·                       ───
+ 4 │                 }
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `PascalCaseVar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:30]
+ 1 │ 
+ 2 │                 export const PascalCaseVar = 1;
+   ·                              ─────────────
+ 3 │                 export enum PascalCaseEnum {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum name `PascalCaseEnum` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:3:29]
+ 2 │                 export const PascalCaseVar = 1;
+ 3 │                 export enum PascalCaseEnum {}
+   ·                             ──────────────
+ 4 │                 export class PascalCaseClass {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `PascalCaseClass` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:4:30]
+ 3 │                 export enum PascalCaseEnum {}
+ 4 │                 export class PascalCaseClass {}
+   ·                              ───────────────
+ 5 │                 export function PascalCaseFunction() {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `PascalCaseFunction` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:5:33]
+ 4 │                 export class PascalCaseClass {}
+ 5 │                 export function PascalCaseFunction() {}
+   ·                                 ──────────────────
+ 6 │                 export interface PascalCaseInterface {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `PascalCaseInterface` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:6:34]
+ 5 │                 export function PascalCaseFunction() {}
+ 6 │                 export interface PascalCaseInterface {}
+   ·                                  ───────────────────
+ 7 │                 export type PascalCaseType = {};
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Alias name `PascalCaseType` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:7:29]
+ 6 │                 export interface PascalCaseInterface {}
+ 7 │                 export type PascalCaseType = {};
+   ·                             ──────────────
+ 8 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `PascalCaseVar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 const PascalCaseVar = 1;
+   ·                       ─────────────
+ 3 │                 enum PascalCaseEnum {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum name `PascalCaseEnum` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:3:22]
+ 2 │                 const PascalCaseVar = 1;
+ 3 │                 enum PascalCaseEnum {}
+   ·                      ──────────────
+ 4 │                 class PascalCaseClass {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `PascalCaseClass` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:4:23]
+ 3 │                 enum PascalCaseEnum {}
+ 4 │                 class PascalCaseClass {}
+   ·                       ───────────────
+ 5 │                 function PascalCaseFunction() {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `PascalCaseFunction` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:5:26]
+ 4 │                 class PascalCaseClass {}
+ 5 │                 function PascalCaseFunction() {}
+   ·                          ──────────────────
+ 6 │                 interface PascalCaseInterface {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `PascalCaseInterface` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:6:27]
+ 5 │                 function PascalCaseFunction() {}
+ 6 │                 interface PascalCaseInterface {}
+   ·                           ───────────────────
+ 7 │                 type PascalCaseType = {};
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Alias name `PascalCaseType` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:7:22]
+ 6 │                 interface PascalCaseInterface {}
+ 7 │                 type PascalCaseType = {};
+   ·                      ──────────────
+ 8 │                 export {
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `PascalCaseVar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 const PascalCaseVar = 1;
+   ·                       ─────────────
+ 3 │                 function PascalCaseFunction() {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `PascalCaseFunction` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:3:26]
+ 2 │                 const PascalCaseVar = 1;
+ 3 │                 function PascalCaseFunction() {}
+   ·                          ──────────────────
+ 4 │                 declare function PascalCaseDeclaredFunction();
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `PascalCaseDeclaredFunction` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:4:34]
+ 3 │                 function PascalCaseFunction() {}
+ 4 │                 declare function PascalCaseDeclaredFunction();
+   ·                                  ──────────────────────────
+ 5 │               
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `some_name1` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:25]
+ 1 │ 
+ 2 │                 const { some_name1 } = {};
+   ·                         ──────────
+ 3 │                 const { some_name2 = 2 } = {};
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `some_name2` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:3:25]
+ 2 │                 const { some_name1 } = {};
+ 3 │                 const { some_name2 = 2 } = {};
+   ·                         ──────────
+ 4 │                 const { ignored: IgnoredDueToModifiers1 } = {};
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `aName` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:3:21]
+ 2 │                 export function Foo(
+ 3 │                   { aName },
+   ·                     ─────
+ 4 │                   { anotherName = 1 },
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `anotherName` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:4:21]
+ 3 │                   { aName },
+ 4 │                   { anotherName = 1 },
+   ·                     ───────────
+ 5 │                   { ignored: IgnoredDueToModifiers1 },
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `some_name` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:3:43]
+ 2 │                 class Ignored {
+ 3 │                   private static readonly some_name;
+   ·                                           ─────────
+ 4 │                   IgnoredDueToModifiers = 1;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `some_name` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:4:38]
+ 3 │                   constructor(
+ 4 │                     private readonly some_name,
+   ·                                      ─────────
+ 5 │                     IgnoredDueToModifiers,
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `some_name` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:3:34]
+ 2 │                 class Ignored {
+ 3 │                   private static some_name() {}
+   ·                                  ─────────
+ 4 │                   IgnoredDueToModifiers() {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `some_name` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:3:38]
+ 2 │                 class Ignored {
+ 3 │                   private static get some_name() {}
+   ·                                      ─────────
+ 4 │                   get IgnoredDueToModifiers() {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `some_name` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:32]
+ 1 │ 
+ 2 │                 abstract class some_name {}
+   ·                                ─────────
+ 3 │                 class IgnoredDueToModifier {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UnusedVar` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:2:23]
+ 1 │ 
+ 2 │                 const UnusedVar = 1;
+   ·                       ─────────
+ 3 │                 function UnusedFunc(
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `UnusedFunc` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:3:26]
+ 2 │                 const UnusedVar = 1;
+ 3 │                 function UnusedFunc(
+   ·                          ──────────
+ 4 │                   // this line is intentionally broken out
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `UnusedParam` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:5:19]
+ 4 │                   // this line is intentionally broken out
+ 5 │                   UnusedParam: string,
+   ·                   ───────────
+ 6 │                 ) {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `UnusedClass` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:7:23]
+ 6 │                 ) {}
+ 7 │                 class UnusedClass {}
+   ·                       ───────────
+ 8 │                 interface UnusedInterface {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `UnusedInterface` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:8:27]
+ 7 │                 class UnusedClass {}
+ 8 │                 interface UnusedInterface {}
+   ·                           ───────────────
+ 9 │                 type UnusedType<
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Alias name `UnusedType` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:9:22]
+  8 │                 interface UnusedInterface {}
+  9 │                 type UnusedType<
+    ·                      ──────────
+ 10 │                   // this line is intentionally broken out
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Parameter name `UnusedTypeParam` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:11:19]
+ 10 │                   // this line is intentionally broken out
+ 11 │                   UnusedTypeParam,
+    ·                   ───────────────
+ 12 │                 > = {};
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Property name `a a` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:3:19]
+ 2 │                 const ignored1 = {
+ 3 │                   'a a': 1,
+   ·                   ─────
+ 4 │                   'b b'() {},
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `b b` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:4:19]
+ 3 │                   'a a': 1,
+ 4 │                   'b b'() {},
+   ·                   ─────
+ 5 │                   get 'c c'() {
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `c c` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:5:23]
+ 4 │                   'b b'() {},
+ 5 │                   get 'c c'() {
+   ·                       ─────
+ 6 │                     return 1;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `d d` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:8:23]
+ 7 │                   },
+ 8 │                   set 'd d'(value: string) {},
+   ·                       ─────
+ 9 │                 };
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `a a` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:11:19]
+ 10 │                 class ignored2 {
+ 11 │                   'a a' = 1;
+    ·                   ─────
+ 12 │                   'b b'() {}
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `b b` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:12:19]
+ 11 │                   'a a' = 1;
+ 12 │                   'b b'() {}
+    ·                   ─────
+ 13 │                   get 'c c'() {
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `c c` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:13:23]
+ 12 │                   'b b'() {}
+ 13 │                   get 'c c'() {
+    ·                       ─────
+ 14 │                     return 1;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `d d` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:16:23]
+ 15 │                   }
+ 16 │                   set 'd d'(value: string) {}
+    ·                       ─────
+ 17 │                 }
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `a a` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:19:19]
+ 18 │                 interface ignored3 {
+ 19 │                   'a a': 1;
+    ·                   ─────
+ 20 │                   'b b'(): void;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `b b` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:20:19]
+ 19 │                   'a a': 1;
+ 20 │                   'b b'(): void;
+    ·                   ─────
+ 21 │                 }
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `a a` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:23:19]
+ 22 │                 type ignored4 = {
+ 23 │                   'a a': 1;
+    ·                   ─────
+ 24 │                   'b b'(): void;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `b b` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:24:19]
+ 23 │                   'a a': 1;
+ 24 │                   'b b'(): void;
+    ·                   ─────
+ 25 │                 };
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum Member name `a a` must match one of the following formats: PascalCase
+    ╭─[naming_convention.ts:27:19]
+ 26 │                 enum ignored5 {
+ 27 │                   'a a',
+    ·                   ─────
+ 28 │                 }
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `foo     Bar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:3:19]
+ 2 │                 type Foo = {
+ 3 │                   'foo     Bar': string;
+   ·                   ─────────────
+ 4 │                   '': string;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:4:19]
+ 3 │                   'foo     Bar': string;
+ 4 │                   '': string;
+   ·                   ──
+ 5 │                   '0': string;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `0` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:5:19]
+ 4 │                   '': string;
+ 5 │                   '0': string;
+   ·                   ───
+ 6 │                   'foo': string;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `foo-bar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:7:19]
+ 6 │                   'foo': string;
+ 7 │                   'foo-bar': string;
+   ·                   ─────────
+ 8 │                   '#foo-bar': string;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `#foo-bar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:8:19]
+ 7 │                   'foo-bar': string;
+ 8 │                   '#foo-bar': string;
+   ·                   ──────────
+ 9 │                 };
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `boo-----foo` must match one of the following formats: camelCase
+    ╭─[naming_convention.ts:12:19]
+ 11 │                 interface Bar {
+ 12 │                   'boo-----foo': string;
+    ·                   ─────────────
+ 13 │                 }
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `asyncBar` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:10:32]
+  9 │                   // ❌ error
+ 10 │                   public async asyncBar() {
+    ·                                ────────
+ 11 │                     return 42;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `AsyncBar2` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:14:26]
+ 13 │                   // ❌ error
+ 14 │                   public AsyncBar2 = async () => {
+    ·                          ─────────
+ 15 │                     return 42;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `AsyncBar3` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:18:26]
+ 17 │                   // ❌ error
+ 18 │                   public AsyncBar3 = async function () {
+    ·                          ─────────
+ 19 │                     return 42;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `ASYNC_BAR` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:26:41]
+ 25 │                   // ❌ error
+ 26 │                   public abstract async ASYNC_BAR(): number;
+    ·                                         ─────────
+ 27 │                 }
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `AsyncBar` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:10:25]
+  9 │                   // ❌ error
+ 10 │                   async AsyncBar() {
+    ·                         ────────
+ 11 │                     return 42;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `AsyncBar2` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:14:19]
+ 13 │                   // ❌ error
+ 14 │                   AsyncBar2: async () => {
+    ·                   ─────────
+ 15 │                     return 42;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `AsyncBar3` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:18:19]
+ 17 │                   // ❌ error
+ 18 │                   AsyncBar3: async function () {
+    ·                   ─────────
+ 19 │                     return 42;
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `AsyncBar1` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:7:23]
+ 6 │                 // ❌ error
+ 7 │                 const AsyncBar1 = async () => {};
+   ·                       ─────────
+ 8 │                 const async_bar1 = async () => {};
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `asyncBar5` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:12:23]
+ 11 │                 // ❌ error
+ 12 │                 const asyncBar5 = async function async_bar6() {};
+    ·                       ─────────
+ 13 │               
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  × Identifier `async_bar3` has already been declared
+    ╭─[naming_convention.ts:9:23]
+  8 │                 async function asyncBar2() {}
+  9 │                 const async_bar3 = async function async_bar4() {};
+    ·                       ─────┬────
+    ·                            ╰── `async_bar3` has already been declared here
+ 10 │                 async function async_bar2() {}
+ 11 │                 // ❌ error
+ 12 │                 const async_bar3 = async function ASYNC_BAR4() {};
+    ·                       ─────┬────
+    ·                            ╰── It can not be redeclared here
+ 13 │               
+    ╰────
+
+  ⚠ typescript(naming-convention): Class Property name `someAttributeOverride` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:6:35]
+ 5 │                   // ❌ error
+ 6 │                   public override someAttributeOverride = 1;
+   ·                                   ─────────────────────
+ 7 │                 }
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `someMethodOverride` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:7:35]
+ 6 │                   // ❌ error
+ 7 │                   public override someMethodOverride() {
+   ·                                   ──────────────────
+ 8 │                     return 42;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `someGetterOverride` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:6:39]
+ 5 │                   // ❌ error
+ 6 │                   public override get someGetterOverride(): string;
+   ·                                       ──────────────────
+ 7 │                   public set someSetter(val: string);
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `someSetterOverride` must match one of the following formats: snake_case
+    ╭─[naming_convention.ts:10:39]
+  9 │                   // ❌ error
+ 10 │                   public override set someSetterOverride(val: string);
+    ·                                       ──────────────────
+ 11 │                 }
+    ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `first_private_field` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:5:27]
+ 4 │                   // ❌ error
+ 5 │                   private first_private_field = 1;
+   ·                           ───────────────────
+ 6 │                   // ❌ error
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `secondPrivateField` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:7:19]
+ 6 │                   // ❌ error
+ 7 │                   #secondPrivateField = 1;
+   ·                   ───────────────────
+ 8 │                   #second_private_field = 1;
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `first_private_method` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:5:27]
+ 4 │                   // ❌ error
+ 5 │                   private first_private_method() {}
+   ·                           ────────────────────
+ 6 │                   // ❌ error
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `secondPrivateMethod` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:7:19]
+ 6 │                   // ❌ error
+ 7 │                   #secondPrivateMethod() {}
+   ·                   ────────────────────
+ 8 │                   #second_private_method() {}
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Import name `fooBar` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:1:13]
+ 1 │ import * as fooBar from 'foo_bar';
+   ·             ──────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Import name `FooBar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:1:8]
+ 1 │ import FooBar from 'foo_bar';
+   ·        ──────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Import name `foo_bar` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:1:21]
+ 1 │ import { default as foo_bar } from 'foo_bar';
+   ·                     ───────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Import name `foo` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:1:20]
+ 1 │ import { "🍎" as foo } from 'foo_bar';
+   ·                  ───
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { accessor snake_case = 10; }
+   ·                                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { accessor #snake_case = 10; }
+   ·                                  ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:41]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { static accessor snake_case = 10; }
+   ·                                         ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:41]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { static accessor #snake_case = 10; }
+   ·                                         ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:42]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { private accessor snake_case = 10; }
+   ·                                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:49]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { private static accessor snake_case = 10; }
+   ·                                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:43]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { override accessor snake_case = 10; }
+   ·                                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { accessor "snake_case" = 10; }
+   ·                                  ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:44]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { protected accessor snake_case = 10; }
+   ·                                            ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:41]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { public accessor snake_case = 10; }
+   ·                                         ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:43]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { abstract accessor snake_case; }
+   ·                                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:31]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         const ignored = { get snake_case() {} };
+   ·                               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:31]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         const ignored = { set "snake_case"(ignored) {} };
+   ·                               ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:37]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { private get snake_case() {} }
+   ·                                     ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:37]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { private set "snake_case"(ignored) {} }
+   ·                                     ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:44]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { private static get snake_case() {} }
+   ·                                            ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:36]
+ 1 │ // {"selector":"accessor","format":["camelCase"]}
+ 2 │         class Ignored { static get #snake_case() {} }
+   ·                                    ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { accessor snake_case = 10; }
+   ·                                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { accessor #snake_case = 10; }
+   ·                                  ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:41]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { static accessor snake_case = 10; }
+   ·                                         ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:41]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { static accessor #snake_case = 10; }
+   ·                                         ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:42]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { private accessor snake_case = 10; }
+   ·                                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:49]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { private static accessor snake_case = 10; }
+   ·                                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:43]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { override accessor snake_case = 10; }
+   ·                                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { accessor "snake_case" = 10; }
+   ·                                  ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:44]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { protected accessor snake_case = 10; }
+   ·                                            ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:41]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { public accessor snake_case = 10; }
+   ·                                         ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Auto Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:43]
+ 1 │ // {"selector":"autoAccessor","format":["camelCase"]}
+ 2 │         class Ignored { abstract accessor snake_case; }
+   ·                                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"class","format":["camelCase"]}
+ 2 │         class snake_case {}
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:24]
+ 1 │ // {"selector":"class","format":["camelCase"]}
+ 2 │         abstract class snake_case {}
+   ·                        ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:31]
+ 1 │ // {"selector":"class","format":["camelCase"]}
+ 2 │         const ignored = class snake_case {}
+   ·                               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:31]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         const ignored = { get snake_case() {} };
+   ·                               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:31]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         const ignored = { set "snake_case"(ignored) {} };
+   ·                               ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:37]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         class Ignored { private get snake_case() {} }
+   ·                                     ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:37]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         class Ignored { private set "snake_case"(ignored) {} }
+   ·                                     ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:44]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         class Ignored { private static get snake_case() {} }
+   ·                                            ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:36]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         class Ignored { static get #snake_case() {} }
+   ·                                    ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:47]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         abstract class Ignored { abstract get snake_case(): number }
+   ·                                               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:47]
+ 1 │ // {"selector":"classicAccessor","format":["camelCase"]}
+ 2 │         abstract class Ignored { abstract set snake_case(ignored: number) }
+   ·                                               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER_CASE` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const UPPER_CASE = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const UPPER = 1;
+   ·               ─────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `StrictPascalCase` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const StrictPascalCase = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["PascalCase"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER_CASE` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["PascalCase"]}
+ 2 │         const UPPER_CASE = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must match one of the following formats: PascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["PascalCase"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER_CASE` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["snake_case"]}
+ 2 │         const UPPER_CASE = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `SNAKE_case_UNSTRICT` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["snake_case"]}
+ 2 │         const SNAKE_case_UNSTRICT = 1;
+   ·               ───────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["snake_case"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `StrictPascalCase` must match one of the following formats: snake_case
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["snake_case"]}
+ 2 │         const StrictPascalCase = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: strictCamelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["strictCamelCase"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER_CASE` must match one of the following formats: strictCamelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["strictCamelCase"]}
+ 2 │         const UPPER_CASE = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER` must match one of the following formats: strictCamelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["strictCamelCase"]}
+ 2 │         const UPPER = 1;
+   ·               ─────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `StrictPascalCase` must match one of the following formats: strictCamelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["strictCamelCase"]}
+ 2 │         const StrictPascalCase = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `camelCaseUNSTRICT` must match one of the following formats: strictCamelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["strictCamelCase"]}
+ 2 │         const camelCaseUNSTRICT = 1;
+   ·               ─────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: StrictPascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["StrictPascalCase"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER_CASE` must match one of the following formats: StrictPascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["StrictPascalCase"]}
+ 2 │         const UPPER_CASE = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `UPPER` must match one of the following formats: StrictPascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["StrictPascalCase"]}
+ 2 │         const UPPER = 1;
+   ·               ─────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must match one of the following formats: StrictPascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["StrictPascalCase"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `PascalCaseUNSTRICT` must match one of the following formats: StrictPascalCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["StrictPascalCase"]}
+ 2 │         const PascalCaseUNSTRICT = 1;
+   ·               ──────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `lower` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["UPPER_CASE"]}
+ 2 │         const lower = 1;
+   ·               ─────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["UPPER_CASE"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `SNAKE_case_UNSTRICT` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["UPPER_CASE"]}
+ 2 │         const SNAKE_case_UNSTRICT = 1;
+   ·               ───────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["UPPER_CASE"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `StrictPascalCase` must match one of the following formats: UPPER_CASE
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["UPPER_CASE"]}
+ 2 │         const StrictPascalCase = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:18]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         function snake_case () {}
+   ·                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:20]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         (function (snake_case) {});
+   ·                    ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:45]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { constructor(private snake_case) {} }
+   ·                                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const ignored = { snake_case };
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         interface Ignored { snake_case: string }
+   ·                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         type Ignored = { snake_case: string }
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { private snake_case = 1 }
+   ·                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:25]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { #snake_case = 1 }
+   ·                         ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:45]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { constructor(private snake_case) {} }
+   ·                                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:25]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { #snake_case() {} }
+   ·                         ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { private snake_case() {} }
+   ·                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         const ignored = { snake_case() {} };
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Classic Accessor name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:37]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         class Ignored { private get snake_case() {} }
+   ·                                     ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum Member name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:24]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         enum Ignored { snake_case }
+   ·                        ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:24]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         abstract class snake_case {}
+   ·                        ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:19]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         interface snake_case { }
+   ·                   ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Alias name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:14]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         type snake_case = { };
+   ·              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:14]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         enum snake_case {}
+   ·              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"filter":"[iI]gnored","selector":"default","format":["camelCase"]}
+ 2 │         interface Ignored<snake_case> extends Ignored<string> {}
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:14]
+ 1 │ // {"selector":"enum","format":["camelCase"]}
+ 2 │         enum snake_case {}
+   ·              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum Member name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:24]
+ 1 │ // {"selector":"enumMember","format":["camelCase"]}
+ 2 │         enum Ignored { snake_case }
+   ·                        ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Enum Member name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:24]
+ 1 │ // {"selector":"enumMember","format":["camelCase"]}
+ 2 │         enum Ignored { "snake_case" }
+   ·                        ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:18]
+ 1 │ // {"selector":"function","format":["camelCase"]}
+ 2 │         function snake_case () {}
+   ·                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:19]
+ 1 │ // {"selector":"function","format":["camelCase"]}
+ 2 │         (function snake_case () {});
+   ·                   ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Function name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"function","format":["camelCase"]}
+ 2 │         declare function snake_case ();
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Interface name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:19]
+ 1 │ // {"selector":"interface","format":["camelCase"]}
+ 2 │         interface snake_case {}
+   ·                   ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { private snake_case() {} }
+   ·                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { private "snake_case"() {} }
+   ·                                 ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:39]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { private async snake_case() {} }
+   ·                                       ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:40]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { private static snake_case() {} }
+   ·                                        ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:46]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { private static async snake_case() {} }
+   ·                                              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { private snake_case = () => {} }
+   ·                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { abstract snake_case() }
+   ·                                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:25]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { #snake_case() }
+   ·                         ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:32]
+ 1 │ // {"selector":"classMethod","format":["camelCase"]}
+ 2 │         class Ignored { static #snake_case() }
+   ·                                ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"objectLiteralMethod","format":["camelCase"]}
+ 2 │         const ignored = { snake_case() {} };
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"objectLiteralMethod","format":["camelCase"]}
+ 2 │         const ignored = { "snake_case"() {} };
+   ·                           ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"objectLiteralMethod","format":["camelCase"]}
+ 2 │         const ignored = { snake_case: () => {} };
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         interface Ignored { snake_case(): string }
+   ·                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         interface Ignored { "snake_case"(): string }
+   ·                             ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         interface Ignored { snake_case: () => string }
+   ·                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         interface Ignored { "snake_case": () => string }
+   ·                             ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         type Ignored = { snake_case(): string }
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         type Ignored = { "snake_case"(): string }
+   ·                          ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         type Ignored = { snake_case: () => string }
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Method name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeMethod","format":["camelCase"]}
+ 2 │         type Ignored = { "snake_case": () => string }
+   ·                          ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored(snake_case) {}
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:20]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         (function (snake_case) {});
+   ·                    ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         declare function ignored(snake_case);
+   ·                                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored({snake_case}) {}
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored(...snake_case) {}
+   ·                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored({snake_case = 1}) {}
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:30]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored({...snake_case}) {}
+   ·                              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored([snake_case]) {}
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored([snake_case = 1]) {}
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:30]
+ 1 │ // {"selector":"parameter","format":["camelCase"]}
+ 2 │         function ignored([...snake_case]) {}
+   ·                              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:45]
+ 1 │ // {"selector":"parameterProperty","format":["camelCase"]}
+ 2 │         class Ignored { constructor(private snake_case) {} }
+   ·                                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:46]
+ 1 │ // {"selector":"parameterProperty","format":["camelCase"]}
+ 2 │         class Ignored { constructor(readonly snake_case) {} }
+   ·                                              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:54]
+ 1 │ // {"selector":"parameterProperty","format":["camelCase"]}
+ 2 │         class Ignored { constructor(private readonly snake_case) {} }
+   ·                                                      ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Parameter Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:54]
+ 1 │ // {"modifiers":["readonly"],"selector":"parameterProperty","format":["camelCase"]}
+ 2 │         class Ignored { constructor(private readonly snake_case) {} }
+   ·                                                      ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { private snake_case }
+   ·                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { private "snake_case" = 1 }
+   ·                                 ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:42]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { private readonly snake_case = 1 }
+   ·                                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:40]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { private static snake_case }
+   ·                                        ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:49]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { private static readonly snake_case = 1 }
+   ·                                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:34]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { abstract snake_case }
+   ·                                  ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:33]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { declare snake_case }
+   ·                                 ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:25]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { #snake_case }
+   ·                         ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Class Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:32]
+ 1 │ // {"selector":"classProperty","format":["camelCase"]}
+ 2 │         class Ignored { static #snake_case }
+   ·                                ───────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"objectLiteralProperty","format":["camelCase"]}
+ 2 │         const ignored = { snake_case };
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Object Literal Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"objectLiteralProperty","format":["camelCase"]}
+ 2 │         const ignored = { "snake_case": 1 };
+   ·                           ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"typeProperty","format":["camelCase"]}
+ 2 │         interface Ignored { snake_case }
+   ·                             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:29]
+ 1 │ // {"selector":"typeProperty","format":["camelCase"]}
+ 2 │         interface Ignored { "snake_case": string }
+   ·                             ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeProperty","format":["camelCase"]}
+ 2 │         type Ignored = { snake_case }
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Property name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeProperty","format":["camelCase"]}
+ 2 │         type Ignored = { "snake_case": string }
+   ·                          ────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Alias name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:14]
+ 1 │ // {"selector":"typeAlias","format":["camelCase"]}
+ 2 │         type snake_case = {};
+   ·              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Alias name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:14]
+ 1 │ // {"selector":"typeAlias","format":["camelCase"]}
+ 2 │         type snake_case = 1;
+   ·              ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:23]
+ 1 │ // {"selector":"typeParameter","format":["camelCase"]}
+ 2 │         class Ignored<snake_case> {}
+   ·                       ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:26]
+ 1 │ // {"selector":"typeParameter","format":["camelCase"]}
+ 2 │         function ignored<snake_case>() {}
+   ·                          ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:22]
+ 1 │ // {"selector":"typeParameter","format":["camelCase"]}
+ 2 │         type Ignored<snake_case> = { ignored: snake_case };
+   ·                      ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Type Parameter name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:27]
+ 1 │ // {"selector":"typeParameter","format":["camelCase"]}
+ 2 │         interface Ignored<snake_case> extends Ignored<string> {}
+   ·                           ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const snake_case = 1;
+   ·               ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         let snake_case = 1;
+   ·             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         var snake_case = 1;
+   ·             ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:16]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const {snake_case} = {ignored: 1};
+   ·                ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:16]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const {snake_case = 2} = {ignored: 1};
+   ·                ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:19]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const {...snake_case} = {ignored: 1};
+   ·                   ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:16]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const [snake_case] = [1];
+   ·                ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:16]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const [snake_case = 1] = [1];
+   ·                ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `snake_case` must match one of the following formats: camelCase
+   ╭─[naming_convention.ts:2:19]
+ 1 │ // {"selector":"variable","format":["camelCase"]}
+ 2 │         const [...snake_case] = [1];
+   ·                   ──────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `_strictCamelCase` must not have a leading underscore.
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"forbid"}
+ 2 │         const _strictCamelCase = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one leading underscore(s).
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"require"}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have two leading underscore(s).
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"requireDouble"}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `_strictCamelCase` must have two leading underscore(s).
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"requireDouble"}
+ 2 │         const _strictCamelCase = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase_` must not have a trailing underscore.
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"forbid"}
+ 2 │         const strictCamelCase_ = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one trailing underscore(s).
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"require"}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have two trailing underscore(s).
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"requireDouble"}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase_` must have two trailing underscore(s).
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"requireDouble"}
+ 2 │         const strictCamelCase_ = 1;
+   ·               ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following prefixes: MyPrefix
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"prefix":["MyPrefix"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following prefixes: MyPrefix1, MyPrefix2
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"prefix":["MyPrefix1","MyPrefix2"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following suffixes: MySuffix
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"suffix":["MySuffix"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following suffixes: MySuffix1, MySuffix2
+   ╭─[naming_convention.ts:2:15]
+ 1 │ // {"selector":"variable","format":["camelCase"],"suffix":["MySuffix1","MySuffix2"]}
+ 2 │         const strictCamelCase = 1;
+   ·               ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `_strictCamelCase` must not have a leading underscore.
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"forbid"}
+ 2 │         let _strictCamelCase = 1;
+   ·             ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one leading underscore(s).
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"require"}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have two leading underscore(s).
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"requireDouble"}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `_strictCamelCase` must have two leading underscore(s).
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"leadingUnderscore":"requireDouble"}
+ 2 │         let _strictCamelCase = 1;
+   ·             ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase_` must not have a trailing underscore.
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"forbid"}
+ 2 │         let strictCamelCase_ = 1;
+   ·             ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one trailing underscore(s).
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"require"}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have two trailing underscore(s).
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"requireDouble"}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase_` must have two trailing underscore(s).
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"trailingUnderscore":"requireDouble"}
+ 2 │         let strictCamelCase_ = 1;
+   ·             ────────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following prefixes: MyPrefix
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"prefix":["MyPrefix"]}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following prefixes: MyPrefix1, MyPrefix2
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"prefix":["MyPrefix1","MyPrefix2"]}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following suffixes: MySuffix
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"suffix":["MySuffix"]}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.
+
+  ⚠ typescript(naming-convention): Variable name `strictCamelCase` must have one of the following suffixes: MySuffix1, MySuffix2
+   ╭─[naming_convention.ts:2:13]
+ 1 │ // {"selector":"variable","format":["camelCase"],"suffix":["MySuffix1","MySuffix2"]}
+ 2 │         let strictCamelCase = 1;
+   ·             ───────────────
+   ╰────
+  help: Rename it to follow the configured naming convention.

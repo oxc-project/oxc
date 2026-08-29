@@ -263,6 +263,57 @@ export type FixStyle = "separate-type-imports" | "inline-type-imports";
 export type Prefer = "type-imports" | "no-type-imports";
 export type AccessibilityLevel = "explicit" | "no-public" | "off";
 export type MethodSignatureStyleConfig = "property" | "method";
+export type FilterOption = string | MatchRegexOption;
+export type PredefinedFormat =
+  "camelCase" | "strictCamelCase" | "PascalCase" | "StrictPascalCase" | "snake_case" | "UPPER_CASE";
+export type UnderscoreOption = "forbid" | "allow" | "require" | "requireDouble" | "allowDouble" | "allowSingleOrDouble";
+export type ModifierName =
+  | "const"
+  | "readonly"
+  | "static"
+  | "public"
+  | "protected"
+  | "private"
+  | "#private"
+  | "abstract"
+  | "destructured"
+  | "global"
+  | "exported"
+  | "unused"
+  | "requiresQuotes"
+  | "override"
+  | "async"
+  | "default"
+  | "namespace";
+export type SelectorOption = SelectorName | SelectorName[];
+export type SelectorName =
+  | "default"
+  | "variableLike"
+  | "memberLike"
+  | "typeLike"
+  | "method"
+  | "property"
+  | "accessor"
+  | "variable"
+  | "function"
+  | "parameter"
+  | "parameterProperty"
+  | "classicAccessor"
+  | "enumMember"
+  | "classMethod"
+  | "objectLiteralMethod"
+  | "typeMethod"
+  | "classProperty"
+  | "objectLiteralProperty"
+  | "typeProperty"
+  | "autoAccessor"
+  | "class"
+  | "interface"
+  | "typeAlias"
+  | "enum"
+  | "typeParameter"
+  | "import";
+export type TypeModifierName = "boolean" | "string" | "number" | "function" | "array";
 /**
  * Type or value specifier for matching specific declarations
  *
@@ -1451,6 +1502,7 @@ export interface DummyRuleMap {
   "typescript/explicit-member-accessibility"?: RuleNoConfig | [AllowWarnDeny, ExplicitMemberAccessibilityConfig];
   "typescript/explicit-module-boundary-types"?: RuleNoConfig | [AllowWarnDeny, ExplicitModuleBoundaryTypesConfig];
   "typescript/method-signature-style"?: RuleNoConfig | [AllowWarnDeny, MethodSignatureStyleConfig];
+  "typescript/naming-convention"?: RuleNoConfig | [AllowWarnDeny, ...NamingConventionOption[]];
   "typescript/no-array-delete"?: RuleNoConfig;
   "typescript/no-base-to-string"?: RuleNoConfig | [AllowWarnDeny, NoBaseToStringConfig];
   "typescript/no-confusing-non-null-assertion"?: RuleNoConfig;
@@ -5457,6 +5509,78 @@ export interface ExplicitModuleBoundaryTypesConfig {
    * return values checked.
    */
   allowedNames?: string[];
+}
+/**
+ * A single naming convention selector option.
+ */
+export interface NamingConventionOption {
+  /**
+   * A custom regular expression the name must match (or must not match).
+   */
+  custom?: MatchRegexOption;
+  /**
+   * Only apply this option to names matching (or not matching) the regex.
+   * Options with a filter take the highest precedence.
+   */
+  filter?: FilterOption;
+  /**
+   * One or more predefined formats the name must match:
+   * `camelCase`, `strictCamelCase`, `PascalCase`, `StrictPascalCase`,
+   * `snake_case`, `UPPER_CASE`. Use `null` to skip format checking.
+   */
+  format?: PredefinedFormat[];
+  /**
+   * How leading underscores are treated: `forbid`, `allow`, `require`,
+   * `requireDouble`, `allowDouble`, `allowSingleOrDouble`.
+   */
+  leadingUnderscore?: UnderscoreOption;
+  /**
+   * Only apply this option to names that have all of these modifiers,
+   * e.g. `const`, `readonly`, `static`, `public`, `protected`, `private`,
+   * `#private`, `abstract`, `destructured`, `global`, `exported`,
+   * `unused`, `requiresQuotes`, `override`, `async`, `default`,
+   * `namespace`.
+   */
+  modifiers?: ModifierName[];
+  /**
+   * The name must start with one of these prefixes. The prefix is
+   * removed before the format is checked.
+   */
+  prefix?: string[];
+  /**
+   * The selector(s) this option applies to, e.g. `"variable"`,
+   * `"classProperty"`, or a meta selector such as `"default"`,
+   * `"variableLike"`, `"memberLike"`, `"typeLike"`, `"method"`,
+   * `"property"` or `"accessor"`.
+   */
+  selector: SelectorOption;
+  /**
+   * The name must end with one of these suffixes. The suffix is removed
+   * before the format is checked.
+   */
+  suffix?: string[];
+  /**
+   * How trailing underscores are treated: `forbid`, `allow`, `require`,
+   * `requireDouble`, `allowDouble`, `allowSingleOrDouble`.
+   */
+  trailingUnderscore?: UnderscoreOption;
+  /**
+   * Only apply this option to names whose type is one of `boolean`,
+   * `string`, `number`, `function`, `array`. This requires type
+   * information which oxlint does not have, so options that use `types`
+   * are skipped for selectors that support them.
+   */
+  types?: TypeModifierName[];
+}
+export interface MatchRegexOption {
+  /**
+   * Whether the name must match (`true`) or must not match (`false`) the regex.
+   */
+  match: boolean;
+  /**
+   * The regular expression to test the name against.
+   */
+  regex: string;
 }
 export interface NoBaseToStringConfig {
   /**

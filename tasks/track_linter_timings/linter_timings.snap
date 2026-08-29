@@ -511,6 +511,7 @@ typescript/explicit-function-return-type                   |   5917
 typescript/explicit-member-accessibility                   |  10183
 typescript/explicit-module-boundary-types                  |     63
 typescript/method-signature-style                          |   2675
+typescript/naming-convention                               |  95602
 typescript/no-confusing-non-null-assertion                 |  14772
 typescript/no-duplicate-enum-values                        |     23
 typescript/no-dynamic-delete                               |   9106

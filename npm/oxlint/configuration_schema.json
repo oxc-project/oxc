@@ -7827,6 +7827,25 @@
             }
           ]
         },
+        "typescript/naming-convention": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NamingConventionOption"
+              },
+              "minItems": 1
+            }
+          ]
+        },
         "typescript/no-array-delete": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -11175,6 +11194,24 @@
       "additionalProperties": false,
       "markdownDescription": "Describes specific types or values declared in local files."
     },
+    "FilterOption": {
+      "anyOf": [
+        {
+          "description": "A regular expression that the name must match for this option to apply.",
+          "type": "string",
+          "markdownDescription": "A regular expression that the name must match for this option to apply."
+        },
+        {
+          "description": "A regular expression and whether the name must or must not match it.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatchRegexOption"
+            }
+          ],
+          "markdownDescription": "A regular expression and whether the name must or must not match it."
+        }
+      ]
+    },
     "FixStyle": {
       "oneOf": [
         {
@@ -12841,6 +12878,26 @@
         "ForOfStatement"
       ]
     },
+    "MatchRegexOption": {
+      "type": "object",
+      "required": [
+        "match",
+        "regex"
+      ],
+      "properties": {
+        "match": {
+          "description": "Whether the name must match (`true`) or must not match (`false`) the regex.",
+          "type": "boolean",
+          "markdownDescription": "Whether the name must match (`true`) or must not match (`false`) the regex."
+        },
+        "regex": {
+          "description": "The regular expression to test the name against.",
+          "type": "string",
+          "markdownDescription": "The regular expression to test the name against."
+        }
+      },
+      "additionalProperties": false
+    },
     "MaxClassesPerFileConfig": {
       "type": "object",
       "properties": {
@@ -13315,6 +13372,28 @@
         "readonly"
       ]
     },
+    "ModifierName": {
+      "type": "string",
+      "enum": [
+        "const",
+        "readonly",
+        "static",
+        "public",
+        "protected",
+        "private",
+        "#private",
+        "abstract",
+        "destructured",
+        "global",
+        "exported",
+        "unused",
+        "requiresQuotes",
+        "override",
+        "async",
+        "default",
+        "namespace"
+      ]
+    },
     "ModuleStylesOverride": {
       "oneOf": [
         {
@@ -13462,6 +13541,110 @@
           "markdownDescription": "Disallow declarations directly inside TypeScript namespace or module bodies."
         }
       ]
+    },
+    "NamingConventionConfig": {
+      "type": "array",
+      "additionalItems": {
+        "$ref": "#/definitions/NamingConventionOption"
+      }
+    },
+    "NamingConventionOption": {
+      "description": "A single naming convention selector option.",
+      "type": "object",
+      "required": [
+        "selector"
+      ],
+      "properties": {
+        "custom": {
+          "description": "A custom regular expression the name must match (or must not match).",
+          "allOf": [
+            {
+              "$ref": "#/definitions/MatchRegexOption"
+            }
+          ],
+          "markdownDescription": "A custom regular expression the name must match (or must not match)."
+        },
+        "filter": {
+          "description": "Only apply this option to names matching (or not matching) the regex.\nOptions with a filter take the highest precedence.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/FilterOption"
+            }
+          ],
+          "markdownDescription": "Only apply this option to names matching (or not matching) the regex.\nOptions with a filter take the highest precedence."
+        },
+        "format": {
+          "description": "One or more predefined formats the name must match:\n`camelCase`, `strictCamelCase`, `PascalCase`, `StrictPascalCase`,\n`snake_case`, `UPPER_CASE`. Use `null` to skip format checking.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PredefinedFormat"
+          },
+          "markdownDescription": "One or more predefined formats the name must match:\n`camelCase`, `strictCamelCase`, `PascalCase`, `StrictPascalCase`,\n`snake_case`, `UPPER_CASE`. Use `null` to skip format checking."
+        },
+        "leadingUnderscore": {
+          "description": "How leading underscores are treated: `forbid`, `allow`, `require`,\n`requireDouble`, `allowDouble`, `allowSingleOrDouble`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/UnderscoreOption"
+            }
+          ],
+          "markdownDescription": "How leading underscores are treated: `forbid`, `allow`, `require`,\n`requireDouble`, `allowDouble`, `allowSingleOrDouble`."
+        },
+        "modifiers": {
+          "description": "Only apply this option to names that have all of these modifiers,\ne.g. `const`, `readonly`, `static`, `public`, `protected`, `private`,\n`#private`, `abstract`, `destructured`, `global`, `exported`,\n`unused`, `requiresQuotes`, `override`, `async`, `default`,\n`namespace`.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ModifierName"
+          },
+          "markdownDescription": "Only apply this option to names that have all of these modifiers,\ne.g. `const`, `readonly`, `static`, `public`, `protected`, `private`,\n`#private`, `abstract`, `destructured`, `global`, `exported`,\n`unused`, `requiresQuotes`, `override`, `async`, `default`,\n`namespace`."
+        },
+        "prefix": {
+          "description": "The name must start with one of these prefixes. The prefix is\nremoved before the format is checked.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "The name must start with one of these prefixes. The prefix is\nremoved before the format is checked."
+        },
+        "selector": {
+          "description": "The selector(s) this option applies to, e.g. `\"variable\"`,\n`\"classProperty\"`, or a meta selector such as `\"default\"`,\n`\"variableLike\"`, `\"memberLike\"`, `\"typeLike\"`, `\"method\"`,\n`\"property\"` or `\"accessor\"`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SelectorOption"
+            }
+          ],
+          "markdownDescription": "The selector(s) this option applies to, e.g. `\"variable\"`,\n`\"classProperty\"`, or a meta selector such as `\"default\"`,\n`\"variableLike\"`, `\"memberLike\"`, `\"typeLike\"`, `\"method\"`,\n`\"property\"` or `\"accessor\"`."
+        },
+        "suffix": {
+          "description": "The name must end with one of these suffixes. The suffix is removed\nbefore the format is checked.",
+          "default": null,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "The name must end with one of these suffixes. The suffix is removed\nbefore the format is checked."
+        },
+        "trailingUnderscore": {
+          "description": "How trailing underscores are treated: `forbid`, `allow`, `require`,\n`requireDouble`, `allowDouble`, `allowSingleOrDouble`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/UnderscoreOption"
+            }
+          ],
+          "markdownDescription": "How trailing underscores are treated: `forbid`, `allow`, `require`,\n`requireDouble`, `allowDouble`, `allowSingleOrDouble`."
+        },
+        "types": {
+          "description": "Only apply this option to names whose type is one of `boolean`,\n`string`, `number`, `function`, `array`. This requires type\ninformation which oxlint does not have, so options that use `types`\nare skipped for selectors that support them.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TypeModifierName"
+          },
+          "markdownDescription": "Only apply this option to names whose type is one of `boolean`,\n`string`, `number`, `function`, `array`. This requires type\ninformation which oxlint does not have, so options that use `types`\nare skipped for selectors that support them."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "A single naming convention selector option."
     },
     "NativeAllowList": {
       "anyOf": [
@@ -17429,6 +17612,17 @@
         }
       ]
     },
+    "PredefinedFormat": {
+      "type": "string",
+      "enum": [
+        "camelCase",
+        "strictCamelCase",
+        "PascalCase",
+        "StrictPascalCase",
+        "snake_case",
+        "UPPER_CASE"
+      ]
+    },
     "Prefer": {
       "oneOf": [
         {
@@ -18948,6 +19142,58 @@
         }
       ]
     },
+    "SelectorName": {
+      "type": "string",
+      "enum": [
+        "default",
+        "variableLike",
+        "memberLike",
+        "typeLike",
+        "method",
+        "property",
+        "accessor",
+        "variable",
+        "function",
+        "parameter",
+        "parameterProperty",
+        "classicAccessor",
+        "enumMember",
+        "classMethod",
+        "objectLiteralMethod",
+        "typeMethod",
+        "classProperty",
+        "objectLiteralProperty",
+        "typeProperty",
+        "autoAccessor",
+        "class",
+        "interface",
+        "typeAlias",
+        "enum",
+        "typeParameter",
+        "import"
+      ]
+    },
+    "SelectorOption": {
+      "anyOf": [
+        {
+          "description": "A single selector.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SelectorName"
+            }
+          ],
+          "markdownDescription": "A single selector."
+        },
+        {
+          "description": "Multiple selectors that share the same options.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SelectorName"
+          },
+          "markdownDescription": "Multiple selectors that share the same options."
+        }
+      ]
+    },
     "SelfClosingComp": {
       "type": "object",
       "properties": {
@@ -19390,6 +19636,16 @@
         true
       ]
     },
+    "TypeModifierName": {
+      "type": "string",
+      "enum": [
+        "boolean",
+        "string",
+        "number",
+        "function",
+        "array"
+      ]
+    },
     "TypeOrValueSpecifier": {
       "description": "Type or value specifier for matching specific declarations\n\nSupports four types of specifiers:\n\n1. **String specifier** (deprecated): Universal match by name\n```json\n\"Promise\"\n```\n\n2. **File specifier**: Match types/values declared in local files\n```json\n{ \"from\": \"file\", \"name\": \"MyType\" }\n{ \"from\": \"file\", \"name\": [\"Type1\", \"Type2\"] }\n{ \"from\": \"file\", \"name\": \"MyType\", \"path\": \"./types.ts\" }\n```\n\n3. **Lib specifier**: Match TypeScript built-in lib types\n```json\n{ \"from\": \"lib\", \"name\": \"Promise\" }\n{ \"from\": \"lib\", \"name\": [\"Promise\", \"PromiseLike\"] }\n```\n\n4. **Package specifier**: Match types/values from npm packages\n```json\n{ \"from\": \"package\", \"name\": \"Observable\", \"package\": \"rxjs\" }\n{ \"from\": \"package\", \"name\": [\"Observable\", \"Subject\"], \"package\": \"rxjs\" }\n```",
       "anyOf": [
@@ -19467,6 +19723,17 @@
         }
       },
       "additionalProperties": false
+    },
+    "UnderscoreOption": {
+      "type": "string",
+      "enum": [
+        "forbid",
+        "allow",
+        "require",
+        "requireDouble",
+        "allowDouble",
+        "allowSingleOrDouble"
+      ]
     },
     "UnifiedSignaturesOptions": {
       "type": "object",
