@@ -49,7 +49,7 @@ antd.js:
   sys deallocs: 155
   sys alloc bytes: 29960368 # 29.96 MB
   sys peak growth: 19934725 # 19.93 MB
-  arena allocs: 175842
+  arena allocs: 175843
   arena reallocs: 34169
   arena size: 44039296 # 44.04 MB
 

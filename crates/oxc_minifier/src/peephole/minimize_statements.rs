@@ -2,7 +2,7 @@ use std::iter;
 
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::{VisitJs, walk_js};
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
@@ -438,17 +438,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Check if a switch case can be inlined by verifying:
-    /// - The test expression has no side effects
-    /// - All statements can be safely inlined (no unlabeled breaks)
-    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
-        if !case.test.as_ref().is_none_or(Expression::is_literal) {
-            return false;
-        }
-
-        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
-    }
-
     fn handle_switch_statement(
         mut switch_stmt: ArenaBox<'a, SwitchStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -472,53 +461,6 @@ impl<'a> PeepholeOptimizations {
             result,
             ctx,
         );
-
-        if !ctx.is_tree_shake_only()
-            && switch_stmt.cases.len() == 1
-            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
-            && let Some(case) = switch_stmt.cases.pop()
-        {
-            ctx.notice_change();
-            let switch_scope_id = switch_stmt.scope_id();
-            let SwitchStatement { span: switch_span, discriminant, .. } = switch_stmt.unbox();
-            let SwitchCase { span: case_span, test, mut consequent, .. } = case;
-
-            let block_stmt =
-                if consequent.len() == 1 && matches!(consequent[0], Statement::BlockStatement(_)) {
-                    consequent.pop().unwrap()
-                } else {
-                    Statement::new_block_statement_with_scope_id(
-                        case_span,
-                        consequent,
-                        switch_scope_id,
-                        ctx,
-                    )
-                };
-
-            if let Some(test) = test {
-                result.push(Statement::new_if_statement(
-                    switch_span,
-                    Expression::new_binary_expression(
-                        SPAN,
-                        discriminant,
-                        BinaryOperator::StrictEquality,
-                        test,
-                        ctx,
-                    ),
-                    block_stmt,
-                    None,
-                    ctx,
-                ));
-                return;
-            }
-
-            if !discriminant.is_literal() {
-                Self::push_new_expression_stmt_to_result(discriminant, result, ctx);
-            }
-
-            result.push(block_stmt);
-            return;
-        }
 
         result.push(Statement::SwitchStatement(switch_stmt));
     }
@@ -1905,42 +1847,6 @@ impl<'a> PeepholeOptimizations {
                 ctx.parent().is_function_body()
             }
             _ => false,
-        }
-    }
-}
-
-#[derive(Default)]
-struct FindNestedBreak {
-    found_unlabelled_break: bool,
-}
-
-impl FindNestedBreak {
-    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
-        let mut visitor = Self::default();
-        visitor.visit_switch_case(node);
-        visitor.found_unlabelled_break
-    }
-}
-
-impl<'a> VisitJs<'a> for FindNestedBreak {
-    fn visit_expression(&mut self, _it: &Expression<'a>) {
-        // do nothing
-    }
-
-    fn visit_statement(&mut self, it: &Statement<'a>) {
-        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
-            return;
-        }
-        match it {
-            Statement::ThrowStatement(_)
-            | Statement::SwitchStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::ReturnStatement(_)
-            | Statement::ExpressionStatement(_) => {}
-            Statement::BreakStatement(it) if it.label.is_none() => {
-                self.found_unlabelled_break = true;
-            }
-            _ => walk_js::walk_statement(self, it),
         }
     }
 }
