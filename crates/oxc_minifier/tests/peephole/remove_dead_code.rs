@@ -38,7 +38,7 @@ fn test_fold_block() {
     // test("for (x of y) {x}", "for(x of y);");
     test("for (let x = 1; x <10; x++ ) {}", "for (let x = 1; x <10; x++ );");
     test("for (var x = 1; x <10; x++ ) {}", "for (var x = 1; x <10; x++ );");
-    test("do { } while (true)", "do;while(!0)");
+    test("do { } while (true)", "do;while(1)");
     test(
         "function z(a) {
           {
@@ -85,7 +85,7 @@ fn test_fold_useless_for() {
     test("for (var se = [1, 2]; false;);", "var se = [1, 2];");
     test("for (var se = [1, 2]; false;) { var a = 0; }", "var se = [1, 2], a;");
 
-    test("for (foo = bar; false;) {}", "for (foo = bar; !1;);");
+    test("for (foo = bar; false;) {}", "for (foo = bar; 0;);");
     // test("l1:for(;false;) {  }", "");
 }
 

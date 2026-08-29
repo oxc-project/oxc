@@ -285,8 +285,8 @@ fn test_loop_optimization_edge_cases() {
     test("while (true) { infiniteLoop(); }", "for (;;) infiniteLoop();"); // optimized loop form
 
     // Test do-while loops - false becomes !1, braces may be removed, true becomes !0
-    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (!1);");
-    test("do { body(); } while (true);", "do\n\tbody();\nwhile (!0);");
+    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (0);");
+    test("do { body(); } while (true);", "do\n\tbody();\nwhile (1);");
 
     // Test for loops with analyzable bounds
     test(

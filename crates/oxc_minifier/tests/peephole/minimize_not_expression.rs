@@ -13,6 +13,11 @@ fn minimize_duplicate_nots() {
     test_same("function k () { return !!x; }");
     test("var k = () => { return !!x; }", "var k = () => !!x");
     test_same("var k = () => !!x;");
+    // Negation of a `1`, `0` is boolean context.
+    test("var v = !(!0);", "var v = !1;");
+    test("var v = !(!1);", "var v = !0;");
+    test("var v = !(a || !0);", "var v = !(a || 1);");
+    test("var v = !(a && !1);", "var v = !(a && 0);");
 }
 
 #[test]

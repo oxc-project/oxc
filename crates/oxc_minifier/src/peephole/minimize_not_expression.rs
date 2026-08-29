@@ -46,6 +46,12 @@ impl<'a> PeepholeOptimizations {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
                 true
             }
+            // `!0` => `1`
+            // `!1` => `0`
+            Expression::NumericLiteral(num) if boolean_context => {
+                num.value = if num.value.is_nan() || num.value == 0.0 { 1.0 } else { 0.0 };
+                true
+            }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
             // De Morgan's law, only when every comparison in the `&&`/`||` chain
