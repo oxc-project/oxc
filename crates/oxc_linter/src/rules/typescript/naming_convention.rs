@@ -1684,6 +1684,13 @@ fn for_each_binding_identifier<'a, 'b>(
 fn test() {
     use crate::tester::Tester;
 
+    // spellchecker:off
+    // These cases are transcribed from typescript-eslint's own fixtures, whose
+    // shared `filter` is the regex `.gnored` — a deliberate way to match both
+    // `ignored` and `Ignored` without case-insensitivity. The spellchecker
+    // reads that fragment as a misspelling, so it is silenced for the
+    // transcribed data below; upstream silences it the same way, with a
+    // `cSpell` directive. Keep this comment inside the silenced block.
     let pass = vec![
         (
             r"
@@ -5328,6 +5335,7 @@ fn test() {
             ),
         ),
     ];
+    // spellchecker:on
 
     Tester::new(NamingConvention::NAME, NamingConvention::PLUGIN, pass, fail)
         .change_rule_path_extension("ts")

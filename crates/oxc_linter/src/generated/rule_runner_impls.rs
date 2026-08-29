@@ -1500,30 +1500,6 @@ impl RuleRunner for crate::rules::eslint::yoda::Yoda {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
-impl RuleRunner for crate::rules::typescript::naming_convention::NamingConvention {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::AccessorProperty,
-        AstType::ArrowFunctionExpression,
-        AstType::Class,
-        AstType::Function,
-        AstType::ImportDefaultSpecifier,
-        AstType::ImportNamespaceSpecifier,
-        AstType::ImportSpecifier,
-        AstType::MethodDefinition,
-        AstType::ObjectProperty,
-        AstType::PropertyDefinition,
-        AstType::TSEnumDeclaration,
-        AstType::TSEnumMember,
-        AstType::TSInterfaceDeclaration,
-        AstType::TSMethodSignature,
-        AstType::TSPropertySignature,
-        AstType::TSTypeAliasDeclaration,
-        AstType::TSTypeParameter,
-        AstType::VariableDeclarator,
-    ]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
-}
-
 impl RuleRunner
     for crate::rules::typescript::adjacent_overload_signatures::AdjacentOverloadSignatures
 {
@@ -1675,6 +1651,30 @@ impl RuleRunner for crate::rules::typescript::method_signature_style::MethodSign
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::TSMethodSignature,
         AstType::TSPropertySignature,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::typescript::naming_convention::NamingConvention {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AccessorProperty,
+        AstType::ArrowFunctionExpression,
+        AstType::Class,
+        AstType::Function,
+        AstType::ImportDefaultSpecifier,
+        AstType::ImportNamespaceSpecifier,
+        AstType::ImportSpecifier,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::PropertyDefinition,
+        AstType::TSEnumDeclaration,
+        AstType::TSEnumMember,
+        AstType::TSInterfaceDeclaration,
+        AstType::TSMethodSignature,
+        AstType::TSPropertySignature,
+        AstType::TSTypeAliasDeclaration,
+        AstType::TSTypeParameter,
+        AstType::VariableDeclarator,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }

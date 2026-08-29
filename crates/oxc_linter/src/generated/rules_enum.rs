@@ -1111,7 +1111,6 @@ pub enum RuleEnum {
     EslintValidTypeof(EslintValidTypeof),
     EslintVarsOnTop(EslintVarsOnTop),
     EslintYoda(EslintYoda),
-    TypescriptNamingConvention(TypescriptNamingConvention),
     TypescriptAdjacentOverloadSignatures(TypescriptAdjacentOverloadSignatures),
     TypescriptArrayType(TypescriptArrayType),
     TypescriptAwaitThenable(TypescriptAwaitThenable),
@@ -1131,6 +1130,7 @@ pub enum RuleEnum {
     TypescriptExplicitMemberAccessibility(TypescriptExplicitMemberAccessibility),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
     TypescriptMethodSignatureStyle(TypescriptMethodSignatureStyle),
+    TypescriptNamingConvention(TypescriptNamingConvention),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
     TypescriptNoBaseToString(TypescriptNoBaseToString),
     TypescriptNoConfusingNonNullAssertion(TypescriptNoConfusingNonNullAssertion),
@@ -1992,8 +1992,7 @@ const ESLINT_USE_ISNAN_ID: usize = ESLINT_UNICODE_BOM_ID + 1usize;
 const ESLINT_VALID_TYPEOF_ID: usize = ESLINT_USE_ISNAN_ID + 1usize;
 const ESLINT_VARS_ON_TOP_ID: usize = ESLINT_VALID_TYPEOF_ID + 1usize;
 const ESLINT_YODA_ID: usize = ESLINT_VARS_ON_TOP_ID + 1usize;
-const TYPESCRIPT_NAMING_CONVENTION_ID: usize = ESLINT_YODA_ID + 1usize;
-const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = TYPESCRIPT_NAMING_CONVENTION_ID + 1usize;
+const TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID: usize = ESLINT_YODA_ID + 1usize;
 const TYPESCRIPT_ARRAY_TYPE_ID: usize = TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID + 1usize;
 const TYPESCRIPT_AWAIT_THENABLE_ID: usize = TYPESCRIPT_ARRAY_TYPE_ID + 1usize;
 const TYPESCRIPT_BAN_TS_COMMENT_ID: usize = TYPESCRIPT_AWAIT_THENABLE_ID + 1usize;
@@ -2020,7 +2019,8 @@ const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
     TYPESCRIPT_EXPLICIT_MEMBER_ACCESSIBILITY_ID + 1usize;
 const TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID: usize =
     TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
-const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID + 1usize;
+const TYPESCRIPT_NAMING_CONVENTION_ID: usize = TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID + 1usize;
+const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_NAMING_CONVENTION_ID + 1usize;
 const TYPESCRIPT_NO_BASE_TO_STRING_ID: usize = TYPESCRIPT_NO_ARRAY_DELETE_ID + 1usize;
 const TYPESCRIPT_NO_CONFUSING_NON_NULL_ASSERTION_ID: usize =
     TYPESCRIPT_NO_BASE_TO_STRING_ID + 1usize;
@@ -2972,7 +2972,6 @@ static RULE_NAMES: [&str; 871usize] = [
     EslintValidTypeof::NAME,
     EslintVarsOnTop::NAME,
     EslintYoda::NAME,
-    TypescriptNamingConvention::NAME,
     TypescriptAdjacentOverloadSignatures::NAME,
     TypescriptArrayType::NAME,
     TypescriptAwaitThenable::NAME,
@@ -2992,6 +2991,7 @@ static RULE_NAMES: [&str; 871usize] = [
     TypescriptExplicitMemberAccessibility::NAME,
     TypescriptExplicitModuleBoundaryTypes::NAME,
     TypescriptMethodSignatureStyle::NAME,
+    TypescriptNamingConvention::NAME,
     TypescriptNoArrayDelete::NAME,
     TypescriptNoBaseToString::NAME,
     TypescriptNoConfusingNonNullAssertion::NAME,
@@ -3849,7 +3849,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => ESLINT_VALID_TYPEOF_ID,
             Self::EslintVarsOnTop(_) => ESLINT_VARS_ON_TOP_ID,
             Self::EslintYoda(_) => ESLINT_YODA_ID,
-            Self::TypescriptNamingConvention(_) => TYPESCRIPT_NAMING_CONVENTION_ID,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TYPESCRIPT_ADJACENT_OVERLOAD_SIGNATURES_ID
             }
@@ -3885,6 +3884,7 @@ impl RuleEnum {
                 TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID
             }
             Self::TypescriptMethodSignatureStyle(_) => TYPESCRIPT_METHOD_SIGNATURE_STYLE_ID,
+            Self::TypescriptNamingConvention(_) => TYPESCRIPT_NAMING_CONVENTION_ID,
             Self::TypescriptNoArrayDelete(_) => TYPESCRIPT_NO_ARRAY_DELETE_ID,
             Self::TypescriptNoBaseToString(_) => TYPESCRIPT_NO_BASE_TO_STRING_ID,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -4861,7 +4861,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::CATEGORY,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::CATEGORY,
             Self::EslintYoda(_) => EslintYoda::CATEGORY,
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::CATEGORY,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::CATEGORY
             }
@@ -4899,6 +4898,7 @@ impl RuleEnum {
                 TypescriptExplicitModuleBoundaryTypes::CATEGORY
             }
             Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::CATEGORY,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::CATEGORY,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::CATEGORY,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::CATEGORY,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -5905,7 +5905,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::FIX,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::FIX,
             Self::EslintYoda(_) => EslintYoda::FIX,
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::FIX,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::FIX
             }
@@ -5941,6 +5940,7 @@ impl RuleEnum {
                 TypescriptExplicitModuleBoundaryTypes::FIX
             }
             Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::FIX,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::FIX,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::FIX,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::FIX,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -6929,7 +6929,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::documentation(),
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::documentation(),
             Self::EslintYoda(_) => EslintYoda::documentation(),
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::documentation(),
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::documentation()
             }
@@ -6973,6 +6972,7 @@ impl RuleEnum {
             Self::TypescriptMethodSignatureStyle(_) => {
                 TypescriptMethodSignatureStyle::documentation()
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::documentation(),
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::documentation(),
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::documentation(),
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -8502,10 +8502,6 @@ impl RuleEnum {
             Self::EslintYoda(_) => {
                 EslintYoda::config_schema(generator).or_else(|| EslintYoda::schema(generator))
             }
-            Self::TypescriptNamingConvention(_) => {
-                TypescriptNamingConvention::config_schema(generator)
-                    .or_else(|| TypescriptNamingConvention::schema(generator))
-            }
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::config_schema(generator)
                     .or_else(|| TypescriptAdjacentOverloadSignatures::schema(generator))
@@ -8571,6 +8567,10 @@ impl RuleEnum {
             Self::TypescriptMethodSignatureStyle(_) => {
                 TypescriptMethodSignatureStyle::config_schema(generator)
                     .or_else(|| TypescriptMethodSignatureStyle::schema(generator))
+            }
+            Self::TypescriptNamingConvention(_) => {
+                TypescriptNamingConvention::config_schema(generator)
+                    .or_else(|| TypescriptNamingConvention::schema(generator))
             }
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::config_schema(generator)
                 .or_else(|| TypescriptNoArrayDelete::schema(generator)),
@@ -10661,7 +10661,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => "eslint",
             Self::EslintVarsOnTop(_) => "eslint",
             Self::EslintYoda(_) => "eslint",
-            Self::TypescriptNamingConvention(_) => "typescript",
             Self::TypescriptAdjacentOverloadSignatures(_) => "typescript",
             Self::TypescriptArrayType(_) => "typescript",
             Self::TypescriptAwaitThenable(_) => "typescript",
@@ -10681,6 +10680,7 @@ impl RuleEnum {
             Self::TypescriptExplicitMemberAccessibility(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
             Self::TypescriptMethodSignatureStyle(_) => "typescript",
+            Self::TypescriptNamingConvention(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
             Self::TypescriptNoBaseToString(_) => "typescript",
             Self::TypescriptNoConfusingNonNullAssertion(_) => "typescript",
@@ -11657,9 +11657,6 @@ impl RuleEnum {
                 Ok(Self::EslintValidTypeof(EslintValidTypeof::from_configuration(value)?))
             }
             Self::EslintYoda(_) => Ok(Self::EslintYoda(EslintYoda::from_configuration(value)?)),
-            Self::TypescriptNamingConvention(_) => Ok(Self::TypescriptNamingConvention(
-                TypescriptNamingConvention::from_configuration(value)?,
-            )),
             Self::TypescriptArrayType(_) => {
                 Ok(Self::TypescriptArrayType(TypescriptArrayType::from_configuration(value)?))
             }
@@ -11720,6 +11717,9 @@ impl RuleEnum {
             }
             Self::TypescriptMethodSignatureStyle(_) => Ok(Self::TypescriptMethodSignatureStyle(
                 TypescriptMethodSignatureStyle::from_configuration(value)?,
+            )),
+            Self::TypescriptNamingConvention(_) => Ok(Self::TypescriptNamingConvention(
+                TypescriptNamingConvention::from_configuration(value)?,
             )),
             Self::TypescriptNoBaseToString(_) => Ok(Self::TypescriptNoBaseToString(
                 TypescriptNoBaseToString::from_configuration(value)?,
@@ -12670,7 +12670,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run(node, ctx),
             Self::EslintVarsOnTop(rule) => rule.run(node, ctx),
             Self::EslintYoda(rule) => rule.run(node, ctx),
-            Self::TypescriptNamingConvention(rule) => rule.run(node, ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.run(node, ctx),
             Self::TypescriptArrayType(rule) => rule.run(node, ctx),
             Self::TypescriptAwaitThenable(rule) => rule.run(node, ctx),
@@ -12690,6 +12689,7 @@ impl RuleEnum {
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
             Self::TypescriptMethodSignatureStyle(rule) => rule.run(node, ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run(node, ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run(node, ctx),
@@ -13558,7 +13558,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run_once(ctx),
             Self::EslintVarsOnTop(rule) => rule.run_once(ctx),
             Self::EslintYoda(rule) => rule.run_once(ctx),
-            Self::TypescriptNamingConvention(rule) => rule.run_once(ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.run_once(ctx),
             Self::TypescriptArrayType(rule) => rule.run_once(ctx),
             Self::TypescriptAwaitThenable(rule) => rule.run_once(ctx),
@@ -13578,6 +13577,7 @@ impl RuleEnum {
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
             Self::TypescriptMethodSignatureStyle(rule) => rule.run_once(ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_once(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_once(ctx),
@@ -14449,7 +14449,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintVarsOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintYoda(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14485,6 +14484,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::TypescriptMethodSignatureStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNamingConvention(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoBaseToString(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => {
@@ -15452,7 +15452,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.should_run(ctx),
             Self::EslintVarsOnTop(rule) => rule.should_run(ctx),
             Self::EslintYoda(rule) => rule.should_run(ctx),
-            Self::TypescriptNamingConvention(rule) => rule.should_run(ctx),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.should_run(ctx),
             Self::TypescriptArrayType(rule) => rule.should_run(ctx),
             Self::TypescriptAwaitThenable(rule) => rule.should_run(ctx),
@@ -15472,6 +15471,7 @@ impl RuleEnum {
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
             Self::TypescriptMethodSignatureStyle(rule) => rule.should_run(ctx),
+            Self::TypescriptNamingConvention(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
             Self::TypescriptNoBaseToString(rule) => rule.should_run(ctx),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.should_run(ctx),
@@ -16361,7 +16361,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::IS_TSGOLINT_RULE,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::IS_TSGOLINT_RULE,
             Self::EslintYoda(_) => EslintYoda::IS_TSGOLINT_RULE,
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::IS_TSGOLINT_RULE,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::IS_TSGOLINT_RULE
             }
@@ -16405,6 +16404,7 @@ impl RuleEnum {
             Self::TypescriptMethodSignatureStyle(_) => {
                 TypescriptMethodSignatureStyle::IS_TSGOLINT_RULE
             }
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::IS_TSGOLINT_RULE,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::IS_TSGOLINT_RULE,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::IS_TSGOLINT_RULE,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -17598,7 +17598,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::VERSION,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::VERSION,
             Self::EslintYoda(_) => EslintYoda::VERSION,
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::VERSION,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::VERSION
             }
@@ -17636,6 +17635,7 @@ impl RuleEnum {
                 TypescriptExplicitModuleBoundaryTypes::VERSION
             }
             Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::VERSION,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::VERSION,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::VERSION,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::VERSION,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -18654,7 +18654,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::HAS_CONFIG,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::HAS_CONFIG,
             Self::EslintYoda(_) => EslintYoda::HAS_CONFIG,
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::HAS_CONFIG,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::HAS_CONFIG
             }
@@ -18692,6 +18691,7 @@ impl RuleEnum {
                 TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
             }
             Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::HAS_CONFIG,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::HAS_CONFIG,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::HAS_CONFIG,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::HAS_CONFIG,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -19733,7 +19733,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(_) => EslintValidTypeof::INFO,
             Self::EslintVarsOnTop(_) => EslintVarsOnTop::INFO,
             Self::EslintYoda(_) => EslintYoda::INFO,
-            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::INFO,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
                 TypescriptAdjacentOverloadSignatures::INFO
             }
@@ -19769,6 +19768,7 @@ impl RuleEnum {
                 TypescriptExplicitModuleBoundaryTypes::INFO
             }
             Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::INFO,
+            Self::TypescriptNamingConvention(_) => TypescriptNamingConvention::INFO,
             Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::INFO,
             Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::INFO,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
@@ -20727,7 +20727,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.types_info(),
             Self::EslintVarsOnTop(rule) => rule.types_info(),
             Self::EslintYoda(rule) => rule.types_info(),
-            Self::TypescriptNamingConvention(rule) => rule.types_info(),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.types_info(),
             Self::TypescriptArrayType(rule) => rule.types_info(),
             Self::TypescriptAwaitThenable(rule) => rule.types_info(),
@@ -20747,6 +20746,7 @@ impl RuleEnum {
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
             Self::TypescriptMethodSignatureStyle(rule) => rule.types_info(),
+            Self::TypescriptNamingConvention(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
             Self::TypescriptNoBaseToString(rule) => rule.types_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.types_info(),
@@ -21602,7 +21602,6 @@ impl RuleEnum {
             Self::EslintValidTypeof(rule) => rule.run_info(),
             Self::EslintVarsOnTop(rule) => rule.run_info(),
             Self::EslintYoda(rule) => rule.run_info(),
-            Self::TypescriptNamingConvention(rule) => rule.run_info(),
             Self::TypescriptAdjacentOverloadSignatures(rule) => rule.run_info(),
             Self::TypescriptArrayType(rule) => rule.run_info(),
             Self::TypescriptAwaitThenable(rule) => rule.run_info(),
@@ -21622,6 +21621,7 @@ impl RuleEnum {
             Self::TypescriptExplicitMemberAccessibility(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
             Self::TypescriptMethodSignatureStyle(rule) => rule.run_info(),
+            Self::TypescriptNamingConvention(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
             Self::TypescriptNoBaseToString(rule) => rule.run_info(),
             Self::TypescriptNoConfusingNonNullAssertion(rule) => rule.run_info(),
@@ -22499,7 +22499,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintValidTypeof(EslintValidTypeof::default()),
         RuleEnum::EslintVarsOnTop(EslintVarsOnTop::default()),
         RuleEnum::EslintYoda(EslintYoda::default()),
-        RuleEnum::TypescriptNamingConvention(TypescriptNamingConvention::default()),
         RuleEnum::TypescriptAdjacentOverloadSignatures(
             TypescriptAdjacentOverloadSignatures::default(),
         ),
@@ -22535,6 +22534,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             TypescriptExplicitModuleBoundaryTypes::default(),
         ),
         RuleEnum::TypescriptMethodSignatureStyle(TypescriptMethodSignatureStyle::default()),
+        RuleEnum::TypescriptNamingConvention(TypescriptNamingConvention::default()),
         RuleEnum::TypescriptNoArrayDelete(TypescriptNoArrayDelete::default()),
         RuleEnum::TypescriptNoBaseToString(TypescriptNoBaseToString::default()),
         RuleEnum::TypescriptNoConfusingNonNullAssertion(
