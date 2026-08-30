@@ -606,12 +606,16 @@ impl Tool for ServerLinter {
         // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionContext
         let applying_kinds = match &params.context.only {
             Some(only) => {
-                // `source.fixAll` and `source.fixAll.oxc` should behave the same, filter duplicate out
+                // `source.fixAll.oxc` is a subset of `source.fixAll` and `source`.
+                // Remap `source` and `source.fixAll` to `source.fixAll.oxc` to avoid duplicate code actions.
+                // We ignore `source.fixAllDangerous.oxc` remap to `source` because it can break the user document.
+                // Only provide `source.fixAllDangerous.oxc` if the client specifically requests it.
                 let mut seen = FxHashSet::default();
                 only.iter()
                     .filter_map(|kind| {
                         if kind == &CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
                             || kind == &CodeActionKind::SOURCE_FIX_ALL
+                            || kind == &CodeActionKind::SOURCE
                         {
                             if seen.contains(&CodeActionKind::SOURCE_FIX_ALL) {
                                 None
@@ -625,7 +629,10 @@ impl Tool for ServerLinter {
                     })
                     .collect::<Vec<_>>()
             }
-            // if `only` is not provided, only return quickfixes
+            // In version 1.0 of the protocol, there weren't any source or refactoring code actions.
+            // Code actions were solely used to (quick) fix code, not to write / rewrite code.
+            // So if a client asks for code actions without any kind, the standard quick fix code actions should be returned.
+            // https://github.com/microsoft/language-server-protocol/blob/8c26a839f86296448692b414cb35c0a8fbabe0e5/_specifications/lsp/3.18/language/codeAction.md
             None => vec![CodeActionKind::QUICKFIX],
         };
 
