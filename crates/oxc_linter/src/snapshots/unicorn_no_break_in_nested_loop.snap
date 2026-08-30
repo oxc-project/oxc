@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `break` here.
+   ╭─[no_break_in_nested_loop.tsx:3:21]
+ 2 │                 for (const child of item.children) {
+ 3 │                     break;
+   ·                     ──────
+ 4 │                 }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `continue` here.
+   ╭─[no_break_in_nested_loop.tsx:3:21]
+ 2 │                 while (item.children.pop()) {
+ 3 │                     continue;
+   ·                     ─────────
+ 4 │                 }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `break` here.
+   ╭─[no_break_in_nested_loop.tsx:4:25]
+ 3 │                     case 'child':
+ 4 │                         break;
+   ·                         ──────
+ 5 │                 }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): An unlabeled `continue` inside a `switch` continues the surrounding loop, not the next `case`. Use a labeled `continue` if that is intentional.
+   ╭─[no_break_in_nested_loop.tsx:4:25]
+ 3 │                     case 'child':
+ 4 │                         continue;
+   ·                         ─────────
+ 5 │                 }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): An unlabeled `continue` inside a `switch` continues the surrounding loop, not the next `case`. Use a labeled `continue` if that is intentional.
+   ╭─[no_break_in_nested_loop.tsx:5:29]
+ 4 │                         case 'child':
+ 5 │                             continue;
+   ·                             ─────────
+ 6 │                     }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `continue` here.
+   ╭─[no_break_in_nested_loop.tsx:5:29]
+ 4 │                         while (item.pending) {
+ 5 │                             continue;
+   ·                             ─────────
+ 6 │                         }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `break` here.
+   ╭─[no_break_in_nested_loop.tsx:3:21]
+ 2 │                 for (const child of items[index].children) {
+ 3 │                     break;
+   ·                     ──────
+ 4 │                 }
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `continue` here.
+   ╭─[no_break_in_nested_loop.tsx:3:21]
+ 2 │                 do {
+ 3 │                     continue;
+   ·                     ─────────
+ 4 │                 } while (items[key].pending);
+   ╰────
+
+  ⚠ unicorn(no-break-in-nested-loop): Move this nested loop or switch into a function instead of using `break` here.
+   ╭─[no_break_in_nested_loop.tsx:4:25]
+ 3 │                     while (item.pending) {
+ 4 │                         break;
+   ·                         ──────
+ 5 │                     }
+   ╰────
