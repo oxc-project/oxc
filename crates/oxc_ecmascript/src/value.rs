@@ -51,6 +51,14 @@ impl<'a> ConstantValue<'a> {
         }
     }
 
+    /// <https://tc39.es/ecma262/#sec-isstrictlyequal>
+    ///
+    /// The derived `PartialEq` already has the spec semantics: `NaN` is not equal to
+    /// itself, `+0` equals `-0`, and values of different types are never equal.
+    pub fn is_strictly_equal(&self, other: &Self) -> bool {
+        self == other
+    }
+
     pub fn into_string(self) -> Option<Cow<'a, str>> {
         match self {
             Self::String(s) => Some(s),
@@ -120,5 +128,40 @@ impl<'a> ToBoolean<'a> for ConstantValue<'a> {
             Self::Boolean(b) => Some(*b),
             Self::Null | Self::Undefined => Some(false),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn is_strictly_equal() {
+        use ConstantValue::{BigInt as Big, Boolean, Null, Number, String, Undefined};
+
+        assert!(Number(1.0).is_strictly_equal(&Number(1.0)));
+        assert!(Number(0.0).is_strictly_equal(&Number(-0.0)));
+        assert!(!Number(f64::NAN).is_strictly_equal(&Number(f64::NAN)));
+        assert!(!Number(1.0).is_strictly_equal(&Number(2.0)));
+
+        assert!(Big(1.into()).is_strictly_equal(&Big(1.into())));
+        assert!(!Big(1.into()).is_strictly_equal(&Big(2.into())));
+
+        assert!(String("a".into()).is_strictly_equal(&String(Cow::Owned("a".to_string()))));
+        assert!(!String("a".into()).is_strictly_equal(&String("b".into())));
+
+        assert!(Boolean(true).is_strictly_equal(&Boolean(true)));
+        assert!(!Boolean(true).is_strictly_equal(&Boolean(false)));
+
+        assert!(Undefined.is_strictly_equal(&Undefined));
+        assert!(Null.is_strictly_equal(&Null));
+
+        // Values of different types are never strictly equal.
+        assert!(!Number(1.0).is_strictly_equal(&String("1".into())));
+        assert!(!Number(1.0).is_strictly_equal(&Boolean(true)));
+        assert!(!Number(1.0).is_strictly_equal(&Big(1.into())));
+        assert!(!Number(0.0).is_strictly_equal(&Null));
+        assert!(!Undefined.is_strictly_equal(&Null));
+        assert!(!String("".into()).is_strictly_equal(&Boolean(false)));
     }
 }
