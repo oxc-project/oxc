@@ -4,7 +4,7 @@
  */
 
 export type AllowWarnDeny = ("allow" | "off" | "warn" | "error" | "deny") | number;
-export type GlobalValue = ("readonly" | "writable" | "off") | undefined;
+export type GlobalValue = (("readonly" | "writable" | "off") | boolean) | undefined;
 export type ExternalPluginEntry =
   | string
   | {

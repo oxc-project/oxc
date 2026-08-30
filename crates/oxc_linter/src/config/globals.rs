@@ -1,7 +1,7 @@
 use std::{borrow, fmt, hash, ops::Deref};
 
 use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, schema::SchemaObject};
 use serde::{Deserialize, Serialize, de::Visitor};
 
 /// Add or remove global variables.
@@ -57,12 +57,29 @@ impl OxlintGlobals {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GlobalValue {
     Readonly,
     Writable,
     Off,
+}
+
+impl JsonSchema for GlobalValue {
+    fn schema_name() -> String {
+        "GlobalValue".to_string()
+    }
+
+    fn json_schema(r#gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut string_schema = <String as JsonSchema>::json_schema(r#gen).into_object();
+        string_schema.enum_values =
+            Some(vec!["readonly".into(), "writable".into(), "off".into()]);
+
+        let mut schema = SchemaObject::default();
+        schema.subschemas().any_of =
+            Some(vec![string_schema.into(), <bool as JsonSchema>::json_schema(r#gen)]);
+        schema.into()
+    }
 }
 
 impl GlobalValue {
