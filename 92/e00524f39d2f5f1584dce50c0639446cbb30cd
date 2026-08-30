@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/eslint/no_unmodified_loop_condition.rs
+  s_f9b80309e34272::t_9eab2e9b0c00a9 174-175,187-192,223,229-230,429,509-516
+crates/oxc_linter/src/snapshots/eslint_no_unmodified_loop_condition@check_conditional_expressions.snap
+  s_f9b80309e34272::t_61587a53a540a2 29-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "92e00524f39d2f5f1584dce50c0639446cbb30cd",
+  "prompts": {},
+  "sessions": {
+    "s_f9b80309e34272": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05468-7b25-7a52-8e9c-eec9a8057c08",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
