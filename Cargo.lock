@@ -325,6 +325,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1af709f1f33454bf52eadfc8c78b3b9ef9cb26fb54d16dc9cd9a7299f899fd1b"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "cookie"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -720,12 +729,13 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "flate2"
-version = "1.1.9"
+version = "1.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843fba2746e448b37e26a819579957415c8cef339bf08564fe8b7ddbd959573c"
+checksum = "6e634e2e0ebac1ee034020da1ca582e17ffe4e0f5e985823721e168928136dcb"
 dependencies = [
  "crc32fast",
- "miniz_oxide 0.8.9",
+ "miniz_oxide",
+ "zlib-rs",
 ]
 
 [[package]]
@@ -1169,9 +1179,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.14.0"
+version = "2.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
+checksum = "07aa2048142242915a31d35844fb311e0e53fcca590c3a0a40dcf1b841fa09eb"
 dependencies = [
  "equivalent",
  "hashbrown 0.17.1",
@@ -1309,9 +1319,9 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "libmimalloc-sys2"
-version = "0.1.60"
+version = "0.1.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "921641155d9dc4f434332abd912518e33c70e37c557434818b6cfd1fbbb6138d"
+checksum = "d5cd7ba032dd74ede1f3ccfd0a07c52aaab57c7324ee330cdf34d660f1a3c78d"
 dependencies = [
  "cc",
  "cmake",
@@ -1381,21 +1391,11 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "mimalloc-safe"
-version = "0.1.64"
+version = "0.1.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afd082b59cfceeb3bf31dbff65e7b96e1f94fa9b918e131d02353e6867a12824"
+checksum = "dad88e7be1f5c4388cfb406b68d9b174d9fe89bb2c52c1237358c8184b96c152"
 dependencies = [
  "libmimalloc-sys2",
-]
-
-[[package]]
-name = "miniz_oxide"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316"
-dependencies = [
- "adler2",
- "simd-adler32",
 ]
 
 [[package]]
@@ -1405,6 +1405,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c"
 dependencies = [
  "adler2",
+ "simd-adler32",
 ]
 
 [[package]]
@@ -1438,7 +1439,7 @@ version = "3.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa55ea69990c90b888e9e77044410e304ce7f35de599dc6d0b5c1923d2e59af"
 dependencies = [
- "convert_case",
+ "convert_case 0.11.0",
  "ctor",
  "napi-derive-backend",
  "proc-macro2",
@@ -1452,7 +1453,7 @@ version = "6.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df4056ac7c18e4438ccf0edaed4340ca0d269278c8ec19284f7b23cb039fd0ae"
 dependencies = [
- "convert_case",
+ "convert_case 0.11.0",
  "proc-macro2",
  "quote",
  "semver",
@@ -1686,7 +1687,7 @@ checksum = "456720daa870e4f69f8d29fded1c8deea82da4780a6b8553baa160eb0cd8d864"
 dependencies = [
  "js-sys",
  "libc",
- "miniz_oxide 0.9.1",
+ "miniz_oxide",
  "postcard",
  "rustc-hash",
  "serde",
@@ -1792,7 +1793,7 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "bpaf",
- "convert_case",
+ "convert_case 0.12.0",
  "cow-utils",
  "indexmap",
  "itertools",
@@ -2240,7 +2241,7 @@ version = "1.80.0"
 dependencies = [
  "bitflags",
  "constcat",
- "convert_case",
+ "convert_case 0.12.0",
  "cow-utils",
  "fast-glob",
  "ignore",
@@ -2294,7 +2295,7 @@ dependencies = [
 name = "oxc_linter_codegen"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.12.0",
  "proc-macro2",
  "project-root",
  "quote",
@@ -2306,7 +2307,7 @@ dependencies = [
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.12.0",
  "itertools",
  "proc-macro2",
  "quote",
@@ -2480,7 +2481,7 @@ dependencies = [
 name = "oxc_react_compiler"
 version = "0.143.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.12.0",
  "cow-utils",
  "indexmap",
  "insta",
@@ -3310,7 +3311,7 @@ dependencies = [
 name = "rulegen"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.12.0",
  "handlebars",
  "insta",
  "lazy-regex",
@@ -4625,6 +4626,12 @@ dependencies = [
  "quote",
  "syn 2.0.119",
 ]
+
+[[package]]
+name = "zlib-rs"
+version = "0.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34b31d188d9d685a4f9c7b46d6e36631b07058d2cfe190267adce54dc230bf12"
 
 [[package]]
 name = "zmij"
