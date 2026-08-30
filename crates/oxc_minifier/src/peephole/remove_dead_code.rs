@@ -167,7 +167,7 @@ impl<'a> PeepholeOptimizations {
     /// whose declarators all lack initializers. Used as an idempotency gate in
     /// `try_fold_if` so the var-hoisting rewrite doesn't re-fire across loop
     /// iterations when `KeepVar` would just re-emit the same shape.
-    pub fn is_keep_var_canonical(stmt: &Statement<'a>) -> bool {
+    fn is_keep_var_canonical(stmt: &Statement<'a>) -> bool {
         matches!(
             stmt,
             Statement::VariableDeclaration(decl)
