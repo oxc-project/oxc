@@ -606,9 +606,9 @@ impl Tool for ServerLinter {
         // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionContext
         let applying_kinds = match &params.context.only {
             Some(only) => {
-                // `source.fixAll.oxc` is a subset of `source.fixAll` and `source`.
-                // Remap `source` and `source.fixAll` to `source.fixAll.oxc` to avoid duplicate code actions.
-                // We ignore `source.fixAllDangerous.oxc` remap to `source` because it can break the user document.
+                // `source.fixAll.oxc` is a subset of `source.fixAll` (and therefore `source`).
+                // Remap `source`, `source.fixAll`, and `source.fixAll.oxc` to `source.fixAll` to avoid duplicate code actions.
+                // We intentionally do not remap `source.fixAllDangerous.oxc` because it can break the user document.
                 // Only provide `source.fixAllDangerous.oxc` if the client specifically requests it.
                 let mut seen = FxHashSet::default();
                 only.iter()
