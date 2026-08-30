@@ -194,7 +194,7 @@ unicode-id-start = "1" # Unicode identifier validation
 unicode-segmentation = "1.13.3" # Unicode grapheme segmentation
 
 #
-javascript-globals = "1.5.1" # JavaScript global definitions
+javascript-globals = "2.0.0" # JavaScript global definitions
 json-strip-comments = "3.1.1" # Strip JSON comments
 oxc-browserslist = "5.0.0" # Browser compatibility queries
 oxc_index = { version = "5.0.0", features = ["nonmax", "serde"] } # Type-safe indices
