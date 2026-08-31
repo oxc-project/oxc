@@ -4,7 +4,8 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    JsFormatOptions, SortImportsOptions, SortOrder, default_groups, default_internal_patterns,
+    JsFormatOptions, SortImportsOptions, SortOptions, SortOrder, default_groups,
+    default_internal_patterns,
 };
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -42,8 +43,10 @@ fn main() -> Result<(), String> {
     let allocator = Allocator::new();
 
     // Format the parsed code
-    let options =
-        JsFormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
+    let options = JsFormatOptions {
+        sort: SortOptions { imports: Some(sort_imports_options.clone()) },
+        ..Default::default()
+    };
 
     let formatted = match oxc_formatter::format(&allocator, &source_text, source_type, options) {
         Ok(formatted) => formatted,

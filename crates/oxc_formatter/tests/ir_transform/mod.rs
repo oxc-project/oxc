@@ -55,7 +55,16 @@ struct TestConfig {
     single_quote: Option<bool>,
     semi: Option<bool>,
     sort_imports: Option<TestSortImportsConfig>,
+    /// Canonical location. `sort_imports` below is accepted as an alias so the existing
+    /// cases need no rewrite.
+    sort: Option<TestSortConfig>,
     jsdoc: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TestSortConfig {
+    imports: Option<TestSortImportsConfig>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -137,7 +146,8 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
     if config.jsdoc == Some(true) {
         options.jsdoc = Some(JsdocOptions::default());
     }
-    if let Some(sort_config) = config.sort_imports {
+    let sort_imports_config = config.sort.and_then(|s| s.imports).or(config.sort_imports);
+    if let Some(sort_config) = sort_imports_config {
         let mut sort_imports = SortImportsOptions::default();
         if let Some(v) = sort_config.partition_by_newline {
             sort_imports.partition_by_newline = v;
@@ -184,7 +194,7 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
                 .collect();
         }
         sort_imports.validate().expect("fixture `options.json` holds an invalid sortImports set");
-        options.sort_imports = Some(sort_imports);
+        options.sort.imports = Some(sort_imports);
     }
 
     options

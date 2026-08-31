@@ -118,7 +118,7 @@ pub fn to_oxc_formatter(
 
     // Below are our own extensions
 
-    format_options.sort_imports = sort_imports;
+    format_options.sort.imports = sort_imports;
     format_options.jsdoc = to_jsdoc(config);
     // napi only, like the CSS mapper: collection itself normalizes whitespace,
     // so enabling it without the JS-side sorter would apply half the feature
@@ -380,7 +380,7 @@ mod tests {
         assert!(!format_options.quote_style.is_double());
         assert!(format_options.semicolons.is_as_needed());
 
-        let sort_imports = format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort.imports.unwrap();
         assert!(sort_imports.partition_by_newline);
         assert!(sort_imports.order.is_desc());
         assert!(!sort_imports.ignore_case);
@@ -402,7 +402,7 @@ mod tests {
         assert!(format_options.indent_style.is_space());
         assert_eq!(format_options.indent_width.value(), 2);
         assert_eq!(format_options.line_width.value(), 100);
-        assert_eq!(format_options.sort_imports, None);
+        assert_eq!(format_options.sort.imports, None);
     }
 
     #[test]
@@ -414,7 +414,7 @@ mod tests {
         assert!(format_options.indent_style.is_space());
         assert_eq!(format_options.indent_width.value(), 2);
         assert_eq!(format_options.line_width.value(), 100);
-        assert_eq!(format_options.sort_imports, None);
+        assert_eq!(format_options.sort.imports, None);
     }
 
     #[test]
@@ -452,7 +452,7 @@ mod tests {
         )
         .unwrap();
         let format_options = build(&config).unwrap();
-        let sort_imports = format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort.imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -466,7 +466,7 @@ mod tests {
         )
         .unwrap();
         let format_options = build(&config).unwrap();
-        let sort_imports = format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort.imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -480,7 +480,7 @@ mod tests {
         )
         .unwrap();
         let format_options = build(&config).unwrap();
-        let sort_imports = format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort.imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -520,7 +520,7 @@ mod tests {
         )
         .unwrap();
         let format_options = build(&config).unwrap();
-        let sort_imports = format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort.imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(
             sort_imports.groups[0],
@@ -553,7 +553,7 @@ mod tests {
         )
         .unwrap();
         let format_options = build(&config).unwrap();
-        let sort_imports = format_options.sort_imports.unwrap();
+        let sort_imports = format_options.sort.imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 3);
         assert_eq!(
             sort_imports.groups[0],
@@ -637,10 +637,10 @@ mod tests {
     #[test]
     fn test_bool_for_object_options() {
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": true}"#).unwrap();
-        assert!(build(&config).unwrap().sort_imports.is_some());
+        assert!(build(&config).unwrap().sort.imports.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": false}"#).unwrap();
-        assert!(build(&config).unwrap().sort_imports.is_none());
+        assert!(build(&config).unwrap().sort.imports.is_none());
 
         // Tailwind collection maps napi-only
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": true}"#).unwrap();

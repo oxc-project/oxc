@@ -501,10 +501,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Wrap every emitted comment with `JsLabels::Comment` when `sort_imports` is enabled.
+        // Wrap every emitted comment with `JsLabels::Comment` when `sort.imports` is enabled.
         // So the IR transform can identify comments structurally (without textual prefix checks)
         // and suppress any internal line breaks (e.g. multi-line block / JSDoc).
-        let wrap = f.options().sort_imports.is_some();
+        let wrap = f.options().sort.imports.is_some();
         if wrap {
             f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(JsLabels::Comment))));
         }

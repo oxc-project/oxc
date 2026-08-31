@@ -30,4 +30,10 @@
 mod sort_common;
 mod sort_imports;
 
+pub mod options;
+
+// First consumer lands with `sort.namedImports` (a later PR); remove this allowance then.
+#[allow(dead_code, clippy::allow_attributes)]
+pub mod sorted_list;
+
 pub use sort_imports::*;

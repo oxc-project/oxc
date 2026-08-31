@@ -33,13 +33,13 @@ use crate::{
 /// the same shape. The inter-statement separator is written by the next `entry` call
 /// (or the closing newline emitted by `Program::write`).
 ///
-/// The caller must already have verified that `sort_imports` option is enabled.
+/// The caller must already have verified that `sort.imports` option is enabled.
 ///
 /// # Panics
-/// Panics if `sort_imports` option is not enabled.
+/// Panics if `sort.imports` option is not enabled.
 pub fn sort_imports_chunk(formatter: &mut JsFormatter<'_, '_>, chunk_start: usize) {
     let elements = &formatter.elements()[chunk_start..];
-    let options = formatter.options().sort_imports.as_ref().unwrap();
+    let options = formatter.options().sort.imports.as_ref().unwrap();
 
     let sorted_elements = transform(elements, options, formatter.allocator());
     formatter.replace_end(chunk_start, &sorted_elements);

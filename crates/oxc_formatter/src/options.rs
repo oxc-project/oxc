@@ -9,7 +9,7 @@ use crate::{
         JsFormatContext, JsFormatter,
         prelude::{if_group_breaks, token},
     },
-    ir_transform::options::SortImportsOptions,
+    ir_transform::options::SortOptions,
     write,
 };
 
@@ -61,8 +61,8 @@ pub struct JsFormatOptions {
     /// - `false` - Retain the default behavior of ternaries; keep question marks on the same line as the consequent.
     pub experimental_ternaries: bool,
 
-    /// Sort import statements. By default disabled.
-    pub sort_imports: Option<SortImportsOptions>,
+    /// Sorting features (`sort.imports`, …). All disabled by default.
+    pub sort: SortOptions,
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
@@ -223,7 +223,7 @@ impl fmt::Display for JsFormatOptions {
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Operator position: {}", self.operator_position)?;
-        writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
+        writeln!(f, "Sort: {:?}", self.sort)?;
         writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
         writeln!(f, "JSDoc: {:?}", self.jsdoc)
     }

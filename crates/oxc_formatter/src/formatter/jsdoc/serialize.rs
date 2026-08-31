@@ -7,7 +7,7 @@ use oxc_span::Span;
 
 use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
-use crate::{JsFormatOptions, write};
+use crate::{JsFormatOptions, SortOptions, write};
 
 use super::{
     imports::process_import_tags, line_buffer::LineBuffer,
@@ -84,7 +84,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         let type_format_options = JsFormatOptions {
             line_width: LineWidth::try_from(type_width).unwrap(),
             jsdoc: None,
-            sort_imports: None,
+            sort: SortOptions::default(),
             sort_tailwindcss: None,
             ..format_options.clone()
         };
@@ -1186,7 +1186,7 @@ mod tests {
         let opts = JsFormatOptions {
             line_width: LineWidth::try_from(width).unwrap(),
             jsdoc: None,
-            sort_imports: None,
+            sort: SortOptions::default(),
             sort_tailwindcss: None,
             ..JsFormatOptions::default()
         };

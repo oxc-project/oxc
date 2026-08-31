@@ -1551,3 +1551,23 @@ acc[path] = `src/${path
 "#,
     );
 }
+
+// ---
+
+#[test]
+fn should_accept_sort_umbrella_config() {
+    // `sort.imports` is the canonical location; `sortImports` stays as an alias in the harness.
+    assert_format(
+        r#"
+import c from "c";
+import a from "a";
+import b from "b";
+"#,
+        r#"{ "sort": { "imports": {} } }"#,
+        r#"
+import a from "a";
+import b from "b";
+import c from "c";
+"#,
+    );
+}

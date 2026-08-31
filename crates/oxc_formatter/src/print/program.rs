@@ -60,7 +60,7 @@ impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let import_sort_enabled = f.options().sort_imports.is_some();
+        let import_sort_enabled = f.options().sort.imports.is_some();
 
         let mut join = f.join_nodes_with_hardline();
 
@@ -98,10 +98,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
 ///
 /// Returns the next statement after the run of `ImportDeclaration`s, or `None` if there are no more statements.
 ///
-/// The caller must already have verified that `sort_imports` option is enabled.
+/// The caller must already have verified that `sort.imports` option is enabled.
 ///
 /// # Panics
-/// Panics if `sort_imports` option is not enabled.
+/// Panics if `sort.imports` option is not enabled.
 //
 // `#[cold]` because most statements aren't `ImportDeclaration`s.
 // Also, when there *are* lots of `ImportDeclaration`s, they tend to all be grouped together.

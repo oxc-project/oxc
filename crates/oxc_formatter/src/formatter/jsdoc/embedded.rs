@@ -2,7 +2,7 @@ use oxc_formatter_core::{FormatSession, LineWidth};
 use oxc_span::SourceType;
 
 use crate::options::TrailingCommas;
-use crate::{JsFormatOptions, format_with_session};
+use crate::{JsFormatOptions, SortOptions, format_with_session};
 
 /// Helper for:
 /// - Parse a snippet ([`format_with_session`]'s gate: any parse diagnostic rejects)
@@ -100,7 +100,7 @@ pub(super) fn update_template_depth(line: &str, mut depth: u32) -> u32 {
 /// JSDoc-specific behaviour (inline comments below give the full rationale):
 /// - object-literal wrap for `{`-leading snippets
 /// - TSX → JSX fallback (TSX first so TS generics aren't miss-parsed)
-/// - `sort_imports` / `sort_tailwindcss` are disabled (top-level concerns)
+/// - `sort.imports` / `sort_tailwindcss` are disabled (top-level concerns)
 ///
 /// Returns `None` on parse failure, the pass-through gate every caller uses.
 pub(super) fn format_jsdoc_js_snippet(
@@ -115,7 +115,7 @@ pub(super) fn format_jsdoc_js_snippet(
     let base_options = JsFormatOptions {
         line_width,
         jsdoc: None,
-        sort_imports: None,
+        sort: SortOptions::default(),
         sort_tailwindcss: None,
         ..format_options.clone()
     };
