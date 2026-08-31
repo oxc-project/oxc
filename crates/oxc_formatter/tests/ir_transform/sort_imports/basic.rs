@@ -1141,6 +1141,33 @@ import { d } from "../d";
 // ---
 
 #[test]
+fn should_group_monorepo_workspace_packages_as_internal() {
+    assert_format(
+        r#"
+import { helper } from "./helper";
+import { Button } from "@myorg/ui";
+import { useQuery } from "@tanstack/react-query";
+import { config } from "../config";
+import react from "react";
+import { util } from "@myorg/utils";
+"#,
+        r#"{ "sort": { "imports": { "internalPattern": ["@myorg/"] } } }"#,
+        r#"
+import { useQuery } from "@tanstack/react-query";
+import react from "react";
+
+import { Button } from "@myorg/ui";
+import { util } from "@myorg/utils";
+
+import { config } from "../config";
+import { helper } from "./helper";
+"#,
+    );
+}
+
+// ---
+
+#[test]
 fn should_sort_with_multiline_comments_attached_to_each_import() {
     assert_format(
         r#"
