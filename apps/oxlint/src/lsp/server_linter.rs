@@ -97,8 +97,7 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
-        // Read suppression-display options up front, before `options` is partially moved below.
-        let show_suppressed_violations = options.should_show_suppressed_violations();
+        // Read the suppression-display option up front, before `options` is partially moved below.
         let suppressed_violation_severity = options.suppressed_violation_severity;
         let mut external_linter = self.external_linter.as_ref();
         let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
@@ -259,7 +258,6 @@ impl ServerLinterBuilder {
                 fix_kind,
                 lint_options.report_unused_directive,
                 options.rules_customization,
-                show_suppressed_violations,
                 suppressed_violation_severity,
             ),
             Vec::new(),
@@ -457,9 +455,7 @@ pub struct ServerLinter {
     rules_customization: Option<RulesCustomization>,
     /// Bulk-suppression baseline loaded from the workspace root.
     suppressions: WorkspaceSuppressions,
-    /// Whether suppressed violations are rendered (faded) in the editor instead of hidden.
-    show_suppressed_violations: bool,
-    /// Severity override applied to suppressed violations when they are shown.
+    /// Severity applied to suppressed violations, or `Off` to hide them.
     suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
@@ -765,7 +761,6 @@ impl ServerLinter {
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
-        show_suppressed_violations: bool,
         suppressed_violation_severity: SuppressedViolationSeverity,
     ) -> Self {
         let suppressions = WorkspaceSuppressions::new(cwd.clone());
@@ -781,7 +776,6 @@ impl ServerLinter {
             unused_directives_severity,
             rules_customization,
             suppressions,
-            show_suppressed_violations,
             suppressed_violation_severity,
         }
     }
@@ -916,13 +910,13 @@ impl ServerLinter {
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
-        if self.show_suppressed_violations {
-            let severity = match self.suppressed_violation_severity {
-                SuppressedViolationSeverity::Hint => DiagnosticSeverity::HINT,
-                SuppressedViolationSeverity::Information => DiagnosticSeverity::INFORMATION,
-                SuppressedViolationSeverity::Warning => DiagnosticSeverity::WARNING,
-                SuppressedViolationSeverity::Error => DiagnosticSeverity::ERROR,
-            };
+        if let Some(severity) = match self.suppressed_violation_severity {
+            SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::HINT),
+            SuppressedViolationSeverity::Info => Some(DiagnosticSeverity::INFORMATION),
+            SuppressedViolationSeverity::Warn => Some(DiagnosticSeverity::WARNING),
+            SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::ERROR),
+            SuppressedViolationSeverity::Off => None,
+        } {
             for message in suppressed {
                 if let Some(mut report) = message_to_lsp_diagnostic(
                     message,
@@ -959,8 +953,6 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
-            || old_options.should_show_suppressed_violations()
-                != new_options.should_show_suppressed_violations()
             || old_options.suppressed_violation_severity
                 != new_options.suppressed_violation_severity
     }

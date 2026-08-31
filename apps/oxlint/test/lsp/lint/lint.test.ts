@@ -92,7 +92,7 @@ describe("LSP linting", () => {
         "suppressions",
         "hidden.js",
         "javascript",
-        { showSuppressedViolations: false },
+        { suppressedViolationSeverity: "off" },
       );
 
       expect(diagnostics).toHaveLength(1);
@@ -105,7 +105,7 @@ describe("LSP linting", () => {
         "suppressions",
         "severity.js",
         "javascript",
-        { suppressedViolationSeverity: "information" },
+        { suppressedViolationSeverity: "info" },
       );
       const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
 
