@@ -740,6 +740,10 @@ impl<'a> SemanticBuilder<'a> {
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
     fn resolve_references_for_current_scope(&mut self, unresolved_start: usize) {
+        if self.unresolved_references.len() == unresolved_start {
+            return;
+        }
+
         let current_scope_id = self.current_scope_id;
         let parent_scope_id = self
             .scoping
@@ -2092,16 +2096,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if func.params.has_parameter() || func.return_type.is_some() {
-            // `function foo({bar: identifier_reference}) {}`
-            //                     ^^^^^^^^^^^^^^^^^^^^
-            // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
-            //                            ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope(unresolved_start);
-        }
+        // `function foo({bar: identifier_reference}) {}`
+        //                     ^^^^^^^^^^^^^^^^^^^^
+        // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
+        //                            ^^^^^^^^   ^^^^^^^^
+        // `function foo<T extends SomeType>(this: SomeType) {}`
+        //                         ^^^^^^^^        ^^^^^^^^
+        // Parameter initializers must be resolved after all parameters have been declared.
+        // Param types, return type, type parameter constraints and the `this` type must be
+        // resolved after type parameters have been declared.
+        // In all cases, need to avoid binding to variables/types declared inside the function body.
+        self.resolve_references_for_current_scope(unresolved_start);
 
         if let Some(body) = &func.body {
             self.visit_function_body(body);
@@ -2180,16 +2185,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if expr.params.has_parameter() || expr.return_type.is_some() {
-            // `let foo = ({bar: identifier_reference}) => {};`
-            //                   ^^^^^^^^^^^^^^^^^^^^
-            // `let foo = <SomeType>(v: SomeType): SomeType => v;`
-            //                          ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope(unresolved_start);
-        }
+        // `let foo = ({bar: identifier_reference}) => {};`
+        //                   ^^^^^^^^^^^^^^^^^^^^
+        // `let foo = <SomeType>(v: SomeType): SomeType => v;`
+        //                          ^^^^^^^^   ^^^^^^^^
+        // `let foo = <T extends SomeType>() => {};`
+        //                       ^^^^^^^^
+        // Parameter initializers must be resolved after all parameters have been declared.
+        // Param types, return type and type parameter constraints must be resolved after
+        // type parameters have been declared.
+        // In all cases, need to avoid binding to variables/types declared inside the function body.
+        self.resolve_references_for_current_scope(unresolved_start);
 
         self.visit_arrow_function_body(&expr.body);
 
