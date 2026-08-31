@@ -97,21 +97,29 @@ describe("LSP linting", () => {
       expect(diagnostics[0]?.code).toBe("eslint(no-debugger)");
     });
 
-    it("overrides the severity of suppressed diagnostics", async () => {
-      const diagnostics = await lintFixtureDiagnostics(
-        FIXTURES_DIR,
-        "suppressions/severity.js",
-        "javascript",
-        { suppressedViolationSeverity: "info" },
-      );
-      const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+    it.each([
+      ["hint", DiagnosticSeverity.Hint],
+      ["info", DiagnosticSeverity.Information],
+      ["warn", DiagnosticSeverity.Warning],
+      ["error", DiagnosticSeverity.Error],
+    ] as const)(
+      "renders %s suppressed diagnostics faded",
+      async (severity, expectedSeverity) => {
+        const diagnostics = await lintFixtureDiagnostics(
+          FIXTURES_DIR,
+          "suppressions/severity.js",
+          "javascript",
+          { suppressedViolationSeverity: severity },
+        );
+        const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
 
-      expect(suppressed).toHaveLength(2);
-      for (const diagnostic of suppressed) {
-        expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
-        expect(diagnostic.severity).toBe(DiagnosticSeverity.Information);
-      }
-    });
+        expect(suppressed).toHaveLength(2);
+        for (const diagnostic of suppressed) {
+          expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
+          expect(diagnostic.severity).toBe(expectedSeverity);
+        }
+      },
+    );
 
     it("surfaces a rule when its violation count increases", async () => {
       const diagnostics = await lintFixtureDiagnostics(
