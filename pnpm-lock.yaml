@@ -34,8 +34,8 @@ catalogs:
       specifier: 10.8.1
       version: 10.8.1
     json-schema-to-typescript:
-      specifier: ^15.0.4
-      version: 15.0.4
+      specifier: ^16.0.0
+      version: 16.0.0
     publint:
       specifier: 0.3.24
       version: 0.3.24
@@ -108,7 +108,7 @@ importers:
         version: 10.0.1
       json-schema-to-typescript:
         specifier: 'catalog:'
-        version: 15.0.4
+        version: 16.0.0
       svelte:
         specifier: ^5.56.2
         version: 5.56.10(@typescript-eslint/types@8.67.0)
@@ -195,7 +195,7 @@ importers:
         version: 10.0.1
       json-schema-to-typescript:
         specifier: 'catalog:'
-        version: 15.0.4
+        version: 16.0.0
       json-stable-stringify-without-jsonify:
         specifier: ^1.0.1
         version: 1.0.1
@@ -307,7 +307,7 @@ importers:
         version: 1.2.6
       tinypool:
         specifier: ^2.0.0
-        version: 2.1.0
+        version: 2.1.2
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@24.1.0)(@vitest/browser-playwright@4.1.11)(@vitest/browser-preview@4.1.11)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.33.0)(terser@5.44.1)(tsx@4.23.12))
@@ -520,7 +520,7 @@ importers:
         version: https://codeload.github.com/lit/dist/tar.gz/2d8c023d796e1884e53ad527d3c68214c866a9e1
       lodash:
         specifier: ^4.17.21
-        version: 4.17.21
+        version: 4.18.1
       luxon:
         specifier: ^3.6.1
         version: 3.7.2
@@ -3245,8 +3245,8 @@ packages:
   '@types/json-stable-stringify-without-jsonify@1.0.2':
     resolution: {integrity: sha512-X/Kn5f5fv1KBGqGDaegrj72Dlh+qEKN3ELwMAB6RdVlVzkf6NTeEnJpgR/Hr0AlpgTlYq/Vd0U3f79lavn6aDA==}
 
-  '@types/lodash@4.17.23':
-    resolution: {integrity: sha512-RDvF6wTulMPjrNdCoYRC8gNR880JNGT8uB+REUpC2Ns4pRqQJhGz90wh7rgdXDPpCczF3VGktDuFGVnz8zP7HA==}
+  '@types/lodash@4.17.25':
+    resolution: {integrity: sha512-+K1NIO8I+F9/wNulfVvu23QYd0Pe9/OCqRrim4NoYIf1VoEDL90Ve4ClzpyqBLc7NpGGWRvYNCKZ1BE/Jpf8dQ==}
 
   '@types/methods@1.1.4':
     resolution: {integrity: sha512-ymXWVrDiCxTBE3+RIrrP533E70eA+9qu7zdWoHuOmGujkYtzf4HQF96b8nwHLqhuf4ykX61IGRIB38CC6/sImQ==}
@@ -4640,6 +4640,10 @@ packages:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
     hasBin: true
 
+  js-yaml@5.4.1:
+    resolution: {integrity: sha512-28R/k+NAjeuf7+CKlTxWZVExJGwVVLwY06DgEnOMz2gEpfNkDcD7QvyiVPT0xy0XXhU8vHsd4Ot42OOPdJG7dQ==}
+    hasBin: true
+
   jsesc@3.1.0:
     resolution: {integrity: sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA==}
     engines: {node: '>=6'}
@@ -4648,8 +4652,8 @@ packages:
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
 
-  json-schema-to-typescript@15.0.4:
-    resolution: {integrity: sha512-Su9oK8DR4xCmDsLlyvadkXzX6+GGXJpbhwoLtOGArAG61dvbW4YQmSEno2y66ahpIdmLMg6YUf/QHLgiwvkrHQ==}
+  json-schema-to-typescript@16.0.0:
+    resolution: {integrity: sha512-Ah6kK4q6SjlMzWBH1eNOQkdRh5Qhr5T/RCFwfjQqWZA7UDW+N47A8wfyoiN0L884s4L4bAEI54IjIuN3/u0B/A==}
     engines: {node: '>=16.0.0'}
     hasBin: true
 
@@ -4767,8 +4771,8 @@ packages:
     resolution: {integrity: sha512-gvVijfZvn7R+2qyPX8mAuKcFGDf6Nc61GdvGafQsHL0sBIxfKzA+usWn4GFC/bk+QdwPUD4kWFJLhElipq+0VA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   lru-cache@11.5.2:
     resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
@@ -8093,7 +8097,7 @@ snapshots:
 
   '@types/json-stable-stringify-without-jsonify@1.0.2': {}
 
-  '@types/lodash@4.17.23': {}
+  '@types/lodash@4.17.25': {}
 
   '@types/methods@1.1.4': {}
 
@@ -9591,18 +9595,21 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
+  js-yaml@5.4.1:
+    dependencies:
+      argparse: 2.0.1
+
   jsesc@3.1.0: {}
 
   json-buffer@3.0.1: {}
 
-  json-schema-to-typescript@15.0.4:
+  json-schema-to-typescript@16.0.0:
     dependencies:
       '@apidevtools/json-schema-ref-parser': 11.9.3
       '@types/json-schema': 7.0.15
-      '@types/lodash': 4.17.23
-      is-glob: 4.0.3
-      js-yaml: 4.2.0
-      lodash: 4.17.21
+      '@types/lodash': 4.17.25
+      js-yaml: 5.4.1
+      lodash: 4.18.1
       minimist: 1.2.8
       prettier: 3.9.6
       tinyglobby: 0.2.17
@@ -9689,7 +9696,7 @@ snapshots:
     dependencies:
       p-locate: 6.0.0
 
-  lodash@4.17.21: {}
+  lodash@4.18.1: {}
 
   lru-cache@11.5.2: {}
 

@@ -20,7 +20,7 @@ catalog:
   cross-env: ^10.1.0
   degit: 3.8.0
   eslint: 10.8.1
-  json-schema-to-typescript: ^15.0.4
+  json-schema-to-typescript: ^16.0.0
   publint: 0.3.24
   rolldown: 1.2.6
   tsdown: 0.22.14
