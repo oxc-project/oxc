@@ -285,6 +285,32 @@
         "cr"
       ]
     },
+    "FallbackSortConfig": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "order": {
+          "description": "Inherits the primary `order` when omitted.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortOrderConfig"
+            }
+          ],
+          "markdownDescription": "Inherits the primary `order` when omitted."
+        },
+        "type": {
+          "description": "How tied members are compared; same values as `type`.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortTypeConfig"
+            }
+          ],
+          "markdownDescription": "How tied members are compared; same values as `type`."
+        }
+      }
+    },
     "FormatConfig": {
       "type": "object",
       "properties": {
@@ -501,7 +527,7 @@
       ]
     },
     "ImportModifierConfig": {
-      "description": "Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).",
+      "description": "Modifier matching the import characteristics in `customGroups` (see the `groups` option of `sort.imports` for semantics).",
       "type": "string",
       "enum": [
         "side_effect",
@@ -511,10 +537,10 @@
         "wildcard",
         "named"
       ],
-      "markdownDescription": "Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics)."
+      "markdownDescription": "Modifier matching the import characteristics in `customGroups` (see the `groups` option of `sort.imports` for semantics)."
     },
     "ImportSelectorConfig": {
-      "description": "Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).",
+      "description": "Selector matching the import kind in `customGroups` (see the `groups` option of `sort.imports` for semantics).",
       "type": "string",
       "enum": [
         "type",
@@ -530,7 +556,7 @@
         "external",
         "import"
       ],
-      "markdownDescription": "Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics)."
+      "markdownDescription": "Selector matching the import kind in `customGroups` (see the `groups` option of `sort.imports` for semantics)."
     },
     "JsdocConfig": {
       "type": "object",
@@ -739,6 +765,7 @@
       ]
     },
     "SortImportsConfig": {
+      "description": "Options for sorting import statements (`sort.imports`, or its deprecated alias `sortImports`).",
       "type": "object",
       "properties": {
         "customGroups": {
@@ -748,6 +775,15 @@
             "$ref": "#/definitions/CustomGroupItemConfig"
           },
           "markdownDescription": "Define your own groups for matching very specific imports.\n\nThe `customGroups` list is ordered: The first definition that matches an element will be used.\nCustom groups have a higher priority than any predefined group.\n\nIf you want a predefined group to take precedence over a custom group,\nyou must write a custom group definition that does the same as what the predefined group does, and put it first in the list.\n\nIf you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,\nall conditions must be met for an import to match the custom group (AND logic).\n\nNOTE: Predefined group names (e.g. `side_effect`, `external`) and `unknown` are reserved and cannot be used as `groupName`.\n\n- Default: `[]`"
+        },
+        "fallbackSort": {
+          "description": "Secondary comparison used when two members compare equal.\n\n```json\n{ \"fallbackSort\": { \"type\": \"line-length\", \"order\": \"desc\" } }\n```\n\n- Default: `{ \"type\": \"unsorted\" }` (equal members keep their source order)",
+          "allOf": [
+            {
+              "$ref": "#/definitions/FallbackSortConfig"
+            }
+          ],
+          "markdownDescription": "Secondary comparison used when two members compare equal.\n\n```json\n{ \"fallbackSort\": { \"type\": \"line-length\", \"order\": \"desc\" } }\n```\n\n- Default: `{ \"type\": \"unsorted\" }` (equal members keep their source order)"
         },
         "groups": {
           "description": "Specifies a list of predefined import groups for sorting.\n\nEach import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).\nThe order of items in the `groups` option determines how groups are ordered.\n\nWithin a given group, members will be sorted according to the type, order, ignoreCase, etc. options.\n\nIndividual groups can be combined together by placing them in an array.\nThe order of groups in that array does not matter.\nAll members of the groups in the array will be sorted together as if they were part of a single group.\n\nPredefined groups are characterized by a single selector and potentially multiple modifiers.\nYou may enter modifiers in any order, but the selector must always come at the end.\n\nThe list of selectors is sorted from most to least important:\n- `type` — TypeScript type imports.\n- `side_effect_style` — Side effect style imports.\n- `side_effect` — Side effect imports.\n- `style` — Style imports.\n- `index` — Main file from the current directory.\n- `sibling` — Modules from the same directory.\n- `parent` — Modules from the parent directory.\n- `subpath` — Node.js subpath imports.\n- `internal` — Your internal modules.\n- `builtin` — Node.js Built-in Modules.\n- `external` — External modules installed in the project.\n- `import` — Any import.\n\nThe list of modifiers is sorted from most to least important:\n- `side_effect` — Side effect imports.\n- `type` — TypeScript type imports.\n- `value` — Value imports.\n- `default` — Imports containing the default specifier.\n- `wildcard` — Imports containing the wildcard (`* as`) specifier.\n- `named` — Imports containing at least one named specifier.\n\n- Default: See below\n```json\n[\n\"builtin\",\n\"external\",\n[\"internal\", \"subpath\"],\n[\"parent\", \"sibling\", \"index\"],\n\"style\",\n\"unknown\"\n]\n```\n\nAlso, you can override the global `newlinesBetween` setting for specific group boundaries\nby including a `{ \"newlinesBetween\": boolean }` marker object in the `groups` list at the desired position.",
@@ -798,8 +834,27 @@
           "description": "Specifies whether side effect imports should be sorted.\n\nBy default, sorting side-effect imports is disabled for security reasons.\n\n- Default: `false`",
           "type": "boolean",
           "markdownDescription": "Specifies whether side effect imports should be sorted.\n\nBy default, sorting side-effect imports is disabled for security reasons.\n\n- Default: `false`"
+        },
+        "specialCharacters": {
+          "description": "What to do with non-letter characters before comparing.\n\n- `\"keep\"` — Compare names as-is.\n- `\"trim\"` — Strip leading non-letters (`./foo` compares as `foo`, `@scope/x` as `scope/x`).\n- `\"remove\"` — Strip every non-letter (digits included, as in perfectionist).\n\n- Default: `\"keep\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SpecialCharactersConfig"
+            }
+          ],
+          "markdownDescription": "What to do with non-letter characters before comparing.\n\n- `\"keep\"` — Compare names as-is.\n- `\"trim\"` — Strip leading non-letters (`./foo` compares as `foo`, `@scope/x` as `scope/x`).\n- `\"remove\"` — Strip every non-letter (digits included, as in perfectionist).\n\n- Default: `\"keep\"`"
+        },
+        "type": {
+          "description": "How members are compared.\n\n- `\"natural\"` — Digit runs compare numerically (`a2` before `a10`).\n- `\"alphabetical\"` — Code-point order of the normalized name (no locale collation).\n- `\"line-length\"` — Shorter members first.\n- `\"unsorted\"` — Do not sort, only group and partition.\n\n- Default: `\"natural\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortTypeConfig"
+            }
+          ],
+          "markdownDescription": "How members are compared.\n\n- `\"natural\"` — Digit runs compare numerically (`a2` before `a10`).\n- `\"alphabetical\"` — Code-point order of the normalized name (no locale collation).\n- `\"line-length\"` — Shorter members first.\n- `\"unsorted\"` — Do not sort, only group and partition.\n\n- Default: `\"natural\"`"
         }
-      }
+      },
+      "markdownDescription": "Options for sorting import statements (`sort.imports`, or its deprecated alias `sortImports`)."
     },
     "SortImportsUserConfig": {
       "anyOf": [
@@ -887,6 +942,23 @@
         {
           "$ref": "#/definitions/SortTailwindcssConfig"
         }
+      ]
+    },
+    "SortTypeConfig": {
+      "type": "string",
+      "enum": [
+        "natural",
+        "alphabetical",
+        "line-length",
+        "unsorted"
+      ]
+    },
+    "SpecialCharactersConfig": {
+      "type": "string",
+      "enum": [
+        "keep",
+        "trim",
+        "remove"
       ]
     },
     "SvelteConfig": {

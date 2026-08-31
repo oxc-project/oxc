@@ -46,6 +46,8 @@ impl<'a> SourceLine<'a> {
         let mut has_default_specifier = false;
         let mut has_namespace_specifier = false;
         let mut has_named_specifier = false;
+        let mut size: u32 = 0;
+        let mut inside_comment = false;
 
         // One-way scan state, bounded by `range`.
         // No look-ahead: looking ahead past `range` would inherit the NEXT import's specifiers.
@@ -59,8 +61,30 @@ impl<'a> SourceLine<'a> {
         let mut seen_from_keyword = false;
 
         let import_label = LabelId::of(JsLabels::ImportDeclaration);
+        let comment_label = LabelId::of(JsLabels::Comment);
         for idx in range.clone() {
             let element = &elements[idx];
+
+            match element {
+                FormatElement::Tag(Tag::StartLabelled(id)) if *id == comment_label => {
+                    inside_comment = true;
+                }
+                FormatElement::Tag(Tag::EndLabelled) if inside_comment => {
+                    inside_comment = false;
+                }
+                _ if has_import && !inside_comment => {
+                    #[expect(clippy::cast_possible_truncation)]
+                    // Token text is source-sized, fits in `u32`
+                    let element_width = match element {
+                        FormatElement::Token { text } => text.len() as u32,
+                        FormatElement::Text { width, .. } => width.value(),
+                        FormatElement::Space => 1,
+                        _ => 0,
+                    };
+                    size += element_width;
+                }
+                _ => {}
+            }
 
             // Special marker for `ImportDeclaration`
             if let FormatElement::Tag(Tag::StartLabelled(id)) = element {
@@ -144,6 +168,7 @@ impl<'a> SourceLine<'a> {
                 has_default_specifier,
                 has_namespace_specifier,
                 has_named_specifier,
+                size,
             },
         )
     }
@@ -194,4 +219,6 @@ pub struct ImportLineMetadata<'a> {
     pub has_namespace_specifier: bool,
     /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
     pub has_named_specifier: bool,
+    /// Approximate printed width of the import statement's own tokens (comments excluded); used by `type: "line-length"`.
+    pub size: u32,
 }

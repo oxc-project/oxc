@@ -206,12 +206,12 @@ fn transform<'a>(
             }
             // `SourceLine::Empty` and `SourceLine::CommentOnly` can be boundaries depending on options.
             // Otherwise, they will be the leading/trailing lines of `PartitionedChunk::Imports`.
-            SourceLine::Empty if !options.partition_by_newline => {
+            SourceLine::Empty if !options.common.partition_by_newline => {
                 current_chunk.add_imports_line(line);
             }
             // TODO: Support more flexible comment handling?
             // e.g. Specific text by regex, only line comments, etc.
-            SourceLine::CommentOnly(..) if !options.partition_by_comment => {
+            SourceLine::CommentOnly(..) if !options.common.partition_by_comment => {
                 current_chunk.add_imports_line(line);
             }
             // This `SourceLine` is a boundary!
@@ -309,7 +309,11 @@ fn transform<'a>(
 
                     // Output leading lines and import line
                     for line in &sorted_import.leading_lines {
-                        line.write(prev_elements, &mut next_elements, options.partition_by_newline);
+                        line.write(
+                            prev_elements,
+                            &mut next_elements,
+                            options.common.partition_by_newline,
+                        );
                     }
                     sorted_import.import_line.write(prev_elements, &mut next_elements, false);
 

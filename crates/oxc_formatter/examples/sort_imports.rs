@@ -4,7 +4,7 @@ use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    JsFormatOptions, SortImportsOptions, SortOptions, SortOrder, default_groups,
+    JsFormatOptions, SortCommonOptions, SortImportsOptions, SortOptions, SortOrder, default_groups,
     default_internal_patterns,
 };
 use oxc_span::SourceType;
@@ -24,11 +24,14 @@ fn main() -> Result<(), String> {
     let newlines_between = !args.contains("--no_newlines_between");
 
     let sort_imports_options = SortImportsOptions {
-        order,
-        partition_by_newline,
-        partition_by_comment,
+        common: SortCommonOptions {
+            order,
+            ignore_case,
+            partition_by_newline,
+            partition_by_comment,
+            ..SortCommonOptions::default()
+        },
         sort_side_effects,
-        ignore_case,
         newlines_between,
         internal_pattern: default_internal_patterns(),
         groups: default_groups(),

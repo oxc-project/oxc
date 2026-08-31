@@ -1,25 +1,17 @@
 pub use super::group_config::{
     GroupEntry, GroupName, ImportModifier, ImportSelector, ImportVocabulary,
 };
+use crate::ir_transform::sort_common::options::SortCommonOptions;
 pub use crate::ir_transform::sort_common::options::SortOrder;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
-    /// Partition imports by newlines.
-    /// Default is `false`.
-    pub partition_by_newline: bool,
-    /// Partition imports by comments.
-    /// Default is `false`.
-    pub partition_by_comment: bool,
+    /// Options shared by every sorting target (`type`, `order`, `ignoreCase`, `specialCharacters`,
+    /// `fallbackSort`, `partitionByNewline`, `partitionByComment`).
+    pub common: SortCommonOptions,
     /// Sort side effects imports.
     /// Default is `false`.
     pub sort_side_effects: bool,
-    /// Sort order (asc or desc).
-    /// Default is ascending (asc).
-    pub order: SortOrder,
-    /// Ignore case when sorting.
-    /// Default is `true`.
-    pub ignore_case: bool,
     /// Whether to insert blank lines between different import groups.
     /// - `true`: Insert one blank line between groups (default)
     /// - `false`: No blank lines between groups
@@ -51,11 +43,12 @@ impl SortImportsOptions {
     /// Returns an error message if incompatible options are set,
     /// or `groups` references an undefined custom group name.
     pub fn validate(&self) -> Result<(), String> {
-        if self.partition_by_newline && self.newline_boundary_overrides.iter().any(Option::is_some)
+        if self.common.partition_by_newline
+            && self.newline_boundary_overrides.iter().any(Option::is_some)
         {
             return Err("`partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
         }
-        if self.partition_by_newline && self.newlines_between {
+        if self.common.partition_by_newline && self.newlines_between {
             return Err(
                 "`partitionByNewline: true` and `newlinesBetween: true` cannot be used together"
                     .to_string(),
@@ -98,11 +91,8 @@ impl SortImportsOptions {
 impl Default for SortImportsOptions {
     fn default() -> Self {
         Self {
-            partition_by_newline: false,
-            partition_by_comment: false,
+            common: SortCommonOptions::default(),
             sort_side_effects: false,
-            order: SortOrder::default(),
-            ignore_case: true,
             newlines_between: true,
             internal_pattern: default_internal_patterns(),
             groups: default_groups(),

@@ -2,9 +2,10 @@
 use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
-    CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOptions, SortOrder, TrailingCommas,
+    CustomGroupDefinition, Expand, FallbackSort, GroupEntry, ImportModifier, ImportSelector,
+    JsFormatOptions, JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, SortImportsOptions, SortOptions, SortOrder, SortType,
+    SpecialCharacters, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
@@ -14,7 +15,8 @@ use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
     ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
     ObjectWrapConfig, OperatorPositionConfig, QuotePropsConfig, SortGroupItemConfig,
-    SortImportsUserConfig, SortOrderConfig, TrailingCommaConfig,
+    SortImportsUserConfig, SortOrderConfig, SortTypeConfig, SpecialCharactersConfig,
+    TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -184,23 +186,33 @@ fn to_sort_imports(
 
     let mut sort_imports = SortImportsOptions::default();
 
-    if let Some(v) = sort_imports_config.partition_by_newline {
-        sort_imports.partition_by_newline = v;
+    let common = sort_imports_config.common;
+    if let Some(v) = common.sort_type {
+        sort_imports.common.sort_type = to_sort_type(v);
     }
-    if let Some(v) = sort_imports_config.partition_by_comment {
-        sort_imports.partition_by_comment = v;
+    if let Some(v) = common.order {
+        sort_imports.common.order = to_sort_order(v);
+    }
+    if let Some(v) = common.ignore_case {
+        sort_imports.common.ignore_case = v;
+    }
+    if let Some(v) = common.special_characters {
+        sort_imports.common.special_characters = to_special_characters(v);
+    }
+    if let Some(v) = common.fallback_sort {
+        sort_imports.common.fallback_sort = FallbackSort {
+            sort_type: to_sort_type(v.sort_type),
+            order: v.order.map(to_sort_order),
+        };
+    }
+    if let Some(v) = common.partition_by_newline {
+        sort_imports.common.partition_by_newline = v;
+    }
+    if let Some(v) = common.partition_by_comment {
+        sort_imports.common.partition_by_comment = v;
     }
     if let Some(v) = sort_imports_config.sort_side_effects {
         sort_imports.sort_side_effects = v;
-    }
-    if let Some(v) = sort_imports_config.order {
-        sort_imports.order = match v {
-            SortOrderConfig::Asc => SortOrder::Asc,
-            SortOrderConfig::Desc => SortOrder::Desc,
-        };
-    }
-    if let Some(v) = sort_imports_config.ignore_case {
-        sort_imports.ignore_case = v;
     }
     if let Some(v) = sort_imports_config.newlines_between {
         sort_imports.newlines_between = v;
@@ -257,6 +269,30 @@ fn to_sort_imports(
     sort_imports.validate().map_err(|e| format!("Invalid `{key_label}` configuration: {e}"))?;
 
     Ok(Some(sort_imports))
+}
+
+fn to_sort_order(config: SortOrderConfig) -> SortOrder {
+    match config {
+        SortOrderConfig::Asc => SortOrder::Asc,
+        SortOrderConfig::Desc => SortOrder::Desc,
+    }
+}
+
+fn to_sort_type(config: SortTypeConfig) -> SortType {
+    match config {
+        SortTypeConfig::Natural => SortType::Natural,
+        SortTypeConfig::Alphabetical => SortType::Alphabetical,
+        SortTypeConfig::LineLength => SortType::LineLength,
+        SortTypeConfig::Unsorted => SortType::Unsorted,
+    }
+}
+
+fn to_special_characters(config: SpecialCharactersConfig) -> SpecialCharacters {
+    match config {
+        SpecialCharactersConfig::Keep => SpecialCharacters::Keep,
+        SpecialCharactersConfig::Trim => SpecialCharacters::Trim,
+        SpecialCharactersConfig::Remove => SpecialCharacters::Remove,
+    }
 }
 
 /// Pure field translation (unknown values are rejected at deserialize time).
@@ -344,7 +380,9 @@ pub(super) fn to_jsdoc(config: &FormatConfig) -> Option<JsdocOptions> {
 
 #[cfg(test)]
 mod tests {
-    use oxc_formatter::{Expand, GroupEntry, GroupName};
+    use oxc_formatter::{
+        Expand, GroupEntry, GroupName, SortCommonOptions, SortType, SpecialCharacters,
+    };
 
     use super::super::validate::validate;
     use super::*;
@@ -375,6 +413,58 @@ mod tests {
                 });
             assert_eq!(to_import_modifier(config), *modifier);
         }
+        for sort_type in SortType::ALL {
+            let config: SortTypeConfig =
+                serde_json::from_value(serde_json::json!(sort_type.name())).unwrap_or_else(|_| {
+                    panic!("type `{}` is missing from SortTypeConfig", sort_type.name())
+                });
+            assert_eq!(to_sort_type(config), *sort_type);
+        }
+        for special in SpecialCharacters::ALL {
+            let config: SpecialCharactersConfig =
+                serde_json::from_value(serde_json::json!(special.name())).unwrap_or_else(|_| {
+                    panic!("value `{}` is missing from SpecialCharactersConfig", special.name())
+                });
+            assert_eq!(to_special_characters(config), *special);
+        }
+    }
+
+    #[test]
+    fn test_sort_common_options_map() {
+        let config: FormatConfig = serde_json::from_str(
+            r#"{ "sort": { "imports": {
+                "type": "line-length",
+                "specialCharacters": "trim",
+                "fallbackSort": { "type": "alphabetical", "order": "desc" }
+            } } }"#,
+        )
+        .unwrap();
+        let common = build(&config).unwrap().sort.imports.unwrap().common;
+        assert_eq!(common.sort_type, SortType::LineLength);
+        assert_eq!(common.special_characters, SpecialCharacters::Trim);
+        assert_eq!(common.fallback_sort.sort_type, SortType::Alphabetical);
+        assert!(common.fallback_sort.order.unwrap().is_desc());
+    }
+
+    #[test]
+    fn test_sort_common_defaults_unchanged() {
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": true } }"#).unwrap();
+        let common = build(&config).unwrap().sort.imports.unwrap().common;
+        assert_eq!(common, SortCommonOptions::default());
+    }
+
+    #[test]
+    fn test_flattened_common_still_accepts_legacy_field_spellings() {
+        // `order` / `ignoreCase` / `partitionBy*` moved into the flattened struct; the JSON is unchanged.
+        let config: FormatConfig = serde_json::from_str(
+            r#"{ "sortImports": { "order": "desc", "ignoreCase": false, "partitionByComment": true } }"#,
+        )
+        .unwrap();
+        let common = build(&config).unwrap().sort.imports.unwrap().common;
+        assert!(common.order.is_desc());
+        assert!(!common.ignore_case);
+        assert!(common.partition_by_comment);
     }
 
     #[test]
@@ -403,9 +493,9 @@ mod tests {
         assert!(format_options.semicolons.is_as_needed());
 
         let sort_imports = format_options.sort.imports.unwrap();
-        assert!(sort_imports.partition_by_newline);
-        assert!(sort_imports.order.is_desc());
-        assert!(!sort_imports.ignore_case);
+        assert!(sort_imports.common.partition_by_newline);
+        assert!(sort_imports.common.order.is_desc());
+        assert!(!sort_imports.common.ignore_case);
         assert!(!sort_imports.newlines_between);
     }
 
@@ -476,7 +566,7 @@ mod tests {
         let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort.imports.unwrap();
         assert!(sort_imports.newlines_between);
-        assert!(!sort_imports.partition_by_newline);
+        assert!(!sort_imports.common.partition_by_newline);
 
         // Test explicit false
         let config: FormatConfig = serde_json::from_str(
@@ -490,7 +580,7 @@ mod tests {
         let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort.imports.unwrap();
         assert!(!sort_imports.newlines_between);
-        assert!(!sort_imports.partition_by_newline);
+        assert!(!sort_imports.common.partition_by_newline);
 
         // Test explicit true
         let config: FormatConfig = serde_json::from_str(
@@ -504,7 +594,7 @@ mod tests {
         let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort.imports.unwrap();
         assert!(sort_imports.newlines_between);
-        assert!(!sort_imports.partition_by_newline);
+        assert!(!sort_imports.common.partition_by_newline);
 
         let config: FormatConfig = serde_json::from_str(
             r#"{
@@ -686,7 +776,7 @@ mod tests {
         let config: FormatConfig =
             serde_json::from_str(r#"{ "sort": { "imports": { "order": "desc" } } }"#).unwrap();
         let sort_imports = build(&config).unwrap().sort.imports.unwrap();
-        assert!(sort_imports.order.is_desc());
+        assert!(sort_imports.common.order.is_desc());
     }
 
     #[test]

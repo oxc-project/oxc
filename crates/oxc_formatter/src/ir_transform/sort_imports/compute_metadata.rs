@@ -1,10 +1,9 @@
 use std::{borrow::Cow, path::Path};
 
-use cow_utils::CowUtils;
 use phf::phf_set;
 
 use crate::ir_transform::{
-    sort_common::groups::GroupMatcher,
+    sort_common::{compare::normalize_key, groups::GroupMatcher},
     sort_imports::{
         group_config::{ImportModifier, ImportSelector, ImportVocabulary},
         options::SortImportsOptions,
@@ -30,7 +29,7 @@ pub fn compute_import_metadata<'a>(
 
     // Pre-compute normalized source for case-insensitive comparison
     let normalized_source =
-        if options.ignore_case { source.cow_to_lowercase() } else { Cow::Borrowed(source) };
+        normalize_key(source, options.common.ignore_case, options.common.special_characters);
 
     // Determine if this import should be ignored (not moved between groups)
     // - If `sort_side_effects: true`, never ignore

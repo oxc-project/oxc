@@ -1,8 +1,8 @@
 mod sort_imports;
 
 use oxc_formatter::{
-    CustomGroupDefinition, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    JsdocOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    CustomGroupDefinition, FallbackSort, GroupEntry, ImportModifier, ImportSelector,
+    JsFormatOptions, JsdocOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
 };
 use serde::Deserialize;
 
@@ -90,6 +90,18 @@ struct TestSortImportsConfig {
     #[serde(default, deserialize_with = "deserialize_groups")]
     groups: Option<ParsedGroups>,
     custom_groups: Option<Vec<TestCustomGroupDefinition>>,
+    #[serde(rename = "type")]
+    sort_type: Option<String>,
+    special_characters: Option<String>,
+    fallback_sort: Option<TestFallbackSortConfig>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TestFallbackSortConfig {
+    #[serde(rename = "type")]
+    sort_type: String,
+    order: Option<String>,
 }
 
 #[derive(Debug, Default)]
@@ -150,22 +162,22 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
     if let Some(sort_config) = sort_imports_config {
         let mut sort_imports = SortImportsOptions::default();
         if let Some(v) = sort_config.partition_by_newline {
-            sort_imports.partition_by_newline = v;
+            sort_imports.common.partition_by_newline = v;
         }
         if let Some(v) = sort_config.partition_by_comment {
-            sort_imports.partition_by_comment = v;
+            sort_imports.common.partition_by_comment = v;
         }
         if let Some(v) = sort_config.sort_side_effects {
             sort_imports.sort_side_effects = v;
         }
         if let Some(v) = sort_config.order {
-            sort_imports.order = match v.as_str() {
+            sort_imports.common.order = match v.as_str() {
                 "desc" => SortOrder::Desc,
                 _ => SortOrder::Asc,
             };
         }
         if let Some(v) = sort_config.ignore_case {
-            sort_imports.ignore_case = v;
+            sort_imports.common.ignore_case = v;
         }
         if let Some(v) = sort_config.newlines_between {
             sort_imports.newlines_between = v;
@@ -192,6 +204,19 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
                         .collect(),
                 })
                 .collect();
+        }
+        if let Some(v) = sort_config.sort_type {
+            sort_imports.common.sort_type = v.parse().expect("invalid `type` in test config");
+        }
+        if let Some(v) = sort_config.special_characters {
+            sort_imports.common.special_characters =
+                v.parse().expect("invalid `specialCharacters` in test config");
+        }
+        if let Some(v) = sort_config.fallback_sort {
+            sort_imports.common.fallback_sort = FallbackSort {
+                sort_type: v.sort_type.parse().expect("invalid `fallbackSort.type` in test config"),
+                order: v.order.map(|o| if o == "desc" { SortOrder::Desc } else { SortOrder::Asc }),
+            };
         }
         sort_imports.validate().expect("fixture `options.json` holds an invalid sortImports set");
         options.sort.imports = Some(sort_imports);

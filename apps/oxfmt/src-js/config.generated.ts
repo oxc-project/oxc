@@ -21,11 +21,11 @@ export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
 /**
- * Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+ * Modifier matching the import characteristics in `customGroups` (see the `groups` option of `sort.imports` for semantics).
  */
 export type ImportModifierConfig = "side_effect" | "type" | "value" | "default" | "wildcard" | "named";
 /**
- * Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).
+ * Selector matching the import kind in `customGroups` (see the `groups` option of `sort.imports` for semantics).
  */
 export type ImportSelectorConfig =
   | "type"
@@ -40,8 +40,10 @@ export type ImportSelectorConfig =
   | "builtin"
   | "external"
   | "import";
-export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
+export type SortTypeConfig = "natural" | "alphabetical" | "line-length" | "unsorted";
+export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
+export type SpecialCharactersConfig = "keep" | "trim" | "remove";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
 export type SortTailwindcssUserConfig = boolean | SortTailwindcssConfig;
 export type SvelteUserConfig = boolean | SvelteConfig;
@@ -655,6 +657,9 @@ export interface SortConfig {
   imports?: SortImportsUserConfig;
   [k: string]: unknown;
 }
+/**
+ * Options for sorting import statements (`sort.imports`, or its deprecated alias `sortImports`).
+ */
 export interface SortImportsConfig {
   /**
    * Define your own groups for matching very specific imports.
@@ -673,6 +678,16 @@ export interface SortImportsConfig {
    * - Default: `[]`
    */
   customGroups?: CustomGroupItemConfig[];
+  /**
+   * Secondary comparison used when two members compare equal.
+   *
+   * ```json
+   * { "fallbackSort": { "type": "line-length", "order": "desc" } }
+   * ```
+   *
+   * - Default: `{ "type": "unsorted" }` (equal members keep their source order)
+   */
+  fallbackSort?: FallbackSortConfig;
   /**
    * Specifies a list of predefined import groups for sorting.
    *
@@ -793,6 +808,27 @@ export interface SortImportsConfig {
    * - Default: `false`
    */
   sortSideEffects?: boolean;
+  /**
+   * What to do with non-letter characters before comparing.
+   *
+   * - `"keep"` — Compare names as-is.
+   * - `"trim"` — Strip leading non-letters (`./foo` compares as `foo`, `@scope/x` as `scope/x`).
+   * - `"remove"` — Strip every non-letter (digits included, as in perfectionist).
+   *
+   * - Default: `"keep"`
+   */
+  specialCharacters?: SpecialCharactersConfig;
+  /**
+   * How members are compared.
+   *
+   * - `"natural"` — Digit runs compare numerically (`a2` before `a10`).
+   * - `"alphabetical"` — Code-point order of the normalized name (no locale collation).
+   * - `"line-length"` — Shorter members first.
+   * - `"unsorted"` — Do not sort, only group and partition.
+   *
+   * - Default: `"natural"`
+   */
+  type?: SortTypeConfig;
   [k: string]: unknown;
 }
 export interface CustomGroupItemConfig {
@@ -813,6 +849,17 @@ export interface CustomGroupItemConfig {
    * Selector to match the import kind.
    */
   selector?: ImportSelectorConfig;
+  [k: string]: unknown;
+}
+export interface FallbackSortConfig {
+  /**
+   * Inherits the primary `order` when omitted.
+   */
+  order?: SortOrderConfig;
+  /**
+   * How tied members are compared; same values as `type`.
+   */
+  type: SortTypeConfig;
   [k: string]: unknown;
 }
 /**

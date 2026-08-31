@@ -86,4 +86,22 @@ import { b } from "b";
     expect(result.errors.length).toBe(1);
     expect(result.errors[0].message).toMatch(/deprecated alias of `sort\.imports`/);
   });
+
+  it("should sort by line length with a fallback", async () => {
+    const input = `import { ccc } from "./ccc";
+import { b } from "./y";
+import { a } from "./x";
+`;
+    const result = await format("a.ts", input, {
+      sort: { imports: { type: "line-length", fallbackSort: { type: "alphabetical" } } },
+    });
+    expect(result.code).toBe(
+      `
+import { a } from "./x";
+import { b } from "./y";
+import { ccc } from "./ccc";
+`.trimStart(),
+    );
+    expect(result.errors).toStrictEqual([]);
+  });
 });

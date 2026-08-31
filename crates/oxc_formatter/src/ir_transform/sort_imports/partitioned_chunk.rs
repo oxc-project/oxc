@@ -126,6 +126,7 @@ impl<'a> PartitionedChunk<'a> {
                     }
 
                     let is_side_effect = metadata.is_side_effect;
+                    let size = metadata.size;
                     let (group_idx, normalized_source, is_ignored) =
                         compute_import_metadata(metadata, group_matcher, options);
 
@@ -135,6 +136,7 @@ impl<'a> PartitionedChunk<'a> {
                         is_side_effect,
                         group_idx,
                         normalized_source,
+                        size,
                         is_ignored,
                     });
                 }

@@ -483,38 +483,13 @@ impl SortImportsUserConfig {
     }
 }
 
+/// Options for sorting import statements (`sort.imports`, or its deprecated alias `sortImports`).
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
-    /// Enables the empty line to separate imports into logical groups.
-    ///
-    /// When `true`, formatter will not sort imports if there is an empty line between them.
-    /// This helps maintain the defined order of logically separated groups of members.
-    ///
-    /// ```js
-    /// import { b1, b2 } from 'b'
-    ///
-    /// import { a } from 'a'
-    /// import { c } from 'c'
-    /// ```
-    ///
-    /// - Default: `false`
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub partition_by_newline: Option<bool>,
-    /// Enables the use of comments to separate imports into logical groups.
-    ///
-    /// When `true`, all comments will be treated as delimiters, creating partitions.
-    ///
-    /// ```js
-    /// import { b1, b2 } from 'b'
-    /// // PARTITION
-    /// import { a } from 'a'
-    /// import { c } from 'c'
-    /// ```
-    ///
-    /// - Default: `false`
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub partition_by_comment: Option<bool>,
+    /// Options shared by every `sort.*` target.
+    #[serde(flatten)]
+    pub common: SortCommonConfig,
     /// Specifies whether side effect imports should be sorted.
     ///
     /// By default, sorting side-effect imports is disabled for security reasons.
@@ -522,16 +497,6 @@ pub struct SortImportsConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_side_effects: Option<bool>,
-    /// Specifies whether to sort items in ascending or descending order.
-    ///
-    /// - Default: `"asc"`
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub order: Option<SortOrderConfig>,
-    /// Specifies whether sorting should be case-sensitive.
-    ///
-    /// - Default: `true`
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ignore_case: Option<bool>,
     /// Specifies whether to add newlines between groups.
     ///
     /// When `false`, no newlines are added between groups.
@@ -616,6 +581,107 @@ pub struct SortImportsConfig {
     pub custom_groups: Option<Vec<CustomGroupItemConfig>>,
 }
 
+/// Options shared by every `sort.*` target.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortCommonConfig {
+    /// How members are compared.
+    ///
+    /// - `"natural"` — Digit runs compare numerically (`a2` before `a10`).
+    /// - `"alphabetical"` — Code-point order of the normalized name (no locale collation).
+    /// - `"line-length"` — Shorter members first.
+    /// - `"unsorted"` — Do not sort, only group and partition.
+    ///
+    /// - Default: `"natural"`
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub sort_type: Option<SortTypeConfig>,
+    /// Specifies whether to sort items in ascending or descending order.
+    ///
+    /// - Default: `"asc"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<SortOrderConfig>,
+    /// Specifies whether sorting should be case-sensitive.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_case: Option<bool>,
+    /// What to do with non-letter characters before comparing.
+    ///
+    /// - `"keep"` — Compare names as-is.
+    /// - `"trim"` — Strip leading non-letters (`./foo` compares as `foo`, `@scope/x` as `scope/x`).
+    /// - `"remove"` — Strip every non-letter (digits included, as in perfectionist).
+    ///
+    /// - Default: `"keep"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub special_characters: Option<SpecialCharactersConfig>,
+    /// Secondary comparison used when two members compare equal.
+    ///
+    /// ```json
+    /// { "fallbackSort": { "type": "line-length", "order": "desc" } }
+    /// ```
+    ///
+    /// - Default: `{ "type": "unsorted" }` (equal members keep their source order)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fallback_sort: Option<FallbackSortConfig>,
+    /// Enables the empty line to separate imports into logical groups.
+    ///
+    /// When `true`, formatter will not sort imports if there is an empty line between them.
+    /// This helps maintain the defined order of logically separated groups of members.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    ///
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_newline: Option<bool>,
+    /// Enables the use of comments to separate imports into logical groups.
+    ///
+    /// When `true`, all comments will be treated as delimiters, creating partitions.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    /// // PARTITION
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partition_by_comment: Option<bool>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum SortTypeConfig {
+    Natural,
+    Alphabetical,
+    LineLength,
+    Unsorted,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum SpecialCharactersConfig {
+    Keep,
+    Trim,
+    Remove,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct FallbackSortConfig {
+    /// How tied members are compared; same values as `type`.
+    #[serde(rename = "type")]
+    pub sort_type: SortTypeConfig,
+    /// Inherits the primary `order` when omitted.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<SortOrderConfig>,
+}
+
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum SortOrderConfig {
@@ -698,7 +764,7 @@ pub struct CustomGroupItemConfig {
     pub modifiers: Option<Vec<ImportModifierConfig>>,
 }
 
-/// Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).
+/// Selector matching the import kind in `customGroups` (see the `groups` option of `sort.imports` for semantics).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ImportSelectorConfig {
@@ -716,7 +782,7 @@ pub enum ImportSelectorConfig {
     Import,
 }
 
-/// Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+/// Modifier matching the import characteristics in `customGroups` (see the `groups` option of `sort.imports` for semantics).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ImportModifierConfig {
@@ -1066,7 +1132,7 @@ mod tests_sort_umbrella {
         let config: FormatConfig =
             serde_json::from_str(r#"{ "sort": { "imports": { "order": "desc" } } }"#).unwrap();
         let imports = config.sort.unwrap().imports.unwrap().into_config().unwrap();
-        assert!(matches!(imports.order, Some(SortOrderConfig::Desc)));
+        assert!(matches!(imports.common.order, Some(SortOrderConfig::Desc)));
         assert!(config.sort_imports.is_none());
     }
 
@@ -1090,7 +1156,7 @@ mod tests_sort_umbrella {
             serde_json::from_str(r#"{ "sort": { "imports": { "ignoreCase": true } } }"#).unwrap();
         base.merge(&overlay);
         let imports = base.sort.unwrap().imports.unwrap().into_config().unwrap();
-        assert!(matches!(imports.order, Some(SortOrderConfig::Desc)));
-        assert_eq!(imports.ignore_case, Some(true));
+        assert!(matches!(imports.common.order, Some(SortOrderConfig::Desc)));
+        assert_eq!(imports.common.ignore_case, Some(true));
     }
 }

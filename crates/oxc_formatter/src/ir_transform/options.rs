@@ -3,6 +3,9 @@
 //! `JsFormatOptions.sort` is the umbrella; each target is `Option<…>` and `None` means disabled.
 //! Every printer hook is gated on its own target so that disabled targets cost nothing.
 
+pub use super::sort_common::options::{
+    FallbackSort, SortCommonOptions, SortType, SpecialCharacters,
+};
 pub use super::sort_imports::options::*;
 
 /// Umbrella for all sorting targets.

@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
 use crate::ir_transform::{
-    sort_common::permutation::{apply_permutation, group_sort, sort_with_pinned},
+    sort_common::{
+        compare::compare,
+        permutation::{apply_permutation, group_sort, sort_with_pinned},
+    },
     sort_imports::{options::SortImportsOptions, source_line::SourceLine},
 };
 
@@ -13,6 +16,7 @@ pub struct SortableImport<'a> {
     // These are used for sorting and computed by `compute_import_metadata()`
     pub group_idx: usize,
     pub normalized_source: Cow<'a, str>,
+    pub size: u32,
     pub is_side_effect: bool,
     pub is_ignored: bool,
 }
@@ -30,13 +34,14 @@ impl SortSortableImports for Vec<SortableImport<'_>> {
             return;
         }
 
-        // NOTE: Apply `desc` by reversing the per-comparison `Ordering`,
-        // NOT by reversing the sorted slice afterwards.
-        // `reverse()` on the slice would also flip imports that compare `Equal` (e.g. same source),
-        // breaking stability and making sorting non-idempotent.
         let compare_sources = |a: usize, b: usize| {
-            let ordering = natord::compare(&self[a].normalized_source, &self[b].normalized_source);
-            if options.order.is_desc() { ordering.reverse() } else { ordering }
+            compare(
+                &self[a].normalized_source,
+                self[a].size,
+                &self[b].normalized_source,
+                self[b].size,
+                &options.common,
+            )
         };
 
         // Ignored imports (side-effects that may not be regrouped) keep their absolute position.

@@ -496,7 +496,7 @@ All specified modifiers must be present (AND logic).
 type: `"side_effect" | "type" | "value" | "default" | "wildcard" | "named"`
 
 
-Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+Modifier matching the import characteristics in `customGroups` (see the `groups` option of `sort.imports` for semantics).
 
 
 ###### sort.imports.customGroups[n].selector
@@ -505,6 +505,41 @@ type: `"type" | "side_effect_style" | "side_effect" | "style" | "index" | "sibli
 
 
 Selector to match the import kind.
+
+
+#### sort.imports.fallbackSort
+
+type: `object`
+
+
+Secondary comparison used when two members compare equal.
+
+```json
+{
+  "fallbackSort": {
+    "type": "line-length",
+    "order": "desc"
+  }
+}
+```
+
+- Default: `{ "type": "unsorted" }` (equal members keep their source order)
+
+
+##### sort.imports.fallbackSort.order
+
+type: `"asc" | "desc"`
+
+
+Inherits the primary `order` when omitted.
+
+
+##### sort.imports.fallbackSort.type
+
+type: `"natural" | "alphabetical" | "line-length" | "unsorted"`
+
+
+How tied members are compared; same values as `type`.
 
 
 #### sort.imports.groups
@@ -682,6 +717,35 @@ By default, sorting side-effect imports is disabled for security reasons.
 - Default: `false`
 
 
+#### sort.imports.specialCharacters
+
+type: `"keep" | "trim" | "remove"`
+
+
+What to do with non-letter characters before comparing.
+
+- `"keep"` — Compare names as-is.
+- `"trim"` — Strip leading non-letters (`./foo` compares as `foo`, `@scope/x` as `scope/x`).
+- `"remove"` — Strip every non-letter (digits included, as in perfectionist).
+
+- Default: `"keep"`
+
+
+#### sort.imports.type
+
+type: `"natural" | "alphabetical" | "line-length" | "unsorted"`
+
+
+How members are compared.
+
+- `"natural"` — Digit runs compare numerically (`a2` before `a10`).
+- `"alphabetical"` — Code-point order of the normalized name (no locale collation).
+- `"line-length"` — Shorter members first.
+- `"unsorted"` — Do not sort, only group and partition.
+
+- Default: `"natural"`
+
+
 ## sortImports
 
 type: `object | boolean`
@@ -755,7 +819,7 @@ All specified modifiers must be present (AND logic).
 type: `"side_effect" | "type" | "value" | "default" | "wildcard" | "named"`
 
 
-Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+Modifier matching the import characteristics in `customGroups` (see the `groups` option of `sort.imports` for semantics).
 
 
 ##### sortImports.customGroups[n].selector
@@ -764,6 +828,41 @@ type: `"type" | "side_effect_style" | "side_effect" | "style" | "index" | "sibli
 
 
 Selector to match the import kind.
+
+
+### sortImports.fallbackSort
+
+type: `object`
+
+
+Secondary comparison used when two members compare equal.
+
+```json
+{
+  "fallbackSort": {
+    "type": "line-length",
+    "order": "desc"
+  }
+}
+```
+
+- Default: `{ "type": "unsorted" }` (equal members keep their source order)
+
+
+#### sortImports.fallbackSort.order
+
+type: `"asc" | "desc"`
+
+
+Inherits the primary `order` when omitted.
+
+
+#### sortImports.fallbackSort.type
+
+type: `"natural" | "alphabetical" | "line-length" | "unsorted"`
+
+
+How tied members are compared; same values as `type`.
 
 
 ### sortImports.groups
@@ -939,6 +1038,35 @@ Specifies whether side effect imports should be sorted.
 By default, sorting side-effect imports is disabled for security reasons.
 
 - Default: `false`
+
+
+### sortImports.specialCharacters
+
+type: `"keep" | "trim" | "remove"`
+
+
+What to do with non-letter characters before comparing.
+
+- `"keep"` — Compare names as-is.
+- `"trim"` — Strip leading non-letters (`./foo` compares as `foo`, `@scope/x` as `scope/x`).
+- `"remove"` — Strip every non-letter (digits included, as in perfectionist).
+
+- Default: `"keep"`
+
+
+### sortImports.type
+
+type: `"natural" | "alphabetical" | "line-length" | "unsorted"`
+
+
+How members are compared.
+
+- `"natural"` — Digit runs compare numerically (`a2` before `a10`).
+- `"alphabetical"` — Code-point order of the normalized name (no locale collation).
+- `"line-length"` — Shorter members first.
+- `"unsorted"` — Do not sort, only group and partition.
+
+- Default: `"natural"`
 
 
 ## sortPackageJson
