@@ -101,7 +101,7 @@ impl ServerLinterBuilder {
         // create a set for config errors, because if the main config fails to load,
         // the same error might occur again.
         let mut client_messages = FxHashSet::default();
-        let suppressions = match WorkspaceSuppressions::new(root_path.clone()) {
+        let suppressions = match WorkspaceSuppressions::new(root_path.to_path_buf()) {
             Ok(suppressions) => suppressions,
             Err(diagnostic) => {
                 warn!("{diagnostic}");
@@ -109,7 +109,7 @@ impl ServerLinterBuilder {
                     message: diagnostic.to_string(),
                     r#type: MessageType::Error,
                 });
-                WorkspaceSuppressions::without_baseline(root_path.clone())
+                WorkspaceSuppressions::without_baseline(root_path.to_path_buf())
             }
         };
         let mut external_linter = self.external_linter.as_ref();
@@ -791,7 +791,7 @@ impl Tool for ServerLinter {
 impl ServerLinter {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn new(
+    fn new(
         run: Run,
         cwd: PathBuf,
         ignore_matcher: LintIgnoreMatcher,
