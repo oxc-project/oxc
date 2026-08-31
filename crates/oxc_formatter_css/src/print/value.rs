@@ -131,6 +131,14 @@ pub(super) fn write_attribute_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a
     write!(f, text(arena_cow_str(&printed, f)).without_expand_parent());
 }
 
+/// Emit a raw source slice with [`adjust_numbers_and_strings`] applied
+/// (Prettier's raw selector-text print path:
+/// spacing and newlines stay verbatim and nothing ever breaks on line width).
+pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    let adjusted = adjust_numbers_and_strings(raw, f.options());
+    write!(f, text(arena_cow_str(&adjusted, f)));
+}
+
 /// Prettier's `adjustNumbers(adjustStrings(...))` over a raw source slice:
 /// strings re-quote via `printString`,
 /// standalone numbers (not glued to a word part) get `printCssNumber` + lowercased/canonical unit;

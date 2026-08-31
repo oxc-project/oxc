@@ -20,24 +20,16 @@ Parses with [`oxc-css-parser`](https://crates.io/crates/oxc-css-parser), a `raff
 
 The fork adds:
 
-- `template_placeholder` option (for the css-in-js dispatcher)
-  - Backtick-delimited marker `` `<prefix><digits>` `` with a parameterized inner affix (`TemplatePlaceholder { prefix }`);
-  - Backtick is invalid CSS/SCSS/Sass (only Less's inline-JS delimiter), so the marker is
-    unmistakably out-of-band, not a real `@var`/`$var` or at-rule
-  - Only `format_to_ir` with `template_placeholders: true` enables it (with the option unset a backtick is a syntax error)
-  - MUST be used with `Syntax::Scss`; css-in-js is `CssVariant::Scss`-hardcoded
-  - Tokenized as one typed `Token::Placeholder { index, suffix }` accepted in value / selector / statement / declaration-name positions
-    - Per-position layout and coverage: see "css-in-js specifics" below
-- Whitespace-sensitive Less `+`/`-` operators (matching `lessc`)
-  - A `+`/`-` is a `LessBinaryOperation` operator only when followed by whitespace;
-  - `@a -@b` is two values (`-@b` is a `LessNegativeValue` sign
-  - `margin: -@a -@b` = two values, NOT `(-@a) - @b` subtraction), `@a - @b` is subtraction
-- Various bug fixes for valid CSS/SCSS/Less syntax `oxc-css-parser` miss-parses or rejects
-  - selector / at-rule / value-token coverage gaps
+- `template_placeholder` option: backtick-delimited `` `<prefix><digits>` `` markers tokenized as one typed `Token::Placeholder`
+  - the css-in-js parse mode, enabled only by `format_to_ir`
+  - Rationale, gating and per-position coverage: see "css-in-js specifics" below
+- Bug fixes toward the reference compilers for valid CSS/SCSS/Less syntax `raffia` miss parses or rejects;
+  - unlike the leniencies below these may change the AST of input that already parsed
+    - e.g. lessc's whitespace-sensitive `+`/`-`: `margin: -@a -@b` is two values, not subtraction
 - Additive leniencies for syntax reference compilers reject but postcss (and so Prettier) accepts
-  - the IE `*color` hack, Scss dotted words (`foo.bar`, xstyled / tailwind-theme tokens), plain-CSS `%placeholder` selectors (postcss-extend-rule), non-standard `@import` tails, ...
-  - Each is additive: it only accepts previously-erroring input, never changes the AST of input that already parsed
-  - See "Policy: how to take in non-spec / non-Sass dialect syntax" below
+  - e.g. the IE `*color` hack, raw-prelude rules like `sans: "Sans" { ... }`
+  - Contract (additive-only, code comment + test pin per leniency) and triage:
+    - see "Policy: how to take in non-spec / non-Sass dialect syntax" below
 
 Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
@@ -169,7 +161,7 @@ When a dialect report comes in, first translate it: "which GENERAL postcss behav
 Then absorb it at the highest possible rung of the escape-hatch hierarchy (top = cheapest, each rung covers whole classes of dialects at once):
 
 1. Unknown at-rule prelude verbatim (`write_verbatim_at_rule_tail`) zero-cost bucket: Tailwind, postcss-mixins, ICSS ride it for free
-2. Raw fallbacks when the typed grammar rejects (raw component values, `TokenSeq`, `ImportPrelude.modifiers`) `[attr=;]`, weird import tails
+2. Raw fallbacks when the typed grammar rejects (raw component values, `TokenSeq`, `ImportPrelude.modifiers`, `UnknownQualifiedRule`) `[attr=;]`, weird import tails, nested config blocks
 3. postcss word rules at the separator layer (`is_word_glued_number`, the `1#{$var}` glue, solidus words) variant-agnostic, fixes xstyled + `theme()` + future unknown tokens in one place
 4. `ParserOptions` flag + typed node (postcss-simple-vars) ONLY when the formatter must make layout decisions INSIDE the construct.
    Promotion criteria, all three:
@@ -189,11 +181,7 @@ Either means the fix is at the wrong rung.
 
 #### Supported: postcss-simple-vars (auto-enabled for `CssVariant::Css`)
 
-Covered:
-
-- `$var: value !important;` declarations (top-level and inside rules)
-- `$var` references in property values
-- `$var` references inside `@media`/at-rule preludes
+Covered: `$var: value !important;` declarations (top-level and inside rules), `$var` references in property values and `@media`/at-rule preludes.
 
 NOT covered: `$(var)` interpolation (`margin-$(dir): 10px`, `.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
 
