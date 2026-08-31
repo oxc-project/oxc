@@ -131,6 +131,25 @@ describe("LSP linting", () => {
       }
     });
 
+    it("generates inverted diagnostics for suppressed diagnostics", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions",
+        "related.js",
+        "javascript",
+      );
+      const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-duplicate-case)");
+      const inverted = diagnostics.filter(({ code, relatedInformation }) => {
+        return (
+          code === undefined &&
+          relatedInformation?.some(({ message }) => message === "original diagnostic")
+        );
+      });
+
+      expect(suppressed).toHaveLength(1);
+      expect(inverted.length).toBeGreaterThan(0);
+    });
+
     it("ignores a suppression baseline below the workspace root", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
