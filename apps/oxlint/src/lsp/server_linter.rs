@@ -3,6 +3,7 @@ use std::str::FromStr;
 use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
+use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::{
     gen_lsp_types::{
@@ -18,8 +19,7 @@ use tracing::{debug, error, warn};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DiffManager, ExternalLinter,
     ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
-    LintRunnerBuilder, LintServiceOptions, Linter, OxlintSuppressionFileAction, Oxlintrc,
-    SuppressionManager, read_to_string,
+    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SuppressionTracking, read_to_string,
 };
 
 use oxc_language_server::{
@@ -97,11 +97,22 @@ impl ServerLinterBuilder {
         let root_path = uri_to_file_path(root_uri).unwrap();
         // Read the suppression-display option up front, before `options` is partially moved below.
         let suppressed_violation_severity = options.suppressed_violation_severity;
-        let mut external_linter = self.external_linter.as_ref();
-        let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
         // create a set for config errors, because if the main config fails to load,
         // the same error might occur again.
         let mut client_messages = FxHashSet::default();
+        let suppressions = match WorkspaceSuppressions::new(root_path.clone()) {
+            Ok(suppressions) => suppressions,
+            Err(diagnostic) => {
+                warn!("{diagnostic}");
+                client_messages.insert(ClientMessage {
+                    message: diagnostic.to_string(),
+                    r#type: MessageType::Error,
+                });
+                WorkspaceSuppressions::without_baseline(root_path.clone())
+            }
+        };
+        let mut external_linter = self.external_linter.as_ref();
+        let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = external_linter {
@@ -276,6 +287,7 @@ impl ServerLinterBuilder {
                 fix_kind,
                 lint_options.report_unused_directive,
                 options.rules_customization,
+                suppressions,
                 suppressed_violation_severity,
             ),
             client_messages.into_iter().collect(),
@@ -436,18 +448,25 @@ struct WorkspaceSuppressions {
 }
 
 impl WorkspaceSuppressions {
-    fn new(workspace_root: PathBuf) -> Self {
-        let suppression_manager =
-            SuppressionManager::load(&workspace_root, SUPPRESSIONS_FILE_NAME, false, false);
-        let manager = match &suppression_manager.file_action {
-            OxlintSuppressionFileAction::Malformed(error) => {
-                warn!("{error}");
-                None
-            }
-            _ => Some(suppression_manager.build_diff()),
-        };
+    fn new(workspace_root: PathBuf) -> Result<Self, OxcDiagnostic> {
+        let suppression_file_path = workspace_root.join(SUPPRESSIONS_FILE_NAME);
+        if !suppression_file_path.exists() {
+            return Ok(Self::without_baseline(workspace_root));
+        }
 
-        Self { workspace_root, manager }
+        let tracking = SuppressionTracking::from_file(&suppression_file_path, &workspace_root)?;
+        let manager = Some(Arc::new(DiffManager::new(
+            tracking.suppressions().clone(),
+            true,
+            false,
+            false,
+        )));
+
+        Ok(Self { workspace_root, manager })
+    }
+
+    fn without_baseline(workspace_root: PathBuf) -> Self {
+        Self { workspace_root, manager: None }
     }
 
     fn partition_file(
@@ -783,9 +802,9 @@ impl ServerLinter {
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
+        suppressions: WorkspaceSuppressions,
         suppressed_violation_severity: SuppressedViolationSeverity,
     ) -> Self {
-        let suppressions = WorkspaceSuppressions::new(cwd.clone());
         Self {
             run,
             cwd,
@@ -992,7 +1011,12 @@ impl ServerLinter {
 
 #[cfg(test)]
 mod tests_builder {
-    use tower_lsp_server::gen_lsp_types::{CodeActionKind, CodeActionProvider, ServerCapabilities};
+    use std::fs;
+
+    use serde_json::json;
+    use tower_lsp_server::gen_lsp_types::{
+        CodeActionKind, CodeActionProvider, MessageType, ServerCapabilities, Uri,
+    };
 
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
@@ -1001,7 +1025,7 @@ mod tests_builder {
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
         commands::FIX_ALL_COMMAND_ID,
-        server_linter::ServerLinterBuilder,
+        server_linter::{SUPPRESSIONS_FILE_NAME, ServerLinterBuilder},
     };
 
     #[test]
@@ -1068,6 +1092,20 @@ mod tests_builder {
         let mut server_capabilities = ServerCapabilities::default();
         builder.server_capabilities(&mut server_capabilities, &mut capabilities);
         assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Push);
+    }
+
+    #[test]
+    fn test_malformed_suppression_file_returns_client_message() {
+        let root_dir = tempfile::tempdir().unwrap();
+        fs::write(root_dir.path().join(SUPPRESSIONS_FILE_NAME), "{]").unwrap();
+        let root_uri = Uri::from_file_path(root_dir.path()).unwrap();
+
+        let (_linter, client_messages) =
+            ServerLinterBuilder::default().build(&root_uri, json!({}));
+
+        assert_eq!(client_messages.len(), 1);
+        assert_eq!(client_messages[0].r#type, MessageType::ERROR);
+        assert!(client_messages[0].message.contains("Failed to parse oxlint config"));
     }
 }
 
