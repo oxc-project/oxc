@@ -90,7 +90,8 @@ pub use crate::{
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{
-        DiffManager, OxlintSuppressionFileAction, SuppressionManager, SuppressionTracking,
+        DEFAULT_SUPPRESSIONS_FILE_NAME, DiffManager, OxlintSuppressionFileAction,
+        SuppressionManager, SuppressionTracking,
     },
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::TsGoLintState,
