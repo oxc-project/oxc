@@ -1005,7 +1005,7 @@ mod tests_builder {
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
         commands::FIX_ALL_COMMAND_ID,
-        server_linter::ServerLinterBuilder,
+        server_linter::{ServerLinterBuilder, WorkspaceSuppressions},
     };
 
     #[test]
@@ -1086,6 +1086,18 @@ mod tests_builder {
         assert_eq!(client_messages.len(), 1);
         assert_eq!(client_messages[0].r#type, MessageType::ERROR);
         assert!(client_messages[0].message.contains("Failed to parse oxlint config"));
+    }
+
+    #[test]
+    fn test_nested_suppression_file_is_ignored() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_dir = root_dir.path().join("web");
+        fs::create_dir_all(&nested_dir).unwrap();
+        fs::write(nested_dir.join(DEFAULT_SUPPRESSIONS_FILE_NAME), "{}").unwrap();
+
+        let suppressions = WorkspaceSuppressions::new(root_dir.path().to_path_buf()).unwrap();
+
+        assert!(suppressions.manager.is_none());
     }
 }
 
