@@ -23,7 +23,7 @@
     "prettier": "3.9.6",
     "prettier-plugin-svelte": "4.1.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.2b6f3c2",
-    "tinypool": "2.1.0"
+    "tinypool": "2.1.2"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
