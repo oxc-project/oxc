@@ -1,0 +1,19 @@
+Cargo.toml
+  s_52131809d4ac28::t_1ad257684c71ce 221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bf33d033827dde542a8cc5c56da951f56628b576",
+  "prompts": {},
+  "sessions": {
+    "s_52131809d4ac28": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05585-517a-7f61-8656-4eff0c38acc5",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
