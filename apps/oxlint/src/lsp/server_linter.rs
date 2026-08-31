@@ -908,8 +908,6 @@ impl ServerLinter {
             })
             .collect();
 
-        messages.append(&mut generate_inverted_diagnostics(&messages, uri));
-
         if let Some(severity) = match self.suppressed_violation_severity {
             SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::HINT),
             SuppressedViolationSeverity::Info => Some(DiagnosticSeverity::INFORMATION),
@@ -932,6 +930,8 @@ impl ServerLinter {
                 }
             }
         }
+
+        messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
         // Take directives once to avoid separate get/remove lock acquisitions.
         let directives = self.runner.directives_coordinator().take(path);
