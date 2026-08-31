@@ -14,6 +14,7 @@ pub struct UnresolvedReference<'a> {
 /// Instead of maintaining per-scope hashmaps and merging them on scope exit (bubble-up),
 /// references are collected flat and resolved in a single pass after traversal (walk-up).
 /// This eliminates all hashmap drain+insert operations during scope exit.
+#[derive(Default)]
 pub struct UnresolvedReferences<'a> {
     /// The lookup scope initially matches the reference's recorded scope and advances past
     /// function bodies which are not visible to parameter references.
@@ -51,33 +52,15 @@ impl<'a> UnresolvedReferences<'a> {
         self.references.len()
     }
 
-    /// Read a reference by index, by value.
-    ///
-    /// Used by [`crate::SemanticBuilder::resolve_references_for_current_scope`]
-    /// to process the list in-place without allocating a temporary `Vec`. All
-    /// entry fields are `Copy`, so this hands the caller an owned value that's
-    /// detached from the underlying borrow.
-    ///
-    /// # Panics
-    /// Panics if `idx >= self.len()`.
+    /// Retain only the references in `self.references[start..]` for which `keep` returns `true`.
+    /// Like [`Vec::retain_mut`], but restricted to the suffix starting at `start`.
+    /// `keep` may modify the reference in place.
     #[inline]
-    pub(crate) fn get(&self, idx: usize) -> UnresolvedReference<'a> {
-        self.references[idx]
-    }
-
-    /// Overwrite the reference at `idx` (write-cursor support for in-place
-    /// processing).
-    ///
-    /// # Panics
-    /// Panics if `idx >= self.len()`.
-    #[inline]
-    pub(crate) fn set(&mut self, idx: usize, reference: UnresolvedReference<'a>) {
-        self.references[idx] = reference;
-    }
-
-    /// Truncate the list to `len`, removing references at the end.
-    #[inline]
-    pub(crate) fn truncate(&mut self, len: usize) {
-        self.references.truncate(len);
+    pub(crate) fn retain_from(
+        &mut self,
+        start: usize,
+        mut keep: impl FnMut(&mut UnresolvedReference<'a>) -> bool,
+    ) {
+        self.references.extract_if(start.., |reference| !keep(reference)).for_each(drop);
     }
 }
