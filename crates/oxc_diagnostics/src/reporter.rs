@@ -54,6 +54,32 @@ pub trait DiagnosticReporter {
         true
     }
 
+    /// Render diagnostics in order, delegating to [`render_error`](Self::render_error) by default.
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        for error in errors {
+            if let Some(rendered) = self.render_error(error) {
+                emit(&rendered);
+            }
+        }
+    }
+
+    /// Render diagnostics until `keep` rejects a rendered report.
+    fn render_errors_until(
+        &mut self,
+        errors: Vec<Error>,
+        keep: &mut dyn FnMut(Option<&str>, &str) -> bool,
+    ) {
+        for error in errors {
+            let source_name =
+                error.source_code().and_then(|source| source.name()).map(ToString::to_string);
+            if let Some(rendered) = self.render_error(error)
+                && !keep(source_name.as_deref(), &rendered)
+            {
+                break;
+            }
+        }
+    }
+
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
     /// of this diagnostic.
@@ -147,29 +173,46 @@ impl Info {
         let mut severity = Severity::Warning;
         let rule_id = diagnostic.code().map(|code| code.to_string());
 
-        if let Some(source) = diagnostic.source_code()
-            && let Some(label) = diagnostic.labels().first()
-            && let Ok(start_offset) = usize::try_from(label.offset())
-            && let Some(end_offset) = label.offset().checked_add(label.len())
-            && let Ok(end_offset) = usize::try_from(end_offset)
-            && source.data().get(start_offset..end_offset).is_some()
-            && let Some(start_position) = line_column(source.data(), start_offset)
-        {
-            start = start_position;
-            if let Some(end_position) = line_column(source.data(), end_offset) {
-                end = end_position;
-            }
-
+        if let Some(source) = diagnostic.source_code() {
             if let Some(name) = source.name() {
                 filename = name.to_string();
             }
-            if matches!(diagnostic.severity(), Some(Severity::Error)) {
-                severity = Severity::Error;
-            }
 
-            message = diagnostic.to_string();
+            if let Some(label) = diagnostic.labels().first()
+                && let Ok(start_offset) = usize::try_from(label.offset())
+                && let Some(end_offset) = label.offset().checked_add(label.len())
+                && let Ok(end_offset) = usize::try_from(end_offset)
+                && source.data().get(start_offset..end_offset).is_some()
+                && let Some(start_position) = line_column(source.data(), start_offset)
+            {
+                start = start_position;
+                if let Some(end_position) = line_column(source.data(), end_offset) {
+                    end = end_position;
+                }
+
+                if matches!(diagnostic.severity(), Some(Severity::Error)) {
+                    severity = Severity::Error;
+                }
+
+                message = diagnostic.to_string();
+            }
         }
 
         Self { start, end, filename, message, severity, rule_id }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{Error, NamedSource, OxcDiagnostic};
+
+    use super::Info;
+
+    #[test]
+    fn includes_source_name_for_unlabelled_diagnostic() {
+        let error: Error = OxcDiagnostic::error("Something went wrong")
+            .with_source_code(NamedSource::new("file.js", ""));
+
+        assert_eq!(Info::new(&error).filename, "file.js");
     }
 }

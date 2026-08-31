@@ -11,5 +11,11 @@
       ".gitignore": "ignored-by-root.js",
       "subdir/.gitignore": "ignored-by-subdir.js\n"
     }
+  },
+  {
+    "args": ["--check", "ignored-by-root.js"],
+    "gitignore": {
+      ".gitignore": "ignored-by-root.js\nsubdir/"
+    }
   }
 ]

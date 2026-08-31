@@ -1,0 +1,11 @@
+{
+  "plugins": ["vue"],
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "vue/valid-define-emits": "error",
+    "vue-scripts-plugin/no-debugger": "error"
+  }
+}

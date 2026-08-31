@@ -1,6 +1,6 @@
 [package]
 name = "oxc_codegen"
-version = "0.144.0"
+version = "0.147.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -19,6 +19,10 @@ workspace = true
 [lib]
 doctest = true
 
+[[example]]
+name = "codegen"
+required-features = ["sourcemap"]
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
@@ -34,6 +38,7 @@ oxc_syntax = { workspace = true }
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }

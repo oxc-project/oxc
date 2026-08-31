@@ -104,6 +104,11 @@ pub enum CommentContent {
     /// Classified separately because its meaning remains valid if the next AST
     /// node is removed, unlike position-sensitive coverage annotations.
     CoverageIgnoreFile = 11,
+
+    /// Marks the following string or no-substitution template as a property name.
+    /// `/* @__KEY__ */` or `/* #__KEY__ */`
+    /// <https://esbuild.github.io/api/#mangle-key>
+    PropertyKey = 12,
 }
 
 bitflags! {
@@ -151,10 +156,19 @@ pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,
 
-    /// Start of token this leading comment is attached to.
-    /// `/* Leading */ token`
-    ///                ^ This start
-    /// NOTE: Trailing comment attachment is not computed yet.
+    /// Source boundary this comment is attached to.
+    ///
+    /// Leading comments use the start of the following token:
+    /// ```text
+    /// /* Leading */ token
+    ///               ^ attached_to
+    /// ```
+    ///
+    /// Trailing comments use the end of the preceding token:
+    /// ```text
+    /// token| /* Trailing */
+    ///      ^ attached_to (the boundary immediately after `token`)
+    /// ```
     #[estree(skip)]
     pub attached_to: u32,
 
@@ -275,6 +289,12 @@ impl Comment {
     #[inline]
     pub fn is_no_side_effects(self) -> bool {
         self.content == CommentContent::NoSideEffects
+    }
+
+    /// Is a leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
+    #[inline]
+    pub fn is_property_key_annotation(self) -> bool {
+        self.content == CommentContent::PropertyKey && self.is_leading()
     }
 
     /// Is webpack magic comment.

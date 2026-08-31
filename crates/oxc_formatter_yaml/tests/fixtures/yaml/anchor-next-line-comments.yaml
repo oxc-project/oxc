@@ -1,0 +1,14 @@
+# A single comment on the line after an anchor inlines onto the anchor's
+# line (`&a # c`); two or more stay own-line. Both match Prettier
+# (the prettier#10518 / #9327 bug class, structurally avoided here:
+# the positional cursor makes them the next node's leading comments).
+key: &a
+  # c
+  a: 1
+seq: &s
+  # c
+  - 1
+multi: &m
+  # c1
+  # c2
+  b: 1

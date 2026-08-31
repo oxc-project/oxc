@@ -744,6 +744,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 Left-Hand-Side Expression
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
+        self.with_pure_comments(Self::parse_lhs_expression_or_higher_impl)
+    }
+
+    fn parse_lhs_expression_or_higher_impl(&mut self) -> Expression<'a> {
         let start = self.cur_start();
         let mut in_optional_chain = false;
         // `MemberExpression`
@@ -776,6 +780,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = self.end_span(start);
             self.map_to_chain_expression(span, lhs)
         }
+    }
+
+    fn with_pure_comments(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> Expression<'a>,
+    ) -> Expression<'a> {
+        let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+        let mut expr = parse(self);
+        if let Some(comments) = pure_comments
+            && Self::set_pure_on_call_or_new_expr(&mut expr)
+        {
+            self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+        }
+        expr
     }
 
     fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
@@ -1235,7 +1253,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // which parses the JSX element.)
             Kind::LAngle if !self.source_type.is_jsx() => {
                 if self.is_ts {
-                    self.parse_ts_type_assertion()
+                    self.with_pure_comments(Self::parse_ts_type_assertion)
                 } else {
                     self.parse_jsx_in_non_jsx_error()
                 }
@@ -1257,7 +1275,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     return self.parse_jsx_expression();
                 }
                 if self.is_ts {
-                    return self.parse_ts_type_assertion();
+                    return self.with_pure_comments(Self::parse_ts_type_assertion);
                 }
                 self.parse_jsx_in_non_jsx_error()
             }
@@ -1277,13 +1295,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
-        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
-        let mut argument = self.parse_simple_unary_expression(self.cur_start());
-        if let Some(index) = pure_comment_index
-            && !Self::set_pure_on_call_or_new_expr(&mut argument)
-        {
-            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
-        }
+        let argument = self.parse_simple_unary_expression(self.cur_start());
         Expression::new_unary_expression(self.end_span(start), operator, argument, self)
     }
 
@@ -1298,13 +1310,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             self.parse_private_in_expression(lhs_start, lhs_precedence)
         } else {
-            let has_pure_comment =
-                self.lexer.trivia_builder.previous_token_has_pure_comment().is_some();
-            let mut expr = self.parse_unary_expression_or_higher(lhs_start);
-            if has_pure_comment {
-                Self::set_pure_on_call_or_new_expr(&mut expr);
-            }
-            expr
+            self.parse_unary_expression_or_higher(lhs_start)
         };
 
         self.parse_binary_expression_rest(lhs_start, lhs, lhs_parenthesized, lhs_precedence)
@@ -1485,7 +1491,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
@@ -1549,12 +1554,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expr =
             self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function);
 
-        if let Some(index) = pure_comment_index
-            && !Self::set_pure_on_call_or_new_expr(&mut expr)
-        {
-            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
-        }
-
         if has_no_side_effects_comment {
             Self::set_pure_on_function_expr(&mut expr);
         }
@@ -1572,17 +1571,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 new_expr.pure = true;
                 true
             }
-            Expression::BinaryExpression(binary_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut binary_expr.left)
-            }
-            Expression::LogicalExpression(logical_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut logical_expr.left)
-            }
-            Expression::ConditionalExpression(conditional_expr) => {
-                Self::set_pure_on_call_or_new_expr(&mut conditional_expr.test)
-            }
-            // Recurse through member-access chains: `/* #__PURE__ */ foo().a.b.c`
-            // applies PURE to the underlying call/new (Rollup/esbuild semantics).
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
             }

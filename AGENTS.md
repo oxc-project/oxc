@@ -48,7 +48,7 @@ Avoid editing `generated` subdirectories.
 
 ## Development Commands
 
-Prerequisites: Rust (MSRV: 1.95), Node.js, pnpm, just
+Prerequisites: Rust (MSRV: 1.96), Node.js, pnpm, just
 
 **Setup Notes:**
 
@@ -186,10 +186,7 @@ fn test() {
 
 #### oxc_formatter (and other `oxc_formatter_*` language crates)
 
-- **Fixture tests** (`tests/fixtures/`) and **Prettier conformance** (`tests/conformance.rs`), both part of `cargo test`
-- **Command**: `cargo test -p <crate>` (conformance only: `--test conformance`)
-- **Debug**: `PRETTIER_FILTER=<name> cargo test -p <crate> --test conformance -- --nocapture`
-- Conformance compares output with Prettier's snapshots (suite self-provisioned by `oxc_formatter_tests`); reports are pinned with `insta`
+- Read the target crate's `AGENTS.md`; it includes the shared formatter policy plus language-specific rules and verification commands
 
 #### oxc_minifier
 
@@ -272,7 +269,6 @@ These test suites are pre-cloned and ready to search:
 - **Test262** (`tasks/coverage/test262/`) - ECMAScript spec compliance
 - **Babel** (`tasks/coverage/babel/`) - Parsing and transformation edge cases
 - **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
-- **Prettier** (`crates/oxc_formatter_tests/prettier/`) - Formatting expectations (self-provisioned on first conformance run)
 
 NOTE: These suites are script-cloned and fully gitignored. ripgrep respects `.gitignore`, so a plain `rg` inside them silently returns nothing.
 Use `rg --no-ignore` (or `-u`) when searching them.

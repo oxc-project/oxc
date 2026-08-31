@@ -150,7 +150,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
                 if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    format_leading_comments_and_open_paren(argument.span(), true, f);
+                    // The argument's parentheses survive here,
+                    // so even a comment inside the first element's source parens stays inside:
+                    // bound at the span start.
+                    let span = argument.span();
+                    format_leading_comments_and_open_paren(span, span.start, true, f);
                     write!(f, [argument, token(")")]);
                 } else {
                     write!(f, argument);

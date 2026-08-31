@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.mutate-global-increment-op-
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Support UpdateExpression where argument is a global", labels: [LabeledSpan { label: None, span: Span { start: 45, end: 58 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Support UpdateExpression where argument is a global", labels: [LabeledSpan { label: None, span: Span { start: 45, end: 58 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 No changes.

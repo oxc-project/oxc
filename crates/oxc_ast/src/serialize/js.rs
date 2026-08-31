@@ -281,6 +281,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     raw_deser = "
         const pattern = DESER[BindingPattern](POS_OFFSET.id);
         if (IS_TS) {
+            let start, end;
             const previousParent = parent;
             if (PARENT) parent = pattern;
             const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
@@ -361,9 +362,9 @@ impl ESTree for CatchParameterConverter<'_, '_> {
         if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
             pos = int32[restFieldPos32];
 
-            let start, end;
-            const previousParent = parent;
-            const rest = parent = {
+            let start, end,
+                previousParent = parent,
+                rest = parent = {
                 type: 'RestElement',
                 ...(IS_TS && { decorators: [] }),
                 argument: null,
@@ -379,14 +380,19 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             };
             rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
+                rest.decorators = DESER[Vec<Decorator>](POS_OFFSET<FormalParameterRest>.decorators);
+                if (rest.decorators.length !== 0) {
+                    start = rest.decorators[0].start;
+                }
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<FormalParameterRest>.type_annotation
                 );
                 if (rest.typeAnnotation !== null) {
                     end = rest.typeAnnotation.end;
-                    rest.end = end;
-                    if (RANGE) rest.range[1] = end;
                 }
+                rest.start = start;
+                rest.end = end;
+                if (RANGE) rest.range = [start, end];
             }
             params.push(rest);
             if (PARENT) parent = previousParent;
@@ -418,16 +424,12 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);
         state.serialize_ts_field("value", &Null(()));
-        state.serialize_span(
-            rest.type_annotation
-                .as_ref()
-                .map_or(rest.rest.span, |ta| rest.rest.span.merge(ta.span)),
-        );
+        state.serialize_span(rest.span);
         state.end();
     }
 }

@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/allow-jsx-ref-destructured-parameter.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @validateRefAccessDuringRender @compilationMode:"infer"
+export function Button(t0) {
+	const $ = _c(2);
+	const { ref } = t0;
+	let t1;
+	if ($[0] !== ref) {
+		t1 = <button ref={ref} />;
+		$[0] = ref;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}

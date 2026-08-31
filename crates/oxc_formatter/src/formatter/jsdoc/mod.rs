@@ -1,6 +1,7 @@
 mod embedded;
 mod imports;
 mod line_buffer;
+mod markers;
 mod mdast_serialize;
 mod normalize;
 mod param_order;

@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import { join as pathJoin } from "node:path";
 
-const path = pathJoin(import.meta.dirname, "../index.js");
+import { disableReusedWorkers } from "../../disable-reused-workers.mjs";
+
+const packageDir = pathJoin(import.meta.dirname, "..");
+disableReusedWorkers(pathJoin(packageDir, "minify.wasi-browser.js"));
+
+const path = pathJoin(packageDir, "index.js");
 
 let data = fs.readFileSync(path, "utf-8");
 data = data.replace(

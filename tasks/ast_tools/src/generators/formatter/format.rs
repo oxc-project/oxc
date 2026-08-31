@@ -1,5 +1,14 @@
 //! Generator for `oxc_formatter`.
 //!
+//! Boundary with the handwritten side:
+//!
+//! - The node lists here decide which fragments of the `fmt` skeleton are EMITTED (comment-printing ownership, parentheses frames)
+//!   - they change the shape of the generated code, nothing else
+//! - Behavior the skeleton queries per node lives on `FormatWrite` (`write`, `suppressed_span`, `write_suppressed`)
+//!   - defaults cover the common case, overrides sit next to the node's `write` and need no regeneration
+//!
+//! Add a new list only for a variation the emitted shape must express;
+//! for anything a node merely answers, add a trait method with a total default.
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -38,35 +47,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
     &["TSUnionType", "ExpressionStatement"];
 
-// Statements whose suppressed (`oxfmt-ignore`d) range must exclude the trailing semicolon,
-// so the formatter prints its own terminator like Prettier's ignored range.
-// Every node listed here MUST implement `FormatWrite::write_suppressed`
-// (the default implementation panics at runtime).
-//
-// Mirrors Prettier's `locEnd` overrides (`language-js/location/overrides.js`) +
-// `shouldIgnoredNodePrintSemicolon`: keyword statements end at their keyword/label,
-// content-terminated ones at their content, body-ended ones recurse into the rightmost body.
-//
-// `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
-// but no confirmed divergence against Prettier 3.9 yet.
-//
-// Extend the list one statement at a time, verifying each against Prettier first.
-const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] = &[
-    "BreakStatement",
-    "ContinueStatement",
-    "DebuggerStatement",
-    "DoWhileStatement",
-    "ForInStatement",
-    "ForOfStatement",
-    "ForStatement",
-    "IfStatement",
-    "LabeledStatement",
-    "ReturnStatement",
-    "ThrowStatement",
-    "WhileStatement",
-    "WithStatement",
-];
-
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -78,11 +58,6 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSFunctionType",
     "TSTypeOperator",
 ];
-
-const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
-    "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",
-    "Function" => "FormatFunctionOptions",
-};
 
 pub struct FormatterFormatGenerator;
 
@@ -107,11 +82,6 @@ impl Generator for FormatterFormatGenerator {
             })
             .collect::<TokenStream>();
 
-        let options = NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.values().map(|o| {
-            let ident = format_ident!("{}", o);
-            quote! { , #ident }
-        });
-
         let output = quote! {
             #![expect(clippy::match_same_arms)]
             use oxc_ast::ast::*;
@@ -123,8 +93,8 @@ impl Generator for FormatterFormatGenerator {
                 formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren}},
-                print::{FormatWrite #(#options)*},
+                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
+                print::FormatWrite,
             };
 
             #impls
@@ -166,12 +136,22 @@ fn generate_struct_implementation(
     });
 
     let needs_parentheses_before = if needs_parentheses {
-        if do_not_print_leading_comment {
+        if do_not_print_comment {
+            // The node owns ALL its comment printing (leading and trailing) in `write`;
+            // keep the added paren bare and leave every comment to it.
             quote! {
                 let needs_parentheses = self.needs_parentheses(f);
                 if needs_parentheses {
                     "(".fmt(f);
                 }
+            }
+        } else if do_not_print_leading_comment {
+            // The node prints its own leading comments in `write`,
+            // but the ones that belong outside the formatter-added paren (source side / own-line) must
+            // print first (`X & /* c */ (A | B)` keeps `c` outside).
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
             }
         } else {
             // A leading type cast comment must stay adjacent to the `(` of its cast target inside this node;
@@ -179,7 +159,7 @@ fn generate_struct_implementation(
             // or the cast would rebind to them.
             quote! {
                 let needs_parentheses = self.needs_parentheses(f);
-                format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+                format_leading_comments_and_open_paren(self.span(), self.leading_comments_start(), needs_parentheses, f);
             }
         }
     } else {
@@ -196,40 +176,34 @@ fn generate_struct_implementation(
         quote! {}
     };
 
-    let generate_fmt_implementation = |has_options: bool| {
-        let write_call = if has_options {
-            quote! {
-                self.write_with_options(options, f);
-            }
-        } else {
-            quote! {
-                self.write(f);
-            }
+    let fmt_implementation = {
+        let write_call = quote! {
+            self.write(f);
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
+        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
+        //
+        // The check, the suppressed leading comments, and the printed range are all bounded by
+        // `FormatWrite::suppressed_span` (default: the node's span),
+        // which nodes override when the ignored range starts before their span (class decorators before `export`).
+        // `FormatWrite::write_suppressed` (default: print `suppressed_span` verbatim) is overridden by
+        // statements whose ignored range excludes the trailing semicolon.
         let suppressed_check = (!matches!(struct_name, "Program" | "JSXElement" | "JSXFragment"))
             .then(|| {
                 quote! {
-                    let is_suppressed = f.comments().is_suppressed(self.span().start);
+                    let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
                 }
             });
 
         let write_implementation = if suppressed_check.is_none() {
             write_call
         } else {
-            let suppressed_write =
-                if AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING.contains(&struct_name) {
-                    quote! { self.write_suppressed(f); }
-                } else {
-                    quote! { FormatSuppressedNode(self.span()).fmt(f); }
-                };
             // When `fmt` doesn't print leading/trailing comments itself,
             // the suppressed path still has to print them, or the suppression comment would be lost.
             let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
                 quote! {
-                    self.format_leading_comments(f);
+                    format_leading_comments(self.suppressed_span()).fmt(f);
                 }
             });
             let suppressed_trailing_comments = do_not_print_comment.then(|| {
@@ -240,7 +214,7 @@ fn generate_struct_implementation(
             quote! {
                 if is_suppressed {
                     #suppressed_leading_comments
-                    #suppressed_write
+                    self.write_suppressed(f);
                     #suppressed_trailing_comments
                 } else {
                     #write_call
@@ -290,23 +264,6 @@ fn generate_struct_implementation(
         }
     };
 
-    let fmt_implementation = generate_fmt_implementation(false);
-    let fmt_options =
-        NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
-        let implementation = generate_fmt_implementation(true);
-        quote! {
-            ///@@line_break
-            impl<'a> #type_ty {
-                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut JsFormatter<'_, 'a>) {
-                    #implementation
-                }
-            }
-        }
-    } else {
-        quote! {}
-    };
-
     quote! {
         ///@@line_break
         impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
@@ -314,8 +271,6 @@ fn generate_struct_implementation(
                 #fmt_implementation
             }
         }
-
-        #fmt_with_options_inherent
     }
 }
 

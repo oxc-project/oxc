@@ -536,6 +536,7 @@ impl TsGoLintState {
 
         // Kill the child process if it's still running to avoid zombie processes
         let _ = child.kill();
+        let _ = child.wait();
 
         diagnostics
     }
@@ -858,7 +859,6 @@ impl Message {
                 .with_message(suggestion.message.description)
         });
 
-        #[expect(clippy::from_iter_instead_of_collect)]
         let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
         Self::new(val.into(), possible_fixes)

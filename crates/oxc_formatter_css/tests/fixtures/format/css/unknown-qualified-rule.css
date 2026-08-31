@@ -1,0 +1,46 @@
+/* Declaration-shaped rules with raw preludes (postcss-nested-style config
+   blocks, oxc-project/oxc#26158): prelude verbatim, block formatted. */
+@font {
+  sans: "Sans" {
+    weight: 100 900;
+  }
+}
+
+@animate {
+  wiggle: wiggle 1s ease-in-out infinite {
+    from { transform: rotate(-3deg); }
+  }
+}
+
+/* interior whitespace stays verbatim; the gap before `{` collapses */
+a {
+  sans   :   "Sans"  woo  {
+    weight:100 900;
+  }
+  color: red;
+}
+
+/* multiline prelude stays verbatim, source indentation included */
+b {
+  x: y,
+z     q {
+    c: d;
+  }
+}
+
+/* top level, glued, empty block */
+sans:"Sans"{}
+
+@keyframes k {
+  x: y "s" {
+    a: b;
+  }
+}
+
+/* an `ident:`-led selector with a genuinely invalid An+B takes the raw-prelude
+   path and stays verbatim — Prettier keeps it verbatim too (no string/number
+   adjustment on the selector-unknown path); a merely-uppercase `2N-1` is valid
+   An+B and prints structurally as `2n-1` (see selectors fixtures) */
+a:nth-child(2n-x) {
+  color: red;
+}

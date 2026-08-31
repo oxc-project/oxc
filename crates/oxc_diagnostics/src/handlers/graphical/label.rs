@@ -7,19 +7,16 @@
 //! text hanging off each one. For multi-line spans the closing label is drawn
 //! by [`render_multi_line_end`](GraphicalReportHandler::render_multi_line_end).
 
-use std::{
-    cmp::max,
-    fmt::{self, Write},
-};
+use std::{cmp::max, fmt};
 
-use owo_colors::{OwoColorize, Style};
+use smallvec::SmallVec;
 
 use super::{
     handler::GraphicalReportHandler,
     line::Line,
     span::{FancySpan, LabelRenderMode},
 };
-use crate::handlers::theme::ThemeCharacters;
+use crate::handlers::theme::{DiagnosticColorize, Style, ThemeCharacters};
 
 struct Underline {
     padding: usize,
@@ -27,6 +24,27 @@ struct Underline {
     marker: char,
     right: usize,
     line: char,
+}
+
+impl Underline {
+    fn write(&self, f: &mut impl fmt::Write) -> fmt::Result {
+        // Use pre-encoded chunks for built-in theme characters.
+        let Some((underline_chunk, char_len)) = (match self.line {
+            '─' => Some((UNICODE_BARS, '─'.len_utf8())),
+            '^' => Some((ASCII_CARETS, 1)),
+            _ => None,
+        }) else {
+            write_repeated_char(f, ' ', self.padding)?;
+            write_repeated_char(f, self.line, self.left)?;
+            f.write_char(self.marker)?;
+            return write_repeated_char(f, self.line, self.right);
+        };
+
+        write_repeated_chunk(f, SPACES, 1, self.padding)?;
+        write_repeated_chunk(f, underline_chunk, char_len, self.left)?;
+        f.write_char(self.marker)?;
+        write_repeated_chunk(f, underline_chunk, char_len, self.right)
+    }
 }
 
 const CHUNK_CHARS: usize = 64;
@@ -69,23 +87,7 @@ fn write_padding(f: &mut impl fmt::Write, count: usize) -> fmt::Result {
 
 impl fmt::Display for Underline {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // Built-in themes repeat these characters frequently, so emit them in chunks.
-        // Preserve the original character loop for custom themes.
-        let Some((underline_chunk, char_len)) = (match self.line {
-            '─' => Some((UNICODE_BARS, '─'.len_utf8())),
-            '^' => Some((ASCII_CARETS, 1)),
-            _ => None,
-        }) else {
-            write_repeated_char(f, ' ', self.padding)?;
-            write_repeated_char(f, self.line, self.left)?;
-            f.write_char(self.marker)?;
-            return write_repeated_char(f, self.line, self.right);
-        };
-
-        write_repeated_chunk(f, SPACES, 1, self.padding)?;
-        write_repeated_chunk(f, underline_chunk, char_len, self.left)?;
-        f.write_char(self.marker)?;
-        write_repeated_chunk(f, underline_chunk, char_len, self.right)
+        self.write(f)
     }
 }
 
@@ -102,6 +104,22 @@ struct LabelContext<'a, 'source, 'label> {
     max_gutter: usize,
     all_highlights: &'a [FancySpan<'label>],
     vertical_bars: &'a [(&'a FancySpan<'label>, usize)],
+}
+
+impl LabelText<'_> {
+    fn write_unstyled(&self, f: &mut impl fmt::Write) -> fmt::Result {
+        let chars = self.chars;
+        let label = self.label;
+        match self.render_mode {
+            LabelRenderMode::SingleLine => {
+                write!(f, "{}{}{} {label}", chars.lbot, chars.hbar, chars.hbar)
+            }
+            LabelRenderMode::BlockFirst => {
+                write!(f, "{}{}{} {label}", chars.lbot, chars.hbar, chars.rcross)
+            }
+            LabelRenderMode::BlockRest => write!(f, "  {} {label}", chars.vbar),
+        }
+    }
 }
 
 impl fmt::Display for LabelText<'_> {
@@ -133,7 +151,7 @@ impl GraphicalReportHandler {
         let mut highest = 0;
 
         let chars = &self.theme.characters;
-        let mut vbar_offsets = Vec::with_capacity(single_liners.len());
+        let mut vbar_offsets = SmallVec::<[_; 2]>::with_capacity(single_liners.len());
         for &hl in single_liners {
             let byte_start = hl.offset();
             let byte_end = hl.offset() + hl.len();
@@ -156,18 +174,18 @@ impl GraphicalReportHandler {
             } else {
                 chars.underline
             };
-            write!(
-                f,
-                "{}",
-                Underline {
-                    padding: width,
-                    left: num_left,
-                    marker,
-                    right: num_right,
-                    line: chars.underline,
-                }
-                .style(hl.style)
-            )?;
+            let underline = Underline {
+                padding: width,
+                left: num_left,
+                marker,
+                right: num_right,
+                line: chars.underline,
+            };
+            if hl.style.is_plain() {
+                underline.write(f)?;
+            } else {
+                write!(f, "{}", underline.style(hl.style))?;
+            }
             highest = max(highest, end);
             vbar_offsets.push((hl, vbar_offset));
         }
@@ -226,7 +244,12 @@ impl GraphicalReportHandler {
                     style: hl.style,
                     render_mode,
                 };
-                writeln!(f, "{}", line.style(hl.style))?;
+                if hl.style.is_plain() {
+                    line.write_unstyled(f)?;
+                } else {
+                    write!(f, "{}", line.style(hl.style))?;
+                }
+                f.write_char('\n')?;
                 break;
             }
             write!(f, "{}", self.theme.characters.vbar.style(offset_hl.style))?;
@@ -312,6 +335,29 @@ impl GraphicalReportHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn plain_fast_paths_match_display_output() {
+        let underline = Underline { padding: 3, left: 2, marker: '|', right: 4, line: '^' };
+        let mut output = String::new();
+        underline.write(&mut output).unwrap();
+        assert_eq!(output, underline.to_string());
+
+        let theme = crate::GraphicalTheme::none();
+        for render_mode in
+            [LabelRenderMode::SingleLine, LabelRenderMode::BlockFirst, LabelRenderMode::BlockRest]
+        {
+            let label = LabelText {
+                chars: &theme.characters,
+                label: "plain label",
+                style: Style::Plain,
+                render_mode,
+            };
+            output.clear();
+            label.write_unstyled(&mut output).unwrap();
+            assert_eq!(output, label.to_string());
+        }
+    }
 
     #[test]
     fn repeated_chars_match_standard_output() {

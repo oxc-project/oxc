@@ -1,6 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter`
 
 Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the JS/TS-specific rules and translations.
+Known divergences live in DIVERGENCES.md (not yet an exhaustive audit against the conformance snapshots).
 
 ## Overview
 
@@ -77,19 +78,28 @@ this section records their JS/TS translation and the measured compat tables.
 Repositioning a comment is allowed only relative to formatter-owned punctuation
 (e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
 
-The `;` rule applies to statement terminators only, never to member separators:
+Four token classes decide a comment's freedom of movement.
+Replaceability does not separate them (only the separator is replaceable); the guaranteed flush point does:
+a delimiter flushes on the comment's own side, a terminator only right BEHIND itself, so a riding line comment lands just past it and nothing else:
 
-- Terminator: the `;` cannot be replaced by `,` — statements, class members
+- (1) Statement terminator: `;` after statements and class members
   (property/accessor via `FormatClassElementWithSemicolon`, bodyless methods in `MethodDefinition`).
-  A same-line trailing comment moves behind it
-- Separator: interface / type literal members and index signatures (`;` is interchangeable with `,`),
-  enum members' `,` — the comment stays before it, same as any list separator.
+  Formatter-owned: a same-line trailing comment moves behind it, block and line comments alike (the move-behind table below)
+- (2) In-head terminator: the for-head's `;`s, a label's or a single-block case test's `:`.
+  Block and own-line comments keep their slot (the uniform rule);
+  only a same-line line comment moves, just behind the token (`for (a // c\n; b;)` -> `a; // c`, `foo // c\n: b();` -> `foo: // c` + break)
+- (3) Separator: interchangeable with another token (interface / type literal members and index signatures
+  (`;` ⇄ `,`), enum members' `,`) the comment stays before it, same as any list separator.
   This matches Prettier and is the principled line, not an emulated quirk
-- Known gap, intentionally not covered: TS-only statements
-  (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
-  They are terminators by the rule above, but Prettier does not move their comments (yet);
-  we follow Prettier for now. If Prettier extends the rule to them, follow;
-  each is a small mechanical `FormatContentWithSemicolon` adoption
+- (4) Delimiter: bounds a region, a body's `{` `}`, a head's `(` `)`, the `}`-to-keyword gap.
+  User content: comments never cross it in either direction (the head-body comment policy below)
+
+Known gap, intentionally not covered: TS-only statements
+(`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
+
+They are terminators by the rule above, but Prettier does not move their comments (yet);
+we follow Prettier for now. If Prettier extends the rule to them, follow;
+each is a small mechanical `FormatContentWithSemicolon` adoption.
 
 When the content's source parentheses survive in the output (return/throw arguments, sequence/assignment in the prettier#19263 positions), comments inside them belong to the content and stay there;
 only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
@@ -116,8 +126,19 @@ JS-side mechanics of the shared "never cross" invariants:
 
 - Line boundary: line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
   - Both are structural guarantees, keep them
+  - One known violation, kept for Prettier compat: an own-line comment claimed mid-line inlines onto that line (`const // c` + break), see the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
 - User content: e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element — an attachment artifact, we keep the comment in place and diverge intentionally
 - Suppression: when hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+
+Head-body comment policy ("never cross user content" applied to statement/declaration heads):
+a body's `{` `}` and a head's `(` `)` are delimiters, and an empty-statement body's `;` is content, not a terminator (the verbatim empty-statement note in "Statement terminators and suppression"), so a comment between a head and its body keeps its side of each, uniformly across constructs:
+
+- same-line block comment stays inline (`while (x) /* c */ {`)
+- same-line line comment keeps its line, forcing the `{` onto the next line (`while (x) // c` + break)
+- own-line comment keeps its own line
+- comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
+
+Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`); their rustdocs cover the trailing-pass suppression mechanics.
 
 Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
 (e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
@@ -145,18 +166,6 @@ Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
   never from the previous statement's output;
   sound because no statement leaves its own trailing `;`,
   except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
-
-## Known divergences
-
-Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
-Entries documented in this file so far (all of the comment-attachment-artifact class, details in "Comment placement invariants" above) is not yet an exhaustive audit against the conformance snapshots:
-
-- A comment after a trailing array hole stays in place; Prettier relocates it backward across commas to the last real element
-- Asymmetric attachment like `export type T = string /* c */;` (comment moved behind `;` only in the exported form): one uniform rule instead of emulating the asymmetry
-- A trailing comment before a closing paren never breaks the operand chain: `!(a &&\n b // c)` collapses to `a && b // c`, as both formatters already do in every other paren-surviving position (return/throw argument, call argument, assignment, arrow body)
-  - Prettier preserves the source break only in the unary position and only when the last operand was alone on its source line (attachment binds the comment to that operand)
-  - Internal inconsistency plus source-layout sensitivity, overridden by the uniform rule
-  - Conditions are a separate shared rule (logical operands always break)
 
 ## Verification
 

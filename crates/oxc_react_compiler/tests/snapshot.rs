@@ -26,11 +26,11 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_react_compiler::{
-    BuiltInTypeRef, CompilationMode, CompileResult, CompilerOutputMode, DynamicGatingConfig,
-    Effect, EnvironmentConfig, ExhaustiveEffectDepsMode, ExternalFunctionConfig,
-    FunctionTypeConfig, FxIndexMap, GatingConfig, HookTypeConfig, InstrumentationConfig,
-    ObjectTypeConfig, PanicThreshold, PluginOptions, TypeConfig, TypeReferenceConfig, ValueKind,
-    compile, lint,
+    AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeRef, CompilationMode, CompileResult,
+    CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig, ExhaustiveEffectDepsMode,
+    ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig, HookTypeConfig,
+    InstrumentationConfig, ObjectTypeConfig, PanicThreshold, PluginOptions, TypeConfig,
+    TypeReferenceConfig, ValueKind, ValueReason, compile, lint,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -116,12 +116,24 @@ fn run_fixture(source: &str) -> String {
     // emitting. Surface any divergence in the snapshot so it stays reviewed rather than
     // drifting silently.
     let transform_body = diagnostics_body(diagnostics.as_slice());
-    let lint_body = diagnostics_body(lint_result.diagnostics.as_slice());
-    if lint_body != transform_body {
+    // `lint` wraps each compiler diagnostic with its category for routing. Compare
+    // only the wrapped diagnostic so lint and transform modes remain byte-identical.
+    let lint_diagnostics = lint_result
+        .diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.diagnostic.clone())
+        .collect::<Vec<_>>();
+    let lint_body = diagnostics_body(&lint_diagnostics);
+    // A fatal compile may originate from codegen, which lint intentionally does not
+    // run, and may replace diagnostics accumulated by earlier passes. Successful
+    // compilation still has to agree with lint on diagnostics and fatality.
+    if !fatal && lint_body != transform_body {
         out.push_str("\n\nLint-mode diagnostics (differ from transform):\n\n");
         out.push_str(if lint_body.is_empty() { "(none)\n" } else { &lint_body });
     }
-    assert_eq!(lint_result.fatal, fatal, "lint and compile fatality diverged");
+    if !fatal {
+        assert_eq!(lint_result.fatal, fatal, "lint and compile fatality diverged");
+    }
     out
 }
 
@@ -407,6 +419,12 @@ fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
                     "knownIncompatible",
                     incompatible_fn("useKnownIncompatible is known to be incompatible"),
                 ),
+                (
+                    "knownIncompatibleAliasing",
+                    incompatible_aliasing_fn(
+                        "knownIncompatibleAliasing is known to be incompatible",
+                    ),
+                ),
             ]),
         ),
         (
@@ -415,6 +433,27 @@ fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
                 ("useHookNotTypedAsHook", type_ref()),
                 ("notAhookTypedAsHook", hook(type_ref(), None, None)),
             ]),
+        ),
+        (
+            "ReactCompilerPureTagTest".to_string(),
+            object([(
+                "tag",
+                TypeConfig::Function(FunctionTypeConfig {
+                    positional_params: Vec::new(),
+                    rest_param: Some(Effect::Read),
+                    callee_effect: Effect::Read,
+                    return_type: Box::new(TypeConfig::TypeReference(TypeReferenceConfig {
+                        name: BuiltInTypeRef::Any,
+                    })),
+                    return_value_kind: ValueKind::Mutable,
+                    no_alias: None,
+                    mutable_only_if_operands_are_mutable: None,
+                    impure: Some(false),
+                    canonical_name: None,
+                    aliasing: None,
+                    known_incompatible: None,
+                }),
+            )]),
         ),
         ("useDefaultExportNotTypedAsHook".to_string(), object([("default", type_ref())])),
     ])
@@ -458,6 +497,33 @@ fn incompatible_fn(message: &str) -> TypeConfig {
         impure: None,
         canonical_name: None,
         aliasing: None,
+        known_incompatible: Some(message.to_string()),
+    })
+}
+
+fn incompatible_aliasing_fn(message: &str) -> TypeConfig {
+    TypeConfig::Function(FunctionTypeConfig {
+        positional_params: Vec::new(),
+        rest_param: Some(Effect::Read),
+        callee_effect: Effect::Read,
+        return_type: Box::new(type_ref()),
+        return_value_kind: ValueKind::Mutable,
+        no_alias: None,
+        mutable_only_if_operands_are_mutable: None,
+        impure: None,
+        canonical_name: None,
+        aliasing: Some(AliasingSignatureConfig {
+            receiver: "@receiver",
+            params: &[],
+            rest: Some("@rest"),
+            returns: "@returns",
+            temporaries: &[],
+            effects: &[AliasingEffectConfig::Create {
+                into: "@returns",
+                value: ValueKind::Mutable,
+                reason: ValueReason::KnownReturnSignature,
+            }],
+        }),
         known_incompatible: Some(message.to_string()),
     })
 }

@@ -11,7 +11,7 @@
 @forward "a" show x, /* c */ y;
 @use "a" /* c */ as b;
 @forward "a" as p-* /* before show */ show x, y;
-// KNOWN DIVERGENCE (see AGENTS.md): when the FIRST member alone overflows,
+// KNOWN DIVERGENCE (DIVERGENCES.md "forward-first-member-overflow"): when the FIRST member alone overflows,
 // Prettier puts it at +4 and every later member on its own line at +2 (an
 // artifact of its nested comma-chunk fill); our flat fill packs members at +2.
 // The next statement deviates from Prettier in that way.

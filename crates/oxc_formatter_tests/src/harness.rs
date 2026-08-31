@@ -137,6 +137,30 @@ pub fn format_options_display(json: &OptionSet) -> String {
     format!("{{ {} }}", parts.join(", "))
 }
 
+/// Snapshot-body invariant: the configured `endOfLine` is applied to every output line break.
+/// The snapshot itself cannot pin this
+/// (insta normalizes line endings when storing, and `.gitattributes eol=crlf` re-normalizes the `crlf/` fixtures on checkout),
+/// so assert it before the output is embedded.
+/// This doubles as the per-crate `endOfLine` option-plumbing check;
+/// the conversion itself is pinned by `it_converts_line_endings` in `oxc_formatter_core`
+/// (and the builders' debug_asserts keep raw `\r` out of `Text`/`Token`, so a stray `\r` can only come from the printer).
+fn assert_line_ending_applied(option_json: &OptionSet, formatted: &str, path: &Path) {
+    let Some(eol) = option_json.get("endOfLine").and_then(serde_json::Value::as_str) else {
+        return;
+    };
+    let bytes = formatted.as_bytes();
+    let ok = match eol {
+        "crlf" => bytes.iter().enumerate().all(|(i, &b)| match b {
+            b'\n' => i > 0 && bytes[i - 1] == b'\r',
+            b'\r' => bytes.get(i + 1) == Some(&b'\n'),
+            _ => true,
+        }),
+        "cr" => !bytes.contains(&b'\n'),
+        _ => !bytes.contains(&b'\r'),
+    };
+    assert!(ok, "endOfLine: {eol:?} not applied to every line break in {}", path.display());
+}
+
 /// Generates the canonical snapshot body for `path`/`source_text`.
 ///
 /// For each resolved option-set, exercises Prettier's default (`printWidth: 80`) and
@@ -201,6 +225,7 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
 
         let options = F::parse_options(&option_json);
         let formatted = F::format(source_text, path, &options);
+        assert_line_ending_applied(&option_json, &formatted, path);
 
         snapshot.push_str(&formatted);
         snapshot.push('\n');
@@ -210,6 +235,7 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
         // so known non-idempotent fixtures stay visible in their own snapshots
         // (and fixing one shows up as this section disappearing).
         let reformatted = F::format(&formatted, path, &options);
+        assert_line_ending_applied(&option_json, &reformatted, path);
         if reformatted != formatted {
             snapshot.push_str("---------- Not idempotent (second pass) ----------\n");
             snapshot.push_str(&reformatted);

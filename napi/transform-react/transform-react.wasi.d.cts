@@ -153,6 +153,11 @@ export interface ReactCompilerEnvironmentOptions {
   enableCustomTypeDefinitionForReanimated?: boolean
   enableTreatRefLikeIdentifiersAsRefs?: boolean
   enableTreatSetIdentifiersAsStateSetters?: boolean
+  /**
+   * Validate that `useMemo` callbacks return a value.
+   *
+   * @default false
+   */
   validateNoVoidUseMemo?: boolean
   enableAllowSetStateFromRefsInEffects?: boolean
   enableVerboseNoSetStateInEffect?: boolean
@@ -231,6 +236,9 @@ export interface ReactCompilerOptions {
   customOptOutDirectives?: Array<string>
   /**
    * Only run the React Compiler when the filename contains one of these strings.
+   *
+   * By default, files whose filename contains `node_modules` are skipped.
+   * Providing this option replaces that default filter.
    *
    * Function-valued `sources` filters from the Babel plugin are intentionally
    * unsupported across the native boundary.
@@ -315,7 +323,7 @@ export interface TransformResult {
   code: string
   /** Source map, populated when `sourcemap` is `true`. */
   map?: SourceMap
-  /** Parse, semantic, React Compiler, and downstream transform diagnostics. */
+  /** Parse, semantic, downstream transform, and fatal React Compiler diagnostics. */
   errors: Array<OxcError>
 }
 

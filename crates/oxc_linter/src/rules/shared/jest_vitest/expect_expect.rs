@@ -28,6 +28,8 @@ fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+pub const SHORT_DESCRIPTION: &str = "Enforce that each test has at least one `expect()` call.";
+
 pub const DOCUMENTATION: &str = r"### What it does
 
 This rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.
@@ -367,7 +369,13 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        if func.is_declaration()
+            && let Some(body) = &func.body
+        {
+            self.visit_function_body(body);
+        }
+    }
 
     fn visit_formal_parameter(&mut self, _param: &FormalParameter<'a>) {}
 }

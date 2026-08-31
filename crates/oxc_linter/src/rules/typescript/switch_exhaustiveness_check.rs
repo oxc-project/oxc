@@ -17,9 +17,11 @@ pub struct SwitchExhaustivenessCheckConfig {
     /// When true, a switch statement with a `default` case is considered exhaustive
     /// even if not all union members are handled explicitly.
     pub consider_default_exhaustive_for_unions: bool,
-    /// Regular expression pattern that when matched in a default case comment,
-    /// will suppress the exhaustiveness check.
-    /// Example: `"@skip-exhaustive-check"` to allow `default: // @skip-exhaustive-check`
+    /// Regular expression pattern for a comment that acts as an omitted `default` case.
+    /// The comment must appear after the final case and the switch must not have a `default` case.
+    /// For union types, it suppresses the exhaustiveness check only when
+    /// `considerDefaultExhaustiveForUnions` is enabled.
+    /// Example: `"^skip default$"` to allow a switch ending in `// skip default`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default_case_comment_pattern: Option<String>,
     /// Whether to require default cases on switches over union types that are not exhaustive.
@@ -142,7 +144,7 @@ declare_oxc_lint!(
 
 impl Rule for SwitchExhaustivenessCheck {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

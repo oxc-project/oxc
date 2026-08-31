@@ -134,7 +134,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -195,14 +194,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
-
-        // `/* #__PURE__ */ function foo() {}` - pure comment before non-expression statements cannot be applied.
-        // Expression statements handle pure comments internally in `parse_assignment_expression_or_higher_impl`.
-        if let Some(index) = pure_comment_index
-            && !matches!(stmt, Statement::ExpressionStatement(_))
-        {
-            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
-        }
 
         if has_no_side_effects_comment {
             Self::set_pure_on_function_stmt(&mut stmt);
@@ -599,6 +590,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 is_for_in,
                 declaration.span,
             ));
+            return;
+        }
+
+        // Annex B.3.5 only permits `var BindingIdentifier Initializer` in non-strict code:
+        // https://tc39.es/ecma262/#sec-initializers-in-forin-statement-heads
+        // Reject lexical declarations here; semantic analysis checks strict mode and patterns.
+        if is_for_in
+            && matches!(
+                declaration.kind,
+                VariableDeclarationKind::Let | VariableDeclarationKind::Const
+            )
+            && declaration.has_init()
+        {
+            self.error(diagnostics::initializer_in_for_in_lexical_declaration(declaration.span));
         }
     }
 

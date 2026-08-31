@@ -1,0 +1,26 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(memo-dependencies): Found missing memoization dependencies
+   ╭─[memo_dependencies.tsx:4:31]
+ 3 │ function Component({value}) {
+ 4 │   return useMemo(() => value, []);
+   ·                        ──┬──  ─┬
+   ·                          │     ╰── This dependency list is missing values used by the callback
+   ·                          ╰── Missing dependency `value`
+ 5 │ }
+   ╰────
+  help: Missing dependencies can cause a value to update less often than it should, resulting in stale UI
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps
+
+  ⚠ react(memo-dependencies): Found extra memoization dependencies
+   ╭─[memo_dependencies.tsx:4:39]
+ 3 │ function Component({value, extra}) {
+ 4 │   return useMemo(() => value, [value, extra]);
+   ·                                       ──┬──
+   ·                                         ╰── Unnecessary dependency `extra`
+ 5 │ }
+   ╰────
+  help: Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps

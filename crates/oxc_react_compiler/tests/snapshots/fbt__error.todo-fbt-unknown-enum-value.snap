@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/fbt/error.todo-fbt-unknown-enum-v
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support duplicate fbt tags", labels: [LabeledSpan { label: Some("Multiple `<fbt:enum>` tags found"), span: Span { start: 100, end: 108 }, primary: false }, LabeledSpan { label: Some("Multiple `<fbt:enum>` tags found"), span: Span { start: 170, end: 178 }, primary: false }], help: Some("Support `<fbt>` tags with multiple `<fbt:enum>` values"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Support duplicate fbt tags", labels: [LabeledSpan { label: Some("Multiple `<fbt:enum>` tags found"), span: Span { start: 100, end: 108 }, primary: true }, LabeledSpan { label: Some("Multiple `<fbt:enum>` tags found"), span: Span { start: 170, end: 178 }, primary: false }], help: Some("Support `<fbt>` tags with multiple `<fbt:enum>` values"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 No changes.

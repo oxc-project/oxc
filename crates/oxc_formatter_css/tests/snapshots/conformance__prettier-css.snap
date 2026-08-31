@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-css compatibility: 145/151 (96.03%), 17 files skipped
+css compatibility: 145/151 (96.03%), 15 files skipped
 
 # Failed
 
@@ -24,17 +24,11 @@ css compatibility: 145/151 (96.03%), 17 files skipped
 - css/combinator/combinator.css
 - css/comments/selectors.css
 - css/custom-properties/emoji.css
-- css/modules/modules.css
 - css/no-semicolon/url.css
 - css/parens/empty-lines.css
 - css/postcss-plugins/postcss-mixins.css
-- css/postcss-plugins/postcss-nested-props.css
 - css/postcss-plugins/postcss-simple-vars.css
 - css/quotes/quotes.css
 - css/selector-list/selectors.css
 - css/selector-string/string.css
 - css/stylefmt-repo/ie-hacks/ie-hacks.css
-
-# Not idempotent
-
-- css/comments/17479.css

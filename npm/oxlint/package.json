@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "1.78.0",
+  "version": "1.80.0",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [
     "eslint",
@@ -20,7 +20,7 @@
     "directory": "npm/oxlint"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "bin": {
     "oxlint": "bin/oxlint"

@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2dad1e0 parser: Track irregular line terminators in trivia (#25947) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- ae9be8f parser: Forbid type parameters on quoted constructors (#25696) (Boshen)
+- 23a7ad0 parser: Stop delimited lists at end of file (#25542) (Boshen)
+- 73acba9 parser: Preserve fatal errors during await reparse (#25541) (Boshen)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

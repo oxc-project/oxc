@@ -53,16 +53,22 @@ fn test_fold_one_child_blocks() {
     test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
     // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-    test("if(x){ if(y){var x;}else{var z;} }", "if(x){if(y)var x;else var z}");
+    test(
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } }",
+    );
 
     // NOTE - technically we can remove the blocks since both the parent
     // and child have elses. But we don't since it causes ambiguities in
     // some cases where not all descendent ifs having elses
     test(
-        "if(x){ if(y){var x;}else{var z;} }else{var w}",
-        "if(x){if(y)var x;else var z;}else var w",
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } else { var w } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } else var w }",
     );
-    test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+    test(
+        "v = function(x, y) { if(x) { var x } else { if(y) { var y } } }",
+        "v = function(x, y) { if(x) var x; else if(y) var y }",
+    );
 
     // Here's some of the ambiguous cases
     test(
@@ -350,9 +356,8 @@ fn test_minimize_demorgan20a() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan20b() {
-    test("if (0!==c || 2!==a && 1!==a) g(); else f()", "(0!==c || 2!==a && 1!==a) ? g() : f()");
+    test("if (0!==c || 2!==a && 1!==a) g(); else f()", "c!==0 || a!==2 && a!==1 ? g() : f()");
 }
 
 #[test]

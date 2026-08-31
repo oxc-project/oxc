@@ -129,7 +129,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@91ddec75689c4c78665b598d188dc821c5a43e5c # v2.85.9
+      - uses: taiki-e/install-action@37f7c5781271959fb65b6b35224e28652ff2b63d # v2.87.0
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -147,7 +147,7 @@ jobs:
         with:
           path: /home/runner/.rustup
           cache: rust
-      - uses: taiki-e/install-action@91ddec75689c4c78665b598d188dc821c5a43e5c # v2.85.9
+      - uses: taiki-e/install-action@37f7c5781271959fb65b6b35224e28652ff2b63d # v2.87.0
         with:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
@@ -203,7 +203,7 @@ jobs:
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
-          paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
+          paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
@@ -226,8 +226,8 @@ jobs:
           RUN_RAW_RANGE_TESTS: "true"
           RUN_RAW_TOKENS_TESTS: "true"
         run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
       - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         working-directory: tasks/e2e
@@ -347,7 +347,7 @@ jobs:
         id: filter
         with:
           exclude: oxc_linter,oxc_language_server
-          paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
+          paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
@@ -377,8 +377,8 @@ jobs:
         env:
           RUN_RAW_RANGE_TESTS: "true"
         run: |
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" build-test
-          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" build-test
+          pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
       - if: steps.filter.outputs.changed == 'true'
         name: Run e2e tests
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
@@ -475,7 +475,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: crate-ci/typos@8a48f81b6c64dcfea44b3633223084c4be58ac5f # v1.49.0
+      - uses: crate-ci/typos@a8168dc2984a9e2352f183ffe788f0f23a300389 # v1.49.1
         with:
           files: .
 
@@ -505,6 +505,7 @@ jobs:
         run: cargo clippy --all-features --profile dev-no-debug-assertions
       - run: pnpm --filter oxlint-app build-js
       - run: pnpm --filter oxfmt-app build-js
+      - run: pnpm --filter oxc-codegen build
       - run: node --run lint
 
   doc:
@@ -554,7 +555,7 @@ jobs:
             rust
             pnpm
 
-      - uses: taiki-e/install-action@91ddec75689c4c78665b598d188dc821c5a43e5c # v2.85.9
+      - uses: taiki-e/install-action@37f7c5781271959fb65b6b35224e28652ff2b63d # v2.87.0
         if: steps.filter.outputs.changed == 'true'
         with:
           tool: just
@@ -564,6 +565,44 @@ jobs:
         run: |
           just update-transformer-fixtures
           just coverage
+          git diff --exit-code
+
+  test-codegen:
+    name: Test Codegen
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - name: Check if codegen tests should run
+        id: filter
+        uses: ./.github/actions/check-changes
+        with:
+          packages: oxc_codegen_conformance,oxc_parser_napi
+          paths: .github/workflows/ci.yml,packages/codegen/,tasks/codegen_conformance/,napi/parser/,npm/oxc-types/,tasks/coverage/,pnpm-lock.yaml,pnpm-workspace.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          node-compat-table: false
+
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+        if: steps.filter.outputs.changed == 'true'
+
+      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+
+      - name: Run codegen tests
+        if: steps.filter.outputs.changed == 'true'
+        run: |
+          pnpm --filter oxc-codegen build-test
+          pnpm --filter oxc-codegen test
           git diff --exit-code
 
   minification:

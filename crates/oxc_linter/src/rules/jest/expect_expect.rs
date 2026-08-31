@@ -3,7 +3,7 @@ use oxc_macros::declare_oxc_lint;
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig},
+    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig, SHORT_DESCRIPTION},
     utils::PossibleJestNode,
 };
 
@@ -17,6 +17,7 @@ declare_oxc_lint!(
     config = ExpectExpectConfig,
     docs = DOCUMENTATION,
     version = "0.0.12",
+    short_description = SHORT_DESCRIPTION,
 );
 
 impl Rule for ExpectExpect {
@@ -45,6 +46,15 @@ fn test() {
         ("test('should pass', () => expect(true).toBeDefined())", None),
         ("it('should pass', () => somePromise().then(() => expect(true).toBeDefined()))", None),
         ("it('should pass', myTest); function myTest() { expect(true).toBeDefined() }", None),
+        (
+            "test('via function declaration', async () => {
+                async function check() {
+                    expect(1 + 1).toBe(2);
+                }
+                await check();
+            });",
+            None,
+        ),
         (
             "
             test('should pass', () => {

@@ -1,0 +1,7 @@
+# A break-less space-only EOF line MORE-indented than the block is content
+# (this value ends "\n "), kept verbatim with the standard final newline appended.
+# Contrast keep-chomped-eos-trailing-spaces: at-or-below-indent spaces add nothing.
+key: |+
+  x
+
+   
