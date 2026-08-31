@@ -151,18 +151,14 @@ impl FormatStrategy {
     ) -> Self {
         let insert_final_newline = config.insert_final_newline.unwrap_or(true);
         // Borrowed so the resolver's fast path can hand out its cached artifacts per file;
-        // `sort_imports` (the only non-`Copy` member) is cloned in the one arm that needs it.
+        // `sort` (the only non-`Copy` member) is cloned in the one arm that needs it.
         let core = validated.core;
 
         match kind {
             FileKind::OxcFormatter { path, source_type } => Self::OxcFormatter {
                 path,
                 source_type,
-                format_options: Box::new(to_oxc_formatter(
-                    &config,
-                    core,
-                    validated.sort_imports.clone(),
-                )),
+                format_options: Box::new(to_oxc_formatter(&config, core, validated.sort.clone())),
                 config: Arc::new(config),
                 core,
                 insert_final_newline,

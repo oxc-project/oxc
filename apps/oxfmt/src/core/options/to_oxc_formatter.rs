@@ -4,7 +4,7 @@ use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
     JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TrailingCommas,
+    SortImportsOptions, SortOptions, SortOrder, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
@@ -20,11 +20,11 @@ use super::super::oxfmtrc::{
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
 ///
 /// NOTE: Pure field translation:
-/// `core` and `sort_imports` are the validation gate's artifacts ([`super::validate::validate()`]), so this cannot fail.
+/// `core` and `sort` are the validation gate's artifacts ([`super::validate::validate()`]), so this cannot fail.
 pub fn to_oxc_formatter(
     config: &FormatConfig,
     core_options: CoreFormatOptions,
-    sort_imports: Option<SortImportsOptions>,
+    sort: SortOptions,
 ) -> JsFormatOptions {
     let mut format_options = JsFormatOptions::default();
     format_options.apply_core(core_options);
@@ -118,7 +118,7 @@ pub fn to_oxc_formatter(
 
     // Below are our own extensions
 
-    format_options.sort.imports = sort_imports;
+    format_options.sort = sort;
     format_options.jsdoc = to_jsdoc(config);
     // napi only, like the CSS mapper: collection itself normalizes whitespace,
     // so enabling it without the JS-side sorter would apply half the feature
@@ -140,8 +140,29 @@ pub fn to_oxc_formatter(
     format_options
 }
 
-/// Derive [`SortImportsOptions`] from the resolved config;
-/// the gate ([`super::validate::validate()`]) runs it once, like `to_core_options`.
+/// Derive the umbrella [`SortOptions`] from the resolved config; the gate
+/// ([`super::validate::validate()`]) runs it once, like `to_core_options`.
+///
+/// `sortImports` (and its `experimentalSortImports` alias) is the deprecated spelling of
+/// `sort.imports`; both set at once is an error rather than a silent precedence rule.
+///
+/// # Errors
+/// Returns an error if the sorting configuration is invalid.
+pub(super) fn to_sort_options(config: &FormatConfig) -> Result<SortOptions, String> {
+    let legacy = config.sort_imports.clone();
+    let umbrella = config.sort.as_ref().and_then(|sort| sort.imports.clone());
+    let imports = match (legacy, umbrella) {
+        (Some(_), Some(_)) => {
+            return Err("`sortImports` and `sort.imports` cannot both be set; `sortImports` is a deprecated alias of `sort.imports`".to_string());
+        }
+        (Some(legacy), None) => to_sort_imports(Some(legacy), "sortImports")?,
+        (None, umbrella) => to_sort_imports(umbrella, "sort.imports")?,
+    };
+    Ok(SortOptions { imports })
+}
+
+/// Derive [`SortImportsOptions`] from one target's user config.
+/// `key_label` names the config key in error messages (`sortImports` or `sort.imports`).
 ///
 /// NOTE: Combination validity is a property of the resolved config
 /// (overrides deep-merge field-wise, so two individually valid configs can compose into an invalid one),
@@ -152,11 +173,12 @@ pub fn to_oxc_formatter(
 /// enumerated values (selector / modifiers) at deserialize.
 ///
 /// # Errors
-/// Returns an error if the `sortImports` configuration is invalid.
-pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImportsOptions>, String> {
-    let Some(sort_imports_config) =
-        config.sort_imports.clone().and_then(SortImportsUserConfig::into_config)
-    else {
+/// Returns an error if the configuration is invalid.
+fn to_sort_imports(
+    user_config: Option<SortImportsUserConfig>,
+    key_label: &str,
+) -> Result<Option<SortImportsOptions>, String> {
+    let Some(sort_imports_config) = user_config.and_then(SortImportsUserConfig::into_config) else {
         return Ok(None);
     };
 
@@ -204,7 +226,7 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
     }
     if let Some(v) = sort_imports_config.groups {
         SortGroupItemConfig::validate_markers(&v)
-            .map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
+            .map_err(|e| format!("Invalid `{key_label}` configuration: {e}"))?;
 
         let mut groups = Vec::new();
         let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
@@ -232,7 +254,7 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
         sort_imports.newline_boundary_overrides = newline_boundary_overrides;
     }
 
-    sort_imports.validate().map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
+    sort_imports.validate().map_err(|e| format!("Invalid `{key_label}` configuration: {e}"))?;
 
     Ok(Some(sort_imports))
 }
@@ -330,7 +352,7 @@ mod tests {
     /// Production shape: the gate validates/derives, then the infallible mapper builds.
     fn build(config: &FormatConfig) -> Result<JsFormatOptions, String> {
         let validated = validate(config)?;
-        Ok(to_oxc_formatter(config, validated.core, validated.sort_imports))
+        Ok(to_oxc_formatter(config, validated.core, validated.sort))
     }
 
     /// The config enums mirror `oxc_formatter`'s (which deliberately carries no
@@ -657,6 +679,43 @@ mod tests {
 
         let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": false}"#).unwrap();
         assert!(build(&config).unwrap().jsdoc.is_none());
+    }
+
+    #[test]
+    fn test_sort_umbrella_maps_to_imports() {
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": { "order": "desc" } } }"#).unwrap();
+        let sort_imports = build(&config).unwrap().sort.imports.unwrap();
+        assert!(sort_imports.order.is_desc());
+    }
+
+    #[test]
+    fn test_sort_umbrella_false_disables() {
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": false } }"#).unwrap();
+        assert!(build(&config).unwrap().sort.imports.is_none());
+    }
+
+    #[test]
+    fn test_alias_and_umbrella_conflict_is_rejected() {
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sortImports": true, "sort": { "imports": true } }"#)
+                .unwrap();
+        let err = build(&config).unwrap_err();
+        assert_eq!(
+            err,
+            "`sortImports` and `sort.imports` cannot both be set; `sortImports` is a deprecated alias of `sort.imports`"
+        );
+    }
+
+    #[test]
+    fn test_umbrella_invalid_combination_names_the_umbrella_key() {
+        let config: FormatConfig = serde_json::from_str(
+            r#"{ "sort": { "imports": { "partitionByNewline": true, "newlinesBetween": true } } }"#,
+        )
+        .unwrap();
+        let err = build(&config).unwrap_err();
+        assert!(err.starts_with("Invalid `sort.imports` configuration:"), "{err}");
     }
 
     #[test]

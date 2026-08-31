@@ -214,12 +214,21 @@ export interface Oxfmtrc {
    */
   singleQuote?: boolean;
   /**
-   * Sort import statements.
+   * Sorting features, one key per target.
    *
-   * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
-   * For details, see each field's documentation.
+   * - `imports` — Sort import statements.
    *
-   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   * More targets (named specifiers, interface members, union types, …) are added under this key.
+   * `sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,
+   * not JS/TS declarations.
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: All disabled
+   */
+  sort?: SortConfig;
+  /**
+   * Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.
+   * Setting both `sortImports` and `sort.imports` is a configuration error.
    *
    * - Languages: JS, JSX, TS, TSX
    * - Default: Disabled
@@ -536,12 +545,21 @@ export interface FormatConfig {
    */
   singleQuote?: boolean;
   /**
-   * Sort import statements.
+   * Sorting features, one key per target.
    *
-   * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
-   * For details, see each field's documentation.
+   * - `imports` — Sort import statements.
    *
-   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   * More targets (named specifiers, interface members, union types, …) are added under this key.
+   * `sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,
+   * not JS/TS declarations.
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: All disabled
+   */
+  sort?: SortConfig;
+  /**
+   * Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.
+   * Setting both `sortImports` and `sort.imports` is a configuration error.
    *
    * - Languages: JS, JSX, TS, TSX
    * - Default: Disabled
@@ -618,6 +636,23 @@ export interface FormatConfig {
    * - Default: `false`
    */
   vueIndentScriptAndStyle?: boolean;
+  [k: string]: unknown;
+}
+/**
+ * The `sort` umbrella: one optional entry per sorting target.
+ */
+export interface SortConfig {
+  /**
+   * Sort import statements.
+   *
+   * Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
+   * For details, see each field's documentation.
+   *
+   * Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+   *
+   * - Default: Disabled
+   */
+  imports?: SortImportsUserConfig;
   [k: string]: unknown;
 }
 export interface SortImportsConfig {

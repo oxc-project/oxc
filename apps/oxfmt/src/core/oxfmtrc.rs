@@ -221,12 +221,21 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Sort import statements.
+    /// Sorting features, one key per target.
     ///
-    /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
-    /// For details, see each field's documentation.
+    /// - `imports` — Sort import statements.
     ///
-    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    /// More targets (named specifiers, interface members, union types, …) are added under this key.
+    /// `sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,
+    /// not JS/TS declarations.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: All disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort: Option<SortConfig>,
+
+    /// Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.
+    /// Setting both `sortImports` and `sort.imports` is a configuration error.
     ///
     /// - Languages: JS, JSX, TS, TSX
     /// - Default: Disabled
@@ -435,6 +444,24 @@ pub enum HtmlWhitespaceSensitivityConfig {
     Css,
     Strict,
     Ignore,
+}
+
+// ---
+
+/// The `sort` umbrella: one optional entry per sorting target.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortConfig {
+    /// Sort import statements.
+    ///
+    /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
+    /// For details, see each field's documentation.
+    ///
+    /// Pass `true` or an object to enable with defaults, or omit/set `false` to disable.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub imports: Option<SortImportsUserConfig>,
 }
 
 // ---
@@ -1025,5 +1052,45 @@ mod tests_reject_experimental {
         }"#;
         let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
         assert!(err.to_string().contains("experimentalTernaries"));
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_sort_umbrella {
+    use super::*;
+
+    #[test]
+    fn parses_sort_umbrella() {
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": { "order": "desc" } } }"#).unwrap();
+        let imports = config.sort.unwrap().imports.unwrap().into_config().unwrap();
+        assert!(matches!(imports.order, Some(SortOrderConfig::Desc)));
+        assert!(config.sort_imports.is_none());
+    }
+
+    #[test]
+    fn sort_umbrella_bool_shorthand() {
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": true } }"#).unwrap();
+        assert!(config.sort.unwrap().imports.unwrap().into_config().is_some());
+        let config: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": false } }"#).unwrap();
+        assert!(config.sort.unwrap().imports.unwrap().into_config().is_none());
+    }
+
+    #[test]
+    fn merge_deep_merges_sort_umbrella() {
+        let mut base: FormatConfig = serde_json::from_str(
+            r#"{ "sort": { "imports": { "order": "desc", "ignoreCase": false } } }"#,
+        )
+        .unwrap();
+        let overlay: FormatConfig =
+            serde_json::from_str(r#"{ "sort": { "imports": { "ignoreCase": true } } }"#).unwrap();
+        base.merge(&overlay);
+        let imports = base.sort.unwrap().imports.unwrap().into_config().unwrap();
+        assert!(matches!(imports.order, Some(SortOrderConfig::Desc)));
+        assert_eq!(imports.ignore_case, Some(true));
     }
 }

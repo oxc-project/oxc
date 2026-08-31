@@ -63,4 +63,27 @@ import { foo } from "@scope/foo";
     );
     expect(result.errors).toStrictEqual([]);
   });
+
+  it("should accept the sort umbrella", async () => {
+    const input = `import { b } from "b";
+import { a } from "a";
+`;
+    const result = await format("a.ts", input, { sort: { imports: true } });
+    expect(result.code).toBe(
+      `
+import { a } from "a";
+import { b } from "b";
+`.trimStart(),
+    );
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should reject sortImports together with sort.imports", async () => {
+    const result = await format("a.ts", `import { a } from "a";\n`, {
+      sortImports: true,
+      sort: { imports: true },
+    });
+    expect(result.errors.length).toBe(1);
+    expect(result.errors[0].message).toMatch(/deprecated alias of `sort\.imports`/);
+  });
 });

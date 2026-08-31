@@ -7,5 +7,6 @@
       "custom_groups_selector_modifiers.json",
       "custom_groups_selector_modifiers.ts"
     ]
-  }
+  },
+  { "args": ["--check", "--config", "umbrella.json", "umbrella.ts"] }
 ]

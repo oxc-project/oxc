@@ -143,14 +143,23 @@
       "type": "boolean",
       "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
     },
+    "sort": {
+      "description": "Sorting features, one key per target.\n\n- `imports` — Sort import statements.\n\nMore targets (named specifiers, interface members, union types, …) are added under this key.\n`sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,\nnot JS/TS declarations.\n\n- Languages: JS, JSX, TS, TSX\n- Default: All disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/SortConfig"
+        }
+      ],
+      "markdownDescription": "Sorting features, one key per target.\n\n- `imports` — Sort import statements.\n\nMore targets (named specifiers, interface members, union types, …) are added under this key.\n`sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,\nnot JS/TS declarations.\n\n- Languages: JS, JSX, TS, TSX\n- Default: All disabled"
+    },
     "sortImports": {
-      "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
+      "description": "Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.\nSetting both `sortImports` and `sort.imports` is a configuration error.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
       "allOf": [
         {
           "$ref": "#/definitions/SortImportsUserConfig"
         }
       ],
-      "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
+      "markdownDescription": "Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.\nSetting both `sortImports` and `sort.imports` is a configuration error.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
     },
     "sortPackageJson": {
       "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`",
@@ -402,14 +411,23 @@
           "type": "boolean",
           "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Languages: JS, JSX, TS, TSX, CSS, Less, SCSS, Markdown, MDX, YAML, Handlebars, Svelte\n- Default: `false`\n- Overrides `.editorconfig.quote_type`"
         },
+        "sort": {
+          "description": "Sorting features, one key per target.\n\n- `imports` — Sort import statements.\n\nMore targets (named specifiers, interface members, union types, …) are added under this key.\n`sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,\nnot JS/TS declarations.\n\n- Languages: JS, JSX, TS, TSX\n- Default: All disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortConfig"
+            }
+          ],
+          "markdownDescription": "Sorting features, one key per target.\n\n- `imports` — Sort import statements.\n\nMore targets (named specifiers, interface members, union types, …) are added under this key.\n`sortPackageJson` and `sortTailwindcss` stay top-level: they sort JSON keys and class strings,\nnot JS/TS declarations.\n\n- Languages: JS, JSX, TS, TSX\n- Default: All disabled"
+        },
         "sortImports": {
-          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
+          "description": "Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.\nSetting both `sortImports` and `sort.imports` is a configuration error.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled",
           "allOf": [
             {
               "$ref": "#/definitions/SortImportsUserConfig"
             }
           ],
-          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
+          "markdownDescription": "Deprecated alias of `sort.imports`; new configurations should use `sort.imports`.\nSetting both `sortImports` and `sort.imports` is a configuration error.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
         },
         "sortPackageJson": {
           "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Languages: JSON (`package.json` only)\n- Default: `true`",
@@ -677,6 +695,22 @@
         "consistent",
         "preserve"
       ]
+    },
+    "SortConfig": {
+      "description": "The `sort` umbrella: one optional entry per sorting target.",
+      "type": "object",
+      "properties": {
+        "imports": {
+          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/SortImportsUserConfig"
+            }
+          ],
+          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Default: Disabled"
+        }
+      },
+      "markdownDescription": "The `sort` umbrella: one optional entry per sorting target."
     },
     "SortGroupItemConfig": {
       "anyOf": [

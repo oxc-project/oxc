@@ -144,7 +144,7 @@ pub fn resolve_for_api(
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
     format_config.resolve_tailwind_paths(cwd);
-    // Validate eagerly, as the single gate for every option (core + js/sortImports):
+    // Validate eagerly, as the single gate for every option (core + sort):
     // downstream mapping consumes the derived artifacts and cannot re-fail,
     // and `Prettier` kinds have no later chance before values reach Prettier.
     let validated = validate(&format_config)?;
@@ -185,8 +185,8 @@ pub fn resolve_for_embedded_js(
     config: FormatConfig,
     parent_filepath: PathBuf,
 ) -> Result<EmbeddedCallbackResolved, String> {
-    let ValidatedOptions { core, sort_imports } = validate(&config)?;
-    let format_options = Box::new(to_oxc_formatter(&config, core, sort_imports));
+    let ValidatedOptions { core, sort } = validate(&config)?;
+    let format_options = Box::new(to_oxc_formatter(&config, core, sort));
     Ok(EmbeddedCallbackResolved { format_options, config: Arc::new(config), core, parent_filepath })
 }
 

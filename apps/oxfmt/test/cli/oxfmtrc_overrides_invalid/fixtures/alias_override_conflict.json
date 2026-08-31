@@ -1,0 +1,11 @@
+{
+  "sortImports": true,
+  "overrides": [
+    {
+      "files": ["*"],
+      "options": {
+        "sort": { "imports": true }
+      }
+    }
+  ]
+}
