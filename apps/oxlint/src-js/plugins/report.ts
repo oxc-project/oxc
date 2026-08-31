@@ -138,12 +138,12 @@ export function report(
     [start, end] = actualRange;
 
     if (
-      typeof start !== "number" ||
-      typeof end !== "number" ||
-      start < 0 ||
-      end < 0 ||
-      (start | 0) !== start ||
-      (end | 0) !== end
+      typeof start !== "number"
+      || typeof end !== "number"
+      || start < 0
+      || end < 0
+      || (start | 0) !== start
+      || (end | 0) !== end
     ) {
       throw new TypeError("`actualRange[0]` and `actualRange[1]` must be non-negative integers");
     }
