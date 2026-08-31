@@ -22,9 +22,10 @@ use tower_lsp_server::{
 use tracing::{debug, error, warn};
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DiffManager, ExternalLinter,
-    ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
-    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SuppressionTracking, read_to_string,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DEFAULT_SUPPRESSIONS_FILE_NAME,
+    DiffManager, ExternalLinter, ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS,
+    LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder, LintServiceOptions, Linter,
+    Oxlintrc, SuppressionTracking, read_to_string,
 };
 
 use oxc_language_server::{
@@ -421,8 +422,6 @@ impl ServerLinterBuilder {
     }
 }
 
-const SUPPRESSIONS_FILE_NAME: &str = "oxlint-suppressions.json";
-
 struct WorkspaceSuppressions {
     workspace_root: PathBuf,
     manager: Option<Arc<DiffManager>>,
@@ -430,7 +429,7 @@ struct WorkspaceSuppressions {
 
 impl WorkspaceSuppressions {
     fn new(workspace_root: PathBuf) -> Result<Self, OxcDiagnostic> {
-        let suppression_file_path = workspace_root.join(SUPPRESSIONS_FILE_NAME);
+        let suppression_file_path = workspace_root.join(DEFAULT_SUPPRESSIONS_FILE_NAME);
         if !suppression_file_path.exists() {
             return Ok(Self::without_baseline(workspace_root));
         }
@@ -573,7 +572,7 @@ impl Tool for ServerLinter {
         }
 
         // Re-lint open documents when the bulk-suppression baseline changes.
-        watchers.push(SUPPRESSIONS_FILE_NAME.to_string());
+        watchers.push(DEFAULT_SUPPRESSIONS_FILE_NAME.to_string());
 
         watchers
     }
@@ -1000,13 +999,14 @@ mod tests_builder {
     };
 
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
+    use oxc_linter::DEFAULT_SUPPRESSIONS_FILE_NAME;
 
     use crate::lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
         commands::FIX_ALL_COMMAND_ID,
-        server_linter::{SUPPRESSIONS_FILE_NAME, ServerLinterBuilder},
+        server_linter::ServerLinterBuilder,
     };
 
     #[test]
@@ -1078,7 +1078,7 @@ mod tests_builder {
     #[test]
     fn test_malformed_suppression_file_returns_client_message() {
         let root_dir = tempfile::tempdir().unwrap();
-        fs::write(root_dir.path().join(SUPPRESSIONS_FILE_NAME), "{]").unwrap();
+        fs::write(root_dir.path().join(DEFAULT_SUPPRESSIONS_FILE_NAME), "{]").unwrap();
         let root_uri = Uri::from_file_path(root_dir.path()).unwrap();
 
         let (_linter, client_messages) =
