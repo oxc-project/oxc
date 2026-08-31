@@ -26,8 +26,6 @@ pub enum Run {
 }
 
 /// Controls the severity used to render bulk-suppressed violations in the editor.
-///
-/// Only relevant when `showSuppressedViolations` is enabled.
 #[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SuppressedViolationSeverity {
@@ -36,7 +34,7 @@ pub enum SuppressedViolationSeverity {
     #[default]
     Warn,
     Error,
-    Off
+    Off,
 }
 
 /// LSP Options
@@ -129,13 +127,8 @@ pub struct LintOptions {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rules_customization: Option<RulesCustomization>,
-    /// Whether to show violations suppressed by the bulk-suppression baseline
-    /// (`oxlint-suppressions.json`) in the editor as faded (`UNNECESSARY`-tagged) diagnostics
-    /// instead of hiding them entirely. Unset is treated as `true`; set to `false` to hide them.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub show_suppressed_violations: Option<bool>,
-    /// Severity used to render bulk-suppressed violations when they are shown. Defaults to
-    /// `warning`.
+    /// Severity used to render bulk-suppressed violations. Defaults to `warn`. Set to `off` to
+    /// hide them.
     #[schemars(with = "Option<SuppressedViolationSeverity>")]
     pub suppressed_violation_severity: SuppressedViolationSeverity,
 }
@@ -222,12 +215,6 @@ impl LintOptions {
             && self.config_path.is_none()
             && config_discovery().nested_configs()
     }
-
-    /// Whether bulk-suppressed violations should be rendered (faded) in the editor.
-    /// Defaults to `true` when the option is unset.
-    pub fn should_show_suppressed_violations(&self) -> bool {
-        self.show_suppressed_violations != Some(false)
-    }
 }
 
 impl<'de> Deserialize<'de> for LintOptions {
@@ -303,9 +290,6 @@ impl TryFrom<Value> for LintOptions {
             rules_customization: object
                 .get("rulesCustomization")
                 .and_then(|key| RulesCustomization::deserialize(key).ok()),
-            show_suppressed_violations: object
-                .get("showSuppressedViolations")
-                .and_then(Value::as_bool),
             suppressed_violation_severity: object
                 .get("suppressedViolationSeverity")
                 .and_then(|key| SuppressedViolationSeverity::deserialize(key).ok())
@@ -332,8 +316,7 @@ mod test {
             "typeAware": true,
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
-            "showSuppressedViolations": false,
-            "suppressedViolationSeverity": "information",
+            "suppressedViolationSeverity": "info",
             "rulesCustomization": {
                 "no-unused-vars": {
                     "severity": "error",
@@ -352,10 +335,9 @@ mod test {
         assert_eq!(options.type_aware, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
-        assert!(!options.should_show_suppressed_violations());
         assert_eq!(
             options.suppressed_violation_severity,
-            SuppressedViolationSeverity::Information
+            SuppressedViolationSeverity::Info
         );
 
         assert!(options.rules_customization.is_some());
@@ -408,10 +390,9 @@ mod test {
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
         assert!(options.rules_customization.is_none());
-        assert!(options.should_show_suppressed_violations());
         assert_eq!(
             options.suppressed_violation_severity,
-            SuppressedViolationSeverity::Warning
+            SuppressedViolationSeverity::Warn
         );
     }
 
