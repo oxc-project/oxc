@@ -1,3 +1,4 @@
 {
+  "singleThread": true,
   "args": ["--format", "json"]
 }
