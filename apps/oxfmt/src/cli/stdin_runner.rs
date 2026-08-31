@@ -116,19 +116,25 @@ impl StdinRunner {
             }
         };
 
-        // Check if the file is ignored by tool-ignores or config's `ignorePatterns`.
+        // Check if the file is ignored by tool-ignores or config's `ignorePatterns`,
+        // unless `--no-ignore` disables the corresponding kind.
         // `.gitignore` is deliberately not consulted, stdin is an explicitly requested document.
-        let global_matchers = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
-            .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
-        {
-            Ok(matchers) => matchers,
-            Err(err) => {
-                utils::print_and_flush(stderr, &format!("{err}\n"));
-                return CliRunResult::InvalidOptionConfig;
+        let global_matchers = if ignore_options.no_ignore.cli {
+            vec![]
+        } else {
+            match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
+                .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
+            {
+                Ok(matchers) => matchers,
+                Err(err) => {
+                    utils::print_and_flush(stderr, &format!("{err}\n"));
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
         };
         if is_ignored(&global_matchers, &filepath, false, true)
-            || config_resolver.is_path_ignored(&filepath, false)
+            || (!ignore_options.no_ignore.config
+                && config_resolver.is_path_ignored(&filepath, false))
         {
             utils::print_and_flush(stdout, &source_text);
             return CliRunResult::FormatSucceeded;
