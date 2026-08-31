@@ -173,13 +173,12 @@ export async function lintFixture(
 
 export async function lintFixtureDiagnostics(
   fixturesDir: string,
-  workspacePath: string,
   fixturePath: string,
   languageId: string,
   initializationOptions?: OxlintLSPConfig,
 ): Promise<Diagnostic[]> {
-  const workspaceUri = pathToFileURL(join(fixturesDir, workspacePath)).href;
-  const filePath = join(fixturesDir, workspacePath, fixturePath);
+  const filePath = join(fixturesDir, fixturePath);
+  const workspaceUri = pathToFileURL(dirname(filePath)).href;
   const fileUri = pathToFileURL(filePath).href;
   const content = await fs.readFile(filePath, "utf-8");
 
