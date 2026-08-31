@@ -30,10 +30,11 @@ pub enum Run {
 #[serde(rename_all = "camelCase")]
 pub enum SuppressedViolationSeverity {
     Hint,
-    Information,
+    Info,
     #[default]
-    Warning,
+    Warn,
     Error,
+    Off
 }
 
 /// LSP Options
