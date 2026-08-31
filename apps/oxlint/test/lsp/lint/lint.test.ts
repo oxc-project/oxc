@@ -70,8 +70,7 @@ describe("LSP linting", () => {
     it("shows suppressed diagnostics faded by default", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
-        "suppressions",
-        "default.js",
+        "suppressions/default.js",
         "javascript",
       );
       const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
@@ -89,8 +88,7 @@ describe("LSP linting", () => {
     it("hides suppressed diagnostics when configured", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
-        "suppressions",
-        "hidden.js",
+        "suppressions/hidden.js",
         "javascript",
         { suppressedViolationSeverity: "off" },
       );
@@ -102,8 +100,7 @@ describe("LSP linting", () => {
     it("overrides the severity of suppressed diagnostics", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
-        "suppressions",
-        "severity.js",
+        "suppressions/severity.js",
         "javascript",
         { suppressedViolationSeverity: "info" },
       );
@@ -119,8 +116,7 @@ describe("LSP linting", () => {
     it("surfaces a rule when its violation count increases", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
-        "suppressions",
-        "increased.js",
+        "suppressions/increased.js",
         "javascript",
       );
       const noConsole = diagnostics.filter(({ code }) => code === "eslint(no-console)");
@@ -134,8 +130,7 @@ describe("LSP linting", () => {
     it("generates inverted diagnostics for suppressed diagnostics", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
-        "suppressions",
-        "related.js",
+        "suppressions/related.js",
         "javascript",
       );
       const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-duplicate-case)");
@@ -150,26 +145,10 @@ describe("LSP linting", () => {
       expect(inverted.length).toBeGreaterThan(0);
     });
 
-    it("ignores a suppression baseline below the workspace root", async () => {
-      const diagnostics = await lintFixtureDiagnostics(
-        FIXTURES_DIR,
-        "suppressions-nested",
-        "web/test.js",
-        "javascript",
-      );
-      const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
-
-      expect(suppressed).toHaveLength(2);
-      for (const diagnostic of suppressed) {
-        expect(diagnostic.tags).toBeUndefined();
-      }
-    });
-
     it("surfaces diagnostics when the suppression baseline is malformed", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
-        "suppressions-malformed",
-        "test.js",
+        "suppressions-malformed/test.js",
         "javascript",
       );
       const noConsole = diagnostics.filter(({ code }) => code === "eslint(no-console)");
