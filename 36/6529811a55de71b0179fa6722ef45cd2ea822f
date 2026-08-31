@@ -1,0 +1,23 @@
+tasks/coverage/snapshots/codegen_babel.snap
+  s_49cd06206d8aa9::t_ebc3d891b70007 5
+tasks/coverage/snapshots/codegen_test262.snap
+  s_49cd06206d8aa9::t_c26ec52525c353 5
+tasks/coverage/snapshots/codegen_typescript.snap
+  s_49cd06206d8aa9::t_eea50db28dabbd 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "366529811a55de71b0179fa6722ef45cd2ea822f",
+  "prompts": {},
+  "sessions": {
+    "s_49cd06206d8aa9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0385e-8599-7e72-9aa4-71c6549842c1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

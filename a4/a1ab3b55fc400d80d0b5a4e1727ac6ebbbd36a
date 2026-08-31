@@ -1,0 +1,29 @@
+crates/oxc_ecmascript/src/string_to_number.rs
+  s_fa8fcb955d2932::t_fe475128f35095 12,77-100
+crates/oxc_minifier/tests/peephole/fold_constants.rs
+  s_455804da42cc8d::t_0783f66aee7c22 1042,1048
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a4a1ab3b55fc400d80d0b5a4e1727ac6ebbbd36a",
+  "prompts": {},
+  "sessions": {
+    "s_455804da42cc8d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a04894-b766-7423-a946-ce2fb3392df7",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_fa8fcb955d2932": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a048a4-c20f-7592-af2e-720949451975",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+crates/oxc_linter/src/snapshots/eslint_no_useless_assignment.snap
+  s_f5822f1e6772c5::t_b9db02db7c58a9 591-598
+crates/oxc_linter/src/rules/eslint/no_useless_assignment.rs
+  s_f5822f1e6772c5::t_9e83b0bb6ed33d 295,297-298,302-303
+  s_f5822f1e6772c5::t_7b6d5a83cbb2e0 275,296,299-301,304-307
+  s_b897e757f95eba::t_01b3b9a0344cd3 255-256,683-707,1864-1866
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "22e856f74efcaa9abb0818abfdc6ceb2ba03bc88",
+  "prompts": {},
+  "sessions": {
+    "s_b897e757f95eba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03d81-4df1-7db1-a04c-0d48be653d89",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_f5822f1e6772c5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a019a9-1e84-7d01-a632-f62b3d8320db",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

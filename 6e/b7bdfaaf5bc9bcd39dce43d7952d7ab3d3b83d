@@ -1,0 +1,19 @@
+apps/oxlint/src/output_formatter/github.rs
+  s_81190e2271f081::t_c642ea8aab5470 225
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6eb7bdfaaf5bc9bcd39dce43d7952d7ab3d3b83d",
+  "prompts": {},
+  "sessions": {
+    "s_81190e2271f081": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0480b-61e5-7803-ab17-ce40dde44b63",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
