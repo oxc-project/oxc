@@ -21,15 +21,25 @@ impl<'a> PeepholeOptimizations {
         // constant and the boolean-falsy fact below. `None` for a non-constant or
         // absent initializer.
         let init_constant = decl.init.as_ref().and_then(|e| e.evaluate_value(ctx));
+        // Switch cases share one lexical environment. Jumping to a later case
+        // skips this initializer, so later reads can observe TDZ (#26174).
+        // Withhold every declaration-derived fact: the constant, freshness,
+        // and boolean-falsy (a withheld falsy constant would otherwise fold
+        // `if (x)` on the skipped-init path).
+        let lexical_in_switch_case =
+            declaration_kind.is_lexical() && Self::is_lexical_declaration_in_switch_case(ctx);
         // Whether the initializer is an explicit falsy constant (not the implicit
         // `undefined` of `var x;`, which `init_constant` leaves `None`). Fed to
         // `init_value`, which turns it into the `boolean_falsy` fact (see
         // `SymbolValue::boolean_falsy`).
-        let falsy_init = init_constant.as_ref().is_some_and(Self::is_falsy_constant);
-        let declaration_in_body_statement_list =
-            !declaration_kind.is_var() || Self::is_declaration_in_body_statement_list(ctx);
+        let falsy_init =
+            !lexical_in_switch_case && init_constant.as_ref().is_some_and(Self::is_falsy_constant);
+        let declaration_in_body_statement_list = !lexical_in_switch_case
+            && (!declaration_kind.is_var() || Self::is_declaration_in_body_statement_list(ctx));
         let value = if Self::is_for_statement_init(ctx) {
             // for-statement initializers have their value set by the for statement itself.
+            None
+        } else if lexical_in_switch_case {
             None
         } else if declaration_kind.is_var()
             && decl.init.is_some()
@@ -95,6 +105,26 @@ impl<'a> PeepholeOptimizations {
                 Ancestor::VariableDeclarationDeclarations(_)
                 | Ancestor::ExportDeclarationDeclaration(_) => {}
                 Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_) => return true,
+                _ => return false,
+            }
+        }
+        false
+    }
+
+    /// Whether a lexical declaration is a direct item of a switch-case
+    /// consequent, not nested in an inner block that would give it its own
+    /// scope.
+    ///
+    /// Switch cases share the switch's lexical environment, but initialization
+    /// only runs when that case is reached. Jumping to a later case therefore
+    /// skips the initializer and later reads observe TDZ (#26174):
+    /// `switch (a) { case 2: let x = 1; case 1: console.log(x) }`.
+    fn is_lexical_declaration_in_switch_case(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                Ancestor::VariableDeclarationDeclarations(_)
+                | Ancestor::ExportDeclarationDeclaration(_) => {}
+                Ancestor::SwitchCaseConsequent(_) => return true,
                 _ => return false,
             }
         }
