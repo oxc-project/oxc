@@ -5,22 +5,26 @@
 //! reference disappears, but it cannot remove `function a() { b() }
 //! function b() { a() }`: each function keeps the other's count non-zero.
 //! This module adds the missing reachability question: can executing code
-//! reach a candidate function declaration?
+//! reach a candidate function declaration or function-valued declarator?
 //!
 //! Four concepts define the analysis:
 //!
-//! 1. **Candidates** are eligible function declarations whose deadness may
-//!    require graph reachability. Normalize initially registers every eligible
-//!    declaration. Analysis permanently untracks a non-dead candidate once no
-//!    current reference has a registered function owner; it no longer needs
-//!    graph reachability, so ordinary removal checks handle it from then on.
-//!    Published-dead candidates remain tracked to enforce monotonicity. Other
-//!    declaration kinds continue to use reference counts.
-//!    Self-recursive function and arrow expressions in declarator initializers
-//!    are handled by a local check at their removal site
-//!    (`self_recursive_function_declarator_is_unused`) and need no graph state.
+//! 1. **Candidates** are eligible function declarations and exact
+//!    function-valued declarators whose deadness may require graph reachability.
+//!    Normalize initially registers every eligible declaration. Function
+//!    declarations and registered declarators participate in later analyses.
+//!    A live declarator whose body has no graph edge is unregistered and its
+//!    scope owner mapping is cleared before normal inlining can relocate it;
+//!    declarators that do own graph edges remain registered so later dead-code
+//!    elimination can safely recompute their reachability. Published-dead
+//!    candidates remain tracked as tombstones after their declarations are
+//!    removed.
+//!    Other declaration kinds continue to use reference counts. The local
+//!    self-recursive declarator check remains as a fallback for exact shapes
+//!    created after Normalize.
 //! 2. **Ownership** comes from semantic scopes. The nearest registered function
-//!    declaration is a reference's owner. A reference from a candidate that is
+//!    declaration or active declarator initializer is a reference's owner. A
+//!    reference from a candidate that is
 //!    not implicitly observable is stored as `(owner, target)` and propagates
 //!    when the owner becomes live. Implicitly observable owners and references
 //!    outside registered functions make their targets live immediately. A
@@ -45,7 +49,10 @@
 //!
 //! 1. **Do not create function declarations.** A new declaration would have no
 //!    entry in `function_by_scope` and therefore could not own references or
-//!    become a candidate. Removing an existing declaration is supported.
+//!    become a candidate. Removing an existing declaration is supported. Exact
+//!    declarators are registered only during Normalize. A declarator that owns
+//!    a graph edge cannot be single-use inlined until the graph untracks or
+//!    removes it.
 //! 2. **Do not move an existing reference across function owners.** Ownership
 //!    comes from `Reference::scope_id()` and the registered function-scope
 //!    ancestors. A transform that changes the nearest owning function must
@@ -79,12 +86,12 @@
 //!
 //! ## Current limitations
 //!
-//! - Only function declarations are candidates. Mutual declarator cycles
-//!   (`const a = () => b(); const b = () => a();`) and class cycles are kept.
-//!   Making them candidates measured zero output bytes on real bundles but
-//!   caused most of the wrong-code hazards, and class removal has no stable
-//!   proof (`remove_unused_class` extracts static values, and heritage
-//!   classification can change between passes).
+//! - Only exact function-valued declarators in statement lists (and their
+//!   direct classic `for` initializers) participate. Wrapped initializers and
+//!   declaration positions without a stable removal site are kept.
+//! - Class cycles are kept. Class removal has no stable proof
+//!   (`remove_unused_class` extracts static values, and heritage classification
+//!   can change between passes).
 //! - Any direct eval propagates to the root scope and disables the analysis for
 //!   the whole program. There is no per-scope granularity.
 //! - Sloppy unhoisted Annex B block functions are always kept, even when
@@ -94,13 +101,16 @@
 use oxc_allocator::{Allocator, ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
 #[cfg(debug_assertions)]
-use oxc_ast_visit::{VisitJs, walk_js::walk_function};
+use oxc_ast_visit::{
+    VisitJs,
+    walk_js::{walk_function, walk_variable_declarator},
+};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
-use crate::{CompressOptions, CompressOptionsUnused, TraverseCtx};
+use crate::{CompressOptions, CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor};
 
 /// Stable program-wide symbol facts plus the optional recursive-function graph.
 ///
@@ -156,6 +166,20 @@ impl<'a> SymbolLiveness<'a> {
         self.recursive_functions.as_ref().is_some_and(|graph| graph.is_dead(symbol_id))
     }
 
+    #[inline]
+    pub fn function_declarator_is_dead(&self, symbol_id: SymbolId, scope_id: ScopeId) -> bool {
+        self.recursive_functions
+            .as_ref()
+            .is_some_and(|graph| graph.is_declarator_dead(symbol_id, scope_id))
+    }
+
+    #[inline]
+    pub fn is_function_declarator_candidate(&self, symbol_id: SymbolId) -> bool {
+        self.recursive_functions
+            .as_ref()
+            .is_some_and(|graph| graph.is_function_declarator_candidate(symbol_id))
+    }
+
     fn mark_implicitly_observable(&mut self, symbol_id: SymbolId) {
         self.implicitly_observable.set_bit(symbol_id.index());
     }
@@ -207,7 +231,27 @@ impl<'a> SymbolLiveness<'a> {
 
         let graph =
             self.recursive_functions.get_or_insert_with(|| FunctionGraph::new(scoping, allocator));
-        graph.register(scope_id, symbol_id);
+        graph.register_function_declaration(scope_id, symbol_id);
+    }
+
+    fn register_function_declarator(
+        &mut self,
+        decl: &VariableDeclarator<'_>,
+        allocator: &'a Allocator,
+        scoping: &Scoping,
+    ) {
+        let BindingPattern::BindingIdentifier(id) = &decl.id else { return };
+        let Some(symbol_id) = id.symbol_id.get() else { return };
+        let Some(scope_id) = function_declarator_scope_id(decl) else { return };
+        if self.is_implicitly_observable(symbol_id)
+            || scoping.root_scope_flags().contains_direct_eval()
+        {
+            return;
+        }
+
+        let graph =
+            self.recursive_functions.get_or_insert_with(|| FunctionGraph::new(scoping, allocator));
+        graph.register_function_declarator(scope_id, symbol_id);
     }
 
     fn analyze(&mut self, scoping: &Scoping) -> bool {
@@ -216,8 +260,10 @@ impl<'a> SymbolLiveness<'a> {
     }
 
     #[cfg(debug_assertions)]
-    fn dead_functions(&self) -> Option<&BitSet<'a>> {
-        self.recursive_functions.as_ref().map(|graph| &graph.dead)
+    fn dead_declarations(&self) -> Option<(&BitSet<'a>, Option<&BitSet<'a>>)> {
+        self.recursive_functions.as_ref().map(|graph| {
+            (&graph.dead, graph.declarators.as_ref().map(|declarators| &declarators.scopes))
+        })
     }
 }
 
@@ -229,6 +275,11 @@ struct FunctionGraph<'a> {
     /// reachability. Graph-independent removal checks then handle it. Untracked
     /// functions stay in `function_by_scope` and can still own references.
     candidates: BitSet<'a>,
+    /// Declarator-specific source metadata. It is allocated only after an
+    /// eligible function-valued declarator appears, keeping the longstanding
+    /// function-declaration-only path allocation-free.
+    declarators: Option<FunctionDeclaratorCandidates<'a>>,
+    allocator: &'a Allocator,
     /// Maps each registered function declaration's own scope to its symbol.
     /// Owner lookup walks the current semantic parent chain, so scopes inserted
     /// or reparented after Normalize remain correct.
@@ -247,15 +298,39 @@ impl<'a> FunctionGraph<'a> {
             ArenaVec::from_iter_in(std::iter::repeat_n(None, scoping.scopes_len()), &allocator);
         Self {
             candidates: BitSet::new_in(symbols_len, allocator),
+            declarators: None,
+            allocator,
             function_by_scope,
             dead: BitSet::new_in(symbols_len, allocator),
             scratch: GraphScratch::new(symbols_len, allocator),
         }
     }
 
-    fn register(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+    fn register_function_declaration(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
         self.function_by_scope[scope_id.index()] = Some(symbol_id);
         self.candidates.set_bit(symbol_id.index());
+        if let Some(declarators) = &mut self.declarators {
+            declarators.function_declarations.set_bit(symbol_id.index());
+        }
+    }
+
+    fn register_function_declarator(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+        if self.declarators.is_none() {
+            let mut declarators = FunctionDeclaratorCandidates::new(
+                self.candidates.capacity(),
+                self.function_by_scope.len(),
+                self.allocator,
+            );
+            for bit in self.candidates.ones() {
+                declarators.function_declarations.set_bit(bit);
+            }
+            self.declarators = Some(declarators);
+        }
+        self.function_by_scope[scope_id.index()] = Some(symbol_id);
+        self.candidates.set_bit(symbol_id.index());
+        let declarators = self.declarators.as_mut().unwrap();
+        declarators.function_declarators.set_bit(symbol_id.index());
+        declarators.scopes.set_bit(scope_id.index());
     }
 
     #[inline]
@@ -263,14 +338,34 @@ impl<'a> FunctionGraph<'a> {
         self.dead.contains(symbol_id.index())
     }
 
+    #[inline]
+    fn is_declarator_dead(&self, symbol_id: SymbolId, scope_id: ScopeId) -> bool {
+        self.dead.contains(symbol_id.index())
+            && self.declarators.as_ref().is_some_and(|declarators| {
+                declarators.function_declarators.contains(symbol_id.index())
+                    && declarators.scopes.contains(scope_id.index())
+            })
+    }
+
+    #[inline]
+    fn is_function_declarator_candidate(&self, symbol_id: SymbolId) -> bool {
+        self.declarators
+            .as_ref()
+            .is_some_and(|declarators| declarators.function_declarators.contains(symbol_id.index()))
+    }
+
     /// Returns the nearest registered function whose body contains
     /// `scope_id`. Code there only runs when that function is called. `None`
     /// means the scope is not inside any registered function, so references
     /// there make their target unconditionally live.
-    fn owner(&self, scoping: &Scoping, scope_id: ScopeId) -> Option<SymbolId> {
-        scoping
-            .scope_ancestors(scope_id)
-            .find_map(|scope_id| self.function_by_scope.get(scope_id.index()).copied().flatten())
+    fn owner(&self, scoping: &Scoping, scope_id: ScopeId) -> Option<(SymbolId, ScopeId)> {
+        scoping.scope_ancestors(scope_id).find_map(|scope_id| {
+            self.function_by_scope
+                .get(scope_id.index())
+                .copied()
+                .flatten()
+                .map(|symbol_id| (symbol_id, scope_id))
+        })
     }
 
     /// Rebuild current reachability and report whether this run published any
@@ -289,6 +384,9 @@ impl<'a> FunctionGraph<'a> {
         }
 
         self.scratch.reset();
+        if let Some(declarators) = &mut self.declarators {
+            declarators.reset();
+        }
 
         // Phase 1: classify every current reference to a candidate. Seed
         // unconditional liveness, store candidate-owned dependencies, and
@@ -303,7 +401,8 @@ impl<'a> FunctionGraph<'a> {
             let mut has_registered_function_owner = false;
             for &reference_id in scoping.get_resolved_reference_ids(target) {
                 let reference = scoping.get_reference(reference_id);
-                let Some(owner) = self.owner(scoping, reference.scope_id()) else {
+                let Some((owner, owner_scope_id)) = self.owner(scoping, reference.scope_id())
+                else {
                     self.scratch.mark_live(target);
                     continue;
                 };
@@ -319,14 +418,36 @@ impl<'a> FunctionGraph<'a> {
                 }
                 if self.candidates.contains(owner.index()) {
                     self.scratch.owned_references.push((owner, target));
+                    if let Some(declarators) = &mut self.declarators
+                        && declarators.scopes.contains(owner_scope_id.index())
+                    {
+                        declarators.scratch.with_graph_dependencies.set_bit(owner.index());
+                    }
                 } else if !scoping.symbol_is_unused(owner) {
                     // A registered non-candidate owner keeps the target live
                     // only while its body can still execute.
                     self.scratch.mark_live(target);
                 }
             }
-            if !has_registered_function_owner && !self.dead.contains(bit) {
+            if !has_registered_function_owner
+                && !self.dead.contains(bit)
+                && self
+                    .declarators
+                    .as_ref()
+                    .is_none_or(|declarators| declarators.function_declarations.contains(bit))
+            {
                 self.scratch.candidates_to_untrack.set_bit(bit);
+            }
+        }
+        for bit in self.candidates.ones() {
+            if self.dead.contains(bit) {
+                continue;
+            }
+            if let Some(declarators) = &mut self.declarators
+                && declarators.function_declarators.contains(bit)
+                && !declarators.scratch.with_graph_dependencies.contains(bit)
+            {
+                declarators.scratch.to_untrack.set_bit(bit);
             }
         }
 
@@ -337,17 +458,13 @@ impl<'a> FunctionGraph<'a> {
         // executable.
         for index in 0..self.scratch.owned_references.len() {
             let (owner, target) = self.scratch.owned_references[index];
-            let owner_leaves_graph = self.scratch.candidates_to_untrack.contains(owner.index());
+            let owner_leaves_graph = self.owner_leaves_graph_after_untracking(owner);
             let owner_stays_live_by_count = !scoping.symbol_is_unused(owner);
             if owner_leaves_graph && owner_stays_live_by_count {
                 self.scratch.mark_live(target);
             }
         }
-        // Future analyses treat these functions as registered non-candidate
-        // owners.
-        for bit in self.scratch.candidates_to_untrack.ones() {
-            self.candidates.unset_bit(bit);
-        }
+        self.untrack_sources();
 
         #[cfg(debug_assertions)]
         for bit in self.dead.ones() {
@@ -380,7 +497,117 @@ impl<'a> FunctionGraph<'a> {
                 published_new_dead = true;
             }
         }
+
         published_new_dead
+    }
+
+    fn owner_leaves_graph_after_untracking(&self, symbol_id: SymbolId) -> bool {
+        let bit = symbol_id.index();
+        let Some(declarators) = &self.declarators else {
+            return self.scratch.candidates_to_untrack.contains(bit);
+        };
+        (!declarators.function_declarations.contains(bit)
+            || self.scratch.candidates_to_untrack.contains(bit))
+            && (!declarators.function_declarators.contains(bit)
+                || declarators.scratch.to_untrack.contains(bit))
+    }
+
+    /// Apply source-specific untracking using sparse bitset iteration. Function
+    /// declaration scopes remain conservative non-candidate owners. Declarator
+    /// scopes are cleared in one batched sparse sweep before later transforms
+    /// can move their function expressions.
+    fn untrack_sources(&mut self) {
+        let Some(declarators) = &mut self.declarators else {
+            for bit in self.scratch.candidates_to_untrack.ones() {
+                self.candidates.unset_bit(bit);
+            }
+            return;
+        };
+
+        for bit in self.scratch.candidates_to_untrack.ones() {
+            declarators.function_declarations.unset_bit(bit);
+            if !declarators.function_declarators.contains(bit) {
+                self.candidates.unset_bit(bit);
+            }
+        }
+        for bit in declarators.scratch.to_untrack.ones() {
+            declarators.function_declarators.unset_bit(bit);
+            if !declarators.function_declarations.contains(bit) {
+                self.candidates.unset_bit(bit);
+            }
+        }
+
+        for scope_index in declarators.scopes.ones() {
+            let Some(symbol_id) = self.function_by_scope[scope_index] else {
+                debug_assert!(false, "registered declarator scope has no owner");
+                declarators.scratch.scopes_to_untrack.set_bit(scope_index);
+                continue;
+            };
+            if !declarators.function_declarators.contains(symbol_id.index()) {
+                declarators.scratch.scopes_to_untrack.set_bit(scope_index);
+            }
+        }
+        for scope_index in declarators.scratch.scopes_to_untrack.ones() {
+            self.function_by_scope[scope_index] = None;
+            declarators.scopes.unset_bit(scope_index);
+        }
+    }
+}
+
+/// Source-specific metadata required only when exact function-valued
+/// declarators participate in the graph.
+struct FunctionDeclaratorCandidates<'a> {
+    /// Candidate symbols with at least one active function declaration source.
+    function_declarations: BitSet<'a>,
+    /// Candidate symbols whose graph ownership originates from an exact
+    /// function-valued variable declarator.
+    function_declarators: BitSet<'a>,
+    /// Function scopes owned by still-active declarator candidates. This
+    /// makes graph deadness specific to an initializer site rather than every
+    /// declaration that happens to share the same binding symbol.
+    scopes: BitSet<'a>,
+    scratch: FunctionDeclaratorScratch<'a>,
+}
+
+impl<'a> FunctionDeclaratorCandidates<'a> {
+    fn new(symbols_len: usize, scopes_len: usize, allocator: &'a Allocator) -> Self {
+        Self {
+            function_declarations: BitSet::new_in(symbols_len, allocator),
+            function_declarators: BitSet::new_in(symbols_len, allocator),
+            scopes: BitSet::new_in(scopes_len, allocator),
+            scratch: FunctionDeclaratorScratch::new(symbols_len, scopes_len, allocator),
+        }
+    }
+
+    fn reset(&mut self) {
+        self.scratch.reset();
+    }
+}
+
+struct FunctionDeclaratorScratch<'a> {
+    /// Declarators whose bodies have references to another candidate, so their
+    /// scopes must remain graph owners.
+    with_graph_dependencies: BitSet<'a>,
+    /// Declarator sources whose scopes no longer own graph edges and can be
+    /// unregistered before their expressions are inlined.
+    to_untrack: BitSet<'a>,
+    /// Declarator scope owners to clear after source untracking is settled.
+    scopes_to_untrack: BitSet<'a>,
+}
+
+impl<'a> FunctionDeclaratorScratch<'a> {
+    fn new(symbols_len: usize, scopes_len: usize, allocator: &'a Allocator) -> Self {
+        Self {
+            with_graph_dependencies: BitSet::new_in(symbols_len, allocator),
+            to_untrack: BitSet::new_in(symbols_len, allocator),
+            scopes_to_untrack: BitSet::new_in(scopes_len, allocator),
+        }
+    }
+
+    fn reset(&mut self) {
+        self.with_graph_dependencies.clear();
+        self.to_untrack.clear();
+        self.scopes_to_untrack.clear();
     }
 }
 
@@ -467,6 +694,57 @@ pub fn register_function(function: &Function<'_>, ctx: &mut TraverseCtx<'_>) {
     let TraverseCtx { state, scoping, .. } = ctx;
     if let Some(liveness) = state.symbols.liveness_mut() {
         liveness.register_function(function, source_type, scoping.scoping(), allocator);
+    }
+}
+
+/// Normalize hook: register an exact function-valued declarator that has a
+/// guaranteed removal site. This intentionally excludes declarations in bare
+/// statement slots and loop heads whose binding is part of the loop's runtime
+/// semantics.
+pub fn register_function_declarator(decl: &VariableDeclarator<'_>, ctx: &mut TraverseCtx<'_>) {
+    if ctx.options().unused == CompressOptionsUnused::Keep {
+        return;
+    }
+    let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.parent() else {
+        unreachable!("variable declarator must have a variable declaration parent");
+    };
+    if declaration.kind().is_using() || !declarator_has_removal_site(ctx) {
+        return;
+    }
+
+    let allocator = ctx.allocator();
+    let TraverseCtx { state, scoping, .. } = ctx;
+    if let Some(liveness) = state.symbols.liveness_mut() {
+        liveness.register_function_declarator(decl, allocator, scoping.scoping());
+    }
+}
+
+/// Return the scope that owns references in an exact function-valued
+/// declarator initializer.
+pub fn function_declarator_scope_id(decl: &VariableDeclarator<'_>) -> Option<ScopeId> {
+    decl.init.as_ref().and_then(|init| match init {
+        Expression::FunctionExpression(function) => function.scope_id.get(),
+        Expression::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
+        _ => None,
+    })
+}
+fn declarator_has_removal_site(ctx: &TraverseCtx<'_>) -> bool {
+    let parent_is_statement_list = |ancestor: Ancestor<'_, '_>| {
+        matches!(
+            ancestor,
+            Ancestor::ProgramBody(_)
+                | Ancestor::FunctionBodyStatements(_)
+                | Ancestor::BlockStatementBody(_)
+                | Ancestor::SwitchCaseConsequent(_)
+                | Ancestor::StaticBlockBody(_)
+                | Ancestor::TSModuleBlockBody(_)
+        )
+    };
+
+    match ctx.ancestor(1) {
+        ancestor if parent_is_statement_list(ancestor) => true,
+        Ancestor::ForStatementInit(_) => parent_is_statement_list(ctx.ancestor(2)),
+        _ => false,
     }
 }
 
@@ -584,8 +862,15 @@ pub fn analyze<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a>, recompute: 
     let _ = program;
 
     #[cfg(debug_assertions)]
-    if let Some(dead) = ctx.state.symbols.liveness().and_then(SymbolLiveness::dead_functions) {
-        debug_assert_dead_function_declarations_removed(program, ctx.scoping(), dead);
+    if let Some((dead, declarator_scopes)) =
+        ctx.state.symbols.liveness().and_then(SymbolLiveness::dead_declarations)
+    {
+        debug_assert_dead_function_declarations_removed(
+            program,
+            ctx.scoping(),
+            dead,
+            declarator_scopes,
+        );
     }
 
     if !recompute {
@@ -603,17 +888,19 @@ fn debug_assert_dead_function_declarations_removed(
     program: &Program<'_>,
     scoping: &Scoping,
     dead: &BitSet<'_>,
+    declarator_scopes: Option<&BitSet<'_>>,
 ) {
     if dead.is_empty() {
         return;
     }
-    DeadFunctionSweep { scoping, dead }.visit_program(program);
+    DeadFunctionSweep { scoping, dead, declarator_scopes }.visit_program(program);
 }
 
 #[cfg(debug_assertions)]
 struct DeadFunctionSweep<'s, 'd, 'a> {
     scoping: &'s Scoping,
     dead: &'d BitSet<'a>,
+    declarator_scopes: Option<&'d BitSet<'a>>,
 }
 
 #[cfg(debug_assertions)]
@@ -629,5 +916,23 @@ impl<'a> VisitJs<'a> for DeadFunctionSweep<'_, '_, '_> {
             );
         }
         walk_function(self, function, flags);
+    }
+
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+        if let BindingPattern::BindingIdentifier(id) = &decl.id
+            && let Some(symbol_id) = id.symbol_id.get()
+            && let Some(scope_id) = function_declarator_scope_id(decl)
+        {
+            assert!(
+                !self.dead.contains(symbol_id.index())
+                    || !self.declarator_scopes.is_some_and(
+                        |declarator_scopes| declarator_scopes.contains(scope_id.index())
+                    ),
+                "dead function-valued declarator `{}` survived the pass after its deadness was \
+                 published",
+                self.scoping.symbol_name(symbol_id),
+            );
+        }
+        walk_variable_declarator(self, decl);
     }
 }

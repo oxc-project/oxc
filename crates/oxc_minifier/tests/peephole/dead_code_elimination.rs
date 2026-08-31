@@ -987,10 +987,9 @@ fn dce_remove_unreachable_after_terminating_statement() {
 }
 
 // #13105: dead recursive/cyclic function declarations must also drop in
-// dce-only mode (rolldown's per-module treeshake preprocess). Self-recursive
-// function-valued declarators use a local removal-site check; mutual
-// declarator and class cycles are kept because graph candidacy is function
-// declarations only.
+// dce-only mode (rolldown's per-module treeshake preprocess) shares the
+// initial graph analysis for exact function-valued declarators. Class cycles
+// remain count-managed.
 #[test]
 fn dce_recursive_unused_functions() {
     test("function f() { f() }", "");
@@ -1000,8 +999,12 @@ fn dce_recursive_unused_functions() {
     // Cycle whose only external reference sits in dead code: needs the mid-loop
     // recompute trigger (pass 2), not just the initial compute.
     test("if (false) c(); function c() { d() } function d() { c() }", "");
-    // Declarator and class cycles are kept (functions-only candidacy).
-    test_same("const a = () => b();\nconst b = () => a();");
+    test("const a = () => b();\nconst b = () => a();", "");
+    test(
+        "let HANDLERS; const a = () => { HANDLERS.push(1); b() }; const b = () => { HANDLERS.push(2); a() }; export {};",
+        "export {};",
+    );
+    // Class cycles remain count-managed.
     test_same("class A {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}");
     // Live references keep the cycle live.
     test_same("function f() {\n\tf();\n}\nconsole.log(f);");
@@ -1043,9 +1046,8 @@ fn dce_keeps_inferred_class_name_for_executing_class() {
 }
 
 #[test]
-#[ignore = "TODO: extend recursive reachability to mutual declarators and classes"]
-fn dce_recursive_unused_mutual_declarators_and_classes() {
-    test("const a = () => b(); const b = () => a();", "");
+#[ignore = "TODO: extend recursive reachability to class declarations"]
+fn dce_recursive_unused_classes() {
     test("class A { m() { new B() } } class B { m() { new A() } }", "");
 }
 

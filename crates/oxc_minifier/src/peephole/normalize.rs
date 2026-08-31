@@ -122,6 +122,17 @@ impl<'a> Traverse<'a> for Normalize {
         }
     }
 
+    fn exit_variable_declarator(
+        &mut self,
+        decl: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // This runs after `exit_expression` has stripped parenthesized
+        // wrappers, so only exact function-valued initializers enter the
+        // focused recursive-declarator analysis.
+        symbol_liveness::register_function_declarator(decl, ctx);
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {

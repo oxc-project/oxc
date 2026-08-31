@@ -429,7 +429,7 @@ fn remove_recursive_unused_nested_in_live_function() {
     );
 }
 
-// ---- Site-local self-recursive declarators ----
+// ---- Exact function-valued declarators ----
 
 #[test]
 fn remove_self_recursive_function_valued_declarators() {
@@ -456,25 +456,81 @@ fn keep_reachable_self_recursive_function_valued_declarators() {
     );
 }
 
-// A for initializer is an actual declarator removal site, so it can use the
-// same local self-reference check without becoming a graph candidate.
+#[test]
+fn keep_reachable_recursive_function_valued_declarators() {
+    test_smallest(
+        "const a = () => b(); const b = () => a(); use(a);",
+        "const a = () => b(), b = () => a(); use(a);",
+    );
+    test_smallest(
+        "export const a = () => b(); const b = () => a();",
+        "export const a = () => b(); const b = () => a();",
+    );
+    test_smallest(
+        "let a = () => b(); const b = () => a(); a = other;",
+        "let a = () => b(); const b = () => a(); a = other;",
+    );
+    test_smallest(
+        "eval('a()'); const a = () => b(); const b = () => a();",
+        "eval('a()'); const a = () => b(), b = () => a();",
+    );
+
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "const a = () => b(); const b = () => a();",
+        "const a = () => b(), b = () => a();",
+        SourceType::script(),
+        &options,
+    );
+
+    // Keeping `a` graph-owned prevents a single-use substitution from moving
+    // its arrow scope out of the declarator and making `b` appear unreachable.
+    test_smallest(
+        "function b() { side() } const a = () => b(); use(a);",
+        "function b() { side() } const a = () => b(); use(a);",
+    );
+
+    let options =
+        CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() };
+    test_options(
+        "const a = () => b(); const b = () => a();",
+        "const a = () => b(), b = () => a();",
+        &options,
+    );
+}
+
+// A for initializer is an actual declarator removal site, so exact
+// function-valued declarators can participate in the initial graph analysis.
 #[test]
 fn remove_self_recursive_for_init_declarator() {
     test_smallest("for (let f = () => f();;) break;", "for (;;) break;");
 }
 
-// ---- Non-candidates: declarator and class cycles ----
+// ---- Recursive declarator and class cycles ----
 
-// Mutual declarator and class cycles are deliberately kept because only
-// function declarations participate in graph reachability. These tests pin
-// the currently unsupported shapes.
 #[test]
-fn keep_recursive_declarator_and_class_cycles() {
-    // const arrow cycle.
+fn remove_recursive_unused_function_valued_declarators() {
+    test_smallest("const a = () => b(); const b = () => a();", "");
+    test_smallest("const a = function() { b() }; const b = function() { a() };", "");
+    test_smallest("const a = (() => b()); const b = () => a();", "");
+    test_smallest("for (let a = () => b(), b = () => a();;) break;", "for (;;) break;");
+    test_smallest("{ const a = () => b(); const b = () => a(); side(); }", "side();");
     test_smallest(
-        "const a = () => b(); const b = () => a();",
-        "const a = () => b(), b = () => a();",
+        "switch (x) { case 0: const a = () => b(); const b = () => a(); side(); }",
+        "x === 0 && side();",
     );
+    test_smallest(
+        "class C { static { const a = () => b(); const b = () => a(); side(); } }",
+        "class C { static { side(); } }",
+    );
+    test_smallest(
+        "function outer() { const a = () => b(); const b = () => a(); return 1 } g(outer());",
+        "function outer() { return 1 } g(outer());",
+    );
+}
+
+#[test]
+fn keep_recursive_class_cycles() {
     // Class cycle with side-effect-free evaluation.
     test_same_smallest(
         "class A {\n\tm() {\n\t\tnew B();\n\t}\n}\nclass B {\n\tm() {\n\t\tnew A();\n\t}\n}",
@@ -488,12 +544,28 @@ fn keep_recursive_declarator_and_class_cycles() {
 }
 
 #[test]
-fn keep_recursive_multi_declarator_cycle() {
-    // The declarator member of the cycle keeps the function member live, so
-    // the cycle survives even after the used sibling declarator is inlined.
+fn remove_recursive_multi_declarator_cycle() {
     test_smallest(
         "const a = () => b(), keep = 1; function b() { a() } console.log(keep);",
-        "const a = () => b();\nfunction b() {\n\ta();\n}\nconsole.log(1);",
+        "console.log(1);",
+    );
+}
+
+#[test]
+fn remove_recursive_same_symbol_function_sources() {
+    // A symbol can have both a function-declaration and a declarator source.
+    // Source-kind bookkeeping must not let untracking one hide the other.
+    test_smallest("function a() { b() } var a = () => b(); function b() { a() }", "");
+}
+
+#[test]
+fn remove_recursive_declarator_with_side_effectful_redeclaration() {
+    test_smallest("var a = () => b(); var a = effect(); const b = () => a();", "effect();");
+    // The wrapper prevents `a` from becoming an exact graph candidate, so the
+    // mutually-referential declarations remain conservatively retained.
+    test_smallest(
+        "const a = (effect(), () => b()); const b = () => a();",
+        "const a = (effect(), () => b()), b = () => a();",
     );
 }
 
@@ -503,18 +575,34 @@ fn keep_recursive_multi_declarator_cycle() {
 #[test]
 fn keep_declarator_cycle_in_bare_statement_slot() {
     test_same_smallest("function a() {\n\tb();\n}\nif (g) var b = a;");
+    test_same_smallest("if (g) var a = () => b(); const b = () => a();");
 }
 
-// Future extension: mutual declarator cycles need graph participation rather
-// than the removal-site-local check used for self-recursive initializers.
 #[test]
-#[ignore = "TODO: extend recursive reachability to mutual variable declarators"]
 fn remove_recursive_unused_mutual_declarator_cycles() {
-    test_smallest("const a = () => b(); const b = () => a();", "");
     test_smallest(
-        "const a = () => b(), keep = 1; function b() { a() } console.log(keep);",
+        "const a = () => b(), b = () => a(), keep = 1; console.log(keep);",
         "console.log(1);",
     );
+}
+
+#[test]
+fn remove_issue_26117_recursive_arrow_functions() {
+    let source = "let HANDLERS;\nconst connect_node_compile_to_regexp = (connectNode) => {\n\tHANDLERS.push(connectNode[0]);\n\tnode_compile_to_regexp(connectNode[1]);\n};\nconst node_compile_to_regexp = (node) => {\n\tHANDLERS.push(node[0]);\n\tconnect_node_compile_to_regexp(node[1]);\n};\nexport {};";
+    test_smallest(source, "export {};");
+
+    // The first pass removes the functions and flushes their body references;
+    // the unused outer binding disappears in the following pass.
+    let options = CompressOptions { max_iterations: Some(0), ..CompressOptions::smallest() };
+    test_options_once_with_iterations(source, "let HANDLERS; export {};", 0, &options);
+}
+
+#[test]
+fn remove_declarator_cycles_that_become_unreachable_later() {
+    // A registered candidate is not single-use inlined while its function
+    // scope owns graph references, so a later dead-code pass can safely
+    // recompute its reachability.
+    test_smallest("if (false) a(); const a = () => b(); const b = () => a();", "");
 }
 
 // Future extension: class evaluation needs a stable removability proof before

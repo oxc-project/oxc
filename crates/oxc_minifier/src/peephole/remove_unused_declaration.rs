@@ -1,5 +1,5 @@
 use super::{PeepholeOptimizations, remove_unused_expression::ClassRemovability};
-use crate::{CompressOptionsUnused, TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx, symbol_liveness};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 use oxc_syntax::symbol::SymbolId;
@@ -33,22 +33,17 @@ impl<'a> PeepholeOptimizations {
     /// effects, and without a reference from outside that function it can
     /// never be called.
     ///
-    /// This check deliberately runs at the declarator removal site instead of
-    /// registering declarators in the recursive-function graph. That keeps
-    /// mutual declarator cycles unsupported, but also means statement
-    /// relocation cannot leave a dead candidate in a non-removable AST slot.
-    /// For example, `const f = () => f()` is removable, while adding `use(f)`
-    /// supplies an outside reference and keeps it.
+    /// This remains a cheap local fallback for function initializers that
+    /// become exact only during peephole optimization and therefore were not
+    /// registered during Normalize. For example, `const f = () => f()` is
+    /// removable, while adding `use(f)` supplies an outside reference and
+    /// keeps it.
     fn self_recursive_function_declarator_is_unused(
         decl: &VariableDeclarator<'a>,
         symbol_id: SymbolId,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        let Some(function_scope_id) = decl.init.as_ref().and_then(|init| match init {
-            Expression::FunctionExpression(function) => function.scope_id.get(),
-            Expression::ArrowFunctionExpression(arrow) => arrow.scope_id.get(),
-            _ => None,
-        }) else {
+        let Some(function_scope_id) = symbol_liveness::function_declarator_scope_id(decl) else {
             return false;
         };
 
@@ -119,7 +114,12 @@ impl<'a> PeepholeOptimizations {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
                     let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
-                        || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
+                        || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx)
+                        || symbol_liveness::function_declarator_scope_id(decl).is_some_and(
+                            |scope_id| {
+                                ctx.state.symbols.function_declarator_is_dead(symbol_id, scope_id)
+                            },
+                        );
                     return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);
                 }
                 false
