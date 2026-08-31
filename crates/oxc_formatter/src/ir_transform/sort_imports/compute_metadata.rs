@@ -3,11 +3,13 @@ use std::{borrow::Cow, path::Path};
 use cow_utils::CowUtils;
 use phf::phf_set;
 
-use crate::ir_transform::sort_imports::{
-    group_config::{ImportModifier, ImportSelector},
-    group_matcher::{GroupMatcher, ImportMetadata},
-    options::SortImportsOptions,
-    source_line::ImportLineMetadata,
+use crate::ir_transform::{
+    sort_common::groups::GroupMatcher,
+    sort_imports::{
+        group_config::{ImportModifier, ImportSelector, ImportVocabulary},
+        options::SortImportsOptions,
+        source_line::ImportLineMetadata,
+    },
 };
 
 /// Compute all metadata derived from import line metadata.
@@ -15,18 +17,16 @@ use crate::ir_transform::sort_imports::{
 /// Returns `(group_idx, normalized_source, is_ignored)`.
 pub fn compute_import_metadata<'a>(
     metadata: &ImportLineMetadata<'a>,
-    group_matcher: &GroupMatcher,
+    group_matcher: &GroupMatcher<ImportVocabulary>,
     options: &SortImportsOptions,
 ) -> (usize, Cow<'a, str>, bool) {
     let source = extract_source_path(metadata.source);
     let is_style_import = is_style(source);
     let path_kind = to_path_kind(source, options);
 
-    let group_idx = group_matcher.compute_group_index(&ImportMetadata {
-        source,
-        selectors: compute_selectors(metadata, is_style_import, is_subpath(source), &path_kind),
-        modifiers: compute_modifiers(metadata),
-    });
+    let selectors = compute_selectors(metadata, is_style_import, is_subpath(source), &path_kind);
+    let modifiers = compute_modifiers(metadata);
+    let group_idx = group_matcher.group_index(source, &selectors, &modifiers);
 
     // Pre-compute normalized source for case-insensitive comparison
     let normalized_source =
@@ -40,8 +40,9 @@ pub fn compute_import_metadata<'a>(
     //     or a custom group with the bare `side_effect(_style)` selector
     //     - If yes, allow regrouping (not ignored)
     //     - If no, keep in original position (ignored)
-    let should_regroup_side_effect = group_matcher.should_regroup_side_effect();
-    let should_regroup_side_effect_style = group_matcher.should_regroup_side_effect_style();
+    let should_regroup_side_effect = group_matcher.has_plain_selector(ImportSelector::SideEffect);
+    let should_regroup_side_effect_style =
+        group_matcher.has_plain_selector(ImportSelector::SideEffectStyle);
 
     let is_ignored = !options.sort_side_effects
         && metadata.is_side_effect

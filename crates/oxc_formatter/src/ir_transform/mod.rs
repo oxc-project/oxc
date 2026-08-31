@@ -1,5 +1,7 @@
 //! This module contains IR transforms for sorting and aesthetic features.
-//! Currently, it only includes import sorting (`sort_imports_chunk`).
+//! `sort_common` holds the target-independent engine (group vocabulary + matcher, permutation
+//! helpers); `sort_imports` is its first consumer. Further sorting targets are tracked in
+//! <https://github.com/oxc-project/oxc/issues/22521>.
 //!
 //! Several approaches were considered:
 //! - 1. Sort at the AST level.
@@ -25,6 +27,7 @@
 //! - <https://github.com/oxc-project/oxc/pull/14651> (initial experiment, IR level)
 //! - <https://github.com/oxc-project/oxc/pull/22065> (move to during-IR-construction)
 
+mod sort_common;
 mod sort_imports;
 
 pub use sort_imports::*;

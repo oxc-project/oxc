@@ -1,11 +1,14 @@
 use oxc_formatter_core::format_element::LineMode;
 
-use crate::ir_transform::sort_imports::{
-    compute_metadata::compute_import_metadata,
-    group_matcher::GroupMatcher,
-    options::SortImportsOptions,
-    sortable_imports::{SortSortableImports, SortableImport},
-    source_line::SourceLine,
+use crate::ir_transform::{
+    sort_common::groups::GroupMatcher,
+    sort_imports::{
+        compute_metadata::compute_import_metadata,
+        group_config::ImportVocabulary,
+        options::SortImportsOptions,
+        sortable_imports::{SortSortableImports, SortableImport},
+        source_line::SourceLine,
+    },
 };
 
 /// Orphan content (comments/empty lines separated by empty line from the next import).
@@ -64,7 +67,7 @@ impl<'a> PartitionedChunk<'a> {
     #[must_use]
     pub fn into_sorted_import_units(
         self,
-        group_matcher: &GroupMatcher,
+        group_matcher: &GroupMatcher<ImportVocabulary>,
         options: &SortImportsOptions,
     ) -> (Vec<SortableImport<'a>>, Vec<OrphanContent<'a>>, Vec<SourceLine<'a>>, Vec<bool>) {
         let Self::Imports(lines) = self else {

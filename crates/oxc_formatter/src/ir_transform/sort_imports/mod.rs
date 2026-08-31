@@ -1,6 +1,5 @@
 mod compute_metadata;
 mod group_config;
-mod group_matcher;
 pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
@@ -15,8 +14,9 @@ use oxc_formatter_core::format_element::{
 use crate::{
     Buffer, JsLabels, SortImportsOptions,
     formatter::JsFormatter,
-    ir_transform::sort_imports::{
-        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
+    ir_transform::{
+        sort_common::groups::GroupMatcher,
+        sort_imports::{partitioned_chunk::PartitionedChunk, source_line::SourceLine},
     },
 };
 

@@ -38,6 +38,7 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 - Inspired by `eslint-plugin-perfectionist`, but not a 1:1 match (default group definitions differ too)
 - Implemented purely as a Rust IR transform; requires no JS callback
+- Target-independent pieces (group vocabulary/matcher, permutation helpers) live in `ir_transform/sort_common/`; new sorting targets consume them rather than copying `sort_imports`
 
 ### Format JSDoc (`formatter/jsdoc/`)
 

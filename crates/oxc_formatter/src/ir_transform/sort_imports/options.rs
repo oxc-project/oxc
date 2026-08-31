@@ -1,7 +1,7 @@
-use std::fmt;
-use std::str::FromStr;
-
-pub use super::group_config::{GroupEntry, GroupName, ImportModifier, ImportSelector};
+pub use super::group_config::{
+    GroupEntry, GroupName, ImportModifier, ImportSelector, ImportVocabulary,
+};
+pub use crate::ir_transform::sort_common::options::SortOrder;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
@@ -112,71 +112,9 @@ impl Default for SortImportsOptions {
     }
 }
 
-// ---
-
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum SortOrder {
-    /// Sort in ascending order (A-Z).
-    #[default]
-    Asc,
-    /// Sort in descending order (Z-A).
-    Desc,
-}
-
-impl SortOrder {
-    pub const fn is_asc(self) -> bool {
-        matches!(self, Self::Asc)
-    }
-
-    pub const fn is_desc(self) -> bool {
-        matches!(self, Self::Desc)
-    }
-}
-
-impl FromStr for SortOrder {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "asc" => Ok(Self::Asc),
-            "desc" => Ok(Self::Desc),
-            _ => Err("Value not supported for SortOrder. Supported values are 'asc' and 'desc'."),
-        }
-    }
-}
-
-impl fmt::Display for SortOrder {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            SortOrder::Asc => "ASC",
-            SortOrder::Desc => "DESC",
-        };
-        f.write_str(s)
-    }
-}
-
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
-pub struct CustomGroupDefinition {
-    /// The identifier used in `groups` representing this group.
-    pub group_name: String,
-    /// List of glob patterns to match import sources for this group.
-    pub element_name_pattern: Vec<String>,
-    /// When specified, the import's selectors must contain this selector.
-    pub selector: Option<ImportSelector>,
-    /// When specified, **all** modifiers must be present in the import's modifiers (AND logic).
-    pub modifiers: Vec<ImportModifier>,
-}
-
-impl CustomGroupDefinition {
-    /// Check if this is a plain selector: the given selector with no other narrowing condition.
-    /// The custom-group counterpart of [`GroupName::is_plain_selector`];
-    /// keep in sync when a narrowing field is added to this struct.
-    pub fn is_plain_selector(&self, selector: ImportSelector) -> bool {
-        self.selector == Some(selector)
-            && self.element_name_pattern.is_empty()
-            && self.modifiers.is_empty()
-    }
-}
+/// A user-defined import group; the matching rules are documented on `CustomGroup`.
+pub type CustomGroupDefinition =
+    crate::ir_transform::sort_common::groups::CustomGroup<ImportVocabulary>;
 
 /// Returns default prefixes for identifying internal imports: `["~/", "@/", "#"]`.
 pub fn default_internal_patterns() -> Vec<String> {
