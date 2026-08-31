@@ -15,6 +15,16 @@ impl<'a> PeepholeOptimizations {
         if switch_stmt.cases.len() <= 1 {
             return;
         }
+
+        if switch_stmt
+            .cases
+            .iter()
+            .any(|case| case.consequent.iter().any(Self::statement_cares_about_scope))
+        {
+            // preserve any potential TDZ issues
+            return;
+        }
+
         let Some(discriminant) = switch_stmt.discriminant.evaluate_value(ctx) else {
             return;
         };

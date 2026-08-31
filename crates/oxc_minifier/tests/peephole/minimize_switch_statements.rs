@@ -1,7 +1,7 @@
-use crate::test;
+use crate::{test, test_same};
 
 #[test]
-fn test_handle_switch_statement_with_sequence_expressions() {
+fn test_drop_unreachable_switch_cases_with_sequence_expressions() {
     test("switch (c, b) { case 2: switch (a) { case 2: foo()}}", "c, b === 2 && a === 2 && foo();");
     test("switch ((a(), 1)) { case 1: b(); break; default: c(); break; }", "a(), b();");
     test("switch (1) { case 1: foo(); case (a(), 2): bar(); }", "foo(), bar();");
@@ -36,7 +36,7 @@ fn test_handle_switch_statement_with_sequence_expressions() {
 }
 
 #[test]
-fn test_handle_switch_statement_with_hoisted_vars() {
+fn test_drop_unreachable_switch_cases_with_hoisted_vars() {
     test(
         "switch (3) { case 1: var q = 1; break; case 2: w(); } return q;",
         "if (0) var q; return;",
@@ -55,4 +55,16 @@ fn test_handle_switch_statement_with_hoisted_vars() {
         "switch ('r') { case 'r': a();break; case 'r': var x=0;break;}",
         "switch ('r') { case 'r': a(); break; var x; }",
     );
+}
+
+#[test]
+fn test_drop_unreachable_switch_cases_tdz_in_case() {
+    test_same("switch (1) { case 1: break; case 2: let x = 1; }");
+    test_same("switch (1) { case 1: break; case 2: function x() {} }");
+    test_same("switch (1) { case 1: break; case 2: class C {} }");
+    test(
+        "switch (1) { case 2: let x = 1; case 1: console.log(x); }",
+        "switch (1) { case 2: let x = 1; case 1: console.log(1); }",
+    );
+    test_same("switch (1) { case 2: function x() {} case 1: console.log(x); }");
 }

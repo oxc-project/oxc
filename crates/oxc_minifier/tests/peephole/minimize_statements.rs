@@ -363,9 +363,4 @@ fn test_handle_switch_statement() {
         "function f(){ switch (0) { case x: } let x = 1; }",
     ); // TDZ; function f() { x; let x = 1; }
     test_same("function f(){ switch (0) { case x: case y: } let x = 1; }"); // TDZ; function f() { x, y; let x = 1; }
-    test("switch (1) { case 1: break; case 2: let x = 1; }", "");
-    test("switch (1) { case 1: break; case 2: function x() {} }", "");
-    test("switch (1) { case 1: break; case 2: class C {} }", "");
-    test("switch (1) { case 2: let x = 1; case 1: console.log(x); }", "console.log(1);"); // expected TDZ
-    test("switch (1) { case 2: function x() {} case 1: console.log(x); }", "console.log(x);");
 }
