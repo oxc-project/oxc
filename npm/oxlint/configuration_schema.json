@@ -9086,6 +9086,9 @@
         "unicorn/no-empty-file": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-exports-in-scripts": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-hex-escape": {
           "$ref": "#/definitions/RuleNoConfig"
         },
