@@ -101,7 +101,7 @@ impl ServerLinterBuilder {
         // Read the suppression-display option up front, before `options` is partially moved below.
         let suppressed_violation_severity = options.suppressed_violation_severity;
         let mut client_messages = Vec::new();
-        let suppressions = match WorkspaceSuppressions::new(root_path.clone()) {
+        let suppressions = match WorkspaceSuppressions::new(root_path.to_path_buf()) {
             Ok(suppressions) => suppressions,
             Err(diagnostic) => {
                 warn!("{diagnostic}");
@@ -109,7 +109,7 @@ impl ServerLinterBuilder {
                     message: diagnostic.to_string(),
                     r#type: MessageType::ERROR,
                 });
-                WorkspaceSuppressions::without_baseline(root_path.clone())
+                WorkspaceSuppressions::without_baseline(root_path.to_path_buf())
             }
         };
         let mut external_linter = self.external_linter.as_ref();
@@ -770,7 +770,7 @@ impl Tool for ServerLinter {
 impl ServerLinter {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn new(
+    fn new(
         run: Run,
         cwd: PathBuf,
         ignore_matcher: LintIgnoreMatcher,
