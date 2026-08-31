@@ -412,7 +412,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
-                Statement::SwitchStatement(_) => Self::try_fold_switch(stmt, ctx),
+                Statement::SwitchStatement(_) => {
+                    Self::drop_unreachable_switch_cases(stmt, ctx);
+                    Self::try_fold_switch(stmt, ctx);
+                }
                 Statement::FunctionDeclaration(_) => {
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
