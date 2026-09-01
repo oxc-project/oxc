@@ -702,6 +702,8 @@ impl<'a> PeepholeOptimizations {
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
             Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx, false);
+            // `var a; return a = b(), c;` => `var a = b(); return c;`
+            Self::merge_leading_assignments_to_declaration(ret_argument_expr, false, result, ctx);
         }
 
         if let Some(argument) = &mut ret_stmt.argument
@@ -725,23 +727,14 @@ impl<'a> PeepholeOptimizations {
             if let Some(old) = ret_stmt.argument.take() {
                 ctx.drop_expression(&old);
             }
-            result.push(Statement::ReturnStatement(ret_stmt));
-            return;
-        }
-
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        } else if ctx.options().sequences
             && let Some(argument) = &mut ret_stmt.argument
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
             let a = &mut prev_expr_stmt.expression;
             let new_arg = Self::join_sequence(a, argument, ctx);
             ctx.replace_expression(argument, new_arg);
             result.pop();
-        }
-
-        // `var a; return a = b(), c;` => `var a = b(); return c;`
-        if let Some(argument) = &mut ret_stmt.argument {
-            Self::merge_leading_assignments_to_declaration(argument, false, result, ctx);
         }
 
         // `if (a) return b; return c;` => `return a ? b : c;`
