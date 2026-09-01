@@ -1,6 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter_graphql`
 
 Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the GraphQL-specific rules and translations.
+Known divergences live in DIVERGENCES.md.
 
 ## Overview
 
@@ -43,15 +44,12 @@ This crate instead collects comment spans into a positional cursor, drained in s
 
 The shared placement invariants apply: a comment stays between the source tokens it sat between, and a same-line trailing comment stays on its line.
 
-Two bounded exceptions:
+Two known deviations, kept deliberately (details live on the helpers' doc comments):
 
-- an own-line comment claimed right after a printed literal (`type`, `:`, `=`) inlines on that literal's line
-  - `type` + break + `# c` + break + `A` prints as `type # c` + break + `A`
-  - identical to Prettier and to `oxc_formatter`'s `const // c` + break + `a = 1`; keeping it own-line would need a column-conditional break the IR does not have
-- positions no printer claims fall back to an own-line trailing comment after the node, which may cross remaining in-span tokens (e.g. a type's `!`)
-  - `flush_overlooked_inside_comments`
+- an own-line comment claimed right after a printed literal inlines on that literal's line (`write_leading_comments`)
+- positions no printer claims fall back to a trailing comment after the node, which may cross remaining in-span tokens (`flush_overlooked_inside_comments`)
 
-Where Prettier relocates a comment across tokens instead, we diverge, see "Known divergences".
+Where Prettier relocates a comment across tokens instead, we diverge, see DIVERGENCES.md.
 
 Two constraints the code cannot show:
 
@@ -81,17 +79,6 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
   Counting raw newlines would over-report when tokens (e.g. the `&` between two `implements` comments, or an insignificant comma) sit on their own line.
 - A cooked `\r` escape in a string value is re-emitted as `\r`
   (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
-
-## Known divergences
-
-Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
-All current entries are one class: Prettier relocates a comment (an attachment artifact of `graphql-js` node boundaries, not a layout rule), we keep it between its source tokens on its source line.
-
-- `"desc" type # c`: Prettier pulls the comment backwards across the keyword onto the description's line
-- `"""d"""` + break + `# c` + break + `type A`: Prettier pushes the comment forward across the keyword (`type # c` + break + `A`)
-- `type A # c` + break + `implements B`: Prettier scatters it to the line end (`type A implements B { # c`);
-  - same class: `f(x) # c` + break + `: T` is pulled inside the parens
-- `{ # c` after an opening delimiter: Prettier moves it own-line as the first child's leading (asymmetric: `test # c` / `} # c` stay inline)
 
 ## Verification
 

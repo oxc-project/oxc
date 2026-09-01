@@ -19,7 +19,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   $spacer: variables.$spacer
 );
 // A trailing `//` after a comma moves to its own line before the next item.
-// KNOWN DIVERGENCE (see AGENTS.md): the own-line `// before close` keeps its
+// KNOWN DIVERGENCE (DIVERGENCES.md "own-line-trailing-comment-keeps-line"): the own-line `// before close` keeps its
 // own line, consistent with the map printer; Prettier pulls it up to the last
 // item's line (`$e: 5 // before close`).
 @use "a" with (
@@ -62,7 +62,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   /* Spacing */ $spacer: variables.$spacer
 );
 // A trailing `//` after a comma moves to its own line before the next item.
-// KNOWN DIVERGENCE (see AGENTS.md): the own-line `// before close` keeps its
+// KNOWN DIVERGENCE (DIVERGENCES.md "own-line-trailing-comment-keeps-line"): the own-line `// before close` keeps its
 // own line, consistent with the map printer; Prettier pulls it up to the last
 // item's line (`$e: 5 // before close`).
 @use "a" with (
@@ -105,7 +105,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   /* Spacing */ $spacer: variables.$spacer
 );
 // A trailing `//` after a comma moves to its own line before the next item.
-// KNOWN DIVERGENCE (see AGENTS.md): the own-line `// before close` keeps its
+// KNOWN DIVERGENCE (DIVERGENCES.md "own-line-trailing-comment-keeps-line"): the own-line `// before close` keeps its
 // own line, consistent with the map printer; Prettier pulls it up to the last
 // item's line (`$e: 5 // before close`).
 @use "a" with (

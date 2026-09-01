@@ -27,8 +27,6 @@ Each crate's `AGENTS.md` holds only language-specific rules and the crate-local 
   - Comments explain BEHAVIOR and mechanism, never Prettier's code structure
     - Naming an upstream function as a search key is fine (greppable in any Prettier version) — most valuable when pinning an artifact explanation or a compat-table entry
     - File names / line numbers are not (not reproducible without a commit hash)
-- Implementation strategies legitimately differ (e.g. Prettier pre-classifies comments per context; we decide on the spot with positional cursors)
-  - Compatibility is judged on bytes out, not code shape
 - Before matching a mismatch, always consider whether it is a Prettier bug or artifact (see "Known divergences")
 - The oracle version is the `prettier` pinned in `apps/oxfmt/package.json`: the bundle, the conformance suite (via `oxc_formatter_tests`), and fixture verification all derive from that one version
   - The LATEST Prettier is still worth consulting as a forward-looking aid: whether a bug we diverged on has been fixed upstream, or a behavior is about to change
@@ -36,26 +34,47 @@ Each crate's `AGENTS.md` holds only language-specific rules and the crate-local 
 
 ### Known divergences
 
-Deliberate divergences from Prettier's output. Admission reasons:
+Admission reasons:
 
-- (1) Prettier's output would change program semantics: Formatting must NEVER do that (this reason is mandatory to act on, the others are judgment calls)
+- (1) `semantics`: Prettier's output would change program semantics
+  - Formatting must NEVER do that (this reason is mandatory to act on, the others are judgment calls)
   - Idempotency breakage is a symptom of this class: output that fails to re-parse, or re-parses to a different value/structure
   - Verify semantics claims with the reference compiler/parser (tsc, dart-sass, lessc, ...), not intuition
-- (2) Prettier's behavior is a bug: acknowledged as an open issue, OR explainable as an artifact (of comment attachment, parser structure, token lexing, ...) rather than an intended layout rule
-  - Typical case: comment relocations that are attachment artifacts of Prettier's parser
-  - "Looks wrong" without an artifact explanation is NOT enough; follow Prettier until the mechanism is understood
-- (3) Prettier's behavior conflicts with a uniform rule across our formatter crates
+- (2) `prettier-bug`: Prettier's behavior is a bug
+  - Acknowledged as an open issue, OR explainable as an artifact (of comment attachment, parser structure, token lexing, ...) rather than an intended layout rule
+  - e.g. comment relocations that are attachment artifacts of Prettier's parser
+  - When "looks wrong", find and understand an artifact explanation
+- (3) `uniform-rule`: Prettier's behavior conflicts with a uniform rule across our formatter crates
   - The uniform rule wins, even where Prettier's behavior is normal and internally consistent
-    - e.g. re-quoting SCSS `@warn "x"` per `singleQuote` where Prettier keeps the raw string verbatim
+  - e.g. re-quoting SCSS `@warn "x"` per `singleQuote` where Prettier keeps the raw string verbatim
   - This also covers Prettier's internal inconsistencies (same construct, different output depending on node kind or context): one principle beats emulating the inconsistency
-- (4) The impact does not justify the matching cost (layout-only, rare trigger)
+- (4) `cost`: The impact does not justify the matching cost
+  - This is layout-only, rare trigger
+- (5) `style-hold`: Prettier changed an intended style and we deliberately stay on the PREVIOUS Prettier version's output, pending an adoption decision
+  - Requires a tracking issue recording the decision; never a novel style of our own (that would be taste)
+  - Resolve by following the new style or re-classifying, then drop or rewrite the entry
+
+Choosing the reason:
+
+- Each reason judges a different thing: (1) the OUTPUT's effect, (2) the CAUSE on Prettier's side, (3) OUR principle, (4) the impact-vs-cost trade, (5) a tracked hold on an upstream style change
+- Semantics takes precedence: output that changes meaning is (1) even when the mechanism is also an artifact; a bug label must not hide the one mandatory class
+- (2) vs (3) litmus: would the divergence disappear once Prettier fixes itself and the pin catches up?
+  - Yes → (2), and give the entry a `Drop when`
+  - No → (3), the principle outlives any upstream fix
+- When an entry has traits of both, the `Why` is the ground that DECIDED admission; the other trait goes in the prose
+- Style debates (`status:needs discussion` issues) are still followed; do not "improve" on taste
+  - Applying a rule already established across our crates (reason 3) is not taste; inventing a new style neither Prettier nor our crates have is
 
 Rules:
 
-- Style debates (`status:needs discussion` issues) are still followed; do not "improve" on taste
-  - Applying a rule already established across our crates (reason 3) is not taste; inventing a new style neither Prettier nor our crates have is
-- Every divergence is documented in the owning crate's AGENTS.md "Known divergences" section, with the reason
-- Every divergence is pinned by a fixture whose comments say which lines deviate from Prettier and why
+- Every divergence is documented in the owning layer's `DIVERGENCES.md` and pinned by a fixture whose comments say which lines deviate from Prettier and why
+  - Entry format: an H2 slug (the stable anchor external pointers use), required `Why:` (admission reason keyword + upstream issue if any) and `Pin:` lines, `Drop when:` only when a convergence condition exists; an input/ours/prettier example is the body, written with OUR behavior as the spec
+  - `prettier-bug` entries drop by default when the upstream fix reaches the pin (that is what made them (2)); write `Drop when:` only when the condition is more specific than that default
+  - No status, dates, or authors: listed = accepted, condition met = delete (git holds history)
+  - The owning layer is where the behavior is decided: a language crate for single-language behavior, `apps/oxfmt` for embedding E2E behavior
+  - A divergence discovered through a real-world conformance case (oxfmt externals, Prettier suite) is pinned by DISTILLING a minimal fixture into the owning layer's `tests/fixtures/`; the big source file stays in conformance as a regression net, never as the pin
+  - `DIVERGENCES.md` holds entries only, opening with one back-reference line to this section; `AGENTS.md` keeps policy translations and mechanism prose;
+    - oxfmt conformance notes never explain, one identifying line + `See <path>/DIVERGENCES.md#<slug>`
 - Affected conformance fixtures stay counted as failures; a new conformance failure is acceptable only under this policy and must be documented
 - The rule cuts both ways: never "fix" a conformance failure by following Prettier into a documented divergence
   - Check the crate's divergence list and open oxc issues for intent before treating a diff as a plain bug
@@ -79,6 +98,10 @@ The invariants:
     - The replaceability test only separates these two
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
   - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
+  - Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
+    - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
+    - The source pair stays user content only where a sub-printer claims it and prints the comment inside (per-language keeps tables)
+    - The line-boundary invariant still gates the move: never across a re-printed paren that ends up on its own line
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
 
@@ -140,8 +163,6 @@ PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
 ```
 
 The Prettier suite lives under `crates/oxc_formatter_tests/prettier/` and is self-provisioned on the first conformance run. It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.
-
-JSDoc formatting is covered by plain fixture-pair tests in `oxc_formatter` (`--test jsdoc`, committed input/expected pairs — a mismatch is a failing test, not a tracked report entry).
 
 Failures must be either fixed or classified under "Known divergences".
 

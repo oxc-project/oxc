@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- faf11d9 formatter_yaml: Keep trailing whitespace in block scalars (#26072) (leaysgur)
+
+### 📚 Documentation
+
+- b879608 formatter,formatter_graphql,formatter_yaml: Annotate own-line comment inlining as known policy violation (#26131) (leaysgur)
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
 ## [0.64.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

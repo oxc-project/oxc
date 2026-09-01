@@ -3,14 +3,21 @@ use oxc_macros::declare_oxc_lint;
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::shared::no_disabled_tests::{DOCUMENTATION, run_on_jest_node},
+    rules::shared::no_disabled_tests::{DOCUMENTATION, SHORT_DESCRIPTION, run_on_jest_node},
     utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDisabledTests;
 
-declare_oxc_lint!(NoDisabledTests, vitest, correctness, docs = DOCUMENTATION, version = "0.0.7",);
+declare_oxc_lint!(
+    NoDisabledTests,
+    vitest,
+    correctness,
+    docs = DOCUMENTATION,
+    version = "0.0.7",
+    short_description = SHORT_DESCRIPTION,
+);
 
 impl Rule for NoDisabledTests {
     fn run_on_jest_node<'a, 'c>(

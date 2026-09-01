@@ -1,6 +1,6 @@
 # externals/webawesome/carousel/carousel.ts
 
-> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
+> embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent
 
 ## Option 1
 

@@ -197,54 +197,51 @@ fn test_while_continue_optimization() {
 
 #[test]
 fn test_do_continue_optimization() {
-    test("do{if(x)continue; x=3; continue; }while(true)", "do x||=3;while(!0);");
-    test("do{a();continue;b()}while(true)", "do a();while(!0)");
-    test("do{if(true){a();continue;}else;b();}while(true)", "do a();while(!0)");
-    test("do{if(false){a();continue;}else;b();continue;}while(true)", "do b();while(!0)");
-    test(
-        "do{if(a()){b();continue;}else;c();}while(true)",
-        "do{if(a()){b();continue}c()}while(!0);",
-    ); // do a()?b():c();while(!0)
+    test("do{if(x)continue; x=3; continue; }while(true)", "do x||=3;while(1);");
+    test("do{a();continue;b()}while(true)", "do a();while(1)");
+    test("do{if(true){a();continue;}else;b();}while(true)", "do a();while(1)");
+    test("do{if(false){a();continue;}else;b();continue;}while(true)", "do b();while(1)");
+    test("do{if(a()){b();continue;}else;c();}while(true)", "do{if(a()){b();continue}c()}while(1);"); // do a()?b():c();while(1)
     test(
         "do{if(a()){b();}else{c();continue;}}while(true)",
-        "do if(a())b();else{c();continue}while(!0);",
-    ); // do a()?b():c();while(!0)
-    test("do{if(a()){b();continue;}else;}while(true)", "do if(a()){b();continue}while(!0);"); // do a()&&b();while(!0)
-    test("do{if(a()){continue;}else{continue;} continue;}while(true)", "do a();while(!0)");
-    test("do{if(a()){continue;}else{continue;} b();}while(true)", "do a();while(!0)");
+        "do if(a())b();else{c();continue}while(1);",
+    ); // do a()?b():c();while(1)
+    test("do{if(a()){b();continue;}else;}while(true)", "do if(a()){b();continue}while(1);"); // do a()&&b();while(1)
+    test("do{if(a()){continue;}else{continue;} continue;}while(true)", "do a();while(1)");
+    test("do{if(a()){continue;}else{continue;} b();}while(true)", "do a();while(1)");
 
-    test("do{while(a())continue;}while(true)", "do for(;a();)continue;while(!0);"); // do for(;a(););while(!0)
-    test("do{for(x in a())continue}while(true)", "do for(x in a())continue;while(!0);"); // do for(x in a());while(!0)
+    test("do{while(a())continue;}while(true)", "do for(;a();)continue;while(1);"); // do for(;a(););while(1)
+    test("do{for(x in a())continue}while(true)", "do for(x in a())continue;while(1);"); // do for(x in a());while(1)
 
-    test("do{while(a())break;}while(true)", "do for(;a();)break;while(!0)");
-    test("do for(x in a())break;while(true)", "do for(x in a())break;while(!0)");
+    test("do{while(a())break;}while(true)", "do for(;a();)break;while(1)");
+    test("do for(x in a())break;while(true)", "do for(x in a())break;while(1)");
 
     test(
         "do{try{continue;}catch(e){continue;}}while(true)",
-        "do try{continue}catch{continue}while(!0);",
-    ); // do;while(!0)
+        "do try{continue}catch{continue}while(1);",
+    ); // do;while(1)
     test(
         "do{try{if(a()){continue;}else{continue;} continue;}catch(e){}}while(true)",
-        "do try{if(a())continue;continue}catch{}while(!0);",
-    ); // do try{a()}catch{}while(!0);
+        "do try{if(a())continue;continue}catch{}while(1);",
+    ); // do try{a()}catch{}while(1);
 
-    test("do{g:continue}while(true)", "do g:continue;while(!0);"); // do;while(!0);
+    test("do{g:continue}while(true)", "do g:continue;while(1);"); // do;while(1);
     // This case could be improved.
     test(
         "do{g:if(a()){continue;}else{continue;} continue;}while(true)",
-        "do g:if(a())continue;else continue;while(!0);",
-    ); // do g:a();while(!0);
+        "do g:if(a())continue;else continue;while(1);",
+    ); // do g:a();while(1);
 
-    test("do { foo(); continue; } while(false)", "do foo();while(!1)");
-    test("do { foo(); break; } while(false)", "do foo();while(!1)");
+    test("do { foo(); continue; } while(false)", "do foo();while(0)");
+    test("do { foo(); break; } while(false)", "do foo();while(0)");
 
     test("do{break}while(fn());", "do break; while(fn());");
-    test("do{break}while(true);", "do break; while(!0);"); // do while(!1);
-    test("do{break}while(!new Date());", "do;while(!1);");
+    test("do{break}while(true);", "do break; while(1);"); // do while(0);
+    test("do{break}while(!new Date());", "do;while(0);");
 
     test(
         "do { foo(); switch (x) { case 1: break; default: f()} } while(false)",
-        "do switch (foo(),x) { case 1: break; default: f() } while(!1);",
+        "do switch (foo(),x) { case 1: break; default: f() } while(0);",
     );
 }
 

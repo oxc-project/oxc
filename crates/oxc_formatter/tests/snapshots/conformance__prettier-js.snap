@@ -1,13 +1,15 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
+assertion_line: 172
 expression: report
 ---
-js compatibility: 766/810 (94.57%), 23 files skipped
+js compatibility: 765/810 (94.44%), 23 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 93.75% |
 | js/arrows/issue-17421.js | 💥💥 | 88.70% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/assignment-comments/string.js | 💥 | 96.59% |
@@ -32,7 +34,7 @@ js compatibility: 766/810 (94.57%), 23 files skipped
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 88.24% |
 | js/for/9812-2.js | 💥 | 88.89% |
-| js/for/continue-and-break-comment-without-blocks.js | 💥 | 74.24% |
+| js/for/continue-and-break-comment-without-blocks.js | 💥 | 67.59% |
 | js/for-of/comments.js | 💥 | 44.83% |
 | js/function/iife.js | 💥 | 14.89% |
 | js/function/issue-12967.js | 💥 | 0.00% |
@@ -83,7 +85,6 @@ js compatibility: 766/810 (94.57%), 23 files skipped
 
 - js/arrays/numbers-negative-comment-after-minus.js
 - js/arrays/numbers-with-holes.js
-- js/arrows/arrow-chain-with-trailing-comments.js
 - js/comments/return-statement.js
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js

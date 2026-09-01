@@ -5,7 +5,7 @@ d:nth-child(2n-1) { color: red; }
 e:nth-child(odd) { color: red; }
 f:nth-child(2n) { color: red; }
 /*
- * Deliberate divergence (see "Known divergences" in AGENTS.md): the leading `+` stays glued (`+3n`).
+ * Deliberate divergence (DIVERGENCES.md "nth-anb-leading-sign"): the leading `+` stays glued (`+3n`).
  * Prettier prints `+ 3n`, but the An+B grammar forbids whitespace between a leading sign and its term,
  * so Prettier's output no longer parses as a selector.
  */
@@ -22,3 +22,10 @@ p:nth-child(2N) { color: red; }
 q:nth-last-child(N+3) { color: red; }
 r:nth-child(0n+5) { color: red; }
 s:nth-child(2n+1   of   LI.foo) { color: red; }
+/* dash-digit forms: PARSING is case-insensitive (`<ndashdigit-dimension>` etc.);
+   printing follows postcss-selector-parser — digit-led terms lowercase (`2N-1`
+   -> `2n-1`), letter-led terms keep case (`N-1`, `-N-1`). A genuinely invalid
+   An+B goes through the raw-prelude path instead (unknown-qualified-rule.css) */
+t:nth-child(2N-1) { color: red; }
+u:nth-child(N-1) { color: red; }
+v:nth-child(-N-1) { color: red; }

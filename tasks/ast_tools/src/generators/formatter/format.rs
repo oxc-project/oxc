@@ -6,6 +6,9 @@
 //!   - they change the shape of the generated code, nothing else
 //! - Behavior the skeleton queries per node lives on `FormatWrite` (`write`, `suppressed_span`, `write_suppressed`)
 //!   - defaults cover the common case, overrides sit next to the node's `write` and need no regeneration
+//!   - EXCEPT: expression-shaped nodes bypass `write_suppressed` entirely
+//!     (their suppressed path goes to `write_suppressed_expression`, see below),
+//!     so an override on such a node would silently never be called
 //!
 //! Add a new list only for a variation the emitted shape must express;
 //! for anything a node merely answers, add a trait method with a total default.
@@ -93,7 +96,7 @@ impl Generator for FormatterFormatGenerator {
                 formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::FormatSuppressedNode, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
+                utils::{suppressed::{FormatSuppressedNode, write_suppressed_expression}, typecast::{format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
                 print::FormatWrite,
             };
 
@@ -196,31 +199,58 @@ fn generate_struct_implementation(
                 }
             });
 
-        let write_implementation = if suppressed_check.is_none() {
-            write_call
-        } else {
-            // When `fmt` doesn't print leading/trailing comments itself,
-            // the suppressed path still has to print them, or the suppression comment would be lost.
-            let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
-                quote! {
-                    format_leading_comments(self.suppressed_span()).fmt(f);
-                }
-            });
-            let suppressed_trailing_comments = do_not_print_comment.then(|| {
-                quote! {
-                    self.format_trailing_comments(f);
-                }
-            });
-            quote! {
-                if is_suppressed {
-                    #suppressed_leading_comments
-                    self.write_suppressed(f);
-                    #suppressed_trailing_comments
+        // Expression-shaped nodes (formatter parens + own comment printing) hand the whole
+        // suppressed sequence to one owner, so the cast-target decision is made once
+        // while every comment is still unprinted (see `write_suppressed_expression`).
+        // These nodes have no `suppressed_span`/`write_suppressed` overrides (those are statements).
+        let suppressed_expression_return =
+            (suppressed_check.is_some() && needs_parentheses && !do_not_print_leading_comment)
+                .then(|| {
+                    quote! {
+                        if is_suppressed {
+                            write_suppressed_expression(
+                                self.span(),
+                                self.leading_comments_start(),
+                                self.needs_parentheses(f),
+                                f,
+                            );
+                            self.format_trailing_comments(f);
+                            return;
+                        }
+                    }
+                });
+
+        let write_implementation =
+            if suppressed_check.is_none() || suppressed_expression_return.is_some() {
+                write_call
+            } else {
+                // When `fmt` doesn't print leading comments itself,
+                // the suppressed path delegates them to the node;
+                // see `FormatWrite::write_suppressed_leading_comments`.
+                let suppressed_write_call = if do_not_print_leading_comment {
+                    quote! {
+                        self.write_suppressed_leading_comments(f);
+                        self.write_suppressed(f);
+                    }
                 } else {
-                    #write_call
+                    quote! {
+                        self.write_suppressed(f);
+                    }
+                };
+                let suppressed_trailing_comments = do_not_print_comment.then(|| {
+                    quote! {
+                        self.format_trailing_comments(f);
+                    }
+                });
+                quote! {
+                    if is_suppressed {
+                        #suppressed_write_call
+                        #suppressed_trailing_comments
+                    } else {
+                        #write_call
+                    }
                 }
-            }
-        };
+            };
 
         let type_cast_comment_formatting = needs_parentheses.then(|| {
             let is_object_or_array_argument =
@@ -232,7 +262,10 @@ fn generate_struct_implementation(
                     quote! { false }
                 };
 
-            let suppressed_check_for_typecast = suppressed_check.is_some().then(|| {
+            // With the suppressed early return above, the flag is trivially false here
+            let suppressed_check_for_typecast = (suppressed_check.is_some()
+                && suppressed_expression_return.is_none())
+            .then(|| {
                 quote! {
                     !is_suppressed &&
                 }
@@ -254,6 +287,7 @@ fn generate_struct_implementation(
         } else {
             quote! {
                 #suppressed_check
+                #suppressed_expression_return
                 #type_cast_comment_formatting
                 #leading_comments
                 #needs_parentheses_before

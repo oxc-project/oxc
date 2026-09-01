@@ -848,15 +848,11 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             }
             AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
                 Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
+                    let mut target = &labeled_statement.body;
+                    while let Statement::LabeledStatement(nested) = target {
+                        target = &nested.body;
+                    }
+                    if target.is_iteration_statement() {
                         break;
                     }
                     return ctx.error(diagnostics::invalid_label_non_iteration(

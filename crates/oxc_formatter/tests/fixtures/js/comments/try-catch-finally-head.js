@@ -13,6 +13,8 @@ try
 {} catch {}
 
 try {} catch (e) /* c */ {}
+try {} catch (/* before */ err /* after */) {}
+try {} catch (/* before */ err /* after */) /* c */ {}
 try {} catch (e) // c
 {}
 try {} catch (e)

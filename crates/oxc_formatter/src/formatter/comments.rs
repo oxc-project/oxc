@@ -304,26 +304,28 @@ impl<'a> Comments<'a> {
             .then(|| &comments[..count])
     }
 
-    /// Whether the source has a `;` between the given positions,
-    /// ignoring `;` bytes inside comments (e.g. `foo /* ; */`).
-    /// `false` when the source relies on ASI.
+    /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).
+    /// Why a `)` counts as a statement terminator: see `trailing_comments_to_move_behind_semicolon`.
     ///
     /// Lexical byte scan: the range must contain only trivia and punctuation.
     /// (e.g. a content end up to the statement end)
-    /// A range containing a string literal would false-match a `;` inside it.
-    pub(crate) fn has_semicolon_in_range(&self, start: u32, end: u32) -> bool {
+    /// A range containing a string literal would false-match a byte inside it.
+    pub(crate) fn has_semicolon_or_closing_paren_in_range(&self, start: u32, end: u32) -> bool {
+        let has_terminator = |from: u32, to: u32| {
+            self.source_text.bytes_range(from, to).iter().any(|&b| matches!(b, b';' | b')'))
+        };
         let mut pos = start;
         for comment in self.comments_in_range(start, end) {
             // A comment ending exactly at `start` lies before the range
             if comment.span.start < pos {
                 continue;
             }
-            if self.source_text.bytes_contain(pos, comment.span.start, b';') {
+            if has_terminator(pos, comment.span.start) {
                 return true;
             }
             pos = comment.span.end;
         }
-        self.source_text.bytes_contain(pos, end, b';')
+        has_terminator(pos, end)
     }
 
     /// End of the content including its source parentheses:

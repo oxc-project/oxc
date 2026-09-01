@@ -98,6 +98,11 @@ Result is a **4x slow-down**.
 So `oxc-codegen` has to find a different solution. Every time it pushes a string to output, it also records
 in `state.last` what the output now ends with. `state.output` never needs to be read from.
 
+The rope is flattened once, at the end. Whatever the caller does with the returned code will flatten it anyway
+(and `generateSourceMap` scans it), so `printSync` pre-flattens with the fastest method available.
+A large output is flattened in chunks along the way rather than all at once at the end -
+see `print/flatten.ts` for the two reasons.
+
 ### The answer: A category, not a character
 
 It turns out the functions which decide whether spaces need to be inserted between keywords / identifiers

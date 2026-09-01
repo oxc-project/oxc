@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A suppressed `for` head declaration stays verbatim: it has no terminator of
+// its own to re-add; Prettier appends one anyway and its output no longer parses.
+// The last line deviates from Prettier (DIVERGENCES.md#suppressed-for-head-declaration).
+
+for (/* prettier-ignore */ var i   =   1;;) [].sort()
+
+==================== Output ====================
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+// A suppressed `for` head declaration stays verbatim: it has no terminator of
+// its own to re-add; Prettier appends one anyway and its output no longer parses.
+// The last line deviates from Prettier (DIVERGENCES.md#suppressed-for-head-declaration).
+
+for (/* prettier-ignore */ var i   =   1; ;) [].sort();
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+// A suppressed `for` head declaration stays verbatim: it has no terminator of
+// its own to re-add; Prettier appends one anyway and its output no longer parses.
+// The last line deviates from Prettier (DIVERGENCES.md#suppressed-for-head-declaration).
+
+for (/* prettier-ignore */ var i   =   1; ;) [].sort();
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+// A suppressed `for` head declaration stays verbatim: it has no terminator of
+// its own to re-add; Prettier appends one anyway and its output no longer parses.
+// The last line deviates from Prettier (DIVERGENCES.md#suppressed-for-head-declaration).
+
+for (/* prettier-ignore */ var i   =   1; ;) [].sort()
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+// A suppressed `for` head declaration stays verbatim: it has no terminator of
+// its own to re-add; Prettier appends one anyway and its output no longer parses.
+// The last line deviates from Prettier (DIVERGENCES.md#suppressed-for-head-declaration).
+
+for (/* prettier-ignore */ var i   =   1; ;) [].sort()
+
+===================== End =====================

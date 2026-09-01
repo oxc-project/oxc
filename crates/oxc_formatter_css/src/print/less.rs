@@ -4,10 +4,9 @@ use oxc_css_parser::ast::{
     ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset, LessExtend,
     LessExtendList, LessExtendRule, LessMixinArgument, LessMixinCall, LessMixinDefinition,
     LessMixinName, LessNamespaceValue, LessNamespaceValueCallee, LessVariableDeclaration,
-    SimpleBlock,
 };
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
+    Buffer,
     builders::{
         group, hard_line_break, soft_line_break_or_space, soft_line_indent_or_space, space, text,
     },
@@ -15,11 +14,11 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    comments::{last_line_has_inline_comment, write_single_comment},
+    comments::write_single_comment,
     format::to_span,
     print::{
         CssFormatter, format_with, selector,
-        statement::write_block,
+        statement::{write_block, write_verbatim_prelude_rule},
         value::{self, ValueContext},
     },
 };
@@ -89,36 +88,6 @@ fn write_mixin_name<'a>(name: &LessMixinName<'a>, f: &mut CssFormatter<'_, 'a>) 
     write!(f, text(source.text_for(&span)));
 }
 
-/// Raw source text with Prettier's string-level normalizations applied
-/// (`adjustNumbers(adjustStrings(...))`).
-/// The selector-side print path for everything postcss-selector-parser receives:
-/// spacing and newlines stay verbatim and nothing ever breaks on line width.
-fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    let adjusted = value::adjust_numbers_and_strings(raw, f.options());
-    write!(f, text(arena_cow_str(&adjusted, f)));
-}
-
-/// Prelude printed verbatim from `start` to the block, then the block.
-/// A trailing `//` comment pushes `{` to the next line
-/// (selector-unknown's `lastLineHasInlineComment`).
-fn write_verbatim_prelude_rule<'a>(
-    start: u32,
-    block: &SimpleBlock<'a>,
-    f: &mut CssFormatter<'_, 'a>,
-) {
-    let source = f.context().source_text();
-    let block_start = to_span(&block.span).start;
-    let raw = source.slice_range(start, block_start).trim_end();
-    let _ = f.context().comments().take_before(block_start);
-    write_adjusted_verbatim(raw, f);
-    if last_line_has_inline_comment(raw) {
-        write!(f, hard_line_break());
-    } else {
-        write!(f, space());
-    }
-    write_block(block, f);
-}
-
 /// `.mixin(@params...) when (guard) { ... }`:
 /// Prettier hands the whole prelude to postcss-selector-parser (`css-rule` selector)
 /// and prints it raw apart from number/string adjustments,
@@ -130,7 +99,7 @@ pub(super) fn write_less_mixin_definition<'a>(
     def: &LessMixinDefinition<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    write_verbatim_prelude_rule(to_span(def.name.span()).start, &def.block, f);
+    write_verbatim_prelude_rule(to_span(def.name.span()).start, &def.block, true, f);
 }
 
 /// `selector when (guard) { ... }` — a `css-rule` in Prettier: raw selector
@@ -142,7 +111,7 @@ pub(super) fn write_less_conditional_qualified_rule<'a>(
     rule: &LessConditionalQualifiedRule<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    write_verbatim_prelude_rule(to_span(&rule.span).start, &rule.block, f);
+    write_verbatim_prelude_rule(to_span(&rule.span).start, &rule.block, true, f);
 }
 
 /// Statement-position `.mixin(args);` — a `mixin` at-rule in Prettier, whose
@@ -161,7 +130,7 @@ pub(super) fn write_less_mixin_call_statement<'a>(
     let end = call.important.as_ref().map_or(span.end, |imp| to_span(&imp.span).start);
     let raw = source.slice_range(span.start, end).trim_end();
     let _ = f.context().comments().take_before(end);
-    write_adjusted_verbatim(raw, f);
+    value::write_adjusted_verbatim(raw, f);
     if call.important.is_some() {
         write!(f, [space(), "!important"]);
     }

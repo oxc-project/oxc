@@ -995,9 +995,7 @@ fn compute_memoized_identifiers(
         memoized: &mut FxHashSet<DeclarationId>,
     ) -> Result<bool, OxcDiagnostic> {
         let Some(&(level, _, _, _, seen)) = identifier_nodes.get(&id) else {
-            // Upstream raises an "Expected a node for all identifiers" invariant
-            // here; this port has always been lenient instead.
-            return Ok(false);
+            return Err(diagnostics::invariant_expected_node_all_identifiers(id.index()));
         };
         if seen {
             return Ok(identifier_nodes.get(&id).unwrap().1);

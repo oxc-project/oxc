@@ -140,7 +140,7 @@ eslint/no-unused-expressions                               |  24802
 eslint/no-unused-labels                                    |      7
 eslint/no-unused-private-class-members                     |      4
 eslint/no-unused-vars                                      |      7
-eslint/no-use-before-define                                | 104670
+eslint/no-use-before-define                                | 209565
 eslint/no-useless-assignment                               |      7
 eslint/no-useless-backreference                            |  64236
 eslint/no-useless-call                                     |  62606

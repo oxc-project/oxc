@@ -8,7 +8,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 // Both sources below must converge to the same commaed output;
 // conformance's scss/parens/2.scss covers only the comma-less source with `(` on its own line.
 //
-// DIVERGENCE (see AGENTS.md): the `b:` bodies print at the normal nested-map indent;
+// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the `b:` bodies print at the normal nested-map indent;
 // Prettier double-indents them (`+6` body / `+4` `)`, its dedent-skip doc-shape artifact).
 $with-comment_n_comma: (
   a: (
@@ -55,7 +55,7 @@ $without-both: (
 // Both sources below must converge to the same commaed output;
 // conformance's scss/parens/2.scss covers only the comma-less source with `(` on its own line.
 //
-// DIVERGENCE (see AGENTS.md): the `b:` bodies print at the normal nested-map indent;
+// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the `b:` bodies print at the normal nested-map indent;
 // Prettier double-indents them (`+6` body / `+4` `)`, its dedent-skip doc-shape artifact).
 $with-comment_n_comma: (
   a: (
@@ -101,7 +101,7 @@ $without-both: (
 // Both sources below must converge to the same commaed output;
 // conformance's scss/parens/2.scss covers only the comma-less source with `(` on its own line.
 //
-// DIVERGENCE (see AGENTS.md): the `b:` bodies print at the normal nested-map indent;
+// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the `b:` bodies print at the normal nested-map indent;
 // Prettier double-indents them (`+6` body / `+4` `)`, its dedent-skip doc-shape artifact).
 $with-comment_n_comma: (
   a: (

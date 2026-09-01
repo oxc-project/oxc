@@ -1,7 +1,7 @@
 # externals/webawesome/input/input.ts
 
-> Union broken out of its `:`/`as` position: Prettier retries the whole union flat on the indented next line, we expand to leading-`|` members right away. Core oxc_formatter (plain `.ts` too), not embed-specific
-> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
+> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+> embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent
 
 ## Option 1
 

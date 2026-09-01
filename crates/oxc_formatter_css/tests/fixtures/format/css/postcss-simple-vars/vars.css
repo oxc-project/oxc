@@ -1,0 +1,27 @@
+/* postcss-simple-vars: $var declarations and references (auto-enabled for Css) */
+$primary: red;
+$breakpoint-md: 62em;
+$padding: 10px 20px;
+$important: red !important;
+$brand: sandstone.10;
+
+.demo {
+  color: $primary;
+  padding: $padding;
+  border: 1px solid $border-color;
+}
+
+/* references inside media preludes: nested and top-level */
+.nested {
+  @media (max-width: $breakpoint-md) {
+    font-size: 12px;
+  }
+}
+@media (min-width: $breakpoint-sm) and (max-width: $breakpoint-lg) {
+  .a {
+    color: red;
+  }
+}
+
+/* multi-value lists in $var declarations break one per line */
+$fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;

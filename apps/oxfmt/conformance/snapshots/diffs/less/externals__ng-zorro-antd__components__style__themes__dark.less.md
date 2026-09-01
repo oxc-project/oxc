@@ -1,6 +1,6 @@
 # externals/ng-zorro-antd/components/style/themes/dark.less
 
-> Allowed: trailing `// comment` rides a line_suffix, never counts toward print width; Prettier only treats CSS-family `//` inline and breaks the value. See crates/oxc_formatter_css/AGENTS.md
+> trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
 
 ## Option 1
 

@@ -1,0 +1,49 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/*
+ * Break-point in an over-wide math-y value run: our core fill (biome semantics)
+ * breaks at the last fitting SEPARATOR (before `/ 2`).
+ * DIVERGES from Prettier (DIVERGENCES.md "fill-break-position"),
+ * whose fill fit-check breaks INSIDE the wide chunk (after `+`).
+ */
+.SearchBox {
+  .inner {
+    margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav) / 2;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/*
+ * Break-point in an over-wide math-y value run: our core fill (biome semantics)
+ * breaks at the last fitting SEPARATOR (before `/ 2`).
+ * DIVERGES from Prettier (DIVERGENCES.md "fill-break-position"),
+ * whose fill fit-check breaks INSIDE the wide chunk (after `+`).
+ */
+.SearchBox {
+  .inner {
+    margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav)
+      / 2;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/*
+ * Break-point in an over-wide math-y value run: our core fill (biome semantics)
+ * breaks at the last fitting SEPARATOR (before `/ 2`).
+ * DIVERGES from Prettier (DIVERGENCES.md "fill-break-position"),
+ * whose fill fit-check breaks INSIDE the wide chunk (after `+`).
+ */
+.SearchBox {
+  .inner {
+    margin-left: sg-layout-width(logo-shopify) / 2 * -1 + sg-offset-x(page-nav) / 2;
+  }
+}
+
+===================== End =====================

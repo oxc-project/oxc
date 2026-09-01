@@ -2,7 +2,7 @@
 // (`= // c` + mandatory break). Prettier flushes it past a FITTING right-hand
 // side (`const v1 = 1; // c`, crossing the value) while keeping the order when
 // the right-hand side breaks — one rule for both shapes
-// (Known divergence, see AGENTS.md).
+// (Known divergence, see DIVERGENCES.md "eol-comment-after-assign-colon").
 
 const v1 = // c
   1;

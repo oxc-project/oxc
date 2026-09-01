@@ -320,7 +320,7 @@ pub(super) fn write_sass_map<'a>(
                 });
                 // Prettier's dedent applies only when the pair doc is a plain `group(indent(fill))`;
                 // a paren/map KEY changes that shape, so it keeps the pair's indent on the value.
-                // NOTE: two more dedent skips are deliberately NOT matched here (see "Known divergences" in AGENTS.md):
+                // NOTE: two more dedent skips are deliberately NOT matched here (both known divergences):
                 // - LEADING COMMENT (also changes the doc shape; trivia must not change layout)
                 // - `@if`/`@each`/... ancestor (an explicit prettier#16607 crash-guard, not doc shape: SAME source, different indent per context)
                 if key_is_block {
@@ -906,7 +906,7 @@ fn write_module_path<'a>(path: &InterpolableStr<'a>, f: &mut CssFormatter<'_, 'a
 /// - and a blank line after an item's comma is preserved
 ///
 /// EXCEPT an own-line trailing comment, which keeps its own line
-/// (consistent with the map printer; Prettier pulls it up — see "Known divergences").
+/// (consistent with the map printer; Prettier pulls it up: a known divergence).
 fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     // Comments between the module path and `with` stay glued to the head

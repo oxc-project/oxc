@@ -19,10 +19,10 @@ catalog:
   "@types/node": 24.1.0
   cross-env: ^10.1.0
   degit: 3.8.0
-  eslint: 10.8.1
-  json-schema-to-typescript: ^15.0.4
+  eslint: 10.9.1
+  json-schema-to-typescript: ^16.0.0
   publint: 0.3.24
-  rolldown: 1.2.5
+  rolldown: 1.2.6
   tsdown: 0.22.14
   vite-plus: 0.3.0
   vitest: 4.1.11

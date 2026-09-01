@@ -1,0 +1,24 @@
+// A comma can never be an operand (lessc: `func(20px, +20px)` is two args,
+// `+20px` a signed value) — previously this ASTed as a comma-left
+// `LessBinaryOperation` and leaked a space before the comma.
+// lessc's glue rules are symmetric for `+` and `-`: a sign folded into the
+// number token is a binary operator only when glued to the left operand
+// (`10px+20px` is math, `10px +20px` is a two-value list).
+.a {
+  p1: func(20px, +20px);
+  p2: func(20px,+20px);
+  p3: func(20px,-20px);
+  p4: 10px +20px;
+  p5: (10px+20px);
+  // p6 DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"):
+  // ours keeps the source-spaced `+ 20px`, Prettier glues it to `+20px`
+  p6: func(+20px, + 20px);
+  // p7 DIVERGES from Prettier (DIVERGENCES.md "value-glued-minus"): a sign
+  // glued to a call is a binary op (lessc); ours spaces both, Prettier keeps
+  // `-` glued (sign-lexing artifact) but agrees on p8's spaced `+`
+  p7: fade(@c, 4%)-1;
+  p8: fade(@c, 4%)+1;
+  // NON-call left operands keep the glue (Prettier lexes them as one word)
+  p9: @a+1;
+  p10: (10px)+1;
+}

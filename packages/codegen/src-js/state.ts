@@ -61,6 +61,12 @@ export class State {
   // A string which is appended to as the printing process proceeds.
   declare output: string;
 
+  // Flattened chunks of `output`, in order, once it has grown past `OUTPUT_CHUNK_LENGTH` (see `print/flatten.ts`),
+  // or `null` while it has not - a small print never allocates the array. Sourcemap builds also keep the total
+  // length spilled so far - the true output offset the recorders need is `spilledOutputLength + output.length`.
+  declare outputChunks: string[] | null;
+  declare spilledOutputLength: number;
+
   // Current indentation level.
   declare indentLevel: number;
 
@@ -111,6 +117,8 @@ export class State {
 
   constructor(options: Options) {
     this.output = "";
+    this.outputChunks = null;
+    this.spilledOutputLength = 0;
 
     let { startingIndentLevel: indentLevel } = options;
     if (indentLevel === undefined) {

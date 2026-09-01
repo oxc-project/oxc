@@ -1,6 +1,6 @@
 # externals/prettier/js/multiparser-graphql/graphql-tag.js
 
-> Prettier moves `query Test { # c` own-line comment to next line, we keep
+> `{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter
 
 ## Option 1
 

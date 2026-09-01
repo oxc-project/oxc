@@ -162,8 +162,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
             return;
         };
 
-        // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
-        // the last directive, for example:
+        // if next_sibling's first leading_trivia has more than one new_line,
+        // we should add an extra empty line at the end of the last directive, for example:
         //```js
         // "use strict"; <- first leading new_line
         //  			 <- second leading new_line
@@ -175,6 +175,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
 
         // If the last directive has a trailing comment, `lines_after` stops at the first
         // non-whitespace character (`/`) and returns 0 before counting any newlines.
+        // Only the LAST directive is checked here
+        // (between-directive blanks go through `get_lines_before`, which is not subject to this hazard);
+        // the per-comment-kind pins live in `tests/fixtures/js/directives/issue-21152*.js`, one file each.
         let check_pos = f
             .context()
             .comments()

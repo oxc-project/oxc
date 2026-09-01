@@ -1,6 +1,6 @@
 # externals/prettier/js/multiparser-comments/comment-inside.js
 
-> Broken `${}` holding comments: Prettier prints the expression at root indent (drops the embed indent), we indent to the placeholder
+> broken `${}` holding comments indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
 
 ## Option 1
 

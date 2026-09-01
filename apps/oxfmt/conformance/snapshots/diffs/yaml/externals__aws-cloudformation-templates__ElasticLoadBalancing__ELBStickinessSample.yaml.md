@@ -1,6 +1,6 @@
 # externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml
 
-> We match Prettier main (prettier/prettier#19764): block scalar trailing whitespace is part of the value; 3.9.6 drops it. See crates/oxc_formatter_yaml/AGENTS.md
+> block scalar trailing whitespace is part of the value. See crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 
 ## Option 1
 

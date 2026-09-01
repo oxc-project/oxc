@@ -1,6 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter_yaml`
 
 Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the YAML-specific rules and translations.
+Known divergences live in DIVERGENCES.md.
 
 ## Overview
 
@@ -40,42 +41,6 @@ Positional cursor (`Comments` in `src/comments.rs`), same approach as graphql/js
 
 Placement is decided at print sites; the rules live as doc comments on the placement helpers, all in `src/comments.rs`.
 Stream-tail end comments (`write_end_comments`) are the one document-layer exception, in `src/print/document.rs`.
-
-## Known divergences
-
-Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Current divergences:
-
-- anchor/tag order (prettier#19524): source order is preserved, never reordered
-  (fixed upstream by prettier#19599, unreleased; drop this entry when the pin catches up)
-- block scalar trailing whitespace is part of the VALUE and preserved
-  - the last content line's spaces/tabs, and space-only lines more-indented than the block (content per YAML)
-  - The pinned Prettier drops both, corrupting the value; fixed upstream by prettier#19764 (unreleased), so `block-folded-strip.yml` stays a conformance failure until the pin catches up
-  - When converging, keep the blank line after such a scalar
-    - post-#19764 Prettier eats it; the unified blank-line rule (below) wins.
-- EOF blank lines: the file always ends with exactly one newline, like every other formatter crate (`|+` keep-chomped verbatim tails excepted)
-  - Prettier YAML alone preserves EOF blank lines verbatim
-- keep-chomped tail at a space-only EOF line (no final newline):
-  - its at-or-below-indent spaces hold no line break, so they add nothing to the kept tail;
-  - Prettier counts it and prints one newline too many, changing the value `"\n"` → `"\n\n"` (prettier#19256 is the nearest issue)
-- `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
-- anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
-- blank lines (prettier#15528): one unified rule:
-  a blank line right after a node is preserved (normalized to one) if the source had one, never invented, identical for every node kind and context.
-  Prettier's matrix (block collections only between documents; mappings only before end comments; unconditional insertion after block scalars) is not ported.
-  This also keeps `proseWrap: never` idempotent where Prettier is not (prettier#10776),
-  and covers the blank DOUBLED in front of stream-end comments when the last item carries a trailing comment
-  (the prettier#9130 shape, resurfaced: one source blank comes out as two)
-- folded scalar more-indented lines (prettier#16126): never re-flowed under `proseWrap: always`, their line breaks are literal per YAML folding,
-  so Prettier's wrapping at the print width changes the parsed value and breaks idempotency
-- "broken but not broken" flow collections: Prettier sometimes emits a newline inside flow brackets while keeping them flat (no trailing comma, `]`/`}` on the content line).
-  multiline pairs (spec-example-7-20 / 9-4) and key trailing comments.
-  Here a flow collection either fits on one line or breaks normally.
-- comment position (spec-example-6-1): a comment stays at its syntactic position; Prettier hoists a comment after `[` onto the `key:` line
-- over-indented comments (`key: value` followed by a deeper-indented comment): the value's layout never changes for a comment;
-  Prettier breaks the pair onto two lines (`key:\n  value`) — comment indentation alone must not rewrite the preceding node
-- trailing comment width (`key: | # ...`): a same-line trailing comment never counts toward the `fits` measurement
-  the same treatment Prettier itself gives JS/JSON line comments and yaml flow collections, but not for block scalar header
-  The KEY does count: a long key overflowing on `key: |` alone breaks the pair exactly like Prettier
 
 ## Verification
 

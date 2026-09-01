@@ -1,4 +1,6 @@
-//! Fixture tests for cases the Prettier conformance suite does NOT cover.
+//! Fixture tests for cases the Prettier conformance suite does NOT cover,
+//! plus minimal re-pins of known divergences the suite DOES hit
+//! (a divergence needs its own pin; the big conformance file is only a regression net).
 //!
 //! Expected outputs were verified against `prettier` by hand;
 //! when adding a fixture, do the same (`npx prettier@<oxfmt-bundle-version> --parser <variant>`).
@@ -127,6 +129,7 @@ fn parse_error_is_err() {
     let allocator = Allocator::default();
     let css = CssFormatOptions::default();
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
+    let less = CssFormatOptions { variant: CssVariant::Less, ..css };
     for (source, options) in [
         // Top-level declaration: valid only as an embedded css-in-js fragment
         // (`format_to_ir`); standalone files must reject it like Dart Sass does.
@@ -148,9 +151,12 @@ fn parse_error_is_err() {
         // (`format_to_ir` tolerates them via the oxc-css-parser fork option;
         // see `fixtures/embedded/`).
         (".a-`PLACEHOLDER-0` {\n}", scss),
-        // `2N-1` with a glued minus is invalid An+B for oxc-css-parser
-        // (postcss-selector-parser accepts and lowercases it).
-        ("a:nth-child(2N-1) { color: red; }", css),
+        // The raw-prelude fallback (`unknown-qualified-rule.css`) fires only
+        // when a declaration's value hits a top-level `{` (name + `:` parsed);
+        // a selector error with no such head stays a hard error.
+        ("a, { color: red; }", css),
+        // Pin for crates/oxc_formatter_css/DIVERGENCES.md#less-value-interpolation-rejected
+        (".a { width: @{min-width}; }", less),
     ] {
         assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
     }

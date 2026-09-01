@@ -131,6 +131,14 @@ pub(super) fn write_attribute_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a
     write!(f, text(arena_cow_str(&printed, f)).without_expand_parent());
 }
 
+/// Emit a raw source slice with [`adjust_numbers_and_strings`] applied
+/// (Prettier's raw selector-text print path:
+/// spacing and newlines stay verbatim and nothing ever breaks on line width).
+pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    let adjusted = adjust_numbers_and_strings(raw, f.options());
+    write!(f, text(arena_cow_str(&adjusted, f)));
+}
+
 /// Prettier's `adjustNumbers(adjustStrings(...))` over a raw source slice:
 /// strings re-quote via `printString`,
 /// standalone numbers (not glued to a word part) get `printCssNumber` + lowercased/canonical unit;
@@ -1808,10 +1816,17 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
 /// continuation lines share one uniform indent.
 /// Nested unparenthesized operations flatten into the SAME fill;
 /// a parenthesized sub-expression is its own nested group (it can break inside its parens).
-/// Operator spacing follows the source: `+`/`-` always have whitespace here
-/// (`oxc-css-parser` only treats a whitespace-followed `+`/`-` as a binary operator,
-/// a signed value like `-@b` in a `margin` shorthand stays a separate `LessNegativeValue`, never an operand here),
-/// while `*`/`/` may be glued (`@base*2`).
+///
+/// Operator spacing follows the source, with one exception:
+/// a `+`/`-` glued to a preceding CALL prints spaced
+/// (`fade(@c, 4%)-1` → `fade(@c, 4%) - 1`, a folded sign the parser split off; Prettier spaces the `+` there too).
+/// Every other glue is kept, matching Prettier's Less word lexing:
+/// `10px+20px`, `@a+1`, `(@a)+1`, `@base*2` all stay glued
+/// (unlike SCSS, where `write_sass_binary` also spaces word-like neighbors and `*`).
+/// Signed values never reach here: `-@b` in a `margin` shorthand stays a separate `LessNegativeValue`, not an operand.
+/// KNOWN GAP (pre-existing): Prettier's division word-neighbor rule
+/// (`@w/2` → `@w / 2`, `2/@w` → `2 / @w`, call left spaced; `10px/8px` glued)
+/// is not ported; ours keeps the source glue for all of them.
 fn write_less_binary_operation<'a>(
     op: &LessBinaryOperation<'a>,
     ctx: ValueContext<'a>,
@@ -1840,12 +1855,19 @@ fn write_less_binary_operation<'a>(
         let right_start = to_span(op.right.span()).start;
 
         push_operand(&op.left, chunks, current);
-        if left_end != op_span.start {
+        // The call-left exception (see the doc comment);
+        // the left neighbor in the flattened stream is the piece `push_operand` just pushed last.
+        let after_call = matches!(
+            op.op.kind,
+            LessOperationOperatorKind::Plus | LessOperationOperatorKind::Minus
+        ) && matches!(current.last(), Some(Piece::Operand(v)) if is_func_like(v));
+        if left_end != op_span.start || after_call {
             current.push(Piece::Space);
         }
         current.push(Piece::Op(op_str));
-        // Break opportunity only when the source has a gap after the operator
-        if op_span.end != right_start {
+        // Break opportunity when the source has a gap after the operator
+        // (or the call-left exception applies)
+        if op_span.end != right_start || after_call {
             chunks.push(std::mem::take(current));
         }
         push_operand(&op.right, chunks, current);

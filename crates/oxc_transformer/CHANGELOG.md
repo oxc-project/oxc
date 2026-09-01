@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- 243b685 transformer/object-rest: Lower multiple declarators correctly (#26147) (camc314)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

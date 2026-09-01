@@ -248,7 +248,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             let only_type = union_type_at_top.types.len() == 1;
             let has_own_line_comment = comment_info.has_own_line_comment
                 || (matches!(union_type_at_top.parent(), AstNodes::TSTypeAliasDeclaration(_))
-                    && comment_info.has_trailing_own_line_non_jsdoc_block_comment);
+                    && comment_info.has_line_ending_trailing_non_jsdoc_block_comment);
             // An own-line leading comment breaks BEFORE itself and stays above the first member
             // ```ts
             // type A =
@@ -284,8 +284,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 struct LeadingCommentsInfo {
     has_own_line_comment: bool,
     has_end_of_line_comment: bool,
-    has_trailing_own_line_non_jsdoc_block_comment: bool,
-    has_trailing_own_line_jsdoc_comment: bool,
+    has_line_ending_trailing_non_jsdoc_block_comment: bool,
+    has_line_ending_trailing_jsdoc_comment: bool,
 }
 
 impl LeadingCommentsInfo {
@@ -294,17 +294,20 @@ impl LeadingCommentsInfo {
         for comment in comments {
             info.has_own_line_comment |= comment.preceded_by_newline();
             info.has_end_of_line_comment |= comment.followed_by_newline();
-            info.has_trailing_own_line_non_jsdoc_block_comment |= comment.is_block()
+            info.has_line_ending_trailing_non_jsdoc_block_comment |= comment.is_block()
                 && comment.is_trailing()
                 && comment.followed_by_newline()
                 && !matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal);
-            info.has_trailing_own_line_jsdoc_comment |= is_trailing_own_line_jsdoc_comment(comment);
+            info.has_line_ending_trailing_jsdoc_comment |=
+                is_line_ending_trailing_jsdoc_comment(comment);
         }
         info
     }
 }
 
-pub fn is_trailing_own_line_jsdoc_comment(comment: &Comment) -> bool {
+/// A trailing (same-line start) jsdoc comment that ends its source line;
+/// NOT own-line (that vocabulary means preceded by a newline, see `formatter/trivia.rs`)
+pub fn is_line_ending_trailing_jsdoc_comment(comment: &Comment) -> bool {
     matches!(comment.content, CommentContent::Jsdoc | CommentContent::JsdocLegal)
         && comment.is_trailing()
         && comment.followed_by_newline()
@@ -334,10 +337,10 @@ pub fn type_alias_left_end(decl: &TSTypeAliasDeclaration) -> u32 {
 ///   (`type A = // c` and `type A = /* c */ // c`)
 pub fn alias_union_breaks_after_operator(
     decl: &TSTypeAliasDeclaration,
-    has_trailing_own_line_jsdoc_comment: bool,
+    has_line_ending_trailing_jsdoc_comment: bool,
     comments: &Comments,
 ) -> bool {
-    has_trailing_own_line_jsdoc_comment
+    has_line_ending_trailing_jsdoc_comment
         || comments.printed_comments().last().is_some_and(|comment| {
             comment.span.start > type_alias_left_end(decl) && comment.followed_by_newline()
         })
@@ -350,7 +353,7 @@ fn should_indent_alias_union<'a>(
 ) -> bool {
     !alias_union_breaks_after_operator(
         alias,
-        comment_info.has_trailing_own_line_jsdoc_comment,
+        comment_info.has_line_ending_trailing_jsdoc_comment,
         f.comments(),
     )
 }
