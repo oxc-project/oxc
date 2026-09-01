@@ -75,9 +75,7 @@ impl<'de> Deserialize<'de> for OxlintLanguageOptions {
                     ": use oxlint's top-level `globals` (or `env`) setting instead".to_string()
                 }
                 "env" => ": use oxlint's top-level `env` setting instead".to_string(),
-                "ecmaVersion" => {
-                    ": oxlint infers the ECMAScript version automatically".to_string()
-                }
+                "ecmaVersion" => ": oxlint infers the ECMAScript version automatically".to_string(),
                 "sourceType" => {
                     ": oxlint infers the module kind from the file extension and config".to_string()
                 }

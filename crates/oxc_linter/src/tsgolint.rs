@@ -89,6 +89,16 @@ impl TsGoLintState {
         })
     }
 
+    /// Returns `true` if `path` should be handed to `tsgolint`.
+    ///
+    /// Files whose extension maps to a [`SourceType`] always are. So are files matched by a
+    /// config override with `languageOptions.parser`: their extension is unknown to us, but
+    /// `typescript-go` can still resolve them through the tsconfig's `contentMappers`, which
+    /// is why the original path is what gets sent rather than some rewritten one.
+    fn is_type_aware_lintable(&self, path: &Path) -> bool {
+        SourceType::from_path(path).is_ok() || self.config_store.has_external_parser(path)
+    }
+
     /// Set to `true` to skip file system reads.
     /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
     ///
@@ -153,9 +163,8 @@ impl TsGoLintState {
         let all_paths = {
             let mut paths_buff = vec![];
             for path in paths {
-                if SourceType::from_path(Path::new(path)).is_ok() {
-                    let path_buf = PathBuf::from(path);
-                    paths_buff.push(path_buf.clone());
+                if self.is_type_aware_lintable(Path::new(path)) {
+                    paths_buff.push(PathBuf::from(path));
                 }
             }
             paths_buff
@@ -563,7 +572,7 @@ impl TsGoLintState {
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
         for path in paths {
-            if SourceType::from_path(Path::new(path)).is_ok() {
+            if self.is_type_aware_lintable(Path::new(path)) {
                 let path_buf = PathBuf::from(path);
                 let file_path = path.to_string_lossy().to_string();
 
@@ -1778,5 +1787,124 @@ mod test {
 
         // Identical rules should be deduplicated
         assert_eq!(rules.len(), 1, "BTreeSet should deduplicate identical rules");
+    }
+
+    /// Files matched by a config override with `languageOptions.parser` reach `tsgolint`
+    /// even though their extension is unknown to `SourceType::from_path`, and they reach it
+    /// under their original path so `typescript-go` can map them via `contentMappers`.
+    #[test]
+    fn test_json_input_includes_external_parser_files() {
+        use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            AllowWarnDeny, ExternalPluginStore, RuleEnum,
+            config::{
+                Config, ConfigStore, GlobSet, LintConfig, OxlintCategories, ResolvedExternalParser,
+                ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides,
+            },
+            external_plugin_store::ExternalParserId,
+            rules::TypescriptNoFloatingPromises,
+            tsgolint::TsGoLintState,
+        };
+
+        let base_rules = vec![(
+            RuleEnum::TypescriptNoFloatingPromises(TypescriptNoFloatingPromises::default()),
+            AllowWarnDeny::Deny,
+        )];
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["**/*.{gjs,gts}"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            globals: None,
+            plugins: None,
+            external_parser: Some(ResolvedExternalParser {
+                parser_id: ExternalParserId::from_usize(0),
+                parser_options_json: None,
+            }),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+        let config_store = ConfigStore::new(
+            Config::new(
+                base_rules,
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let state = TsGoLintState::new(&PathBuf::from("/project"), config_store, FixKind::empty());
+
+        let paths: Vec<Arc<OsStr>> =
+            ["/project/app/component.gts", "/project/app/index.ts", "/project/README.md"]
+                .iter()
+                .map(|p| Arc::from(OsStr::new(*p)))
+                .collect();
+
+        let mut resolved_configs = FxHashMap::default();
+        let payload = state.json_input(&paths, None, &mut resolved_configs);
+
+        let mut sent: Vec<&str> = payload
+            .configs
+            .iter()
+            .flat_map(|config| config.file_paths.iter().map(String::as_str))
+            .collect();
+        sent.sort_unstable();
+
+        // The `.gts` is sent under its original path; the `.md` is still excluded.
+        assert_eq!(sent, vec!["/project/app/component.gts", "/project/app/index.ts"]);
+    }
+
+    /// Without a `languageOptions.parser` override, unknown extensions stay excluded.
+    #[test]
+    fn test_json_input_excludes_unknown_extensions_without_parser() {
+        use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            AllowWarnDeny, ExternalPluginStore, RuleEnum,
+            config::{Config, ConfigStore, LintConfig, OxlintCategories, ResolvedOxlintOverrides},
+            rules::TypescriptNoFloatingPromises,
+            tsgolint::TsGoLintState,
+        };
+
+        let base_rules = vec![(
+            RuleEnum::TypescriptNoFloatingPromises(TypescriptNoFloatingPromises::default()),
+            AllowWarnDeny::Deny,
+        )];
+        let config_store = ConfigStore::new(
+            Config::new(
+                base_rules,
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                ResolvedOxlintOverrides::default(),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let state = TsGoLintState::new(&PathBuf::from("/project"), config_store, FixKind::empty());
+
+        let paths: Vec<Arc<OsStr>> = ["/project/app/component.gts", "/project/app/index.ts"]
+            .iter()
+            .map(|p| Arc::from(OsStr::new(*p)))
+            .collect();
+
+        let mut resolved_configs = FxHashMap::default();
+        let payload = state.json_input(&paths, None, &mut resolved_configs);
+
+        let sent: Vec<&str> = payload
+            .configs
+            .iter()
+            .flat_map(|config| config.file_paths.iter().map(String::as_str))
+            .collect();
+
+        assert_eq!(sent, vec!["/project/app/index.ts"]);
     }
 }

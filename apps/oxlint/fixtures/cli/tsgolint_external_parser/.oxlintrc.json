@@ -1,0 +1,19 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "typescript/no-floating-promises": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.{gjs,gts}"],
+      "languageOptions": {
+        "parser": "ember-eslint-parser"
+      }
+    }
+  ]
+}

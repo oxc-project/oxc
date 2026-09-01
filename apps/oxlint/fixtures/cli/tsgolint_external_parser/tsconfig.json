@@ -1,0 +1,13 @@
+{
+  "contentMappers": [
+    { "package": "ember-content-mapper", "extensions": [".gts", ".gjs"] }
+  ],
+  "compilerOptions": {
+    "target": "es2016",
+    "lib": ["ES2024"],
+    "module": "commonjs",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["files"]
+}
