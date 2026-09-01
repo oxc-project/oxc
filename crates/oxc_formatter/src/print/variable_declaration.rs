@@ -3,7 +3,9 @@ use oxc_ast::ast::*;
 use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
-use crate::print::semicolon::{FormatContentWithSemicolon, keeps_trailing_comment_inside_parens};
+use crate::print::semicolon::{
+    FormatContentWithSemicolon, semicolon_terminated_expression_content_end,
+};
 use crate::utils::assignment_like::AssignmentLike;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -37,17 +39,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             if semicolon {
                 let last_declarator = declarations.as_ref().last();
                 let declarations_end = last_declarator.map_or(self.span().end, |d| d.span().end);
-                // A trailing comment right before the closing paren of the last initializer stays inside the parentheses;
-                // extend the content past the closing paren so the comment is not moved behind the semicolon
-                // (the initializer prints it, see `keeps_trailing_comment_inside_parens`).
-                let keeps_comment_inside_parens = last_declarator
+                let content_end = last_declarator
                     .and_then(|declarator| declarator.init.as_ref())
-                    .is_some_and(|init| keeps_trailing_comment_inside_parens(init, true));
-                let content_end = if keeps_comment_inside_parens {
-                    f.comments().end_including_source_parens(declarations_end, self.span().end)
-                } else {
-                    declarations_end
-                };
+                    .map_or(declarations_end, |init| {
+                        semicolon_terminated_expression_content_end(
+                            f,
+                            init,
+                            declarations_end,
+                            self.span().end,
+                            true,
+                        )
+                    });
                 write!(
                     f,
                     FormatContentWithSemicolon::new(declarations, content_end, self.span().end)

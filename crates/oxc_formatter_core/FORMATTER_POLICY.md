@@ -98,6 +98,10 @@ The invariants:
     - The replaceability test only separates these two
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
   - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
+  - Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
+    - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
+    - The source pair stays user content only where a sub-printer claims it and prints the comment inside (per-language keeps tables)
+    - The line-boundary invariant still gates the move: never across a re-printed paren that ends up on its own line
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
 
@@ -159,8 +163,6 @@ PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
 ```
 
 The Prettier suite lives under `crates/oxc_formatter_tests/prettier/` and is self-provisioned on the first conformance run. It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.
-
-JSDoc formatting is covered by plain fixture-pair tests in `oxc_formatter` (`--test jsdoc`, committed input/expected pairs — a mismatch is a failing test, not a tracked report entry).
 
 Failures must be either fixed or classified under "Known divergences".
 

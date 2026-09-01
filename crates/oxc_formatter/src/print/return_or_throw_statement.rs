@@ -10,7 +10,8 @@ use crate::{
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     print::{
-        ExpressionLeftSide, return_statement_content_end, semicolon::OptionalSemicolon,
+        ExpressionLeftSide, return_statement_content_end,
+        semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
         semicolon_terminated_content_end, write_suppressed_statement,
     },
     utils::{
@@ -84,14 +85,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
 
         if let Some(argument) = self.argument() {
             write!(f, space());
-            if f.comments().has_comment_in_range(argument.span().end, self.span().end) {
+            let argument_leaf_end = assignment_chain_leaf_end(argument.as_ref());
+            if f.comments().has_comment_in_range(argument_leaf_end, self.span().end) {
                 // Comments inside the argument's source parentheses belong to the argument
                 // and stay in place (`return (\n  a && b // c\n);` keeps the comment inside, like Prettier);
                 // only comments after the closing paren are dangling comments.
                 // Unlike `FormatContentWithSemicolon` they move even without a source `;` (ASI),
                 // matching Prettier's dangling-comment handling for return/throw.
-                let argument_end =
-                    f.comments().end_including_source_parens(argument.span().end, self.span().end);
+                // ... except when the chain-leaf walk descended into the argument:
+                // the chain's inner parens are dropped, so comments inside them move too
+                let argument_end = if argument_leaf_end < argument.span().end {
+                    argument_leaf_end
+                } else {
+                    f.comments().end_including_source_parens(argument.span().end, self.span().end)
+                };
                 if f.comments().has_trailing_suppression_comment(argument_end) {
                     // Keep a trailing suppression comment visible to the argument,
                     // so it preserves its original text.

@@ -212,30 +212,126 @@ type NestedParens =
 
 Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not idempotent); we normalize directly.
 
+## deferred-own-line-comment-stays-own-line
+
+- Why: uniform-rule (the own-line invariant; Prettier's glue is an attachment artifact)
+- Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
+
+An own-line comment deferred across a statement terminator (printed behind the previous node) stays own-line, with its blank lines preserved; the already-printed `;` is transparent to the break measurement (`lines_after_skipping_terminators`):
+
+```ts
+// input
+bar = 2
+/* own line */;
+
+quux();
+
+// ours
+bar = 2;
+/* own line */
+
+quux();
+
+// prettier (comment glued onto the next statement, the blank hoisted above it)
+bar = 2;
+
+/* own line */ quux();
+```
+
+Prettier attaches the comment as the next statement's leading and measures its break from the source `;`, gluing them; ours keeps the comment's own-line-ness and its distance to both neighbors as written.
+
 ## paren-comment-fixpoint
 
-- Why: prettier-bug (fixed upstream in prettier#19893 / prettier#19894)
-- Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`, `tests/fixtures/js/sequence-expression/leading-comment-in-first-element-parens.js`
-- Drop when: the pin catches up (converge on Prettier's now-fixed output)
+- Why: uniform-rule (upstream converging piecewise: prettier#19893 / prettier#19894 / prettier#19930 merged, prettier#19956 open)
+- Pin: `tests/fixtures/ts/semicolons/trailing-comments-parens.ts`, `tests/fixtures/ts/semicolons/trailing-comments-class-members.ts`, `tests/fixtures/js/sequence-expression/leading-comment-in-first-element-parens.js`
 
-Two comment placements print Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent:
+Comment placements printing Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent:
 
 ```js
 // input
 assigned = (a = c /* c1 */);
 ((/* c2 */ a), b);
+chained = (a) => ((b) => {
+  c();
+} /* c3 */)
+asiLeaf = (someValue /* c4 */)
 
 // ours
 assigned = a = c; /* c1 */
 /* c2 */ (a, b);
+chained = (a) => (b) => {
+  c();
+}; /* c3 */
+asiLeaf = someValue; /* c4 */
 
 // prettier (first pass; its second pass produces ours)
 assigned = a = c /* c1 */;
 (/* c2 */ a, b);
+chained = (a) => (b) => {
+  c();
+} /* c3 */;
+asiLeaf = someValue /* c4 */;
 ```
 
-- A trailing comment inside an expression statement's dropped parentheses moves behind the `;`, including the chain-leaf shapes prettier#19893 left out
+- A trailing comment inside a statement's dropped parentheses moves behind the `;`, including the chain-leaf shapes prettier#19893 left out
+- The chain passes through arrow expression bodies, and a dropped `)` counts as the terminator even without a source `;`
+  - prettier#19930 covers assignment/arrow links, the open prettier#19956 the rest; ours is one uniform rule
+- The walk stops where the comment stays inside re-added parens (sequence, assignment, JSX); conditional bodies move
+- Applied at every semicolon-terminated site: expression statements, export defaults, variable declarations, class property values, return arguments
+- A class member's same-line comment moves even when an own-line comment sits between it and the `;` (the pinned Prettier cancels the move on its first pass, then moves on its second — the `d = 4` and `dmixed` pins); the own-line one defers to the next element, like statements
 - A comment inside a sequence's parenthesized first element leads the sequence, outside the formatter-added parens
+
+Known limitation, shared with upstream: whether these parens survive is a group-fit decision, unknowable when the content end is chosen, so the comment settles only on the second pass when they end up dropped — a short JSX arrow body (`x = (a) => (<div /> /* c */)`), or a `;`-less return argument whose parenthesized binary fits flat (the `asiReturn` pin).
+
+## binary-cast-own-line-comment
+
+- Why: uniform-rule (upstream converging piecewise: prettier#19939 merged, prettier#19958 open)
+- Pin: `tests/fixtures/ts/comments/binary-cast-own-line-comment.ts`
+
+Comments around the operator keep their source side and their line-start side — the head-body comment policy applied to the operator gap, unifying it with `=`/`:` (`eol-comment-after-assign-colon`) and statement head-body gaps:
+
+- before the operator: trail the expression, never cross the operator — except what the grammar-defined slot cannot hold (no line terminator may precede the operator, a multiline comment's interior counts): those normalize to the type side so the output re-parses
+- glued after the operator: stay on the operator's line; a line comment forces the type onto the next line, a single-line block comment leaves the layout free to inline the type
+- own-line (and a line-ending multiline block, paragraph-like): lead the type on its own line, the type breaks under the operator
+
+```ts
+// input
+const t1 = {
+  prop1: 1,
+} satisfies
+// Comment
+Record<string, number>;
+const eolLine = 1 as // c
+Foo;
+const eolBlock = {} satisfies /* c */
+{};
+
+// ours
+const t1 = {
+  prop1: 1,
+} satisfies
+  // Comment
+  Record<string, number>;
+const eolLine = 1 as // c
+  Foo;
+const eolBlock = {} satisfies /* c */ {};
+
+// prettier (pinned): pulls the own-line comment beside the operator (three passes
+// to settle), relocates the line comment across the type and the `;`,
+// and the block comment backward across the operator
+const t1 = {
+  prop1: 1,
+} satisfies // Comment
+Record<string, number>;
+const eolLine = 1 as Foo; // c
+const eolBlock = {} /* c */ satisfies {};
+```
+
+Prettier is converging on its own piecewise fixes (own-line comments in prettier#19939, endOfLine comments reattached in the open prettier#19958, both normalizing toward own-line); we preserve the written position instead, so the entry outlives them.
+
+`as const` follows the same policy (`const` is a type like any other; the pinned Prettier relocates its comments across `const` and the `;`).
+The one exclusion, pinned in the fixture: union types defer to the union printer's own comment claiming (a same-line line comment before a union still moves behind the statement, crossing the type — an invariant violation tolerated only here) — that claiming is its own subsystem, see #union-leading-pipe-comment-normalization and #union-added-paren-comment-side.
+Drop when: the union printer's claiming is bounded to its own gap; this exclusion then collapses into the general slot rule above (the `unionEol` pin flips).
 
 ## head-body-comment-relocation
 

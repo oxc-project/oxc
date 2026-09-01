@@ -40,7 +40,7 @@ pub use arrow_function_expression::{
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use union_type::{
-    alias_union_breaks_after_operator, is_trailing_own_line_jsdoc_comment, type_alias_left_end,
+    alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
 };
 
 use cow_utils::CowUtils;
@@ -101,8 +101,8 @@ use self::{
     program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
     semicolon::{
-        FormatContentWithSemicolon, OptionalSemicolon, assignment_chain_leaf_end,
-        keeps_trailing_comment_inside_parens, write_trailing_comments_inside_parens,
+        FormatContentWithSemicolon, OptionalSemicolon, semicolon_terminated_expression_content_end,
+        write_trailing_comments_inside_parens,
     },
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
@@ -666,11 +666,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
         } else {
             leading_comments.len()
         };
-        write!(f, FormatLeadingComments::Comments(&leading_comments[..split]));
+        write!(f, FormatLeadingComments::CommentsOfNode(&leading_comments[..split], span.start));
         if needs_semicolon {
             write!(f, ";");
         }
-        write!(f, FormatLeadingComments::Comments(&leading_comments[split..]));
+        write!(f, FormatLeadingComments::CommentsOfNode(&leading_comments[split..], span.start));
 
         if f.comments().has_trailing_suppression_comment(span.end) {
             // Preserve original text when the statement has an inline suppression comment:
@@ -680,15 +680,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
         }
 
         let expression = self.expression();
-        // A trailing comment right before the closing paren of the rightmost
-        // sequence/assignment stays inside the parentheses;
-        // extend the content past the closing paren so the comment is not moved behind the semicolon
-        // (the sub-expression prints it, see `keeps_trailing_comment_inside_parens`).
-        let content_end = if keeps_trailing_comment_inside_parens(expression.as_ref(), false) {
-            f.comments().end_including_source_parens(expression.span().end, self.span().end)
-        } else {
-            assignment_chain_leaf_end(expression.as_ref())
-        };
+        let content_end = semicolon_terminated_expression_content_end(
+            f,
+            expression.as_ref(),
+            expression.span().end,
+            self.span().end,
+            false,
+        );
         write!(f, FormatContentWithSemicolon::new(expression, content_end, self.span().end));
     }
 }
