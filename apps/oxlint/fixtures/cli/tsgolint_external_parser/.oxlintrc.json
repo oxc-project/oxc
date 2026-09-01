@@ -6,7 +6,7 @@
     "typeAware": true
   },
   "rules": {
-    "typescript/no-floating-promises": "error"
+    "typescript/no-unnecessary-condition": "error"
   },
   "overrides": [
     {
