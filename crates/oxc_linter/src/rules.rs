@@ -510,6 +510,7 @@ pub(crate) mod react {
     pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
+    pub mod no_invalid_html_attribute;
     pub mod no_is_mounted;
     pub mod no_multi_comp;
     pub mod no_namespace;

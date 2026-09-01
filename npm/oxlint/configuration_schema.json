@@ -1311,6 +1311,14 @@
       },
       "additionalProperties": false
     },
+    "CheckedAttribute": {
+      "description": "Attributes this rule knows how to validate. Upstream restricts the option to\n`rel`, which is also the default when no configuration is provided.",
+      "type": "string",
+      "enum": [
+        "rel"
+      ],
+      "markdownDescription": "Attributes this rule knows how to validate. Upstream restricts the option to\n`rel`, which is also the default when no configuration is provided."
+    },
     "CheckedRequiresOnchangeOrReadonly": {
       "type": "object",
       "properties": {
@@ -7107,6 +7115,26 @@
         },
         "react/no-find-dom-node": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/no-invalid-html-attribute": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoInvalidHtmlAttribute"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/no-is-mounted": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -14637,6 +14665,13 @@
           "type": "string"
         }
       }
+    },
+    "NoInvalidHtmlAttribute": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CheckedAttribute"
+      },
+      "uniqueItems": true
     },
     "NoInvalidRegexpConfig": {
       "type": "object",
