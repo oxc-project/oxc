@@ -9,6 +9,7 @@ use super::{
 pub trait StructSerializer {
     type Config: Config;
     type Formatter: Formatter;
+    type SourceText: AsRef<str> + Copy;
 
     /// Serialize struct field.
     ///
@@ -51,22 +52,25 @@ pub trait StructSerializer {
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
+
+    /// Get the source text associated with this serialization, if provided.
+    fn source_text(&self) -> Option<Self::SourceText>;
 }
 
 /// Serializer for structs.
 ///
 /// This is returned by `ESTreeSerializer::serialize_struct`.
-pub struct ESTreeStructSerializer<'s, C: Config, F: Formatter> {
+pub struct ESTreeStructSerializer<'s, 'a, C: Config, F: Formatter> {
     /// Serializer
-    serializer: &'s mut ESTreeSerializer<C, F>,
+    serializer: &'s mut ESTreeSerializer<'a, C, F>,
     /// State of struct.
     /// Starts as `StructState::Empty`, transitions to `StructState::HasFields` on first field.
     state: StructState,
 }
 
-impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
+impl<'s, 'a, C: Config, F: Formatter> ESTreeStructSerializer<'s, 'a, C, F> {
     /// Create new [`ESTreeStructSerializer`].
-    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<C, F>) -> Self {
+    pub(super) fn new(mut serializer: &'s mut ESTreeSerializer<'a, C, F>) -> Self {
         // Push item to `trace_path`. It will be replaced with a `TracePathPart::Key`
         // when serializing each field in the struct, and popped off again in `end` method.
         if serializer.config.fixes() {
@@ -79,9 +83,10 @@ impl<'s, C: Config, F: Formatter> ESTreeStructSerializer<'s, C, F> {
     }
 }
 
-impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C, F> {
+impl<'a, C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, 'a, C, F> {
     type Config = C;
     type Formatter = F;
+    type SourceText = &'a str;
 
     /// Serialize struct field.
     ///
@@ -181,6 +186,12 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     fn ranges(&self) -> bool {
         self.serializer.ranges()
     }
+
+    /// Get the source text associated with this serialization, if provided.
+    #[inline(always)]
+    fn source_text(&self) -> Option<Self::SourceText> {
+        self.serializer.source_text()
+    }
 }
 
 /// State of [`StructSerializer`].
@@ -229,15 +240,16 @@ pub struct FlatStructSerializer<'p, P: StructSerializer>(pub &'p mut P);
 
 impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
     type Formatter = P::Formatter;
+    type SourceText = P::SourceText;
     type StructSerializer = Self;
-    type SequenceSerializer = ESTreeSequenceSerializer<'p, P::Config, P::Formatter>;
+    type SequenceSerializer = ESTreeSequenceSerializer<'p, 'static, P::Config, P::Formatter>;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self {
         self
     }
 
-    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'p, P::Config, P::Formatter> {
+    fn serialize_sequence(self) -> ESTreeSequenceSerializer<'p, 'static, P::Config, P::Formatter> {
         const {
             panic!("Cannot flatten a sequence into a struct");
         }
@@ -261,6 +273,12 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
         self.0.ranges()
     }
 
+    /// Get the source text associated with this serialization, if provided.
+    #[inline(always)]
+    fn source_text(&self) -> Option<Self::SourceText> {
+        self.0.source_text()
+    }
+
     fn buffer_mut(&mut self) -> &mut CodeBuffer {
         const {
             panic!("Cannot flatten anything but a struct into another struct");
@@ -277,6 +295,7 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
 impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     type Config = P::Config;
     type Formatter = P::Formatter;
+    type SourceText = P::SourceText;
 
     /// Serialize struct field.
     ///
@@ -340,6 +359,12 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.0.ranges()
+    }
+
+    /// Get the source text associated with this serialization, if provided.
+    #[inline(always)]
+    fn source_text(&self) -> Option<Self::SourceText> {
+        self.0.source_text()
     }
 }
 
