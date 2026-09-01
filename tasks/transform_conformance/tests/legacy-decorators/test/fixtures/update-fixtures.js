@@ -14,10 +14,10 @@ import { dirname, extname, join } from "path";
 
 const __dirname = new URL(".", import.meta.url).pathname;
 
-// https://github.com/microsoft/TypeScript/blob/8da951cbb629b648753454872df4e1754982aef1/tests/cases/conformance/decorators/class
+// https://github.com/microsoft/TypeScript/blob/f52473a2ed51bfddc972bb509517f85342d859df/tsc/testdata/tests/cases/conformance/decorators/class
 const typescriptTestFolderPath = join(
   __dirname,
-  "../../../../../coverage/typescript/tests/cases/conformance/decorators/class",
+  "../../../../../coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/class",
 );
 const oxcTestFolderPath = join(__dirname, "typescript");
 

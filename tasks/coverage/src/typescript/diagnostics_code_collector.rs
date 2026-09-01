@@ -4,13 +4,14 @@ use oxc_tasks_common::Snapshot;
 use rustc_hash::{FxHashMap, FxHashSet};
 use walkdir::WalkDir;
 
+use super::{BASELINES_PATH, CASES_PATH};
 use crate::{snap_root, workspace_root};
 
-const TESTS_ROOT: &str = "typescript/tests";
+const TYPESCRIPT_REPO_PATH: &str = "typescript";
 
 pub fn save_reviewed_tsc_diagnostics_codes() {
     // Collected codes are based on current TypeScript version in submodule.
-    let snapshot = Snapshot::new(&workspace_root().join(TESTS_ROOT), true);
+    let snapshot = Snapshot::new(&workspace_root().join(TYPESCRIPT_REPO_PATH), true);
 
     let mut contents = vec![];
     contents.extend([
@@ -32,12 +33,10 @@ pub fn save_reviewed_tsc_diagnostics_codes() {
 }
 
 fn collect_diagnostics_codes() -> Vec<u32> {
-    let ts_repo_dir = workspace_root().join(TESTS_ROOT);
-    let baselines_dir = ts_repo_dir.join("baselines/reference");
+    let baselines_dir = workspace_root().join(BASELINES_PATH);
 
-    // First, collect all `.errors.txt` files from `tests/baselines/reference`.
-    // At this point, snapshots for tests other than `compiler` and `conformance` are also included.
-    // NOTE: Some `.errors.txt` files are located in subdirectories, but we do not need them
+    // First, collect all `.errors.txt` files from `testdata/baselines/reference`.
+    // Baselines are grouped by the `compiler` and `conformance` suites.
     let all_errors_text_paths = collect_errors_txt_files(&baselines_dir);
 
     // Each test case refers to a `.errors.txt` file with the same name as the test file.
@@ -48,8 +47,9 @@ fn collect_diagnostics_codes() -> Vec<u32> {
         errors_map.entry(test_id).or_default().push(errors_text_path);
     }
 
-    // Now, collect all test files from `tests/cases/compiler` and `tests/cases/conformance`.
-    let all_test_paths = collect_test_files(&ts_repo_dir.join("cases"));
+    // Now, collect all test files from `testdata/tests/cases/compiler` and
+    // `testdata/tests/cases/conformance`.
+    let all_test_paths = collect_test_files(&workspace_root().join(CASES_PATH));
 
     // If the test is expected to produce an error, a `.errors.txt` file should exist.
     // Keep `.errors.txt` files that have a corresponding test file.
@@ -87,14 +87,18 @@ fn collect_diagnostics_codes() -> Vec<u32> {
 fn collect_errors_txt_files(baselines_dir: &Path) -> Vec<String> {
     let mut files = Vec::new();
 
-    if let Ok(entries) = fs::read_dir(baselines_dir) {
-        for entry in entries.flatten() {
-            if let Ok(file_type) = entry.file_type()
-                && !file_type.is_dir()
-                && let Some(file_name) = entry.file_name().to_str()
-                && file_name.ends_with(".errors.txt")
+    for dir_name in ["compiler", "conformance"] {
+        let dir_path = baselines_dir.join(dir_name);
+        for entry in WalkDir::new(&dir_path)
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|entry| !entry.file_type().is_dir())
+        {
+            if let Ok(relative_path) = entry.path().strip_prefix(baselines_dir)
+                && let Some(path_str) = relative_path.to_str()
+                && path_str.ends_with(".errors.txt")
             {
-                files.push(file_name.to_string());
+                files.push(path_str.to_string());
             }
         }
     }

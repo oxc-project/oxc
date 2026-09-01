@@ -1,45 +1,47 @@
-commit: b465fdbf
+commit: f52473a2
 
 transformer_typescript Summary:
-AST Parsed     : 9783/9783 (100.00%)
-Positive Passed: 9763/9783 (99.80%)
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
+AST Parsed     : 10077/10077 (100.00%)
+Positive Passed: 10056/10077 (99.79%)
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/braceEscapedSurrogatePairLiteralType.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classOverloadForFunction.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierReferencingOuterDeclaration2.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportSpecifierForAGlobal.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/funClodule.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportSpecifierReferencingOuterDeclaration2.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration1.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/funClodule.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration2.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reExportGlobalDeclaration1.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration3.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reExportGlobalDeclaration2.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration4.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reExportGlobalDeclaration3.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportUndefined1.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reExportGlobalDeclaration4.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuperConflict_es6.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reExportUndefined1.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuper_es2017.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncMethodWithSuperConflict_es6.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMethodWithSuper_es5.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/async/es2017/asyncMethodWithSuper_es2017.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/async/es5/asyncMethodWithSuper_es5.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.3.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.5.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.3.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.3.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.5.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.5.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.3.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonLocalDeclarations.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.5.ts
+
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/exportNonLocalDeclarations.ts
 

@@ -14,7 +14,7 @@ use oxc::{
     span::{SourceType, Span},
 };
 
-use crate::workspace_root;
+use super::baseline_root;
 
 // Returns a match for a test option. Test options have the form `// @name: value`
 static META_OPTIONS: Lazy<Regex> = lazy_regex!(
@@ -192,8 +192,8 @@ impl TestCaseContent {
         let test_unit_data = test_unit_data
             .into_iter()
             // Some snapshot units contain an invalid file with just a message, not even a comment!
-            // e.g. typescript/tests/cases/compiler/extendsUntypedModule.ts
-            // e.g. typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
+            // e.g. typescript/tsc/testdata/tests/cases/compiler/extendsUntypedModule.ts
+            // e.g. typescript/tsc/testdata/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
             // Based on some config, it's not expected to be read in the first place.
             .filter(|unit| {
                 // `unit.content.trim().starts_with()` is insufficient when dealing with the first unit.
@@ -355,7 +355,7 @@ impl TestCaseContent {
         }
 
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let root = workspace_root().join("typescript/tests/baselines/reference");
+        let root = baseline_root(path);
         let mut suffixes = vec![];
         // TypeScript writes baseline suffixes in alphabetical key order, e.g.
         // `(alwaysstrict=true,target=es5).errors.txt`. Keep the same ordering here so
