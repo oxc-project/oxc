@@ -2352,6 +2352,7 @@ impl ContentEq for TSTypePredicateName<'_> {
 impl ContentEq for TSExternalModuleDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
+            && ContentEq::content_eq(&self.attributes, &other.attributes)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.declare, &other.declare)
     }

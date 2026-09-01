@@ -460,6 +460,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
+        let attributes = self.eat(Kind::With).then(|| self.parse_type_literal_node());
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
             Some(self.parse_ts_module_block(/* in_ts_namespace_body */ false))
@@ -476,6 +477,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSExternalModuleDeclaration::boxed(
             self.end_span(start),
             id,
+            attributes,
             body,
             modifiers.contains_declare(),
             self,

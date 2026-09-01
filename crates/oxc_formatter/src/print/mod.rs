@@ -2106,12 +2106,30 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
         }
 
         write!(f, ["module", space()]);
-        if let Some(body) = self.body() {
-            write!(f, FormatNodeWithoutTrailingComments(self.id()));
-            write_head_body_separator(body.span().start, f);
-            write!(f, body);
-        } else {
-            write!(f, [self.id(), OptionalSemicolon]);
+        match (self.attributes(), self.body()) {
+            (Some(attributes), Some(body)) => {
+                write!(
+                    f,
+                    [
+                        self.id(),
+                        space(),
+                        "with",
+                        space(),
+                        FormatNodeWithoutTrailingComments(attributes),
+                    ]
+                );
+                write_head_body_separator(body.span().start, f);
+                write!(f, body);
+            }
+            (None, Some(body)) => {
+                write!(f, FormatNodeWithoutTrailingComments(self.id()));
+                write_head_body_separator(body.span().start, f);
+                write!(f, body);
+            }
+            (Some(attributes), None) => {
+                write!(f, [self.id(), space(), "with", space(), attributes, OptionalSemicolon]);
+            }
+            (None, None) => write!(f, [self.id(), OptionalSemicolon]),
         }
     }
 }

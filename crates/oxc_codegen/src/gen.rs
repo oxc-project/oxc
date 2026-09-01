@@ -4002,6 +4002,13 @@ impl Gen for TSExternalModuleDeclaration<'_> {
         p.print_space_before_identifier();
         p.print_string_literal(&self.id, false);
 
+        if let Some(attributes) = &self.attributes {
+            p.print_soft_space();
+            p.print_str("with");
+            p.print_soft_space();
+            attributes.print(p, ctx);
+        }
+
         if let Some(body) = &self.body {
             p.print_soft_space();
             body.print(p, ctx);

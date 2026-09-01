@@ -1248,6 +1248,8 @@ pub struct TSExternalModuleDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: StringLiteral<'a>,
+    #[estree(skip)]
+    pub attributes: Option<Box<'a, TSTypeLiteral<'a>>>,
     #[scope(enter_before)]
     pub body: Option<Box<'a, TSModuleBlock<'a>>>,
     pub declare: bool,
