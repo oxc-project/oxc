@@ -25,7 +25,7 @@ pub(crate) use assert_valid_block_nesting::{get_scopes, recursively_traverse_ite
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::number::ToJsString;
 pub use raw::RawTypeCategory;
 pub use reactive::*;
@@ -236,7 +236,8 @@ impl HirFunction<'_> {
 
 #[derive(Debug, Clone, Copy)]
 pub struct FunctionDirective<'a> {
-    pub value: Str<'a>,
+    pub value: JSStr<'a>,
+    pub raw: Str<'a>,
     pub span: Span,
     pub expression_span: Span,
 }
@@ -960,7 +961,7 @@ pub enum PrimitiveValue<'a> {
     Undefined,
     Boolean(bool),
     Number(FloatValue),
-    String(Str<'a>),
+    String(JSStr<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1570,6 +1571,7 @@ impl<'a> CloneIn<'a> for FunctionDirective<'a> {
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
         FunctionDirective {
             value: self.value.clone_in_impl(sem, alloc),
+            raw: self.raw.clone_in_impl(sem, alloc),
             span: self.span,
             expression_span: self.expression_span,
         }

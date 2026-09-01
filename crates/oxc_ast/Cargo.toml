@@ -36,6 +36,7 @@ bitflags = { workspace = true }
 default = []
 serialize = [
   "oxc_allocator/serialize",
+  "oxc_str/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_estree/serialize",

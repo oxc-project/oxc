@@ -401,7 +401,7 @@ impl NoRestrictedProperties {
 
 fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a, str>> {
     match expression {
-        Expression::StringLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
+        Expression::StringLiteral(literal) => literal.value.as_str().map(Cow::Borrowed),
         Expression::RegExpLiteral(literal) => literal.raw.map(|r| Cow::Borrowed(r.as_str())),
         Expression::NumericLiteral(literal) => Some(Cow::Owned(literal.value.to_string())),
         Expression::BigIntLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),

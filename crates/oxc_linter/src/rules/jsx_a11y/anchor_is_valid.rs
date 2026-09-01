@@ -248,17 +248,19 @@ impl AnchorIsValid {
     fn check_value(value: &JSXAttributeValue) -> HrefValueKind {
         match value {
             JSXAttributeValue::Element(_) => HrefValueKind::Valid,
-            JSXAttributeValue::StringLiteral(str_lit) => {
-                Self::href_value_kind_from_string(&str_lit.value)
-            }
+            JSXAttributeValue::StringLiteral(str_lit) => str_lit
+                .value
+                .as_str()
+                .map_or(HrefValueKind::Valid, Self::href_value_kind_from_string),
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
                 JSXExpression::Identifier(ident) if ident.name == "undefined" => {
                     HrefValueKind::Nullish
                 }
                 JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
-                JSXExpression::StringLiteral(str_lit) => {
-                    Self::href_value_kind_from_string(&str_lit.value)
-                }
+                JSXExpression::StringLiteral(str_lit) => str_lit
+                    .value
+                    .as_str()
+                    .map_or(HrefValueKind::Valid, Self::href_value_kind_from_string),
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {
                         return HrefValueKind::Valid;

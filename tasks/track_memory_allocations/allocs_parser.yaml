@@ -44,9 +44,9 @@ pdf.mjs:
 
 antd.js:
   file size: 6686316 # 6.69 MB
-  sys allocs: 185
+  sys allocs: 186
   sys reallocs: 221
-  sys deallocs: 185
+  sys deallocs: 186
   sys alloc bytes: 109952 # 109.95 kB
   sys peak growth: 48264 # 48.26 kB
   arena allocs: 528577

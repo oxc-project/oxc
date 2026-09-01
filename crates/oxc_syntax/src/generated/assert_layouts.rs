@@ -21,6 +21,12 @@ const _: () = {
     assert!(offset_of!(NameSpan, span) == 0);
     assert!(offset_of!(NameSpan, name) == 8);
 
+    // Padding: 0 bytes
+    assert!(size_of::<ModuleRequest>() == 24);
+    assert!(align_of::<ModuleRequest>() == 8);
+    assert!(offset_of!(ModuleRequest, span) == 0);
+    assert!(offset_of!(ModuleRequest, name) == 8);
+
     // Padding: 7 bytes
     assert!(size_of::<ImportEntry>() == 96);
     assert!(align_of::<ImportEntry>() == 8);
@@ -109,28 +115,34 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(NameSpan, span) == 0);
     assert!(offset_of!(NameSpan, name) == 8);
 
+    // Padding: 0 bytes
+    assert!(size_of::<ModuleRequest>() == 20);
+    assert!(align_of::<ModuleRequest>() == 4);
+    assert!(offset_of!(ModuleRequest, span) == 0);
+    assert!(offset_of!(ModuleRequest, name) == 8);
+
     // Padding: 3 bytes
-    assert!(size_of::<ImportEntry>() == 64);
+    assert!(size_of::<ImportEntry>() == 68);
     assert!(align_of::<ImportEntry>() == 4);
     assert!(offset_of!(ImportEntry, statement_span) == 0);
     assert!(offset_of!(ImportEntry, module_request) == 8);
-    assert!(offset_of!(ImportEntry, import_name) == 24);
-    assert!(offset_of!(ImportEntry, local_name) == 44);
-    assert!(offset_of!(ImportEntry, is_type) == 60);
+    assert!(offset_of!(ImportEntry, import_name) == 28);
+    assert!(offset_of!(ImportEntry, local_name) == 48);
+    assert!(offset_of!(ImportEntry, is_type) == 64);
 
     assert!(size_of::<ImportImportName>() == 20);
     assert!(align_of::<ImportImportName>() == 4);
 
     // Padding: 3 bytes
-    assert!(size_of::<ExportEntry>() == 96);
+    assert!(size_of::<ExportEntry>() == 100);
     assert!(align_of::<ExportEntry>() == 4);
     assert!(offset_of!(ExportEntry, span) == 0);
     assert!(offset_of!(ExportEntry, statement_span) == 8);
     assert!(offset_of!(ExportEntry, module_request) == 16);
-    assert!(offset_of!(ExportEntry, import_name) == 32);
-    assert!(offset_of!(ExportEntry, export_name) == 52);
-    assert!(offset_of!(ExportEntry, local_name) == 72);
-    assert!(offset_of!(ExportEntry, is_type) == 92);
+    assert!(offset_of!(ExportEntry, import_name) == 36);
+    assert!(offset_of!(ExportEntry, export_name) == 56);
+    assert!(offset_of!(ExportEntry, local_name) == 76);
+    assert!(offset_of!(ExportEntry, is_type) == 96);
 
     assert!(size_of::<ExportImportName>() == 20);
     assert!(align_of::<ExportImportName>() == 4);

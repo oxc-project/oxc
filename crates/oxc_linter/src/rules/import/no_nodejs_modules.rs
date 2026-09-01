@@ -91,24 +91,24 @@ impl Rule for NoNodejsModules {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let module_name = match node.kind() {
             AstKind::ImportExpression(import) => match &import.source {
-                Expression::StringLiteral(str_lit) => Some(str_lit.value),
+                Expression::StringLiteral(str_lit) => str_lit.value.as_str(),
                 Expression::TemplateLiteral(temp_lit) if temp_lit.is_no_substitution_template() => {
-                    temp_lit.single_quasi()
+                    temp_lit.single_quasi().map(|value| value.as_str())
                 }
                 _ => None,
             },
             AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {
                 TSModuleReference::ExternalModuleReference(external) => {
-                    Some(external.expression.value)
+                    external.expression.value.as_str()
                 }
                 _ => None,
             },
             AstKind::CallExpression(call) if !call.optional => {
-                call.common_js_require().map(|s| s.value)
+                call.common_js_require().and_then(|s| s.value.as_str())
             }
-            AstKind::ImportDeclaration(import) => Some(import.source.value),
-            AstKind::ExportFromDeclaration(export) => Some(export.source.value),
-            AstKind::ExportAllDeclaration(export_all) => Some(export_all.source.value),
+            AstKind::ImportDeclaration(import) => import.source.value.as_str(),
+            AstKind::ExportFromDeclaration(export) => export.source.value.as_str(),
+            AstKind::ExportAllDeclaration(export_all) => export_all.source.value.as_str(),
             _ => return,
         };
 
@@ -116,12 +116,12 @@ impl Rule for NoNodejsModules {
             return;
         };
 
-        if self.allow.contains(module_name.as_str()) {
+        if self.allow.contains(module_name) {
             return;
         }
 
-        if module_name.starts_with("node:") || is_nodejs_builtin_module(&module_name) {
-            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), &module_name));
+        if module_name.starts_with("node:") || is_nodejs_builtin_module(module_name) {
+            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), module_name));
         }
     }
 }

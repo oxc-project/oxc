@@ -978,6 +978,41 @@ mod test {
     }
 
     #[test]
+    fn escaped_identifiers_and_string_literals_use_separate_storage() {
+        let allocator = Allocator::default();
+        let source = r#"let \u0061 = "\uD800"; class C { "\u0063onstructor"() {} }"#;
+        let ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+    }
+
+    #[test]
+    fn escaped_string_in_ts_import_type_options_recovers_without_panicking() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path(Path::new("test.ts")).unwrap();
+        let source = r#"type T = import("mod", { "wi\u0074h": {} });"#;
+        let ret = Parser::new(&allocator, source, source_type).parse();
+
+        assert!(!ret.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn string_literal_preserves_utf16_code_units() {
+        let allocator = Allocator::default();
+        let expression =
+            Parser::new(&allocator, r#""a\uD800\uD83D\uDE00\uDC00""#, SourceType::default())
+                .parse_expression()
+                .unwrap();
+        let Expression::StringLiteral(literal) = expression else { unreachable!() };
+
+        assert!(literal.value.has_lone_surrogate());
+        assert_eq!(literal.value.as_str(), None);
+        assert_eq!(
+            literal.value.encode_utf16().collect::<Vec<_>>(),
+            [0x0061, 0xD800, 0xD83D, 0xDE00, 0xDC00]
+        );
+    }
+
+    #[test]
     fn flow_error() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

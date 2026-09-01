@@ -2789,25 +2789,18 @@ function deserializeNumericLiteral(pos) {
 
 function deserializeStringLiteral(pos) {
   let start = deserializeI32(pos),
-    end = deserializeI32(pos + 4),
-    previousParent = parent,
-    node = (parent = {
-      type: "Literal",
-      value: null,
-      raw:
-        int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
-          ? null
-          : sourceText.slice(start, end),
-      start,
-      end,
-      parent,
-    }),
-    value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12) &&
-    (value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16))));
-  node.value = value;
-  parent = previousParent;
-  return node;
+    end = deserializeI32(pos + 4);
+  return {
+    type: "Literal",
+    value: deserializeJSStr(pos + 16),
+    raw:
+      int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
+        ? null
+        : sourceText.slice(start, end),
+    start,
+    end,
+    parent,
+  };
 }
 
 function deserializeBigIntLiteral(pos) {
@@ -4907,6 +4900,14 @@ function deserializeNameSpan(pos) {
   };
 }
 
+function deserializeModuleRequest(pos) {
+  return {
+    value: deserializeJSStr(pos + 8),
+    start: deserializeI32(pos),
+    end: deserializeI32(pos + 4),
+  };
+}
+
 function deserializeImportEntry(pos) {
   return {
     importName: deserializeImportImportName(pos + 32),
@@ -4947,7 +4948,7 @@ function deserializeImportImportName(pos) {
 
 function deserializeExportEntry(pos) {
   return {
-    moduleRequest: deserializeOptionNameSpan(pos + 16),
+    moduleRequest: deserializeOptionModuleRequest(pos + 16),
     importName: deserializeExportImportName(pos + 40),
     exportName: deserializeExportExportName(pos + 72),
     localName: deserializeExportLocalName(pos + 104),
@@ -5248,7 +5249,7 @@ function deserializeEcmaScriptModule(pos) {
 
 function deserializeStaticImport(pos) {
   return {
-    moduleRequest: deserializeNameSpan(pos + 8),
+    moduleRequest: deserializeModuleRequest(pos + 8),
     entries: deserializeVecImportEntry(pos + 32),
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
@@ -6116,6 +6117,33 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
+function deserializeJSStr(pos) {
+  if (uint8[pos + 12] === 0) return deserializeStr(pos);
+  let pos32 = pos >> 2,
+    len = int32[pos32 + 2];
+  if (len === 0) return "";
+  pos = int32[pos32];
+  let end = pos + len,
+    out = "",
+    chunkStart = pos;
+  for (; pos < end;) {
+    if (uint8[pos] === 237 && pos + 2 < end) {
+      let second = uint8[pos + 1];
+      if (second >= 160 && second <= 191) {
+        chunkStart < pos && (out += utf8Slice.call(uint8, chunkStart, pos));
+        let value = ((uint8[pos] & 15) << 12) | ((second & 63) << 6) | (uint8[pos + 2] & 63);
+        out += fromCharCode(value);
+        pos += 3;
+        chunkStart = pos;
+        continue;
+      }
+    }
+    pos++;
+  }
+  chunkStart < end && (out += utf8Slice.call(uint8, chunkStart, end));
+  return out;
+}
+
 function deserializeU8(pos) {
   return uint8[pos];
 }
@@ -6494,10 +6522,8 @@ function deserializeI32(pos) {
   return int32[pos >> 2];
 }
 
-function deserializeOptionNameSpan(pos) {
-  return int32[(pos >> 2) + 2] === 0 && int32[(pos >> 2) + 3] === 0
-    ? null
-    : deserializeNameSpan(pos);
+function deserializeOptionModuleRequest(pos) {
+  return uint8[pos + 20] === 2 ? null : deserializeModuleRequest(pos);
 }
 
 function deserializeVecError(pos) {

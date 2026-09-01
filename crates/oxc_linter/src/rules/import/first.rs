@@ -84,10 +84,19 @@ declare_oxc_lint!(
     short_description = "Forbids any non-import statements before imports except directives.",
 );
 
-fn is_relative_path(path: &str) -> bool {
+fn is_relative_path(path: oxc_str::JSStr<'_>) -> bool {
     // A path is considered relative if it starts with "/", "./", or "../"
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#module_specifier_resolution
-    path.starts_with("./") || path.starts_with("../") || path.starts_with('/')
+    let mut code_points = path.code_points();
+    match code_points.next() {
+        Some(value) if value == u32::from(b'/') => true,
+        Some(value) if value == u32::from(b'.') => match code_points.next() {
+            Some(value) if value == u32::from(b'/') => true,
+            Some(value) if value == u32::from(b'.') => code_points.next() == Some(u32::from(b'/')),
+            _ => false,
+        },
+        _ => false,
+    }
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/first.md>
@@ -107,7 +116,7 @@ impl Rule for First {
                 Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                     TSModuleReference::ExternalModuleReference(mod_ref) => {
                         if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
-                            if is_relative_path(mod_ref.expression.value.as_str()) {
+                            if is_relative_path(mod_ref.expression.value) {
                                 any_relative = true;
                             } else if any_relative {
                                 ctx.diagnostic(absolute_first_diagnostic(mod_ref.expression.span));
@@ -122,7 +131,7 @@ impl Rule for First {
                 },
                 Statement::ImportDeclaration(decl) => {
                     if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {
-                        if is_relative_path(decl.source.value.as_str()) {
+                        if is_relative_path(decl.source.value) {
                             any_relative = true;
                         } else if any_relative {
                             ctx.diagnostic(absolute_first_diagnostic(decl.source.span));
@@ -181,6 +190,11 @@ fn test() {
         (
             r"import { y } from 'bar';
               import { x } from '/foo';",
+            Some(json!(["absolute-first"])),
+        ),
+        (
+            r"import { x } from './foo';
+              import { y } from './\uD800';",
             Some(json!(["absolute-first"])),
         ),
     ];

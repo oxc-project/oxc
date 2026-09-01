@@ -1192,8 +1192,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if (!is_with && !is_assert) || self.cur_token().escaped() {
             self.error(diagnostics::ts_import_type_options_expected_with(key_span));
         }
-        // Use the actual string from the source (not a static string) to ensure it's in the arena
-        let key_name = self.ident(self.cur_string());
+        // A quoted or escaped key is invalid here, but still build a recovery node without
+        // indexing the identifier-only escaped-string storage.
+        let key_name = if self.at(Kind::Str) {
+            self.ident(self.cur_js_string().as_str().unwrap_or(""))
+        } else {
+            self.ident(self.cur_string())
+        };
         let with_key_start = self.cur_start();
         self.bump_any();
         let with_key = IdentifierName::boxed(self.end_span(with_key_start), key_name, self);

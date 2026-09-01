@@ -555,9 +555,11 @@ fn get_computed_member_name(
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
-        Expression::StringLiteral(lit) if !lit.value.is_empty() => {
-            Some((lit.value.as_ref().into(), lit.span))
-        }
+        Expression::StringLiteral(lit) => lit
+            .value
+            .as_str()
+            .filter(|value| !value.is_empty())
+            .map(|value| (value.into(), lit.span)),
         Expression::TemplateLiteral(lit)
             if lit.expressions.is_empty()
                 && lit.quasis.len() == 1

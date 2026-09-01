@@ -866,6 +866,8 @@ fn test_property_access() {
     test("[...[1]][0]", false);
     test("[...'a'][0]", false);
     test("[...'a'][1]", true);
+    test("[...'\\uD800'][0]", false);
+    test("[...'\\uD800'][1]", true);
 
     test("import.meta.url", true);
     test("import.meta['url']", true);

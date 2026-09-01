@@ -364,6 +364,17 @@ mod tests {
     }
 
     #[test]
+    fn distinct_lone_surrogate_method_names_are_not_one_overload_group() {
+        let allocator = Allocator::default();
+        let source = r#"class C { "\uD800"(): void; "\uDC00"(): void; }"#;
+        let parse = oxc_parser::Parser::new(&allocator, source, SourceType::ts()).parse();
+        assert!(parse.diagnostics.is_empty());
+
+        let semantic = SemanticBuilder::new_compiler().build(&parse.program);
+        assert_eq!(semantic.diagnostics.len(), 2);
+    }
+
+    #[test]
     fn test_is_global() {
         let source = "
             var a = 0;

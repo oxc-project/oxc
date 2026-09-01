@@ -88,7 +88,7 @@ impl Rule for NoImportCompilerMacros {
             return;
         };
 
-        if !VUE_MODULES.contains(&import_decl.source.value.as_str()) {
+        if !import_decl.source.value.as_str().is_some_and(|value| VUE_MODULES.contains(&value)) {
             return;
         }
 

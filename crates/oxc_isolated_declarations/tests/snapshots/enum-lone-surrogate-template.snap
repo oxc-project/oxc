@@ -1,0 +1,13 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+assertion_line: 54
+input_file: crates/oxc_isolated_declarations/tests/fixtures/enum-lone-surrogate-template.ts
+---
+```
+==================== .D.TS ====================
+
+export declare enum E {
+	Lone = "\ud800",
+	Pair = "😀",
+	Text = "x\ny"
+}

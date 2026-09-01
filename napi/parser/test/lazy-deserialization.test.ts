@@ -34,6 +34,13 @@ it("parses", () => {
   expect(declarator.type).toBe("VariableDeclarator");
 });
 
+it("preserves lone surrogates in string literals and module requests", () => {
+  const data = parseSyncLazy("test.js", 'import "\\uD800"; "\\uDC00";');
+
+  expect(data.module.staticImports[0].moduleRequest.value).toBe("\ud800");
+  expect(data.program.body[1].expression.value).toBe("\udc00");
+});
+
 it("returns same node objects and node arrays on each access", () => {
   const data = parseSyncLazy("test.js", "let x = y + z;");
   const { program } = data;

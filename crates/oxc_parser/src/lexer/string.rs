@@ -1,7 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::ArenaStringBuilder;
-use oxc_data_structures::branch_hints::cold_path;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
@@ -9,19 +8,6 @@ use super::{
     Kind, Lexer, Span, Token, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
 };
-
-/// Convert `char` to UTF-8 bytes array.
-const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
-    assert!(ch.len_utf8() == N);
-    let mut bytes = [0u8; N];
-    ch.encode_utf8(&mut bytes);
-    bytes
-}
-
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
@@ -31,17 +17,6 @@ static DOUBLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
 static SINGLE_QUOTE_STRING_END_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'\'' | b'\r' | b'\n' | b'\\'));
 
-// Same as above, but with 1st byte of lossy replacement character added
-static DOUBLE_QUOTE_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!(
-    b,
-    b'"' | b'\r' | b'\n' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE
-));
-
-static SINGLE_QUOTE_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!(
-    b,
-    b'\'' | b'\r' | b'\n' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE
-));
-
 /// Macro to handle a string literal.
 ///
 /// # SAFETY
@@ -50,7 +25,7 @@ static SINGLE_QUOTE_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_ta
 /// `$table` must be a `SafeByteMatchTable`.
 /// `$table` must only match `$delimiter`, '\', '\r' or '\n'.
 macro_rules! handle_string_literal {
-    ($lexer:ident, $delimiter:literal, $table:ident, $escaped_table:ident) => {{
+    ($lexer:ident, $delimiter:literal, $table:ident) => {{
         debug_assert!($delimiter.is_ascii());
 
         // Skip opening quote.
@@ -83,12 +58,7 @@ macro_rules! handle_string_literal {
                 Kind::Str
             }
             b'\\' => cold_branch(|| {
-                handle_string_literal_escape!(
-                    $lexer,
-                    $delimiter,
-                    $escaped_table,
-                    after_opening_quote
-                )
+                handle_string_literal_escape!($lexer, $delimiter, $table, after_opening_quote)
             }),
             _ => {
                 // Line break. This is impossible in valid JS, so cold path.
@@ -110,7 +80,7 @@ macro_rules! handle_string_literal_escape {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = ArenaStringBuilder::with_capacity_in(capacity, $lexer.allocator);
+        let mut str = JSStrBuilder::with_capacity_in(capacity, $lexer.allocator);
 
         // Push chunk before `\` into `str`.
         str.push_str(so_far);
@@ -122,14 +92,14 @@ macro_rules! handle_string_literal_escape {
 
             // Consume escape sequence and add char to `str`
             let mut is_valid_escape_sequence = true;
-            $lexer.read_string_escape_sequence(&mut str, false, &mut is_valid_escape_sequence);
+            $lexer.read_js_string_escape_sequence(&mut str, &mut is_valid_escape_sequence);
             if !is_valid_escape_sequence {
                 let range = Span::new(escape_start_offset, $lexer.offset());
                 $lexer.error(diagnostics::invalid_escape_sequence(range));
             }
 
             // Consume bytes until reach end of string, line break, or another escape
-            let mut chunk_start = $lexer.source.position();
+            let chunk_start = $lexer.source.position();
             while let Some(b) = $lexer.peek_byte() {
                 match b {
                     b if !$table.matches(b) => {
@@ -157,28 +127,6 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => {
-                        // If the string contains lone surrogates, the lossy replacement character (U+FFFD)
-                        // is used as start of an escape sequence.
-                        // So an actual lossy escape character has to be escaped too.
-                        // Output it as `\u{FFFD}fffd`.
-                        // Cold branch because this should be very rare in real-world code.
-                        cold_path();
-
-                        // SAFETY: A byte is available, as we just peeked it, and it's 0xEF.
-                        // 0xEF is always 1st byte of a 3-byte Unicode sequence, so safe to consume 3 bytes.
-                        $lexer.source.next_byte_unchecked();
-                        let next1 = $lexer.source.next_byte_unchecked();
-                        let next2 = $lexer.source.next_byte_unchecked();
-                        if $lexer.token.lone_surrogates()
-                            && [next1, next2] == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                        {
-                            let chunk = $lexer.source.str_from_pos_to_current(chunk_start);
-                            str.push_str(chunk);
-                            str.push_str("fffd");
-                            chunk_start = $lexer.source.position();
-                        }
-                    }
                     _ => {
                         // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
@@ -196,8 +144,7 @@ macro_rules! handle_string_literal_escape {
             return Kind::Undetermined;
         }
 
-        // Convert `str` to arena slice and save to `escaped_strings`
-        $lexer.save_string(true, str.into_str());
+        $lexer.save_js_string(str.finish());
 
         Kind::Str
     }};
@@ -211,14 +158,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     pub(super) unsafe fn read_string_literal_double_quote(&mut self) -> Kind {
         // SAFETY: Caller guarantees next char is `"`, which is ASCII.
         // b'"' is an ASCII byte. `DOUBLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        unsafe {
-            handle_string_literal!(
-                self,
-                b'"',
-                DOUBLE_QUOTE_STRING_END_TABLE,
-                DOUBLE_QUOTE_ESCAPED_MATCH_TABLE
-            )
-        }
+        unsafe { handle_string_literal!(self, b'"', DOUBLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Read string literal delimited with `'`.
@@ -227,14 +167,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     pub(super) unsafe fn read_string_literal_single_quote(&mut self) -> Kind {
         // SAFETY: Caller guarantees next char is `'`, which is ASCII.
         // b'\'' is an ASCII byte. `SINGLE_QUOTE_STRING_END_TABLE` is a `SafeByteMatchTable`.
-        unsafe {
-            handle_string_literal!(
-                self,
-                b'\'',
-                SINGLE_QUOTE_STRING_END_TABLE,
-                SINGLE_QUOTE_ESCAPED_MATCH_TABLE
-            )
-        }
+        unsafe { handle_string_literal!(self, b'\'', SINGLE_QUOTE_STRING_END_TABLE) }
     }
 
     /// Save the string if it is escaped
@@ -252,8 +185,26 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.token.set_escaped(true);
     }
 
+    #[cold]
+    fn save_js_string(&mut self, value: JSStr<'a>) {
+        self.escaped_js_strings.insert(self.token.start(), value);
+        self.token.set_escaped(true);
+    }
+
+    pub(crate) fn get_js_string(&self, token: Token) -> JSStr<'a> {
+        if token.escaped() {
+            return self.escaped_js_strings[&token.start()];
+        }
+
+        JSStr::from(self.get_string(token))
+    }
+
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
         if token.escaped() {
+            debug_assert!(
+                !matches!(token.kind(), Kind::Str),
+                "escaped string literals must be read with `get_js_string`"
+            );
             return self.escaped_strings[&token.start()];
         }
 

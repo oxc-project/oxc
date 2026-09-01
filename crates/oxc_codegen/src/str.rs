@@ -1,7 +1,8 @@
-use std::slice;
+use std::{fmt::Write, slice};
 
 use oxc_ast::ast::StringLiteral;
 use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
+use oxc_str::JSStr;
 use oxc_syntax::{
     identifier::NBSP,
     line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
@@ -31,7 +32,7 @@ impl Codegen<'_> {
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
-        self.print_string_impl(s.value.as_str(), s.lone_surrogates, allow_backtick);
+        self.print_js_string_impl(s.value, allow_backtick);
     }
 
     /// Print a [`StringLiteral`] as a template literal, whatever its contents.
@@ -42,7 +43,25 @@ impl Codegen<'_> {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
         Quote::Backtick.print(self);
-        self.print_string_body(s.value.as_str(), s.lone_surrogates, Some(Quote::Backtick), true);
+        self.print_js_string_body(s.value, Some(Quote::Backtick), true);
+    }
+
+    fn print_js_string_impl(&mut self, s: JSStr<'_>, allow_backtick: bool) {
+        if let Some(s) = s.as_str() {
+            self.print_string_impl(s, false, allow_backtick);
+        } else {
+            let escaped = js_str_to_lone_surrogate_markers(s);
+            self.print_string_impl(&escaped, true, allow_backtick);
+        }
+    }
+
+    fn print_js_string_body(&mut self, s: JSStr<'_>, quote: Option<Quote>, allow_backtick: bool) {
+        if let Some(s) = s.as_str() {
+            self.print_string_body(s, false, quote, allow_backtick);
+        } else {
+            let escaped = js_str_to_lone_surrogate_markers(s);
+            self.print_string_body(&escaped, true, quote, allow_backtick);
+        }
     }
 
     pub(super) fn print_string_impl(
@@ -123,6 +142,22 @@ impl Codegen<'_> {
         let quote = unsafe { state.quote.unwrap_unchecked() };
         quote.print(self);
     }
+}
+
+/// Adapt canonical WTF-8 to the old string printer's marker format on the rare
+/// path where a JavaScript string contains a lone surrogate.
+fn js_str_to_lone_surrogate_markers(value: JSStr<'_>) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for value in value.code_points() {
+        if value == 0xFFFD {
+            escaped.push_str("\u{FFFD}fffd");
+        } else if let Some(value) = char::from_u32(value) {
+            escaped.push(value);
+        } else {
+            write!(escaped, "\u{FFFD}{value:04x}").unwrap();
+        }
+    }
+    escaped
 }
 
 /// String printer state.

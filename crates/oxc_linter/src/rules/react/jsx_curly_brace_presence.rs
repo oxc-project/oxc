@@ -421,12 +421,10 @@ impl JsxCurlyBracePresence {
                 }
             }
             JSXAttributeValue::StringLiteral(string) => {
-                if self.props.is_always() {
-                    report_missing_curly_for_string_attribute_value(
-                        ctx,
-                        string.span,
-                        string.value.as_str(),
-                    );
+                if self.props.is_always()
+                    && let Some(value) = string.value.as_str()
+                {
+                    report_missing_curly_for_string_attribute_value(ctx, string.span, value);
                 }
             }
         }
@@ -582,6 +580,12 @@ fn report_unnecessary_curly<'a>(
     container: &JSXExpressionContainer<'a>,
     inner_span: Span,
 ) {
+    if matches!(
+        &container.expression,
+        JSXExpression::StringLiteral(literal) if literal.value.as_str().is_none()
+    ) {
+        return;
+    }
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
@@ -592,7 +596,7 @@ fn report_unnecessary_curly<'a>(
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(string_literal.value.as_str());
+                fix.print_str(string_literal.value.as_str().unwrap());
 
                 fixer.replace(container.span, fix.into_source_text())
             }
@@ -613,10 +617,18 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
     container: &JSXExpressionContainer<'a>,
     inner_span: Span,
 ) {
+    if matches!(
+        &container.expression,
+        JSXExpression::StringLiteral(literal) if literal.value.as_str().is_none()
+    ) {
+        return;
+    }
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
         let str = match &container.expression {
-            JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
-            JSXExpression::StringLiteral(string_lit) => string_lit.value,
+            JSXExpression::TemplateLiteral(template_lit) => {
+                template_lit.single_quasi().unwrap().as_str()
+            }
+            JSXExpression::StringLiteral(string_lit) => string_lit.value.as_str().unwrap(),
             JSXExpression::JSXElement(el) => {
                 return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
             }
@@ -625,11 +637,11 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
 
         let mut fix = fixer.codegen();
 
-        if !contains_double_quote_characters(str.as_str()) {
+        if !contains_double_quote_characters(str) {
             fix = fix.with_options(CodegenOptions::default());
         }
 
-        fix.print_string(str.as_str());
+        fix.print_string(str);
 
         fixer.replace(container.span, fix.into_source_text())
     });

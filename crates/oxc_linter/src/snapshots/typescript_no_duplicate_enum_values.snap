@@ -2,6 +2,15 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `"\uD800"`
+   ╭─[no_duplicate_enum_values.tsx:1:14]
+ 1 │ enum E { A = "\uD800", B = "\uD800" }
+   ·              ────┬───      ────┬───
+   ·                  │             ╰── and is re-used here
+   ·                  ╰── "\uD800" is first used as an initializer here
+   ╰────
+  help: Give B a unique value
+
   ⚠ typescript(no-duplicate-enum-values): Duplicate enum value `1`
    ╭─[no_duplicate_enum_values.tsx:3:19]
  2 │             enum E {

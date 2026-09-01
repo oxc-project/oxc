@@ -117,7 +117,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
             return;
         };
 
-        let role_str = role_value.value.as_str().trim();
+        let Some(role_str) = role_value.value.as_str().map(str::trim) else { return };
         let Some(first_role) = role_str.split_whitespace().next() else {
             return;
         };

@@ -193,10 +193,10 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::ComputedMemberExpression(right_computed_expr),
         ) => is_same_node(&left_computed_expr.expression, &right_computed_expr.expression, ctx),
         (Expression::StringLiteral(left_lit), Expression::NumericLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            left_lit.value.as_str().is_some_and(|value| value == right_lit.to_string())
         }
         (Expression::NumericLiteral(left_lit), Expression::StringLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            right_lit.value.as_str().is_some_and(|value| value == left_lit.to_string())
         }
         (
             Expression::TemplateLiteral(left_template_lit),
@@ -206,7 +206,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            template_str.as_str() == right_string_lit.to_string()
+            right_string_lit.value.as_str() == Some(template_str.as_str())
         }
         (
             Expression::StringLiteral(left_string_lit),
@@ -216,7 +216,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            left_string_lit.to_string() == template_str.as_str()
+            left_string_lit.value.as_str() == Some(template_str.as_str())
         }
         _ => false,
     }

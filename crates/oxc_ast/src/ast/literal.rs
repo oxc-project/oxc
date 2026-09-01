@@ -12,7 +12,7 @@ use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 use oxc_syntax::{
     node::NodeId,
     number::{BigintBase, NumberBase},
@@ -94,7 +94,7 @@ pub struct StringLiteral<'a> {
     ///
     /// Any escape sequences in the raw code are unescaped.
     #[estree(via = StringLiteralValue)]
-    pub value: Str<'a>,
+    pub value: JSStr<'a>,
 
     /// The raw string as it appears in source code.
     ///
@@ -102,15 +102,6 @@ pub struct StringLiteral<'a> {
     #[content_eq(skip)]
     #[estree(from_span)]
     pub raw: Option<Str<'a>>,
-
-    /// The string value contains lone surrogates.
-    ///
-    /// `value` is encoded using `\u{FFFD}` (the lossy replacement character) as an escape character.
-    /// Lone surrogates are encoded as `\u{FFFD}XXXX`, where `XXXX` is the code unit in hex.
-    /// The lossy escape character itself is encoded as `\u{FFFD}fffd`.
-    #[builder(default)]
-    #[estree(skip)]
-    pub lone_surrogates: bool,
 }
 
 /// BigInt literal

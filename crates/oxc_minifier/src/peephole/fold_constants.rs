@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
@@ -7,6 +7,7 @@ use oxc_ecmascript::{
     with_number_literal,
 };
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::JSStrBuilder;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::TraverseCtx;
@@ -624,6 +625,18 @@ impl<'a> PeepholeOptimizations {
         parent_span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        if let (Expression::StringLiteral(left), Expression::StringLiteral(right)) =
+            (&*left_expr, &*right_expr)
+        {
+            let mut value = JSStrBuilder::with_capacity_in(
+                left.value.len() + right.value.len(),
+                ctx.allocator(),
+            );
+            value.push_js_str(left.value);
+            value.push_js_str(right.value);
+            return Some(Expression::new_string_literal(parent_span, value.finish(), None, ctx));
+        }
+
         if let Expression::TemplateLiteral(left) = left_expr {
             // "`${a}b` + `x${y}`" => "`${a}bx${y}`"
             if let Expression::TemplateLiteral(right) = right_expr {
@@ -851,7 +864,9 @@ impl<'a> PeepholeOptimizations {
             );
 
             let may_be_equal = match &e.right {
-                Expression::StringLiteral(string_lit) => is_typeof_string(&string_lit.value),
+                Expression::StringLiteral(string_lit) => {
+                    string_lit.value.as_str().is_some_and(is_typeof_string)
+                }
                 right => {
                     let ty = right.value_type(ctx);
                     matches!(ty, ValueType::Undetermined | ValueType::String)

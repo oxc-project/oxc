@@ -110,8 +110,9 @@ impl Rule for NoRedundantRoles {
         let component = get_element_type(ctx, jsx_el);
         if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
+            && let Some(value) = role_values.value.as_str()
         {
-            for role in role_values.value.split_whitespace() {
+            for role in value.split_whitespace() {
                 if let Some(implicit_role) = get_redundant_implicit_role(&component, jsx_el, role)
                     && !self.is_allowed_redundant_role(&component, implicit_role)
                 {
@@ -198,12 +199,12 @@ fn get_select_implicit_role(jsx_el: &JSXOpeningElement) -> &'static str {
 
 fn get_static_string_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
     match get_prop_value(item)? {
-        JSXAttributeValue::StringLiteral(lit) => Some(lit.value.as_str()),
+        JSXAttributeValue::StringLiteral(lit) => lit.value.as_str(),
         JSXAttributeValue::ExpressionContainer(container) => {
             let Expression::StringLiteral(lit) = container.expression.as_expression()? else {
                 return None;
             };
-            Some(lit.value.as_str())
+            lit.value.as_str()
         }
         _ => None,
     }

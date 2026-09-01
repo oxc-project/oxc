@@ -6,7 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use napi::{Either, Task, bindgen_prelude::AsyncTask};
+use napi::{
+    Either, Task,
+    bindgen_prelude::{AsyncTask, Utf16String},
+};
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
@@ -1033,10 +1036,10 @@ pub struct ModuleRunnerTransformResult {
     pub map: Option<SourceMap>,
 
     // Import sources collected during transformation.
-    pub deps: Vec<String>,
+    pub deps: Vec<Utf16String>,
 
     // Dynamic import sources collected during transformation.
-    pub dynamic_deps: Vec<String>,
+    pub dynamic_deps: Vec<Utf16String>,
 
     /// Parse and transformation errors.
     ///
@@ -1100,8 +1103,14 @@ fn module_runner_transform_impl(
     ModuleRunnerTransformResult {
         code,
         map: map.map(Into::into),
-        deps: deps.into_iter().collect::<Vec<String>>(),
-        dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
+        deps: deps
+            .into_iter()
+            .map(|value| Utf16String::from(value.encode_utf16().collect::<Vec<_>>()))
+            .collect(),
+        dynamic_deps: dynamic_deps
+            .into_iter()
+            .map(|value| Utf16String::from(value.encode_utf16().collect::<Vec<_>>()))
+            .collect(),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
     }
 }

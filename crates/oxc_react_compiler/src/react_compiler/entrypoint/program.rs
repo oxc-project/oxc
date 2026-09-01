@@ -41,7 +41,7 @@ use super::suppression::suppressions_to_diagnostics;
 use crate::options::{
     CompilationMode, CompilerOutputMode, GatingConfig, PanicThreshold, PluginOptions,
 };
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr};
 
 // -----------------------------------------------------------------------
 // Constants
@@ -78,7 +78,7 @@ struct CompileSource<'b, 'a> {
 
 #[derive(Clone, Copy)]
 struct BodyDirective<'a> {
-    value: Str<'a>,
+    value: JSStr<'a>,
     span: Span,
 }
 
@@ -101,9 +101,12 @@ fn try_find_directive_enabling_memoization<'a>(
     opts: &PluginOptions,
 ) -> Result<Option<&'a str>, Diagnostics> {
     // Check standard opt-in directives
-    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.value.as_str()));
-    if let Some(directive) = opt_in {
-        return Ok(Some(directive.value.as_str()));
+    for directive in directives {
+        if let Some(value) = directive.value.as_str()
+            && OPT_IN_DIRECTIVES.contains(&value)
+        {
+            return Ok(Some(value));
+        }
     }
 
     // Check dynamic gating directives
@@ -147,14 +150,14 @@ fn find_directives_dynamic_gating<'a>(
     let mut matches: Vec<(&'a str, String, Span)> = Vec::new();
 
     for directive in directives {
-        if let Some(ident) = parse_dynamic_gating_directive(directive.value.as_str()) {
+        let Some(value) = directive.value.as_str() else {
+            continue;
+        };
+        if let Some(ident) = parse_dynamic_gating_directive(value) {
             if is_valid_identifier(ident) {
-                matches.push((directive.value.as_str(), ident.to_string(), directive.span));
+                matches.push((value, ident.to_string(), directive.span));
             } else {
-                errors.push(diagnostics::invalid_gating_directive(
-                    directive.value.as_str(),
-                    directive.span,
-                ));
+                errors.push(diagnostics::invalid_gating_directive(value, directive.span));
             }
         }
     }
@@ -1236,7 +1239,7 @@ fn process_fn<'a>(
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
     let opt_out = find_directive_disabling_memoization(
-        source.body_directives.iter().map(|directive| directive.value.as_str()),
+        source.body_directives.iter().filter_map(|directive| directive.value.as_str()),
         context.opts.custom_opt_out_directives.as_deref(),
     );
 
@@ -2981,8 +2984,9 @@ fn ox_add_imports_to_program<'a>(
     for (idx, stmt) in program.body.iter().enumerate() {
         if let Statement::ImportDeclaration(import) = stmt
             && ox_is_non_namespaced_import(import)
+            && let Some(source) = import.source.value.as_str()
         {
-            existing_import_indices.entry(import.source.value.as_str()).or_insert(idx);
+            existing_import_indices.entry(source).or_insert(idx);
         }
     }
 
@@ -3156,7 +3160,7 @@ pub fn compile_program<'a>(
 
     // Check for module-scope opt-out directive
     let has_module_scope_opt_out = find_directive_disabling_memoization(
-        program.directives.iter().map(|d| d.expression.value.as_str()),
+        program.directives.iter().filter_map(|d| d.expression.value.as_str()),
         options.custom_opt_out_directives.as_deref(),
     )
     .is_some();

@@ -138,15 +138,13 @@ impl NoUntypedMockFactory {
         };
 
         if let Expression::StringLiteral(string_literal) = expr {
+            let Some(value) = string_literal.value.as_str() else { return };
             ctx.diagnostic_with_fix(
-                add_type_parameter_to_module_mock_diagnostic(
-                    string_literal.value.as_str(),
-                    property_span,
-                ),
+                add_type_parameter_to_module_mock_diagnostic(value, property_span),
                 |fixer| {
                     let mut code = String::with_capacity(string_literal.value.len() + 20);
                     code.push_str("<typeof import('");
-                    code.push_str(string_literal.value.as_str());
+                    code.push_str(value);
                     code.push_str("')>");
 
                     fixer.insert_text_after(&call_expr.callee, code)

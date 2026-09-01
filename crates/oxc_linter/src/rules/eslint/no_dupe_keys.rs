@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -82,10 +83,10 @@ impl Rule for NoDupeKeys {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
                 continue;
             };
-            let Some(name) = prop.key.static_name() else {
+            let Some(name) = prop.key.static_js_name(ctx.allocator()) else {
                 continue;
             };
-            if is_proto_setter_property(prop, &name) {
+            if is_proto_setter_property(prop, name) {
                 continue;
             }
             if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
@@ -100,7 +101,7 @@ impl Rule for NoDupeKeys {
     }
 }
 
-fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
+fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: JSStr<'_>) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
         && !prop.computed
@@ -113,7 +114,9 @@ fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
         PropertyKey::Identifier(ident) => ident.name.as_str(),
         PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
         PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
-        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
+        PropertyKey::StringLiteral(lit) => {
+            lit.value.as_str().unwrap_or_else(|| ctx.source_range(key.span()))
+        }
         PropertyKey::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
         _ => ctx.source_range(key.span()),
     }
@@ -165,6 +168,7 @@ fn test() {
         "var x = { 1n: 1, 1: 2 };",   // { "ecmaVersion": 2020 },
         "var x = { 1_0: 1, 10: 2 };", // { "ecmaVersion": 2021 },
         r#"var x = { "z": 1, z: 2 };"#,
+        r#"var x = { "\uD800": 1, "\uD800": 2 };"#,
         "var foo = {
               bar: 1,
               bar: 1,

@@ -224,6 +224,7 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"test("\uD800", () => {}); test("\uD800", () => {});"#, None),
         (
             "
               describe('foo', () => {

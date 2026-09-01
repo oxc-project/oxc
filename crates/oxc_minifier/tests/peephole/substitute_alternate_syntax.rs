@@ -314,6 +314,7 @@ fn test_string_array_splitting() {
     test_with_longer_args("',,','.',',',',',',',','", ",,(.(,(,(,(,", "(");
     test_with_longer_args("'a,','.',',',',',',',','", "a,(.(,(,(,(,", "(");
     test_with_longer_args("`1`,'2','3','4','5','6'", "123456", "");
+    test_same_with_longer_args("'\\uD800','2','3','4','5','6'");
 
     // all possible delimiters used, leave it alone
     test_same_with_longer_args("'.', ',', '(', ')', ' '");

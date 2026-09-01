@@ -555,7 +555,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
         if self.at(Kind::Str)
-            && self.cur_string() == "constructor"
+            && self.cur_js_string() == "constructor"
             && self.lexer.peek_token().kind() == Kind::LParen
         {
             let string_literal = self.parse_literal_string();

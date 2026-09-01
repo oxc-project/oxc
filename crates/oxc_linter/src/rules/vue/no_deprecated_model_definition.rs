@@ -153,7 +153,7 @@ fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<S
 
 fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
     match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.to_string()),
+        Expression::StringLiteral(lit) => Some(lit.value.as_str()?.to_string()),
         Expression::TemplateLiteral(tpl) => tpl.single_quasi().map(Str::into_string),
         _ => None,
     }

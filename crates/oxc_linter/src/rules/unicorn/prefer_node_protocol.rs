@@ -73,24 +73,21 @@ impl Rule for PreferNodeProtocol {
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;
         };
-        let module_name = string_lit_value.as_str();
+        let Some(module_name) = string_lit_value.as_str() else { return };
         if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            prefer_node_protocol_diagnostic(span, &string_lit_value),
-            |fixer| {
-                // Smallest module name is 2 chars, plus 2 for quotes = 4.
-                debug_assert!(
-                    span.size() >= 4,
-                    "node stdlib module name should be at least 4 chars long"
-                );
-                // We're replacing inside the string literal, shift to account for quotes.
-                let span = span.shrink_left(1).shrink_right(1);
-                fixer.replace(span, format!("node:{string_lit_value}"))
-            },
-        );
+        ctx.diagnostic_with_fix(prefer_node_protocol_diagnostic(span, module_name), |fixer| {
+            // Smallest module name is 2 chars, plus 2 for quotes = 4.
+            debug_assert!(
+                span.size() >= 4,
+                "node stdlib module name should be at least 4 chars long"
+            );
+            // We're replacing inside the string literal, shift to account for quotes.
+            let span = span.shrink_left(1).shrink_right(1);
+            fixer.replace(span, format!("node:{module_name}"))
+        });
     }
 }
 

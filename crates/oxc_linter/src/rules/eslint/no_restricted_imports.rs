@@ -795,7 +795,9 @@ impl RestrictedPath {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let Some(name) = literal.value.as_str().map(CompactStr::from) else {
+            return ImportNameResult::Allowed;
+        };
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -899,7 +901,9 @@ impl RestrictedPattern {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let Some(name) = literal.value.as_str().map(CompactStr::from) else {
+            return ImportNameResult::Allowed;
+        };
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -1285,7 +1289,7 @@ impl NoRestrictedImports {
         is_type: bool,
         is_dynamic_import: bool,
     ) {
-        let source = source_literal.value.as_str();
+        let Some(source) = source_literal.value.as_str() else { return };
 
         for path in &self.paths {
             if source != path.name.as_str() {

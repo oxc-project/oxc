@@ -87,7 +87,9 @@ pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
 }
 
 pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
-    get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
+    get_prop_value(item)
+        .and_then(JSXAttributeValue::as_string_literal)
+        .and_then(|s| s.value.as_str())
 }
 
 // TODO: Move the a11y methods to their own util for jsx-a11y?
@@ -693,7 +695,7 @@ pub fn get_element_type<'c, 'a>(
         })
         .and_then(get_prop_value)
         .and_then(JSXAttributeValue::as_string_literal)
-        .map(|s| s.value.as_str());
+        .and_then(|s| s.value.as_str());
 
     let raw_type = polymorphic_prop.map_or(name, Cow::Borrowed);
     match jsx_a11y.components.get(raw_type.as_ref()) {
@@ -704,7 +706,7 @@ pub fn get_element_type<'c, 'a>(
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
-        JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
+        JSXAttributeValue::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         JSXAttributeValue::ExpressionContainer(container) => {
             parse_jsx_expression(&container.expression)
         }
@@ -722,7 +724,7 @@ fn parse_jsx_expression(expression: &JSXExpression) -> Result<f64, ()> {
 
 fn parse_expression(expression: &Expression) -> Result<f64, ()> {
     match expression {
-        Expression::StringLiteral(str) => str.value.parse().or(Err(())),
+        Expression::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         Expression::TemplateLiteral(tmpl) => {
             tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
         }

@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -109,7 +110,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a str, JestFnKind, NodeId)> {
+) -> Option<(Span, JSStr<'a>, JestFnKind, NodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
@@ -125,11 +126,15 @@ fn filter_and_process_jest_result<'a>(
 
     match call_expr.arguments.first() {
         Some(Argument::StringLiteral(string_lit)) => {
-            Some((string_lit.span, &string_lit.value, kind, parent_id))
+            Some((string_lit.span, string_lit.value, kind, parent_id))
         }
-        Some(Argument::TemplateLiteral(template_lit)) => template_lit
-            .single_quasi()
-            .map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id)),
+        Some(Argument::TemplateLiteral(template_lit))
+            if template_lit.is_no_substitution_template() =>
+        {
+            template_lit.quasis[0]
+                .cooked_js_str(ctx.allocator())
+                .map(|title| (template_lit.span, title, kind, parent_id))
+        }
         _ => None,
     }
 }

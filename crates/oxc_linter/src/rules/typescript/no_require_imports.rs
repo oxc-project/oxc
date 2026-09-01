@@ -157,11 +157,17 @@ impl Rule for NoRequireImports {
                             }
                         }
                         Argument::StringLiteral(string_literal)
-                            if match_argument_value_with_regex(
-                                &self.allow,
-                                &string_literal.value,
-                            ) =>
+                            if string_literal.value.as_str().is_some_and(|value| {
+                                match_argument_value_with_regex(&self.allow, value)
+                            }) =>
                         {
+                            return;
+                        }
+                        Argument::StringLiteral(string_literal)
+                            if string_literal.value.has_lone_surrogate() =>
+                        {
+                            // Rust regexes cannot inspect a lone surrogate. Avoid rejecting a
+                            // value which may match the configured JavaScript-string allowlist.
                             return;
                         }
                         _ => {}
@@ -177,7 +183,10 @@ impl Rule for NoRequireImports {
                     }
 
                     if !self.allow.is_empty()
-                        && match_argument_value_with_regex(&self.allow, &mod_ref.expression.value)
+                        && (mod_ref.expression.value.has_lone_surrogate()
+                            || mod_ref.expression.value.as_str().is_some_and(|value| {
+                                match_argument_value_with_regex(&self.allow, value)
+                            }))
                     {
                         return;
                     }
@@ -197,6 +206,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (r#"const value = require("\uD800");"#, Some(serde_json::json!([{ "allow": [".*"] }]))),
         ("import { l } from 'lib';", None),
         ("var lib3 = load('not_an_import');", None),
         ("var lib4 = lib2.subImport;", None),

@@ -964,6 +964,9 @@ fn test_fold_string_concat() {
     test("x = ''.concat('a', 'b', 'c')", "x = 'abc'");
     test("x = ''.concat('a', 'b', 'c', 'd')", "x = 'abcd'");
     test("x = ''.concat('a', 'b', 'c', 'd', 'e')", "x = 'abcde'");
+    test("x = '\\ud800'.concat('y')", "x = '\\ud800y'");
+    test("x = '\\ud83d'.concat('\\ude00')", "x = '😀'");
+    test("x = '�'.concat('\\ud800')", "x = '�\\ud800'");
     test("x = ''.concat(a, 'b')", "x = `${a}b`");
     test("x = ''.concat('a', b)", "x = `a${b}`");
     test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
@@ -977,6 +980,7 @@ fn test_fold_string_concat() {
     test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
     test("x = '`'.concat(a)", "x = `\\`${a}`");
     test("x = '${'.concat(a)", "x = `\\${${a}`");
+    test_same("x = '\\ud800'.concat(a)");
 }
 
 #[test]

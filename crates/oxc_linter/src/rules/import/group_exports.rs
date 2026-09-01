@@ -77,16 +77,20 @@ impl Rule for GroupExports {
             match node.kind() {
                 AstKind::ExportFromDeclaration(export_decl) => match export_decl.export_kind {
                     ImportOrExportKind::Value => {
-                        modules_source_record
-                            .entry(export_decl.source.value.to_string())
-                            .or_default()
-                            .push(export_decl.span);
+                        if let Some(source) = export_decl.source.value.as_str() {
+                            modules_source_record
+                                .entry(source.to_string())
+                                .or_default()
+                                .push(export_decl.span);
+                        }
                     }
                     ImportOrExportKind::Type => {
-                        type_source_record
-                            .entry(export_decl.source.value.to_string())
-                            .or_default()
-                            .push(export_decl.span);
+                        if let Some(source) = export_decl.source.value.as_str() {
+                            type_source_record
+                                .entry(source.to_string())
+                                .or_default()
+                                .push(export_decl.span);
+                        }
                     }
                 },
                 AstKind::ExportNamedDeclaration(export_decl) => match export_decl.export_kind {

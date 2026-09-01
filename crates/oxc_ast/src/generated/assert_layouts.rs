@@ -1000,12 +1000,11 @@ const _: () = {
     assert!(offset_of!(NumericLiteral, raw) == 16);
     assert!(offset_of!(NumericLiteral, value) == 32);
 
-    // Padding: 3 bytes
+    // Padding: 4 bytes
     assert!(size_of::<StringLiteral>() == 48);
     assert!(align_of::<StringLiteral>() == 8);
     assert!(offset_of!(StringLiteral, span) == 0);
     assert!(offset_of!(StringLiteral, node_id) == 8);
-    assert!(offset_of!(StringLiteral, lone_surrogates) == 12);
     assert!(offset_of!(StringLiteral, value) == 16);
     assert!(offset_of!(StringLiteral, raw) == 32);
 
@@ -2842,13 +2841,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(NumericLiteral, raw) == 16);
     assert!(offset_of!(NumericLiteral, value) == 24);
 
-    // Padding: 3 bytes
+    // Padding: 0 bytes
     assert!(size_of::<StringLiteral>() == 32);
     assert!(align_of::<StringLiteral>() == 4);
     assert!(offset_of!(StringLiteral, span) == 0);
     assert!(offset_of!(StringLiteral, node_id) == 8);
-    assert!(offset_of!(StringLiteral, lone_surrogates) == 12);
-    assert!(offset_of!(StringLiteral, value) == 16);
+    assert!(offset_of!(StringLiteral, value) == 12);
     assert!(offset_of!(StringLiteral, raw) == 24);
 
     // Padding: 3 bytes

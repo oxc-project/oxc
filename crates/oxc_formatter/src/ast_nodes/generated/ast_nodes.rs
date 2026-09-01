@@ -7,7 +7,7 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
-use oxc_str::Ident;
+use oxc_str::{Ident, JSStr};
 use oxc_syntax::node::NodeId;
 
 use crate::ast_nodes::AstNode;
@@ -6476,18 +6476,13 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     }
 
     #[inline]
-    pub fn value(&self) -> Str<'a> {
+    pub fn value(&self) -> JSStr<'a> {
         self.inner.value
     }
 
     #[inline]
     pub fn raw(&self) -> Option<Str<'a>> {
         self.inner.raw
-    }
-
-    #[inline]
-    pub fn lone_surrogates(&self) -> bool {
-        self.inner.lone_surrogates
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

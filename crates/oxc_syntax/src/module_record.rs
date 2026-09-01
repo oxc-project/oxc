@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, ArenaHashMap, ArenaVec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::Span;
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 
 /// ESM Module Record
 ///
@@ -28,7 +28,7 @@ pub struct ModuleRecord<'a> {
     ///   export ExportFromClause FromClause
     ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
-    pub requested_modules: ArenaHashMap<'a, Str<'a>, ArenaVec<'a, RequestedModule>>,
+    pub requested_modules: ArenaHashMap<'a, JSStr<'a>, ArenaVec<'a, RequestedModule>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -96,6 +96,27 @@ pub struct NameSpan<'a> {
     pub span: Span,
 }
 
+/// JavaScript string module request and its source span.
+#[ast]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[generate_derive(ESTree)]
+#[estree(no_type, no_ts_def)]
+pub struct ModuleRequest<'a> {
+    /// Module specifier string.
+    #[estree(rename = "value")]
+    pub name: JSStr<'a>,
+
+    /// Span.
+    pub span: Span,
+}
+
+impl<'a> ModuleRequest<'a> {
+    /// Constructor.
+    pub fn new(name: JSStr<'a>, span: Span) -> Self {
+        Self { span, name }
+    }
+}
+
 impl<'a> NameSpan<'a> {
     /// Constructor
     pub fn new(name: Str<'a>, span: Span) -> Self {
@@ -136,7 +157,7 @@ pub struct ImportEntry<'a> {
     /// //                   ^^^
     /// ```
     #[estree(skip)]
-    pub module_request: NameSpan<'a>,
+    pub module_request: ModuleRequest<'a>,
 
     /// The name under which the desired binding is exported by the module identified by `[[ModuleRequest]]`.
     ///
@@ -243,7 +264,7 @@ pub struct ExportEntry<'a> {
 
     /// The String value of the ModuleSpecifier of the ExportDeclaration.
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
-    pub module_request: Option<NameSpan<'a>>,
+    pub module_request: Option<ModuleRequest<'a>>,
 
     /// The name under which the desired binding is exported by the module identified by `[[ModuleRequest]]`.
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
@@ -450,7 +471,7 @@ pub trait VisitMutModuleRecord {
 
     fn visit_import_entry(&mut self, import_entry: &mut ImportEntry) {
         self.visit_span(&mut import_entry.statement_span);
-        self.visit_name_span(&mut import_entry.module_request);
+        self.visit_module_request(&mut import_entry.module_request);
         self.visit_name_span(&mut import_entry.local_name);
         self.visit_import_import_name(&mut import_entry.import_name);
     }
@@ -467,11 +488,15 @@ pub trait VisitMutModuleRecord {
         self.visit_span(&mut export_entry.statement_span);
         self.visit_span(&mut export_entry.span);
         if let Some(module_request) = &mut export_entry.module_request {
-            self.visit_name_span(module_request);
+            self.visit_module_request(module_request);
         }
         self.visit_export_import_name(&mut export_entry.import_name);
         self.visit_export_export_name(&mut export_entry.export_name);
         self.visit_export_local_name(&mut export_entry.local_name);
+    }
+
+    fn visit_module_request(&mut self, module_request: &mut ModuleRequest) {
+        self.visit_span(&mut module_request.span);
     }
 
     fn visit_export_import_name(&mut self, export_import_name: &mut ExportImportName) {

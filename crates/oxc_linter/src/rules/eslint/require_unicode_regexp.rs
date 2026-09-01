@@ -259,7 +259,7 @@ fn resolve_flags<'a>(
     }
 
     match expr {
-        Expression::StringLiteral(lit) => Some(parse_flags(lit.value.as_str())),
+        Expression::StringLiteral(lit) => Some(parse_flags(lit.value.as_str()?)),
         Expression::TemplateLiteral(template) => resolve_template_flags(template, ctx, next_depth),
         Expression::BooleanLiteral(lit) => {
             Some(if lit.value { RegExpFlags::U } else { RegExpFlags::empty() })
@@ -307,11 +307,11 @@ fn resolve_template_flags<'a>(
 
 fn resolve_static_string<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
     match expr.get_inner_expression() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::StringLiteral(lit) => lit.value.as_str(),
         Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
         Expression::Identifier(ident) => {
             match resolve_const_initializer(ident, ctx)?.get_inner_expression() {
-                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+                Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
                 _ => None,
             }

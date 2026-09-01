@@ -130,6 +130,10 @@ impl NameSpan {
     pub fn name(&self) -> &str {
         self.name.as_str()
     }
+
+    fn from_module_request(other: &oxc_syntax::module_record::ModuleRequest<'_>) -> Option<Self> {
+        Some(Self { name: CompactStr::from(other.name.as_str()?), span: other.span })
+    }
 }
 
 impl<'a> From<&oxc_syntax::module_record::NameSpan<'a>> for NameSpan {
@@ -218,15 +222,15 @@ pub struct ImportEntry {
     pub is_type: bool,
 }
 
-impl<'a> From<&oxc_syntax::module_record::ImportEntry<'a>> for ImportEntry {
-    fn from(other: &oxc_syntax::module_record::ImportEntry<'a>) -> Self {
-        Self {
+impl ImportEntry {
+    fn from_syntax(other: &oxc_syntax::module_record::ImportEntry<'_>) -> Option<Self> {
+        Some(Self {
             statement_span: other.statement_span,
-            module_request: NameSpan::from(&other.module_request),
+            module_request: NameSpan::from_module_request(&other.module_request)?,
             import_name: ImportImportName::from(&other.import_name),
             local_name: NameSpan::from(&other.local_name),
             is_type: other.is_type,
-        }
+        })
     }
 }
 
@@ -318,17 +322,21 @@ pub struct ExportEntry {
     pub is_type: bool,
 }
 
-impl<'a> From<&oxc_syntax::module_record::ExportEntry<'a>> for ExportEntry {
-    fn from(other: &oxc_syntax::module_record::ExportEntry<'a>) -> Self {
-        Self {
+impl ExportEntry {
+    fn from_syntax(other: &oxc_syntax::module_record::ExportEntry<'_>) -> Option<Self> {
+        let module_request = match &other.module_request {
+            Some(module_request) => Some(NameSpan::from_module_request(module_request)?),
+            None => None,
+        };
+        Some(Self {
             statement_span: other.statement_span,
             span: other.span,
-            module_request: other.module_request.as_ref().map(NameSpan::from),
+            module_request,
             import_name: ExportImportName::from(&other.import_name),
             export_name: ExportExportName::from(&other.export_name),
             local_name: ExportLocalName::from(&other.local_name),
             is_type: other.is_type,
-        }
+        })
     }
 }
 
@@ -471,26 +479,34 @@ impl ModuleRecord {
             requested_modules: other
                 .requested_modules
                 .iter()
-                .map(|(name, requested_modules)| {
-                    (
-                        CompactStr::from(name.as_str()),
+                .filter_map(|(name, requested_modules)| {
+                    Some((
+                        CompactStr::from(name.as_str()?),
                         requested_modules.iter().copied().collect::<Vec<_>>(),
-                    )
+                    ))
                 })
                 .collect(),
-            import_entries: other.import_entries.iter().map(ImportEntry::from).collect(),
+            import_entries: other
+                .import_entries
+                .iter()
+                .filter_map(ImportEntry::from_syntax)
+                .collect(),
 
             local_export_entries: other
                 .local_export_entries
                 .iter()
-                .map(ExportEntry::from)
+                .filter_map(ExportEntry::from_syntax)
                 .collect(),
             indirect_export_entries: other
                 .indirect_export_entries
                 .iter()
-                .map(ExportEntry::from)
+                .filter_map(ExportEntry::from_syntax)
                 .collect(),
-            star_export_entries: other.star_export_entries.iter().map(ExportEntry::from).collect(),
+            star_export_entries: other
+                .star_export_entries
+                .iter()
+                .filter_map(ExportEntry::from_syntax)
+                .collect(),
             exported_bindings: other
                 .exported_bindings
                 .iter()

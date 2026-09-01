@@ -87,7 +87,7 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
             }
             PropertyKey::PrivateIdentifier(_) => false,
             PropertyKey::StringLiteral(str) => {
-                matches!(str.value.as_str(), "toString" | "valueOf")
+                matches!(str.value.as_str(), Some("toString" | "valueOf"))
             }
             PropertyKey::TemplateLiteral(temp) => temp
                 .single_quasi()

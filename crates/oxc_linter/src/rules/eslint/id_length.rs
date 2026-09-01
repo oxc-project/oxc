@@ -219,7 +219,9 @@ impl IdLength {
 
         match parent_node.kind() {
             AstKind::ImportSpecifier(import_specifier) => {
-                if import_specifier.imported.name() == import_specifier.local.name {
+                if import_specifier.imported.name().as_str()
+                    == Some(import_specifier.local.name.as_str())
+                {
                     return;
                 }
                 if !import_specifier.local.content_eq(ident) {

@@ -151,7 +151,7 @@ impl Rule for PreferStringRaw {
             return;
         }
 
-        let value = string_literal.value.as_str();
+        let Some(value) = string_literal.value.as_str() else { return };
 
         // Cannot use String.raw if the value ends with an odd number of backslashes,
         // as the final backslash would escape the closing backtick.

@@ -233,6 +233,8 @@ describe.concurrent("edge cases", () => {
     ';"\\uD800\\uDBFF";',
     ';"�\\u{FFFD}";',
     ';"�\\u{FFFD}\\uD800\\uDBFF�\\u{FFFD}";',
+    // Module requests containing lone surrogates
+    'import "a\\uD800b";',
     // `TemplateLiteral`s containing lone surrogates and/or lossy replacement characters
     "`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;",
     "`�\\u{FFFD}${x}�\\u{FFFD}`;",

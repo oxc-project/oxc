@@ -4,6 +4,7 @@ use cow_utils::CowUtils;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 use oxc_allocator::ArenaStringBuilder;
+use oxc_str::JSStrBuilder;
 use oxc_syntax::{
     identifier::{
         FF, TAB, VT, is_identifier_part, is_identifier_start, is_identifier_start_unicode,
@@ -27,6 +28,21 @@ enum UnicodeEscape {
     // `\u Hex4Digits` or `\u{ HexDigits }`, which forms an invalid Unicode code point.
     // Code unit is in the range 0xD800..=0xDFFF.
     LoneSurrogate(u32),
+}
+
+enum EscapeSequenceBuilder<'b, 'a> {
+    Utf8(&'b mut ArenaStringBuilder<'a>),
+    JavaScript(&'b mut JSStrBuilder<'a>),
+}
+
+impl EscapeSequenceBuilder<'_, '_> {
+    #[inline]
+    fn push_char(&mut self, value: char) {
+        match self {
+            Self::Utf8(text) => text.push(value),
+            Self::JavaScript(text) => text.push_char(value),
+        }
+    }
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
@@ -137,7 +153,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut ArenaStringBuilder<'a>,
+        text: &mut EscapeSequenceBuilder<'_, 'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek_byte() {
@@ -157,20 +173,33 @@ impl<'a, C: Config> Lexer<'a, C> {
         // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
             UnicodeEscape::CodePoint(ch) => {
-                if ch == '\u{FFFD}' && self.token.lone_surrogates() {
+                if matches!(text, EscapeSequenceBuilder::Utf8(_))
+                    && ch == '\u{FFFD}'
+                    && self.token.lone_surrogates()
+                {
                     // Lossy replacement character is being used as an escape marker. Escape it.
+                    let EscapeSequenceBuilder::Utf8(text) = text else { unreachable!() };
                     text.push_str("\u{FFFD}fffd");
                 } else {
-                    text.push(ch);
+                    text.push_char(ch);
                 }
             }
             UnicodeEscape::SurrogatePair(ch) => {
                 // Surrogate pair is always >= 0x10000, so cannot be 0xFFFD
-                text.push(ch);
+                text.push_char(ch);
             }
-            UnicodeEscape::LoneSurrogate(code_point) => {
-                self.string_lone_surrogate(code_point, text);
-            }
+            UnicodeEscape::LoneSurrogate(code_point) => match text {
+                EscapeSequenceBuilder::Utf8(text) => {
+                    self.string_lone_surrogate(code_point, text);
+                }
+                EscapeSequenceBuilder::JavaScript(text) => {
+                    #[expect(
+                        clippy::cast_possible_truncation,
+                        reason = "lone surrogates are always within u16"
+                    )]
+                    text.push_code_unit(code_point as u16);
+                }
+            },
         }
     }
 
@@ -333,6 +362,31 @@ impl<'a, C: Config> Lexer<'a, C> {
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
+        self.read_string_escape_sequence_impl(
+            &mut EscapeSequenceBuilder::Utf8(text),
+            in_template,
+            is_valid_escape_sequence,
+        );
+    }
+
+    pub(super) fn read_js_string_escape_sequence(
+        &mut self,
+        text: &mut JSStrBuilder<'a>,
+        is_valid_escape_sequence: &mut bool,
+    ) {
+        self.read_string_escape_sequence_impl(
+            &mut EscapeSequenceBuilder::JavaScript(text),
+            false,
+            is_valid_escape_sequence,
+        );
+    }
+
+    fn read_string_escape_sequence_impl(
+        &mut self,
+        text: &mut EscapeSequenceBuilder<'_, 'a>,
+        in_template: bool,
+        is_valid_escape_sequence: &mut bool,
+    ) {
         match self.next_char() {
             None => {
                 self.error(diagnostics::unterminated_string(self.unterminated_range()));
@@ -351,13 +405,13 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
                 // SingleEscapeCharacter :: one of
                 //   ' " \ b f n r t v
-                '\'' | '"' | '\\' => text.push(c),
-                'b' => text.push('\u{8}'),
-                'f' => text.push(FF),
-                'n' => text.push(LF),
-                'r' => text.push(CR),
-                't' => text.push(TAB),
-                'v' => text.push(VT),
+                '\'' | '"' | '\\' => text.push_char(c),
+                'b' => text.push_char('\u{8}'),
+                'f' => text.push_char(FF),
+                'n' => text.push_char(LF),
+                'r' => text.push_char(CR),
+                't' => text.push_char(TAB),
+                'v' => text.push_char(VT),
                 // HexEscapeSequence
                 'x' => {
                     self.hex_digit()
@@ -372,7 +426,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                                 *is_valid_escape_sequence = false;
                             },
                             |c| {
-                                text.push(c);
+                                text.push_char(c);
                             },
                         );
                 }
@@ -381,7 +435,9 @@ impl<'a, C: Config> Lexer<'a, C> {
                     self.string_unicode_escape_sequence(text, is_valid_escape_sequence);
                 }
                 // 0 [lookahead ∉ DecimalDigit]
-                '0' if !self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => text.push('\0'),
+                '0' if !self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
+                    text.push_char('\0');
+                }
                 // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
@@ -397,19 +453,13 @@ impl<'a, C: Config> Lexer<'a, C> {
                             value = value * 8 + digit;
 
                             if value >= 128 {
-                                // `value` is between 128 and 255. UTF-8 representation is:
-                                // 128-191: `0xC2`, followed by code point value.
-                                // 192-255: `0xC3`, followed by code point value - 64.
-                                let bytes = [0xC0 + first_digit, value & 0b1011_1111];
-                                // SAFETY: `bytes` is a valid 2-byte UTF-8 sequence
-                                unsafe { text.push_bytes_unchecked(&bytes) };
+                                text.push_char(char::from(value));
                                 return;
                             }
                         }
                     }
 
-                    // SAFETY: `value` is in range 0 to `((1 * 8) + 7) * 8 + 7` (127) i.e. ASCII
-                    unsafe { text.push_byte_unchecked(value) };
+                    text.push_char(char::from(value));
                 }
                 '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
                     self.consume_char();
@@ -423,7 +473,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
                 other => {
                     // NonOctalDecimalEscapeSequence \8 \9 in strict mode
-                    text.push(other);
+                    text.push_char(other);
                 }
             },
         }

@@ -12,7 +12,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
@@ -124,7 +124,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_none_or(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -139,7 +142,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_none_or(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -154,7 +160,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_none_or(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -1387,8 +1396,12 @@ impl<'a> PeepholeOptimizations {
         let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
             return;
         };
-        let new_value =
-            Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
+        let new_value = Expression::new_string_literal(
+            t.span(),
+            JSStr::from(Str::from_cow_in(&val, ctx)),
+            None,
+            ctx,
+        );
         ctx.replace_expression(expr, new_value);
     }
 
@@ -1404,11 +1417,11 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
-                let value = s.value.as_str();
+                let Some(value) = s.value.as_str() else { return };
                 if is_identifier_name_patched(value) {
                     // Bool field flip on an existing AST node, not a slot replacement.
                     *computed = false;
-                    let new_key = PropertyKey::new_static_identifier(s.span, s.value, ctx);
+                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
@@ -1714,10 +1727,13 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        let is_all_string = array.elements.iter().all(|element| {
-            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
+        let is_all_utf8_string = array.elements.iter().all(|element| {
+            matches!(
+                element.as_expression(),
+                Some(Expression::StringLiteral(string)) if string.value.as_str().is_some()
+            )
         });
-        if !is_all_string {
+        if !is_all_utf8_string {
             return;
         }
 
@@ -1731,7 +1747,8 @@ impl<'a> PeepholeOptimizations {
 
         let strings = array.elements.iter().map(|element| {
             let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.value.as_str()
+            let Some(value) = str.value.as_str() else { unreachable!() };
+            value
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 

@@ -527,6 +527,18 @@ function Component(props) {\n\
 }
 
 #[test]
+fn fbt_string_operand_with_lone_surrogate_stays_in_expression_container() {
+    let source = r#"function Component() { return <fbt desc={"\uD800"}>x</fbt>; }"#;
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should be compiled");
+    assert!(!result.diagnostics.has_errors(), "unexpected errors: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains(r#"desc={"\ud800"}"#), "lone surrogate was not preserved:\n{output}");
+}
+
+#[test]
 fn resource_management_declarations_bail_out() {
     let cases = [
         "\

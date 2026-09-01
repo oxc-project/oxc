@@ -234,7 +234,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ImportAttr
             if self.len() > 1
                 || self
                     .first()
-                    .is_some_and(|attribute| attribute.key.as_arena_str().as_str() != "type")
+                    .is_some_and(|attribute| attribute.key.as_js_str().as_str() != Some("type"))
                 || f.comments().has_comment_before(self.parent().span().end)
             {
                 write!(

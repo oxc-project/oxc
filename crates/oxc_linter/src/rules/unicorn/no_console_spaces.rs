@@ -86,12 +86,13 @@ impl Rule for NoConsoleSpaces {
                             .trim_start_matches('`')
                             .trim_end_matches('`');
 
-                        (literal_raw, true)
+                        (Some(literal_raw), true)
                     }
 
                     _ => continue,
                 };
 
+                let Some(literal_raw) = literal_raw else { continue };
                 if check_literal_leading(i, literal_raw) {
                     report_diagnostic(
                         "leading",

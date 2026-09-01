@@ -263,7 +263,9 @@ fn match_href_expression(
     is_dynamic_link: &mut bool,
 ) {
     match expr {
-        Expression::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
+        Expression::StringLiteral(str) => {
+            *is_external_link = str.value.as_str().is_some_and(check_is_external_link);
+        }
         Expression::Identifier(_) => *is_dynamic_link = true,
         Expression::ConditionalExpression(expr) => {
             match_href_expression(&expr.consequent, is_external_link, is_dynamic_link);
@@ -283,7 +285,7 @@ fn check_href(
         matches!(enforce_dynamic_links, EnforceDynamicLinksEnum::Never);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            is_external_link = check_is_external_link(&str.value);
+            is_external_link = str.value.as_str().is_some_and(check_is_external_link);
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
@@ -309,19 +311,38 @@ fn check_href(
 }
 
 fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
-    let mut splits = str.value.as_str().split(' ');
+    let contains_token = |expected: &str, ignore_ascii_case: bool| {
+        let expected = expected.as_bytes();
+        let mut index = 0;
+        let mut token_matches = true;
+
+        for code_point in str.value.code_points().chain(std::iter::once(u32::from(b' '))) {
+            if code_point == u32::from(b' ') {
+                if token_matches && index == expected.len() {
+                    return true;
+                }
+                index = 0;
+                token_matches = true;
+                continue;
+            }
+
+            let code_point =
+                if ignore_ascii_case && (u32::from(b'A')..=u32::from(b'Z')).contains(&code_point) {
+                    code_point + u32::from(b'a' - b'A')
+                } else {
+                    code_point
+                };
+            token_matches &= index < expected.len() && code_point == u32::from(expected[index]);
+            index += 1;
+        }
+        false
+    };
+
     if allow_referrer {
-        return splits.any(|str| {
-            if str == "noopener" {
-                return true;
-            }
-            if str == "noreferrer" {
-                return true;
-            }
-            false
-        });
+        contains_token("noopener", false) || contains_token("noreferrer", false)
+    } else {
+        contains_token("noreferrer", true)
     }
-    splits.any(|str| str.eq_ignore_ascii_case("noreferrer"))
 }
 
 fn match_rel_expression<'a>(
@@ -364,9 +385,12 @@ fn match_target_expression<'a>(
 ) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
     let default = (false, None, false, false);
     match expr {
-        Expression::StringLiteral(str) => {
-            (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
-        }
+        Expression::StringLiteral(str) => (
+            str.value.as_str().is_some_and(|value| value.eq_ignore_ascii_case("_blank")),
+            None,
+            false,
+            false,
+        ),
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
@@ -381,9 +405,12 @@ fn check_target<'a>(
 ) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
     let default = (false, None, false, false);
     match attribute_value {
-        JSXAttributeValue::StringLiteral(str) => {
-            (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
-        }
+        JSXAttributeValue::StringLiteral(str) => (
+            str.value.as_str().is_some_and(|value| value.eq_ignore_ascii_case("_blank")),
+            None,
+            false,
+            false,
+        ),
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
                 match_target_expression(expr)
@@ -406,6 +433,7 @@ fn test() {
         (r#"<a href="foobar" target="_blank" rel="noopener noreferrer"></a>"#, None, None),
         (r#"<a href="foobar" target="_blank" rel="noreferrer"></a>"#, None, None),
         (r#"<a href="foobar" target="_blank" rel={"noopener noreferrer"}></a>"#, None, None),
+        (r#"<a href="foobar" target="_blank" rel={"noopener noreferrer \uD800"}></a>"#, None, None),
         (r#"<a href="foobar" target="_blank" rel={"noreferrer"}></a>"#, None, None),
         (r#"<a href={"foobar"} target={"_blank"} rel={"noopener noreferrer"}></a>"#, None, None),
         (r#"<a href={"foobar"} target={"_blank"} rel={"noreferrer"}></a>"#, None, None),

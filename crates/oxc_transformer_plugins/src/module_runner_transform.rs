@@ -55,7 +55,7 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
-use oxc_str::{Ident, static_ident};
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
@@ -68,11 +68,11 @@ pub struct ModuleRunnerTransform<'a> {
     /// Import bindings used to determine which identifiers should be transformed.
     /// The key is a symbol id that belongs to the import binding.
     /// The value is a tuple of (Binding, Property).
-    import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<Str<'a>>)>,
+    import_bindings: FxHashMap<SymbolId, (BoundIdentifier<'a>, Option<JSStr<'a>>)>,
 
     // Collect deps and dynamic deps for Vite
-    deps: FxHashSet<String>,
-    dynamic_deps: FxHashSet<String>,
+    deps: FxHashSet<JSStr<'a>>,
+    dynamic_deps: FxHashSet<JSStr<'a>>,
 }
 
 impl<'a> ModuleRunnerTransform<'a> {
@@ -91,7 +91,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         scoping: Scoping,
-    ) -> (FxHashSet<String>, FxHashSet<String>) {
+    ) -> (FxHashSet<JSStr<'a>>, FxHashSet<JSStr<'a>>) {
         traverse_mut(&mut self, allocator, program, scoping, ());
         (self.deps, self.dynamic_deps)
     }
@@ -230,11 +230,13 @@ impl<'a> ModuleRunnerTransform<'a> {
             // TODO(improvement): It looks like here could always return a computed member expression,
             //                    so that we don't need to check if it's an identifier name.
             // __vite_ssr_import_0__.foo
-            let expr = if is_identifier_name(property) {
+            let expr = if let Some(property) =
+                property.as_str().filter(|property| is_identifier_name(property))
+            {
                 create_property_access(ident.span, object, property, ctx)
             } else {
                 // __vite_ssr_import_0__['arbitrary string']
-                create_compute_property_access(ident.span, object, property, ctx)
+                create_compute_property_access(ident.span, object, *property, ctx)
             };
 
             if matches!(ctx.parent(), Ancestor::CallExpressionCallee(_)) {
@@ -262,7 +264,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             let ImportExpression { span, source, options, .. } = import_expr.unbox();
 
             if let Expression::StringLiteral(source) = &source {
-                self.dynamic_deps.insert(source.value.to_string());
+                self.dynamic_deps.insert(source.value);
             }
 
             let flags = ReferenceFlags::Read;
@@ -321,7 +323,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        self.deps.insert(source.value.to_string());
+        self.deps.insert(source.value);
 
         // ['vue', { importedNames: ['foo'] }]`
         let mut arguments = ArenaVec::with_capacity_in(1 + usize::from(specifiers.is_some()), ctx);
@@ -464,7 +466,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let import_binding = source.map(|source| {
-            self.deps.insert(source.value.to_string());
+            self.deps.insert(source.value);
             let binding = self.generate_import_binding(ctx);
             let pattern = binding.create_binding_pattern(ctx);
             let imported_names = ArenaVec::from_iter_in(
@@ -494,16 +496,18 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let property = local.name();
                 // TODO(improvement): It looks like here could always return a computed member expression,
                 //                    so that we don't need to check if it's an identifier name.
-                if is_identifier_name(&property) {
-                    create_property_access(SPAN, object, &property, ctx)
+                if let Some(property) =
+                    property.as_str().filter(|property| is_identifier_name(property))
+                {
+                    create_property_access(SPAN, object, property, ctx)
                 } else {
-                    create_compute_property_access(SPAN, object, &property, ctx)
+                    create_compute_property_access(SPAN, object, property, ctx)
                 }
             } else {
                 let ModuleExportName::IdentifierReference(ident) = local else { unreachable!() };
                 Expression::Identifier(ArenaBox::new_in(ident, ctx))
             };
-            Self::create_export(span, expr, exported.name().into(), ctx)
+            Self::create_export(span, expr, exported.name(), ctx)
         }));
     }
 
@@ -532,7 +536,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let ExportAllDeclaration { span, source, exported, .. } = export.unbox();
-        self.deps.insert(source.value.to_string());
+        self.deps.insert(source.value);
         let binding = self.generate_import_binding(ctx);
         let pattern = binding.create_binding_pattern(ctx);
         let arguments = ArenaVec::from_value_in(
@@ -546,7 +550,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         if let Some(exported) = exported {
             // `export * as foo from 'vue'` ->
             // `Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
-            let export = Self::create_export(span, ident, exported.name().into(), ctx);
+            let export = Self::create_export(span, ident, exported.name(), ctx);
             hoist_imports.push(import);
             hoist_exports.push(export);
         } else {
@@ -682,7 +686,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         span: Span,
         binding: &BoundIdentifier<'a>,
         ident: BindingIdentifier<'a>,
-        key: Str<'a>,
+        key: JSStr<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArrayExpressionElement<'a> {
         let BindingIdentifier { name, symbol_id, .. } = ident;
@@ -833,7 +837,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn create_export(
         span: Span,
         expr: Expression<'a>,
-        exported_name: Ident<'a>,
+        exported_name: impl Into<JSStr<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
@@ -854,7 +858,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     static_ident!("__vite_ssr_exports__"),
                     ReferenceFlags::Read,
                 )),
-                Argument::new_string_literal(SPAN, exported_name, None, ctx),
+                Argument::new_string_literal(SPAN, exported_name.into(), None, ctx),
                 Argument::from(object),
             ],
             ctx,
@@ -899,11 +903,10 @@ impl<'a> ModuleRunnerTransform<'a> {
 fn create_compute_property_access<'a>(
     span: Span,
     object: Expression<'a>,
-    property: &str,
+    property: JSStr<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let expression =
-        Expression::new_string_literal(SPAN, Str::from_str_in(property, ctx), None, ctx);
+    let expression = Expression::new_string_literal(SPAN, property, None, ctx);
     Expression::new_computed_member_expression(span, object, expression, false, ctx)
 }
 
@@ -947,8 +950,8 @@ mod test {
 
     struct TransformReturn {
         code: String,
-        deps: FxHashSet<String>,
-        dynamic_deps: FxHashSet<String>,
+        deps: FxHashSet<Vec<u16>>,
+        dynamic_deps: FxHashSet<Vec<u16>>,
     }
 
     fn transform(source_text: &str, is_jsx: bool) -> Result<TransformReturn, Diagnostics> {
@@ -966,6 +969,9 @@ mod test {
         }
         let (deps, dynamic_deps) =
             ModuleRunnerTransform::new().transform(&allocator, &mut program, scoping);
+        let deps = deps.into_iter().map(|value| value.encode_utf16().collect()).collect();
+        let dynamic_deps =
+            dynamic_deps.into_iter().map(|value| value.encode_utf16().collect()).collect();
 
         if !ret.diagnostics.is_empty() {
             return Err(ret.diagnostics);
@@ -1028,10 +1034,10 @@ mod test {
             panic!("Expected code does not match the result");
         }
         for dep in deps {
-            assert!(result_deps.contains(*dep));
+            assert!(result_deps.contains(&dep.encode_utf16().collect::<Vec<_>>()));
         }
         for dep in dynamic_deps {
-            assert!(result_dynamic_deps.contains(*dep));
+            assert!(result_dynamic_deps.contains(&dep.encode_utf16().collect::<Vec<_>>()));
         }
     }
 
@@ -2496,5 +2502,12 @@ const c = () => {
         __vite_ssr_dynamic_import__('e');
         ";
         test_same_and_deps(code, expected, &["a", "b", "c", "d"], &["e"]);
+    }
+
+    #[test]
+    fn deps_preserve_lone_surrogates() {
+        let result = transform("import '\\uD800'; import('\\uDC00')", false).unwrap();
+        assert!(result.deps.contains(&vec![0xD800]));
+        assert!(result.dynamic_deps.contains(&vec![0xDC00]));
     }
 }

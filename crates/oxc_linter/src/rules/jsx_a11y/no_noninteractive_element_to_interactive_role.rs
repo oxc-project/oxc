@@ -169,7 +169,7 @@ impl Rule for NoNoninteractiveElementToInteractiveRole {
             return;
         };
 
-        let role = role_value.value.as_str().trim();
+        let Some(role) = role_value.value.as_str().map(str::trim) else { return };
 
         // Take only the first role token (whitespace-separated).
         let Some(first_role) = role.split_whitespace().next() else {

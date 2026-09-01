@@ -208,7 +208,7 @@ fn check_computed_class_member(
 ) {
     match expr {
         Expression::StringLiteral(lit) => {
-            let key_name = lit.value.as_str();
+            let Some(key_name) = lit.value.as_str() else { return };
             let allowed = if is_static {
                 allow_static.contains(&key_name)
             } else {

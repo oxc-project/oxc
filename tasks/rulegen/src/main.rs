@@ -274,7 +274,7 @@ impl<'a> VisitJs<'a> for TestCase {
                 let ArrayExpressionElement::StringLiteral(lit) = arg else {
                     continue;
                 };
-                code.push_str(lit.value.as_str());
+                code.push_str(lit.value.as_str().expect("rule tests must contain valid UTF-8"));
                 code.push('\n');
             }
             self.code = Some(code);
@@ -288,7 +288,7 @@ impl<'a> VisitJs<'a> for TestCase {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
@@ -316,7 +316,7 @@ impl<'a> VisitJs<'a> for TestCase {
                                         .iter()
                                         .map(|arg| match arg {
                                             ArrayExpressionElement::StringLiteral(string) => {
-                                                string.value.as_str()
+                                                string.value.as_str().unwrap_or("")
                                             }
                                             _ => "",
                                         })
@@ -329,7 +329,7 @@ impl<'a> VisitJs<'a> for TestCase {
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "output" => {
                         self.output = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
@@ -380,7 +380,7 @@ impl<'a> VisitJs<'a> for TestCase {
     }
 
     fn visit_string_literal(&mut self, lit: &StringLiteral) {
-        self.code = Some(lit.value.to_string());
+        self.code = lit.value.as_str().map(str::to_owned);
         self.config = None;
     }
 
@@ -557,7 +557,11 @@ impl<'a> VisitJs<'a> for State<'a> {
                 && let Some(Argument::StringLiteral(lit)) = expr.arguments.first()
             {
                 pushed = true;
-                self.group_comment_stack.push(lit.value.to_string());
+                if let Some(value) = lit.value.as_str() {
+                    self.group_comment_stack.push(value.to_owned());
+                } else {
+                    pushed = false;
+                }
             }
         }
         for arg in &expr.arguments {
@@ -984,13 +988,13 @@ impl<'a> RuleConfig<'a> {
     // Helper function to parse type string literals
     fn parse_type_string_literal(&mut self, lit: &StringLiteral) -> Option<RuleConfigElement> {
         match lit.value.as_str() {
-            "string" => Some(RuleConfigElement::String),
-            "boolean" => Some(RuleConfigElement::Boolean),
-            "number" => Some(RuleConfigElement::Number),
-            "integer" => Some(RuleConfigElement::Integer),
-            "array" | "object" => None,
+            Some("string") => Some(RuleConfigElement::String),
+            Some("boolean") => Some(RuleConfigElement::Boolean),
+            Some("number") => Some(RuleConfigElement::Number),
+            Some("integer") => Some(RuleConfigElement::Integer),
+            Some("array" | "object") => None,
             _ => {
-                self.log_error(&format!("Unhandled `type` value: {}", lit.value));
+                self.log_error(&format!("Unhandled `type` value: {:?}", lit.value));
                 None
             }
         }
@@ -1096,9 +1100,10 @@ impl<'a> RuleConfig<'a> {
             .elements
             .iter()
             .filter_map(|arg| match arg {
-                ArrayExpressionElement::StringLiteral(string_literal) => {
-                    Some(RuleConfigElement::StringLiteral(string_literal.value.into()))
-                }
+                ArrayExpressionElement::StringLiteral(string_literal) => string_literal
+                    .value
+                    .as_str()
+                    .map(|value| RuleConfigElement::StringLiteral(value.to_owned())),
                 ArrayExpressionElement::BooleanLiteral(boolean_literal) => {
                     if boolean_literal.value {
                         Some(RuleConfigElement::True)

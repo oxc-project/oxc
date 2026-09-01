@@ -102,7 +102,7 @@ fn bad_char_at_comparison_operands(
 fn invalid_comparison_string(expr: &Expression) -> Option<(Span, usize)> {
     let expr = expr.without_parentheses();
     let value = match expr {
-        Expression::StringLiteral(literal) => literal.value.as_str(),
+        Expression::StringLiteral(literal) => literal.value.as_str()?,
         Expression::TemplateLiteral(literal) if literal.expressions.is_empty() => {
             literal.quasis.first()?.value.cooked.as_deref()?
         }
@@ -178,7 +178,7 @@ fn is_static_string_index(expr: &Expression) -> bool {
     match expr.without_parentheses() {
         Expression::NumericLiteral(_) => true,
         Expression::StringLiteral(literal) => {
-            let value = literal.value.as_str();
+            let Some(value) = literal.value.as_str() else { return false };
             value == "0"
                 || (!value.starts_with('0')
                     && value.bytes().all(|byte| byte.is_ascii_digit())

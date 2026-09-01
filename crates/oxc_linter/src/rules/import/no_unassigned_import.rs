@@ -97,7 +97,12 @@ impl Rule for NoUnassignedImport {
                 if import_decl.specifiers.is_some() {
                     return;
                 }
-                if !self.is_match_allow_globs(import_decl.source.value.as_str()) {
+                if import_decl
+                    .source
+                    .value
+                    .as_str()
+                    .is_none_or(|value| !self.is_match_allow_globs(value))
+                {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         import_decl.span,
                         "Imported module should be assigned",
@@ -115,7 +120,7 @@ impl Rule for NoUnassignedImport {
                 let Argument::StringLiteral(source_str) = first_arg else {
                     return;
                 };
-                if !self.is_match_allow_globs(source_str.value.as_str()) {
+                if source_str.value.as_str().is_none_or(|value| !self.is_match_allow_globs(value)) {
                     ctx.diagnostic(no_unassigned_import_diagnostic(
                         call_expr.span,
                         "A `require()` style import is forbidden.",

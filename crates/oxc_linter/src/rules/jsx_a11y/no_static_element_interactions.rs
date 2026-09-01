@@ -151,7 +151,8 @@ impl Rule for NoStaticElementInteractions {
 
         match role_value {
             JSXAttributeValue::StringLiteral(role) => {
-                let role_str = role.value.as_str().cow_to_lowercase();
+                let Some(value) = role.value.as_str() else { return };
+                let role_str = value.cow_to_lowercase();
                 let roles: Vec<&str> = role_str.split_whitespace().collect();
 
                 if let Some(first_role) = roles.first() {

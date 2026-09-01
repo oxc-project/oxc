@@ -226,9 +226,10 @@ impl ControlHasAssociatedLabel {
 
                 match &attr.value {
                     None => false,
-                    Some(JSXAttributeValue::StringLiteral(s)) => {
-                        !s.value.as_str().trim().is_empty()
-                    }
+                    Some(JSXAttributeValue::StringLiteral(s)) => s
+                        .value
+                        .as_str()
+                        .map_or(!s.value.is_empty(), |value| !value.trim().is_empty()),
                     Some(_) => true,
                 }
             }

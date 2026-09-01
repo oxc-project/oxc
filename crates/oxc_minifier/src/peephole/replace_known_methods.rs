@@ -11,6 +11,7 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -39,7 +40,10 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
-                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                    Expression::StringLiteral(s) => {
+                        let Some(name) = s.value.as_str() else { return };
+                        (name, &member.object)
+                    }
                     _ => return,
                 }
             }
@@ -266,10 +270,40 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::StringLiteral(base_str) => {
-                if !ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
-                    || args.is_empty()
-                    || !args.iter().all(Argument::is_expression)
-                {
+                if args.is_empty() || !args.iter().all(Argument::is_expression) {
+                    return None;
+                }
+
+                if args.iter().all(|arg| matches!(arg, Argument::StringLiteral(_))) {
+                    let capacity = base_str.value.len()
+                        + args
+                            .iter()
+                            .map(|argument| {
+                                let Argument::StringLiteral(literal) = argument else {
+                                    unreachable!()
+                                };
+                                literal.value.len()
+                            })
+                            .sum::<usize>();
+                    let mut value = JSStrBuilder::with_capacity_in(capacity, ctx.allocator());
+                    value.push_js_str(base_str.value);
+                    for argument in args {
+                        let Argument::StringLiteral(literal) = argument else { unreachable!() };
+                        value.push_js_str(literal.value);
+                    }
+                    return Some(Expression::new_string_literal(span, value.finish(), None, ctx));
+                }
+
+                if !ctx.supports_feature(ESFeature::ES2015TemplateLiterals) {
+                    return None;
+                }
+
+                // Template cooked values still use `Str` in this first version. Keep this
+                // optimization on the UTF-8 fast path until templates migrate to `JSStr`.
+                let base_value = base_str.value.as_str()?;
+                if args.iter().any(|arg| {
+                    matches!(arg, Argument::StringLiteral(lit) if lit.value.as_str().is_none())
+                }) {
                     return None;
                 }
 
@@ -299,7 +333,7 @@ impl<'a> PeepholeOptimizations {
                 // separator quasi without a state-machine flag.
                 let scratch = &mut ctx.state.concat_scratch;
                 scratch.clear();
-                scratch.push_str(base_str.value.as_str());
+                scratch.push_str(base_value);
 
                 let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
                 let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
@@ -307,7 +341,7 @@ impl<'a> PeepholeOptimizations {
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
                         // Append onto the in-progress quasi.
-                        scratch.push_str(&str_lit.value);
+                        scratch.push_str(str_lit.value.as_str().unwrap());
                     } else {
                         // Flush the current quasi (possibly empty) before
                         // pushing the next expression.
@@ -386,7 +420,8 @@ impl<'a> PeepholeOptimizations {
                 match &member.expression {
                     Expression::StringLiteral(s) => {
                         let span = member.span;
-                        (s.value.as_str(), &mut member.object, span)
+                        let Some(name) = s.value.as_str() else { return };
+                        (name, &mut member.object, span)
                     }
                     Expression::NumericLiteral(n) => {
                         if let Some(integer_index) = n.value.to_integer_index() {
@@ -551,11 +586,10 @@ impl<'a> PeepholeOptimizations {
 
         match object {
             Expression::StringLiteral(s) => {
-                if let StringCharAtResult::Value(c) =
-                    s.value.as_str().char_at(Some(property.into()))
-                {
+                let value = s.value.as_str()?;
+                if let StringCharAtResult::Value(c) = value.char_at(Some(property.into())) {
                     s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx);
+                    s.value = JSStr::from_str_in(&c.to_string(), ctx);
                     s.raw = None;
                     Some(object.take_in(ctx))
                 } else {

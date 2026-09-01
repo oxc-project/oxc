@@ -117,21 +117,16 @@ impl PreferImportInMock {
         let Some(Argument::StringLiteral(import_value)) = call_expr.arguments.first() else {
             return;
         };
+        let Some(import_value_str) = import_value.value.as_str() else { return };
 
         ctx.diagnostic_with_fix(
-            prefer_import_in_mock_diagnostic(
-                call_expr.arguments_span().unwrap(),
-                import_value.value.as_ref(),
-            ),
+            prefer_import_in_mock_diagnostic(call_expr.arguments_span().unwrap(), import_value_str),
             |fixer| {
                 if !self.fixable {
                     return fixer.noop();
                 }
 
-                fixer.replace(
-                    import_value.span,
-                    format!("import('{}')", import_value.value.as_ref()),
-                )
+                fixer.replace(import_value.span, format!("import('{import_value_str}')"))
             },
         );
     }

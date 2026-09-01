@@ -936,6 +936,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         ",
         "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
+        "JSStr" => JS_STR_DESERIALIZER_BODY,
         // Reuse deserializers for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
         type_name if type_name.starts_with("Atomic") => return,
@@ -1010,6 +1011,39 @@ static STR_DESERIALIZER_BODY: &str = "
 
     // Call `fromCharCode` with temp array
     return fromCharCode.apply(null, arr);
+";
+
+static JS_STR_DESERIALIZER_BODY: &str = "
+    const hasLoneSurrogate = uint8[pos + 12] !== 0;
+    if (!hasLoneSurrogate) return deserializeStr(pos);
+
+    const pos32 = pos >> 2,
+        len = int32[pos32 + 2];
+    if (len === 0) return '';
+
+    pos = int32[pos32];
+    const end = pos + len;
+
+    let out = '',
+        chunkStart = pos;
+    while (pos < end) {
+        if (uint8[pos] === 0xED && pos + 2 < end) {
+            const second = uint8[pos + 1];
+            if (second >= 0xA0 && second <= 0xBF) {
+                if (chunkStart < pos) out += utf8Slice.call(uint8, chunkStart, pos);
+                const value = ((uint8[pos] & 0x0F) << 12)
+                    | ((second & 0x3F) << 6)
+                    | (uint8[pos + 2] & 0x3F);
+                out += fromCharCode(value);
+                pos += 3;
+                chunkStart = pos;
+                continue;
+            }
+        }
+        pos++;
+    }
+    if (chunkStart < end) out += utf8Slice.call(uint8, chunkStart, end);
+    return out;
 ";
 
 /// Generate deserialize function for an `Option`.

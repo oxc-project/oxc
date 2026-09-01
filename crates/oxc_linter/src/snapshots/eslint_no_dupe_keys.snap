@@ -101,6 +101,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing the duplicated key
 
+  ⚠ eslint(no-dupe-keys): Duplicate key '"\uD800"'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { "\uD800": 1, "\uD800": 2 };
+   ·           ────┬───     ────┬───
+   ·               │            ╰── and duplicated here
+   ·               ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
   ⚠ eslint(no-dupe-keys): Duplicate key 'bar'
    ╭─[no_dupe_keys.tsx:2:15]
  1 │ var foo = {

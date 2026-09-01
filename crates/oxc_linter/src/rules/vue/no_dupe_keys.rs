@@ -15,6 +15,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::number::ToJsString;
 
 use crate::{
@@ -114,7 +115,7 @@ impl NoDupeKeys {
         // dedup: user-supplied group names may overlap with built-in names
         let groups: FxHashSet<&str> =
             GROUP_NAMES.iter().copied().chain(extra_groups.iter().map(String::as_str)).collect();
-        let mut seen: FxHashSet<Cow<'a, str>> = FxHashSet::default();
+        let mut seen: FxHashSet<JSStr<'a>> = FxHashSet::default();
         // Walk all properties in source order so duplicate group names are both visited
         for prop_kind in &obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
@@ -205,7 +206,7 @@ fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
 
 fn collect_group_keys<'a>(
     value: &'a Expression<'a>,
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<JSStr<'a>>,
     ctx: &LintContext<'a>,
 ) {
     // Only unwrap parens: espree has no paren nodes, so upstream sees through them,
@@ -215,7 +216,7 @@ fn collect_group_keys<'a>(
             for el in &arr.elements {
                 let Some(expr) = el.as_expression() else { continue };
                 let expr = expr.without_parentheses();
-                if let Some(name) = literal_element_name(expr)
+                if let Some(name) = literal_element_js_name(expr, ctx)
                     && !name.is_empty()
                 {
                     report_or_add(name, expr.span(), seen, ctx);
@@ -251,7 +252,7 @@ fn collect_group_keys<'a>(
 
 fn collect_returned_object_keys<'a>(
     statements: &'a [Statement<'a>],
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<JSStr<'a>>,
     ctx: &LintContext<'a>,
 ) {
     for stmt in statements {
@@ -266,31 +267,31 @@ fn collect_returned_object_keys<'a>(
 
 fn collect_object_keys<'a>(
     obj: &'a ObjectExpression<'a>,
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<JSStr<'a>>,
     ctx: &LintContext<'a>,
 ) {
-    let getter_names: FxHashSet<Cow<'a, str>> = obj
+    let getter_names: FxHashSet<JSStr<'a>> = obj
         .properties
         .iter()
         .filter_map(|p| {
             let prop = p.as_property()?;
-            if prop.kind == PropertyKind::Get { static_key_name(&prop.key) } else { None }
+            if prop.kind == PropertyKind::Get { static_js_key_name(&prop.key, ctx) } else { None }
         })
         .collect();
 
-    let mut used_getters: FxHashSet<Cow<'a, str>> = FxHashSet::default();
+    let mut used_getters: FxHashSet<JSStr<'a>> = FxHashSet::default();
 
     for prop_kind in &obj.properties {
         let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
-        let Some(name) = static_key_name(&prop.key) else { continue };
+        let Some(name) = static_js_key_name(&prop.key, ctx) else { continue };
         // upstream skips empty names (`if (name)`)
         if name.is_empty() {
             continue;
         }
 
         if prop.kind == PropertyKind::Set
-            && getter_names.contains(name.as_ref())
-            && !used_getters.contains(name.as_ref())
+            && getter_names.contains(&name)
+            && !used_getters.contains(&name)
         {
             used_getters.insert(name);
             continue;
@@ -301,15 +302,45 @@ fn collect_object_keys<'a>(
 }
 
 fn report_or_add<'a>(
-    name: Cow<'a, str>,
+    name: JSStr<'a>,
     span: Span,
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<JSStr<'a>>,
     ctx: &LintContext<'a>,
 ) {
-    if seen.contains(name.as_ref()) {
-        ctx.diagnostic(duplicate_key_diagnostic(span, &name));
+    if seen.contains(&name) {
+        let display_name = name.as_str().unwrap_or_else(|| ctx.source_range(span));
+        ctx.diagnostic(duplicate_key_diagnostic(span, display_name));
     } else {
         seen.insert(name);
+    }
+}
+
+fn literal_element_js_name<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> Option<JSStr<'a>> {
+    match expr {
+        Expression::StringLiteral(s) => Some(s.value),
+        Expression::TemplateLiteral(t) if t.is_no_substitution_template() => {
+            t.quasis[0].cooked_js_str(ctx.allocator())
+        }
+        Expression::NumericLiteral(n) => {
+            Some(JSStr::from_str_in(&n.value.to_js_string(), &ctx.allocator()))
+        }
+        Expression::BooleanLiteral(b) => Some(JSStr::from(if b.value { "true" } else { "false" })),
+        Expression::BigIntLiteral(b) => Some(b.value.into()),
+        Expression::RegExpLiteral(r) => {
+            Some(JSStr::from_str_in(&r.regex.to_string(), &ctx.allocator()))
+        }
+        _ => None,
+    }
+}
+
+fn static_js_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Option<JSStr<'a>> {
+    match key {
+        PropertyKey::NumericLiteral(n) => {
+            Some(JSStr::from_str_in(&n.value.to_js_string(), &ctx.allocator()))
+        }
+        PropertyKey::BooleanLiteral(b) => Some(JSStr::from(if b.value { "true" } else { "false" })),
+        PropertyKey::NullLiteral(_) => None,
+        _ => key.static_js_name(ctx.allocator()),
     }
 }
 
@@ -317,7 +348,7 @@ fn report_or_add<'a>(
 /// Non-string literals are stringified like JS `String(value)`; `null` has no name.
 fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
     match expr {
-        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+        Expression::StringLiteral(s) => s.value.as_str().map(Cow::Borrowed),
         Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
         Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
         Expression::BooleanLiteral(b) => {
@@ -1902,6 +1933,17 @@ export default { data () { return { null: 1, null: 2 } } }
 export default { props: { [true]: String }, data () { return { 'true': 1 } } }
 </script>
 ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // JavaScript string keys are compared as UTF-16 values, including lone surrogates.
+        (
+            r#"
+<script>
+export default { data () { return { "\uD800": 1, "\uD800": 2 } } }
+</script>
+"#,
             None,
             None,
             Some(PathBuf::from("test.vue")),

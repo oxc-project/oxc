@@ -1078,7 +1078,7 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
                 Some(expr.property.name.as_arena_str())
             }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
-                static_property_name_of_computed_expr(expr).copied()
+                static_property_name_of_computed_expr(expr)
             }
         }
     }
@@ -1093,11 +1093,11 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
 
 fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Str<'a>> {
+) -> Option<Str<'a>> {
     match &expr.expression {
-        Expression::StringLiteral(lit) => Some(&lit.value),
+        Expression::StringLiteral(lit) => lit.value.as_str().map(Str::from),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
-            Some(&lit.quasis[0].value.raw)
+            Some(lit.quasis[0].value.raw)
         }
         _ => None,
     }

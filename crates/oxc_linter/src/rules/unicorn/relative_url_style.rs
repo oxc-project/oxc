@@ -103,7 +103,7 @@ impl Rule for RelativeUrlStyle {
 
         match first_arg {
             Argument::StringLiteral(str_lit) => {
-                let url = str_lit.value.as_str();
+                let Some(url) = str_lit.value.as_str() else { return };
 
                 match self.0 {
                     RelativeUrlStyleConfig::Never => {
@@ -164,11 +164,11 @@ fn can_add_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
         return false;
     }
 
-    if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1) {
-        let base = base_lit.value.as_str();
-        if is_safe_to_add_dot_slash(url, &[base]) {
-            return true;
-        }
+    if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1)
+        && let Some(base) = base_lit.value.as_str()
+        && is_safe_to_add_dot_slash(url, &[base])
+    {
+        return true;
     }
 
     is_safe_to_add_dot_slash(url, &TEST_URL_BASES)
@@ -179,11 +179,11 @@ fn can_remove_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
         return false;
     }
 
-    if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1) {
-        let base = base_lit.value.as_str();
-        if is_safe_to_remove_dot_slash(url, &[base]) {
-            return true;
-        }
+    if let Some(Argument::StringLiteral(base_lit)) = new_expr.arguments.get(1)
+        && let Some(base) = base_lit.value.as_str()
+        && is_safe_to_remove_dot_slash(url, &[base])
+    {
+        return true;
     }
 
     is_safe_to_remove_dot_slash(url, &TEST_URL_BASES)

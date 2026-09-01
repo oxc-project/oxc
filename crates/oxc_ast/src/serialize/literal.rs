@@ -51,38 +51,13 @@ impl ESTree for NullLiteralRaw<'_> {
 
 /// Serializer for `value` field of `StringLiteral`.
 ///
-/// Handle when `lone_surrogates` flag is set, indicating the string contains lone surrogates.
 #[ast_meta]
-#[estree(
-    ts_type = "string",
-    raw_deser = r#"
-        let value = DESER[Str](POS_OFFSET.value);
-        if (DESER[bool](POS_OFFSET.lone_surrogates)) {
-            value = value.replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
-        }
-        value
-    "#
-)]
+#[estree(ts_type = "string", raw_deser = "DESER[JSStr](POS_OFFSET.value)", raw_deser_inline)]
 pub struct StringLiteralValue<'a, 'b>(pub &'b StringLiteral<'a>);
 
 impl ESTree for StringLiteralValue<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let lit = self.0;
-        #[expect(clippy::if_not_else)]
-        if !lit.lone_surrogates {
-            lit.value.serialize(serializer);
-        } else {
-            // String contains lone surrogates. Very uncommon, so cold path.
-            self.serialize_lone_surrogates(serializer);
-        }
-    }
-}
-
-impl StringLiteralValue<'_, '_> {
-    #[cold]
-    #[inline(never)]
-    fn serialize_lone_surrogates<S: Serializer>(&self, serializer: S) {
-        LoneSurrogatesString(self.0.value.as_str()).serialize(serializer);
+        self.0.value.serialize(serializer);
     }
 }
 

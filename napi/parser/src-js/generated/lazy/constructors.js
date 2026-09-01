@@ -6685,7 +6685,7 @@ export class StringLiteral {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return (internal.$value = constructStr(internal.pos + 16, internal.ast));
+    return (internal.$value = constructJSStr(internal.pos + 16, internal.ast));
   }
 
   get raw() {
@@ -12200,6 +12200,52 @@ export class NameSpan {
 
 const DebugNameSpan = class NameSpan {};
 
+export class ModuleRequest {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $value: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get value() {
+    const internal = this.#internal,
+      cached = internal.$value;
+    if (cached !== void 0) return cached;
+    return (internal.$value = constructJSStr(internal.pos + 8, internal.ast));
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      value: this.value,
+      start: this.start,
+      end: this.end,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugModuleRequest.prototype);
+  }
+}
+
+const DebugModuleRequest = class ModuleRequest {};
+
 export class ImportEntry {
   #internal;
 
@@ -12283,7 +12329,7 @@ export class ExportEntry {
 
   get moduleRequest() {
     const internal = this.#internal;
-    return constructOptionNameSpan(internal.pos + 16, internal.ast);
+    return constructOptionModuleRequest(internal.pos + 16, internal.ast);
   }
 
   get importName() {
@@ -12827,7 +12873,7 @@ export class StaticImport {
 
   get moduleRequest() {
     const internal = this.#internal;
-    return new NameSpan(internal.pos + 8, internal.ast);
+    return new ModuleRequest(internal.pos + 8, internal.ast);
   }
 
   get entries() {
@@ -13696,6 +13742,40 @@ function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
+function constructJSStr(pos, ast) {
+  const { buffer } = ast,
+    hasLoneSurrogate = buffer[pos + 12] !== 0;
+  if (!hasLoneSurrogate) return constructStr(pos, ast);
+
+  const pos32 = pos >> 2,
+    { int32 } = buffer,
+    len = int32[pos32 + 2];
+  if (len === 0) return "";
+
+  pos = int32[pos32];
+  const end = pos + len;
+
+  let out = "",
+    chunkStart = pos;
+  while (pos < end) {
+    if (buffer[pos] === 0xed && pos + 2 < end) {
+      const second = buffer[pos + 1];
+      if (second >= 0xa0 && second <= 0xbf) {
+        if (chunkStart < pos) out += decodeStr(buffer.subarray(chunkStart, pos));
+        const value =
+          ((buffer[pos] & 0x0f) << 12) | ((second & 0x3f) << 6) | (buffer[pos + 2] & 0x3f);
+        out += fromCodePoint(value);
+        pos += 3;
+        chunkStart = pos;
+        continue;
+      }
+    }
+    pos++;
+  }
+  if (chunkStart < end) out += decodeStr(buffer.subarray(chunkStart, end));
+  return out;
+}
+
 function constructU8(pos, ast) {
   return ast.buffer[pos];
 }
@@ -14054,9 +14134,9 @@ function constructI32(pos, ast) {
   return ast.buffer.int32[pos >> 2];
 }
 
-function constructOptionNameSpan(pos, ast) {
-  if (ast.buffer.int32[(pos >> 2) + 2] === 0 && ast.buffer.int32[(pos >> 2) + 3] === 0) return null;
-  return new NameSpan(pos, ast);
+function constructOptionModuleRequest(pos, ast) {
+  if (ast.buffer[pos + 20] === 2) return null;
+  return new ModuleRequest(pos, ast);
 }
 
 function constructVecError(pos, ast) {

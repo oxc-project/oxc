@@ -149,6 +149,9 @@ fn is_valid_value_for_aria_prop_type(
             matches!(value_string.as_str(), "true" | "false" | "mixed")
         }
         AriaPropType::String | AriaPropType::Id => {
+            if is_string_literal_value(value) {
+                return true;
+            }
             // Template literals with expressions always produce strings at runtime
             if let JSXAttributeValue::ExpressionContainer(container) = value
                 && let JSXExpression::TemplateLiteral(t) = &container.expression
@@ -180,7 +183,9 @@ fn is_valid_value_for_aria_prop_type(
             }
 
             let Some(value_string) = parse_aria_prop_value_as_string(value, false) else {
-                return false;
+                // A string literal which cannot be represented as `str` contains a lone
+                // surrogate, so it necessarily contains a non-whitespace ID token.
+                return string_literal_has_lone_surrogate(value);
             };
 
             value_string.split_whitespace().next().is_some()
@@ -208,17 +213,40 @@ fn is_valid_value_for_aria_prop_type(
     }
 }
 
+fn is_string_literal_value(value: &JSXAttributeValue) -> bool {
+    match value {
+        JSXAttributeValue::StringLiteral(_) => true,
+        JSXAttributeValue::ExpressionContainer(container) => {
+            matches!(container.expression, JSXExpression::StringLiteral(_))
+        }
+        _ => false,
+    }
+}
+
+fn string_literal_has_lone_surrogate(value: &JSXAttributeValue) -> bool {
+    match value {
+        JSXAttributeValue::StringLiteral(literal) => literal.value.has_lone_surrogate(),
+        JSXAttributeValue::ExpressionContainer(container) => {
+            matches!(
+                &container.expression,
+                JSXExpression::StringLiteral(literal) if literal.value.has_lone_surrogate()
+            )
+        }
+        _ => false,
+    }
+}
+
 fn parse_aria_prop_value_as_string(
     value: &JSXAttributeValue,
     boolean_as_string: bool, // whether to convert boolean literal to string
 ) -> Option<CompactStr> {
     match value {
         JSXAttributeValue::StringLiteral(string_lit) => {
-            Some(string_lit.value.cow_to_lowercase().into())
+            Some(string_lit.value.as_str()?.cow_to_lowercase().into())
         }
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
             JSXExpression::StringLiteral(string_lit) => {
-                Some(string_lit.value.cow_to_lowercase().into())
+                Some(string_lit.value.as_str()?.cow_to_lowercase().into())
             }
             JSXExpression::TemplateLiteral(template_lit) => {
                 Some(template_lit.single_quasi()?.cow_to_lowercase().into())
@@ -403,6 +431,7 @@ fn test() {
         "<div aria-hidden={<div />} />",
         r#"<div aria-label="Close" />"#,
         r#"<div aria-label="" />"#,
+        r#"<div aria-label={"\uD800"} />"#,
         "<div aria-label />",
         "<div aria-label={`Close`} />",
         "<div aria-label={`Hello ${foo}`} />",
@@ -510,6 +539,7 @@ fn test() {
         "<div aria-activedescendant={undefined} />",
         r#"<div aria-labelledby="additions" />"#,
         r#"<div aria-labelledby={"additions"} />"#,
+        r#"<div aria-labelledby={"\uD800"} />"#,
         "<div aria-labelledby={`additions`} />",
         r#"<div aria-labelledby="additions removals" />"#,
         r#"<div aria-labelledby="additions additions" />"#,

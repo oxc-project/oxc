@@ -386,10 +386,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut keys = FxHashMap::default();
         for e in &with_entries {
-            let key = e.key.as_arena_str().as_str();
+            let key = e.key.as_js_str();
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
-                self.error(diagnostics::redeclaration(key, old_span, span));
+                self.error(diagnostics::redeclaration(
+                    key.as_str().unwrap_or_else(|| span.source_text(self.source_text)),
+                    old_span,
+                    span,
+                ));
             }
         }
 
@@ -928,8 +932,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let local =
-                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
+                let local_name = name.name().as_str().unwrap_or("");
+                let local = BindingIdentifier::new(name.span(), self.ident(local_name), self);
                 let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_start),
@@ -971,7 +975,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
-                if literal.lone_surrogates || !literal.is_string_well_formed_unicode() {
+                if !literal.is_string_well_formed_unicode() {
                     self.error(diagnostics::export_lone_surrogate(literal.span));
                 }
                 ModuleExportName::StringLiteral(literal)
@@ -992,13 +996,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
             }
             ModuleExportName::StringLiteral(literal) => {
-                ModuleExportName::new_string_literal_with_lone_surrogates(
-                    literal.span,
-                    literal.value,
-                    literal.raw,
-                    literal.lone_surrogates,
-                    self,
-                )
+                ModuleExportName::new_string_literal(literal.span, literal.value, literal.raw, self)
             }
         }
     }

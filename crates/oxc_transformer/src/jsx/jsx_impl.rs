@@ -99,7 +99,7 @@ use oxc_syntax::{
     line_terminator::is_line_terminator,
     reference::ReferenceFlags,
     symbol::SymbolFlags,
-    xml_entities::decode_entities,
+    xml_entities::{decode_entities, decode_js_str_entities},
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -911,16 +911,7 @@ impl<'a> JsxImpl<'a> {
     ) -> Expression<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
-                let mut decoded = None;
-                decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx.allocator());
-                let jsx_text = if let Some(decoded) = decoded {
-                    // Text contains HTML entities which were decoded.
-                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
-                    Str::from(decoded)
-                } else {
-                    // No HTML entities needed to be decoded. Use the original `Str` without copying.
-                    s.value
-                };
+                let jsx_text = decode_js_str_entities(s.value, ctx.allocator());
                 Expression::new_string_literal(s.span, jsx_text, None, ctx)
             }
             Some(JSXAttributeValue::Element(e)) => self.transform_jsx_element(e, ctx),

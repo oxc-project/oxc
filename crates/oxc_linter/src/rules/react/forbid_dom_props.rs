@@ -227,9 +227,9 @@ impl Rule for ForbidDomProps {
 
 fn static_jsx_string_value<'a>(value: &'a JSXAttributeValue<'a>) -> Option<&'a str> {
     match value {
-        JSXAttributeValue::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+        JSXAttributeValue::StringLiteral(str_lit) => str_lit.value.as_str(),
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-            JSXExpression::StringLiteral(str_lit) => Some(str_lit.value.as_str()),
+            JSXExpression::StringLiteral(str_lit) => str_lit.value.as_str(),
             JSXExpression::TemplateLiteral(template_lit) => {
                 template_lit.single_quasi().map(|quasi| quasi.as_str())
             }

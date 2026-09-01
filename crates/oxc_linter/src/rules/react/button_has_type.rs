@@ -117,7 +117,7 @@ impl Rule for ButtonHasType {
                     return;
                 };
 
-                if str.value.as_str() != "button" {
+                if str.value.as_str() != Some("button") {
                     return;
                 }
 
@@ -194,18 +194,20 @@ impl ButtonHasType {
                     false
                 }
             }
-            Some(JSXAttributeValue::StringLiteral(str)) => {
-                self.is_valid_button_type_prop_string_literal(str.value.as_str())
-            }
+            Some(JSXAttributeValue::StringLiteral(str)) => str
+                .value
+                .as_str()
+                .is_some_and(|value| self.is_valid_button_type_prop_string_literal(value)),
             _ => false,
         }
     }
 
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
         match expr.without_parentheses() {
-            Expression::StringLiteral(str) => {
-                self.is_valid_button_type_prop_string_literal(str.value.as_str())
-            }
+            Expression::StringLiteral(str) => str
+                .value
+                .as_str()
+                .is_some_and(|value| self.is_valid_button_type_prop_string_literal(value)),
             Expression::TemplateLiteral(template_literal) => template_literal
                 .single_quasi()
                 .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi.as_str())),

@@ -4,6 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::{
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
@@ -1166,11 +1167,13 @@ impl Gen for TSNamespaceExportDeclaration<'_> {
 fn get_module_export_name<'a>(
     module_export_name: &ModuleExportName<'a>,
     p: &Codegen<'a>,
-) -> &'a str {
+) -> JSStr<'a> {
     match module_export_name {
-        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-        ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
-        ModuleExportName::StringLiteral(s) => s.value.as_str(),
+        ModuleExportName::IdentifierName(ident) => JSStr::from(ident.name.as_str()),
+        ModuleExportName::IdentifierReference(ident) => {
+            JSStr::from(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(s) => s.value,
     }
 }
 
@@ -2726,10 +2729,16 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-                p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
-                p.print_ascii_byte(quote);
+                if let Some(value) = lit.value.as_str() {
+                    let quote = if value.contains('"') { b'\'' } else { b'"' };
+                    p.print_ascii_byte(quote);
+                    p.print_str(value);
+                    p.print_ascii_byte(quote);
+                } else {
+                    p.print_ascii_byte(b'{');
+                    p.print_string_literal(lit, false);
+                    p.print_ascii_byte(b'}');
+                }
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }

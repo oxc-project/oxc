@@ -420,7 +420,10 @@ impl AstKind<'_> {
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
+            Self::StringLiteral(s) => match s.value.as_str() {
+                Some(value) => format!("StringLiteral({value})").into(),
+                None => format!("StringLiteral({:?})", s.value).into(),
+            },
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
@@ -513,7 +516,10 @@ impl AstKind<'_> {
 
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
             Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name).into(),
-            Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
+            Self::ExportSpecifier(e) => match e.local.name().as_str() {
+                Some(value) => format!("ExportSpecifier({value})").into(),
+                None => format!("ExportSpecifier({:?})", e.local.name()).into(),
+            },
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),
@@ -590,9 +596,10 @@ impl AstKind<'_> {
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
-            Self::TSExternalModuleDeclaration(m) => {
-                format!("TSExternalModuleDeclaration({})", m.id).into()
-            }
+            Self::TSExternalModuleDeclaration(m) => match m.id.value.as_str() {
+                Some(value) => format!("TSExternalModuleDeclaration({value})").into(),
+                None => format!("TSExternalModuleDeclaration({:?})", m.id.value).into(),
+            },
             Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
@@ -664,7 +671,7 @@ impl<'a> MemberExpressionKind<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => lit.value.as_str().map(|value| (lit.span, value)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
                         lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))

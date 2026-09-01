@@ -553,10 +553,12 @@ impl Rule for Extensions {
             return;
         }
         for argument in &call_expr.arguments {
-            if let Argument::StringLiteral(s) = argument {
+            if let Argument::StringLiteral(s) = argument
+                && let Some(value) = s.value.as_str()
+            {
                 self.process_import(
                     ctx,
-                    s.value.as_str(),
+                    value,
                     call_expr.span,
                     false, // require() is never a type import
                     true,  // treat require as import for diagnostics

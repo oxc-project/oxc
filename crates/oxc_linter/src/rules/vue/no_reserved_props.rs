@@ -146,7 +146,10 @@ impl NoReservedProps {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
             let (name, span): (&str, Span) = match expr.get_inner_expression() {
-                Expression::StringLiteral(lit) => (lit.value.as_str(), lit.span),
+                Expression::StringLiteral(lit) => {
+                    let Some(value) = lit.value.as_str() else { continue };
+                    (value, lit.span)
+                }
                 Expression::TemplateLiteral(tpl) => match tpl.single_quasi() {
                     Some(quasi) => (quasi.as_str(), tpl.span),
                     None => continue,

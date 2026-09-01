@@ -236,17 +236,27 @@ fn infer_module_type(init: &Expression) -> ModuleType {
     };
 
     let Some(value) = arg.as_expression().and_then(|expr| match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::StringLiteral(lit) => Some(lit.value),
         _ => None,
     }) else {
         return ModuleType::Computed;
     };
 
-    if BUILTIN_MODULES.contains(&value) {
+    if value.as_str().is_some_and(|value| BUILTIN_MODULES.contains(&value)) {
         return ModuleType::Core;
     }
 
-    if value.starts_with("./") || value.starts_with("../") || value.starts_with('/') {
+    let mut code_points = value.code_points();
+    let is_relative = match code_points.next() {
+        Some(value) if value == u32::from(b'/') => true,
+        Some(value) if value == u32::from(b'.') => match code_points.next() {
+            Some(value) if value == u32::from(b'/') => true,
+            Some(value) if value == u32::from(b'.') => code_points.next() == Some(u32::from(b'/')),
+            _ => false,
+        },
+        _ => false,
+    };
+    if is_relative {
         return ModuleType::File;
     }
 

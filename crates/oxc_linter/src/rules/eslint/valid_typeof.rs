@@ -125,8 +125,10 @@ impl Rule for ValidTypeof {
         };
 
         if let Expression::StringLiteral(lit) = sibling {
-            if !VALID_TYPES.contains(&lit.value.as_str()) {
-                let help = get_typo_suggestion(lit.value.as_str())
+            let value = lit.value.as_str();
+            if !value.is_some_and(|value| VALID_TYPES.contains(&value)) {
+                let help = value
+                    .and_then(get_typo_suggestion)
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }
@@ -227,6 +229,7 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"typeof foo === "\uD800""#, None),
         ("typeof foo === 'strnig'", None),
         ("'strnig' === typeof foo", None),
         ("if (typeof bar === 'umdefined') {}", None),

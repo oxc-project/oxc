@@ -177,14 +177,16 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
     }
     matches!(
         &call.arguments[0],
-        Argument::StringLiteral(lit) if modules.contains(&lit.value.as_str())
+        Argument::StringLiteral(lit)
+            if lit.value.as_str().is_some_and(|value| modules.contains(&value))
     )
 }
 
 fn is_parent_literal(argument: &Argument<'_>) -> bool {
     matches!(
         argument,
-        Argument::StringLiteral(lit) if lit.value.as_str() == "." || lit.value.as_str() == "./"
+        Argument::StringLiteral(lit)
+            if matches!(lit.value.as_str(), Some("." | "./"))
     )
 }
 
@@ -317,7 +319,7 @@ fn import_declaration_source<'a>(
     else {
         return None;
     };
-    Some(import_declaration.source.value.as_str())
+    import_declaration.source.value.as_str()
 }
 
 fn check_variable_declarator(

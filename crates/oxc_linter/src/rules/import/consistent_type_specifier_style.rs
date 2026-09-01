@@ -314,14 +314,26 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
 }
 
 fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
-    let source = &import_decl.source.value;
+    let source_value = import_decl.source.value;
+    let Some(source) = source_value.as_str() else {
+        // Filesystem paths cannot contain lone surrogates, but the rule should still recognize
+        // the declaration-file suffix instead of reporting a style error for valid JS syntax.
+        let code_points = source_value.code_points().collect::<Vec<_>>();
+        let has_declaration_marker = code_points
+            .windows(3)
+            .any(|window| window == [u32::from(b'.'), u32::from(b'd'), u32::from(b'.')]);
+        let has_ts_extension = [".ts", ".mts", ".cts"].iter().any(|extension| {
+            code_points.ends_with(&extension.bytes().map(u32::from).collect::<Vec<_>>())
+        });
+        return has_declaration_marker && has_ts_extension;
+    };
     // Relatively fast check to avoid unnecessary Path and extension parsing
     // if it doesn't even look like a declaration file import
     if !source.contains(".d") {
         return false;
     }
     // Slower check that parses the file name to check if it's a declaration file
-    let path = Path::new(source.as_str());
+    let path = Path::new(source);
     let Some(extension) = path.extension().and_then(std::ffi::os_str::OsStr::to_str) else {
         return false;
     };
@@ -400,6 +412,7 @@ fn test() {
         // declaration files always require `import type` syntax
         ("import type { Foo } from './index.d.ts';", Some(json!(["prefer-top-level"]))),
         ("import type { Foo } from './index.d.ts';", Some(json!(["prefer-inline"]))),
+        (r"import type { Foo } from './\uD800/index.d.ts';", Some(json!(["prefer-inline"]))),
         ("import type { Foo } from './index.d.mts';", Some(json!(["prefer-top-level"]))),
         ("import type { Foo } from './index.d.mts';", Some(json!(["prefer-inline"]))),
         ("import type { Foo } from './index.d.cts';", Some(json!(["prefer-top-level"]))),

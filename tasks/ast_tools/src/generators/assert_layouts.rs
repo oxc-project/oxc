@@ -565,6 +565,12 @@ impl LayoutCalculator<'_> {
                 layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
                 layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(0, 4, 1, 0)),
             },
+            // `JSStr` has a `NonNull<u8>` pointer and a `bool` flag. The flag has more niche
+            // values than the pointer, so rustc uses the first invalid `bool` value for `None`.
+            "JSStr" => Layout {
+                layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(12, 1, 0, 254)),
+                layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(8, 1, 0, 254)),
+            },
             "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
             "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
             "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),

@@ -430,9 +430,9 @@ impl<'a> MayHaveSideEffects<'a> for StaticMemberExpression<'a> {
 impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match &self.expression {
-            Expression::StringLiteral(s) => {
-                property_access_may_have_side_effects(&self.object, &s.value, ctx)
-            }
+            Expression::StringLiteral(s) => s.value.as_str().is_none_or(|property| {
+                property_access_may_have_side_effects(&self.object, property, ctx)
+            }),
             Expression::TemplateLiteral(t) => t.single_quasi().is_none_or(|quasi| {
                 property_access_may_have_side_effects(&self.object, &quasi, ctx)
             }),
@@ -516,7 +516,7 @@ fn integer_index_property_access_may_have_side_effects<'a>(
         return false;
     }
     match object {
-        Expression::StringLiteral(s) => property as usize >= s.value.encode_utf16().count(),
+        Expression::StringLiteral(s) => property as usize >= s.value.utf16_len(),
         Expression::ArrayExpression(arr) => property as usize >= get_array_minimum_length(arr),
         _ => true,
     }
@@ -528,7 +528,7 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
         .map(|e| match e {
             ArrayExpressionElement::SpreadElement(spread) => match &spread.argument {
                 Expression::ArrayExpression(arr) => get_array_minimum_length(arr),
-                Expression::StringLiteral(str) => str.value.chars().count(),
+                Expression::StringLiteral(str) => str.value.code_points().count(),
                 _ => 0,
             },
             _ => 1,
@@ -657,7 +657,8 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
                     Expression::StringLiteral(s) => {
-                        (member.object.get_identifier_reference(), s.value.as_str())
+                        let Some(name) = s.value.as_str() else { return true };
+                        (member.object.get_identifier_reference(), name)
                     }
                     _ => return true,
                 }

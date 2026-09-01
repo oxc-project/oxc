@@ -347,10 +347,11 @@ impl NoRestrictedGlobals {
                         let Some(cooked) = &template.quasis[0].value.cooked else {
                             return;
                         };
-                        cooked.as_str()
+                        Some(cooked.as_str())
                     }
                     _ => return,
                 };
+                let Some(property_name) = property_name else { return };
                 let Some(message) = self.globals.get(property_name) else {
                     return;
                 };

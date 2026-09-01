@@ -228,12 +228,24 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
                 let next_is_same = b.is_some_and(|b| {
                     matches!(b,
                         ClassElement::MethodDefinition(b)
-                            if b.key.static_name() == a.key.static_name()
+                            if match (&a.key, &b.key) {
+                                (PropertyKey::StringLiteral(a), PropertyKey::StringLiteral(b)) => {
+                                    a.value == b.value
+                                }
+                                (PropertyKey::StringLiteral(a), _)
+                                    if a.value.has_lone_surrogate() => false,
+                                (_, PropertyKey::StringLiteral(b))
+                                    if b.value.has_lone_surrogate() => false,
+                                _ => b.key.static_name() == a.key.static_name(),
+                            }
                     )
                 });
                 if next_is_same {
                     is_in_overload_group = true;
-                } else if a.key.static_name().is_some() || is_in_overload_group {
+                } else if a.key.static_name().is_some()
+                    || matches!(&a.key, PropertyKey::StringLiteral(lit) if lit.value.has_lone_surrogate())
+                    || is_in_overload_group
+                {
                     // Report error for:
                     // 1. Methods with static names that are not followed by an implementation
                     // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])

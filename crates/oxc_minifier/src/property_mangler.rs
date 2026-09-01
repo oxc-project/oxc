@@ -14,7 +14,7 @@ use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
 use oxc_ecmascript::StringToNumber;
 use oxc_mangler::base54;
 use oxc_span::Span;
-use oxc_str::{CompactStr, Ident, Str};
+use oxc_str::{CompactStr, Ident, JSStr, Str};
 use oxc_syntax::{identifier::is_identifier_name, number::ToJsString};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -261,7 +261,11 @@ impl<'o> PropertyCollector<'o> {
     fn classify_key_expression(&mut self, expression: &Expression<'_>) {
         match expression.get_inner_expression() {
             Expression::StringLiteral(literal) if self.special_literal(literal.span) => {}
-            Expression::StringLiteral(literal) => self.quoted(literal.value.as_str()),
+            Expression::StringLiteral(literal) => {
+                if let Some(value) = literal.value.as_str() {
+                    self.quoted(value);
+                }
+            }
             Expression::TemplateLiteral(template)
                 if template.expressions.is_empty() && self.special_literal(template.span) => {}
             Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
@@ -304,7 +308,9 @@ impl<'o> PropertyCollector<'o> {
 impl<'a> Visit<'a> for PropertyCollector<'_> {
     fn visit_directive(&mut self, directive: &Directive<'a>) {
         // Directives are not property-name positions.
-        self.occupy(directive.expression.value.as_str());
+        if let Some(value) = directive.expression.value.as_str() {
+            self.occupy(value);
+        }
     }
 
     fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
@@ -360,7 +366,9 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
     }
 
     fn visit_string_literal(&mut self, literal: &StringLiteral<'a>) {
-        self.observe_literal(literal.span, literal.value.as_str());
+        if let Some(value) = literal.value.as_str() {
+            self.observe_literal(literal.span, value);
+        }
     }
 
     fn visit_template_literal(&mut self, template: &TemplateLiteral<'a>) {
@@ -474,8 +482,8 @@ impl<'a> PropertyRewriter<'a, '_> {
         if !self.should_rewrite_literal(literal.span) {
             return;
         }
-        if let Some(target) = self.target(literal.value.as_str()) {
-            literal.value = Str::from_str_in(target.as_str(), &self.ast);
+        if let Some(target) = literal.value.as_str().and_then(|value| self.target(value)) {
+            literal.value = JSStr::from_str_in(target.as_str(), &self.ast);
             literal.raw = None;
         }
     }
@@ -518,7 +526,7 @@ impl<'a> PropertyRewriter<'a, '_> {
 
     fn direct_string_key(key: &PropertyKey<'a>) -> Option<(CompactStr, Span)> {
         if let PropertyKey::StringLiteral(literal) = key {
-            Some((CompactStr::from(literal.value.as_str()), literal.span))
+            Some((CompactStr::from(literal.value.as_str()?), literal.span))
         } else {
             None
         }
@@ -577,8 +585,9 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     fn visit_expression(&mut self, expression: &mut Expression<'a>) {
         if let Expression::ComputedMemberExpression(member) = expression
             && let Expression::StringLiteral(literal) = &member.expression
+            && let Some(value) = literal.value.as_str()
         {
-            let original = CompactStr::from(literal.value.as_str());
+            let original = CompactStr::from(value);
             let property_span = literal.span;
             if self.should_rewrite_literal(property_span)
                 && let Some(target) = self.target(original.as_str())

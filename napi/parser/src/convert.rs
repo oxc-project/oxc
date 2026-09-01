@@ -26,7 +26,7 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
                             start: m.statement_span.start,
                             end: m.statement_span.end,
                             module_request: ValueSpan {
-                                value: name.to_string(),
+                                value: name.encode_utf16().collect::<Vec<_>>().into(),
                                 start: m.span.start,
                                 end: m.span.end,
                             },
@@ -130,9 +130,19 @@ impl From<&module_record::ImportImportName<'_>> for ImportName {
 impl From<&module_record::NameSpan<'_>> for ValueSpan {
     fn from(name_span: &module_record::NameSpan) -> Self {
         Self {
-            value: name_span.name.to_string(),
+            value: name_span.name.encode_utf16().collect::<Vec<_>>().into(),
             start: name_span.span.start,
             end: name_span.span.end,
+        }
+    }
+}
+
+impl From<&module_record::ModuleRequest<'_>> for ValueSpan {
+    fn from(module_request: &module_record::ModuleRequest) -> Self {
+        Self {
+            value: module_request.name.encode_utf16().collect::<Vec<_>>().into(),
+            start: module_request.span.start,
+            end: module_request.span.end,
         }
     }
 }

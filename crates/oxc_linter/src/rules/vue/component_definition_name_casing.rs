@@ -172,7 +172,7 @@ fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
     match expr {
         Expression::StringLiteral(lit) => {
             let inner = Span::new(lit.span.start + 1, lit.span.end - 1);
-            Some((lit.value.to_string(), inner))
+            Some((lit.value.as_str()?.to_string(), inner))
         }
         Expression::TemplateLiteral(tpl) => {
             if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {

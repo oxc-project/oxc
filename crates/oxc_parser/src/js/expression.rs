@@ -499,10 +499,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let span = self.cur_token().span();
         let raw = Str::from(self.cur_src());
-        let value = self.cur_string();
-        let lone_surrogates = self.cur_token().lone_surrogates();
+        let value = self.cur_js_string();
         self.bump_any();
-        StringLiteral::new_with_lone_surrogates(span, value, Some(raw), lone_surrogates, self)
+        StringLiteral::new(span, value, Some(raw), self)
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)

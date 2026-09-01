@@ -224,11 +224,12 @@ impl Rule for NoRestrictedExports {
 impl NoRestrictedExports {
     fn check_export_all(&self, export: &ExportAllDeclaration, ctx: &LintContext) {
         if let Some(exported) = export.exported.as_ref() {
+            let Some(name) = exported.name().as_str() else { return };
             // Always check for restricted named exports
             self.check_no_restricted_named_exports(
                 ctx,
                 export.span,
-                std::iter::once(exported.name().into_string()),
+                std::iter::once(name.to_string()),
             );
 
             // If exported name is default, also check for restricted named default export
@@ -265,12 +266,15 @@ impl NoRestrictedExports {
         let (named_exports, has_default_exports, local_specifiers) = specifiers.iter().fold(
             (Vec::new(), false, Vec::new()),
             |(mut names, mut has_default, mut specifiers), spec| {
-                names.push(spec.exported.name().into_string());
+                let Some(exported_name) = spec.exported.name().as_str() else {
+                    return (names, has_default, specifiers);
+                };
+                names.push(exported_name.to_string());
 
                 if spec.exported.name() == "default" {
                     has_default = true;
                     let local_spec = match spec.local.name().as_str() {
-                        "default" => LocalFromSpecifier::Default,
+                        Some("default") => LocalFromSpecifier::Default,
                         _ => LocalFromSpecifier::Named,
                     };
                     specifiers.push(local_spec);

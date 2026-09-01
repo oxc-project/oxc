@@ -3,6 +3,7 @@
 use phf::{Map, phf_map};
 
 use oxc_allocator::{Allocator, ArenaStringBuilder};
+use oxc_str::{JSStr, JSStrBuilder, Str};
 
 /// XML Entities
 ///
@@ -337,11 +338,66 @@ pub fn decode_entities<'a>(
     }
 }
 
+/// Decode entities in a JavaScript string while preserving lone surrogates.
+///
+/// The UTF-8 fast path reuses [`decode_entities`]. Strings containing lone surrogates take a
+/// cold path which decodes each valid UTF-8 segment and appends the surrogate code units through
+/// [`JSStrBuilder`].
+pub fn decode_js_str_entities<'a>(value: JSStr<'a>, allocator: &'a Allocator) -> JSStr<'a> {
+    if let Some(value) = value.as_str() {
+        let mut decoded = None;
+        decode_entities(value, &mut decoded, value.len(), allocator);
+        return decoded.map_or_else(|| JSStr::from(value), |value| Str::from(value).into());
+    }
+
+    decode_js_str_entities_with_lone_surrogates(value, allocator)
+}
+
+#[cold]
+fn decode_js_str_entities_with_lone_surrogates<'a>(
+    value: JSStr<'_>,
+    allocator: &'a Allocator,
+) -> JSStr<'a> {
+    fn flush_segment<'a>(
+        segment: &mut String,
+        output: &mut JSStrBuilder<'a>,
+        allocator: &'a Allocator,
+    ) {
+        if segment.is_empty() {
+            return;
+        }
+
+        let mut decoded = None;
+        decode_entities(segment, &mut decoded, segment.len(), allocator);
+        if let Some(decoded) = decoded {
+            output.push_str(decoded.as_str());
+        } else {
+            output.push_str(segment);
+        }
+        segment.clear();
+    }
+
+    let mut output = JSStrBuilder::with_capacity_in(value.len(), allocator);
+    let mut segment = String::new();
+    for code_point in value.code_points() {
+        if let Some(character) = char::from_u32(code_point) {
+            segment.push(character);
+        } else {
+            flush_segment(&mut segment, &mut output, allocator);
+            #[expect(clippy::cast_possible_truncation, reason = "lone surrogates fit in u16")]
+            output.push_code_unit(code_point as u16);
+        }
+    }
+    flush_segment(&mut segment, &mut output, allocator);
+    output.finish()
+}
+
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
+    use oxc_str::JSStr;
 
-    use super::decode_entities;
+    use super::{decode_entities, decode_js_str_entities};
 
     #[test]
     fn entity_after_stray_amp() {
@@ -350,5 +406,32 @@ mod tests {
         let mut acc = None;
         decode_entities(input, &mut acc, input.len(), &allocator);
         assert_eq!(acc.as_ref().unwrap().as_str(), "& &");
+    }
+
+    #[test]
+    fn js_string_entities_preserve_lone_surrogates() {
+        let allocator = Allocator::default();
+        let input = JSStr::from_utf16_in(
+            &[
+                b'a'.into(),
+                b'&'.into(),
+                b'a'.into(),
+                b'm'.into(),
+                b'p'.into(),
+                b';'.into(),
+                0xD800,
+                b'&'.into(),
+                b'g'.into(),
+                b't'.into(),
+                b';'.into(),
+            ],
+            &&allocator,
+        );
+
+        let decoded = decode_js_str_entities(input, &allocator);
+        assert_eq!(
+            decoded.code_points().collect::<Vec<_>>(),
+            [b'a'.into(), b'&'.into(), 0xD800, b'>'.into()]
+        );
     }
 }
