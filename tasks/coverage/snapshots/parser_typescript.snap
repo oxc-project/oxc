@@ -1,9 +1,9 @@
 commit: f52473a2
 
 parser_typescript Summary:
-AST Parsed     : 10067/10077 (99.90%)
-Positive Passed: 10054/10077 (99.77%)
-Negative Passed: 1666/2732 (60.98%)
+AST Parsed     : 10079/10090 (99.89%)
+Positive Passed: 10066/10090 (99.76%)
+Negative Passed: 1665/2719 (61.24%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -210,14 +210,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deleteOperator1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deprecatedCompilerOptions1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deprecatedCompilerOptions3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deprecatedCompilerOptions4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deprecatedCompilerOptions5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/destructuredLateBoundNameHasCorrectTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/destructuringFromUnionSpread.ts
@@ -336,8 +328,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/esmNoSynthesizedDefault.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exactOptionalPropertyTypesArgumentError.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/excessPropertyCheckIntersectionWithRecursiveType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/expandoFunctionNestedAssigments.ts
@@ -345,8 +335,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAsNamespace_augment.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentImportMergeNoCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMembersVisibleInAugmentation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging6.ts
 
@@ -460,8 +448,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAliasInModuleAugmentation.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAliasTypeOnlyExport.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAndVariableDeclarationConflict1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAndVariableDeclarationConflict4.ts
@@ -540,8 +526,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/isLiteral1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/isolatedDeclarationsAddUndefined.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/isolatedModulesExportDeclarationType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsCheckObjectDefineThisNoCrash.ts
@@ -561,8 +545,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationPublicMethodSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFunctionWithPrototypeNoErrorTruncationNoCrash.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsPromiseNeedsJSDocHint.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsTypedefMergedWithModuleExportProperty.ts
 
@@ -711,8 +693,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multipleExportAssignmentsInAmbientDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multipleExports.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multipleModuleExportsAssignments.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multivar.ts
 
@@ -2132,10 +2112,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/witness/witness.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/typings/typingsLookup1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/typings/typingsLookup3.ts
-
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/alwaysStrictModule2.ts
 
   × Cannot assign to 'arguments' in strict mode
@@ -2191,6 +2167,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/dec
    ·     ───────
  8 │ }
    ╰────
+
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateNameInTypeQuery.ts
+
+  × Unexpected token
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateNameInTypeQuery.ts:16:20]
+ 15 │ 
+ 16 │     a: typeof this.#a = 1;
+    ·                    ──
+ 17 │ 
+    ╰────
 
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts
 
@@ -6257,14 +6243,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  46 │     constructor(public [[h, i], {j, k: [l]}]: any) {}
     ·                 ─────────────────────────────────
  47 │ }
-    ╰────
-
-  × Unexpected token
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateNameInTypeQuery.ts:16:20]
- 15 │ 
- 16 │     a: typeof this.#a = 1;
-    ·                    ──
- 17 │ 
     ╰────
 
   × TS(1049): A 'set' accessor must have exactly one parameter.

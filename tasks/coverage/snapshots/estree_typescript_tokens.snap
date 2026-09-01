@@ -1,8 +1,8 @@
 commit: f52473a2
 
 estree_typescript_tokens Summary:
-AST Parsed     : 9993/9998 (99.95%)
-Positive Passed: 9989/9998 (99.91%)
+AST Parsed     : 10005/10010 (99.95%)
+Positive Passed: 10001/10010 (99.91%)
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 A 'declare' modifier cannot be used in an already ambient context.
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts
