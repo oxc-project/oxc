@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -425,20 +425,27 @@ impl Oxlintrc {
         let mut categories = other.categories;
         categories.extend(self.categories.iter());
 
-        let rules = self
+        // Keep `other`'s rules first and `self`'s rules last, preserving each config's own
+        // ordering. Several rules can be configured under aliased names (e.g.
+        // `no-restricted-imports` and `typescript/no-restricted-imports`); such entries survive
+        // this exact-name merge as separate entries, and when they are later resolved to the same
+        // rule, the last entry wins. Ordering `self` last therefore guarantees the extending
+        // config's entry takes priority, regardless of what else is configured.
+        let self_rule_names: FxHashSet<(&str, &str)> = self
             .rules
             .rules
             .iter()
-            .chain(&other.rules.rules)
-            .fold(FxHashMap::default(), |mut rules_set, rule| {
-                if rules_set.contains_key(&(&rule.plugin_name, &rule.rule_name)) {
-                    return rules_set;
-                }
-                rules_set.insert((&rule.plugin_name, &rule.rule_name), rule);
-                rules_set
+            .map(|rule| (rule.plugin_name.as_str(), rule.rule_name.as_str()))
+            .collect();
+        let rules = other
+            .rules
+            .rules
+            .iter()
+            .filter(|rule| {
+                !self_rule_names.contains(&(rule.plugin_name.as_str(), rule.rule_name.as_str()))
             })
-            .values()
-            .map(|rule| (**rule).clone())
+            .chain(&self.rules.rules)
+            .cloned()
             .collect::<Vec<_>>();
 
         let settings = self.settings.clone();
@@ -664,6 +671,55 @@ mod test {
         let config: Result<Oxlintrc, _> =
             serde_json::from_value(json!({ "respectEslintDisableDirectives": false }));
         assert!(config.is_err());
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_rules_order() {
+        // Merged rules must be deterministically ordered: `other`'s entries first, then
+        // `self`'s, each in their original order, with exact-name duplicates resolved in favor
+        // of `self`. Entries configured under aliased names (e.g. `no-restricted-imports` vs
+        // `typescript/no-restricted-imports`) are distinct at this stage and are only collapsed
+        // when rules are resolved, where the last entry wins — so `self` coming last is what
+        // makes the extending config's entry take priority.
+        let child: Oxlintrc = serde_json::from_value(json!({
+            "rules": {
+                "no-shadow": "off",
+                "typescript/no-restricted-imports": ["error", { "paths": ["a"] }],
+                "no-console": "error"
+            }
+        }))
+        .unwrap();
+        let base: Oxlintrc = serde_json::from_value(json!({
+            "rules": {
+                "no-restricted-imports": ["error", { "patterns": ["b"] }],
+                "no-console": "warn",
+                "no-debugger": "error"
+            }
+        }))
+        .unwrap();
+
+        let merged = child.merge(base);
+        let names: Vec<String> = merged
+            .rules
+            .rules
+            .iter()
+            .map(|r| format!("{}/{}", r.plugin_name, r.rule_name))
+            .collect();
+        assert_eq!(
+            names,
+            [
+                // from base, minus the exact-name duplicate `no-console`
+                "eslint/no-restricted-imports",
+                "eslint/no-debugger",
+                // from child, in its own order
+                "eslint/no-shadow",
+                "typescript/no-restricted-imports",
+                "eslint/no-console",
+            ]
+        );
+        // `self`'s entry wins for exact-name duplicates
+        let no_console = merged.rules.rules.iter().find(|r| r.rule_name == "no-console").unwrap();
+        assert_eq!(no_console.severity, AllowWarnDeny::Deny);
     }
 
     #[test]
