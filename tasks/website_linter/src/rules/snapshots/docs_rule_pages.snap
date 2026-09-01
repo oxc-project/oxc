@@ -1060,8 +1060,7 @@ This rule was added in v1.37.0.
 title: "typescript/no-floating-promises | Oxlint"
 rule: "typescript/no-floating-promises"
 category: "Correctness"
-version: "1.11.0"
-default: true
+default: false
 type_aware: true
 fix: "fixable_suggestion"
 upstream: "https://typescript-eslint.io/rules/no-floating-promises/"
