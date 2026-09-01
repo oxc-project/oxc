@@ -12,10 +12,10 @@ pub mod type_symbol_baseline;
 
 pub use diagnostics_code_collector::save_reviewed_tsc_diagnostics_codes;
 
-pub(crate) const CASES_PATH: &str = "typescript/tsc/testdata/tests/cases";
-pub(crate) const BASELINES_PATH: &str = "typescript/tsc/testdata/baselines/reference";
+pub const CASES_PATH: &str = "typescript/tsc/testdata/tests/cases";
+pub const BASELINES_PATH: &str = "typescript/tsc/testdata/baselines/reference";
 
-pub(crate) fn baseline_root(test_path: &Path) -> PathBuf {
+pub fn baseline_root(test_path: &Path) -> PathBuf {
     let mut components = test_path.components();
     components
         .find(|component| component.as_os_str() == "cases")
