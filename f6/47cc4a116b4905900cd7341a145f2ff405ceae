@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/typescript/no_extraneous_class.rs
+  s_95820e1ccfd990::t_9ba5b887b56107 148,366-371
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f647cc4a116b4905900cd7341a145f2ff405ceae",
+  "prompts": {},
+  "sessions": {
+    "s_95820e1ccfd990": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05dcc-bde8-7e80-89e9-8baecf3879e2",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
