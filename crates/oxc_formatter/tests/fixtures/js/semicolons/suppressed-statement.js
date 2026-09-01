@@ -27,3 +27,43 @@ lbl3: for (;;) {
   // prettier-ignore
   break   lbl3
 }
+
+// A suppressed variable declaration always gets the formatter's terminator:
+// the ignored range ends at the last declarator, source `;` or not
+// (unlike content-terminated statements, and unlike `export const`).
+
+// prettier-ignore
+const noSemi   =   1
+
+;[].sort()
+
+// prettier-ignore
+let cast = /** @type {string} */ (   value  );
+
+;[].sort()
+
+// prettier-ignore
+var multi   =   1,   multi2   =   2
+
+;[].sort()
+
+// The rightmost-body recursion reaches the declaration
+// prettier-ignore
+if (cond) var inBody   =   1
+
+;[].sort()
+
+// prettier-ignore
+export const exported   =   1
+
+foo()
+
+// A suppressed expression statement also ends its ignored range at the content
+// (`;` re-added only when a source `;` was stripped),
+// and still gets its `semi: false` ASI guard.
+
+// prettier-ignore
+stmt(   );
+
+// prettier-ignore
+[breaking].sort();

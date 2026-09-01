@@ -179,8 +179,9 @@ deciding on the spot, we encode the same policy per site, so keep them in step:
 Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
 
 - Whether a suppressed statement re-adds `;` is a compat table, not a principle:
-  keyword statements (`debugger`/`break`/`continue`) always re-add,
-  content-terminated ones only when a source `;` was stripped — the asymmetry is observable only for a suppressed keyword statement relying on ASI
+  keyword statements (`debugger`/`break`/`continue`) and variable declarations (ignored range ends at the last declarator) always re-add;
+  content-terminated ones, including `export const` (measured, keep the asymmetry), only when a source `;` was stripped.
+  A `for` head declaration instead stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
 - The `semi: false` ASI guard is decided from the guarded statement alone,
   never from the previous statement's output;
   sound because no statement leaves its own trailing `;`,

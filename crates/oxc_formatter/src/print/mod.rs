@@ -136,14 +136,23 @@ pub trait FormatWrite<'ast> {
     /// Expression-shaped nodes don't route here: the generated `fmt` hands them to
     /// `write_suppressed_expression`, which keeps a cast target's source parentheses.
     ///
-    /// NOTE: `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
-    /// but no confirmed divergence against Prettier 3.9 yet.
-    /// Extend the overrides one statement at a time, verifying each against Prettier first.
+    /// NOTE: Extend the overrides one statement at a time with verifying each.
     fn write_suppressed(&self, f: &mut JsFormatter<'_, 'ast>)
     where
         Self: GetSpan,
     {
         FormatSuppressedNode(self.suppressed_span()).fmt(f);
+    }
+
+    /// The leading-comments step of the suppressed path,
+    /// for nodes whose generated `fmt` leaves leading comments to the node;
+    /// it calls this, then [`Self::write_suppressed`].
+    /// Override to interleave with the comments (`ExpressionStatement`'s ASI guard).
+    fn write_suppressed_leading_comments(&self, f: &mut JsFormatter<'_, 'ast>)
+    where
+        Self: GetSpan,
+    {
+        format_leading_comments(self.suppressed_span()).fmt(f);
     }
 }
 
@@ -558,10 +567,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
     }
 }
 
-/// Returns `true` if the expression needs a leading semicolon to prevent ASI issues
+/// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.
+///
+/// `verbatim` is set for a suppressed statement, whose printed form is the source text:
+/// that keeps source parens the reprint would drop, so a leading `(` is a hazard the AST checks below cannot see.
 fn expression_statement_needs_semicolon<'a>(
     stmt: &AstNode<'a, ExpressionStatement<'a>>,
     f: &JsFormatter<'_, 'a>,
+    verbatim: bool,
 ) -> bool {
     if matches!(
         stmt.parent(),
@@ -584,6 +597,11 @@ fn expression_statement_needs_semicolon<'a>(
     ) {
         return false;
     }
+
+    if verbatim && f.source_text().as_bytes()[stmt.span().start as usize] == b'(' {
+        return true;
+    }
+
     // Arrow functions need semicolon only if they will have parentheses
     // e.g., `(a) => {}` needs `;(a) => {}` but `a => {}` doesn't need semicolon
     if let Expression::ArrowFunctionExpression(arrow) = &stmt.expression {
@@ -649,30 +667,50 @@ fn expression_statement_needs_semicolon<'a>(
     })
 }
 
+/// Prints the statement's leading comments with the `semi: false` ASI guard spliced in
+/// before a trailing type cast comment: `;/** @type {string[]} */ ([]).forEach(...)`.
+/// `/** @type {string[]} */ ;([]).forEach(...)` form breaks type cast.
+/// For `verbatim`, see [`expression_statement_needs_semicolon`].
+fn write_leading_comments_with_asi_guard<'a>(
+    stmt: &AstNode<'a, ExpressionStatement<'a>>,
+    verbatim: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    let start = stmt.span().start;
+    let needs_semicolon = f.options().semicolons == Semicolons::AsNeeded
+        && expression_statement_needs_semicolon(stmt, f, verbatim);
+    let leading_comments = f.context().comments().comments_before(start);
+    let split = if needs_semicolon
+        && leading_comments.last().is_some_and(|last| f.comments().is_type_cast_comment(last))
+    {
+        leading_comments.len() - 1
+    } else {
+        leading_comments.len()
+    };
+    write!(f, FormatLeadingComments::CommentsOfNode(&leading_comments[..split], start));
+    if needs_semicolon {
+        write!(f, ";");
+    }
+    write!(f, FormatLeadingComments::CommentsOfNode(&leading_comments[split..], start));
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
+    fn write_suppressed_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Prettier's `printIgnored` puts the guard after the cast comment and breaks the cast;
+        // ours goes before it (DIVERGENCES.md#suppressed-cast-comment-asi-guard)
+        write_leading_comments_with_asi_guard(self, true, f);
+    }
+
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        // The ignored range ends at the expression (plus source parens)
+        let (content_end, print_semicolon) =
+            semicolon_terminated_content_end(self.expression().span().end, self.span(), f);
+        write_suppressed_statement(self.span(), content_end, print_semicolon, f);
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let span = self.span();
-        // Check if we need a leading semicolon to prevent ASI issues.
-        // Leading comments are printed here rather than in the generated `fmt`
-        // so the semicolon can go before a type cast comment;
-        // otherwise the cast is detached from its expression and the parentheses get dropped on the next format:
-        // `;/** @type {string[]} */ ([]).forEach(...)`
-        let needs_semicolon = f.options().semicolons == Semicolons::AsNeeded
-            && expression_statement_needs_semicolon(self, f);
-        let leading_comments = f.context().comments().comments_before(span.start);
-        // Split off a trailing type cast comment so the semicolon lands before it
-        let split = if needs_semicolon
-            && leading_comments.last().is_some_and(|last| f.comments().is_type_cast_comment(last))
-        {
-            leading_comments.len() - 1
-        } else {
-            leading_comments.len()
-        };
-        write!(f, FormatLeadingComments::CommentsOfNode(&leading_comments[..split], span.start));
-        if needs_semicolon {
-            write!(f, ";");
-        }
-        write!(f, FormatLeadingComments::CommentsOfNode(&leading_comments[split..], span.start));
+        write_leading_comments_with_asi_guard(self, false, f);
 
         if f.comments().has_trailing_suppression_comment(span.end) {
             // Preserve original text when the statement has an inline suppression comment:
@@ -763,10 +801,23 @@ fn break_or_continue_content_end(
     label.map_or(span.start + keyword_len, |label| label.span.end)
 }
 
+/// The ignored range end for a variable declaration: the last declarator,
+/// extended over a cast's source parens.
+/// The source `;` is always outside (Prettier's `locEnd` override lists `VariableDeclaration`).
+fn variable_declaration_content_end(
+    declaration: &VariableDeclaration<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> u32 {
+    // `VariableDeclaration` always has at least one declarator
+    let declarations_end = declaration.declarations.last().unwrap().span.end;
+    // The stripped-`;` flag is discarded: a declaration re-adds its terminator unconditionally
+    semicolon_terminated_content_end(declarations_end, declaration.span, f).0
+}
+
 /// The ignored range end of a suppressed statement and whether the formatter prints its own terminator after it,
 /// mirroring Prettier's `locEnd` overrides (`language-js/location/overrides.js`) + `shouldIgnoredNodePrintSemicolon`:
 /// the trailing `;` (and anything between it and the content) is excluded from the verbatim range,
-/// keyword statements (`debugger`/`break`/`continue`) always re-add `;`,
+/// keyword statements (`debugger`/`break`/`continue`) and variable declarations always re-add `;`,
 /// content-terminated ones only when a source `;` was stripped, and statements ending in a body recurse into the rightmost body.
 fn suppressed_statement_content_end(stmt: &Statement<'_>, f: &JsFormatter<'_, '_>) -> (u32, bool) {
     match stmt {
@@ -787,6 +838,7 @@ fn suppressed_statement_content_end(stmt: &Statement<'_>, f: &JsFormatter<'_, '_
         Statement::ContinueStatement(s) => {
             (break_or_continue_content_end(s.span, CONTINUE_KEYWORD_LEN, s.label.as_ref()), true)
         }
+        Statement::VariableDeclaration(s) => (variable_declaration_content_end(s, f), true),
         Statement::IfStatement(s) => {
             suppressed_statement_content_end(s.alternate.as_ref().unwrap_or(&s.consequent), f)
         }

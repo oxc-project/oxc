@@ -15,20 +15,45 @@ use crate::{
     write,
 };
 
-use super::FormatWrite;
+use crate::utils::suppressed::FormatSuppressedNode;
+
+use super::{
+    FormatWrite, variable_declaration_content_end, write_suppressed_statement_with_semicolon,
+};
+
+/// Whether the declaration is a `for`/`for-in`/`for-of` head,
+/// terminated by the head itself (the head-vs-body test is by span: a declaration can also be the body).
+/// Everywhere else the declaration terminates itself, including `export const ...`,
+/// whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
+fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool {
+    match decl.parent() {
+        AstNodes::ForStatement(stmt) => {
+            stmt.init.as_ref().is_some_and(|init| init.span() == decl.span())
+        }
+        AstNodes::ForInStatement(stmt) => stmt.left.span() == decl.span(),
+        AstNodes::ForOfStatement(stmt) => stmt.left.span() == decl.span(),
+        _ => false,
+    }
+}
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        if is_for_head_declaration(self) {
+            // No terminator of its own to re-add:
+            // Prettier appends one anyway and corrupts the head (DIVERGENCES.md#suppressed-for-head-declaration)
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            // The ignored range ends at the last declarator; the terminator is always the formatter's
+            write_suppressed_statement_with_semicolon(
+                self.span().start,
+                variable_declaration_content_end(self, f),
+                f,
+            );
+        }
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let semicolon = match self.parent() {
-            AstNodes::ForStatement(stmt) => {
-                stmt.init().is_some_and(|init| init.span() != self.span())
-            }
-            AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
-            AstNodes::ForOfStatement(stmt) => stmt.left().span() != self.span(),
-            // Everywhere else the declaration terminates itself, including `export const ...`,
-            // whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
-            _ => true,
-        };
+        let semicolon = !is_for_head_declaration(self);
 
         if self.declare() {
             write!(f, ["declare", space()]);

@@ -224,13 +224,19 @@ fn generate_struct_implementation(
             if suppressed_check.is_none() || suppressed_expression_return.is_some() {
                 write_call
             } else {
-                // When `fmt` doesn't print leading/trailing comments itself,
-                // the suppressed path still has to print them, or the suppression comment would be lost.
-                let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
+                // When `fmt` doesn't print leading comments itself,
+                // the suppressed path delegates them to the node;
+                // see `FormatWrite::write_suppressed_leading_comments`.
+                let suppressed_write_call = if do_not_print_leading_comment {
                     quote! {
-                        format_leading_comments(self.suppressed_span()).fmt(f);
+                        self.write_suppressed_leading_comments(f);
+                        self.write_suppressed(f);
                     }
-                });
+                } else {
+                    quote! {
+                        self.write_suppressed(f);
+                    }
+                };
                 let suppressed_trailing_comments = do_not_print_comment.then(|| {
                     quote! {
                         self.format_trailing_comments(f);
@@ -238,8 +244,7 @@ fn generate_struct_implementation(
                 });
                 quote! {
                     if is_suppressed {
-                        #suppressed_leading_comments
-                        self.write_suppressed(f);
+                        #suppressed_write_call
                         #suppressed_trailing_comments
                     } else {
                         #write_call

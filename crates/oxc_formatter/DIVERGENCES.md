@@ -432,3 +432,80 @@ literal trailing space, so the exact fill overflows: it breaks the assignment an
 flat on the indented next line. One char over and the outputs converge; a naive port of the
 literal-space structure regresses `js/arrows/currying-4.js` (Prettier gates the hug on the chain's
 expand state), so matching costs more than this exact-width edge is worth.
+
+## suppressed-for-head-declaration
+
+- Why: semantics (Prettier's output no longer parses)
+- Pin: `tests/fixtures/js/semicolons/suppressed-for-head-declaration.js`
+- Drop when: Prettier stops re-adding `;` for a suppressed `for` head declaration
+
+```js
+// input
+for (/* prettier-ignore */ var i   =   1;;) [].sort();
+
+// ours
+for (/* prettier-ignore */ var i   =   1; ;) [].sort();
+
+// prettier
+for (/* prettier-ignore */ var i   =   1;; ;) [].sort();
+```
+
+Prettier's `shouldIgnoredNodePrintSemicolon` lists `VariableDeclaration` unconditionally,
+so a suppressed declaration in a `for` head gets an extra `;` and the head no longer parses
+(a `for (;;)` head admits exactly two semicolons).
+In the head the declaration has no terminator of its own; we keep it verbatim and let the `for` statement print its separators.
+
+## suppressed-source-paren-asi-guard
+
+- Why: semantics (Prettier's output re-parses as a call)
+- Pin: `tests/fixtures/js/semicolons/suppressed-source-paren-asi-guard.js`
+- Drop when: Prettier guards a suppressed statement whose verbatim text starts with `(`
+
+```js
+// input (semi: false)
+let x = 1;
+
+// prettier-ignore
+(sourceParen).sort();
+
+// ours
+let x = 1
+
+// prettier-ignore
+;(sourceParen).sort()
+
+// prettier
+let x = 1
+
+// prettier-ignore
+(sourceParen).sort()
+```
+
+A suppressed expression statement prints its source text, which keeps parens the reprint would drop, so the line starts with `(` and needs the `semi: false` ASI guard.
+Prettier's `expressionNeedsAsiProtection` walks the AST's naked left side and never sees the source paren, so its output re-parses as `1(sourceParen)...`.
+We check the verbatim range's first byte instead and print the guard.
+
+## suppressed-cast-comment-asi-guard
+
+- Why: semantics (Prettier's guard placement detaches the type cast; verified with tsc)
+- Pin: `tests/fixtures/js/semicolons/suppressed-cast-comment-asi-guard.js`
+- Drop when: Prettier prints the ignored-slice ASI guard before a leading type cast comment
+
+```js
+// input (semi: false)
+// prettier-ignore
+/** @type {string[]} */ (cast).sort();
+
+// ours
+// prettier-ignore
+;/** @type {string[]} */ (cast).sort()
+
+// prettier
+// prettier-ignore
+/** @type {string[]} */ ;(cast).sort()
+```
+
+A cast comment types its parenthesized expression only when directly adjacent:
+with Prettier's placement tsc reports the target as its uncast type again.
+
+Prettier's `printIgnored` prepends the guard to the ignored slice, which starts after the leading comments; we reuse the reprint path's split (`ExpressionStatement::write`), so the guard, the cast comment, and the verbatim content print in that order.
