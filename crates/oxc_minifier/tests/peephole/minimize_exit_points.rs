@@ -127,6 +127,10 @@ fn test_function_return_optimization() {
     test("function g(){if(a)return b;return c;var x}", "function g(){return a?b:c;var x;}");
     test("function g(){if(a)return;return;var x}", "function g(){if(!a){return;var x;}}");
     test("function g(){if(a)throw b;throw c;var x}", "function g(){throw a?b:c;var x;}");
+    test(
+        "function g(){if(d){if(a)return b;return;}return c;}",
+        "function g(){return d?a?b:void 0:c;}",
+    );
 }
 
 #[test]

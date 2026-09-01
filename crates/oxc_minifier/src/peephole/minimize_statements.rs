@@ -747,13 +747,14 @@ impl<'a> PeepholeOptimizations {
         // `if (a) return b; return c;` => `return a ? b : c;`
         // `if (a) return; return;` => `a; return;`
         if ctx.options().sequences {
-            while let Some(Statement::IfStatement(if_stmt)) = result.last()
+            'Loop: while let Some(Statement::IfStatement(if_stmt)) = result.last()
                 && if_stmt.alternate.is_none()
                 && let Statement::ReturnStatement(prev_return) = &if_stmt.consequent
             {
                 let prev_has_arg = prev_return.argument.is_some();
+                let ret_has_arg = ret_stmt.argument.is_some();
 
-                if !prev_has_arg && ret_stmt.argument.is_none() {
+                if !prev_has_arg && !ret_has_arg {
                     // `if (a) return; return;` => `a; return;`
                     ctx.notice_change();
                     let prev_stmt = result.pop().unwrap();
@@ -766,31 +767,54 @@ impl<'a> PeepholeOptimizations {
                         test_expr,
                         ctx,
                     ));
-                } else if prev_has_arg
-                    && ret_stmt
-                        .argument
-                        .as_ref()
-                        .is_some_and(|arg| !Self::conditional_expression_count_exceeded(arg))
+                } else if ret_stmt
+                    .argument
+                    .as_ref()
+                    .is_none_or(|arg| !Self::conditional_expression_count_exceeded(arg))
                 {
+                    // do not collapse if return could be removed
+                    if !ret_has_arg && ctx.parent().is_function_body() {
+                        break 'Loop;
+                    }
+                    // do not collapse if parent is async generator and any of arguments is empty
+                    if (!prev_has_arg || !ret_has_arg)
+                        && ctx.is_closest_function_scope_an_async_generator()
+                    {
+                        break 'Loop;
+                    }
+
                     // `if (a) return b; return c;` => `return a ? b : c;`
                     ctx.notice_change();
                     let prev_stmt = result.pop().unwrap();
                     let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
                     let prev_if = prev_if.unbox();
-                    let Statement::ReturnStatement(prev_return) = prev_if.consequent else {
+                    let Statement::ReturnStatement(mut prev_return) = prev_if.consequent else {
                         unreachable!()
                     };
+
+                    let left_span = prev_return.span();
+                    let right_span = ret_stmt.span();
+                    // "if (a) return; return b;" => "return a ? void 0 : b;"
+                    let left = prev_return
+                        .argument
+                        .take()
+                        .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
+                    // "if (a) return a; return;" => "return a ? b : void 0;"
+                    let right = ret_stmt
+                        .argument
+                        .take()
+                        .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
                     let argument = Self::minimize_conditional_after_if(
                         prev_if.span,
                         prev_if.test,
-                        prev_return.unbox().argument.take().unwrap(),
-                        ret_stmt.argument.take().unwrap(),
+                        left,
+                        right,
                         ctx,
                     );
                     ret_stmt.argument = Some(argument);
                 } else {
-                    break;
+                    break 'Loop;
                 }
             }
         }

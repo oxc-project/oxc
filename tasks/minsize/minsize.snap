@@ -5,7 +5,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 173.90 kB  | 55.50 kB   | 59.82 kB   | 18.77 kB   | 19.33 kB   |          2 | moment.js
 
-287.63 kB  | 89.02 kB   | 90.07 kB   | 30.86 kB   | 31.95 kB   |          2 | jquery.js
+287.63 kB  | 89.01 kB   | 90.07 kB   | 30.85 kB   | 31.95 kB   |          2 | jquery.js
 
 342.15 kB  | 114.80 kB  | 118.14 kB  | 42.71 kB   | 44.37 kB   |          2 | vue.js
 
@@ -13,9 +13,9 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 555.77 kB  | 262.75 kB  | 270.13 kB  | 87.66 kB   | 90.80 kB   |          2 | d3.js
 
-1.01 MB    | 436.00 kB  | 458.89 kB  | 121.79 kB  | 126.71 kB  |          2 | bundle.min.js
+1.01 MB    | 435.99 kB  | 458.89 kB  | 121.78 kB  | 126.71 kB  |          2 | bundle.min.js
 
-1.25 MB    | 634.40 kB  | 646.76 kB  | 158.43 kB  | 163.73 kB  |          2 | three.js
+1.25 MB    | 634.39 kB  | 646.76 kB  | 158.43 kB  | 163.73 kB  |          2 | three.js
 
 2.14 MB    | 707.63 kB  | 724.14 kB  | 160.08 kB  | 181.07 kB  |          2 | victory.js
 
@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 6.69 MB    | 2.12 MB    | 2.31 MB    | 453.44 kB  | 488.28 kB  |          5 | antd.js
 
-10.95 MB   | 3.31 MB    | 3.49 MB    | 849.97 kB  | 915.50 kB  |          4 | typescript.js
+10.95 MB   | 3.31 MB    | 3.49 MB    | 849.98 kB  | 915.50 kB  |          4 | typescript.js
 
