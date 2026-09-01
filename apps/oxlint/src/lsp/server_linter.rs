@@ -799,7 +799,6 @@ impl ServerLinter {
         // - inverted diagnostics (related spans for the diagnostics)
         // - diagnostics with span(0,0) and no fixes
         // - tsgolint internal diagnostics
-        // - unused directives diagnostics
         let mut code_actions = vec![];
         for report in reports {
             diagnostics.push(report.diagnostic);
