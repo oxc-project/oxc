@@ -133,6 +133,8 @@ pub trait FormatWrite<'ast> {
     }
     /// Formats the node when it is suppressed (`oxfmt-ignore` / `prettier-ignore`):
     /// prints `suppressed_span` verbatim.
+    /// Expression-shaped nodes don't route here: the generated `fmt` hands them to
+    /// `write_suppressed_expression`, which keeps a cast target's source parentheses.
     ///
     /// NOTE: `ExpressionStatement` and `VariableDeclaration` have the same issue in principle
     /// but no confirmed divergence against Prettier 3.9 yet.

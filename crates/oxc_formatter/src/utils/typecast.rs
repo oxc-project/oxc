@@ -8,6 +8,7 @@ use crate::{
         prelude::*,
         trivia::{FormatLeadingComments, format_leading_comments},
     },
+    utils::suppressed::FormatSuppressedNode,
     write,
 };
 
@@ -139,6 +140,94 @@ pub fn format_type_cast_comment_node<'a>(
     }
 
     true
+}
+
+/// Prints a suppressed node that is a cast target keeping its source cast parentheses;
+/// returns `false` when it is not one
+/// (the caller, `write_suppressed_expression`, prints its plain verbatim range instead).
+/// Must run before anything of the node is printed, with every comment still unprinted.
+///
+/// A cast target's span excludes its own wrapping parentheses (`preserve_parens: false`),
+/// so a plain verbatim range would print `/** @type {A} */ x`, silently breaking the cast.
+/// Leading comments print only up to the cast comment (`pending` ends with it, see [`TypeCast::Target`]);
+/// the in-paren comments (`(/* c */ x)`) print in place via the verbatim text, which also marks them.
+/// An empty `pending` (the cast comment printed by an ancestor) cannot reach here suppressed,
+/// and falls through regardless.
+pub fn write_suppressed_cast_target(span: Span, f: &mut JsFormatter<'_, '_>) -> bool {
+    if let TypeCast::Target(pending) = classify_type_cast(span, f)
+        && let Some(cast_comment) = pending.last()
+        && let Some(verbatim_span) = cast_parens_span(cast_comment.span.end, span, f)
+    {
+        write!(f, [FormatLeadingComments::Comments(pending)]);
+        FormatSuppressedNode(verbatim_span).fmt(f);
+        true
+    } else {
+        false
+    }
+}
+
+/// The verbatim range for a suppressed cast target:
+/// from the first `(` after the cast comment to after the matching `)`.
+///
+/// The gap is already classified as parens and trivia ([`CastCommentGap::ParensAndTrivia`]);
+/// comments are skipped by span ([`gap_segments`]), so `(` `)` bytes inside them don't count.
+/// The parser guarantees each counted `(` wraps the node and closes after it (see [`CastCommentGap`]).
+#[expect(clippy::cast_possible_truncation)] // Offsets fit in `u32`, source length does
+fn cast_parens_span(cast_comment_end: u32, span: Span, f: &JsFormatter<'_, '_>) -> Option<Span> {
+    let comments = f.context().comments();
+    let source = f.source_text();
+    let source_end = source.as_str().len() as u32;
+
+    // Find the first `(` between the cast comment and the node and count them
+    let mut open_parens = 0usize;
+    let mut first_open_paren = None;
+    let backward_comments = comments.comments_in_range(cast_comment_end, span.start);
+    for (from, to) in gap_segments(backward_comments, cast_comment_end, span.start) {
+        for (offset, &byte) in source.bytes_range(from, to).iter().enumerate() {
+            if byte == b'(' {
+                open_parens += 1;
+                first_open_paren.get_or_insert(from + offset as u32);
+            }
+        }
+    }
+    let start = first_open_paren?;
+
+    // Consume the matching `)`s after the node (only trivia sits between them);
+    // `)` bytes inside comments don't count.
+    for (from, to) in gap_segments(comments.comments_after(span.end), span.end, source_end) {
+        for (offset, &byte) in source.bytes_range(from, to).iter().enumerate() {
+            if byte == b')' {
+                open_parens -= 1;
+                if open_parens == 0 {
+                    return Some(Span::new(start, from + offset as u32 + 1));
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Byte segments between `start` and `bound` lying outside the given comment spans:
+/// one `(gap_start, gap_end)` pair per gap, ending with the tail segment up to `bound`.
+fn gap_segments(
+    comment_spans: &[Comment],
+    start: u32,
+    bound: u32,
+) -> impl Iterator<Item = (u32, u32)> + '_ {
+    let mut pos = start;
+    comment_spans
+        .iter()
+        .map(|comment| comment.span)
+        .chain(std::iter::once(Span::empty(bound)))
+        .filter_map(move |span| {
+            // A comment ending exactly at `pos` lies before the range
+            if span.start < pos {
+                return None;
+            }
+            let segment = (pos, span.start);
+            pos = span.end;
+            Some(segment)
+        })
 }
 
 /// Prints a node's leading comments and the formatter-added `(` in the correct order.

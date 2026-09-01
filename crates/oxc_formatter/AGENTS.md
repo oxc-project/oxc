@@ -173,6 +173,8 @@ deciding on the spot, we encode the same policy per site, so keep them in step:
   (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
 - suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
   so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+- suppressed expression side: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence
+  for expression-shaped nodes (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed), so a cast target keeps its source cast parens (excluded from its span, `utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
 
 Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
 
