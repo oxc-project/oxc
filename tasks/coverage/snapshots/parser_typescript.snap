@@ -1,9 +1,9 @@
 commit: f52473a2
 
 parser_typescript Summary:
-AST Parsed     : 10079/10090 (99.89%)
-Positive Passed: 10066/10090 (99.76%)
-Negative Passed: 1665/2719 (61.24%)
+AST Parsed     : 10077/10088 (99.89%)
+Positive Passed: 10066/10088 (99.78%)
+Negative Passed: 1667/2721 (61.26%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2284,16 +2284,6 @@ Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisT
    ·            ────
    ╰────
 
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parameterDecoratorInJsFile.ts
-
-  × Decorators are not valid here.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/parameterDecoratorInJsFile.ts:4:12]
- 3 │ class Foo {
- 4 │     method(@dec x) {}
-   ·            ────
- 5 │ }
-   ╰────
-
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts
 
   × Invalid Character `⼯`
@@ -2301,24 +2291,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reg
  1 │ ⼯䀠慴杲瑥›獥敮瑸⼊⾀ੵ
    · ──
    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts
-
-  × TS(8011): Type arguments can only be used in TypeScript files.
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts:9:26]
-  8 │ 
-  9 │ export class B2 extends A<string> {
-    ·                          ────────
- 10 │     constructor() {
-    ╰────
-
-  × TS(8011): Type arguments can only be used in TypeScript files.
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts:15:26]
- 14 │ 
- 15 │ export class B3 extends A<string, string> {
-    ·                          ────────────────
- 16 │     constructor() {
-    ╰────
 
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
 
@@ -10858,6 +10830,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  11 │ }
     ╰────
 
+  × Decorators are not valid here.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/parameterDecoratorInJsFile.ts:4:12]
+ 3 │ class Foo {
+ 4 │     method(@dec x) {}
+   ·            ────
+ 5 │ }
+   ╰────
+
   × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parameterPropertyInConstructor1.ts:3:17]
  2 │   class Customers {
@@ -13925,6 +13905,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·     ─────────────────────────────
  3 │ }
    ╰────
+
+  × TS(8011): Type arguments can only be used in TypeScript files.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts:9:26]
+  8 │ 
+  9 │ export class B2 extends A<string> {
+    ·                          ────────
+ 10 │     constructor() {
+    ╰────
+
+  × TS(8011): Type arguments can only be used in TypeScript files.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts:15:26]
+ 14 │ 
+ 15 │ export class B3 extends A<string, string> {
+    ·                          ────────────────
+ 16 │     constructor() {
+    ╰────
 
   × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/superCallOutsideConstructor.ts:6:9]

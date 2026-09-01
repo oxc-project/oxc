@@ -48,6 +48,20 @@
 //   - When OXC has limited support for these, we cannot ignore it by error code alone
 //     - We have to ignore by file path, then manually add some parts separately to `misc` cases
 
+use std::path::Path;
+
+/// Whether a TypeScript diagnostic is outside the parser coverage surface.
+///
+/// Most diagnostics can be classified by code. A few codes are emitted by both parser-adjacent
+/// checks and the type checker, so those need a fixture-specific exception.
+pub fn is_not_supported_error_code(path: &Path, code: &str) -> bool {
+    NOT_SUPPORTED_ERROR_CODES.contains(code)
+        || (code == "2339"
+            && ["deleteExpressionMustBeOptional.ts", "inKeywordTypeguard.ts"]
+                .iter()
+                .any(|name| path.ends_with(name)))
+}
+
 // spellchecker:off
 pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: "use strict" with non-simple parameter list is allowed in ES5

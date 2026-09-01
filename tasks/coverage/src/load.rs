@@ -215,7 +215,7 @@ fn load_typescript(filter: Option<&str>) -> Vec<TypeScriptFile> {
             let should_fail = content
                 .error_codes
                 .iter()
-                .any(|c| !typescript::constants::NOT_SUPPORTED_ERROR_CODES.contains(c.as_str()));
+                .any(|c| !typescript::constants::is_not_supported_error_code(&path, c));
             TypeScriptFile {
                 path,
                 code,

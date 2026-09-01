@@ -1,8 +1,8 @@
 commit: f52473a2
 
 semantic_typescript Summary:
-AST Parsed     : 6081/6081 (100.00%)
-Positive Passed: 4474/6081 (73.57%)
+AST Parsed     : 6071/6071 (100.00%)
+Positive Passed: 4468/6071 (73.60%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/APISample_Watch.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
@@ -3876,56 +3876,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["f1"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deleteExpressionMustBeOptional.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "f"]
-rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(5) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(5) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "b":
-after transform: SymbolId(6) "b"
-rebuilt        : <None>
-Reference symbol mismatch for "b":
-after transform: SymbolId(6) "b"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["a", "b", "f"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/deleteExpressionMustBeOptional_exactOptionalPropertyTypes.ts
 Bindings mismatch:
@@ -7966,47 +7916,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["invariant"]
 
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inKeywordTypeguard.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "AWithMethod", "AWithOptionalProp", "B", "BWithMethod", "BWithOptionalProp", "C", "ClassWithUnionProp", "D", "NegativeClassTest", "UnreachableCodeDetection", "_defineProperty", "checkIsTouchDevice", "error", "f", "f1", "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "foo", "isAOrB", "isHTMLTable", "narrowsToNever", "negativeClassesTest", "negativeIntersectionTest", "negativeMultipleClassesTest", "negativePropTest", "negativeTestClassesWithMemberMissingInBothClasses", "negativeTestClassesWithMembers", "positiveClassesTest", "positiveIntersectionTest", "positiveTestClassesWithOptionalProperties", "sym", "test1", "test2", "test3", "x"]
-rebuilt        : ScopeId(0): ["A", "AWithMethod", "AWithOptionalProp", "B", "BWithMethod", "BWithOptionalProp", "C", "ClassWithUnionProp", "D", "NegativeClassTest", "UnreachableCodeDetection", "_defineProperty", "checkIsTouchDevice", "f", "f1", "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "foo", "isHTMLTable", "narrowsToNever", "negativeClassesTest", "negativeIntersectionTest", "negativeMultipleClassesTest", "negativePropTest", "negativeTestClassesWithMemberMissingInBothClasses", "negativeTestClassesWithMembers", "positiveClassesTest", "positiveIntersectionTest", "positiveTestClassesWithOptionalProperties", "sym", "test1", "test2", "test3"]
-Reference symbol mismatch for "error":
-after transform: SymbolId(34) "error"
-rebuilt        : <None>
-Reference symbol mismatch for "error":
-after transform: SymbolId(34) "error"
-rebuilt        : <None>
-Reference symbol mismatch for "error":
-after transform: SymbolId(34) "error"
-rebuilt        : <None>
-Reference symbol mismatch for "isAOrB":
-after transform: SymbolId(39) "isAOrB"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(41) "x"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Array", "Symbol", "require", "window"]
-rebuilt        : ["Array", "Symbol", "error", "isAOrB", "require", "window", "x"]
-
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/incompatibleExports2.ts
 An export assignment cannot be used in a module with other exported elements
 
@@ -11236,9 +11145,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["f"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parameterDecoratorInJsFile.ts
-Decorators are not valid here.
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parametersAliasOverTypeofPreservedAsIsInDeclarations.ts
 Bindings mismatch:
@@ -14883,10 +14789,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["B"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts
-Type arguments can only be used in TypeScript files.
-Type arguments can only be used in TypeScript files.
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superHasMethodsFromMergedInterface.ts
 Bindings mismatch:

@@ -1,8 +1,8 @@
 commit: f52473a2
 
 estree_typescript_tokens Summary:
-AST Parsed     : 10005/10010 (99.95%)
-Positive Passed: 10001/10010 (99.91%)
+AST Parsed     : 10003/10008 (99.95%)
+Positive Passed: 10001/10008 (99.93%)
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 A 'declare' modifier cannot be used in an already ambient context.
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts
@@ -15,9 +15,5 @@ Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileComp
 Type assertion expressions can only be used in TypeScript files.
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
 Identifier expected. 'this' is a reserved word that cannot be used here.
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parameterDecoratorInJsFile.ts
-Decorators are not valid here.
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/superCallInJSWithWrongBaseTypeArgumentCount1.ts
-Type arguments can only be used in TypeScript files.
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
 Type satisfaction expressions can only be used in TypeScript files.

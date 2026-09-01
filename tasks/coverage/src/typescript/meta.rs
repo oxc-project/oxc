@@ -31,7 +31,8 @@ static TS_IGNORE_PATTERN: Lazy<Regex> = lazy_regex!(r"(?://|/\*).*?(@ts-ignore|@
 pub struct CompilerSettings {
     pub modules: Vec<String>,
     pub targets: Vec<String>,
-    pub strict: bool,
+    pub strict: Vec<bool>,
+    pub check_js: Vec<bool>,
     pub jsx: Vec<String>, // 'react', 'preserve'
     pub declaration: bool,
     pub emit_declaration_only: bool,
@@ -50,7 +51,8 @@ impl CompilerSettings {
         Self {
             modules: Self::split_value_options(options.get("module")),
             targets: Self::split_value_options(options.get("target")),
-            strict: Self::value_to_boolean(options.get("strict"), false),
+            strict: Self::split_boolean_options(options.get("strict"), false),
+            check_js: Self::split_boolean_options(options.get("checkjs"), false),
             jsx: Self::split_value_options(options.get("jsx")),
             declaration: Self::value_to_boolean(options.get("declaration"), false),
             emit_declaration_only: Self::value_to_boolean(
@@ -361,11 +363,20 @@ impl TestCaseContent {
         // `(alwaysstrict=true,target=es5).errors.txt`. Keep the same ordering here so
         // the lookup matches.
         suffixes.extend(create_suffixes("alwaysstrict", &options.always_strict));
+        // `checkJs` only changes checker diagnostics, not parser diagnostics. When a test
+        // requests both variants, use the enabled baseline as the representative variant.
+        if options.check_js.len() > 1 && options.check_js.contains(&true) {
+            suffixes.push(vec!["checkjs=true".to_string()]);
+        }
         suffixes
             .extend(create_suffixes("experimentaldecorators", &options.experimental_decorators));
         suffixes.extend(create_suffixes("jsx", &options.jsx));
         suffixes.extend(create_suffixes("module", &options.modules));
         suffixes.extend(create_suffixes("preserveconstenums", &options.preserve_const_enums));
+        // As with `checkJs`, use the enabled baseline when both `strict` variants are present.
+        if options.strict.len() > 1 && options.strict.contains(&true) {
+            suffixes.push(vec!["strict=true".to_string()]);
+        }
         suffixes.extend(create_suffixes("target", &options.targets));
         suffixes.extend(create_suffixes(
             "usedefineforclassfields",
