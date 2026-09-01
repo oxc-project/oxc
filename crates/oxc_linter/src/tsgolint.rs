@@ -297,6 +297,14 @@ impl TsGoLintState {
                 }
 
                 for (path, source_text, messages) in messages_requiring_fixes {
+                    // `None` for a file routed to an external parser, which is load-bearing:
+                    // it skips `Fixer`'s debug-assertion re-parse, and oxc's parser cannot
+                    // read e.g. a `.gts`'s `<template>`. Fixing a file with an unknown
+                    // extension is safe only while tsgolint also holds up its half --
+                    // it emits a fix only where the content mapper's span mapping is
+                    // verbatim, so fixes land on the original bytes and never come back
+                    // from inside a mapped region. Break either half and `.gts` fixes
+                    // break: silent corruption there, a debug panic here.
                     let source_type = SourceType::from_path(&path)
                         .ok()
                         .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });

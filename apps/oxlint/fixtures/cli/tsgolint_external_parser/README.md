@@ -46,18 +46,24 @@ Expected: `files/counter.gts:9:18` on `cuont`, `files/plain.ts:3:18`,
 ## When the mapper is missing or misspelled
 
 Both land as `typescript(unsupported-file-extension)` on line 1 of each `.gts`. Whether
-you also get the tsconfig error that explains *why* depends on the config's other files:
+you also get the tsconfig error that explains *why* depends on **what this run was asked
+to lint** — not on what the tsconfig contains:
 
-- A typo'd `package` **with** a natively-parseable file in the same tsconfig also reports
-  `typescript(tsconfig-error)` — "The content mapper package '…' could not be resolved" —
-  anchored at the offending line in `tsconfig.json`.
-- A typo'd `package` in a `.gts`-only tsconfig reports nothing extra. An unresolvable
-  mapper unregisters its extensions, so no file matches that config, so no program is
-  built and the tsconfig error never surfaces. Indistinguishable from having no
-  `contentMappers` entry at all.
+- Lint a set that includes at least one natively parseable file belonging to that tsconfig
+  and you also get `typescript(tsconfig-error)` — "The content mapper package '…' could
+  not be resolved" — anchored at the offending line in `tsconfig.json`.
+- Lint only `.gts` files and you get nothing extra, even when the tsconfig holds plenty of
+  `.ts` on disk. Programs are built per requested file, so a config with no requested file
+  matching it never gets a program, and building the program is what surfaces its errors.
 
-Real Ember apps normally have `.ts` in the same tsconfig, so the diagnosable case is the
-common one.
+So this is not a rare shape. It covers every single-file lint — `oxlint app/components/
+thing.gts`, and every editor/LSP request, which is the only shape the LSP path has. A
+normal Ember app with hundreds of `.ts` files still hits it the moment someone saves one
+`.gts` and the mapper package name is wrong.
+
+Fixing it properly means resolving the would-be tsconfig for a file that was skipped and
+replaying its errors, deduped against configs that did get a program — a change on the
+tsgolint side, tracked in its own worktree rather than here.
 
 Promote this to a snapshot test in `apps/oxlint/src/lint.rs` once a released
 `oxlint-tsgolint` carries content-mapper support, so CI has a `tsgolint` that can run it.
