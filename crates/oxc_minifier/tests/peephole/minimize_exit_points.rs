@@ -110,13 +110,10 @@ fn test_function_return_optimization() {
         "function f(){g:if(a()){return;}else{return;} return;}",
         "function f(){g:if(a())return;else return}",
     ); // function f(){g:a()}
-    test(
-        "function f(){g:{if(a()){return;}else{return;} return;}}",
-        "function f(){g:return a(),void 0}",
-    ); // function f(){g:a()}
+    test("function f(){g:{if(a()){return;}else{return;} return;}}", "function f(){g:{a();return}}"); // function f(){g:a()}
     test(
         "function f(){g:{a();if(b()){return;}else{return;} return;}}",
-        "function f(){g:return a(),b(),void 0}",
+        "function f(){g:{a(),b();return}}",
     ); // function f(){g:a(),b()}
     test(
         "function f(){try{g:if(a()){throw 9;} return;}finally{return}}",
@@ -126,6 +123,19 @@ fn test_function_return_optimization() {
         "function g(a,b){if(a){}else if(b){return()=>typeof f}else function f(){}}",
         "function g(a,b){if(!a){if(b)return()=>typeof f;else function f(){}}}",
     );
+
+    test("function g(){if(a)return b;return c;var x}", "function g(){return a?b:c;var x;}");
+    test("function g(){if(a)return;return;var x}", "function g(){if(!a){return;var x;}}");
+    test("function g(){if(a)throw b;throw c;var x}", "function g(){throw a?b:c;var x;}");
+}
+
+#[test]
+fn test_async_gen_function_return() {
+    test("async function* foo(){if(a)return b;return c;}", "async function* foo(){return a?b:c;}");
+    test("async function* foo(){if(a)return;return c;}", "async function* foo(){if(!a)return c;}");
+    test("async function* foo(){if(a)return b;return;}", "async function* foo(){if(a)return b;}");
+    test("async function* foo(){if(a)return;return;}", "async function* foo(){a;}");
+    test_same("async function* foo(){if(a){if(b)return;return d;}return e;}");
 }
 
 #[test]
