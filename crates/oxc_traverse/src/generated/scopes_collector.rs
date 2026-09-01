@@ -1954,6 +1954,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
+        if let Some(attributes) = &it.attributes {
+            self.visit_ts_type_literal(attributes);
+        }
         self.add_scope(&it.scope_id);
     }
 

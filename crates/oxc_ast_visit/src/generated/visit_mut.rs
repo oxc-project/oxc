@@ -4139,6 +4139,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_string_literal(&mut it.id);
+        if let Some(attributes) = &mut it.attributes {
+            visitor.visit_ts_type_literal(attributes);
+        }
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
