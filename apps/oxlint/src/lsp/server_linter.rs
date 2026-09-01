@@ -28,7 +28,7 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, CodeActionParams, ConcurrentHashMap, DiagnosticMode, DiagnosticResult,
-    TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+    ResolvedPath, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
     utils::normalize_user_config_path_to_watch_pattern,
 };
 
@@ -422,18 +422,20 @@ impl ServerLinterBuilder {
 }
 
 struct WorkspaceSuppressions {
-    workspace_root: PathBuf,
+    workspace_root: ResolvedPath,
     manager: Option<Arc<DiffManager>>,
 }
 
 impl WorkspaceSuppressions {
     fn new(workspace_root: PathBuf) -> Result<Self, OxcDiagnostic> {
-        let suppression_file_path = workspace_root.join(DEFAULT_SUPPRESSIONS_FILE_NAME);
+        let workspace_root = ResolvedPath::from(workspace_root);
+        let suppression_file_path = workspace_root.as_path().join(DEFAULT_SUPPRESSIONS_FILE_NAME);
         if !suppression_file_path.exists() {
-            return Ok(Self::without_baseline(workspace_root));
+            return Ok(Self { workspace_root, manager: None });
         }
 
-        let tracking = SuppressionTracking::from_file(&suppression_file_path, &workspace_root)?;
+        let tracking =
+            SuppressionTracking::from_file(&suppression_file_path, workspace_root.as_path())?;
         let manager = Some(Arc::new(DiffManager::new(
             tracking.suppressions().clone(),
             true,
@@ -445,7 +447,7 @@ impl WorkspaceSuppressions {
     }
 
     fn without_baseline(workspace_root: PathBuf) -> Self {
-        Self { workspace_root, manager: None }
+        Self { workspace_root: ResolvedPath::from(workspace_root), manager: None }
     }
 
     fn partition_file(
@@ -457,7 +459,8 @@ impl WorkspaceSuppressions {
             return (messages, Vec::new());
         };
 
-        manager.partition_file(path, &self.workspace_root, messages)
+        let path = ResolvedPath::from(path.to_path_buf());
+        manager.partition_file(path.as_path(), self.workspace_root.as_path(), messages)
     }
 }
 
@@ -1098,6 +1101,35 @@ mod tests_builder {
         let suppressions = WorkspaceSuppressions::new(root_dir.path().to_path_buf()).unwrap();
 
         assert!(suppressions.manager.is_none());
+    }
+
+    #[cfg(any(target_os = "windows", target_os = "macos"))]
+    #[test]
+    fn test_suppression_paths_resolve_file_system_casing() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let workspace_root = root_dir.path().join("Workspace");
+        fs::create_dir(&workspace_root).unwrap();
+        fs::write(
+            workspace_root.join(DEFAULT_SUPPRESSIONS_FILE_NAME),
+            r#"{"Source.js":{"no-console":{"count":1}}}"#,
+        )
+        .unwrap();
+        fs::write(workspace_root.join("Source.js"), "console.log('test');").unwrap();
+
+        let unresolved_workspace_root = root_dir.path().join("workspace");
+        let suppressions = WorkspaceSuppressions::new(unresolved_workspace_root.clone()).unwrap();
+        let message = oxc_linter::Message::new(
+            oxc_diagnostics::OxcDiagnostic::error("test diagnostic")
+                .with_error_code("eslint", "no-console"),
+            oxc_linter::PossibleFixes::None,
+        );
+
+        let unresolved_source_path = unresolved_workspace_root.join("source.js");
+        let (surfaced, suppressed) =
+            suppressions.partition_file(&unresolved_source_path, vec![message]);
+
+        assert!(surfaced.is_empty());
+        assert_eq!(suppressed.len(), 1);
     }
 }
 
