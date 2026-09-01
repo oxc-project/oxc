@@ -12,6 +12,10 @@ use rustc_hash::FxHashSet;
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
+    fn supports_rule_timings(&self) -> bool {
+        true
+    }
+
     fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
         let mut output = String::new();
         let table = RuleTable::default();
@@ -232,6 +236,11 @@ mod test_implementation {
 
 #[cfg(test)]
 mod test {
+    #[test]
+    fn supports_rule_timings() {
+        assert!(super::DefaultOutputFormatter.supports_rule_timings());
+    }
+
     use std::time::Duration;
 
     use crate::output_formatter::{
