@@ -16,12 +16,18 @@ const plugin: Plugin = {
 
         return {
           Program(node) {
+            const comments = context.sourceCode.getAllComments().map((comment) => ({
+              start: comment.start,
+              end: comment.end,
+              text: sourceText.slice(comment.start, comment.end),
+            }));
             context.report({
               message:
                 "\n"
                 + `hasBOM: ${context.sourceCode.hasBOM}\n`
                 + `sourceText: ${JSON.stringify(sourceText)}\n`
-                + `Program span: ${node.start}-${node.end}`,
+                + `Program span: ${node.start}-${node.end}`
+                + (comments.length === 0 ? "" : `\ncomments: ${JSON.stringify(comments)}`),
               node,
             });
           },
