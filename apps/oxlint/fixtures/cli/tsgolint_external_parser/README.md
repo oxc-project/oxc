@@ -1,42 +1,36 @@
 # `tsgolint` over files routed to an external parser
 
-Checks that a file oxlint only knows how to lint because a config override gave it a
-`languageOptions.parser` — here `.gts` — still reaches `tsgolint` for type-aware linting,
-under its original path, and that diagnostics land at offsets in that original file.
+A file oxlint only knows how to lint because a config override gave it a
+`languageOptions.parser` — here Ember's `.gts` — still reaches `tsgolint` for type-aware
+linting, under its original path, and diagnostics land at offsets in that original file
+rather than in the mapper's generated TypeScript.
 
-`files/component.gts` carries two problems:
+`typescript-go` does the mapping, via the `contentMappers` entry in `tsconfig.json`
+pointing at [`ember-content-mapper`](https://www.npmjs.com/package/ember-content-mapper)
+(a TypeScript 7 content mapper wrapping Glint). oxlint sends the `.gts` path unrewritten.
 
-- a floating promise at module level (a `tsgolint` *rule* diagnostic), and
-- `label.toUpperCase` inside `<template>`, where `label` is a `number` (a TypeScript
-  *semantic* diagnostic, reported under `--type-check`).
+| file | finding | needs |
+| --- | --- | --- |
+| `files/widget.gts` | `no-unnecessary-condition` on `this.always` inside `<template>` | `--type-aware` |
+| `files/counter.gts` | TS2551 on `this.cuont` inside `<template>` | `--type-aware --type-check` |
+| `files/plain.ts` | `no-unnecessary-condition` — control, a natively lintable extension | `--type-aware` |
 
-## Status
+## Running it
 
-Not yet wired into `apps/oxlint/src/lint.rs` as a snapshot test. `tsgolint` 0.24.0 — the
-version this repo pins — predates `contentMappers`, and panics on a `.gts`:
-
-```
-panic: Unknown script kind for file .../files/component.gts
-```
-
-The `contentMappers` entry in `tsconfig.json` names a package that does not exist yet.
-Once a `tsgolint` with content-mapper support and an Ember content-mapper package are
-available, point `OXLINT_TSGOLINT_PATH` at that build, add the mapper package, and
-promote this to a real snapshot test.
-
-## Verifying the oxlint half today
-
-`scripts/fake-tsgolint.mjs` stands in for the binary. It records the payload oxlint sends
-and replies with one diagnostic per `.gts`, anchored at the offset of `label.toUpperCase`
-in the original file — so it exercises path selection, payload construction, diagnostic
-decoding and source rendering without needing content-mapper support:
+Not part of any automated suite: it needs an `npm install` here, and a `tsgolint` built
+with content-mapper support. The `oxlint-tsgolint` version this repo pins (0.24.0)
+predates that and panics on a `.gts` with `Unknown script kind for file`.
 
 ```sh
 cd apps/oxlint/fixtures/cli/tsgolint_external_parser
-OXLINT_TSGOLINT_PATH=./scripts/fake-tsgolint \
-FAKE_TSGOLINT_CAPTURE=/tmp/payload.json \
-  node ../../../dist/cli.js --type-aware files
+npm install
+OXLINT_TSGOLINT_PATH=/path/to/tsgolint \
+  node ../../../dist/cli.js --type-aware --type-check files
 ```
 
-Expected: the `.gts` appears in `/tmp/payload.json` under its absolute original path, and
-the diagnostic renders at `files/component.gts:12:33`, on `label.toUpperCase`.
+Expected: three findings, each anchored in the original source —
+`files/counter.gts:9:18` on `cuont`, `files/plain.ts:3:18`, `files/widget.gts:10:11`
+on `this.always`.
+
+Promote this to a snapshot test in `apps/oxlint/src/lint.rs` once a released
+`oxlint-tsgolint` carries content-mapper support, so CI has a `tsgolint` that can run it.
