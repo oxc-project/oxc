@@ -1073,6 +1073,12 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
     };
 
     // Characters that could cause ASI issues when followed by `[`, `(`, `/`, etc.
+    //
+    // Known gap: this misses `IdentifierPart` characters that Rust does not treat
+    // as alphanumeric - Latin combining diacritics (so NFD-normalized text), ZWNJ
+    // and ZWJ, and connector punctuation other than `_`. An expression ending in
+    // one of those is not recognised as continuing, so callers relying on this to
+    // guard a fix can emit a missing semicolon there.
     matches!(last_char, ')' | ']' | '}' | '"' | '\'' | '`' | '+' | '-' | '/' | '.')
         || last_char.is_alphanumeric()
         || last_char == '_'

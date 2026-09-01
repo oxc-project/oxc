@@ -1,0 +1,987 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b)
+   · ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a !== b)
+   · ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a == b)
+   · ─────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a != b)
+   · ─────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b === c)
+   · ────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(typeof value === "undefined")
+   · ───────────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !((a === b))
+   · ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:2]
+ 1 │ (!(a === b)).toString()
+   ·  ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:5]
+ 1 │ foo(!(a === b))
+   ·     ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a /* comment */ === b)
+   · ────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !/* comment */(a === b)
+   · ───────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !([a] === b)
+   · ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:9]
+ 1 │     function foo() {
+ 2 │ ╭─▶   return!
+ 3 │ ╰─▶     (a === b);
+ 4 │     }
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:8]
+ 1 │     function foo() {
+ 2 │ ╭─▶   throw!
+ 3 │ ╰─▶     (a === b);
+ 4 │     }
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:24]
+ 1 │ function foo() { return!(a === b); }
+   ·                        ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:23]
+ 1 │ function foo() { throw!(a === b); }
+   ·                       ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ switch (foo) { case!(a === b): break; }
+   ·                    ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:37]
+ 1 │ async function foo() { return await !(a === b); }
+   ·                                     ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:36]
+ 1 │ async function foo() { return await!(a === b); }
+   ·                                    ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:18]
+ 1 │ const foo = void !(a === b);
+   ·                  ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ const foo = typeof !(a === b);
+   ·                    ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:14]
+ 1 │ const foo = +!(a === b);
+   ·              ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:17]
+ 1 │ const foo = a + !(b === c);
+   ·                 ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:26]
+ 1 │ function * foo() { yield !(a === b); }
+   ·                          ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:25]
+ 1 │ function * foo() { yield!(a === b); }
+   ·                         ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:8]
+ 1 │ foo(...!(a === b));
+   ·        ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(a === b) + c
+   · ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ const foo = [a]
+ 2 │ !(b === c) + d
+   · ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:8]
+ 1 │ if (x) !([a] === b)
+   ·        ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:16]
+ 1 │ if (x) {} else !([a] === b)
+   ·                ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:11]
+ 1 │ while (x) !([a] === b)
+   ·           ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:10]
+ 1 │ for (;;) !([a] === b)
+   ·          ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ for (const k in o) !([a] === b)
+   ·                    ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ for (const k of o) !([a] === b)
+   ·                    ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:4]
+ 1 │ do !([a] === b); while (x)
+   ·    ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ lbl: !([a] === b)
+   ·      ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a?.b === c)
+   · ─────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a?.b !== c)
+   · ─────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a?.() == b)
+   · ─────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !({} === b);
+   · ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(function () {} === b);
+   · ───────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(class {} === b);
+   · ─────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(async function () {} === b);
+   · ─────────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(async /* comment */ function () {} === b);
+   · ───────────────────────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(async === b);
+   · ──────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(let[0] === b);
+   · ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(let.a === b);
+   · ──────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(let === b);
+   · ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:7]
+ 1 │ () => !({} === b)
+   ·       ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(<div/> === b)
+   · ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(.5 === b)
+   · ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:24]
+ 1 │ function foo() { return!(\u0061 === b); }
+   ·                        ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ switch (foo) { case!(\u0061 === b): break; }
+   ·                    ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:19]
+ 1 │ const foo = typeof!(a === b);
+   ·                   ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:17]
+ 1 │ const foo = void!(a === b);
+   ·                 ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ switch (foo) { case!({} === b): break; }
+   ·                    ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:24]
+ 1 │ function foo() { return!({} === b); }
+   ·                        ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b) ? x : y
+   · ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:5]
+ 1 │ x = !(a === b)
+   ·     ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:2]
+ 1 │ (!(a === b), c)
+   ·  ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:4]
+ 1 │ `${!(a === b)}`
+   ·    ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:7]
+ 1 │ new C(!(a === b))
+   ·       ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:3]
+ 1 │ o[!(a === b)]
+   ·   ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:15]
+ 1 │ class A { x = !(a === b); }
+   ·               ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b) instanceof C
+   · ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ 2 ** !(a === b)
+   ·      ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:30]
+ 1 │ class A { m() { return #x in !(a === b); } }
+   ·                              ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !({} === b)
+   · ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(`t` === b)
+   · ────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(/re/ === b)
+   · ─────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(-1 === b)
+   · ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(+1 === b)
+   · ───────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(let /* comment */ [0] === b);
+   · ──────────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b /* comment */)
+   · ────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !((a === b) /* comment */)
+   · ──────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!(a in b === c);;);
+   ·      ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!(a === b in c);;);
+   ·      ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:10]
+ 1 │ for (x = !(a in b === c);;);
+   ·          ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:14]
+ 1 │ for (var x = !(a in b === c);;);
+   ·              ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:22]
+ 1 │ class A { m() { for (!(#x in y === z);;); } }
+   ·                      ────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!((a in b) === c);;);
+   ·      ─────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a in b === c);
+   · ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:7]
+ 1 │ for (;!(a in b === c););
+   ·       ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:8]
+ 1 │ for (;;!(a in b === c));
+   ·        ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ x && !(a === b)
+   ·      ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ x ?? !(a === b)
+   ·      ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(foo! === bar)
+   · ───────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !((foo as string) === bar)
+   · ──────────────────────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:13]
+ 1 │ const foo = !(a === b) as boolean;
+   ·             ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:13]
+ 1 │ const foo = !(a === b) satisfies boolean;
+   ·             ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated comparison.
+   ╭─[no_negated_comparison.tsx:1:14]
+ 1 │ const foo = (!(a === b))!;
+   ·              ──────────
+   ╰────
+  help: Use the opposite comparison operator instead of negating the whole comparison.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d)
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:5]
+ 1 │ if (!(a === b && c === d)) {}
+   ·     ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a !== b || c != d)
+   · ────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a?.b === c && d === e)
+   · ────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && (c === d || e === f))
+   · ──────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !((a === b && c === d) && e === f)
+   · ──────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d || e === f)
+   · ────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b || c === d && e === f)
+   · ────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !((a || b) === c && d === e)
+   · ────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !/* comment */(a === b && c === d)
+   · ──────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a /* comment */ === b && c === d)
+   · ───────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && /* comment */ c === d)
+   · ───────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !(a === b && c === d)
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:2:9]
+ 1 │     function foo() {
+ 2 │ ╭─▶   return!
+ 3 │ ╰─▶     (a === b && c === d);
+ 4 │     }
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:24]
+ 1 │ function foo() { return!(a === b && c === d); }
+   ·                        ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:23]
+ 1 │ function foo() { throw!(a === b && c === d); }
+   ·                       ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ switch (foo) { case!(a === b && c === d): break; }
+   ·                    ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:36]
+ 1 │ async function foo() { return await!(a === b && c === d); }
+   ·                                    ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:25]
+ 1 │ function * foo() { yield!(a === b && c === d); }
+   ·                         ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ x && !(a === b && c === d)
+   ·      ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ x || !(a === b && c === d)
+   ·      ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ x ?? !(a === b && c === d)
+   ·      ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d) && x
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(async function () {} === b && c === d);
+   · ────────────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:24]
+ 1 │ function foo() { return!(\u0061 === b && c === d); }
+   ·                        ──────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !({} === b && c === d);
+   · ──────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(let[0] === b && c === d);
+   · ──────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d) ?? x
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d) instanceof C
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:20]
+ 1 │ const foo = typeof !(a === b && c === d);
+   ·                    ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:8]
+ 1 │ foo(...!(a === b && c === d));
+   ·        ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d) ? x : y
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:15]
+ 1 │ class A { x = !(a === b && c === d); }
+   ·               ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:30]
+ 1 │ class A { m() { return #x in !(a === b && c === d); } }
+   ·                              ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:2:1]
+ 1 │ foo
+ 2 │ !([a] === b && c === d)
+   · ───────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b || c === d) && x
+   · ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ x || !(a === b || c === d)
+   ·      ─────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b || c === d || e === f)
+   · ────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d && e === f)
+   · ────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !((a === b || c === d) && e === f)
+   · ──────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && (c === d || (e === f && g === h)))
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:1]
+ 1 │ !(a === b && c === d /* comment */)
+   · ───────────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!(a in b === c && d === e);;);
+   ·      ──────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!(a === b && c in d === e);;);
+   ·      ──────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!((a in b === c) && d === e);;);
+   ·      ────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!(d === e && (a in b === c));;);
+   ·      ────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
+
+  ⚠ unicorn(no-negated-comparison): Unexpected negated logical expression of comparisons.
+   ╭─[no_negated_comparison.tsx:1:6]
+ 1 │ for (!((a in b) === c && d === e);;);
+   ·      ────────────────────────────
+   ╰────
+  help: Apply De Morgan's law: negate each comparison and swap `&&`/`||` instead of negating the whole expression.
