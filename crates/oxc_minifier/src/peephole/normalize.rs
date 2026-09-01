@@ -6,7 +6,9 @@ use oxc_ecmascript::{
     side_effects::{is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
+use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
+use rustc_hash::FxHashMap;
 
 use super::PeepholeOptimizations;
 use crate::{
@@ -43,16 +45,63 @@ pub struct NormalizeOptions {
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize {
     options: NormalizeOptions,
+    annotation_comment_anchors: AnnotationCommentAnchors,
+}
+
+#[derive(Default)]
+struct AnnotationCommentAnchors {
+    // Original comment anchor -> current surviving expression start.
+    anchors: FxHashMap<u32, u32>,
+}
+
+impl AnnotationCommentAnchors {
+    fn collect(program: &Program<'_>) -> Self {
+        let source_text = program.source_text.as_bytes();
+        let anchors = program
+            .comments
+            .iter()
+            .filter(|comment| {
+                comment.is_annotation()
+                    && source_text.get(comment.attached_to as usize) == Some(&b'(')
+            })
+            .map(|comment| (comment.attached_to, comment.attached_to))
+            .collect();
+        Self { anchors }
+    }
+
+    fn parentheses_removed(&mut self, paren_start: u32, expression_start: u32) {
+        if let Some(attached_to) = self.anchors.get_mut(&paren_start) {
+            *attached_to = expression_start;
+        }
+    }
+
+    fn expression_survives(&mut self, expression_start: u32) {
+        if let Some(attached_to) = self.anchors.get_mut(&expression_start) {
+            *attached_to = expression_start;
+        }
+    }
+
+    fn apply(&self, comments: &mut [Comment]) {
+        for comment in comments {
+            if comment.is_annotation()
+                && let Some(&attached_to) = self.anchors.get(&comment.attached_to)
+            {
+                comment.attached_to = attached_to;
+            }
+        }
+    }
 }
 
 impl<'a> Normalize {
     pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        self.annotation_comment_anchors = AnnotationCommentAnchors::collect(program);
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
 impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.annotation_comment_anchors.apply(&mut node.comments);
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
         }
@@ -135,7 +184,10 @@ impl<'a> Traverse<'a> for Normalize {
         if matches!(expr, Expression::ParenthesizedExpression(_)) {
             expr.replace_with(|expr| {
                 let Expression::ParenthesizedExpression(paren_expr) = expr else { unreachable!() };
-                paren_expr.unbox().expression
+                let paren_expr = paren_expr.unbox();
+                self.annotation_comment_anchors
+                    .parentheses_removed(paren_expr.span.start, paren_expr.expression.span().start);
+                paren_expr.expression
             });
         }
         // Handled outside the match below so the replacement can go through
@@ -147,6 +199,7 @@ impl<'a> Traverse<'a> for Normalize {
         {
             let new_expr = Expression::new_void_0(call_expr.span, ctx);
             ctx.replace_expression(expr, new_expr);
+            self.annotation_comment_anchors.expression_survives(expr.span().start);
             return;
         }
         if let Some(e) = match expr {
@@ -169,6 +222,7 @@ impl<'a> Traverse<'a> for Normalize {
         } {
             *expr = e;
         }
+        self.annotation_comment_anchors.expression_survives(expr.span().start);
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -246,7 +300,7 @@ impl<'a> Traverse<'a> for Normalize {
 
 impl<'a> Normalize {
     pub fn new(options: NormalizeOptions) -> Self {
-        Self { options }
+        Self { options, annotation_comment_anchors: AnnotationCommentAnchors::default() }
     }
 
     fn is_console_call_expression(call_expr: &CallExpression<'_>) -> bool {
