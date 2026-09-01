@@ -224,11 +224,20 @@ fn test_vars_self_use_js() {
     let pass = vec![
         // https://github.com/oxc-project/oxc/issues/11215
         "export function promisify() { var fn; function fn() {} return fn; }",
+        // https://github.com/VSC-NeuroPilot/neuropilot/blob/5fb53e68ad41fa74c0114e1639473909173279d3/src/rce.ts#L128-L202
+        "const sink = {}; const promise = new Promise(resolve => { sink.callback = async () => { return promise; }; void resolve; }); console.log(sink);",
+        "const value = factory(() => { return value; });",
+        "const value = new Factory(() => { return value; });",
+        "let value; consume(value = () => { return value; });",
+        "let value; consume(value = () => { return value(); });",
     ];
 
     let fail = vec![
         // https://github.com/oxc-project/oxc/issues/11215
         "export function promisify() { var fn; function fn() { fn() } }",
+        "const value = (() => () => { return value; })();",
+        "let value; consume((value = () => value, 0));",
+        "let value; consume((value = () => value(), 0));",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
