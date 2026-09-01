@@ -68,14 +68,17 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
         && last_printed_comment.span.end <= span.start
         && comments.is_type_cast_comment_followed_by_paren(last_printed_comment)
     {
-        return match classify_cast_comment_gap(last_printed_comment.span.end, span.start, f) {
+        match classify_cast_comment_gap(last_printed_comment.span.end, span.start, f) {
             CastCommentGap::ParensAndTrivia if is_followed_by_closing_paren(span, f) => {
-                TypeCast::Target(&[])
+                return TypeCast::Target(&[]);
             }
-            // `Trivia` here means the cast binds to an inner node; since the comment is already printed,
-            // there is nothing left to keep adjacent at this level.
-            _ => TypeCast::None,
-        };
+            // The printed comment is unrelated to this node;
+            // fall through to look for the node's own unprinted cast comment.
+            CastCommentGap::Code => {}
+            // `Trivia` here means the cast binds to an inner node;
+            // since the comment is already printed, there is nothing left to keep adjacent at this level.
+            _ => return TypeCast::None,
+        }
     }
 
     if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
