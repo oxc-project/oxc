@@ -21,13 +21,19 @@ bitflags! {
 #[derive(Debug)]
 struct Scope<'a> {
     bindings: FxHashMap<Str<'a>, KindFlags>,
+    constant_bindings: FxHashMap<Str<'a>, Expression<'a>>,
     references: FxHashMap<Str<'a>, KindFlags>,
     flags: ScopeFlags,
 }
 
 impl Scope<'_> {
     fn new(flags: ScopeFlags) -> Self {
-        Self { bindings: FxHashMap::default(), references: FxHashMap::default(), flags }
+        Self {
+            bindings: FxHashMap::default(),
+            constant_bindings: FxHashMap::default(),
+            references: FxHashMap::default(),
+            flags,
+        }
     }
 }
 
@@ -36,7 +42,7 @@ impl Scope<'_> {
 pub struct ScopeTree<'a> {
     levels: Vec<Scope<'a>>,
     /// Pool of scopes whose maps have been emptied. Scopes are entered and left in a stack
-    /// pattern, so rather than dropping a left scope's two `FxHashMap`s (and allocating +
+    /// pattern, so rather than dropping a left scope's `FxHashMap`s (and allocating +
     /// re-growing fresh ones on the next `enter_scope`), keep them here to reuse their heap
     /// allocations and retained capacity.
     free_scopes: Vec<Scope<'a>>,
@@ -64,9 +70,18 @@ impl<'a> ScopeTree<'a> {
         scope.references.get(name).iter().any(|flags| flags.contains(KindFlags::Value))
     }
 
+    pub fn get_constant_binding(&self, name: &str) -> Option<&Expression<'a>> {
+        self.levels.iter().rev().find_map(|scope| scope.constant_bindings.get(name))
+    }
+
     fn add_binding(&mut self, name: Str<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.bindings.insert(name, flags);
+    }
+
+    pub fn add_constant_binding(&mut self, name: Str<'a>, initializer: Expression<'a>) {
+        let scope = self.levels.last_mut().unwrap();
+        scope.constant_bindings.insert(name, initializer);
     }
 
     fn add_reference(&mut self, name: Str<'a>, flags: KindFlags) {
@@ -79,7 +94,8 @@ impl<'a> ScopeTree<'a> {
         debug_assert!(self.levels.len() >= 2);
 
         // Remove the current scope, taking ownership of its maps so they can be recycled.
-        let Scope { mut bindings, mut references, .. } = self.levels.pop().unwrap();
+        let Scope { mut bindings, mut constant_bindings, mut references, .. } =
+            self.levels.pop().unwrap();
 
         // Resolve references in the current scope against its own bindings.
         references.retain(|name, reference_flags| {
@@ -93,10 +109,16 @@ impl<'a> ScopeTree<'a> {
             parent_scope.references.entry(name).and_modify(|f| *f |= flags).or_insert(flags);
         }
 
-        // Recycle both now-empty maps (capacity retained) to avoid re-allocating + re-growing
+        // Recycle the now-empty maps (capacity retained) to avoid re-allocating + re-growing
         // them for the next scope. `flags` is a placeholder; `enter_scope` overwrites it.
         bindings.clear();
-        self.free_scopes.push(Scope { bindings, references, flags: ScopeFlags::empty() });
+        constant_bindings.clear();
+        self.free_scopes.push(Scope {
+            bindings,
+            constant_bindings,
+            references,
+            flags: ScopeFlags::empty(),
+        });
     }
 }
 

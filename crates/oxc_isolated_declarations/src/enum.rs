@@ -1,4 +1,4 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
@@ -107,13 +107,15 @@ impl<'a> IsolatedDeclarations<'a> {
         enum_name: &str,
         prev_members: &FxHashMap<Str<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
-        self.evaluate(expr, enum_name, prev_members)
+        self.evaluate(expr, enum_name, prev_members, &mut FxHashSet::default())
     }
 
     fn evaluate_ref(
+        &self,
         expr: &Expression<'a>,
         enum_name: &str,
         prev_members: &FxHashMap<Str<'a>, ConstantValue>,
+        evaluating_bindings: &mut FxHashSet<Str<'a>>,
     ) -> Option<ConstantValue> {
         match expr {
             match_member_expression!(Expression) => {
@@ -137,7 +139,14 @@ impl<'a> IsolatedDeclarations<'a> {
                     return Some(value.clone());
                 }
 
-                None
+                let name: Str<'a> = ident.name.into();
+                let expr = self.scope.get_constant_binding(name.as_str())?;
+                if !evaluating_bindings.insert(name) {
+                    return None;
+                }
+                let value = self.evaluate(expr, enum_name, prev_members, evaluating_bindings);
+                evaluating_bindings.remove(name.as_str());
+                value
             }
             _ => None,
         }
@@ -148,31 +157,43 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &Expression<'a>,
         enum_name: &str,
         prev_members: &FxHashMap<Str<'a>, ConstantValue>,
+        evaluating_bindings: &mut FxHashSet<Str<'a>>,
     ) -> Option<ConstantValue> {
         match expr {
             Expression::Identifier(_)
             | Expression::ComputedMemberExpression(_)
             | Expression::StaticMemberExpression(_)
             | Expression::PrivateFieldExpression(_) => {
-                Self::evaluate_ref(expr, enum_name, prev_members)
+                self.evaluate_ref(expr, enum_name, prev_members, evaluating_bindings)
             }
             Expression::BinaryExpression(expr) => {
-                self.eval_binary_expression(expr, enum_name, prev_members)
+                self.eval_binary_expression(expr, enum_name, prev_members, evaluating_bindings)
             }
             Expression::UnaryExpression(expr) => {
-                self.eval_unary_expression(expr, enum_name, prev_members)
+                self.eval_unary_expression(expr, enum_name, prev_members, evaluating_bindings)
             }
             Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
             Expression::StringLiteral(lit) => Some(ConstantValue::String(lit.value.to_string())),
             Expression::TemplateLiteral(lit) => {
                 let mut value = String::new();
-                for part in &lit.quasis {
+                for (index, part) in lit.quasis.iter().enumerate() {
                     value.push_str(&part.value.raw);
+                    if let Some(expression) = lit.expressions.get(index) {
+                        match self.evaluate(
+                            expression,
+                            enum_name,
+                            prev_members,
+                            evaluating_bindings,
+                        )? {
+                            ConstantValue::Number(number) => value.push_str(&number.to_js_string()),
+                            ConstantValue::String(string) => value.push_str(&string),
+                        }
+                    }
                 }
                 Some(ConstantValue::String(value))
             }
             Expression::ParenthesizedExpression(expr) => {
-                self.evaluate(&expr.expression, enum_name, prev_members)
+                self.evaluate(&expr.expression, enum_name, prev_members, evaluating_bindings)
             }
             _ => None,
         }
@@ -183,9 +204,10 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &BinaryExpression<'a>,
         enum_name: &str,
         prev_members: &FxHashMap<Str<'a>, ConstantValue>,
+        evaluating_bindings: &mut FxHashSet<Str<'a>>,
     ) -> Option<ConstantValue> {
-        let left = self.evaluate(&expr.left, enum_name, prev_members)?;
-        let right = self.evaluate(&expr.right, enum_name, prev_members)?;
+        let left = self.evaluate(&expr.left, enum_name, prev_members, evaluating_bindings)?;
+        let right = self.evaluate(&expr.right, enum_name, prev_members, evaluating_bindings)?;
 
         if matches!(expr.operator, BinaryOperator::Addition)
             && (matches!(left, ConstantValue::String(_))
@@ -248,8 +270,9 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &UnaryExpression<'a>,
         enum_name: &str,
         prev_members: &FxHashMap<Str<'a>, ConstantValue>,
+        evaluating_bindings: &mut FxHashSet<Str<'a>>,
     ) -> Option<ConstantValue> {
-        let value = self.evaluate(&expr.argument, enum_name, prev_members)?;
+        let value = self.evaluate(&expr.argument, enum_name, prev_members, evaluating_bindings)?;
 
         let value = match value {
             ConstantValue::Number(value) => value,
