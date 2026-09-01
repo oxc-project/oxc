@@ -6,11 +6,14 @@
     "typeAware": true
   },
   "rules": {
-    "typescript/no-unnecessary-condition": "error"
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-unnecessary-type-assertion": "error"
   },
   "overrides": [
     {
-      "files": ["**/*.{gjs,gts}"],
+      "files": [
+        "**/*.{gjs,gts}"
+      ],
       "languageOptions": {
         "parser": "ember-eslint-parser"
       }
