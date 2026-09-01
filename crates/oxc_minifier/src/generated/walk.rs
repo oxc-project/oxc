@@ -5140,6 +5140,13 @@ unsafe fn walk_ts_external_module_declaration<'a, Tr: Traverse<'a>>(
             as *mut StringLiteral,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ATTRIBUTES)
+        as *mut Option<ArenaBox<TSTypeLiteral>>)
+    {
+        ctx.retag_stack(AncestorType::TSExternalModuleDeclarationAttributes);
+        walk_ts_type_literal(traverser, (&mut **field) as *mut _, ctx);
+    }
     let previous_scope_id = ctx.current_scope_id();
     let current_scope_id = (*((node as *mut u8)
         .add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_SCOPE_ID)

@@ -5105,6 +5105,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSExternalModuleDeclaration<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
+            attributes: CloneIn::clone_in_impl(&self.attributes, with_semantic_ids, allocator),
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
             scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(

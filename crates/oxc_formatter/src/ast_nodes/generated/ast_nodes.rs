@@ -9548,13 +9548,32 @@ impl<'a> AstNode<'a, TSExternalModuleDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, StringLiteral<'a>> {
-        let following_span_start = self.inner.body.as_deref().map_or(0, |n| n.span().start);
+        let following_span_start = self
+            .inner
+            .attributes
+            .as_deref()
+            .map(|n| n.span().start)
+            .or_else(|| self.inner.body.as_deref().map(|n| n.span().start))
+            .unwrap_or(0);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: AstNodes::TSExternalModuleDeclaration(transmute_self(self)),
             following_span_start,
         })
+    }
+
+    #[inline]
+    pub fn attributes(&self) -> Option<&AstNode<'a, TSTypeLiteral<'a>>> {
+        let following_span_start = self.inner.body.as_deref().map_or(0, |n| n.span().start);
+        self.allocator
+            .alloc(self.inner.attributes.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: AstNodes::TSExternalModuleDeclaration(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
     }
 
     #[inline]

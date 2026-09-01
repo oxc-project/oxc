@@ -10581,12 +10581,12 @@ export class TSExternalModuleDeclaration {
 
   get body() {
     const internal = this.#internal;
-    return constructOptionBoxTSModuleBlock(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSModuleBlock(internal.pos + 72, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   toJSON() {
@@ -13997,6 +13997,11 @@ function constructBoxTSConstructSignatureDeclaration(pos, ast) {
 
 function constructBoxTSMethodSignature(pos, ast) {
   return new TSMethodSignature(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructOptionBoxTSTypeLiteral(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructBoxTSTypeLiteral(pos, ast);
 }
 
 function constructBoxTSModuleBlock(pos, ast) {

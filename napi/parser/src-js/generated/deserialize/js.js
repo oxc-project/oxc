@@ -3847,8 +3847,8 @@ function deserializeTSTypePredicateName(pos) {
 function deserializeTSExternalModuleDeclaration(pos) {
   let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    declare = deserializeBool(pos + 72),
-    body = deserializeOptionBoxTSModuleBlock(pos + 64),
+    declare = deserializeBool(pos + 80),
+    body = deserializeOptionBoxTSModuleBlock(pos + 72),
     node = {
       type: "TSModuleDeclaration",
       id: null,

@@ -127,6 +127,7 @@ impl<'a> IsolatedDeclarations<'a> {
         TSExternalModuleDeclaration::boxed(
             decl.span,
             decl.id.clone_in(self.allocator()),
+            decl.attributes.clone_in(self.allocator()),
             body,
             self.is_declare(),
             self,

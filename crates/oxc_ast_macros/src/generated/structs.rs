@@ -529,7 +529,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "TSExternalModuleDeclaration",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 4, 5, 2]),
+                field_order: Some(&[1, 0, 3, 4, 5, 6, 2]),
                 is_node: true,
                 is_transparent: false,
             },
