@@ -10,6 +10,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Insert `.todo`
 
   ⚠ vitest(prefer-todo): Suggest using `test.todo`.
+   ╭─[prefer_todo.tsx:1:47]
+ 1 │ import { test as aliasedTest } from 'vitest'; aliasedTest('i need to write this test', () => {});
+   ·                                               ───────────
+   ╰────
+  help: Replace with `test.todo` or `it.todo`.
+
+  ⚠ vitest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test('i need to write this test',);
    · ────
