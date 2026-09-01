@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.147.0",
+  "version": "0.148.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
     "babel",
