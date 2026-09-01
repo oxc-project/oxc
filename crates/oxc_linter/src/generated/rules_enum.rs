@@ -675,6 +675,7 @@ pub use crate::rules::unicorn::no_object_as_default_parameter::NoObjectAsDefault
 pub use crate::rules::unicorn::no_process_exit::NoProcessExit as UnicornNoProcessExit;
 pub use crate::rules::unicorn::no_single_promise_in_promise_methods::NoSinglePromiseInPromiseMethods as UnicornNoSinglePromiseInPromiseMethods;
 pub use crate::rules::unicorn::no_static_only_class::NoStaticOnlyClass as UnicornNoStaticOnlyClass;
+pub use crate::rules::unicorn::no_subtraction_comparison::NoSubtractionComparison as UnicornNoSubtractionComparison;
 pub use crate::rules::unicorn::no_thenable::NoThenable as UnicornNoThenable;
 pub use crate::rules::unicorn::no_this_assignment::NoThisAssignment as UnicornNoThisAssignment;
 pub use crate::rules::unicorn::no_typeof_undefined::NoTypeofUndefined as UnicornNoTypeofUndefined;
@@ -1423,6 +1424,7 @@ pub enum RuleEnum {
     UnicornNoProcessExit(UnicornNoProcessExit),
     UnicornNoSinglePromiseInPromiseMethods(UnicornNoSinglePromiseInPromiseMethods),
     UnicornNoStaticOnlyClass(UnicornNoStaticOnlyClass),
+    UnicornNoSubtractionComparison(UnicornNoSubtractionComparison),
     UnicornNoThenable(UnicornNoThenable),
     UnicornNoThisAssignment(UnicornNoThisAssignment),
     UnicornNoTypeofUndefined(UnicornNoTypeofUndefined),
@@ -2362,7 +2364,8 @@ const UNICORN_NO_PROCESS_EXIT_ID: usize = UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER
 const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = UNICORN_NO_PROCESS_EXIT_ID + 1usize;
 const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize =
     UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID + 1usize;
-const UNICORN_NO_THENABLE_ID: usize = UNICORN_NO_STATIC_ONLY_CLASS_ID + 1usize;
+const UNICORN_NO_SUBTRACTION_COMPARISON_ID: usize = UNICORN_NO_STATIC_ONLY_CLASS_ID + 1usize;
+const UNICORN_NO_THENABLE_ID: usize = UNICORN_NO_SUBTRACTION_COMPARISON_ID + 1usize;
 const UNICORN_NO_THIS_ASSIGNMENT_ID: usize = UNICORN_NO_THENABLE_ID + 1usize;
 const UNICORN_NO_TYPEOF_UNDEFINED_ID: usize = UNICORN_NO_THIS_ASSIGNMENT_ID + 1usize;
 const UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID: usize = UNICORN_NO_TYPEOF_UNDEFINED_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3280,6 +3283,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornNoProcessExit::NAME,
     UnicornNoSinglePromiseInPromiseMethods::NAME,
     UnicornNoStaticOnlyClass::NAME,
+    UnicornNoSubtractionComparison::NAME,
     UnicornNoThenable::NAME,
     UnicornNoThisAssignment::NAME,
     UnicornNoTypeofUndefined::NAME,
@@ -4240,6 +4244,7 @@ impl RuleEnum {
                 UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID
             }
             Self::UnicornNoStaticOnlyClass(_) => UNICORN_NO_STATIC_ONLY_CLASS_ID,
+            Self::UnicornNoSubtractionComparison(_) => UNICORN_NO_SUBTRACTION_COMPARISON_ID,
             Self::UnicornNoThenable(_) => UNICORN_NO_THENABLE_ID,
             Self::UnicornNoThisAssignment(_) => UNICORN_NO_THIS_ASSIGNMENT_ID,
             Self::UnicornNoTypeofUndefined(_) => UNICORN_NO_TYPEOF_UNDEFINED_ID,
@@ -5273,6 +5278,7 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::CATEGORY
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::CATEGORY,
+            Self::UnicornNoSubtractionComparison(_) => UnicornNoSubtractionComparison::CATEGORY,
             Self::UnicornNoThenable(_) => UnicornNoThenable::CATEGORY,
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::CATEGORY,
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::CATEGORY,
@@ -6290,6 +6296,7 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::FIX
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::FIX,
+            Self::UnicornNoSubtractionComparison(_) => UnicornNoSubtractionComparison::FIX,
             Self::UnicornNoThenable(_) => UnicornNoThenable::FIX,
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::FIX,
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::FIX,
@@ -7425,6 +7432,9 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::documentation()
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::documentation(),
+            Self::UnicornNoSubtractionComparison(_) => {
+                UnicornNoSubtractionComparison::documentation()
+            }
             Self::UnicornNoThenable(_) => UnicornNoThenable::documentation(),
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::documentation(),
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::documentation(),
@@ -9441,6 +9451,10 @@ impl RuleEnum {
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::config_schema(generator)
                 .or_else(|| UnicornNoStaticOnlyClass::schema(generator)),
+            Self::UnicornNoSubtractionComparison(_) => {
+                UnicornNoSubtractionComparison::config_schema(generator)
+                    .or_else(|| UnicornNoSubtractionComparison::schema(generator))
+            }
             Self::UnicornNoThenable(_) => UnicornNoThenable::config_schema(generator)
                 .or_else(|| UnicornNoThenable::schema(generator)),
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::config_schema(generator)
@@ -10960,6 +10974,7 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(_) => "unicorn",
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => "unicorn",
             Self::UnicornNoStaticOnlyClass(_) => "unicorn",
+            Self::UnicornNoSubtractionComparison(_) => "unicorn",
             Self::UnicornNoThenable(_) => "unicorn",
             Self::UnicornNoThisAssignment(_) => "unicorn",
             Self::UnicornNoTypeofUndefined(_) => "unicorn",
@@ -12965,6 +12980,7 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(rule) => rule.run(node, ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run(node, ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run(node, ctx),
+            Self::UnicornNoSubtractionComparison(rule) => rule.run(node, ctx),
             Self::UnicornNoThenable(rule) => rule.run(node, ctx),
             Self::UnicornNoThisAssignment(rule) => rule.run(node, ctx),
             Self::UnicornNoTypeofUndefined(rule) => rule.run(node, ctx),
@@ -13852,6 +13868,7 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(rule) => rule.run_once(ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_once(ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run_once(ctx),
+            Self::UnicornNoSubtractionComparison(rule) => rule.run_once(ctx),
             Self::UnicornNoThenable(rule) => rule.run_once(ctx),
             Self::UnicornNoThisAssignment(rule) => rule.run_once(ctx),
             Self::UnicornNoTypeofUndefined(rule) => rule.run_once(ctx),
@@ -14822,6 +14839,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoStaticOnlyClass(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoSubtractionComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoThenable(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoThisAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoTypeofUndefined(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15744,6 +15762,7 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(rule) => rule.should_run(ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.should_run(ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.should_run(ctx),
+            Self::UnicornNoSubtractionComparison(rule) => rule.should_run(ctx),
             Self::UnicornNoThenable(rule) => rule.should_run(ctx),
             Self::UnicornNoThisAssignment(rule) => rule.should_run(ctx),
             Self::UnicornNoTypeofUndefined(rule) => rule.should_run(ctx),
@@ -16844,6 +16863,9 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::IS_TSGOLINT_RULE
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::IS_TSGOLINT_RULE,
+            Self::UnicornNoSubtractionComparison(_) => {
+                UnicornNoSubtractionComparison::IS_TSGOLINT_RULE
+            }
             Self::UnicornNoThenable(_) => UnicornNoThenable::IS_TSGOLINT_RULE,
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::IS_TSGOLINT_RULE,
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::IS_TSGOLINT_RULE,
@@ -17994,6 +18016,7 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::VERSION
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::VERSION,
+            Self::UnicornNoSubtractionComparison(_) => UnicornNoSubtractionComparison::VERSION,
             Self::UnicornNoThenable(_) => UnicornNoThenable::VERSION,
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::VERSION,
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::VERSION,
@@ -19067,6 +19090,7 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::HAS_CONFIG
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::HAS_CONFIG,
+            Self::UnicornNoSubtractionComparison(_) => UnicornNoSubtractionComparison::HAS_CONFIG,
             Self::UnicornNoThenable(_) => UnicornNoThenable::HAS_CONFIG,
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::HAS_CONFIG,
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::HAS_CONFIG,
@@ -20101,6 +20125,7 @@ impl RuleEnum {
                 UnicornNoSinglePromiseInPromiseMethods::INFO
             }
             Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::INFO,
+            Self::UnicornNoSubtractionComparison(_) => UnicornNoSubtractionComparison::INFO,
             Self::UnicornNoThenable(_) => UnicornNoThenable::INFO,
             Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::INFO,
             Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::INFO,
@@ -21014,6 +21039,7 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(rule) => rule.types_info(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.types_info(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.types_info(),
+            Self::UnicornNoSubtractionComparison(rule) => rule.types_info(),
             Self::UnicornNoThenable(rule) => rule.types_info(),
             Self::UnicornNoThisAssignment(rule) => rule.types_info(),
             Self::UnicornNoTypeofUndefined(rule) => rule.types_info(),
@@ -21888,6 +21914,7 @@ impl RuleEnum {
             Self::UnicornNoProcessExit(rule) => rule.run_info(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_info(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run_info(),
+            Self::UnicornNoSubtractionComparison(rule) => rule.run_info(),
             Self::UnicornNoThenable(rule) => rule.run_info(),
             Self::UnicornNoThisAssignment(rule) => rule.run_info(),
             Self::UnicornNoTypeofUndefined(rule) => rule.run_info(),
@@ -22864,6 +22891,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoSinglePromiseInPromiseMethods::default(),
         ),
         RuleEnum::UnicornNoStaticOnlyClass(UnicornNoStaticOnlyClass::default()),
+        RuleEnum::UnicornNoSubtractionComparison(UnicornNoSubtractionComparison::default()),
         RuleEnum::UnicornNoThenable(UnicornNoThenable::default()),
         RuleEnum::UnicornNoThisAssignment(UnicornNoThisAssignment::default()),
         RuleEnum::UnicornNoTypeofUndefined(UnicornNoTypeofUndefined::default()),

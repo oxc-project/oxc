@@ -1587,6 +1587,7 @@ export interface DummyRuleMap {
   "unicorn/no-process-exit"?: RuleNoConfig;
   "unicorn/no-single-promise-in-promise-methods"?: RuleNoConfig;
   "unicorn/no-static-only-class"?: RuleNoConfig;
+  "unicorn/no-subtraction-comparison"?: RuleNoConfig;
   "unicorn/no-thenable"?: RuleNoConfig;
   "unicorn/no-this-assignment"?: RuleNoConfig;
   "unicorn/no-typeof-undefined"?: RuleNoConfig | [AllowWarnDeny, NoTypeofUndefined];
