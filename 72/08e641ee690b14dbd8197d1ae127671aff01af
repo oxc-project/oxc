@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/eslint/no_unused_vars/tests/oxc.rs
+  s_ae59b98565170e::t_85a761f3bff32b 227-230,236
+crates/oxc_linter/src/rules/eslint/no_unused_vars/usage.rs
+  s_ae59b98565170e::t_d8e96730715104 931,944-967,976
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7208e641ee690b14dbd8197d1ae127671aff01af",
+  "prompts": {},
+  "sessions": {
+    "s_ae59b98565170e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05d2b-2aab-79a0-92b5-8dfa6d374c6c",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
