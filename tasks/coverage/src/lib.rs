@@ -308,7 +308,7 @@ pub struct AppArgs {
 
 const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
-const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
+const TYPESCRIPT_PATH: &str = typescript::CASES_PATH;
 const MISC_PATH: &str = "misc";
 const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 

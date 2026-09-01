@@ -1,8 +1,8 @@
-commit: be13516f
+commit: 419d3e0a
 
 minifier_test262 Summary:
-AST Parsed     : 45024/45024 (100.00%)
-Positive Passed: 45020/45024 (99.99%)
+AST Parsed     : 45029/45029 (100.00%)
+Positive Passed: 45025/45029 (99.99%)
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-accessor-is-visible-in-computed-properties.js
 
 Compress: tasks/coverage/test262/test/language/statements/class/elements/private-field-is-visible-in-computed-properties.js
