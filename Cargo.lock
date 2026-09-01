@@ -4284,6 +4284,7 @@ dependencies = [
  "oxfmt",
  "pico-args",
  "project-root",
+ "serde_json",
  "website_common",
 ]
 

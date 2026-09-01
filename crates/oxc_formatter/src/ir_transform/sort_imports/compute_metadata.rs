@@ -35,7 +35,9 @@ pub fn compute_import_metadata<'a>(
     // Determine if this import should be ignored (not moved between groups)
     // - If `sort_side_effects: true`, never ignore
     // - If `sort_side_effects: false` and this is a side-effect:
-    //   - Check if groups contain `side-effect` or `side-effect-style`
+    //   - Check if a catch-all side-effect (style) group is in use:
+    //     the predefined `side_effect(_style)` group,
+    //     or a custom group with the bare `side_effect(_style)` selector
     //     - If yes, allow regrouping (not ignored)
     //     - If no, keep in original position (ignored)
     let should_regroup_side_effect = group_matcher.should_regroup_side_effect();
