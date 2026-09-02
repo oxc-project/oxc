@@ -42,6 +42,8 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 ### Format JSDoc (`formatter/jsdoc/`)
 
 - Derived from `prettier-plugin-jsdoc`, but not fully compatible
+- Covered by plain fixture-pair tests (`--test jsdoc`, committed input/expected pairs);
+  a mismatch is a failing test, not a tracked conformance-report entry
 - See `tests/jsdoc/fixtures` for the covered behavior
   - See also `tests/jsdoc/upstream-jsdoc-bugs.md`
 
@@ -75,9 +77,6 @@ Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx 
 The shared two-layer split (invariants vs compat tables) and the base invariants live in FORMATTER_POLICY.md "Comment placement invariants";
 this section records their JS/TS translation and the measured compat tables.
 
-Repositioning a comment is allowed only relative to formatter-owned punctuation
-(e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
-
 Four token classes decide a comment's freedom of movement.
 Replaceability does not separate them (only the separator is replaceable); the guaranteed flush point does:
 a delimiter flushes on the comment's own side, a terminator only right BEHIND itself, so a riding line comment lands just past it and nothing else:
@@ -97,9 +96,9 @@ a delimiter flushes on the comment's own side, a terminator only right BEHIND it
 Known gap, intentionally not covered: TS-only statements
 (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
 
-They are terminators by the rule above, but Prettier does not move their comments (yet);
-we follow Prettier for now. If Prettier extends the rule to them, follow;
-each is a small mechanical `FormatContentWithSemicolon` adoption.
+They are terminators by the rule above, but their comments currently stay in place (coinciding with Prettier).
+Uniformizing them is OUR call, deferred for impact:
+each is a small mechanical `FormatContentWithSemicolon` adoption plus a fixture pin and a DIVERGENCES entry.
 
 When the content's source parentheses survive in the output (return/throw arguments, sequence/assignment in the prettier#19263 positions), comments inside them belong to the content and stay there;
 only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
@@ -112,22 +111,33 @@ The "which positions keep their parens" table is intentionally encoded twice:
 The statement side promises not to hide/move the comment; the expression side actually prints it.
 Change them together: if they drift, the comment silently lands elsewhere (no assert catches it), so pin every position change in a fixture.
 
-The move-behind-the-terminator policy has four deliberate variants.
-When extending to a new node, pick by measuring Prettier, not by analogy:
+One rule decides WHAT moves, at every semicolon-terminated site:
+trailing is the same-line run only. A comment preceded by a newline is never trailing, it defers (stays unprinted) to the next node's leading pass, which keeps it own-line with its blank lines.
+The leading/trailing vocabulary itself (the newline as the semantic boundary, and why deferred comments belong to the NEXT node) is defined in `formatter/trivia.rs`'s module doc.
 
-| Site                                                        | Source `;` required?      | Own-line comment before `;`                                                           |
-| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
-| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass                                              |
-| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | deferred to the next node's leading pass (only the same-line prefix moves behind `;`) |
-| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)                                                     |
-| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                                                                      |
+The defer contract: a deferred comment crosses only already-printed statement terminators.
+The terminator set (`;`, and the `)` of dropped or re-printed parens) is encoded twice.
+`Comments::has_semicolon_or_closing_paren_in_range` decides whether the same-line run moves, `lines_after_skipping_terminators` makes the same tokens transparent to the deferred comment's break measurement.
+So change them together, and pin any extension in a fixture. (`get_lines_before`'s `;` skip is a different token: the ASI-guard `;` the next statement's own format emitted, sitting immediately before it.)
+A downstream pass must exist to print a deferred comment. (the next sibling's leading pass or the container's dangling pass.)
+
+WHEN the same-line run moves is the per-site compat table (extend by measuring Prettier, not by analogy):
+
+| Site                                                                                                                                        | Source `;` required?             |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Statements, class property/accessor, bodyless methods (`FormatContentWithSemicolon`, `FormatClassElementWithSemicolon`, `MethodDefinition`) | `;` or a `)` (bare ASI: no move) |
+| return/throw (`ReturnAndThrowStatement`)                                                                                                    | no (moves even under ASI)        |
+
+A `)` in the gap counts as a terminator (dropped or re-printed parens; the rationale lives in `trailing_comments_to_move_behind_semicolon`'s rustdoc, prettier#19930 family).
+The chain-leaf walk (`assignment_chain_leaf_end`) bounds the content at every semicolon-terminated content site (expression statements, export defaults, variable declarations, class property values, return arguments);
+which arrow bodies stop it (and the flat-JSX-body known limitation) live in `arrow_body_keeps_trailing_comment_inside_parens` and DIVERGENCES.md#paren-comment-fixpoint.
 
 JS-side mechanics of the shared "never cross" invariants:
 
 - Line boundary: line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
   - Both are structural guarantees, keep them
   - One known violation, kept for Prettier compat: an own-line comment claimed mid-line inlines onto that line (`const // c` + break), see the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
-- User content: e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element — an attachment artifact, we keep the comment in place and diverge intentionally
+- User content: attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (e.g. DIVERGENCES.md#array-hole-trailing-comment)
 - Suppression: when hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
 
 Head-body comment policy ("never cross user content" applied to statement/declaration heads):
@@ -138,11 +148,18 @@ a body's `{` `}` and a head's `(` `)` are delimiters, and an empty-statement bod
 - own-line comment keeps its own line
 - comments before a `}`-to-keyword gap (`else`/`catch`/`finally`/`while`) split at the keyword and keep their side
 
+The `as`/`satisfies` operator gap follows the same policy (see `as_or_satisfies_expression.rs` and DIVERGENCES.md#binary-cast-own-line-comment), with two additions of its own:
+
+- the pre-operator slot is grammar-bounded (no line terminator may precede the operator, a multiline comment's interior counts), so once the expression's source parens are dropped, only same-line single-line block comments stay on the expression side;
+  - everything else normalizes to the type side so the output re-parses
+- paragraph-like promotion: a line-ending multiline block goes own-line above the type.
+  - `=`/`:` reach the same outputs through their own machinery (`AssignmentLike`, see DIVERGENCES.md#eol-comment-after-assign-colon for their line-comment glue);
+  - the head-body `write_*` helpers split on `preceded_by_newline` alone and do not have the promotion.
+
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`); their rustdocs cover the trailing-pass suppression mechanics.
 
-Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
-(e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
-When that happens, prefer one uniform rule over emulating the asymmetry, and pin the intentional divergence in a fixture with a note.
+Prettier's comment attachment is position-heuristic and sometimes asymmetric;
+that is FORMATTER_POLICY's uniform-rule ground (reason 3): one rule over the emulated asymmetry, pinned as a divergence (e.g. DIVERGENCES.md#type-alias-trailing-comment-move).
 
 ### Statement terminators and suppression
 
@@ -156,12 +173,15 @@ deciding on the spot, we encode the same policy per site, so keep them in step:
   (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
 - suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
   so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+- suppressed expression side: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence
+  for expression-shaped nodes (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed), so a cast target keeps its source cast parens (excluded from its span, `utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
 
 Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
 
 - Whether a suppressed statement re-adds `;` is a compat table, not a principle:
-  keyword statements (`debugger`/`break`/`continue`) always re-add,
-  content-terminated ones only when a source `;` was stripped — the asymmetry is observable only for a suppressed keyword statement relying on ASI
+  keyword statements (`debugger`/`break`/`continue`) and variable declarations (ignored range ends at the last declarator) always re-add;
+  content-terminated ones, including `export const` (measured, keep the asymmetry), only when a source `;` was stripped.
+  A `for` head declaration instead stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
 - The `semi: false` ASI guard is decided from the guarded statement alone,
   never from the previous statement's output;
   sound because no statement leaves its own trailing `;`,

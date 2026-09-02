@@ -12,7 +12,7 @@ use rustc_hash::FxHashSet;
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&self, enabled_rules: FxHashSet<&str>) -> Option<String> {
+    fn all_rules(&self, enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         let mut output = String::new();
         let table = RuleTable::default();
         for section in &table.sections {

@@ -31,8 +31,8 @@ pub struct LinterCodeAction {
 
 #[derive(Debug, Clone)]
 pub struct FixedContent {
-    pub message: String,
-    pub code: String,
+    pub message: Cow<'static, str>,
+    pub code: Cow<'static, str>,
     pub range: Range,
     pub kind: FixKind,
     pub lsp_kind: FixedContentKind,
@@ -179,7 +179,7 @@ pub fn message_to_lsp_diagnostic(
                 fix.message = Some(alternative_fix_title);
             }
             fixed_content.push(fix_to_fixed_content(
-                &fix,
+                fix,
                 source_text,
                 FixedContentKind::LintRule(message.error.code.clone()),
             ));
@@ -190,7 +190,7 @@ pub fn message_to_lsp_diagnostic(
                     fix.message = Some(alternative_fix_title.clone());
                 }
                 fix_to_fixed_content(
-                    &fix,
+                    fix,
                     source_text,
                     FixedContentKind::LintRule(message.error.code.clone()),
                 )
@@ -207,18 +207,14 @@ pub fn message_to_lsp_diagnostic(
     Some(DiagnosticReport { diagnostic, code_action })
 }
 
-fn fix_to_fixed_content(fix: &Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
+fn fix_to_fixed_content(fix: Fix, source_text: &str, fix_kind: FixedContentKind) -> FixedContent {
     let start_position = offset_to_position(fix.span.start, source_text);
     let end_position = offset_to_position(fix.span.end, source_text);
 
-    debug_assert!(
-        fix.message.is_some(),
-        "Fix message should be present. `message_to_lsp_diagnostic` should modify fixes to include messages."
-    );
-
     FixedContent {
-        message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
-        code: fix.content.to_string(),
+        message: fix.message.expect("Fix message should be present. `message_to_lsp_diagnostic` should modify lint fixes to include messages.
+        Unused Disable directives always calls `Fix.with_message`"),
+        code: fix.content,
         range: Range::new(start_position, end_position),
         kind: fix.kind,
         lsp_kind: fix_kind,
@@ -293,7 +289,7 @@ pub fn create_unused_directives_report(
                     span,
                     severity,
                     source_text,
-                    Some(&Fix::delete(fix_span).with_message(fix_message)),
+                    Some(Fix::delete(fix_span).with_message(fix_message)),
                 ));
             }
             RuleCommentType::Single(rules) => {
@@ -303,7 +299,7 @@ pub fn create_unused_directives_report(
                         rule.name_span,
                         severity,
                         source_text,
-                        Some(&rule.create_fix(source_text, span).with_message(fix_message)),
+                        Some(rule.create_fix(source_text, span).with_message(fix_message)),
                     ));
                 }
             }
@@ -337,7 +333,7 @@ fn build_unused_disable_diagnostic_report(
     span: Span,
     severity: DiagnosticSeverity,
     source_text: &str,
-    fix: Option<&Fix>,
+    fix: Option<Fix>,
 ) -> DiagnosticReport {
     let start_position = offset_to_position(span.start, source_text);
     let end_position = offset_to_position(span.end, source_text);

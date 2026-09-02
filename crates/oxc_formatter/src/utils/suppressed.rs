@@ -1,7 +1,40 @@
 use oxc_formatter_core::{LINE_TERMINATORS, arena_cow_str, normalize_newlines};
 use oxc_span::Span;
 
-use crate::{Buffer, Format, formatter::prelude::*, write};
+use crate::{
+    Buffer, Format,
+    formatter::prelude::*,
+    utils::typecast::{format_leading_comments_and_open_paren, write_suppressed_cast_target},
+    write,
+};
+
+/// Prints a suppressed expression (`oxfmt-ignore` / `prettier-ignore`):
+/// the single owner of the whole suppressed sequence for expression-shaped nodes
+/// (leading comments, formatter-added parens, the verbatim range),
+/// called by the generated `fmt` before anything of the node is printed,
+/// so the cast decision is made once, with every comment still unprinted.
+///
+/// A cast target keeps its source cast parentheses (see `write_suppressed_cast_target`).
+///
+/// `needs_parentheses` promises a PARENTHESIZED output, not a formatter pair:
+/// on the cast path the kept source parens satisfy it (a formatter pair on top would print `((x))`),
+/// so callers must not add parens of their own around this call.
+pub fn write_suppressed_expression(
+    span: Span,
+    leading_comments_start: u32,
+    needs_parentheses: bool,
+    f: &mut JsFormatter<'_, '_>,
+) {
+    if write_suppressed_cast_target(span, f) {
+        return;
+    }
+
+    format_leading_comments_and_open_paren(span, leading_comments_start, needs_parentheses, f);
+    FormatSuppressedNode(span).fmt(f);
+    if needs_parentheses {
+        write!(f, ")");
+    }
+}
 
 pub struct FormatSuppressedNode(pub Span);
 

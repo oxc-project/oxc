@@ -28,9 +28,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for OptionalSemicolon {
 /// Returns the comments to print after the semicolon,
 /// or `None` when the rule does not apply and the content prints as-is:
 /// - no comment between the content and the end of the node (the common case),
-/// - no actual `;` in the source (ASI) — there is nothing to move the comments across,
-/// - a trailing suppression comment (`content /* oxfmt-ignore */;`) must
-///   stay visible to the content so it preserves its original text.
+/// - no actual `;` and no dropped `)` in the source (ASI):
+///   there is nothing to move the comments across;
+///   a closing paren in the range counts because those parens are dropped
+///   (or re-printed on the statement's own terms),
+///   so the comment would trail the whole statement on the next format anyway (prettier#19930),
+/// - a trailing suppression comment (`content /* oxfmt-ignore */;`)
+///   must stay visible to the content so it preserves its original text.
 ///
 /// `Some` may hold an empty slice (e.g. own-line comments only); the caller
 /// still hides the comments from the content and a later pass prints them.
@@ -41,7 +45,7 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
 ) -> Option<&'a [Comment]> {
     let comments = f.context().comments();
     if !comments.has_comment_in_range(content_end, node_end)
-        || !comments.has_semicolon_in_range(content_end, node_end)
+        || !comments.has_semicolon_or_closing_paren_in_range(content_end, node_end)
     {
         return None;
     }
@@ -63,6 +67,9 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
 /// The sequence/assignment itself prints the comment before its closing paren.
 ///
 /// `gated` is `true` when `expr` itself sits in one of those positions.
+///
+/// [`arrow_body_keeps_trailing_comment_inside_parens`] encodes the arrow-body slice of this table (plus JSX)
+/// for the chain-leaf walk; change them together.
 pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) -> bool {
     match expr {
         Expression::SequenceExpression(_) => gated,
@@ -91,12 +98,65 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
 /// // ->
 /// assigned = a = c; /* c */
 /// ```
+///
+/// The chain also passes through arrow expression bodies (prettier#19930 family);
+/// bodies matching [`arrow_body_keeps_trailing_comment_inside_parens`] stop the walk.
 pub fn assignment_chain_leaf_end(expr: &Expression<'_>) -> u32 {
     let mut leaf = expr;
-    while let Expression::AssignmentExpression(assignment) = leaf {
-        leaf = &assignment.right;
+    loop {
+        match leaf {
+            Expression::AssignmentExpression(assignment) => leaf = &assignment.right,
+            Expression::ArrowFunctionExpression(arrow) => match arrow.get_expression() {
+                Some(body) if !arrow_body_keeps_trailing_comment_inside_parens(body) => {
+                    leaf = body;
+                }
+                _ => break,
+            },
+            _ => break,
+        }
     }
     leaf.span().end
+}
+
+/// Content end for a semicolon-terminated expression site, pairing the two functions above:
+/// past the closing source paren where the sub-expression keeps the comment inside, the chain leaf otherwise.
+///
+/// `paren_scan_start` bounds the paren scan on the keeps side
+/// (usually the expression end; a declaration passes its declarations end).
+pub fn semicolon_terminated_expression_content_end(
+    f: &JsFormatter<'_, '_>,
+    expr: &Expression<'_>,
+    paren_scan_start: u32,
+    node_end: u32,
+    gated: bool,
+) -> u32 {
+    if keeps_trailing_comment_inside_parens(expr, gated) {
+        f.context().comments().end_including_source_parens(paren_scan_start, node_end)
+    } else {
+        assignment_chain_leaf_end(expr)
+    }
+}
+
+/// Whether an arrow expression body's printer re-adds the parentheses
+/// AND keeps a trailing comment inside them, stopping the [`assignment_chain_leaf_end`] walk:
+///
+/// - sequence/assignment: the [`keeps_trailing_comment_inside_parens`] table
+///   (`write_trailing_comments_inside_parens` prints the comment inside)
+/// - JSX: the multiline form re-adds the parens with the `)` on its own line,
+///   so moving the comment would cross it and a line boundary;
+///   the flat form drops them (group-fit, unknowable here), the pinned known limitation
+///
+/// NOT conditional: its parens are formatter-owned (`should_add_parens`) and
+/// often absent (object leftmost, broken groups), and its `;` stays on the content's line,
+/// so its comments move uniformly.
+fn arrow_body_keeps_trailing_comment_inside_parens(body: &Expression<'_>) -> bool {
+    matches!(
+        body,
+        Expression::AssignmentExpression(_)
+            | Expression::SequenceExpression(_)
+            | Expression::JSXElement(_)
+            | Expression::JSXFragment(_)
+    )
 }
 
 /// The printing half of [`keeps_trailing_comment_inside_parens`]:

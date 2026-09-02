@@ -11,7 +11,7 @@ use crate::{
     },
     print::{
         BinaryLikeExpression, FormatWrite, alias_union_breaks_after_operator,
-        is_trailing_own_line_jsdoc_comment, type_alias_left_end,
+        is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
     },
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
@@ -654,7 +654,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     decl,
                     comments
                         .comments_before_iter(annotation_start)
-                        .any(is_trailing_own_line_jsdoc_comment),
+                        .any(is_line_ending_trailing_jsdoc_comment),
                     comments,
                 ),
                 // For a single-member `TSIntersectionType`,

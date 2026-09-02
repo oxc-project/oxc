@@ -1215,7 +1215,7 @@ export interface DummyRuleMap {
   "no-undefined"?: RuleNoConfig;
   "no-underscore-dangle"?: RuleNoConfig | [AllowWarnDeny, NoUnderscoreDangleConfig];
   "no-unexpected-multiline"?: RuleNoConfig;
-  "no-unmodified-loop-condition"?: RuleNoConfig;
+  "no-unmodified-loop-condition"?: RuleNoConfig | [AllowWarnDeny, NoUnmodifiedLoopCondition];
   "no-unneeded-ternary"?: RuleNoConfig | [AllowWarnDeny, NoUnneededTernary];
   "no-unreachable"?: RuleNoConfig;
   "no-unreachable-loop"?: RuleNoConfig | [AllowWarnDeny, NoUnreachableLoopConfig];
@@ -1947,6 +1947,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, NoShadowRestrictedNamesConfig]
     | [AllowWarnDeny, NoUndef]
     | [AllowWarnDeny, NoUnderscoreDangleConfig]
+    | [AllowWarnDeny, NoUnmodifiedLoopCondition]
     | [AllowWarnDeny, NoUnneededTernary]
     | [AllowWarnDeny, NoUnreachableLoopConfig]
     | [AllowWarnDeny, NoUnsafeNegation]
@@ -4154,6 +4155,13 @@ export interface NoUnderscoreDangleConfig {
    * Whether to enforce dangling underscores in method names.
    */
   enforceInMethodNames?: boolean;
+}
+export interface NoUnmodifiedLoopCondition {
+  /**
+   * Whether references in each branch of a conditional expression should be checked
+   * independently instead of checking the result of the entire expression.
+   */
+  checkConditionalExpressions?: boolean;
 }
 export interface NoUnneededTernary {
   /**

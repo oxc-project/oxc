@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### ⚡ Performance
+
+- 07a0793 packages/codegen: Flatten output in chunks (#26109) (overlookmotel)
+- 487427a packages/codegen: Faster string flattening (#26108) (overlookmotel)
+- 7785583 packages/codegen: Ensure indent strings are flattened (#26107) (overlookmotel)
+- 0dd4db3 packages/codegen: Store mapping positions in an `Int32Array` (#26085) (overlookmotel)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes

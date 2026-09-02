@@ -1,0 +1,96 @@
+// Comments around the `satisfies` / `as` operator keep their source side and
+// their line-start side — the head-body comment policy applied to the operator
+// gap (see DIVERGENCES.md#binary-cast-own-line-comment).
+// An own-line comment leads the type on its own line, the type breaks
+const t1 = {
+  prop1: 1,
+  prop2: 2,
+} satisfies
+// Comment
+Record<string, number>;
+const t2 = {
+  bar: 1,
+} as
+  // Comment
+  Record<string, number>;
+
+// A line-ending multiline block is paragraph-like and breaks too, jsdoc re-indented
+1 as
+/**
+ * jsdoc
+ */
+Foo;
+1 satisfies /*
+raw interior stays put
+*/
+Foo;
+
+// A glued line comment stays on the operator's line, the type breaks under it
+// (the pinned Prettier relocates it across the type and the semicolon)
+const eolLine = 1 as // c
+Foo;
+// A glued single-line block comment stays glued; the layout is free to inline
+// the type after it (the pinned Prettier relocates it backward across the operator)
+const eolBlock = {} satisfies /* c */
+{};
+
+// A suppression comment stays visible to the type it targets
+// (never consumed as a glued run); the break decision still applies
+const suppressGlued = 1 as /* oxfmt-ignore */ Foo<A,B>;
+const suppressOwnLine = 1 as
+// oxfmt-ignore
+Foo<A,B>;
+
+// A comment that does not end its line keeps the flat layout
+const flatInline = {} satisfies /* c */ {};
+const flatMultiline = 1 as /* multi
+line */ Foo;
+
+// Comments before the operator trail the expression and never cross the operator
+const preOp = {} /* t */ satisfies {};
+const preOpBreak = {} /* t */ satisfies
+// c
+Record<string, number>;
+// ... except what the grammar-defined slot cannot hold: no line terminator may
+// precede the operator (a multiline comment's interior counts), so once the
+// expression's source parens are dropped, only same-line single-line block
+// comments stay on the expression side — a riding line comment flushes behind
+// the operator, everything else normalizes to the type side (the output must
+// re-parse), where the usual layout rules apply
+const preOpLine = (foo // pre line
+) as Foo;
+const preOpOwnLine = (foo
+// pre own line
+) as Foo;
+const preOpOwnBlock = (foo
+/* pre own block */
+) as Foo;
+const preOpMultiInline = (1 /* m1
+i */) as Foo;
+const preOpMultiOwnLine = (1 /* m2
+i */
+) as Foo;
+
+// `as const` follows the same policy, `const` is a type like any other
+// (the pinned Prettier relocates all of these across `const` and the `;`)
+1 as /* c1 */ const;
+1 as // c2
+const;
+1 as
+// c3
+const;
+1 as
+/**
+ * jsdoc
+ */
+const;
+
+// A union's own-line leading comment is indented by the union printer itself;
+// no extra break on the operator.
+// Note: a same-line line comment before a union still moves behind the
+// statement (union comment claiming is its own subsystem)
+const union = 1 as
+// c
+A | B;
+const unionEol = 1 as // c
+A | B;

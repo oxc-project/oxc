@@ -1,6 +1,6 @@
 {
   "name": "@oxc-project/runtime",
-  "version": "0.147.0",
+  "version": "0.148.0",
   "description": "Oxc's modular runtime helpers",
   "homepage": "https://oxc.rs",
   "license": "MIT",
@@ -1055,10 +1055,7 @@
       "./src/helpers/writeOnlyError.js"
     ],
     "./package": "./package.json",
-    "./package.json": "./package.json",
-    "./regenerator": "./regenerator/index.js",
-    "./regenerator/": "./regenerator/",
-    "./regenerator/*.js": "./regenerator/*.js"
+    "./package.json": "./package.json"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

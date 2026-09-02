@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 5672585 parser: Attach all comments to nodes (#25944) (camc314)
+
+### 🐛 Bug Fixes
+
+- dc09a3a parser: Avoid panic on escaped string export names (#26146) (camc314)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes
