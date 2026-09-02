@@ -694,7 +694,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    pub(crate) fn parse_type_literal(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
+    pub(super) fn parse_type_literal(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
         let start = self.cur_start();
         let member_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
