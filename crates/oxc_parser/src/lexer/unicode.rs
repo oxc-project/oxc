@@ -1,7 +1,3 @@
-use std::{borrow::Cow, fmt::Write};
-
-use cow_utils::CowUtils;
-
 use crate::{config::LexerConfig as Config, diagnostics};
 use oxc_allocator::ArenaStringBuilder;
 use oxc_str::JSStrBuilder;
@@ -28,21 +24,6 @@ enum UnicodeEscape {
     // `\u Hex4Digits` or `\u{ HexDigits }`, which forms an invalid Unicode code point.
     // Code unit is in the range 0xD800..=0xDFFF.
     LoneSurrogate(u32),
-}
-
-enum EscapeSequenceBuilder<'b, 'a> {
-    Utf8(&'b mut ArenaStringBuilder<'a>),
-    JavaScript(&'b mut JSStrBuilder<'a>),
-}
-
-impl EscapeSequenceBuilder<'_, '_> {
-    #[inline]
-    fn push_char(&mut self, value: char) {
-        match self {
-            Self::Utf8(text) => text.push(value),
-            Self::JavaScript(text) => text.push_char(value),
-        }
-    }
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
@@ -153,7 +134,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut EscapeSequenceBuilder<'_, 'a>,
+        text: &mut JSStrBuilder<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek_byte() {
@@ -172,58 +153,19 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
-            UnicodeEscape::CodePoint(ch) => {
-                if matches!(text, EscapeSequenceBuilder::Utf8(_))
-                    && ch == '\u{FFFD}'
-                    && self.token.lone_surrogates()
-                {
-                    // Lossy replacement character is being used as an escape marker. Escape it.
-                    let EscapeSequenceBuilder::Utf8(text) = text else { unreachable!() };
-                    text.push_str("\u{FFFD}fffd");
-                } else {
-                    text.push_char(ch);
-                }
-            }
+            UnicodeEscape::CodePoint(ch) => text.push_char(ch),
             UnicodeEscape::SurrogatePair(ch) => {
                 // Surrogate pair is always >= 0x10000, so cannot be 0xFFFD
                 text.push_char(ch);
             }
-            UnicodeEscape::LoneSurrogate(code_point) => match text {
-                EscapeSequenceBuilder::Utf8(text) => {
-                    self.string_lone_surrogate(code_point, text);
-                }
-                EscapeSequenceBuilder::JavaScript(text) => {
-                    #[expect(
-                        clippy::cast_possible_truncation,
-                        reason = "lone surrogates are always within u16"
-                    )]
-                    text.push_code_unit(code_point as u16);
-                }
-            },
-        }
-    }
-
-    /// Lone surrogate found in string.
-    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut ArenaStringBuilder<'a>) {
-        debug_assert!(code_point <= 0xFFFF);
-
-        if !self.token.lone_surrogates() {
-            self.token.set_lone_surrogates(true);
-
-            // We use `\u{FFFD}` (the lossy replacement character) as a marker indicating the start
-            // of a lone surrogate. e.g. `\u{FFFD}d800` (which will be output as `\ud800`).
-            // So we need to escape any actual lossy replacement characters in the string so far.
-            //
-            // This could be more efficient, avoiding allocating a temporary `String`.
-            // But strings containing both lone surrogates and lossy replacement characters
-            // should be vanishingly rare, so don't bother.
-            if let Cow::Owned(replaced) = text.cow_replace("\u{FFFD}", "\u{FFFD}fffd") {
-                *text = ArenaStringBuilder::from_str_in(&replaced, self.allocator);
+            UnicodeEscape::LoneSurrogate(code_point) => {
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    reason = "lone surrogates are always within u16"
+                )]
+                text.push_code_unit(code_point as u16);
             }
         }
-
-        // Encode lone surrogate as `\u{FFFD}XXXX` where XXXX is the code point as hex
-        write!(text, "\u{FFFD}{code_point:04x}").unwrap();
     }
 
     /// Decode unicode code point (`\u{ HexBytes }`).
@@ -358,32 +300,16 @@ impl<'a, C: Config> Lexer<'a, C> {
     // EscapeSequence ::
     pub(super) fn read_string_escape_sequence(
         &mut self,
-        text: &mut ArenaStringBuilder<'a>,
+        text: &mut JSStrBuilder<'a>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
-        self.read_string_escape_sequence_impl(
-            &mut EscapeSequenceBuilder::Utf8(text),
-            in_template,
-            is_valid_escape_sequence,
-        );
-    }
-
-    pub(super) fn read_js_string_escape_sequence(
-        &mut self,
-        text: &mut JSStrBuilder<'a>,
-        is_valid_escape_sequence: &mut bool,
-    ) {
-        self.read_string_escape_sequence_impl(
-            &mut EscapeSequenceBuilder::JavaScript(text),
-            false,
-            is_valid_escape_sequence,
-        );
+        self.read_string_escape_sequence_impl(text, in_template, is_valid_escape_sequence);
     }
 
     fn read_string_escape_sequence_impl(
         &mut self,
-        text: &mut EscapeSequenceBuilder<'_, 'a>,
+        text: &mut JSStrBuilder<'a>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {

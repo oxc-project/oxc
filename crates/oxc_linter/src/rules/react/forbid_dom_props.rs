@@ -231,7 +231,7 @@ fn static_jsx_string_value<'a>(value: &'a JSXAttributeValue<'a>) -> Option<&'a s
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
             JSXExpression::StringLiteral(str_lit) => str_lit.value.as_str(),
             JSXExpression::TemplateLiteral(template_lit) => {
-                template_lit.single_quasi().map(|quasi| quasi.as_str())
+                template_lit.single_quasi().and_then(oxc_str::JSStr::as_str)
             }
             _ => None,
         },

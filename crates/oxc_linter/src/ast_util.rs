@@ -317,7 +317,7 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
     }
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value.as_str()?,
-        Argument::TemplateLiteral(template) => template.single_quasi()?.as_str(),
+        Argument::TemplateLiteral(template) => template.single_quasi()?.as_str()?,
         _ => return None,
     };
     let mut flags = RegExpFlags::empty();
@@ -832,8 +832,9 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
             if template.expressions.is_empty()
                 && template.quasis.len() == 1
                 && let Some(cooked) = &template.quasis[0].value.cooked
+                && let Some(cooked) = cooked.as_str()
             {
-                return Some(Cow::Borrowed(cooked.as_str()));
+                return Some(Cow::Borrowed(cooked));
             }
 
             None

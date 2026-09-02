@@ -351,7 +351,7 @@ impl<'a> PeepholeOptimizations {
                         // `raw` is already escaped
                         quasis.push(TemplateElement::new(
                             SPAN,
-                            TemplateElementValue { raw, cooked: Some(cooked) },
+                            TemplateElementValue { raw, cooked: Some(cooked.into()) },
                             false,
                             ast,
                         ));
@@ -376,7 +376,7 @@ impl<'a> PeepholeOptimizations {
                 // `raw` is already escaped
                 quasis.push(TemplateElement::new(
                     SPAN,
-                    TemplateElementValue { raw, cooked: Some(cooked) },
+                    TemplateElementValue { raw, cooked: Some(cooked.into()) },
                     true, /* tail */
                     ast,
                 ));

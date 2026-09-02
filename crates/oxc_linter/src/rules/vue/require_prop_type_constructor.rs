@@ -191,6 +191,7 @@ fn single_quasi_identifier(tpl: &TemplateLiteral) -> Option<String> {
         return None;
     }
     let cooked = tpl.quasis[0].value.cooked.as_ref()?;
+    let cooked = cooked.as_str()?;
     is_identifier_name(cooked).then(|| cooked.to_string())
 }
 

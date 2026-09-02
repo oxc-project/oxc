@@ -483,11 +483,13 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template)
                 if allowed.is_never() && template.is_no_substitution_template() =>
             {
-                let string = template.single_quasi().unwrap();
-                if !parent_is_attribute && contains_quote_characters(string.as_str())
+                let Some(string) = template.single_quasi().and_then(oxc_str::JSStr::as_str) else {
+                    return;
+                };
+                if !parent_is_attribute && contains_quote_characters(string)
                     || is_allowed_string_like_in_container(
                         ctx,
-                        string.as_str(),
+                        string,
                         container,
                         node.id(),
                         parent_is_attribute,
@@ -583,6 +585,10 @@ fn report_unnecessary_curly<'a>(
     if matches!(
         &container.expression,
         JSXExpression::StringLiteral(literal) if literal.value.as_str().is_none()
+    ) || matches!(
+        &container.expression,
+        JSXExpression::TemplateLiteral(literal)
+            if literal.single_quasi().and_then(oxc_str::JSStr::as_str).is_none()
     ) {
         return;
     }
@@ -590,7 +596,7 @@ fn report_unnecessary_curly<'a>(
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(template_lit.single_quasi().unwrap().as_str());
+                fix.print_str(template_lit.single_quasi().unwrap().as_str().unwrap());
 
                 fixer.replace(container.span, fix.into_source_text())
             }
@@ -620,13 +626,17 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
     if matches!(
         &container.expression,
         JSXExpression::StringLiteral(literal) if literal.value.as_str().is_none()
+    ) || matches!(
+        &container.expression,
+        JSXExpression::TemplateLiteral(literal)
+            if literal.single_quasi().and_then(oxc_str::JSStr::as_str).is_none()
     ) {
         return;
     }
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
         let str = match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
-                template_lit.single_quasi().unwrap().as_str()
+                template_lit.single_quasi().unwrap().as_str().unwrap()
             }
             JSXExpression::StringLiteral(string_lit) => string_lit.value.as_str().unwrap(),
             JSXExpression::JSXElement(el) => {

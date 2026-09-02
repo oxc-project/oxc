@@ -434,7 +434,9 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
                 property_access_may_have_side_effects(&self.object, property, ctx)
             }),
             Expression::TemplateLiteral(t) => t.single_quasi().is_none_or(|quasi| {
-                property_access_may_have_side_effects(&self.object, &quasi, ctx)
+                quasi.as_str().is_none_or(|property| {
+                    property_access_may_have_side_effects(&self.object, property, ctx)
+                })
             }),
             Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
                 !integer_index_property_access_may_have_side_effects(&self.object, n, ctx)

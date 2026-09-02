@@ -1,7 +1,7 @@
-use std::{cmp::max, str};
+use std::cmp::max;
 
-use oxc_allocator::ArenaStringBuilder;
 use oxc_data_structures::branch_hints::cold_path;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
@@ -12,26 +12,8 @@ use super::{
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
 
-/// Convert `char` to UTF-8 bytes array.
-const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
-    assert!(ch.len_utf8() == N);
-    let mut bytes = [0u8; N];
-    ch.encode_utf8(&mut bytes);
-    bytes
-}
-
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0];
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_FIRST_BYTE == 0xEF);
-
 static TEMPLATE_LITERAL_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'$' | b'`' | b'\r' | b'\\'));
-
-// Same as above, but with 1st byte of lossy replacement character added
-static TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_match_table!(
-    |b| matches!(b, b'$' | b'`' | b'\r' | b'\\' | LOSSY_REPLACEMENT_CHAR_FIRST_BYTE)
-);
 
 /// 12.8.6 Template Literal Lexical Components
 impl<'a, C: Config> Lexer<'a, C> {
@@ -147,7 +129,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             // Convert it to `\n` by pushing an `\n` to `str`.
             // `chunk_start` is *after* the `\r`, so the `\r` is not included in next chunk,
             // so it will not also get included in `str` when that next chunk is pushed.
-            str.push('\n');
+            str.push_char('\n');
         }
 
         // SAFETY: `chunk_start` is not after `pos`
@@ -197,17 +179,14 @@ impl<'a, C: Config> Lexer<'a, C> {
     ///
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(
-        &self,
-        pos: SourcePosition<'a>,
-    ) -> ArenaStringBuilder<'a> {
+    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> JSStrBuilder<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
         // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let so_far = unsafe { self.source.str_from_current_to_pos_unchecked(pos) };
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_TEMPLATE_LIT_LEN);
-        let mut str = ArenaStringBuilder::with_capacity_in(capacity, self.allocator);
+        let mut str = JSStrBuilder::with_capacity_in(capacity, self.allocator);
         str.push_str(so_far);
         str
     }
@@ -218,7 +197,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
-        mut str: ArenaStringBuilder<'a>,
+        mut str: JSStrBuilder<'a>,
         pos: SourcePosition<'a>,
         mut chunk_start: SourcePosition<'a>,
         mut is_valid_escape_sequence: bool,
@@ -229,7 +208,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
         byte_search! {
             lexer: self,
-            table: TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE,
+            table: TEMPLATE_LITERAL_TABLE,
             start: pos,
             continue_if: (next_byte, pos) {
                 if next_byte == b'$' {
@@ -262,7 +241,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                         true
                     }
                 } else {
-                    // Next byte is '`', `\r`, `\`, or first byte of lossy replacement character.
+                    // Next byte is '`', `\r`, or `\`.
                     // Add chunk up to before this char to `str`.
                     // SAFETY: Caller guarantees `chunk_start` is not after `pos` at start of
                     // this function. `pos` only increases during searching.
@@ -307,7 +286,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                                     // next chunk is pushed.
                                     // Note: `byte_search!` macro already advances `pos` by 1,
                                     // which steps past the `\r`, so don't advance `pos` here.
-                                    str.push('\n');
+                                    str.push_char('\n');
                                 }
                             } else {
                                 // This is last byte in file. Continue to `handle_eof`.
@@ -340,43 +319,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                             // Continue searching
                             true
                         }
-                        _ => {
-                            // `TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE` only matches `$`, '`', `\r`, `\`,
-                            // or first byte of lossy replacement character
-                            debug_assert_eq!(next_byte, LOSSY_REPLACEMENT_CHAR_FIRST_BYTE);
-
-                            // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
-                            // so there must be 2 more bytes to read
-                            let next2 = unsafe { pos.add(1).read2() };
-                            if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                                && self.token.lone_surrogates()
-                            {
-                                str.push_str("\u{FFFD}fffd");
-                            } else {
-                                let bytes = [LOSSY_REPLACEMENT_CHAR_FIRST_BYTE, next2[0], next2[1]];
-                                // SAFETY: 0xEF is always first byte of a 3-byte UTF-8 character,
-                                // so these 3 bytes must comprise a valid UTF-8 string
-                                let s = unsafe { str::from_utf8_unchecked(&bytes) };
-                                str.push_str(s);
-                            }
-
-                            // Advance past this character.
-                            // SAFETY: Character is 3 bytes, so `pos + 2` is in bounds.
-                            // Note: `byte_search!` macro already advances `pos` by 1, so only
-                            // advance by 2 here, so that in total we skip 3 bytes.
-                            pos = unsafe { pos.add(2) };
-
-                            // Set next chunk to start after this character.
-                            // SAFETY: It's a 3 byte character, and we added 2 to `pos` above,
-                            // so `pos + 1` must be a UTF-8 char boundary.
-                            // This temporarily puts `chunk_start` 1 byte after `pos`, but `byte_search!` macro
-                            // increments `pos` when return `true` from `continue_if`, so `pos` will be
-                            // brought up to `chunk_start` again.
-                            chunk_start = unsafe { pos.add(1) };
-
-                            // Continue searching
-                            true
-                        }
+                        _ => unreachable!(),
                     }
                 }
             },
@@ -386,7 +329,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             },
         };
 
-        self.save_template_string(is_valid_escape_sequence, str.into_str());
+        self.save_template_string(is_valid_escape_sequence, str.finish());
 
         ret
     }
@@ -400,12 +343,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     /// Save escaped template string
-    fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
+    fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: JSStr<'a>) {
         self.escaped_templates.insert(self.token.start(), is_valid_escape_sequence.then_some(s));
         self.token.set_escaped(true);
     }
 
-    pub(crate) fn get_template_string(&self, start: u32) -> Option<&'a str> {
+    pub(crate) fn get_template_string(&self, start: u32) -> Option<JSStr<'a>> {
         self.escaped_templates[&start]
     }
 }
@@ -463,7 +406,7 @@ mod test {
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
             );
             let escaped = lexer.escaped_templates[&token.start()];
-            assert_eq!(escaped, Some(expected_escaped.as_str()));
+            assert_eq!(escaped.and_then(oxc_str::JSStr::as_str), Some(expected_escaped.as_str()));
         }
 
         for (source_fragment, escaped_fragment) in escapes {

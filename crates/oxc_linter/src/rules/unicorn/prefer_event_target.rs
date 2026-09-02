@@ -100,7 +100,8 @@ fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
                     }
                     Argument::TemplateLiteral(source) => source
                         .single_quasi()
-                        .is_some_and(|source| is_ignored_package(source.as_str())),
+                        .and_then(oxc_str::JSStr::as_str)
+                        .is_some_and(is_ignored_package),
                     _ => false,
                 }
         }
@@ -113,7 +114,8 @@ fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
                     }
                     Expression::TemplateLiteral(source) => source
                         .single_quasi()
-                        .is_some_and(|source| is_ignored_package(source.as_str())),
+                        .and_then(oxc_str::JSStr::as_str)
+                        .is_some_and(is_ignored_package),
                     _ => false,
                 }
             }

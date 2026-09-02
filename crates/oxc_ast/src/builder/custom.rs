@@ -13,7 +13,7 @@ use std::{alloc::Layout, mem::MaybeUninit, slice, str};
 
 use oxc_allocator::{Allocator, ArenaBox, GetAllocator};
 use oxc_span::{SPAN, Span};
-use oxc_str::{JSStr, JSStrBuilder, Str};
+use oxc_str::Str;
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
@@ -178,19 +178,6 @@ impl<'a> Function<'a> {
 }
 
 impl<'a> TemplateElement<'a> {
-    /// Return the cooked value as a JavaScript string.
-    ///
-    /// Cooked template values still use the AST's legacy marker representation for lone
-    /// surrogates. This method is the safe boundary for consumers which need the real value.
-    pub fn cooked_js_str(&self, allocator: &'a Allocator) -> Option<JSStr<'a>> {
-        let cooked = self.value.cooked?;
-        if !self.lone_surrogates {
-            return Some(cooked.into());
-        }
-
-        Some(decode_lone_surrogate_markers(cooked.as_str(), allocator))
-    }
-
     /// Build a [`TemplateElement`], escaping special characters in the raw value.
     ///
     /// Like [`TemplateElement::new`], but escapes backticks, `${`, backslashes, and carriage
@@ -211,66 +198,6 @@ impl<'a> TemplateElement<'a> {
         value.raw = escape_template_element_raw(value.raw, builder.allocator());
         TemplateElement::new(span, value, tail, builder)
     }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`, escaping special characters in the raw value.
-    ///
-    /// Like [`TemplateElement::new_with_lone_surrogates`], but escapes backticks, `${`,
-    /// backslashes, and carriage returns in `value.raw` first.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn new_escape_raw_with_lone_surrogates(
-        span: Span,
-        mut value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        let builder = builder.builder();
-        value.raw = escape_template_element_raw(value.raw, builder.allocator());
-        TemplateElement::new_with_lone_surrogates(span, value, tail, lone_surrogates, builder)
-    }
-}
-
-#[cold]
-fn decode_lone_surrogate_markers<'a>(value: &str, allocator: &'a Allocator) -> JSStr<'a> {
-    let mut builder = JSStrBuilder::with_capacity_in(value.len(), allocator);
-    let mut remaining = value;
-
-    while let Some(marker) = remaining.find('\u{FFFD}') {
-        builder.push_str(&remaining[..marker]);
-        let after_marker = &remaining[marker + '\u{FFFD}'.len_utf8()..];
-
-        let Some(hex) = after_marker.get(..4).filter(|hex| hex.is_ascii()) else {
-            builder.push_char('\u{FFFD}');
-            remaining = after_marker;
-            continue;
-        };
-        let Ok(code_unit) = u16::from_str_radix(hex, 16) else {
-            builder.push_char('\u{FFFD}');
-            remaining = after_marker;
-            continue;
-        };
-
-        if code_unit == 0xFFFD {
-            builder.push_char('\u{FFFD}');
-        } else if matches!(code_unit, 0xD800..=0xDFFF) {
-            builder.push_code_unit(code_unit);
-        } else {
-            // Preserve malformed marker input from programmatically-created ASTs.
-            builder.push_char('\u{FFFD}');
-            remaining = after_marker;
-            continue;
-        }
-        remaining = &after_marker[4..];
-    }
-
-    builder.push_str(remaining);
-    builder.finish()
 }
 
 /// Escape special characters for template element raw value.

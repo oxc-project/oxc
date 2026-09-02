@@ -104,7 +104,7 @@ fn invalid_comparison_string(expr: &Expression) -> Option<(Span, usize)> {
     let value = match expr {
         Expression::StringLiteral(literal) => literal.value.as_str()?,
         Expression::TemplateLiteral(literal) if literal.expressions.is_empty() => {
-            literal.quasis.first()?.value.cooked.as_deref()?
+            literal.quasis.first()?.value.cooked?.as_str()?
         }
         _ => return None,
     };

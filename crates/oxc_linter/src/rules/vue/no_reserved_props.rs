@@ -151,7 +151,10 @@ impl NoReservedProps {
                     (value, lit.span)
                 }
                 Expression::TemplateLiteral(tpl) => match tpl.single_quasi() {
-                    Some(quasi) => (quasi.as_str(), tpl.span),
+                    Some(quasi) => {
+                        let Some(quasi) = quasi.as_str() else { continue };
+                        (quasi, tpl.span)
+                    }
                     None => continue,
                 },
                 _ => continue,

@@ -122,13 +122,12 @@ const _: () = {
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 32);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 40);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<TemplateElement>() == 48);
     assert!(align_of::<TemplateElement>() == 8);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, node_id) == 8);
     assert!(offset_of!(TemplateElement, tail) == 12);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 13);
     assert!(offset_of!(TemplateElement, value) == 16);
 
     // Padding: 0 bytes
@@ -1963,17 +1962,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TaggedTemplateExpression, type_arguments) == 20);
     assert!(offset_of!(TaggedTemplateExpression, quasi) == 24);
 
-    // Padding: 2 bytes
-    assert!(size_of::<TemplateElement>() == 32);
+    // Padding: 3 bytes
+    assert!(size_of::<TemplateElement>() == 36);
     assert!(align_of::<TemplateElement>() == 4);
     assert!(offset_of!(TemplateElement, span) == 0);
     assert!(offset_of!(TemplateElement, node_id) == 8);
     assert!(offset_of!(TemplateElement, tail) == 12);
-    assert!(offset_of!(TemplateElement, lone_surrogates) == 13);
     assert!(offset_of!(TemplateElement, value) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<TemplateElementValue>() == 16);
+    assert!(size_of::<TemplateElementValue>() == 20);
     assert!(align_of::<TemplateElementValue>() == 4);
     assert!(offset_of!(TemplateElementValue, raw) == 0);
     assert!(offset_of!(TemplateElementValue, cooked) == 8);

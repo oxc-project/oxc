@@ -165,7 +165,7 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::TemplateLiteral(lit) => {
                 let mut value = JSStrBuilder::new_in(self.allocator());
                 for part in &lit.quasis {
-                    value.push_js_str(part.cooked_js_str(self.allocator())?);
+                    value.push_js_str(part.value.cooked?);
                 }
                 Some(ConstantValue::String(value.finish()))
             }

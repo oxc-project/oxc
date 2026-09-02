@@ -245,7 +245,7 @@ impl RequirePropTypes {
                 Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::Identifier(id) => Some(id.name.as_str()),
                 Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                    lit.quasis.first().and_then(|q| q.value.cooked.as_deref())
+                    lit.quasis.first().and_then(|q| q.value.cooked?.as_str())
                 }
                 _ => None,
             }

@@ -137,9 +137,10 @@ impl Rule for ValidTypeof {
 
         if let Expression::TemplateLiteral(template) = sibling
             && let Some(quasi) = template.single_quasi()
+            && let Some(quasi) = quasi.as_str()
         {
-            if !VALID_TYPES.contains(&quasi.as_str()) {
-                let help = get_typo_suggestion(quasi.as_str())
+            if !VALID_TYPES.contains(&quasi) {
+                let help = get_typo_suggestion(quasi)
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }

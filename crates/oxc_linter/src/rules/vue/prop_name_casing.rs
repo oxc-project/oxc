@@ -221,7 +221,7 @@ fn property_key_static_name<'a>(
                 {
                     let quasi = tpl.quasis.first()?;
                     let cooked = quasi.value.cooked.as_ref()?;
-                    Some((cooked.as_str().into(), tpl.span))
+                    Some((cooked.as_str()?.into(), tpl.span))
                 }
                 Expression::RegExpLiteral(regex) => {
                     Some((regex.raw.as_ref()?.as_str().into(), regex.span))

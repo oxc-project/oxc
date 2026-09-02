@@ -1,4 +1,3 @@
-use oxc_str::Str;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -154,7 +153,9 @@ fn find_string_property_value(obj: &ObjectExpression<'_>, key: &str) -> Option<S
 fn string_literal_value(expr: &Expression<'_>) -> Option<String> {
     match expr {
         Expression::StringLiteral(lit) => Some(lit.value.as_str()?.to_string()),
-        Expression::TemplateLiteral(tpl) => tpl.single_quasi().map(Str::into_string),
+        Expression::TemplateLiteral(tpl) => {
+            tpl.single_quasi().and_then(|value| value.as_str().map(str::to_owned))
+        }
         _ => None,
     }
 }

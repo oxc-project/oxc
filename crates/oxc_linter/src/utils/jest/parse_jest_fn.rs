@@ -500,9 +500,9 @@ impl<'a> KnownMemberExpressionProperty<'a> {
                 Expression::StringLiteral(string_literal) => {
                     string_literal.value.as_str().map(Cow::Borrowed)
                 }
-                Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
-                    template_literal.single_quasi().expect("get string content").as_str(),
-                )),
+                Expression::TemplateLiteral(template_literal) => template_literal
+                    .single_quasi()
+                    .and_then(|quasi| quasi.as_str().map(Cow::Borrowed)),
                 _ => None,
             },
             MemberExpressionElement::IdentName(ident_name) => {

@@ -246,7 +246,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
         tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
-        tag_expr.quasi.single_quasi().map(|quasi| quasi.to_string())
+        tag_expr.quasi.single_quasi().and_then(|quasi| quasi.as_str().map(str::to_owned))
     }
 }
 
@@ -292,9 +292,9 @@ impl<'a> VisitJs<'a> for TestCase {
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
-                            Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
-                            }
+                            Expression::TemplateLiteral(tag_expr) => tag_expr
+                                .single_quasi()
+                                .and_then(|quasi| quasi.as_str().map(str::to_owned)),
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
                                 if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::StringLiteral(string) if string.value == "\n")) {
@@ -333,9 +333,9 @@ impl<'a> VisitJs<'a> for TestCase {
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
-                            Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
-                            }
+                            Expression::TemplateLiteral(tag_expr) => tag_expr
+                                .single_quasi()
+                                .and_then(|quasi| quasi.as_str().map(str::to_owned)),
                             _ => None,
                         }
                     }
@@ -374,7 +374,9 @@ impl<'a> VisitJs<'a> for TestCase {
         self.code = Some(
             lit.single_quasi()
                 .expect("Expected template literal to have a single quasi")
-                .to_string(),
+                .as_str()
+                .expect("Expected rule test template to contain valid UTF-8")
+                .to_owned(),
         );
         self.config = None;
     }

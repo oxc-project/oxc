@@ -102,12 +102,11 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
         }
         Expression::TemplateLiteral(lit) => {
             if let Some(quasi) = lit.single_quasi() {
-                Some(ConstantValue::String(CompactStr::from(quasi.as_str())))
+                Some(ConstantValue::String(CompactStr::from(quasi.as_str()?)))
             } else {
                 let mut value = String::new();
                 for (i, quasi) in lit.quasis.iter().enumerate() {
-                    let cooked_or_raw = quasi.value.cooked.as_ref().unwrap_or(&quasi.value.raw);
-                    value.push_str(cooked_or_raw.as_str());
+                    value.push_str(quasi.value.cooked?.as_str()?);
                     if i < lit.expressions.len() {
                         match evaluate_expression(&lit.expressions[i], ctx)? {
                             ConstantValue::String(s) => value.push_str(&s),

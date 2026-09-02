@@ -132,7 +132,8 @@ fn filter_and_process_jest_result<'a>(
             if template_lit.is_no_substitution_template() =>
         {
             template_lit.quasis[0]
-                .cooked_js_str(ctx.allocator())
+                .value
+                .cooked
                 .map(|title| (template_lit.span, title, kind, parent_id))
         }
         _ => None,

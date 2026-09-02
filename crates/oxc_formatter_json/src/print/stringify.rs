@@ -16,6 +16,7 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_span::GetSpan;
+use oxc_str::JSStr;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::context::JsonFormatContext;
@@ -178,7 +179,7 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
         write!(f, FormatInvalidJson(template.span));
         return;
     };
-    let body = json_stringify_escape(cooked.as_str(), quasi.lone_surrogates);
+    let body = json_stringify_escape(*cooked);
     write_quoted_str(f, b'"', arena_cow_str(&body, f));
 }
 
@@ -186,70 +187,51 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
 /// (the quotes themselves are not included): `"` and `\` get a backslash,
 /// control characters use their short escapes (`\b\f\n\r\t`) or `\uXXXX`.
 ///
-/// When `lone_surrogates` is set, `content` encodes each lone surrogate as
-/// `\u{FFFD}XXXX` (and a literal U+FFFD as `\u{FFFD}fffd`).
-/// The same scheme `oxc_codegen` decodes, `JSON.stringify` prints lone surrogates as `\uXXXX`.
-fn json_stringify_escape(content: &str, lone_surrogates: bool) -> Cow<'_, str> {
+/// Lone surrogates are printed as `\uXXXX`, matching `JSON.stringify`.
+fn json_stringify_escape(content: JSStr<'_>) -> Cow<'_, str> {
     const HEX: &[u8; 16] = b"0123456789abcdef";
 
-    if !lone_surrogates && !content.bytes().any(|b| matches!(b, b'"' | b'\\') || b < 0x20) {
+    if let Some(content) = content.as_str()
+        && !content.bytes().any(|b| matches!(b, b'"' | b'\\') || b < 0x20)
+    {
         return Cow::Borrowed(content);
     }
 
     let mut out = String::with_capacity(content.len() + 8);
-    // Start of the pending run of as-is characters, flushed in one `push_str`
-    // before each escape (mirrors `oxc_formatter_core::spec::normalize_string`).
-    let mut copy_start = 0;
-    let mut chars = content.char_indices();
-    while let Some((i, c)) = chars.next() {
-        let short_escape = match c {
-            '"' => Some("\\\""),
-            '\\' => Some("\\\\"),
-            '\u{8}' => Some("\\b"),
-            '\u{c}' => Some("\\f"),
-            '\n' => Some("\\n"),
-            '\r' => Some("\\r"),
-            '\t' => Some("\\t"),
+    for code_point in content.code_points() {
+        let short_escape = match code_point {
+            0x22 => Some("\\\""),
+            0x5C => Some("\\\\"),
+            0x08 => Some("\\b"),
+            0x0C => Some("\\f"),
+            0x0A => Some("\\n"),
+            0x0D => Some("\\r"),
+            0x09 => Some("\\t"),
             _ => None,
         };
         if let Some(escaped) = short_escape {
-            out.push_str(&content[copy_start..i]);
             out.push_str(escaped);
-            copy_start = i + 1; // every short-escaped char is a single byte
-        } else if (c as u32) < 0x20 {
-            out.push_str(&content[copy_start..i]);
-            // Always `\u00XX` — the guard caps the code point below 0x20.
-            let code = c as u32;
+        } else if code_point < 0x20 {
             out.push_str("\\u00");
-            out.push(HEX[(code >> 4) as usize] as char);
-            out.push(HEX[(code & 0xF) as usize] as char);
-            copy_start = i + 1;
-        } else if c == '\u{FFFD}' && lone_surrogates {
-            out.push_str(&content[copy_start..i]);
-            // 4 lowercase-hex ASCII chars always follow the 3-byte escape marker;
-            // `get` only guards against malformed input the parser never produces,
-            // falling back (like the `fffd` self-escape) to a literal U+FFFD.
-            let hex_start = i + 3;
-            match content.get(hex_start..hex_start + 4) {
-                Some(hex) if hex != "fffd" => {
-                    out.push_str("\\u");
-                    out.push_str(hex);
-                }
-                _ => out.push('\u{FFFD}'),
+            out.push(HEX[((code_point >> 4) & 0xF) as usize] as char);
+            out.push(HEX[(code_point & 0xF) as usize] as char);
+        } else if (0xD800..=0xDFFF).contains(&code_point) {
+            out.push_str("\\u");
+            for shift in [12, 8, 4, 0] {
+                out.push(HEX[((code_point >> shift) & 0xF) as usize] as char);
             }
-            copy_start = (hex_start + 4).min(content.len());
-            // Skip the 4 (single-byte) hex chars.
-            for _ in 0..4 {
-                chars.next();
-            }
+        } else {
+            out.push(char::from_u32(code_point).unwrap());
         }
     }
-    out.push_str(&content[copy_start..]);
     Cow::Owned(out)
 }
 
 #[cfg(test)]
 mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_str::JSStr;
+
     use super::{json_stringify_escape, number_string_round_trips};
 
     #[test]
@@ -276,14 +258,16 @@ mod tests {
 
     #[test]
     fn stringify_escape() {
-        assert_eq!(json_stringify_escape("plain", false), "plain");
-        assert_eq!(json_stringify_escape("a\"b\\c", false), "a\\\"b\\\\c");
-        assert_eq!(json_stringify_escape("\u{8}\u{c}\n\r\t", false), "\\b\\f\\n\\r\\t");
-        assert_eq!(json_stringify_escape("\0\u{1}\u{1f}", false), "\\u0000\\u0001\\u001f");
+        assert_eq!(json_stringify_escape(JSStr::from("plain")), "plain");
+        assert_eq!(json_stringify_escape(JSStr::from("a\"b\\c")), "a\\\"b\\\\c");
+        assert_eq!(json_stringify_escape(JSStr::from("\u{8}\u{c}\n\r\t")), "\\b\\f\\n\\r\\t");
+        assert_eq!(json_stringify_escape(JSStr::from("\0\u{1}\u{1f}")), "\\u0000\\u0001\\u001f");
         // U+2028 / U+2029 are NOT escaped by `JSON.stringify`
-        assert_eq!(json_stringify_escape("\u{2028}\u{2029}", false), "\u{2028}\u{2029}");
-        // Lone surrogate `\u{FFFD}XXXX` encoding; `\u{FFFD}fffd` is a literal U+FFFD
-        assert_eq!(json_stringify_escape("a\u{FFFD}d800b", true), "a\\ud800b");
-        assert_eq!(json_stringify_escape("a\u{FFFD}fffdb", true), "a\u{FFFD}b");
+        assert_eq!(json_stringify_escape(JSStr::from("\u{2028}\u{2029}")), "\u{2028}\u{2029}");
+
+        let allocator = Allocator::default();
+        let value = JSStr::from_utf16_in(&[b'a'.into(), 0xD800, b'b'.into()], &&allocator);
+        assert_eq!(json_stringify_escape(value), "a\\ud800b");
+        assert_eq!(json_stringify_escape(JSStr::from("a\u{FFFD}b")), "a\u{FFFD}b");
     }
 }

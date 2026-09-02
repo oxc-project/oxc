@@ -119,7 +119,7 @@ impl TypeScriptRewriteExtensions {
         // specifiers never do.
         if let Some(rewritten) = rewritten_specifier(quasi.value.raw.as_str(), self.mode, ctx) {
             quasi.value.raw = rewritten;
-            quasi.value.cooked = Some(rewritten);
+            quasi.value.cooked = Some(rewritten.into());
         }
     }
 }

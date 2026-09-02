@@ -297,22 +297,22 @@ fn resolve_template_flags<'a>(
     let mut flags = RegExpFlags::empty();
 
     for (index, expression) in template.expressions.iter().enumerate() {
-        flags |= parse_flags(template.quasis.get(index)?.value.cooked?.as_str());
+        flags |= parse_flags(template.quasis.get(index)?.value.cooked?.as_str()?);
         flags |= resolve_flags(expression, ctx, true, depth)?;
     }
 
-    flags |= parse_flags(template.quasis.last()?.value.cooked?.as_str());
+    flags |= parse_flags(template.quasis.last()?.value.cooked?.as_str()?);
     Some(flags)
 }
 
 fn resolve_static_string<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
     match expr.get_inner_expression() {
         Expression::StringLiteral(lit) => lit.value.as_str(),
-        Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
+        Expression::TemplateLiteral(template) => template.single_quasi()?.as_str(),
         Expression::Identifier(ident) => {
             match resolve_const_initializer(ident, ctx)?.get_inner_expression() {
                 Expression::StringLiteral(lit) => lit.value.as_str(),
-                Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
+                Expression::TemplateLiteral(template) => template.single_quasi()?.as_str(),
                 _ => None,
             }
         }

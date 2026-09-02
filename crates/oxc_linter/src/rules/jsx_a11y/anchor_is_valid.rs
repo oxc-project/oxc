@@ -269,7 +269,7 @@ impl AnchorIsValid {
                     let Some(quasi) = temp_lit.single_quasi() else {
                         return HrefValueKind::Valid;
                     };
-                    Self::href_value_kind_from_string(&quasi)
+                    quasi.as_str().map_or(HrefValueKind::Valid, Self::href_value_kind_from_string)
                 }
                 _ => HrefValueKind::Valid,
             },

@@ -410,7 +410,7 @@ fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
         Expression::TemplateLiteral(literal) if literal.quasis.len() == 1 => {
-            literal.quasis[0].value.cooked.map(|cooked| Cow::Borrowed(cooked.as_str()))
+            literal.quasis[0].value.cooked.and_then(|cooked| cooked.as_str().map(Cow::Borrowed))
         }
         _ => None,
     }

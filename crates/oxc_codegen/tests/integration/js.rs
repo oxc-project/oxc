@@ -906,7 +906,7 @@ fn template_literal_escape_when_building_ast() {
     let cooked = "hello`world${foo}\\bar";
     let value = TemplateElementValue {
         raw: Str::from_str_in(cooked, &ast),
-        cooked: Some(Str::from_str_in(cooked, &ast)),
+        cooked: Some(Str::from_str_in(cooked, &ast).into()),
     };
     let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
     let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);

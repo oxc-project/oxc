@@ -1013,6 +1013,38 @@ mod test {
     }
 
     #[test]
+    fn cooked_template_preserves_utf16_code_units() {
+        let allocator = Allocator::default();
+        let expression =
+            Parser::new(&allocator, r"`�\u{FFFD}\uD800\uD83D\uDE00\uDC00`", SourceType::default())
+                .parse_expression()
+                .unwrap();
+        let Expression::TemplateLiteral(template) = expression else { unreachable!() };
+        let cooked = template.single_quasi().unwrap();
+
+        assert!(cooked.has_lone_surrogate());
+        assert_eq!(cooked.as_str(), None);
+        assert_eq!(
+            cooked.encode_utf16().collect::<Vec<_>>(),
+            [0xFFFD, 0xFFFD, 0xD800, 0xD83D, 0xDE00, 0xDC00]
+        );
+    }
+
+    #[test]
+    fn cooked_template_canonicalizes_surrogate_pair() {
+        let allocator = Allocator::default();
+        let expression = Parser::new(&allocator, r"`\uD800\uDC00`", SourceType::default())
+            .parse_expression()
+            .unwrap();
+        let Expression::TemplateLiteral(template) = expression else { unreachable!() };
+        let cooked = template.single_quasi().unwrap();
+
+        assert!(!cooked.has_lone_surrogate());
+        assert_eq!(cooked.as_str(), Some("𐀀"));
+        assert_eq!(cooked.encode_utf16().collect::<Vec<_>>(), [0xD800, 0xDC00]);
+    }
+
+    #[test]
     fn flow_error() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

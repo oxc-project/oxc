@@ -2146,6 +2146,7 @@ dependencies = [
  "oxc_formatter_tests",
  "oxc_parser",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "oxc_tasks_common",
  "pico-args",

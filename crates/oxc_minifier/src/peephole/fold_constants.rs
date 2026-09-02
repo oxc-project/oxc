@@ -654,7 +654,13 @@ impl<'a> PeepholeOptimizations {
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(Str::from_strs_array_in([cooked1.as_str(), cooked2.as_str()], ctx))
+                    let mut cooked = JSStrBuilder::with_capacity_in(
+                        cooked1.len() + cooked2.len(),
+                        ctx.allocator(),
+                    );
+                    cooked.push_js_str(cooked1);
+                    cooked.push_js_str(cooked2);
+                    Some(cooked.finish())
                 } else {
                     None
                 };
@@ -680,7 +686,13 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([cooked.as_str(), right_str.as_ref()], ctx)
+                    let mut value = JSStrBuilder::with_capacity_in(
+                        cooked.len() + right_str.len(),
+                        ctx.allocator(),
+                    );
+                    value.push_js_str(cooked);
+                    value.push_str(right_str.as_ref());
+                    value.finish()
                 });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
@@ -701,7 +713,13 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([left_str.as_ref(), cooked.as_str()], ctx)
+                    let mut value = JSStrBuilder::with_capacity_in(
+                        left_str.len() + cooked.len(),
+                        ctx.allocator(),
+                    );
+                    value.push_str(left_str.as_ref());
+                    value.push_js_str(cooked);
+                    value.finish()
                 });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
@@ -1051,7 +1069,7 @@ impl<'a> PeepholeOptimizations {
                 .or_else(|| next_raw.as_bytes().first())
                 .is_some_and(u8::is_ascii_digit);
             let cooked_ends_with_null =
-                quasi.value.cooked.is_some_and(|cooked| cooked.as_str().ends_with('\0'));
+                quasi.value.cooked.is_some_and(|cooked| cooked.code_points().last() == Some(0));
             quasi.value.raw = if starts_with_digit
                 && cooked_ends_with_null
                 && let Some(prefix) = raw.strip_suffix("\\0")
@@ -1063,8 +1081,16 @@ impl<'a> PeepholeOptimizations {
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(Str::from_strs_array_in([cooked1.as_str(), &str, cooked2_str], ctx))
+                let mut cooked = JSStrBuilder::with_capacity_in(
+                    cooked1.len() + str.len() + cooked2.map_or(0, oxc_str::JSStr::len),
+                    ctx.allocator(),
+                );
+                cooked.push_js_str(cooked1);
+                cooked.push_str(&str);
+                if let Some(cooked2) = cooked2 {
+                    cooked.push_js_str(cooked2);
+                }
+                Some(cooked.finish())
             } else {
                 None
             };

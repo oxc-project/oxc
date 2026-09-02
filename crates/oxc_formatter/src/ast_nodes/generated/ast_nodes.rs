@@ -1686,11 +1686,6 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
         self.inner.tail
     }
 
-    #[inline]
-    pub fn lone_surrogates(&self) -> bool {
-        self.inner.lone_surrogates
-    }
-
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }

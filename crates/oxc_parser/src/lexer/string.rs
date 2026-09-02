@@ -92,7 +92,7 @@ macro_rules! handle_string_literal_escape {
 
             // Consume escape sequence and add char to `str`
             let mut is_valid_escape_sequence = true;
-            $lexer.read_js_string_escape_sequence(&mut str, &mut is_valid_escape_sequence);
+            $lexer.read_string_escape_sequence(&mut str, false, &mut is_valid_escape_sequence);
             if !is_valid_escape_sequence {
                 let range = Span::new(escape_start_offset, $lexer.offset());
                 $lexer.error(diagnostics::invalid_escape_sequence(range));

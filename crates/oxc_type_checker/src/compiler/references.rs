@@ -266,7 +266,10 @@ impl CallCollector<'_> {
             }
             Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
                 let value = match template.quasis[0].value.cooked {
-                    Some(cooked) => cooked.as_str(),
+                    Some(cooked) => {
+                        let Some(value) = cooked.as_str() else { return };
+                        value
+                    }
                     None => template.quasis[0].value.raw.as_str(),
                 };
                 if !value.is_empty() {

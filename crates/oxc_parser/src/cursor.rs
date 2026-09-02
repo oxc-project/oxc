@@ -83,7 +83,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Get current template string
-    pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
+    pub(crate) fn cur_template_string(&self) -> Option<JSStr<'a>> {
         self.lexer.get_template_string(self.token.start())
     }
 

@@ -61,11 +61,7 @@ impl<'a> ToJsString<'a> for TemplateLiteral<'a> {
     fn to_js_string(&self, ctx: &impl GlobalContext<'a>) -> Option<Cow<'a, str>> {
         let mut str = String::new();
         for (i, quasi) in self.quasis.iter().enumerate() {
-            // Cooked template values still use the legacy lone-surrogate marker representation.
-            if quasi.lone_surrogates {
-                return None;
-            }
-            str.push_str(quasi.value.cooked.as_ref()?);
+            str.push_str(quasi.value.cooked?.as_str()?);
 
             if i < self.expressions.len() {
                 let expr = &self.expressions[i];

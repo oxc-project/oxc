@@ -420,10 +420,7 @@ fn get_jsx_element_key_value<'a>(
                             JSXExpression::TemplateLiteral(lit)
                                 if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
                             {
-                                return Some((
-                                    lit.quasis[0].cooked_js_str(ctx.allocator())?,
-                                    attr.span,
-                                ));
+                                return Some((lit.quasis[0].value.cooked?, attr.span));
                             }
                             _ => {}
                         }

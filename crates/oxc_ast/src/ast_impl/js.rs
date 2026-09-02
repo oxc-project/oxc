@@ -471,7 +471,7 @@ impl<'a> PropertyKey<'a> {
             Self::BigIntLiteral(lit) => Some(lit.value.into()),
             Self::NullLiteral(_) => Some(JSStr::from("null")),
             Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
-                lit.quasis[0].cooked_js_str(allocator)
+                lit.quasis[0].value.cooked
             }
             _ => None,
         }
@@ -493,7 +493,9 @@ impl<'a> PropertyKey<'a> {
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
+            Self::TemplateLiteral(lit) => {
+                lit.single_quasi().and_then(JSStr::as_str).map(Cow::Borrowed)
+            }
             _ => None,
         }
     }
@@ -580,7 +582,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn single_quasi(&self) -> Option<Str<'a>> {
+    pub fn single_quasi(&self) -> Option<JSStr<'a>> {
         if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }
@@ -650,7 +652,10 @@ impl<'a> MemberExpression<'a> {
                 Expression::StringLiteral(lit) => lit.value.as_str().map(|value| (lit.span, value)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        lit.quasis[0]
+                            .value
+                            .cooked
+                            .and_then(|cooked| cooked.as_str().map(|value| (lit.span, value)))
                     } else {
                         None
                     }
@@ -694,7 +699,9 @@ impl<'a> ComputedMemberExpression<'a> {
     pub fn static_property_name(&self) -> Option<Str<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => lit.value.as_str().map(Str::from),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                lit.quasis[0].value.cooked.and_then(JSStr::as_str).map(Str::from)
+            }
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
@@ -706,9 +713,10 @@ impl<'a> ComputedMemberExpression<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match &self.expression {
             Expression::StringLiteral(lit) => lit.value.as_str().map(|value| (lit.span, value)),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
-            }
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0]
+                .value
+                .cooked
+                .and_then(|cooked| cooked.as_str().map(|value| (lit.span, value))),
             Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
         }

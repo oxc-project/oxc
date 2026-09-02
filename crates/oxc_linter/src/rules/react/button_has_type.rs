@@ -210,7 +210,8 @@ impl ButtonHasType {
                 .is_some_and(|value| self.is_valid_button_type_prop_string_literal(value)),
             Expression::TemplateLiteral(template_literal) => template_literal
                 .single_quasi()
-                .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi.as_str())),
+                .and_then(oxc_str::JSStr::as_str)
+                .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi)),
             Expression::ConditionalExpression(conditional_expr) => {
                 self.is_valid_button_type_prop_expression(&conditional_expr.consequent)
                     && self.is_valid_button_type_prop_expression(&conditional_expr.alternate)

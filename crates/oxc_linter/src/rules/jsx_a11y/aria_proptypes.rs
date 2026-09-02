@@ -249,7 +249,7 @@ fn parse_aria_prop_value_as_string(
                 Some(string_lit.value.as_str()?.cow_to_lowercase().into())
             }
             JSXExpression::TemplateLiteral(template_lit) => {
-                Some(template_lit.single_quasi()?.cow_to_lowercase().into())
+                Some(template_lit.single_quasi()?.as_str()?.cow_to_lowercase().into())
             }
             JSXExpression::BooleanLiteral(bool_lit) => {
                 if boolean_as_string {

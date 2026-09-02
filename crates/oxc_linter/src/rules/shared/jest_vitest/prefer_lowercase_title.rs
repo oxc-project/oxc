@@ -190,10 +190,12 @@ impl PreferLowercaseTitleConfig {
                 self.lint_string(ctx, value, string_expr.span);
             }
         } else if let Argument::TemplateLiteral(template_expr) = arg {
-            let Some(template_string) = template_expr.single_quasi() else {
+            let Some(template_string) =
+                template_expr.single_quasi().and_then(oxc_str::JSStr::as_str)
+            else {
                 return;
             };
-            self.lint_string(ctx, template_string.as_str(), template_expr.span);
+            self.lint_string(ctx, template_string, template_expr.span);
         }
     }
 

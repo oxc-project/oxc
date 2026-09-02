@@ -430,7 +430,10 @@ impl AstKind<'_> {
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.single_quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+                t.single_quasi().map_or_else(
+                    || "None".into(),
+                    |q| q.as_str().map_or_else(|| format!("Some({q:?})"), |q| format!("Some({q})"))
+                )
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
@@ -674,7 +677,10 @@ impl<'a> MemberExpressionKind<'a> {
                 Expression::StringLiteral(lit) => lit.value.as_str().map(|value| (lit.span, value)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        lit.quasis[0]
+                            .value
+                            .cooked
+                            .and_then(|cooked| cooked.as_str().map(|value| (lit.span, value)))
                     } else {
                         None
                     }

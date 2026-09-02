@@ -1164,7 +1164,7 @@ mod tests {
                 SPAN,
                 TemplateElementValue {
                     raw: Str::from_str_in(input, &ast),
-                    cooked: Some(Str::from_str_in(input, &ast)),
+                    cooked: Some(Str::from_str_in(input, &ast).into()),
                 },
                 true,
                 &ast,

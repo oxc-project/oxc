@@ -19,7 +19,6 @@ impl<'a> TSEnumMemberName<'a> {
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
             Self::ComputedTemplateString(template) => template
                 .single_quasi()
-                .map(JSStr::from)
                 .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
         }
     }

@@ -638,16 +638,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Also replace `\r` with `\n` in `raw`.
         // If contains `\r`, then `escaped` must be `true` (because `\r` needs unescaping),
         // so we can skip searching for `\r` in common case where contains no escapes.
-        let (cooked, lone_surrogates) = if self.cur_token().escaped() {
+        let cooked = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
-            let cooked = self.cur_template_string().map(Str::from);
+            let cooked = self.cur_template_string();
             if cooked.is_some() && raw.contains('\r') {
                 raw =
                     Str::from_str_in(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"), self);
             }
-            (cooked, self.cur_token().lone_surrogates())
+            cooked
         } else {
-            (Some(raw), false)
+            Some(raw.into())
         };
 
         self.bump_any();
@@ -662,13 +662,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
         // Parser provides already-escaped values from source, so no escaping needed here
-        TemplateElement::new_with_lone_surrogates(
-            span,
-            TemplateElementValue { raw, cooked },
-            tail,
-            lone_surrogates,
-            self,
-        )
+        TemplateElement::new(span, TemplateElementValue { raw, cooked }, tail, self)
     }
 
     /// Section 13.3 ImportCall or ImportMeta

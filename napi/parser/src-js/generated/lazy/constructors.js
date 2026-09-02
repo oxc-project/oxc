@@ -1024,7 +1024,7 @@ export class TemplateElementValue {
     const internal = this.#internal,
       cached = internal.$cooked;
     if (cached !== void 0) return cached;
-    return (internal.$cooked = constructOptionStr(internal.pos + 16, internal.ast));
+    return (internal.$cooked = constructOptionJSStr(internal.pos + 16, internal.ast));
   }
 
   toJSON() {
@@ -13235,9 +13235,43 @@ function constructOptionBoxTSTypeParameterInstantiation(pos, ast) {
   return constructBoxTSTypeParameterInstantiation(pos, ast);
 }
 
-function constructOptionStr(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
-  return constructStr(pos, ast);
+function constructJSStr(pos, ast) {
+  const { buffer } = ast,
+    hasLoneSurrogate = buffer[pos + 12] !== 0;
+  if (!hasLoneSurrogate) return constructStr(pos, ast);
+
+  const pos32 = pos >> 2,
+    { int32 } = buffer,
+    len = int32[pos32 + 2];
+  if (len === 0) return "";
+
+  pos = int32[pos32];
+  const end = pos + len;
+
+  let out = "",
+    chunkStart = pos;
+  while (pos < end) {
+    if (buffer[pos] === 0xed && pos + 2 < end) {
+      const second = buffer[pos + 1];
+      if (second >= 0xa0 && second <= 0xbf) {
+        if (chunkStart < pos) out += decodeStr(buffer.subarray(chunkStart, pos));
+        const value =
+          ((buffer[pos] & 0x0f) << 12) | ((second & 0x3f) << 6) | (buffer[pos + 2] & 0x3f);
+        out += fromCodePoint(value);
+        pos += 3;
+        chunkStart = pos;
+        continue;
+      }
+    }
+    pos++;
+  }
+  if (chunkStart < end) out += decodeStr(buffer.subarray(chunkStart, end));
+  return out;
+}
+
+function constructOptionJSStr(pos, ast) {
+  if (ast.buffer[pos + 12] === 2) return null;
+  return constructJSStr(pos, ast);
 }
 
 function constructBoxComputedMemberExpression(pos, ast) {
@@ -13742,38 +13776,9 @@ function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
-function constructJSStr(pos, ast) {
-  const { buffer } = ast,
-    hasLoneSurrogate = buffer[pos + 12] !== 0;
-  if (!hasLoneSurrogate) return constructStr(pos, ast);
-
-  const pos32 = pos >> 2,
-    { int32 } = buffer,
-    len = int32[pos32 + 2];
-  if (len === 0) return "";
-
-  pos = int32[pos32];
-  const end = pos + len;
-
-  let out = "",
-    chunkStart = pos;
-  while (pos < end) {
-    if (buffer[pos] === 0xed && pos + 2 < end) {
-      const second = buffer[pos + 1];
-      if (second >= 0xa0 && second <= 0xbf) {
-        if (chunkStart < pos) out += decodeStr(buffer.subarray(chunkStart, pos));
-        const value =
-          ((buffer[pos] & 0x0f) << 12) | ((second & 0x3f) << 6) | (buffer[pos + 2] & 0x3f);
-        out += fromCodePoint(value);
-        pos += 3;
-        chunkStart = pos;
-        continue;
-      }
-    }
-    pos++;
-  }
-  if (chunkStart < end) out += decodeStr(buffer.subarray(chunkStart, end));
-  return out;
+function constructOptionStr(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructStr(pos, ast);
 }
 
 function constructU8(pos, ast) {

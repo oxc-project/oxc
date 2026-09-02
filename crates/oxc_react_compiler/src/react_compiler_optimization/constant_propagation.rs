@@ -508,7 +508,7 @@ fn evaluate_instruction<'a>(
                 // No subexpressions: join all cooked quasis
                 let mut result_string = JSStrBuilder::new_in(env.allocator);
                 for q in quasis {
-                    result_string.push_str(q.cooked?.as_str());
+                    result_string.push_js_str(q.cooked?);
                 }
                 let span = *span;
                 let value = PrimitiveValue::String(result_string.finish());
@@ -528,7 +528,7 @@ fn evaluate_instruction<'a>(
 
             let mut quasi_index = 0usize;
             let mut result_string = JSStrBuilder::new_in(env.allocator);
-            result_string.push_str(quasis[quasi_index].cooked.unwrap().as_str());
+            result_string.push_js_str(quasis[quasi_index].cooked.unwrap());
             quasi_index += 1;
 
             for sub_expr in subexprs {
@@ -552,7 +552,7 @@ fn evaluate_instruction<'a>(
                 let suffix = quasis[quasi_index].cooked?;
                 quasi_index += 1;
 
-                result_string.push_str(suffix.as_str());
+                result_string.push_js_str(suffix);
             }
 
             let span = *span;

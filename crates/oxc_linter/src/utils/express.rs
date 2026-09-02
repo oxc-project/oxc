@@ -31,9 +31,10 @@ pub fn as_endpoint_registration<'a, 'n>(
             let path = path.value.as_str().map(Str::from)?;
             Some((Some(path), &call.arguments.as_slice()[1..]))
         }
-        Expression::TemplateLiteral(template) => {
-            template.single_quasi().map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..]))
-        }
+        Expression::TemplateLiteral(template) => template
+            .single_quasi()
+            .and_then(|quasi| quasi.as_str().map(Str::from))
+            .map(|quasi| (Some(quasi), &call.arguments.as_slice()[1..])),
         _ => Some((None, call.arguments.as_slice())),
     }
 }

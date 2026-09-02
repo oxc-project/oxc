@@ -319,7 +319,7 @@ fn literal_element_js_name<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> 
     match expr {
         Expression::StringLiteral(s) => Some(s.value),
         Expression::TemplateLiteral(t) if t.is_no_substitution_template() => {
-            t.quasis[0].cooked_js_str(ctx.allocator())
+            t.quasis[0].value.cooked
         }
         Expression::NumericLiteral(n) => {
             Some(JSStr::from_str_in(&n.value.to_js_string(), &ctx.allocator()))
@@ -349,7 +349,9 @@ fn static_js_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Optio
 fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
     match expr {
         Expression::StringLiteral(s) => s.value.as_str().map(Cow::Borrowed),
-        Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
+        Expression::TemplateLiteral(t) => {
+            t.single_quasi().and_then(|value| value.as_str().map(Cow::Borrowed))
+        }
         Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
         Expression::BooleanLiteral(b) => {
             Some(Cow::Borrowed(if b.value { "true" } else { "false" }))

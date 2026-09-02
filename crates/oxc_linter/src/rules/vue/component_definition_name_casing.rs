@@ -181,7 +181,7 @@ fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
             let quasi = tpl.quasis.first()?;
             let cooked = quasi.value.cooked.as_ref()?;
             let inner = Span::new(tpl.span.start + 1, tpl.span.end - 1);
-            Some((cooked.to_string(), inner))
+            Some((cooked.as_str()?.to_string(), inner))
         }
         _ => None,
     }

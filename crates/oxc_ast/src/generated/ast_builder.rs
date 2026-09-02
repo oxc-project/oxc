@@ -4307,38 +4307,7 @@ impl<'a> TemplateElement<'a> {
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TemplateElement {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value,
-            tail,
-            lone_surrogates: Default::default(),
-        }
-    }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn new_with_lone_surrogates(
-        span: Span,
-        value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        let builder = builder.builder();
-        TemplateElement {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            value,
-            tail,
-            lone_surrogates,
-        }
+        TemplateElement { node_id: Cell::new(builder.node_id()), span, value, tail }
     }
 }
 

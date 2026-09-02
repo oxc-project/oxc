@@ -246,25 +246,17 @@ impl ValidTitleConfig {
                     return;
                 }
 
-                if let Some(quasi) = tagged_template.quasi.single_quasi() {
-                    validate_title(
-                        quasi.as_str(),
-                        tagged_template.span,
-                        config,
-                        &jest_fn_call.name,
-                        ctx,
-                    );
+                if let Some(quasi) =
+                    tagged_template.quasi.single_quasi().and_then(oxc_str::JSStr::as_str)
+                {
+                    validate_title(quasi, tagged_template.span, config, &jest_fn_call.name, ctx);
                 }
             }
             Argument::TemplateLiteral(template_literal) => {
-                if let Some(quasi) = template_literal.single_quasi() {
-                    validate_title(
-                        quasi.as_str(),
-                        template_literal.span,
-                        config,
-                        &jest_fn_call.name,
-                        ctx,
-                    );
+                if let Some(quasi) =
+                    template_literal.single_quasi().and_then(oxc_str::JSStr::as_str)
+                {
+                    validate_title(quasi, template_literal.span, config, &jest_fn_call.name, ctx);
                 }
             }
             Argument::BinaryExpression(binary_expr) => {

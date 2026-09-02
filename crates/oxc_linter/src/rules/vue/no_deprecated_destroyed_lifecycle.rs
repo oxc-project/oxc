@@ -193,9 +193,10 @@ fn get_property_key_info(
         PropertyKey::StringLiteral(lit) => {
             Some((lit.value.as_str()?.to_string(), lit.span, false, KeyType::StringLiteral))
         }
-        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
-            tpl.single_quasi().map(|s| (s.to_string(), tpl.span, false, KeyType::TemplateLiteral))
-        }
+        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl
+            .single_quasi()
+            .and_then(|s| s.as_str().map(str::to_owned))
+            .map(|s| (s, tpl.span, false, KeyType::TemplateLiteral)),
         _ => None,
     }
 }

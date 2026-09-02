@@ -91,7 +91,7 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
             }
             PropertyKey::TemplateLiteral(temp) => temp
                 .single_quasi()
-                .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf")),
+                .is_some_and(|val| matches!(val.as_str(), Some("toString" | "valueOf"))),
             _ => true,
         },
         ObjectPropertyKind::SpreadProperty(e) => match &e.argument {

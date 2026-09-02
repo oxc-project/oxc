@@ -8,7 +8,7 @@ pub fn static_string_value(expression: &Expression<'_>) -> Option<String> {
         Expression::TemplateLiteral(template) => {
             let mut value = String::new();
             for (index, quasi) in template.quasis.iter().enumerate() {
-                value.push_str(quasi.value.cooked.as_ref()?);
+                value.push_str(quasi.value.cooked?.as_str()?);
                 if let Some(expr) = template.expressions.get(index) {
                     value.push_str(&static_string_value(expr)?);
                 }

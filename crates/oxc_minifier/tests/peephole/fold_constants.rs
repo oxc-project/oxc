@@ -1460,6 +1460,8 @@ fn test_inline_values_in_template_literal() {
     fold("`foo${1}${i}`", "`foo1${i}`");
     fold("`foo${'${}'}`", "'foo${}'");
     fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
+    fold("`${x}\\uD800${''}\\uDC00`", "`${x}\\uD800\\uDC00`");
+    fold("`${x}\\uD800` + `\\uDC00${y}`", "`${x}\\uD800\\uDC00${y}`");
     fold_same("foo`foo${1}bar`");
 }
 

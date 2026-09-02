@@ -997,7 +997,7 @@ pub enum FunctionExpressionType {
 #[derive(Debug, Clone, Copy)]
 pub struct TemplateQuasi<'a> {
     pub raw: Str<'a>,
-    pub cooked: Option<Str<'a>>,
+    pub cooked: Option<JSStr<'a>>,
     pub span: Span,
 }
 

@@ -93,7 +93,7 @@ impl Rule for NoNodejsModules {
             AstKind::ImportExpression(import) => match &import.source {
                 Expression::StringLiteral(str_lit) => str_lit.value.as_str(),
                 Expression::TemplateLiteral(temp_lit) if temp_lit.is_no_substitution_template() => {
-                    temp_lit.single_quasi().map(|value| value.as_str())
+                    temp_lit.single_quasi().and_then(oxc_str::JSStr::as_str)
                 }
                 _ => None,
             },

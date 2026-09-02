@@ -140,7 +140,8 @@ fn template_element_starts_with_path_separator(temp_lit: &TemplateLiteral, i: us
         return false;
     };
 
-    if let Some(c) = quasi.value.cooked.as_ref().and_then(|cooked| cooked.chars().next())
+    if let Some(c) =
+        quasi.value.cooked.and_then(|cooked| cooked.code_points().next()).and_then(char::from_u32)
         && is_path_separator(c)
     {
         return true;

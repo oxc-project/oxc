@@ -271,8 +271,9 @@ impl<'o> PropertyCollector<'o> {
             Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
                 if let [quasi] = template.quasis.as_slice()
                     && let Some(cooked) = quasi.value.cooked
+                    && let Some(cooked) = cooked.as_str()
                 {
-                    self.quoted(cooked.as_str());
+                    self.quoted(cooked);
                 }
             }
             Expression::ConditionalExpression(expression) => {
@@ -375,8 +376,9 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
         if template.expressions.is_empty()
             && let [quasi] = template.quasis.as_slice()
             && let Some(cooked) = quasi.value.cooked
+            && let Some(cooked) = cooked.as_str()
         {
-            self.observe_literal(template.span, cooked.as_str());
+            self.observe_literal(template.span, cooked);
         }
         walk::walk_template_literal(self, template);
     }
@@ -494,10 +496,11 @@ impl<'a> PropertyRewriter<'a, '_> {
         }
         if let [quasi] = template.quasis.as_mut_slice()
             && let Some(cooked) = quasi.value.cooked
-            && let Some(target) = self.target(cooked.as_str())
+            && let Some(cooked) = cooked.as_str()
+            && let Some(target) = self.target(cooked)
         {
             let target = Str::from_str_in(target.as_str(), &self.ast);
-            quasi.value.cooked = Some(target);
+            quasi.value.cooked = Some(target.into());
             quasi.value.raw = target;
         }
     }

@@ -347,7 +347,7 @@ impl NoRestrictedGlobals {
                         let Some(cooked) = &template.quasis[0].value.cooked else {
                             return;
                         };
-                        Some(cooked.as_str())
+                        cooked.as_str()
                     }
                     _ => return,
                 };

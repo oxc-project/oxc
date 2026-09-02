@@ -35,7 +35,9 @@ pub(super) fn format_graphql_doc<'a>(
         let Some(cooked) = quasi_elem.value.cooked.as_ref() else {
             return false;
         };
-        let text = cooked.as_str();
+        let Some(text) = cooked.as_str() else {
+            return false;
+        };
         // `.cooked` has normalized line terminators
         let lines: Vec<&str> = text.split('\n').collect();
 
