@@ -740,7 +740,7 @@ impl<'a> PeepholeOptimizations {
         // `if (a) return b; return c;` => `return a ? b : c;`
         // `if (a) return; return;` => `a; return;`
         if ctx.options().sequences {
-            'Loop: while result.len() > 0 {
+            'Loop: while result.len() >= 1 {
                 if let Some(Statement::IfStatement(if_stmt)) = result.last()
                     && if_stmt.alternate.is_none()
                     && let Statement::ReturnStatement(prev_return) = &if_stmt.consequent
@@ -853,7 +853,7 @@ impl<'a> PeepholeOptimizations {
 
         // `if (a) throw b; throw c;` => `throw a ? b : c;`
         if ctx.options().sequences {
-            'Loop: while result.len() > 0 {
+            'Loop: while result.len() >= 1 {
                 if let Some(Statement::IfStatement(if_stmt)) = result.last()
                     && if_stmt.alternate.is_none()
                     && matches!(&if_stmt.consequent, Statement::ThrowStatement(_))
