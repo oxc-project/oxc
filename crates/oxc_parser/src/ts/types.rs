@@ -483,7 +483,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.lookahead(Self::is_start_of_mapped_type) {
                     self.parse_mapped_type()
                 } else {
-                    self.parse_type_literal()
+                    TSType::TSTypeLiteral(self.parse_type_literal())
                 }
             }
             Kind::LBrack => self.parse_tuple_type(),
@@ -694,15 +694,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    pub(crate) fn parse_type_literal_node(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
+    pub(crate) fn parse_type_literal(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
         let start = self.cur_start();
         let member_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
         TSTypeLiteral::boxed(self.end_span(start), member_list, self)
-    }
-
-    fn parse_type_literal(&mut self) -> TSType<'a> {
-        TSType::TSTypeLiteral(self.parse_type_literal_node())
     }
 
     fn parse_type_query(&mut self) -> TSType<'a> {
