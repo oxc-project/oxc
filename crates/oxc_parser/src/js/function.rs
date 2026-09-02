@@ -195,7 +195,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 &modifiers,
                 allowed_modifiers,
                 true,
-                diagnostics::cannot_appear_on_a_parameter,
+                |modifier, allowed| {
+                    if func_kind != FunctionKind::Constructor
+                        && matches!(
+                            modifier.kind,
+                            ModifierKind::Public
+                                | ModifierKind::Private
+                                | ModifierKind::Protected
+                                | ModifierKind::Readonly
+                                | ModifierKind::Override
+                        )
+                    {
+                        diagnostics::a_parameter_property_is_only_allowed_in_a_constructor_implementation(
+                            modifier,
+                        )
+                    } else {
+                        diagnostics::cannot_appear_on_a_parameter(modifier, allowed)
+                    }
+                },
             );
         } else {
             self.verify_modifiers(
