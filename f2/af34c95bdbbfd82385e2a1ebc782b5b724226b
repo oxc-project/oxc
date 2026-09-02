@@ -1,0 +1,19 @@
+crates/oxc_parser/src/ts/types.rs
+  s_555bdd00191282::t_9a0a7998dc7093 697
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f2af34c95bdbbfd82385e2a1ebc782b5b724226b",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
