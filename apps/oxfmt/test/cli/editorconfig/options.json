@@ -10,5 +10,6 @@
   { "cwd": "tab_width_fallback", "args": ["test.js"] },
   { "cwd": "quote_type", "args": ["test.js"] },
   { "cwd": "empty", "args": ["test.js"] },
-  { "cwd": "nested_cwd/sub", "args": ["--check", "."] }
+  { "cwd": "nested_cwd/sub", "args": ["--check", "."] },
+  { "cwd": "unset_in_root", "args": ["test.js", "test.ts"] }
 ]

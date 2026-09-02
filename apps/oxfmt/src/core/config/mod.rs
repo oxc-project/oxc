@@ -28,7 +28,9 @@ use oxc_formatter::JsFormatOptions;
 use oxc_formatter_core::CoreFormatOptions;
 
 use self::{
-    editorconfig::{apply_editorconfig, has_editorconfig_overrides, load_editorconfig},
+    editorconfig::{
+        apply_editorconfig, load_editorconfig, resolve_editorconfig_overrides, root_properties,
+    },
     overrides::OxfmtrcOverrides,
 };
 #[cfg(feature = "napi")]
@@ -421,11 +423,10 @@ impl ConfigResolver {
 
         let mut format_config = oxfmtrc.format_config;
 
-        // Apply `.editorconfig` root section now. Per-file `[src/*.ts]` sections
-        // are deferred to the slow path during `resolve_options()`.
+        // Apply `.editorconfig` root section now.
+        // Per-file sections are deferred to the slow path during `resolve_options()`.
         if let Some(editorconfig) = &self.editorconfig
-            && let Some(props) =
-                editorconfig.sections().iter().find(|s| s.name == "*").map(|s| &s.properties)
+            && let Some(props) = root_properties(editorconfig)
         {
             apply_editorconfig(&mut format_config, props);
         }
@@ -475,17 +476,15 @@ impl ConfigResolver {
         &self,
         path: &Path,
     ) -> Result<(Arc<FormatConfig>, Cow<'_, ValidatedOptions>), String> {
-        // Collected once: the fast-path decision and the slow-path merge consume the same result
-        let matched_overrides =
+        let oxfmtrc_overrides =
             self.oxfmtrc_overrides.as_ref().map_or_else(Vec::new, |o| o.matching(path));
+        // `.editorconfig` `[*]` is already folded in during `build_and_validate()`,
+        // so only a per-file section that changes the result counts as an override.
+        let editorconfig_overrides =
+            self.editorconfig.as_ref().and_then(|ec| resolve_editorconfig_overrides(ec, path));
 
         // Fast path: no per-file overrides → share the cached (already-validated) snapshot.
-        if matched_overrides.is_empty()
-            // `.editorconfig` `[*]` is already folded in during `build_and_validate()`.
-            // Checked after overrides: a match already forces the slow path,
-            // which re-resolves `.editorconfig` itself, so the probe here would be wasted.
-            && !self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path))
-        {
+        if oxfmtrc_overrides.is_empty() && editorconfig_overrides.is_none() {
             let (config, validated) =
                 self.base.as_ref().expect("`build_and_validate()` must be called first");
             return Ok((Arc::clone(config), Cow::Borrowed(validated)));
@@ -498,15 +497,17 @@ impl ConfigResolver {
             .expect("`build_and_validate()` should catch this before");
 
         // Apply oxfmtrc overrides first (explicit settings)
-        for options in matched_overrides {
+        for options in oxfmtrc_overrides {
             format_config.merge(options);
         }
         // Apply `.editorconfig` as fallback (fills in unset fields only).
-        // `EditorConfig::resolve` returns `[*]` + `[src/*.ts]` merged, with per-file
-        // values winning, so per-file editorconfig fallback works even after overrides.
-        if let Some(ec) = &self.editorconfig {
-            let props = ec.resolve(path);
-            apply_editorconfig(&mut format_config, &props);
+        // The per-file resolution is `[*]` + `[src/*.ts]` merged with per-file values winning,
+        // so per-file editorconfig fallback works even after overrides.
+        // `None` means `[*]` alone is authoritative for the applied properties: no second resolve.
+        if let Some(ec) = &self.editorconfig
+            && let Some(props) = editorconfig_overrides.as_ref().or_else(|| root_properties(ec))
+        {
+            apply_editorconfig(&mut format_config, props);
         }
 
         if let Some(config_dir) = &self.config_dir {
