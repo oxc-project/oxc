@@ -556,6 +556,7 @@ impl CliRunner {
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
             .with_type_check(type_check)
+            .with_run_external_code(self.options.run_external_code)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)

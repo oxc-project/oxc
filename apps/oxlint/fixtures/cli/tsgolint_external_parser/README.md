@@ -35,13 +35,35 @@ content-mapper support — the `oxlint-tsgolint` this repo pins (0.24.0) predate
 cd apps/oxlint/fixtures/cli/tsgolint_external_parser
 npm install
 OXLINT_TSGOLINT_PATH=/path/to/tsgolint \
-  node ../../../dist/cli.js --type-aware --type-check files
+  node ../../../dist/cli.js --type-aware --type-check --run-external-code files
 ```
+
+`--run-external-code` is required: content mappers are packages that `tsgolint` executes,
+so TypeScript keeps the underlying option command-line-only and off by default. It is not
+readable from `.oxlintrc.json`, and a `languageOptions.parser` override does not imply it
+— eligibility and permission are separate.
 
 Expected: `files/counter.gts:9:18` on `cuont`, `files/plain.ts:3:18`,
 `files/widget.gts:10:11` on `this.always` — each anchored in the original source.
 
 `OXLINT_TSGOLINT_DISABLE_CONTENT_MAPPERS=true` turns mapping off.
+
+## Without `--run-external-code`
+
+Denial is not fatal. The run still reports everything it can, plus one tsconfig error
+naming the missing flag:
+
+```
+x typescript(tsconfig-error): Invalid tsconfig
+   ,-[tsconfig.json:10:3]
+  help: Content mappers require the '--runExternalCode' command line flag to be enabled.
+x typescript(no-unnecessary-condition)     files/plain.ts:3:18     <- still reported
+x typescript(unsupported-file-extension)   each .gts
+```
+
+That tsconfig error arrives as a `DiagnosticKind::Internal` and renders through the
+existing internal-diagnostic path. Note the help text names tsgolint's own
+`--runExternalCode`; the oxlint flag is `--run-external-code`.
 
 ## When the mapper is missing or misspelled
 
