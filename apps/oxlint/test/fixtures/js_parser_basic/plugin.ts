@@ -37,9 +37,9 @@ const plugin: Plugin = {
             const tokenAfterFirst = sourceCode.getTokenAfter(firstToken)!;
             context.report({
               message:
-                `fn \`${name}\`: scope=${scope.type}, ` +
-                `firstToken=${firstToken.value}, tokenAfterFirst=${tokenAfterFirst.value}, ` +
-                `parserServices.isToyParser=${String(sourceCode.parserServices.isToyParser)}`,
+                `fn \`${name}\`: scope=${scope.type}, `
+                + `firstToken=${firstToken.value}, tokenAfterFirst=${tokenAfterFirst.value}, `
+                + `parserServices.isToyParser=${String(sourceCode.parserServices.isToyParser)}`,
               node,
             });
           },
