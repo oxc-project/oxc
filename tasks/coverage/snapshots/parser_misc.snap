@@ -440,10 +440,14 @@ Negative Passed: 215/215 (100.00%)
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
- 10 │     · ───┬───
+ 10 │ <<<<<<< HEAD
+    · ───┬───
     ·    ╰── between this marker and `=======` is the code that we're merging into
  11 │     const x = 1;
- 12 │  13 │     const y = 2;
+ 12 │ =======
+    · ───┬───
+    ·    ╰── between this marker and `>>>>>>>` is the incoming code
+ 13 │     const y = 2;
  14 │ >>>>>>> branch
     · ───┬───
     ·    ╰── this marker concludes the conflict region
