@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 107/107 (100.00%)
-Positive Passed: 107/107 (100.00%)
+AST Parsed     : 108/108 (100.00%)
+Positive Passed: 108/108 (100.00%)
 Negative Passed: 215/215 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
@@ -440,14 +440,10 @@ Negative Passed: 215/215 (100.00%)
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
- 10 │ <<<<<<< HEAD
-    · ───┬───
+ 10 │     · ───┬───
     ·    ╰── between this marker and `=======` is the code that we're merging into
  11 │     const x = 1;
- 12 │ =======
-    · ───┬───
-    ·    ╰── between this marker and `>>>>>>>` is the incoming code
- 13 │     const y = 2;
+ 12 │  13 │     const y = 2;
  14 │ >>>>>>> branch
     · ───┬───
     ·    ╰── this marker concludes the conflict region
