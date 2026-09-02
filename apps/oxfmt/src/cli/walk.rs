@@ -18,8 +18,7 @@ use super::resolve::{build_global_ignore_matchers, is_ignored};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
 use crate::core::{
-    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, classify_file_kind,
-    resolve_file_scope_config,
+    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, resolve_file_scope_config,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.
@@ -681,7 +680,7 @@ fn resolve_format_strategy(
     tx_error: &DiagnosticSender,
     cwd: &Path,
 ) -> Option<FormatStrategy> {
-    let kind = classify_file_kind(Arc::clone(&path))?;
+    let kind = resolver.classify(Arc::clone(&path))?;
     match resolver.resolve(kind) {
         Ok(ResolveOutcome::Format(strategy)) => Some(strategy),
         Ok(ResolveOutcome::MissingPlugin(_)) => None,

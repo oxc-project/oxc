@@ -1,6 +1,8 @@
 use std::{path::Path, sync::Arc};
 
 use phf::phf_set;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use oxc_formatter_css::CssVariant;
 use oxc_formatter_json::JsonVariant;
@@ -75,20 +77,29 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     #[cfg(feature = "napi")]
     {
         if let Some(parser_name) = get_prettier_parser_name(file_name, extension) {
-            let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
-            let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
-            let supports_svelte = SVELTE_PARSERS.contains(parser_name);
-            return Some(FileKind::Prettier {
-                path,
-                parser_name,
-                supports_tailwind,
-                supports_oxfmt,
-                supports_svelte,
-            });
+            return Some(prettier_file_kind(path, parser_name));
         }
     }
 
     None
+}
+
+/// Returns `true` for machine-generated files (lock files) that must never be reformatted,
+/// even when an explicit `associations` entry matches them.
+pub fn is_excluded_file(path: &Path) -> bool {
+    path.file_name().and_then(|f| f.to_str()).is_some_and(|name| EXCLUDE_FILENAMES.contains(name))
+}
+
+/// Build the Prettier-delegated kind for `parser_name`, deriving its plugin capability flags.
+#[cfg(feature = "napi")]
+fn prettier_file_kind(path: Arc<Path>, parser_name: &'static str) -> FileKind {
+    FileKind::Prettier {
+        path,
+        parser_name,
+        supports_tailwind: TAILWIND_PARSERS.contains(parser_name),
+        supports_oxfmt: OXFMT_PARSERS.contains(parser_name),
+        supports_svelte: SVELTE_PARSERS.contains(parser_name),
+    }
 }
 
 /// Internal classification of a file: which formatter handles it, plus minimal metadata.
@@ -162,6 +173,100 @@ impl FileKind {
             return Some("svelte");
         }
         None
+    }
+}
+
+// ---
+
+/// A language Oxfmt can format, addressable by a stable ID in configuration (`associations`).
+///
+/// IDs name what a file *is*, not which parser handles it,
+/// so they stay valid when a Prettier-delegated language is rewritten in Rust.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum Language {
+    Js,
+    Jsx,
+    Ts,
+    Tsx,
+    Json,
+    Jsonc,
+    Json5,
+    Css,
+    Scss,
+    Less,
+    Yaml,
+    Toml,
+    Graphql,
+    Html,
+    Angular,
+    Vue,
+    Svelte,
+    Markdown,
+    Mdx,
+    Handlebars,
+    Mjml,
+}
+
+impl Language {
+    /// Route `path` to the formatter for this language, ignoring the path's own extension.
+    ///
+    /// Returns `None` for Prettier-delegated languages without the `napi` feature,
+    /// mirroring built-in detection: such files are skipped, not an error.
+    #[cfg_attr(feature = "napi", expect(clippy::unnecessary_wraps))] // `None` only exists in the pure Rust build
+    pub fn into_file_kind(self, path: Arc<Path>) -> Option<FileKind> {
+        let kind = match self {
+            Self::Js => FileKind::OxcFormatter { path, source_type: SourceType::mjs() },
+            Self::Jsx => FileKind::OxcFormatter { path, source_type: SourceType::jsx() },
+            Self::Ts => FileKind::OxcFormatter { path, source_type: SourceType::ts() },
+            Self::Tsx => FileKind::OxcFormatter { path, source_type: SourceType::tsx() },
+            Self::Json => FileKind::OxcFormatterJson { path, variant: JsonVariant::Json },
+            Self::Jsonc => FileKind::OxcFormatterJson { path, variant: JsonVariant::Jsonc },
+            Self::Json5 => FileKind::OxcFormatterJson { path, variant: JsonVariant::Json5 },
+            Self::Css => FileKind::OxcFormatterCss { path, variant: CssVariant::Css },
+            Self::Scss => FileKind::OxcFormatterCss { path, variant: CssVariant::Scss },
+            Self::Less => FileKind::OxcFormatterCss { path, variant: CssVariant::Less },
+            Self::Yaml => FileKind::OxcFormatterYaml { path },
+            Self::Toml => FileKind::OxfmtToml { path },
+            Self::Graphql => FileKind::OxcFormatterGraphql { path },
+            Self::Html
+            | Self::Angular
+            | Self::Vue
+            | Self::Svelte
+            | Self::Markdown
+            | Self::Mdx
+            | Self::Handlebars
+            | Self::Mjml => {
+                #[cfg(feature = "napi")]
+                {
+                    prettier_file_kind(path, self.prettier_parser_name())
+                }
+                #[cfg(not(feature = "napi"))]
+                {
+                    return None;
+                }
+            }
+        };
+        Some(kind)
+    }
+
+    /// Prettier's parser name for a Prettier-delegated language.
+    ///
+    /// # Panics
+    /// Panics for languages formatted in Rust; callers route those first.
+    #[cfg(feature = "napi")]
+    fn prettier_parser_name(self) -> &'static str {
+        match self {
+            Self::Html => "html",
+            Self::Angular => "angular",
+            Self::Vue => "vue",
+            Self::Svelte => "svelte",
+            Self::Markdown => "markdown",
+            Self::Mdx => "mdx",
+            Self::Handlebars => "glimmer",
+            Self::Mjml => "mjml",
+            _ => unreachable!("{self:?} is formatted in Rust, not by Prettier"),
+        }
     }
 }
 
@@ -570,6 +675,94 @@ fn is_extra_js_file(file_name: &str, extension: Option<&str>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn language_ids_round_trip() {
+        for (id, language) in [
+            ("js", Language::Js),
+            ("jsonc", Language::Jsonc),
+            ("angular", Language::Angular),
+            ("handlebars", Language::Handlebars),
+        ] {
+            let parsed: Language = serde_json::from_value(serde_json::json!(id)).unwrap();
+            assert_eq!(parsed, language, "`{id}` should parse");
+            assert_eq!(serde_json::to_value(language).unwrap(), serde_json::json!(id));
+        }
+        // Prettier's parser names are not language IDs
+        assert!(serde_json::from_value::<Language>(serde_json::json!("glimmer")).is_err());
+        assert!(serde_json::from_value::<Language>(serde_json::json!("babel")).is_err());
+    }
+
+    #[test]
+    fn language_into_file_kind_native() {
+        // The path's own extension is irrelevant once a language is given explicitly.
+        let path = || Arc::from(Path::new("template.page.html"));
+        assert!(matches!(
+            Language::Jsonc.into_file_kind(path()),
+            Some(FileKind::OxcFormatterJson { variant: JsonVariant::Jsonc, .. })
+        ));
+        assert!(matches!(
+            Language::Scss.into_file_kind(path()),
+            Some(FileKind::OxcFormatterCss { variant: CssVariant::Scss, .. })
+        ));
+        assert!(matches!(
+            Language::Tsx.into_file_kind(path()),
+            Some(FileKind::OxcFormatter { source_type, .. })
+                if source_type.is_typescript() && source_type.is_jsx()
+        ));
+        assert!(matches!(
+            Language::Js.into_file_kind(path()),
+            Some(FileKind::OxcFormatter { source_type, .. })
+                if source_type.is_javascript() && !source_type.is_jsx()
+        ));
+        assert!(matches!(Language::Toml.into_file_kind(path()), Some(FileKind::OxfmtToml { .. })));
+        assert!(matches!(
+            Language::Graphql.into_file_kind(path()),
+            Some(FileKind::OxcFormatterGraphql { .. })
+        ));
+        assert!(matches!(
+            Language::Yaml.into_file_kind(path()),
+            Some(FileKind::OxcFormatterYaml { .. })
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn language_into_file_kind_prettier() {
+        let path = || Arc::from(Path::new("user.html"));
+        assert!(matches!(
+            Language::Angular.into_file_kind(path()),
+            Some(FileKind::Prettier {
+                parser_name: "angular",
+                supports_tailwind: true,
+                supports_oxfmt: false,
+                supports_svelte: false,
+                ..
+            })
+        ));
+        // Language ID differs from Prettier's parser name
+        assert!(matches!(
+            Language::Handlebars.into_file_kind(path()),
+            Some(FileKind::Prettier { parser_name: "glimmer", .. })
+        ));
+        assert!(matches!(
+            Language::Svelte.into_file_kind(path()),
+            Some(FileKind::Prettier {
+                parser_name: "svelte",
+                supports_tailwind: true,
+                supports_oxfmt: true,
+                supports_svelte: true,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    #[cfg(not(feature = "napi"))]
+    fn language_into_file_kind_prettier_unsupported_without_napi() {
+        // Same as built-in detection: Prettier-delegated languages are skipped, not an error.
+        assert!(Language::Angular.into_file_kind(Arc::from(Path::new("user.html"))).is_none());
+    }
 
     #[test]
     fn exclude_filenames_are_not_js_or_ts() {
