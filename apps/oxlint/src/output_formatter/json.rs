@@ -19,7 +19,7 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
+    fn all_rules(&self, _enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
@@ -35,13 +35,13 @@ impl InternalFormatter for JsonOutputFormatter {
 
         // Determine which rules are turned on by default (same logic as RuleTable)
         let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
-        let default_rules: FxHashSet<&'static str> = RULES
+        let default_rules: FxHashSet<(&'static str, &'static str)> = RULES
             .iter()
             .filter(|rule| {
                 rule.category() == RuleCategory::Correctness
                     && default_plugin_names.contains(&rule.plugin_name())
             })
-            .map(oxc_linter::rules::RuleEnum::name)
+            .map(|rule| (rule.plugin_name(), rule.name()))
             .collect();
 
         let mut rules_info: Vec<_> = RULES
@@ -54,7 +54,7 @@ impl InternalFormatter for JsonOutputFormatter {
                 version: rule.version(),
                 type_aware: rule.is_tsgolint_rule(),
                 fix: rule.fix().to_string(),
-                default: default_rules.contains(rule.name()),
+                default: default_rules.contains(&(rule.plugin_name(), rule.name())),
                 docs_url: format!(
                     "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
                     rule.plugin_name(),
