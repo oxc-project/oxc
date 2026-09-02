@@ -242,6 +242,8 @@ fn test_fold_string_char_at() {
     test("x = 'abcde'.charAt(3)", "x = 'd'");
     test("x = 'abcde'.charAt(4)", "x = 'e'");
     test("x = 'abcde'.charAt(5)", "x = ''");
+    test("x = 'abcde'.charAt(4294967295)", "x = ''");
+    test("x = 'abcde'.charAt(4294967296)", "x = ''");
     test("x = 'abcde'.charAt(-1)", "x = ''");
     test("x = 'abcde'.charAt()", "x = 'a'");
     test_same("x = 'abcde'.charAt(...foo)");
