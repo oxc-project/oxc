@@ -1304,4 +1304,18 @@ mod test {
             ]
         );
     }
+
+    // A fatal error fast-forwards the lexer to end of file. Re-lexing the `}` of a template
+    // substitution after that would derive a token position from the moved cursor, and so
+    // overwrite an unrelated token in the collected stream.
+    #[test]
+    fn tokens_when_template_substitution_fails() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "`${}`", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(ret.panicked);
+        assert!(ret.tokens.is_empty());
+    }
 }

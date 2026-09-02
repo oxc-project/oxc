@@ -241,6 +241,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Tell lexer to read a template substitution tail
     pub(crate) fn re_lex_template_substitution_tail(&mut self) {
+        if self.fatal_error.is_some() {
+            return;
+        }
         if self.at(Kind::RCurly) {
             self.token = self.lexer.next_template_substitution_tail();
         }

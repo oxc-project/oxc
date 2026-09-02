@@ -13339,13 +13339,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ f `123qdawdrqw${
    ╰────
 
-  × Unterminated string
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:20]
- 4 │ // Incomplete call, enough parameters.
- 5 │ f `123qdawdrqw${ }${
-   ·                    ─
-   ╰────
-
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:18]
  4 │ // Incomplete call, enough parameters.
@@ -13357,13 +13350,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions3.ts:5:23]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${ 1 }${
-   ╰────
-
-  × Unterminated string
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions4.ts:5:27]
- 4 │ // Incomplete call, but too many parameters.
- 5 │ f `123qdawdrqw${ 1 }${ }${ 
-   ·                           ─
    ╰────
 
   × Unexpected token
