@@ -49,11 +49,12 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut old_stmts = stmts.take_in(ctx);
+        // Reverse once so we can consume statements in reverse order
+        old_stmts.reverse();
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
-        for i in 0..old_stmts.len() {
-            let stmt = old_stmts[i].take_in(ctx);
+        while let Some(stmt) = old_stmts.pop() {
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -73,7 +74,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, ctx).is_break() {
+            if Self::minimize_statement(stmt, &mut old_stmts, stmts, ctx).is_break() {
                 break;
             }
             // A statement that never completes normally — a direct jump, a
@@ -159,7 +160,6 @@ impl<'a> PeepholeOptimizations {
 
     fn minimize_statement(
         stmt: Statement<'a>,
-        i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -176,7 +176,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
+                if Self::handle_if_statement(stmts, if_stmt, result, ctx).is_break() {
                     return ControlFlow::Break(());
                 }
             }
@@ -562,7 +562,6 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_if_statement(
-        i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -626,12 +625,10 @@ impl<'a> PeepholeOptimizations {
                     //
                     let can_move_branch_condition_outside_scope =
                         !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
-                            && !stmts.get(i + 1..).is_some_and(|stmts| {
-                                stmts.iter().any(Self::statement_cares_about_scope)
-                            });
+                            && !stmts.iter().any(Self::statement_cares_about_scope);
 
                     if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.drain(i + 1..);
+                        let drained_stmts = stmts.drain(..).rev();
                         let mut body = if let Some(alternate) = if_stmt.alternate.take() {
                             ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
                         } else {
@@ -672,7 +669,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 ctx.notice_change();
                 result.push(Statement::IfStatement(if_stmt));
-                return Self::minimize_statement(stmt, i, stmts, result, ctx);
+                return Self::minimize_statement(stmt, stmts, result, ctx);
             }
         }
 
