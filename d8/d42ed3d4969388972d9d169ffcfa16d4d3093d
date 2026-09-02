@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/react/jsx_no_literals.rs
+  s_c2cdb6780ecda7::t_f138eb8dea074d 15,151,157,412,415-419,433-436,440-478,1023-1036,1603-1615
+crates/oxc_linter/src/snapshots/react_jsx_no_literals.snap
+  s_c2cdb6780ecda7::t_0a03c297d5caf3 759-793
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d8d42ed3d4969388972d9d169ffcfa16d4d3093d",
+  "prompts": {},
+  "sessions": {
+    "s_c2cdb6780ecda7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a062c9-cff9-7602-a4ab-7c83e920acff",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
