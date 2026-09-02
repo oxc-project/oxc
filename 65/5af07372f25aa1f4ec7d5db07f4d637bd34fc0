@@ -1,0 +1,19 @@
+tasks/ast_tools/src/generators/get_id.rs
+  s_04c726993ff123::t_fc6b9eb0f39589 143-151,153,161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "655af07372f25aa1f4ec7d5db07f4d637bd34fc0",
+  "prompts": {},
+  "sessions": {
+    "s_04c726993ff123": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a047f4-946a-7071-a675-da6e4ea2b8a4",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
