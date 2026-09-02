@@ -17074,6 +17074,14 @@
           ],
           "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
         },
+        "reportUnusedDisableDirectivesExempt": {
+          "description": "Rule ids that are exempt from unused-disable-directive reporting.\n\nA disable directive that suppresses no violation is normally reported when\n`reportUnusedDisableDirectives` is enabled. Rules listed here are skipped, so contributors\ncan add disable directives for an in-flight rule (e.g. during a large-scale migration)\nwithout them turning into \"unused directive\" errors.\n\nOnly supported in the root configuration file.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Rule ids that are exempt from unused-disable-directive reporting.\n\nA disable directive that suppresses no violation is normally reported when\n`reportUnusedDisableDirectives` is enabled. Rules listed here are skipped, so contributors\ncan add disable directives for an in-flight rule (e.g. during a large-scale migration)\nwithout them turning into \"unused directive\" errors.\n\nOnly supported in the root configuration file."
+        },
         "respectEslintDisableDirectives": {
           "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file.",
           "type": "boolean",
