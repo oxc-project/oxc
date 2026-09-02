@@ -726,7 +726,7 @@ impl<'a> PeepholeOptimizations {
         // `if (a) return b; return c;` => `return a ? b : c;`
         // `if (a) return; return;` => `a; return;`
         if ctx.options().sequences {
-            'return_loop: while result.len() >= 1 {
+            'return_loop: while !result.is_empty() {
                 if let Some(Statement::IfStatement(if_stmt)) = result.last()
                     && if_stmt.alternate.is_none()
                     && let Statement::ReturnStatement(prev_return) = &if_stmt.consequent
@@ -754,7 +754,7 @@ impl<'a> PeepholeOptimizations {
                     if ret_stmt
                         .argument
                         .as_ref()
-                        .is_some_and(|arg| Self::conditional_expression_count_exceeded(arg))
+                        .is_some_and(Self::conditional_expression_count_exceeded)
                     {
                         break 'return_loop;
                     }
@@ -842,7 +842,7 @@ impl<'a> PeepholeOptimizations {
 
         // `if (a) throw b; throw c;` => `throw a ? b : c;`
         if ctx.options().sequences {
-            'Loop: while result.len() >= 1 {
+            'Loop: while !result.is_empty() {
                 if let Some(Statement::IfStatement(if_stmt)) = result.last()
                     && if_stmt.alternate.is_none()
                     && matches!(&if_stmt.consequent, Statement::ThrowStatement(_))
