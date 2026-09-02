@@ -1,0 +1,23 @@
+crates/oxc_formatter/tests/fixtures/ts/comments/declaration-head-body.ts.snap
+  s_555bdd00191282::t_71685138f9e32e 43-54,99-112,156-167
+crates/oxc_formatter/src/print/mod.rs
+  s_555bdd00191282::t_44138ca6db6da6 2111-2112,2122-2123,2130-2146
+crates/oxc_formatter/tests/fixtures/ts/comments/declaration-head-body.ts
+  s_555bdd00191282::t_fa81bc5377380c 39-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c1c8aa1c031ce6aa59cb72d96dfec885ee7e9970",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
