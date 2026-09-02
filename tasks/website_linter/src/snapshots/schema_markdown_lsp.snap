@@ -102,6 +102,17 @@ If your editor does not support `textDocument/diagnostic`,
 this option handles when diagnostics are sent to the client.
 
 
+## runExternalCode
+
+type: `boolean`
+
+
+Whether type-aware linting may execute code from the project, for TypeScript
+`contentMappers`. Defaults to `false`, and deliberately has no config fallback:
+the permission comes from the client, which should set it only for a trusted
+workspace. A checked-in config must not be able to grant it.
+
+
 ## tsConfigPath
 
 type: `string`

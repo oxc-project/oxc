@@ -43,6 +43,13 @@ pub struct TsGoLintState {
     type_check: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
     timings: bool,
+    /// If `true`, let `tsgolint` execute project code for TypeScript `contentMappers`.
+    ///
+    /// Comes from the command line only. TypeScript declares the underlying option
+    /// `IsCommandLineOnly` so that a checked-in tsconfig cannot grant itself code
+    /// execution; sourcing this from `.oxlintrc.json`, or inferring it from a
+    /// `languageOptions.parser` override, would hand that capability straight back.
+    run_external_code: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
 }
@@ -61,6 +68,7 @@ impl TsGoLintState {
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
             timings: false,
+            run_external_code: false,
             with_ignore_fixes: false,
         }
     }
@@ -85,6 +93,7 @@ impl TsGoLintState {
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
             timings: false,
+            run_external_code: false,
             with_ignore_fixes: false,
         })
     }
@@ -115,6 +124,15 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_type_check(mut self, yes: bool) -> Self {
         self.type_check = yes;
+        self
+    }
+
+    /// Set to `true` to let `tsgolint` execute project code for `contentMappers`.
+    ///
+    /// Default is `false`. Must come from the invocation, never from config.
+    #[must_use]
+    pub fn with_run_external_code(mut self, yes: bool) -> Self {
+        self.run_external_code = yes;
         self
     }
 
@@ -621,6 +639,7 @@ impl TsGoLintState {
             source_overrides,
             report_syntactic: self.type_check,
             report_semantic: self.type_check,
+            run_external_code: self.run_external_code,
         }
     }
 }
@@ -648,6 +667,7 @@ pub struct Payload {
     pub source_overrides: Option<FxHashMap<String, String>>,
     pub report_syntactic: bool,
     pub report_semantic: bool,
+    pub run_external_code: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1865,6 +1885,66 @@ mod test {
 
         // The `.gts` is sent under its original path; the `.md` is still excluded.
         assert_eq!(sent, vec!["/project/app/component.gts", "/project/app/index.ts"]);
+    }
+
+    /// A `languageOptions.parser` override makes a file *eligible* for tsgolint; it must
+    /// never also grant permission to execute project code. TypeScript keeps
+    /// `runExternalCode` command-line-only precisely so a checked-in config cannot
+    /// confer it, and `.oxlintrc.json` is checked in just the same.
+    #[test]
+    fn test_external_parser_override_does_not_grant_run_external_code() {
+        use std::{ffi::OsStr, path::PathBuf, sync::Arc};
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            ExternalPluginStore,
+            config::{
+                Config, ConfigStore, GlobSet, LintConfig, OxlintCategories, ResolvedExternalParser,
+                ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides,
+            },
+            external_plugin_store::ExternalParserId,
+            tsgolint::TsGoLintState,
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["**/*.{gjs,gts}"]),
+            exclude_files: GlobSet::default(),
+            env: None,
+            globals: None,
+            plugins: None,
+            external_parser: Some(ResolvedExternalParser {
+                parser_id: ExternalParserId::from_usize(0),
+                parser_options_json: None,
+            }),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+        let config_store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        let state = TsGoLintState::new(&PathBuf::from("/project"), config_store, FixKind::empty());
+        let paths: Vec<Arc<OsStr>> = vec![Arc::from(OsStr::new("/project/app/component.gts"))];
+        let mut resolved_configs = FxHashMap::default();
+
+        let payload = state.json_input(&paths, None, &mut resolved_configs);
+        assert!(
+            !payload.run_external_code,
+            "a parser override must not enable `run_external_code`"
+        );
+
+        // Only the invocation can turn it on.
+        let state = state.with_run_external_code(true);
+        let mut resolved_configs = FxHashMap::default();
+        assert!(state.json_input(&paths, None, &mut resolved_configs).run_external_code);
     }
 
     /// Without a `languageOptions.parser` override, unknown extensions stay excluded.

@@ -84,6 +84,11 @@ pub struct LintOptions {
     /// Whether to enable/disable type-aware linting.
     /// It will override the root config's `typeAware` option if set.
     pub type_aware: Option<bool>,
+    /// Whether type-aware linting may execute code from the project, for TypeScript
+    /// `contentMappers`. Defaults to `false`, and deliberately has no config fallback:
+    /// the permission comes from the client, which should set it only for a trusted
+    /// workspace. A checked-in config must not be able to grant it.
+    pub run_external_code: Option<bool>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.
     #[schemars(with = "Option<bool>")]
@@ -232,6 +237,7 @@ impl TryFrom<Value> for LintOptions {
             config_path: object.get("configPath").and_then(Value::as_str).map(str::to_owned),
             ts_config_path: object.get("tsConfigPath").and_then(Value::as_str).map(str::to_owned),
             type_aware: object.get("typeAware").and_then(Value::as_bool),
+            run_external_code: object.get("runExternalCode").and_then(Value::as_bool),
             disable_nested_config: object
                 .get("disableNestedConfig")
                 .and_then(Value::as_bool)
