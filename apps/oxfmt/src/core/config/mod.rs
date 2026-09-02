@@ -475,14 +475,17 @@ impl ConfigResolver {
         &self,
         path: &Path,
     ) -> Result<(Arc<FormatConfig>, Cow<'_, ValidatedOptions>), String> {
-        let has_editorconfig_overrides =
-            self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
-        let has_oxfmtrc_overrides =
-            self.oxfmtrc_overrides.as_ref().is_some_and(|o| o.has_match(path));
+        // Collected once: the fast-path decision and the slow-path merge consume the same result
+        let matched_overrides =
+            self.oxfmtrc_overrides.as_ref().map_or_else(Vec::new, |o| o.matching(path));
 
         // Fast path: no per-file overrides → share the cached (already-validated) snapshot.
-        // `.editorconfig` `[*]` is already folded in during `build_and_validate()`.
-        if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
+        if matched_overrides.is_empty()
+            // `.editorconfig` `[*]` is already folded in during `build_and_validate()`.
+            // Checked after overrides: a match already forces the slow path,
+            // which re-resolves `.editorconfig` itself, so the probe here would be wasted.
+            && !self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path))
+        {
             let (config, validated) =
                 self.base.as_ref().expect("`build_and_validate()` must be called first");
             return Ok((Arc::clone(config), Cow::Borrowed(validated)));
@@ -495,10 +498,8 @@ impl ConfigResolver {
             .expect("`build_and_validate()` should catch this before");
 
         // Apply oxfmtrc overrides first (explicit settings)
-        if let Some(overrides) = &self.oxfmtrc_overrides {
-            for options in overrides.get_matching(path) {
-                format_config.merge(options);
-            }
+        for options in matched_overrides {
+            format_config.merge(options);
         }
         // Apply `.editorconfig` as fallback (fills in unset fields only).
         // `EditorConfig::resolve` returns `[*]` + `[src/*.ts]` merged, with per-file
