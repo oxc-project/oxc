@@ -1332,6 +1332,10 @@ impl<'a> PeepholeOptimizations {
             // consult the shared metadata explicitly for consistency with the
             // other count-based consumers.
             if ctx.state.symbols.is_implicitly_observable(prev_decl_id.symbol_id())
+                // Function-valued declarators remain graph owners until their
+                // references prove them dead. Inlining one would move its
+                // function scope without rebuilding the owner map.
+                || ctx.state.symbols.is_function_declarator_candidate(prev_decl_id.symbol_id())
                 || symbol_value.references.has_multiple_reads()
                 || symbol_value.references.has_writes()
             {

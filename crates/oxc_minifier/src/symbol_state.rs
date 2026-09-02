@@ -6,7 +6,7 @@ use oxc_allocator::Allocator;
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 use crate::{
     CompressOptions,
@@ -108,6 +108,23 @@ impl<'a> SymbolState<'a> {
     /// absent because deadness was not proved.
     pub fn function_is_dead(&self, symbol_id: SymbolId) -> bool {
         self.liveness.as_ref().is_some_and(|liveness| liveness.function_is_dead(symbol_id))
+    }
+
+    /// Whether reachability analysis proved this exact function-valued
+    /// declarator unreachable. The scope is part of the query so an unrelated
+    /// same-symbol redeclaration cannot consume graph deadness.
+    pub fn function_declarator_is_dead(&self, symbol_id: SymbolId, scope_id: ScopeId) -> bool {
+        self.liveness
+            .as_ref()
+            .is_some_and(|liveness| liveness.function_declarator_is_dead(symbol_id, scope_id))
+    }
+
+    /// A graph-owning function-valued declarator must not be single-use
+    /// inlined while its stable function scope is needed by reachability.
+    pub fn is_function_declarator_candidate(&self, symbol_id: SymbolId) -> bool {
+        self.liveness
+            .as_ref()
+            .is_some_and(|liveness| liveness.is_function_declarator_candidate(symbol_id))
     }
 
     pub fn liveness(&self) -> Option<&SymbolLiveness<'a>> {
