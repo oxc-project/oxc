@@ -56,6 +56,25 @@ fn cases() {
 }
 
 #[test]
+fn ambient_module_import_attributes() {
+    let source = r#"declare module "*.css" with { type: "css" } {}
+declare module "*.text" with { type: "text" };"#;
+
+    test_options_with_source_type(
+        source,
+        "declare module \"*.css\" with {\n\ttype: \"css\";\n} {}\ndeclare module \"*.text\" with {\n\ttype: \"text\";\n};\n",
+        SourceType::ts(),
+        default_options(),
+    );
+    test_options_with_source_type(
+        source,
+        "declare module \"*.css\"with{type:`css`;}{}declare module \"*.text\"with{type:`text`;};",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}
+
+#[test]
 fn export_default_interface() {
     test_same("export default interface X {}\nconst y = 1;\n");
 }
