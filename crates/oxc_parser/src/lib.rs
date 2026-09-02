@@ -1274,4 +1274,34 @@ mod test {
         assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
     }
+
+    // Where the lexer cannot lex any further it emits `Undetermined`, and no `Eof` follows.
+    // That final token ends the input just as `Eof` does, so it is discarded, and discarding it
+    // must not take the real token before it with it.
+    #[test]
+    fn tokens_when_lexing_ends_in_error() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "foo();\n'unterminated", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(!ret.panicked);
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Unterminated string");
+
+        let tokens = ret
+            .tokens
+            .iter()
+            .map(|token| (token.kind(), token.start(), token.end()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            tokens,
+            [
+                (Kind::Ident, 0, 3),
+                (Kind::LParen, 3, 4),
+                (Kind::RParen, 4, 5),
+                (Kind::Semicolon, 5, 6),
+            ]
+        );
+    }
 }
