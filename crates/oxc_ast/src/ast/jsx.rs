@@ -11,7 +11,7 @@ use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::Str;
-use oxc_syntax::node::NodeId;
+use oxc_syntax::{GetNodeId, node::NodeId};
 
 use super::{js::*, literal::*, ts::*};
 
@@ -37,7 +37,7 @@ use super::{js::*, literal::*, ts::*};
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXElement<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -72,7 +72,7 @@ pub struct JSXElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(add_fields(selfClosing = JSXOpeningElementSelfClosing))]
 pub struct JSXOpeningElement<'a> {
     /// Unique identifier for this AST node.
@@ -102,7 +102,7 @@ pub struct JSXOpeningElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXClosingElement<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -123,7 +123,7 @@ pub struct JSXClosingElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXFragment<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -141,7 +141,7 @@ pub struct JSXFragment<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(add_fields(attributes = JsEmptyArray, selfClosing = JsFalse))]
 pub struct JSXOpeningFragment {
     /// Unique identifier for this AST node.
@@ -154,7 +154,7 @@ pub struct JSXOpeningFragment {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXClosingFragment {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -166,7 +166,7 @@ pub struct JSXClosingFragment {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXElementName<'a> {
     /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -192,7 +192,7 @@ pub enum JSXElementName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXNamespacedName<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -222,7 +222,7 @@ pub struct JSXNamespacedName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXMemberExpression<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -253,7 +253,7 @@ pub struct JSXMemberExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXMemberExpressionObject<'a> {
     /// `<Apple.Orange />`
     #[estree(via = JSXElementIdentifierReference)]
@@ -281,7 +281,7 @@ pub enum JSXMemberExpressionObject<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXExpressionContainer<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -299,7 +299,8 @@ pub struct JSXExpressionContainer<'a> {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXExpression<'a> {
     /// An empty expression
     ///
@@ -318,7 +319,7 @@ pub enum JSXExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXEmptyExpression {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -340,7 +341,7 @@ pub struct JSXEmptyExpression {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXAttributeItem<'a> {
     /// A `key="value"` attribute
     Attribute(Box<'a, JSXAttribute<'a>>) = 0,
@@ -362,7 +363,7 @@ pub enum JSXAttributeItem<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXAttribute<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -386,7 +387,7 @@ pub struct JSXAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXSpreadAttribute<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -414,7 +415,7 @@ pub struct JSXSpreadAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXAttributeName<'a> {
     /// An attribute name without a namespace prefix, e.g. `foo` in `foo="bar"`.
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -443,7 +444,7 @@ pub enum JSXAttributeName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXAttributeValue<'a> {
     /// `<Component foo="bar" />`
     StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
@@ -463,7 +464,7 @@ pub enum JSXAttributeValue<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXIdentifier<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -482,7 +483,7 @@ pub struct JSXIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXChild<'a> {
     /// `<Foo>Some Text</Foo>`
     Text(Box<'a, JSXText<'a>>) = 0,
@@ -502,7 +503,7 @@ pub enum JSXChild<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXSpreadChild<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
@@ -525,7 +526,7 @@ pub struct JSXSpreadChild<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct JSXText<'a> {
     /// Unique identifier for this AST node.
     pub node_id: Cell<NodeId>,
