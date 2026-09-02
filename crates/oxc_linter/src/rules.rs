@@ -560,6 +560,7 @@ pub(crate) mod react_perf {
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn>
 pub(crate) mod unicorn {
     pub mod catch_error_name;
+    pub mod class_reference_in_static_methods;
     pub mod consistent_assert;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;

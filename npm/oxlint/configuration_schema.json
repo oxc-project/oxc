@@ -1438,6 +1438,24 @@
       },
       "additionalProperties": false
     },
+    "ClassReferenceInStaticMethodsOptions": {
+      "type": "object",
+      "properties": {
+        "preferSuper": {
+          "description": "Prefer `super` over the superclass name in static methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Prefer `super` over the superclass name in static methods."
+        },
+        "preferThis": {
+          "description": "Prefer `this` over the current class name in static methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Prefer `this` over the current class name in static methods."
+        }
+      },
+      "additionalProperties": false
+    },
     "CommentConfigJson": {
       "type": "object",
       "properties": {
@@ -8847,6 +8865,26 @@
                 },
                 {
                   "$ref": "#/definitions/CatchErrorNameConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "unicorn/class-reference-in-static-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ClassReferenceInStaticMethodsOptions"
                 }
               ],
               "maxItems": 2,
