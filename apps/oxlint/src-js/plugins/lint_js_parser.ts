@@ -281,10 +281,10 @@ function parseWithJsParser(
   }
 
   if (
-    parseResult === null ||
-    typeof parseResult !== "object" ||
-    parseResult.ast === null ||
-    typeof parseResult.ast !== "object"
+    parseResult === null
+    || typeof parseResult !== "object"
+    || parseResult.ast === null
+    || typeof parseResult.ast !== "object"
   ) {
     throw new Error("Parser did not return an AST");
   }
@@ -334,11 +334,11 @@ function getComments(
     // Rust side deserializes spans as `u32`, so a negative / fractional / out-of-range value
     // would fail deserialization of the whole result, losing all diagnostics for the file.
     if (
-      !Number.isInteger(start) ||
-      !Number.isInteger(end) ||
-      start < 0 ||
-      end <= start ||
-      end > sourceText.length
+      !Number.isInteger(start)
+      || !Number.isInteger(end)
+      || start < 0
+      || end <= start
+      || end > sourceText.length
     ) {
       continue;
     }

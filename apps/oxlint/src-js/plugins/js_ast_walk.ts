@@ -101,8 +101,8 @@ export function compileJsVisitors(visitors: Visitor[]): CompiledJsVisitor {
       const typeId = NODE_TYPE_IDS_MAP.get(name);
       if (typeId !== undefined && typeId >= NODE_TYPES_COUNT) {
         throw new Error(
-          `Rules using code path analysis ('${name}') are not supported ` +
-            "for files parsed by a custom parser",
+          `Rules using code path analysis ('${name}') are not supported `
+            + "for files parsed by a custom parser",
         );
       }
 
@@ -243,9 +243,9 @@ export function walkParserAst(
     while (typeIndex < typesLen || selectorIndex < selectorsLen) {
       let handler: Handler;
       if (
-        typeIndex < typesLen &&
-        (selectorIndex === selectorsLen ||
-          compareHandlers(typeHandlers![typeIndex], selectorHandlers[selectorIndex]) <= 0)
+        typeIndex < typesLen
+        && (selectorIndex === selectorsLen
+          || compareHandlers(typeHandlers![typeIndex], selectorHandlers[selectorIndex]) <= 0)
       ) {
         handler = typeHandlers![typeIndex++];
       } else {
@@ -254,8 +254,8 @@ export function walkParserAst(
         // `esquerySelector` is `null` for the universal selector `*`, which matches all nodes.
         const { esquerySelector } = handler;
         if (
-          esquerySelector !== null &&
-          !esqueryMatches(
+          esquerySelector !== null
+          && !esqueryMatches(
             node as unknown as EsqueryNode,
             esquerySelector,
             ancestry as unknown as EsqueryNode[],
@@ -313,9 +313,9 @@ export function walkParserAst(
  */
 export function isNode(value: unknown): value is JsParserNode {
   return (
-    value !== null &&
-    typeof value === "object" &&
-    typeof (value as { type?: unknown }).type === "string"
+    value !== null
+    && typeof value === "object"
+    && typeof (value as { type?: unknown }).type === "string"
   );
 }
 
@@ -336,13 +336,13 @@ export function getFallbackKeys(node: JsParserNode): string[] {
   const keys = [];
   for (const key of Object.keys(node)) {
     if (
-      key !== "parent" &&
-      key !== "range" &&
-      key !== "loc" &&
-      key !== "type" &&
-      key !== "leadingComments" &&
-      key !== "trailingComments" &&
-      !key.startsWith("_")
+      key !== "parent"
+      && key !== "range"
+      && key !== "loc"
+      && key !== "type"
+      && key !== "leadingComments"
+      && key !== "trailingComments"
+      && !key.startsWith("_")
     ) {
       keys.push(key);
     }

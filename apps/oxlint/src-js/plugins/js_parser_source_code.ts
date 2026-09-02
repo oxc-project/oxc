@@ -372,8 +372,8 @@ function getIndexMap(): Record<number, number> {
 
     nextStart = tokenIndex < tokens.length ? tokens[tokenIndex].range[0] : Number.MAX_SAFE_INTEGER;
     while (
-      commentIndex < comments.length &&
-      (range = comments[commentIndex].range)[0] < nextStart
+      commentIndex < comments.length
+      && (range = comments[commentIndex].range)[0] < nextStart
     ) {
       map[range[0]] = tokenIndex;
       map[range[1] - 1] = tokenIndex;
@@ -393,7 +393,7 @@ function getIndexMap(): Record<number, number> {
  * @returns The found index or `tokensOrComments.length`
  */
 function search(tokensOrComments: JsParserToken[], location: number): number {
-  for (let minIndex = 0, maxIndex = tokensOrComments.length - 1; minIndex <= maxIndex; ) {
+  for (let minIndex = 0, maxIndex = tokensOrComments.length - 1; minIndex <= maxIndex;) {
     const index = ((minIndex + maxIndex) / 2) | 0;
     const token = tokensOrComments[index];
     const tokenStartLocation = token.range[0];
@@ -910,8 +910,8 @@ const JSX_WHITESPACE_REGEXP = /\s/u;
  */
 function nodesOrTokensOverlap(first: RangedNodeOrToken, second: RangedNodeOrToken): boolean {
   return (
-    (first.range[0] <= second.range[0] && second.range[0] < first.range[1]) ||
-    (second.range[0] <= first.range[0] && first.range[0] < second.range[1])
+    (first.range[0] <= second.range[0] && second.range[0] < first.range[1])
+    || (second.range[0] <= first.range[0] && first.range[0] < second.range[1])
   );
 }
 
@@ -951,12 +951,12 @@ function isSpaceBetweenImpl(
     if (nextToken === null) return currentToken.range[1] !== finalToken.range[0];
 
     if (
-      currentToken.range[1] !== nextToken.range[0] ||
+      currentToken.range[1] !== nextToken.range[0]
       // For backward compatibility, check whitespace inside `JSXText` tokens
-      (checkInsideOfJSXText &&
-        nextToken !== finalToken &&
-        nextToken.type === "JSXText" &&
-        JSX_WHITESPACE_REGEXP.test(nextToken.value))
+      || (checkInsideOfJSXText
+        && nextToken !== finalToken
+        && nextToken.type === "JSXText"
+        && JSX_WHITESPACE_REGEXP.test(nextToken.value))
     ) {
       return true;
     }
@@ -1027,10 +1027,10 @@ function findNodeAt(node: JsParserNode, index: number): JsParserNode {
  */
 function isNodeWithRange(value: unknown): value is JsParserNode {
   return (
-    value !== null &&
-    typeof value === "object" &&
-    typeof (value as { type?: unknown }).type === "string" &&
-    Array.isArray((value as { range?: unknown }).range)
+    value !== null
+    && typeof value === "object"
+    && typeof (value as { type?: unknown }).type === "string"
+    && Array.isArray((value as { range?: unknown }).range)
   );
 }
 

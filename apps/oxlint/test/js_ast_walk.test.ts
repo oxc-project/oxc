@@ -84,8 +84,8 @@ describe("compileJsVisitors", () => {
 
   it("throws for code path analysis events", () => {
     expect(() => compileJsVisitors([{ onCodePathStart() {} } as unknown as Visitor])).toThrow(
-      "Rules using code path analysis ('onCodePathStart') are not supported " +
-        "for files parsed by a custom parser",
+      "Rules using code path analysis ('onCodePathStart') are not supported "
+        + "for files parsed by a custom parser",
     );
   });
 });

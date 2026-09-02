@@ -123,11 +123,11 @@ export function setParentsAndGetMaskedRegions(
         const start = Array.isArray(range) ? range[0] : (node.start as unknown);
         const end = Array.isArray(range) ? range[1] : (node.end as unknown);
         if (
-          !Number.isInteger(start) ||
-          !Number.isInteger(end) ||
-          (start as number) < 0 ||
-          (end as number) <= (start as number) ||
-          (end as number) > sourceTextLength
+          !Number.isInteger(start)
+          || !Number.isInteger(end)
+          || (start as number) < 0
+          || (end as number) <= (start as number)
+          || (end as number) > sourceTextLength
         ) {
           valid = false;
         } else {
@@ -306,9 +306,9 @@ function enclosingClassDeclaresPrivate(root: JsParserNode, name: string): boolea
       if (!isNode(element)) continue;
       const key = (element as { key?: unknown }).key;
       if (
-        isNode(key) &&
-        key.type === "PrivateIdentifier" &&
-        (key as { name?: unknown }).name === name
+        isNode(key)
+        && key.type === "PrivateIdentifier"
+        && (key as { name?: unknown }).name === name
       ) {
         return true;
       }
@@ -354,9 +354,9 @@ function collectRefs(regions: MaskedRegionReport[], scopeManager: JsParserScopeM
 
       const { name } = resolved;
       if (
-        typeof name !== "string" ||
-        !INJECTABLE_IDENT_REGEX.test(name) ||
-        NON_INJECTABLE_NAMES.has(name)
+        typeof name !== "string"
+        || !INJECTABLE_IDENT_REGEX.test(name)
+        || NON_INJECTABLE_NAMES.has(name)
       ) {
         continue;
       }
