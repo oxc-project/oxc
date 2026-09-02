@@ -2108,16 +2108,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
         write!(f, ["module", space()]);
         match (self.attributes(), self.body()) {
             (Some(attributes), Some(body)) => {
-                write!(
-                    f,
-                    [
-                        self.id(),
-                        space(),
-                        "with",
-                        space(),
-                        FormatNodeWithoutTrailingComments(attributes),
-                    ]
-                );
+                write_ts_external_module_name_and_with(self.id(), attributes, f);
+                write!(f, FormatNodeWithoutTrailingComments(attributes));
                 write_head_body_separator(body.span().start, f);
                 write!(f, body);
             }
@@ -2127,10 +2119,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
                 write!(f, body);
             }
             (Some(attributes), None) => {
-                write!(f, [self.id(), space(), "with", space(), attributes, OptionalSemicolon]);
+                write_ts_external_module_name_and_with(self.id(), attributes, f);
+                write!(f, [attributes, OptionalSemicolon]);
             }
             (None, None) => write!(f, [self.id(), OptionalSemicolon]),
         }
+    }
+}
+
+fn write_ts_external_module_name_and_with<'a>(
+    name: &AstNode<'a, StringLiteral<'a>>,
+    attributes: &AstNode<'a, TSTypeLiteral<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    write!(f, FormatNodeWithoutTrailingComments(name));
+    let comments = f.context().comments().comments_before_character(name.span.end, b'w');
+    if write_comments_between_blocks(comments, f) {
+        write!(f, space());
+    }
+    write!(f, "with");
+    let comments = f.context().comments().comments_before(attributes.span().start);
+    if write_comments_between_blocks(comments, f) {
+        write!(f, space());
     }
 }
 
