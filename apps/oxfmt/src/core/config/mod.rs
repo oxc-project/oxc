@@ -17,6 +17,7 @@ use std::{
 
 use editorconfig_parser::EditorConfig;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use serde::Deserialize;
 use serde_json::Value;
 use tracing::instrument;
 
@@ -126,6 +127,21 @@ pub enum ResolveOutcome {
     MissingPlugin(&'static str),
 }
 
+/// Apply the missing-plugin gate, then build the [`ResolveOutcome`].
+/// The gate's single home: [`ConfigResolver::resolve`] and [`resolve_for_api`] both end here,
+/// so a plugin-gating change can never leave one path behind.
+fn into_outcome(
+    config: Arc<FormatConfig>,
+    validated: &ValidatedOptions,
+    kind: FileKind,
+) -> ResolveOutcome {
+    #[cfg(feature = "napi")]
+    if let Some(plugin) = kind.requires_plugin(&config) {
+        return ResolveOutcome::MissingPlugin(plugin);
+    }
+    ResolveOutcome::Format(FormatStrategy::from_format_config(config, validated, kind))
+}
+
 /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
 ///
 /// This is the simplified path for the NAPI `format()` API.
@@ -148,10 +164,7 @@ pub fn resolve_for_api(
     // downstream mapping consumes the derived artifacts and cannot re-fail,
     // and `Prettier` kinds have no later chance before values reach Prettier.
     let validated = validate(&format_config)?;
-    if let Some(plugin) = kind.requires_plugin(&format_config) {
-        return Ok(ResolveOutcome::MissingPlugin(plugin));
-    }
-    Ok(ResolveOutcome::Format(FormatStrategy::from_format_config(format_config, &validated, kind)))
+    Ok(into_outcome(Arc::new(format_config), &validated, kind))
 }
 
 /// Resolved options ready for the embedded callback to drive `oxc_formatter`.
@@ -202,9 +215,8 @@ pub fn resolve_for_embedded_js(
 pub struct ConfigResolver {
     /// User's raw config as JSON value.
     ///
-    /// Retained because the slow path must re-deserialize [`FormatConfig`] from it.
-    /// (see [`Self::resolve_options`]).
-    /// Cloning a typed `base_config` is not enough, since `apply_editorconfig` only fills `is_none()` fields,
+    /// Retained because the slow path must re-deserialize [`FormatConfig`] from it. (see [`Self::resolve_options`]).
+    /// Rebuilding from the typed `base` snapshot is not enough, since `apply_editorconfig` only fills `is_none()` fields,
     /// so per-file `[src/*.ts]` sections couldn't override values that the `[*]` section already baked in.
     raw_config: Value,
     /// Directory containing the config file (for relative path resolution in overrides).
@@ -213,7 +225,8 @@ pub struct ConfigResolver {
     /// the typed `FormatConfig` (`.oxfmtrc` base + `.editorconfig` `[*]` folded in)
     /// together with its validation-gate artifacts,
     /// so the pair can never go stale against each other and the fast path re-derives nothing.
-    base: Option<(FormatConfig, ValidatedOptions)>,
+    /// `Arc` so the fast path hands out shares instead of deep-cloning per file.
+    base: Option<(Arc<FormatConfig>, ValidatedOptions)>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
     /// Ignore glob built from this config's `ignorePatterns`.
@@ -399,8 +412,7 @@ impl ConfigResolver {
     /// Returns error if config deserialization or validation fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
     pub fn build_and_validate(&mut self) -> Result<(), String> {
-        let oxfmtrc: Oxfmtrc =
-            serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
+        let oxfmtrc = Oxfmtrc::deserialize(&self.raw_config).map_err(|err| err.to_string())?;
 
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
@@ -425,7 +437,7 @@ impl ConfigResolver {
         // Eagerly validate; see method doc for the rationale.
         // The snapshot and its gate artifacts are cached as one pair for the fast path.
         let validated = validate(&format_config)?;
-        self.base = Some((format_config, validated));
+        self.base = Some((Arc::new(format_config), validated));
 
         // Build ignore glob from `ignorePatterns` config field
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
@@ -440,15 +452,7 @@ impl ConfigResolver {
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
     pub fn resolve(&self, kind: FileKind) -> Result<ResolveOutcome, String> {
         let (format_config, validated) = self.resolve_options(kind.path())?;
-        #[cfg(feature = "napi")]
-        if let Some(plugin) = kind.requires_plugin(&format_config) {
-            return Ok(ResolveOutcome::MissingPlugin(plugin));
-        }
-        Ok(ResolveOutcome::Format(FormatStrategy::from_format_config(
-            format_config,
-            &validated,
-            kind,
-        )))
+        Ok(into_outcome(format_config, &validated, kind))
     }
 
     /// Resolve `FormatConfig` for a specific file path.
@@ -470,23 +474,24 @@ impl ConfigResolver {
     fn resolve_options(
         &self,
         path: &Path,
-    ) -> Result<(FormatConfig, Cow<'_, ValidatedOptions>), String> {
+    ) -> Result<(Arc<FormatConfig>, Cow<'_, ValidatedOptions>), String> {
         let has_editorconfig_overrides =
             self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
         let has_oxfmtrc_overrides =
             self.oxfmtrc_overrides.as_ref().is_some_and(|o| o.has_match(path));
 
-        // Fast path: no per-file overrides → reuse the cached (already-validated) snapshot.
+        // Fast path: no per-file overrides → share the cached (already-validated) snapshot.
         // `.editorconfig` `[*]` is already folded in during `build_and_validate()`.
         if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
             let (config, validated) =
                 self.base.as_ref().expect("`build_and_validate()` must be called first");
-            return Ok((config.clone(), Cow::Borrowed(validated)));
+            return Ok((Arc::clone(config), Cow::Borrowed(validated)));
         }
 
-        // Slow path: must rebuild from `raw_config`, NOT from the cached snapshot.
-        // See `raw_config` field doc for why cloning the typed snapshot is insufficient.
-        let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
+        // Slow path: must rebuild from `raw_config`, NOT from the cached `base` snapshot.
+        // See `raw_config` field doc for why the typed snapshot is insufficient here.
+        // Deserializing from `&raw_config` avoids deep-cloning the JSON tree per file.
+        let mut format_config = FormatConfig::deserialize(&self.raw_config)
             .expect("`build_and_validate()` should catch this before");
 
         // Apply oxfmtrc overrides first (explicit settings)
@@ -511,7 +516,7 @@ impl ConfigResolver {
         // see method doc for what kinds of errors are caught and why this is the single gate.
         let validated = validate(&format_config)?;
 
-        Ok((format_config, Cow::Owned(validated)))
+        Ok((Arc::new(format_config), Cow::Owned(validated)))
     }
 }
 
@@ -648,7 +653,7 @@ mod tests_slow_path_validation {
     }
 
     /// Smoke test: when no overrides match, `resolve()` returns successfully from the fast path
-    /// (cloned pre-validated snapshot + gate artifacts, no re-validation anywhere downstream).
+    /// (shared pre-validated snapshot + gate artifacts, no re-validation anywhere downstream).
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
