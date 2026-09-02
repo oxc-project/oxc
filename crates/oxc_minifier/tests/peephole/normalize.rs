@@ -52,6 +52,22 @@ fn parens() {
 }
 
 #[test]
+fn preserve_annotation_anchor_when_removing_parentheses() {
+    test(
+        "function f(a,b){if(a){/* istanbul ignore else */if(b)foo();bar()}}",
+        "function f(a,b){a&&/* istanbul ignore else */(b&&foo(),bar())}",
+    );
+    test("a&&/* c8 ignore next */(((b(),c())))", "a&&/* c8 ignore next */(b(),c())");
+    test("a&&/* normal *//* c8 ignore next */(b(),c())", "a&&/* c8 ignore next */(b(),c())");
+    test("/* c8 ignore start */if(a||b)c()", "/* c8 ignore start */(a||b)&&c()");
+    test(
+        "for(i in x)/* istanbul ignore else */if({}.p())foo()",
+        "for(i in x)/* istanbul ignore else */({}).p()&&foo()",
+    );
+    test("import(/* @vite-ignore */((a?b:c)+d))", "import(/* @vite-ignore */(a?b:c)+d)");
+}
+
+#[test]
 fn drop_console() {
     let options = CompressOptions { drop_console: true, ..default_options() };
     test_options("console.log()", "", &options);

@@ -62,7 +62,7 @@ binder.ts:
   sys peak growth: 657404 # 657.40 kB
   arena allocs: 6809
   arena reallocs: 842
-  arena size: 1164432 # 1.16 MB
+  arena size: 1163376 # 1.16 MB
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
