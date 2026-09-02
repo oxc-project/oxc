@@ -1,0 +1,111 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_555bdd00191282::t_d200f7f913f0b3 5252,5254-5255,5260,5271,7271-7276
+apps/oxlint/src-js/generated/keys.ts
+  s_555bdd00191282::t_2371e1c60fb0de 173,194
+apps/oxlint/src-js/generated/types.d.ts
+  s_555bdd00191282::t_e27e1d45df62a5 1492
+apps/oxlint/src-js/generated/walk.js
+  s_555bdd00191282::t_0d68b6c58067df 2618
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_555bdd00191282::t_f1252b9009d2da 1588,1594-1596,3431,3437-3439
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_555bdd00191282::t_bf6c7746b6182c 8835,8842,8850,8864,8872,8881,9730,9737,9745,9759,9767,9776,25444,25451,25461,25476,25483,25489-25492,25503,25511,25522,25537,25545,25553
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_555bdd00191282::t_a36199bae0f63f 5108
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_555bdd00191282::t_b0940ba7c7e49d 2355
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_555bdd00191282::t_8cbfec9f494bdc 2854
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_555bdd00191282::t_48e457708fa79b 532
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_555bdd00191282::t_b219c2ca301064 3925-3927
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_555bdd00191282::t_583f51e099c0ce 4142-4144
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_555bdd00191282::t_8f71f09fcab0f4 9551-9557,9566-9578
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_555bdd00191282::t_b3dbd8232c065e 282-328,828-829,1770-1772,2543,16151-16152,16183-16190,16223-16285,16315-16322
+crates/oxc_minifier/src/generated/walk.rs
+  s_555bdd00191282::t_8ef5e624055aa2 5143-5149
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_555bdd00191282::t_2f682bbe1175a5 1957-1959
+crates/oxc_semantic/src/builder.rs
+  s_b96252ac4a3d5a::t_1cc5a409c1c682 2657-2659
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_555bdd00191282::t_a003e3047a9e74 282-328,828-829,1770-1772,2543,16151-16152,16183-16190,16223-16285,16315-16322
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_555bdd00191282::t_1aee8ba1cda738 1957-1959
+crates/oxc_traverse/src/generated/walk.rs
+  s_555bdd00191282::t_4d77a0b18acdda 5143-5149
+napi/parser/src-js/generated/deserialize/js.js
+  s_555bdd00191282::t_d292df4e22cd8a 3850-3852,3856,5927-5932
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_555bdd00191282::t_036c27273e8ed4 4293,4295-4296,4300,4310,6462-6467
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_555bdd00191282::t_785e575db8ce07 4306-4308,4312,6489-6494
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_555bdd00191282::t_df5904680acbbd 4747,4749-4750,4754,4765,7023-7028
+napi/parser/src-js/generated/deserialize/ts.js
+  s_555bdd00191282::t_a711582d790526 4149-4151,4155,6245-6250
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_555bdd00191282::t_045018b8812f9c 4622,4624-4625,4629,4639,6810-6815
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_555bdd00191282::t_99efa8c5cd3029 4632-4634,4638,6834-6839
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_555bdd00191282::t_0351932aab9fcb 5103,5105-5106,5110,5121,7398-7403
+napi/parser/src-js/generated/lazy/constructors.js
+  s_555bdd00191282::t_0f8944a67c39e8 10582-10586,10589,10594,10603,14008-14012
+napi/parser/src-js/generated/lazy/walk.js
+  s_555bdd00191282::t_ed58c567551e1a 4453-4454,5986-5990
+napi/parser/src-js/generated/visit/keys.js
+  s_555bdd00191282::t_282febd9a47028 173,194
+napi/parser/src-js/generated/visit/walk.js
+  s_555bdd00191282::t_94ef8779b01ba5 2150
+npm/oxc-types/types.d.ts
+  s_555bdd00191282::t_d68feae11ca991 1485
+tasks/ast_tools/src/generators/estree_visit.rs
+  s_555bdd00191282::t_5737797d2f7d0d 158-162
+crates/oxc_ast/src/ast/ts.rs
+  s_555bdd00191282::t_ebea9ffdaf3ab4 1239,1252
+crates/oxc_ast/src/serialize/ts.rs
+  s_555bdd00191282::t_f988e3c7b13b3f 57,62,74-76,94-96
+crates/oxc_formatter/src/print/mod.rs
+  s_555bdd00191282::t_0182eb7cbf1f7f 2109-2132
+crates/oxc_isolated_declarations/src/declaration.rs
+  s_555bdd00191282::t_7779aded71b214 130
+crates/oxc_parser/src/ts/statement.rs
+  s_555bdd00191282::t_1b84a34cb00de4 463,480
+crates/oxc_parser/src/ts/types.rs
+  s_555bdd00191282::t_d53f3242db2a57 697,701-705
+packages/codegen/src-js/print/typescript.ts
+  s_555bdd00191282::t_79965f9de3082d 953-957
+packages/codegen/test/fixtures/coverage.ts
+  s_555bdd00191282::t_83ced473b4b5ec 52
+tasks/coverage/misc/pass/ambient-module-import-attributes.ts
+  s_555bdd00191282::t_44f383e2f787ef 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c1d8022773fd04fcb183da721ef28f393abfc3f8",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_b96252ac4a3d5a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05dc2-f54f-7d91-b2a4-46d351a49ff4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
