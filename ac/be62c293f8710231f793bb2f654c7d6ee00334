@@ -1,0 +1,121 @@
+crates/oxc_ast/src/ast/ts.rs
+  s_144f37f34e959b::t_277b52c7e5ab6c 1252,1259-1291
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_555bdd00191282::t_8afca52f7ba489 1598-1616,3460-3478
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_555bdd00191282::t_8f5f49ccf92828 8842,8872,9737,9767,25451,25483,25511,25545,25559-25691
+crates/oxc_ast/src/generated/ast_kind.rs
+  s_555bdd00191282::t_6bec8dd00948ac 11,183-209,397-400,606-607,808-809,1012-1013,1217-1218,2092-2105
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_555bdd00191282::t_8a9a98306447e1 5119-5171
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_555bdd00191282::t_cae3ba23be6d74 2361-2384
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_555bdd00191282::t_1d9e76c8e4ee6c 2862-2898
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_555bdd00191282::t_49f22252808b30 3025-3043
+crates/oxc_ast/src/generated/derive_get_address.rs
+  s_555bdd00191282::t_dab15bfbd55daf 816-826
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_555bdd00191282::t_c4fd992f8b4f49 2054-2076
+crates/oxc_ast/src/generated/derive_get_span_mut.rs
+  s_555bdd00191282::t_94e003ceac56ed 2053-2075
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_555bdd00191282::t_8a803083de4957 429-434
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_555bdd00191282::t_da93ec7f74b4c4 431-436
+crates/oxc_ast/src/generated/derive_unstable_address.rs
+  s_555bdd00191282::t_6242e86379f9a6 345-348
+crates/oxc_ast/src/generated/get_id.rs
+  s_555bdd00191282::t_5d71c96f8e6fb7 3056-3087,4558-4569
+crates/oxc_ast_macros/src/generated/enums.rs
+  s_555bdd00191282::t_c8569feda90ebe 11-12,15,17,19-20,22-27,29-31,33-37,39,42-49,51-57,59-65,67-74,76-79,81,83-89,93-102,104,109-127
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_555bdd00191282::t_5241bb7d850243 11-12,14-18,20-25,27-29,31,34-36,39-42,45-49,51-56,59-61,63-65,67-73,75-76,78-83,85-91,95,97,103,105,111-112,115,123,127,135,137,143,145,151,155,157-158,163-167,169-170,179,181,187,191-196,199,201,207,209,214,216,220-225,228,230,236,240,244-245,248,256-261,264-265,268-269,272,274,280,282-283,288-292,300,304,306,312-317,320,328-329,332,340-344,348-352,356,360-364,372,374,380,382,388,390,396,398,404,406,412-413,416-420,422,428,430,436,438,444-449,453-454,457-461,465,469-485,493-497,499,505-506,509,513,515,521-522,525,527,533,535,541,543,549,551,556,558-559,562-563,566,570-571,574,576,582-586,588-589,594-598,600,606-610,618,626,628,634-635,638,640,646-647,658-659,662,664,670,674-675,678-679,682,686,688,693,695-696,699,701-702,707,711,713,719,721,727,729,735,737,742,744-745,748,752,759,761,763,769-774,776,778,780,786,794,797-798,800-801,804-805,808-812,814,820,822,828,836,838,844,846,852-853,856,858,864,866-867,872,874-875,880,888,890-891,896,898,904-909,913,917-918,921-922,925-926,929,931,936-938,940,942,948-949,952-953,956,958,964-965,968-973,976,984-985,988,990,996-1004,1012-1016,1018,1024,1026,1032,1034,1040,1042,1048,1056,1058,1064,1068,1070-1071,1076,1078,1084,1087-1091,1093,1097,1099,1105,1107,1112,1114,1116,1122,1130,1132-1133,1138-1139,1142,1144,1150,1152,1158,1162-1167,1170-1175,1178,1186,1190-1191,1194-1199,1202,1204,1210,1212,1218,1220,1226,1234-1235,1238,1240,1246-1251,1254-1255,1258,1260,1266-1270,1272,1278-1279,1282-1283,1286,1290-1291,1294-1295,1298,1302-1303,1306,1308,1314,1316,1322,1324,1330,1334-1335,1338,1340-1341,1346-1347,1350,1352,1358,1360,1366-1370,1372,1378-1383,1385-1386,1391,1399,1401,1407,1409,1415,1417,1423-1444,1446,1452,1454,1460,1462,1468,1470,1476,1478,1483,1485-1486,1489-1494,1497,1499,1505-1510,1513
+crates/oxc_ast_visit/src/generated/utf8_to_utf16_converter.rs
+  s_555bdd00191282::t_5c2f77fa793893 1007-1021
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_555bdd00191282::t_555556295d505f 1082-1102,1389-1396,3955,3974-4014,4639-4648
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_555bdd00191282::t_f5ae479ace39a2 1074-1094,1384-1391,4172,4191-4231,4895-4904
+crates/oxc_codegen/tests/integration/ts.rs
+  s_144f37f34e959b::t_05c619e0166d75 61-62,66,72
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_555bdd00191282::t_2798564a587aeb 197-198,402-403,607-608,807-808,9575,9615-9710
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_555bdd00191282::t_ae3ed998edb4b5 5558-5613
+crates/oxc_formatter/src/ast_nodes/iterator.rs
+  s_144f37f34e959b::t_1abd7f894e434f 180
+crates/oxc_formatter/src/print/mod.rs
+  s_555bdd00191282::t_1504609445d91c 80,171,2133,2148-2236
+crates/oxc_isolated_declarations/tests/snapshots/ambient-module-import-attributes.snap
+  s_555bdd00191282::t_b923964c7eb025 16-18
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_555bdd00191282::t_dc8e6cd1ab0ceb 284-331,835-841,1786-1798,2163,2281-2285,2573-2575,16215,16218,16349,16352,16380-16525
+crates/oxc_minifier/src/generated/traverse.rs
+  s_555bdd00191282::t_a312102e1a95ef 2196-2240
+crates/oxc_minifier/src/generated/walk.rs
+  s_555bdd00191282::t_5f903e79f7d0c5 5145,5148,5175-5236
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_555bdd00191282::t_2319148b30e974 1958,1963-1991
+crates/oxc_parser/src/ts/statement.rs
+  s_555bdd00191282::t_f45e189f7c4cb0 463-464,488-531
+crates/oxc_parser/src/ts/types.rs
+  s_b8d790ba6c0539::t_2afbd9fa29403b 697,1590
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_555bdd00191282::t_343494be36fb75 284-331,835-841,1786-1798,2163,2281-2285,2573-2575,16215,16218,16349,16352,16380-16525
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_555bdd00191282::t_f85fafe0476cc8 1958,1963-1991
+crates/oxc_traverse/src/generated/traverse.rs
+  s_555bdd00191282::t_0f31be40d366ac 2757-2801
+crates/oxc_traverse/src/generated/walk.rs
+  s_555bdd00191282::t_1a634ae892b0cc 5145,5148,5175-5236
+crates/oxc_ast/src/ast_kind_impl.rs
+  s_f12380349a089e::t_abff120602ea20 596-599
+crates/oxc_codegen/src/gen.rs
+  s_f12380349a089e::t_6ead733040ce91 4022-4061
+crates/oxc_formatter/src/print/object_like.rs
+  s_f12380349a089e::t_41fb31718bcd96 21,29,66-70,80,88
+crates/oxc_semantic/src/builder.rs
+  s_f12380349a089e::t_a6740664a64eb1 2658
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "acbe62c293f8710231f793bb2f654c7d6ee00334",
+  "prompts": {},
+  "sessions": {
+    "s_144f37f34e959b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0668c-876c-78e1-b84f-0245033d4955",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_b8d790ba6c0539": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06687-a2a4-7e50-9453-f7941c936c56",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_f12380349a089e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06689-8410-7ee0-8d44-0caeb0b7f1d9",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
