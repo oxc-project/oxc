@@ -14,6 +14,13 @@
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
+  // Analyze and check with all features enabled, matching the `ck` and `lint` aliases
+  // in `.cargo/config.toml` which `just check` / `just lint` / CI use.
+  // Without this, rust-analyzer only sees default features, so feature-gated code gets
+  // no completions, no jump-to-definition, and no diagnostics.
+  // `rust-analyzer.check.features` defaults to this setting, so it covers `cargo check`
+  // and `cargo clippy` on save too.
+  "rust-analyzer.cargo.features": "all",
   // Exclude huge gitignored submodules and `node_modules` from rust-analyzer's file scan -
   // it does not respect `.gitignore`.
   // Skipping these directories (500k+ files) speeds up server startup and reduces memory use.
