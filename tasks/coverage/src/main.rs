@@ -57,6 +57,7 @@ fn main() {
         "estree_tokens" => app_args.run_estree_tokens(&load()),
         "types" => app_args.run_types(&load()),
         "all" => app_args.run_all_with(&load()),
-        _ => app_args.run_all(),
+        "default" => app_args.run_all(),
+        task => panic!("Unknown coverage task: {task:?}"),
     }
 }
