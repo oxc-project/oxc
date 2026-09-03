@@ -157,6 +157,8 @@ mod test {
 
     use super::Utf8ToUtf16;
 
+    const BOM_LEN: u32 = 3;
+
     #[test]
     fn translate_ast() {
         let allocator = Allocator::new();
@@ -203,6 +205,61 @@ mod test {
         assert_eq!(convert_back(4), 6);
         assert_eq!(convert_back(9), 11);
         assert_eq!(convert_back(11), 15);
+    }
+
+    #[test]
+    fn translate_offsets_after_trimmed_bom() {
+        // Source text has the BOM trimmed off the start, but spans are still relative to the file
+        // including the BOM, so the offsets in the table are too.
+        let table = Utf8ToUtf16::new_with_offset("/*x*/'é'", BOM_LEN);
+        let mut converter = table.converter().unwrap();
+
+        // (UTF-8 offset including BOM, UTF-16 offset excluding BOM)
+        let offsets = [(3u32, 0u32), (8, 5), (9, 6), (11, 7), (12, 8)];
+        for (utf8_offset, expected_utf16_offset) in offsets {
+            let mut offset = utf8_offset;
+            converter.convert_offset(&mut offset);
+            assert_eq!(offset, expected_utf16_offset);
+        }
+
+        for (expected_utf8_offset, utf16_offset) in offsets {
+            let mut offset = utf16_offset;
+            converter.convert_offset_back(&mut offset);
+            assert_eq!(offset, expected_utf8_offset);
+        }
+    }
+
+    #[test]
+    fn translate_offsets_with_trimmed_prefix() {
+        // Linter trims a BOM, or the leading newline of a Vue/Astro/Svelte fragment, off the source
+        // text before building the table. Neither is part of the UTF-16 offsets, so an offset in
+        // the trimmed source has to convert the same way it would with nothing trimmed.
+        let sources = [
+            "/*x*/'é'",
+            "/*x*/'🤨'",
+            // Long enough that the non-ASCII characters land in the aligned-chunk path
+            "/*xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*/'£ऊ🤨'",
+        ];
+
+        for source_text in sources {
+            for trimmed_len in [1u32, BOM_LEN] {
+                let trimmed_table = Utf8ToUtf16::new_with_offset(source_text, trimmed_len);
+                let mut trimmed = trimmed_table.converter().unwrap();
+                let whole_table = Utf8ToUtf16::new(source_text);
+                let mut whole = whole_table.converter().unwrap();
+
+                #[expect(clippy::cast_possible_truncation)]
+                for utf8_offset in 0..=(source_text.len() as u32) {
+                    let mut expected = utf8_offset;
+                    whole.convert_offset(&mut expected);
+
+                    let mut actual = utf8_offset + trimmed_len;
+                    trimmed.convert_offset(&mut actual);
+
+                    assert_eq!(actual, expected, "{source_text:?} at offset {utf8_offset}");
+                }
+            }
+        }
     }
 
     #[test]
