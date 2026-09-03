@@ -761,13 +761,8 @@ impl<'a> PeepholeOptimizations {
                         .take()
                         .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
-                    let argument = Self::minimize_conditional(
-                        prev_if.span,
-                        prev_if.test,
-                        left,
-                        right,
-                        ctx,
-                    );
+                    let argument =
+                        Self::minimize_conditional(prev_if.span, prev_if.test, left, right, ctx);
                     ret_stmt.argument = Some(argument);
                 } else {
                     break 'return_loop;
