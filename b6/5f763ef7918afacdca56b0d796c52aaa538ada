@@ -1,0 +1,19 @@
+packages/codegen/bench.bench.ts
+  s_8a0b3fc1091d46::t_bdec5314fdced2 73-76,147,154,161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b65f763ef7918afacdca56b0d796c52aaa538ada",
+  "prompts": {},
+  "sessions": {
+    "s_8a0b3fc1091d46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06836-2779-76f1-94ac-cd83fa13bcdc",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
