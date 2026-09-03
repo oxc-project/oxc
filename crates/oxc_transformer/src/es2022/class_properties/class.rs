@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
@@ -634,6 +634,8 @@ impl<'a> ClassProperties<'a> {
         let class_details = self.classes_stack.last();
 
         let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
+        // Private method helpers are emitted into the class-expression sequence (see below).
+        expr_count += self.insert_after_stmts.len();
         if let Some(private_props) = &class_details.private_props {
             expr_count += private_props.len();
         }
@@ -704,20 +706,34 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
-        // Insert private methods
+        // Insert private methods as expression assignments in the surrounding sequence.
+        //
+        // Class *declarations* insert `function _method() {}` statements after the class.
+        // For class *expressions*, that statement-injection strategy is wrong whenever the
+        // expression is not itself a statement — most importantly after concise arrow bodies
+        // stopped being represented as a synthetic `FunctionBody` + `ExpressionStatement`
+        // (`ArrowFunctionBody` enum). In `() => class { #m() {} }`, walking to the containing
+        // statement finds the outer `const`/`let` and emits `_m` at module scope, while the
+        // WeakMap for private fields stays inside the arrow — causing `ReferenceError`.
+        //
+        // Emit `_m = function () {}` into the same sequence as the class expression instead,
+        // and declare `var _m` in the current hoist scope (concise arrows are expanded to
+        // blocks when they receive such vars).
         if !self.insert_after_stmts.is_empty() {
-            // Find `Address` of statement containing class expression
-            let mut stmt_address = Address::DUMMY;
-            for ancestor in ctx.ancestors() {
-                if ancestor.is_parent_of_statement() {
-                    break;
-                }
-                stmt_address = ancestor.address();
+            for stmt in self.insert_after_stmts.drain(..) {
+                let Statement::FunctionDeclaration(mut func) = stmt else {
+                    unreachable!(
+                        "class expression private methods are always function declarations"
+                    );
+                };
+                let id = func.id.take().expect("private method binding always has an id");
+                let binding = BoundIdentifier::from_binding_ident(&id);
+                ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+                func.r#type = FunctionType::FunctionExpression;
+                let assignment =
+                    create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);
+                exprs.push(assignment);
             }
-
-            ctx.state
-                .statement_injector
-                .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
 
         // Insert computed key initializers
