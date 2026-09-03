@@ -35,25 +35,26 @@
    : ^^^^^^^^^
    `----
 
-  x bom-plugin(bom): Debugger statement at 0-9
-   ,-[files/bom_unicode.js:1:4]
- 1 | ﻿debugger;
-   : ^^^^^^^^^
- 2 | // 😀🤪😆😎🤮
-   `----
-
   x bom-plugin(bom):
   | hasBOM: true
-  | sourceText: "debugger;\n// 😀🤪😆😎🤮\ndebugger;\ndebugger;"
-  | Program span: 0-43
-   ,-[files/bom_unicode.js:1:4]
- 1 | ,-> ﻿debugger;
+  | sourceText: "/*x*/'é';debugger;\n// 😀🤪😆😎🤮\ndebugger;\ndebugger;"
+  | Program span: 5-52
+  | comments: [{"start":0,"end":5,"text":"/*x*/"},{"start":19,"end":32,"text":"// 😀🤪😆😎🤮"}]
+   ,-[files/bom_unicode.js:1:9]
+ 1 | ,-> ﻿/*x*/'é';debugger;
  2 | |   // 😀🤪😆😎🤮
  3 | |   debugger;
  4 | `-> debugger;
    `----
 
-  x bom-plugin(bom): Debugger statement at 24-33
+  x bom-plugin(bom): Debugger statement at 9-18
+   ,-[files/bom_unicode.js:1:14]
+ 1 | ﻿/*x*/'é';debugger;
+   :          ^^^^^^^^^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x bom-plugin(bom): Debugger statement at 33-42
    ,-[files/bom_unicode.js:3:1]
  2 | // 😀🤪😆😎🤮
  3 | debugger;
@@ -61,7 +62,7 @@
  4 | debugger;
    `----
 
-  x bom-plugin(bom): Debugger statement at 34-43
+  x bom-plugin(bom): Debugger statement at 43-52
    ,-[files/bom_unicode.js:4:1]
  3 | debugger;
  4 | debugger;
@@ -111,6 +112,7 @@
   | hasBOM: false
   | sourceText: "debugger;\n// 😀🤪😆😎🤮\ndebugger;\ndebugger;"
   | Program span: 0-43
+  | comments: [{"start":10,"end":23,"text":"// 😀🤪😆😎🤮"}]
    ,-[files/no_bom_unicode.js:1:1]
  1 | ,-> debugger;
  2 | |   // 😀🤪😆😎🤮
