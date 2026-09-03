@@ -3053,6 +3053,38 @@ impl TSExternalModuleDeclaration<'_> {
     }
 }
 
+impl TSModuleDeclarationAttributeClause<'_> {
+    /// Get [`NodeId`] of [`TSModuleDeclarationAttributeClause`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSModuleDeclarationAttributeClause`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl TSModuleDeclarationAttribute<'_> {
+    /// Get [`NodeId`] of [`TSModuleDeclarationAttribute`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`TSModuleDeclarationAttribute`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl TSNamespaceDeclaration<'_> {
     /// Get [`NodeId`] of [`TSNamespaceDeclaration`].
     ///
@@ -4519,6 +4551,18 @@ impl TSTypePredicateName<'_> {
         match self {
             Self::Identifier(it) => it.node_id(),
             Self::This(it) => it.node_id(),
+        }
+    }
+}
+
+impl TSModuleDeclarationAttributeValue<'_> {
+    /// Get [`NodeId`] of [`TSModuleDeclarationAttributeValue`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn node_id(&self) -> NodeId {
+        match self {
+            Self::StringLiteral(it) => it.node_id(),
+            Self::TemplateLiteral(it) => it.node_id(),
         }
     }
 }

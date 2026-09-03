@@ -14003,11 +14003,6 @@ function constructBoxTSMethodSignature(pos, ast) {
   return new TSMethodSignature(ast.buffer.int32[pos >> 2], ast);
 }
 
-function constructOptionBoxTSTypeLiteral(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
-  return constructBoxTSTypeLiteral(pos, ast);
-}
-
 function constructBoxTSModuleBlock(pos, ast) {
   return new TSModuleBlock(ast.buffer.int32[pos >> 2], ast);
 }

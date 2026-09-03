@@ -2194,6 +2194,51 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_ts_module_declaration_attribute_clause(
+        &mut self,
+        node: &mut TSModuleDeclarationAttributeClause<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration_attribute_clause(
+        &mut self,
+        node: &mut TSModuleDeclarationAttributeClause<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_declaration_attribute(
+        &mut self,
+        node: &mut TSModuleDeclarationAttribute<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration_attribute(
+        &mut self,
+        node: &mut TSModuleDeclarationAttribute<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_declaration_attribute_value(
+        &mut self,
+        node: &mut TSModuleDeclarationAttributeValue<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration_attribute_value(
+        &mut self,
+        node: &mut TSModuleDeclarationAttributeValue<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_namespace_declaration(
         &mut self,
         node: &mut TSNamespaceDeclaration<'a>,

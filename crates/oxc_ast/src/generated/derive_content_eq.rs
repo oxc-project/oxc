@@ -2358,6 +2358,30 @@ impl ContentEq for TSExternalModuleDeclaration<'_> {
     }
 }
 
+impl ContentEq for TSModuleDeclarationAttributeClause<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.entries, &other.entries)
+    }
+}
+
+impl ContentEq for TSModuleDeclarationAttribute<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.readonly, &other.readonly)
+            && ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentEq for TSModuleDeclarationAttributeValue<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
+            (Self::TemplateLiteral(a), Self::TemplateLiteral(b)) => a.content_eq(b),
+            _ => false,
+        }
+    }
+}
+
 impl ContentEq for TSNamespaceDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)

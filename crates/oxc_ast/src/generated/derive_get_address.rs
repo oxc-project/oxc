@@ -813,6 +813,17 @@ impl GetAddress for TSSignature<'_> {
     }
 }
 
+impl GetAddress for TSModuleDeclarationAttributeValue<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::StringLiteral(it) => GetAddress::address(it),
+            Self::TemplateLiteral(it) => GetAddress::address(it),
+        }
+    }
+}
+
 impl GetAddress for TSNamespaceDeclarationBody<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
