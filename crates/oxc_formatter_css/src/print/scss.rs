@@ -468,7 +468,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
                             if !in_tight {
                                 write!(f, " ");
                             }
-                            value::write_component_value(
+                            value::write_list_element(
                                 &expr_elements[0],
                                 ValueContext::default(),
                                 f,
@@ -500,7 +500,7 @@ pub(super) fn write_sass_each<'a>(each: &SassEach<'a>, f: &mut CssFormatter<'_, 
         for (i, el) in expr_elements.iter().enumerate().skip(1) {
             let is_last = i + 1 == expr_elements.len();
             let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                value::write_component_value(el, ValueContext::default(), f);
+                value::write_list_element(el, ValueContext::default(), f);
                 if !is_last {
                     value::write_group_comma(expr_comma_start(i), f);
                 }

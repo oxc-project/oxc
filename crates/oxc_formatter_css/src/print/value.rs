@@ -837,6 +837,19 @@ pub(super) fn is_single_sass_interpolation(values: &[ComponentValue<'_>]) -> boo
         )
 }
 
+/// One bare element of a comma list (`/* c */ 1,`).
+/// Leading comments belong to the element and flush BEFORE any group/indent it opens
+/// (same reason as the head flush in [`write_comma_group`]);
+/// a bare scalar has no comma group of its own to do this.
+pub(super) fn write_list_element<'a>(
+    el: &ComponentValue<'a>,
+    ctx: ValueContext<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    flush_value_comments(to_span(el.span()).start, f);
+    write_component_value(el, ctx, f);
+}
+
 /// Mirrors Prettier's `printCommaSeparatedValueGroup`.
 /// Joins components with `line`, except for pairs that must stay tight.
 pub(super) fn write_comma_group<'a>(
@@ -1342,6 +1355,8 @@ fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>
 }
 
 /// Dispatch a single component value.
+/// Leading comments are the CALLER's job (`write_list_element` / `write_comma_group`):
+/// flushing here would land a `//` hardline inside the group/indent an arm opens.
 pub(super) fn write_component_value<'a>(
     value: &ComponentValue<'a>,
     ctx: ValueContext<'a>,
@@ -1447,7 +1462,7 @@ pub(super) fn write_component_value<'a>(
                         if i > 0 {
                             write!(f, hard_line_break());
                         }
-                        write_component_value(el, inner_ctx, f);
+                        write_list_element(el, inner_ctx, f);
                         let is_last = i + 1 == list.elements.len();
                         if !is_last || keep_trailing_comma {
                             write_group_comma(scss::list_comma_start(list, i), f);
@@ -1469,7 +1484,7 @@ pub(super) fn write_component_value<'a>(
                         if i > 0 {
                             write!(f, soft_line_break_or_space());
                         }
-                        write_component_value(el, inner_ctx, f);
+                        write_list_element(el, inner_ctx, f);
                         let is_last = i + 1 == list.elements.len();
                         if !is_last || keep_trailing_comma {
                             write_group_comma(scss::list_comma_start(list, i), f);
