@@ -1,8 +1,8 @@
-commit: f52473a2
+commit: 0e32aa19
 
 transformer_typescript Summary:
-AST Parsed     : 10088/10088 (100.00%)
-Positive Passed: 10067/10088 (99.79%)
+AST Parsed     : 9937/9937 (100.00%)
+Positive Passed: 9916/9937 (99.79%)
 Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/braceEscapedSurrogatePairLiteralType.ts
 
 Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/classOverloadForFunction.ts

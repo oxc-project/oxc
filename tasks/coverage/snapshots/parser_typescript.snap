@@ -1,9 +1,9 @@
-commit: f52473a2
+commit: 0e32aa19
 
 parser_typescript Summary:
-AST Parsed     : 10077/10088 (99.89%)
-Positive Passed: 10066/10088 (99.78%)
-Negative Passed: 1667/2721 (61.26%)
+AST Parsed     : 9926/9937 (99.89%)
+Positive Passed: 9918/9937 (99.81%)
+Negative Passed: 1681/2754 (61.04%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -33,6 +33,16 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/assignmentCompatFunctionsWithOptionalArgs.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/assignmentToAnyArrayRestParameters.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/augmentExportEquals1_1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/augmentExportEquals2_1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/augmentExportEquals3_1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/augmentExportEquals4_1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/augmentExportEquals6_1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/augmentedClassWithPrototypePropertyOnModule.ts
 
@@ -127,6 +137,18 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/cloduleWithPriorInstantiatedModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndAlias.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndClass.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndEnum.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndFunction.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndInternalModuleAlias.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndModule.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/collisionExportsRequireAndVar.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/commonSourceDirectory_dts.ts
 
@@ -338,6 +360,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging6.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentOfGenericType1.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportDefaultAlias_excludesEverything.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportDefaultClassAndValue.ts
@@ -540,6 +564,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationBindReachabilityErrors.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationPublicMethodSyntaxOfClass.ts
@@ -575,6 +603,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsxImportForSideEffectsNonExtantNoError.tsx
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsxNamespacePrefixIntrinsics.tsx
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/keepImportsInDts1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/keyofIsLiteralContexualType.ts
 
@@ -675,6 +705,14 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleAugmentationImportsAndExports2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleAugmentationImportsAndExports3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleAugmentationsImports1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleAugmentationsImports2.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleAugmentationsImports3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleAugmentationsImports4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleDeclarationsInNonScopeBlock.ts
 
@@ -1132,6 +1170,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es2019/globalThisUnknownNoImplicitAny.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es2019/globalThisVarDeclaration.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/Symbols/symbolProperty3.ts
@@ -1496,9 +1536,7 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/functions/parameterInitializersForwardReferencing1_es6.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importAssertion/importAssertion3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importAttributes/importAttributes3.ts
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importAttributes/importAttributes12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importDefer/dynamicImportDefer.ts
 
@@ -1636,8 +1674,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/importTag14.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/importTag15.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/importTag4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/jsdocAugmentsMissingType.ts
@@ -1671,6 +1707,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/jsdocPrivateName2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/jsdocReadonly.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/jsdocReadonlyDeclarations.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/jsdocTemplateTag.ts
 
@@ -2112,17 +2150,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/witness/witness.ts
 
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/alwaysStrictModule2.ts
-
-  × Cannot assign to 'arguments' in strict mode
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/alwaysStrictModule2.ts:4:13]
- 3 │     export function f() {
- 4 │         var arguments = [];
-   ·             ─────────
- 5 │     }
-   ╰────
-  note: This is strict mode code
-
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/alwaysStrictNoImplicitUseStrict.ts
 
   × Cannot assign to 'arguments' in strict mode
@@ -2134,39 +2161,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/alw
    ╰────
   note: This is strict mode code
 
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPatternAmbientModuleImportAttributes.ts
 
-  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:2:5]
- 1 │ declare namespace M {
- 2 │     declare var x;
-   ·     ───────
- 3 │     declare function f();
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPatternAmbientModuleImportAttributes.ts:1:25]
+ 1 │ declare module "*.style" with { type: "css" } {
+   ·                         ▲
+ 2 │     export interface Style {
    ╰────
-
-  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:3:5]
- 2 │     declare var x;
- 3 │     declare function f();
-   ·     ───────
- 4 │ 
-   ╰────
-
-  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:5:5]
- 4 │ 
- 5 │     declare namespace N { }
-   ·     ───────
- 6 │ 
-   ╰────
-
-  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts:7:5]
- 6 │ 
- 7 │     declare class C { }
-   ·     ───────
- 8 │ }
-   ╰────
+  help: Try inserting a semicolon here
 
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateNameInTypeQuery.ts
 
@@ -2177,24 +2180,6 @@ Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declaratio
     ·                    ──
  17 │ 
     ╰────
-
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts
-
-  × Unexpected export.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts:1:8]
- 1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
-   ·        ──────────────────────────────────────────────────────────────
- 2 │ export var x: number = defaultBinding;
-   ╰────
-
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts
-
-  × Unexpected export.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts:1:8]
- 1 │ export import * as nameSpaceBinding from "server";
-   ·        ───────────────────────────────────────────
- 2 │ export var x = nameSpaceBinding.a;
-   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging1.ts
 
@@ -2227,6 +2212,57 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exp
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDuplicatePatternMergedResolution.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeDuplicatePatternMergedResolution.ts:1:25]
+ 1 │ declare module "*.asset" with { type: "css", format: "module" } {
+   ·                         ▲
+ 2 │     export const fromA: "a";
+   ╰────
+  help: Try inserting a semicolon here
+
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDynamicImports.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeDynamicImports.ts:5:34]
+ 4 │ 
+ 5 │ declare module "typed/*.resource" with { type: "text" } {
+   ·                                  ▲
+ 6 │     export const kind: "text";
+   ╰────
+  help: Try inserting a semicolon here
+
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeMostSpecificType.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeMostSpecificType.ts:1:36]
+ 1 │ declare module "databases/*.sqlite" with { type: "sqlite" } {
+   ·                                    ▲
+ 2 │     const database: {
+   ╰────
+  help: Try inserting a semicolon here
+
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeType2.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeType2.ts:1:36]
+ 1 │ declare module "databases/*.sqlite" with { type: "sqlite", embed: "false" } {
+   ·                                    ▲
+ 2 │     const database: {
+   ╰────
+  help: Try inserting a semicolon here
+
+Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts:1:25]
+ 1 │ declare module "*.style" with { type: "css" } {
+   ·                         ▲
+ 2 │     export interface Style {
+   ╰────
+  help: Try inserting a semicolon here
+
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -2249,32 +2285,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inc
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationNonNullAssertion.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationNonNullAssertion.ts:1:2]
- 1 │ 0!
-   ·  ▲
-   ╰────
-  help: Try inserting a semicolon here
-
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeAssertions.ts
-
-  × TS(8016): Type assertion expressions can only be used in TypeScript files.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:1]
- 1 │ 0 as number;
-   · ───────────
- 2 │ var v = <string>undefined;
-   ╰────
-
-  × Unexpected JSX expression
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:9]
- 1 │ 0 as number;
- 2 │ var v = <string>undefined;
-   ·         ─
-   ╰────
-  help: JSX syntax is disabled and should be enabled via the parser options
-
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
 
   × Identifier expected. 'this' is a reserved word that cannot be used here.
@@ -2290,23 +2300,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reg
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts:1:1]
  1 │ ⼯䀠慴杲瑥›獥敮瑸⼊⾀ੵ
    · ──
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
-
-  × TS(8037): Type satisfaction expressions can only be used in TypeScript files.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:9]
- 1 │ var v = undefined satisfies 1;
-   ·         ─────────────────────
-   ╰────
-
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/exportNonInitializedVariablesAMD.ts
-
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/exportNonInitializedVariablesAMD.ts:1:4]
- 1 │ var;
-   ·    ─
- 2 │ let;
    ╰────
 
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/exportNonInitializedVariablesSystem.ts
@@ -2325,15 +2318,6 @@ Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externa
  1 │ var;
    ·    ─
  2 │ let;
-   ╰────
-
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithAMD.ts
-
-  × Expected `as` but found `from`
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithAMD.ts:1:10]
- 1 │ import * from Zero from "./0"
-   ·          ──┬─
-   ·            ╰── `as` expected
    ╰────
 
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithSystem.ts
@@ -7265,6 +7249,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
 
   × Unexpected export.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts:1:8]
+ 1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
+   ·        ──────────────────────────────────────────────────────────────
+ 2 │ export var x: number = defaultBinding;
+   ╰────
+
+  × Unexpected export.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts:1:8]
  1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
    ·        ──────────────────────────────────────────────────────────────
@@ -7299,6 +7290,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·             ────────┬────────
    ·                     ╰── It can not be redeclared here
  6 │ 
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts:1:8]
+ 1 │ export import * as nameSpaceBinding from "server";
+   ·        ───────────────────────────────────────────
+ 2 │ export var x = nameSpaceBinding.a;
    ╰────
 
   × Identifier expected. 'yield' is a reserved word that cannot be used here.
@@ -8281,6 +8279,64 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Wrap this with quotes
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeArbitraryExtension.ts:1:23]
+ 1 │ declare module "*.ext" with { type: "custom" } {
+   ·                       ▲
+ 2 │     export const ambient: "ambient";
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeModuleAugmentations.ts:5:36]
+ 4 │ 
+ 5 │ declare module "attributed/*.asset" with { type: "css" } {
+   ·                                    ▲
+ 6 │     export const attributed: "attributed";
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributePlainStringAmbientModule.ts:1:29]
+ 1 │ declare module "plainstring" with { type: "css" } {
+   ·                             ▲
+ 2 │     export const value: "plain";
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeType1.ts:1:25]
+ 1 │ declare module "*.asset" with { type: "css" } {
+   ·                         ▲
+ 2 │   const stylesheet: CSSStyleSheet;
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts:1:25]
+ 1 │ declare module "*.style" with { type: "css" } {
+   ·                         ▲
+ 2 │     export interface Style {
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts:3:25]
+ 2 │ 
+ 3 │ declare module "*.asset" with { type: AttributeValue } {
+   ·                         ▲
+ 4 │     export type AttributeValue = "text";
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypesJsImports.ts:1:25]
+ 1 │ declare module "*.asset" with { type: "css" } {
+   ·                         ▲
+ 2 │     export const shared: "css";
+   ╰────
+  help: Try inserting a semicolon here
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:9]
  4 │ }
@@ -8828,6 +8884,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationNonNullAssertion.ts:1:2]
+ 1 │ 0!
+   ·  ▲
+   ╰────
+  help: Try inserting a semicolon here
+
   × Expected `,` or `)` but found `?`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalParameter.ts:1:13]
  1 │ function F(p?) { }
@@ -8863,6 +8926,21 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·            ──
  2 │ Foo<number>(1);
    ╰────
+
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:1]
+ 1 │ 0 as number;
+   · ───────────
+ 2 │ var v = <string>undefined;
+   ╰────
+
+  × Unexpected JSX expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:9]
+ 1 │ 0 as number;
+ 2 │ var v = <string>undefined;
+   ·         ─
+   ╰────
+  help: JSX syntax is disabled and should be enabled via the parser options
 
   × Expected `,` or `)` but found `:`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -11394,6 +11472,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  1 │ export = } x = ( y = z ==== 'function') {
    ·          ─
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleAugmentationMergedSymbol.ts:1:25]
+ 1 │ declare module "*.asset" with {} {
+   ·                         ▲
+ 2 │     export const fromAttributed: "attributed";
+   ╰────
+  help: Try inserting a semicolon here
 
   × Expected `}` but found `EOF`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/prettyContextNotDebugAssertion.ts:1:12]
@@ -18338,6 +18424,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  5 │     }
    ╰────
 
+  × Private identifier '#foo' is not allowed in property names
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsDestructuringPatterns.ts:4:17]
+ 3 │     bar() {
+ 4 │         const { #foo: foo } = this;
+   ·                 ────
+ 5 │         let bar;
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsDestructuringPatterns.ts:6:12]
+ 5 │         let bar;
+ 6 │         ({ #foo: bar } = this);
+   ·            ────
+ 7 │     }
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts:2:12]
  1 │ class A {
@@ -24008,6 +24110,12 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·         ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(8037): Type satisfaction expressions can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:9]
+ 1 │ var v = undefined satisfies 1;
+   ·         ─────────────────────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorInvalidOperations.ts:5:10]

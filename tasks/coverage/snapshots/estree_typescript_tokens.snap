@@ -1,19 +1,9 @@
-commit: f52473a2
+commit: 0e32aa19
 
 estree_typescript_tokens Summary:
-AST Parsed     : 10003/10008 (99.95%)
-Positive Passed: 10001/10008 (99.93%)
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
-A 'declare' modifier cannot be used in an already ambient context.
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts
-Unexpected export.
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts
-Unexpected export.
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationNonNullAssertion.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
-Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationTypeAssertions.ts
-Type assertion expressions can only be used in TypeScript files.
+AST Parsed     : 9850/9851 (99.99%)
+Positive Passed: 9849/9851 (99.98%)
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/doNotemitTripleSlashComments.ts
+
 Panicked: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
 Identifier expected. 'this' is a reserved word that cannot be used here.
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts
-Type satisfaction expressions can only be used in TypeScript files.

@@ -1,4 +1,4 @@
-commit: f52473a2
+commit: 0e32aa19
 
 ---
 NOTE: If you are seeing this file with Git diffs, please follow the instructions below to review the changes.
@@ -295,8 +295,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1451
 1453
 1454
-1463
-1464
 1470
 1471
 1472
@@ -365,6 +363,10 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1546
 1547
 1548
+1550
+1551
+1555
+1557
 2011
 2206
 2207
@@ -746,7 +748,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2854
 2855
 2856
-2857
 2858
 2859
 2860
@@ -886,6 +887,8 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 8010
 8011
 8012
+8013
+8016
 8017
 8020
 8023
@@ -895,6 +898,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 8030
 8032
 8033
+8037
 8038
 8039
 9007
@@ -973,3 +977,4 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 18061
 18062
 18063
+18064
