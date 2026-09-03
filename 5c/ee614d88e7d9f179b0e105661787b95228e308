@@ -1,0 +1,23 @@
+apps/oxfmt/test/cli/cli.test.ts
+  s_8a0b3fc1091d46::t_88e39f5743f975 15
+napi/parser/package.json
+  s_8a0b3fc1091d46::t_39719ab14aac21 89-90
+tasks/e2e/package.json
+  s_8a0b3fc1091d46::t_0ec9e0ac21e9f0 45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5cee614d88e7d9f179b0e105661787b95228e308",
+  "prompts": {},
+  "sessions": {
+    "s_8a0b3fc1091d46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06836-2779-76f1-94ac-cd83fa13bcdc",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
