@@ -380,6 +380,11 @@ impl AppArgs {
     pub fn run_lexer(&self, data: &TestData) {
         #[cfg(all(feature = "lexer", target_endian = "little"))]
         {
+            // Report which implementation was built.
+            // CI checks this line to make sure the build it expected is the build it got.
+            let implementation = if oxc_lexer::IS_SIMD { "SIMD" } else { "scalar" };
+            println!("Lexer implementation: {implementation}");
+
             self.run_tool(
                 "lexer_test262",
                 TEST262_PATH,

@@ -186,6 +186,19 @@ conformance-lexer *args='':
 conformance-lexer-simd *args='':
   cargo run -p oxc_coverage --profile coverage {{_lexer-simd}} --features lexer -- lexer {{args}}
 
+# Lint `oxc_lexer` and the conformance harness against the scalar fallback
+[unix]
+lint-lexer *args='':
+  CARGO_BUILD_WARNINGS=deny cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
+
+[windows]
+lint-lexer *args='':
+  $Env:CARGO_BUILD_WARNINGS='deny'; cargo clippy -p oxc_lexer -p oxc_coverage --all-targets --all-features {{args}}
+
+# Lint `oxc_lexer` and the conformance harness against the SIMD core
+lint-lexer-simd *args='':
+  just lint-lexer {{_lexer-simd}} {{args}}
+
 # ==================== LINTER ====================
 
 # oxlint release build

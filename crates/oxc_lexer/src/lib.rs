@@ -24,6 +24,11 @@ use core::cell::RefCell;
 
 pub const PAD: usize = 64;
 
+/// `true` if the SIMD core is compiled in, `false` if the scalar fallback is.
+/// Used by CI to ensure it's testing the implementation it thinks it is.
+pub const IS_SIMD: bool =
+    cfg!(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"));
+
 thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
 }
