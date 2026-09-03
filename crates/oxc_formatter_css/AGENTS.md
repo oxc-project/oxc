@@ -74,6 +74,8 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
   - a flush's upper bound must never extend past the next piece of user content,
   - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
 - Line-boundary rule in CSS terms: `//` comments force a hardline after;
+  - besides the policy's opener exception, a same-line `//` after a list `,` also leads the next element on its own line
+    (Prettier's CSS; JS keeps `1, // c` trailing)
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
 

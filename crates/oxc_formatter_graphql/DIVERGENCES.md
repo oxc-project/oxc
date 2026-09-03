@@ -60,6 +60,62 @@ A {
 
 Prettier's attachment pushes the comment forward across the `type` keyword (user content), own-line to same-line.
 
+## fields-block-opener-comment
+
+- Why: uniform-rule (same construct, same output: a selection set's `{ # c`)
+- Pin: `tests/fixtures/graphql/comment-after-opening-delimiter.graphql`
+
+```graphql
+# input
+type B implements I @d { # c
+  f: Int
+}
+
+# ours
+type B implements I @d {
+  # c
+  f: Int
+}
+
+# prettier
+type B implements I
+  @d { # c
+  f: Int
+}
+```
+
+A comment right after an opening `{` leads the first item, as in a selection set or `schema` block (Prettier agrees there: no node precedes the comment inside the parent).
+In a `type` / `interface` / `input` / `enum` / `extend` block the comment follows the name, an interface or a directive,
+so Prettier's attachment makes it that node's trailing comment and `lineSuffix` carries it to the line end past `{`;
+the `breakParent` it adds pushes a preceding directive onto its own line.
+
+## argument-list-opener-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/graphql/comment-after-opening-delimiter.graphql`
+
+```graphql
+# input
+query T { a( # c
+  x: 1) }
+
+# ours
+query T {
+  a(
+    # c
+    x: 1
+  )
+}
+
+# prettier
+query T {
+  a(x: 1) # c
+}
+```
+
+Prettier's attachment makes the comment a trailing of the field name and `lineSuffix` carries it past `(x: 1)` (user content crossed).
+Same class: `query R( # c` -> `query R($a: Int) { # c`, `directive @d( # c` -> `directive @d(a: Int) on FIELD # c`.
+
 ## trailing-comment-before-continuation
 
 - Why: invariant
@@ -85,28 +141,3 @@ type A implements B { # c
 ```
 
 Prettier's attachment scatters the comment to the line end, across `implements B {`; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`), user content crossed in both.
-
-## comment-after-opening-delimiter
-
-- Why: invariant
-- Pin: `tests/fixtures/graphql/comment-after-opening-delimiter.graphql`
-
-```graphql
-# input
-{ # c
-  test # t
-} # e
-
-# ours
-{ # c
-  test # t
-} # e
-
-# prettier
-{
-  # c
-  test # t
-} # e
-```
-
-Prettier's attachment moves the comment own-line (same-line to own-line) as the first child's leading; asymmetric, `test # t` / `} # e` stay inline in both.

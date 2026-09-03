@@ -93,6 +93,10 @@ The invariants:
   - When Prettier relocates a comment across tokens, that is a divergence under reason (2) `invariant` (see "Known divergences"), not a rule to emulate
 - A comment never crosses a line boundary: line-based directives (`eslint-disable-line`, ...) must keep their meaning
   - Line comments print via `line_suffix`; own-line comments stay own-line
+  - One exception, Prettier's stance since prettier/prettier#1267:
+    - A same-line comment right after an opening delimiter (`{ // c`, `( # c`, `[ // c`) is the body's first leading comment and moves to its own line;
+    - `-line` directive there loses its target (`-next-line` variants do not)
+    - Applies to every opener uniformly; where Prettier's attachment does something else for a particular opener, that is an artifact to pin as a divergence, not a table to extend
 - A suppression comment (`prettier-ignore` / `oxfmt-ignore`) never loses its target, and its original text is preserved
 - Repositioning is allowed only relative to formatter-OWNED punctuation: the formatter owns terminators (e.g. a statement's `;`) and the trivia up to them; the user owns content
   - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,` / `;` between TS interface members)
