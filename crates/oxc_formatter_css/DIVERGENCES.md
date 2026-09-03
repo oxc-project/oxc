@@ -429,10 +429,74 @@ comma list and NOWHERE else. Prettier 3.9.6 changes `key: ($a + $b)` from a numb
 `key: 2 * ($a + $b)` inside `$var:` declarations (dart-sass: `Undefined operation "2 * (3px,)"`).
 Prettier's own #18530 / #19091 fixed subsets of this; we extend the same rule to every non-comma-list.
 
+## single-item-list-trailing-comma
+
+- Why: semantics (prettier/prettier#19928 fixed the paren form upstream)
+- Pin: `tests/fixtures/format/scss/single-item-list-trailing-comma.scss`
+- Drop when: upstream also keeps the paren-less form and `(fn(1),)` (dropped as a source-span artifact of its value parser)
+
+```scss
+/* input */
+$list: ("a",);
+$bare: "a",;
+$map: (k: ("a",));
+
+/* ours */
+$list: ("a",);
+$bare: "a",;
+$map: (
+  k: ("a",),
+);
+
+/* prettier */
+$list: ("a");
+$bare: "a";
+$map: (
+  k: ("a"),
+);
+```
+
+`("a",)` and `$x: "a",` are one-element lists in Sass while `"a"` is a string (dart-sass `type-of`):
+dropping the comma changes the value for `nth()` / `@each` / `list.append()`.
+Prettier 3.9.6 drops it everywhere but `var()`; we keep it whenever the list has exactly one element
+(multi-element lists and function arguments still drop theirs, the list is a list without it).
+
+## trailing-comma-none-before-tail-comment
+
+- Why: uniform-rule (a semantic no-op comma follows the option; Prettier's CSS printer keeps the source comma while its JS printer drops it)
+- Pin: `tests/fixtures/format/scss/trailing-comma-none/single-item-list.scss`
+
+```scss
+/* input, trailingComma: none */
+$map: (a: 1, b: 2,
+  // own
+);
+
+/* ours */
+$map: (
+  a: 1,
+  b: 2
+  // own
+);
+
+/* prettier */
+$map: (
+  a: 1,
+  b: 2,
+  // own
+);
+```
+
+A trailing comma before an own-line comment is the same no-op as any other trailing comma, so `trailingComma: none` drops it.
+
+Prettier's postcss printer prints the comment as a list member, so a source comma before it becomes the separator and survives the option
+(`scss/map/15193.scss` pins that shape; the issue itself was about the comma landing INSIDE the comment).
+Its JS printer follows the option (`[1, 2\n // own]`), and so do all our formatter crates.
+
 ## own-line-trailing-comment-keeps-line
 
 - Why: prettier-bug
-- Pin: `tests/fixtures/format/scss/module-config-comments.scss`
+- Pin: `tests/fixtures/format/scss/module-config-comments.scss`, `tests/fixtures/format/scss/paren-tail-own-line-comment.scss`
 
 ```scss
 /* input */
@@ -453,11 +517,14 @@ Prettier's own #18530 / #19091 fixed subsets of this; we extend the same rule to
 );
 ```
 
-An own-line trailing comment before a list's closing `)` keeps its own line, in maps AND `@use`/`@forward
-with (...)` configs (for maps the trailing comma is also kept). Prettier pulls the comment up onto the last
-item's line, a `lineSuffix` artifact of its comma-group printing, and drops the map's trailing comma.
-Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the
-author's visual grouping.
+An own-line trailing comment before a closing `)` keeps its own line:
+in maps and `@use`/`@forward with (...)` configs (any comment kind),
+in map-item lists (any kind, the body is already one item per line),
+and in paren lists, call/`@include` arguments and `@mixin` parameters
+(`//` only: an own-line block comment in a fill body is a fill item, see AGENTS.md).
+
+Prettier pulls the comment up onto the last item's line, a `lineSuffix` artifact of its comma-group printing.
+Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the author's visual grouping.
 
 ## map-leading-comment-forced-break
 

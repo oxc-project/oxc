@@ -193,10 +193,10 @@ The harness snapshots both `--print-width 80` and `100`; verify fixtures at both
 
 ### Prettier conformance
 
-At the current version (v3.9.6), the divergences of eight files have been confirmed and are intentional (see DIVERGENCES.md):
+At the current version (v3.9.6), these divergences have been confirmed and are intentional (see DIVERGENCES.md):
 
 - CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`
-- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 

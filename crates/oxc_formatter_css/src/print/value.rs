@@ -570,7 +570,7 @@ pub(super) fn write_declaration_value<'a>(
         && (groups.iter().enumerate().any(|(i, (g, _))| comma_group_is_multi(g, i == 0))
             || has_comments);
 
-    write_value_groups(&groups, ctx, force_hard_line, true, f);
+    write_value_groups(&groups, ctx, force_hard_line, false, f);
 }
 
 /// Does this comma group count as a `value-comma_group` for Prettier's `shouldBreakList`?
@@ -604,11 +604,13 @@ pub(super) fn write_group_comma(comma_start: Option<u32>, f: &mut CssFormatter<'
 
 /// Top-level comma-group list layout, shared between flat component streams and SCSS comma lists.
 /// Each group comes paired with the start of its trailing comma (see [`split_comma_groups`] / [`write_group_comma`]).
+/// `keep_trailing_comma`: the last group's comma is written too (see [`scss::is_single_item_list`]);
+/// only a one-group list sets it, so it matters to the fill branch alone.
 pub(super) fn write_value_groups<'a>(
     groups: &[(&[ComponentValue<'a>], Option<u32>)],
     ctx: ValueContext<'a>,
     force_hard_line: bool,
-    _top_level: bool,
+    keep_trailing_comma: bool,
     f: &mut CssFormatter<'_, 'a>,
 ) {
     // A single comma group never forces (it isn't a list)
@@ -688,7 +690,7 @@ pub(super) fn write_value_groups<'a>(
                 let gctx = if is_last { ctx } else { ValueContext { tail_bound: None, ..ctx } };
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write_comma_group(group_values, gctx, f);
-                    if !is_last {
+                    if !is_last || keep_trailing_comma {
                         write_group_comma(comma, f);
                     }
                 });
@@ -713,6 +715,48 @@ pub(super) fn comment_is_own_line(comment: comments::CssComment, source: SourceT
         }
     }
     true
+}
+
+/// Comments between the last element and its closing `)`.
+///
+/// - Same-line: glued to the element, `a /* c */)`
+///   - A `//` also forces the group open, so `)` lands on the next line
+/// - Own-line `//`: keeps its own line (DIVERGENCES.md#own-line-trailing-comment-keeps-line)
+/// - Own-line block comment: glued too, like any value-level block comment
+///   - it carries no line semantics, and keeping it own-line would pin a wrapped layout
+///   - With `body_hard_broken` it keeps its own line instead:
+///     the body already prints one element per line, so there is no wrapped layout to pin.
+/// - After a `//`: always a new line, or the `//` would swallow the next comment.
+fn write_paren_tail_comments(
+    tail: &[comments::CssComment],
+    body_hard_broken: bool,
+    f: &mut CssFormatter<'_, '_>,
+) {
+    let source = f.context().source_text();
+    let mut after_inline = false;
+    for &comment in tail {
+        let keeps_line = comment.inline || body_hard_broken;
+        if after_inline || (keeps_line && comment_is_own_line(comment, source)) {
+            write!(f, hard_line_break());
+        } else {
+            write!(f, space());
+        }
+        comments::write_single_comment(comment, f);
+        if comment.inline {
+            write!(f, expand_parent());
+        }
+        after_inline = comment.inline;
+    }
+}
+
+/// Drains the comments before `r_paren` and writes them per [`write_paren_tail_comments`].
+pub(super) fn flush_paren_tail_comments(
+    r_paren: u32,
+    body_hard_broken: bool,
+    f: &mut CssFormatter<'_, '_>,
+) {
+    let tail = f.context().comments().take_before(r_paren);
+    write_paren_tail_comments(tail, body_hard_broken, f);
 }
 
 /// Emits pending comments that precede `upper_bound` inline
@@ -1365,76 +1409,80 @@ pub(super) fn write_component_value<'a>(
             // `$var: ((a, b), (c, d))` / map item values: one item per line.
             // ONLY a comma-separated list takes this break:
             // the trailing comma is a semantic no-op there and NOWHERE else.
+            //
             // NOTE: `(x,)` is a single-element list in Sass,
             // so adding it to `($a + $b)` / `(a b)` / `(-$a)` changes the value
             // and `2 * ($a + $b,)` fails to compile.
             // (Prettier 3.9.1 does all of these; #19091 exempted single-node scalars only)
+            //
+            // The reverse also holds: `("a",)` keeps its comma regardless of `trailing_commas`
+            // (see `is_single_item_list`; prettier#19928 preserves it too).
+            let comma_list = match &*paren.expr {
+                ComponentValue::SassList(list) if list.comma_spans.is_some() => Some(list),
+                _ => None,
+            };
+            let keep_trailing_comma = comma_list.is_some_and(scss::is_single_item_list);
+            // A single-item list of ONE component value (`k: ("a",)`, `k: ((1 2),)`, `k: (fn(1),)`)
+            // is not a map item and stays flat (`isSCSSMapItemNode`'s "parenthesized scalar" exit):
+            // only a multi-token item (`k: (1 2,)`, `k: ($a + $b,)`) is a `value-comma_group` there.
+            let single_scalar_item = keep_trailing_comma
+                && comma_list.is_some_and(|list| {
+                    !matches!(
+                        list.elements[0],
+                        ComponentValue::SassList(_) | ComponentValue::SassBinaryExpression(_)
+                    )
+                });
+            let inner_ctx = ValueContext { paren_break: false, ..ctx };
+            let trailing = f.options().allow_trailing_comma();
+            let r_paren = to_span(paren.span()).end.saturating_sub(1);
             if ctx.paren_break
-                && let ComponentValue::SassList(list) = &*paren.expr
-                && list.comma_spans.is_some()
+                && !single_scalar_item
+                && let Some(list) = comma_list
             {
                 // Comma-list map-item values always break (`isSCSSMapItemNode`),
                 // with a trailing comma per option.
-                let inner_ctx = ValueContext { paren_break: false, ..ctx };
-                let trailing = f.options().allow_trailing_comma();
-                let elements = &list.elements;
-                let comma_spans = list.comma_spans.as_ref();
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, hard_line_break());
-                    for (i, el) in elements.iter().enumerate() {
+                    for (i, el) in list.elements.iter().enumerate() {
                         if i > 0 {
-                            write_group_comma(
-                                comma_spans.and_then(|s| s.get(i - 1)).map(|sp| to_span(sp).start),
-                                f,
-                            );
                             write!(f, hard_line_break());
                         }
                         write_component_value(el, inner_ctx, f);
+                        let is_last = i + 1 == list.elements.len();
+                        if !is_last || keep_trailing_comma {
+                            write_group_comma(scss::list_comma_start(list, i), f);
+                        } else if trailing {
+                            write!(f, ",");
+                        }
                     }
-                    if trailing {
-                        write!(f, ",");
-                    }
+                    flush_paren_tail_comments(r_paren, /* body_hard_broken */ true, f);
                 });
                 write!(f, ["(", indent(&body), hard_line_break(), ")"]);
                 return;
             }
-            let inner_ctx = ValueContext { paren_break: false, ..ctx };
-            let trailing = f.options().allow_trailing_comma();
-            let r_paren = to_span(paren.span()).end.saturating_sub(1);
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 write!(f, soft_line_break());
                 // A comma list directly inside parens shares the paren's
                 // indent (no nested group level).
-                if let ComponentValue::SassList(list) = &*paren.expr
-                    && list.comma_spans.is_some()
-                {
-                    let comma_spans = list.comma_spans.as_ref();
+                if let Some(list) = comma_list {
                     for (i, el) in list.elements.iter().enumerate() {
                         if i > 0 {
-                            write_group_comma(
-                                comma_spans.and_then(|s| s.get(i - 1)).map(|sp| to_span(sp).start),
-                                f,
-                            );
                             write!(f, soft_line_break_or_space());
                         }
                         write_component_value(el, inner_ctx, f);
-                    }
-                    // `ctx.paren_break` cannot be set here,
-                    // a comma list with it takes the hard-break branch above.
-                    if trailing && ctx.map_key {
-                        write!(f, if_group_breaks(&text(",")));
+                        let is_last = i + 1 == list.elements.len();
+                        if !is_last || keep_trailing_comma {
+                            write_group_comma(scss::list_comma_start(list, i), f);
+                        } else if trailing && ctx.map_key {
+                            // `ctx.paren_break` cannot be set here,
+                            // a comma list with it takes the hard-break branch above.
+                            write!(f, if_group_breaks(&text(",")));
+                        }
                     }
                 } else {
                     write_component_value(&paren.expr, inner_ctx, f);
                 }
-                // Inline comments before `)` stay inside, forcing the break
-                for &comment in f.context().comments().take_before(r_paren) {
-                    write!(f, " ");
-                    comments::write_single_comment(comment, f);
-                    if comment.inline {
-                        write!(f, expand_parent());
-                    }
-                }
+                flush_paren_tail_comments(r_paren, /* body_hard_broken */ false, f);
             });
             write!(
                 f,
@@ -2185,17 +2233,11 @@ pub(super) fn write_function<'a>(
                 write_group_comma(comma, f);
             }
         }
-        // Comments between the last argument and `)` wrap as fill items;
-        // `//` comments stay glued to the argument (their hardline follows).
+        // Block comments between the last argument and `)` wrap as fill items;
+        // with a `//` among them they take the paren-tail layout instead.
         let tail: &'a [comments::CssComment] = f.context().comments().take_before(r_paren);
         if tail.iter().any(|c| c.inline) {
-            for &comment in tail {
-                write!(f, " ");
-                comments::write_single_comment(comment, f);
-                if comment.inline {
-                    write!(f, [expand_parent(), hard_line_break()]);
-                }
-            }
+            write_paren_tail_comments(tail, /* body_hard_broken */ false, f);
         } else if !tail.is_empty() {
             let inner = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 let mut filler = f.fill();
@@ -2205,9 +2247,6 @@ pub(super) fn write_function<'a>(
                 for &comment in tail {
                     let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                         comments::write_single_comment(comment, f);
-                        if comment.inline {
-                            write!(f, [expand_parent(), hard_line_break()]);
-                        }
                     });
                     filler.entry(&soft_line_break_or_space(), &entry);
                 }

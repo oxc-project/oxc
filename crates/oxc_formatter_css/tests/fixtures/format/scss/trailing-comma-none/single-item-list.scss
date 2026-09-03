@@ -1,0 +1,23 @@
+// `trailingComma: none` drops the commas the formatter would ADD.
+// A single-item list's source comma is the value and stays.
+$single-string: ("a",);
+$bare-string: "a",;
+$map-scalar-item: (k: ("a",));
+$map-multi-token-item: (k: (1 2,));
+
+// Maps and multi-element lists lose theirs.
+$single-entry-map: (a: 1,);
+$map: (a: 1, b: 2,);
+$map-list-item: (k: (1, 2,));
+
+// An own-line comment before `)` changes nothing: the comma is a no-op there, so it goes too
+// (DIVERGENCES.md "trailing-comma-none-before-tail-comment": Prettier keeps a source comma).
+$map-own-line-comment: (a: 1, b: 2,
+  // own
+);
+$map-item-own-line-comment: (k: (1, 2,
+  // own
+));
+$map-item-own-line-block: (k: (1, 2,
+  /* own */
+));
