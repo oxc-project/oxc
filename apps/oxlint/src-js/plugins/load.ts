@@ -138,7 +138,7 @@ const NOT_A_MODULE_HINT =
  * @param err - Error thrown while loading the plugin
  * @returns Hint to append to the error message, or empty string if the error is unrelated
  */
-export function getPluginLoadErrorHint(err: unknown): string {
+function getPluginLoadErrorHint(err: unknown): string {
   if (!(err instanceof SyntaxError)) return "";
   const { message } = err;
   if (!COMMONJS_SYNTAX_ERROR_MESSAGES.has(message)) return "";
