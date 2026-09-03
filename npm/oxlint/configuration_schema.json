@@ -4441,6 +4441,9 @@
         "nextjs/no-img-element": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "nextjs/no-location-assign-relative-destination": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "nextjs/no-page-custom-font": {
           "$ref": "#/definitions/RuleNoConfig"
         },
