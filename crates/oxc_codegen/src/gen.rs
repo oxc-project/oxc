@@ -891,7 +891,9 @@ impl Gen for Function<'_> {
                 type_parameters.print(p, ctx);
             }
             if has_comments_at_params {
-                p.print_soft_space();
+                if !matches!(p.last_byte(), Some(b' ' | b'\n' | b'\t')) {
+                    p.print_soft_space();
+                }
                 p.print_leading_comments_anchored_to_self(self.params.span.start);
             }
             if p.has_node_comments_before_id(self.params.node_id())
