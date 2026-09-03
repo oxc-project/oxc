@@ -35,6 +35,27 @@ fn bench_semantic(criterion: &mut Criterion) {
                 });
             });
         });
+
+        let comments_id = BenchmarkId::new("comments", &file.file_name);
+        group.bench_function(comments_id, |b| {
+            b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let program = black_box(program);
+
+                runner.run(|| {
+                    let ret = SemanticBuilder::new_compiler()
+                        .with_comment_attachments(true)
+                        .build(&program);
+                    let ret = black_box(ret);
+                    // Drop `Semantic` inside the measured section, matching the
+                    // baseline. Attachments and diagnostics normally outlive
+                    // semantic construction, so drop them outside it.
+                    (ret.comment_attachments, ret.diagnostics)
+                });
+            });
+        });
     }
     group.finish();
 }

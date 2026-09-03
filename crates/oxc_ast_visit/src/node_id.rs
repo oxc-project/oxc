@@ -7,7 +7,7 @@ use crate::Visit;
 ///
 /// This is the lightweight alternative to semantic analysis for consumers that
 /// need stable node identities but do not need scopes, symbols, or references.
-/// IDs use the same depth-first traversal order as [`oxc_semantic::SemanticBuilder`],
+/// IDs use the same depth-first traversal order as `oxc_semantic::SemanticBuilder`,
 /// starting with [`NodeId::ROOT`] for the [`Program`].
 ///
 /// Running semantic analysis later will assign the same IDs as long as the AST
