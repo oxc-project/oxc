@@ -25,7 +25,7 @@
 
 ## gql-in-js
 
-### Option 1: 10/12 (83.33%)
+### Option 1: 11/12 (91.67%)
 
 ```json
 {"printWidth":80}
@@ -34,9 +34,8 @@
 | File | Note |
 | :--- | :--- |
 | [edge-cases/gql-in-js/template-expression-indent.js](diffs/gql-in-js/edge-cases__gql-in-js__template-expression-indent.js.md) | embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent |
-| [externals/prettier/js/multiparser-graphql/graphql-tag.js](diffs/gql-in-js/externals__prettier__js__multiparser-graphql__graphql-tag.js.md) | `{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter |
 
-### Option 2: 10/12 (83.33%)
+### Option 2: 11/12 (91.67%)
 
 ```json
 {"printWidth":100}
@@ -45,7 +44,6 @@
 | File | Note |
 | :--- | :--- |
 | [edge-cases/gql-in-js/template-expression-indent.js](diffs/gql-in-js/edge-cases__gql-in-js__template-expression-indent.js.md) | embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent |
-| [externals/prettier/js/multiparser-graphql/graphql-tag.js](diffs/gql-in-js/externals__prettier__js__multiparser-graphql__graphql-tag.js.md) | `{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter |
 
 ## css-in-js
 

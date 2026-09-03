@@ -2,35 +2,185 @@
 source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-# DIVERGENCE: a comment right after an opening delimiter stays inline
-# (`{ # c`); Prettier moves it own-line as the first child's leading.
-# Asymmetric there: `test # t` / `} # e` stay inline in both.
-# See DIVERGENCES.md "comment-after-opening-delimiter".
+# A comment right after an opening `{` / `(` / `[` leads the first child on its
+# own line, whatever the opener. Prettier does this only where no node precedes
+# the comment inside the parent (selection sets, `schema`, values); elsewhere its
+# attachment makes the comment a trailing of the preceding node:
+# - `type A { # c` stays on the `{` line (DIVERGENCES.md "fields-block-opener-comment")
+# - `a( # c` jumps past the `)` (DIVERGENCES.md "argument-list-opener-comment")
+# `test # t` / `} # e` stay inline everywhere.
 { # c
   test # t
 } # e
+query Q($a: Int) { # c
+  a
+}
+fragment F on T { # c
+  a
+}
+schema { # c
+  query: Q
+}
+query R($v: In = { # c
+  a: 1 }) { a }
+query S($v: [Int] = [ # c
+  1 ]) { a }
+# DIVERGENCE (fields-block-opener-comment): Prettier keeps `{ # c` inline,
+# and pushes `@d` onto its own line when a directive precedes the comment.
+type A { # c
+  f: Int
+}
+enum E { # c
+  X
+}
+type B implements I @d { # c
+  f: Int
+}
+# DIVERGENCE (argument-list-opener-comment): Prettier prints `a(x: 1) # c`.
+query T { a( # c
+  x: 1) }
+query U( # c
+  $a: Int) { a }
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-# DIVERGENCE: a comment right after an opening delimiter stays inline
-# (`{ # c`); Prettier moves it own-line as the first child's leading.
-# Asymmetric there: `test # t` / `} # e` stay inline in both.
-# See DIVERGENCES.md "comment-after-opening-delimiter".
-{ # c
+# A comment right after an opening `{` / `(` / `[` leads the first child on its
+# own line, whatever the opener. Prettier does this only where no node precedes
+# the comment inside the parent (selection sets, `schema`, values); elsewhere its
+# attachment makes the comment a trailing of the preceding node:
+# - `type A { # c` stays on the `{` line (DIVERGENCES.md "fields-block-opener-comment")
+# - `a( # c` jumps past the `)` (DIVERGENCES.md "argument-list-opener-comment")
+# `test # t` / `} # e` stay inline everywhere.
+{
+  # c
   test # t
 } # e
+query Q($a: Int) {
+  # c
+  a
+}
+fragment F on T {
+  # c
+  a
+}
+schema {
+  # c
+  query: Q
+}
+query R(
+  $v: In = {
+    # c
+    a: 1
+  }
+) {
+  a
+}
+query S(
+  $v: [Int] = [
+    # c
+    1
+  ]
+) {
+  a
+}
+# DIVERGENCE (fields-block-opener-comment): Prettier keeps `{ # c` inline,
+# and pushes `@d` onto its own line when a directive precedes the comment.
+type A {
+  # c
+  f: Int
+}
+enum E {
+  # c
+  X
+}
+type B implements I @d {
+  # c
+  f: Int
+}
+# DIVERGENCE (argument-list-opener-comment): Prettier prints `a(x: 1) # c`.
+query T {
+  a(
+    # c
+    x: 1
+  )
+}
+query U(
+  # c
+  $a: Int
+) {
+  a
+}
 
 -------------------
 { printWidth: 100 }
 -------------------
-# DIVERGENCE: a comment right after an opening delimiter stays inline
-# (`{ # c`); Prettier moves it own-line as the first child's leading.
-# Asymmetric there: `test # t` / `} # e` stay inline in both.
-# See DIVERGENCES.md "comment-after-opening-delimiter".
-{ # c
+# A comment right after an opening `{` / `(` / `[` leads the first child on its
+# own line, whatever the opener. Prettier does this only where no node precedes
+# the comment inside the parent (selection sets, `schema`, values); elsewhere its
+# attachment makes the comment a trailing of the preceding node:
+# - `type A { # c` stays on the `{` line (DIVERGENCES.md "fields-block-opener-comment")
+# - `a( # c` jumps past the `)` (DIVERGENCES.md "argument-list-opener-comment")
+# `test # t` / `} # e` stay inline everywhere.
+{
+  # c
   test # t
 } # e
+query Q($a: Int) {
+  # c
+  a
+}
+fragment F on T {
+  # c
+  a
+}
+schema {
+  # c
+  query: Q
+}
+query R(
+  $v: In = {
+    # c
+    a: 1
+  }
+) {
+  a
+}
+query S(
+  $v: [Int] = [
+    # c
+    1
+  ]
+) {
+  a
+}
+# DIVERGENCE (fields-block-opener-comment): Prettier keeps `{ # c` inline,
+# and pushes `@d` onto its own line when a directive precedes the comment.
+type A {
+  # c
+  f: Int
+}
+enum E {
+  # c
+  X
+}
+type B implements I @d {
+  # c
+  f: Int
+}
+# DIVERGENCE (argument-list-opener-comment): Prettier prints `a(x: 1) # c`.
+query T {
+  a(
+    # c
+    x: 1
+  )
+}
+query U(
+  # c
+  $a: Int
+) {
+  a
+}
 
 ===================== End =====================

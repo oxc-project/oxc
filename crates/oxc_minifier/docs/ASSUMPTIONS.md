@@ -2,7 +2,7 @@
 
 The Oxc minifier makes certain assumptions about JavaScript code to achieve optimal compression. These assumptions are standard for typical JavaScript but may not hold for unusual code patterns.
 
-These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
+These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
 
 ## Core Assumptions
 

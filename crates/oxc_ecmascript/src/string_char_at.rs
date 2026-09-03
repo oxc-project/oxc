@@ -14,7 +14,12 @@ impl StringCharAt for &str {
 
         let position = pos.unwrap_or(0.0).to_integer_or_infinity_as_i64();
         let position = match position {
-            ToIntegerOrInfinityResult::Value(v) if v >= 0 => v.to_usize().unwrap(),
+            ToIntegerOrInfinityResult::Value(v)
+                if v >= 0
+                    && let Some(v) = v.to_usize() =>
+            {
+                v
+            }
             _ => return StringCharAtResult::OutOfRange,
         };
 
@@ -47,10 +52,18 @@ mod test {
         assert_eq!(s.char_at(Some(4.0)), StringCharAtResult::OutOfRange);
         assert_eq!(s.char_at(Some(0.5)), StringCharAtResult::Value('t'));
         assert_eq!(s.char_at(None), StringCharAtResult::Value('t'));
+        assert_eq!(s.char_at(Some(f64::NAN)), StringCharAtResult::Value('t'));
         assert_eq!(s.char_at(Some(f64::INFINITY)), StringCharAtResult::OutOfRange);
         assert_eq!(s.char_at(Some(f64::NEG_INFINITY)), StringCharAtResult::OutOfRange);
         assert_eq!(s.char_at(Some(-1.0)), StringCharAtResult::OutOfRange);
         assert_eq!(s.char_at(Some(-1.1)), StringCharAtResult::OutOfRange);
         assert_eq!(s.char_at(Some(-1_073_741_825.0)), StringCharAtResult::OutOfRange);
+        assert_eq!(s.char_at(Some(f64::from(u32::MAX))), StringCharAtResult::OutOfRange);
+        assert_eq!(s.char_at(Some(f64::from(u32::MAX) + 1.0)), StringCharAtResult::OutOfRange);
+
+        let astral = "𝄞";
+        assert_eq!(astral.char_at(Some(0.0)), StringCharAtResult::InvalidChar(0xd834));
+        assert_eq!(astral.char_at(Some(1.0)), StringCharAtResult::InvalidChar(0xdd1e));
+        assert_eq!(astral.char_at(Some(2.0)), StringCharAtResult::OutOfRange);
     }
 }

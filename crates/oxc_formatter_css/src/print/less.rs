@@ -8,7 +8,8 @@ use oxc_css_parser::ast::{
 use oxc_formatter_core::{
     Buffer,
     builders::{
-        group, hard_line_break, soft_line_break_or_space, soft_line_indent_or_space, space, text,
+        group, hard_line_break, indent, soft_line_break_or_space, soft_line_indent_or_space, space,
+        text,
     },
     write,
 };
@@ -17,8 +18,10 @@ use crate::{
     comments::write_single_comment,
     format::to_span,
     print::{
-        CssFormatter, format_with, selector,
-        statement::{write_block, write_verbatim_prelude_rule},
+        CssFormatter, format_with,
+        scss::write_top_level_list_element,
+        selector,
+        statement::{write_block, write_terminator_tail_comments, write_verbatim_prelude_rule},
         value::{self, ValueContext},
     },
 };
@@ -38,26 +41,14 @@ pub(super) fn write_less_variable_declaration<'a>(
     let colon_end = to_span(&decl.colon_span).end;
     // Inline comments around the colon make postcss-less treat this as a plain at-rule:
     // the raw text is kept and the block loses its `;`.
-    let value_start_pos = to_span(decl.value.span()).start;
+    let value_start = to_span(decl.value.span()).start;
     let inline_before_colon = f.context().comments().iter_before(colon_end).any(|c| c.inline);
     let inline_after_colon = f
         .context()
         .comments()
-        .iter_before(value_start_pos)
+        .iter_before(value_start)
         .any(|c| c.inline && c.span.start >= colon_end);
-    // Inline comment AFTER the colon only: still a variable;
-    // the comment and line structure are kept (`@var: // c\n{`).
-    if !inline_before_colon && inline_after_colon {
-        write!(f, [":", space()]);
-        for &comment in f.context().comments().take_before(value_start_pos) {
-            write_single_comment(comment, f);
-            write!(f, hard_line_break());
-        }
-        crate::print::scss::write_top_level_value(&decl.value, value_ctx, f);
-        return true;
-    }
-    if inline_before_colon {
-        let value_start = to_span(decl.value.span()).start;
+    let indented = if inline_before_colon {
         let _ = f.context().comments().take_before(value_start);
         let raw = source.slice_range(name_span.end, value_start);
         write!(f, text(raw.trim_end()));
@@ -72,13 +63,35 @@ pub(super) fn write_less_variable_declaration<'a>(
             return false;
         }
         write!(f, space());
-        crate::print::scss::write_top_level_value(&decl.value, value_ctx, f);
-        return true;
+        false
+    } else if inline_after_colon {
+        // Inline comment AFTER the colon only: still a variable;
+        // the comment and line structure are kept (`@var: // c\n{`),
+        // and a plain value continues one level under the name (Prettier's at-rule params indent).
+        // A detached ruleset keeps its `{` under the name.
+        write!(f, [":", space()]);
+        !matches!(&decl.value, ComponentValue::LessDetachedRuleset(_))
+    } else {
+        let _ = f.context().comments().take_before(colon_end);
+        write!(f, [":", space()]);
+        false
+    };
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        if inline_after_colon {
+            for &comment in f.context().comments().take_before(value_start) {
+                write_single_comment(comment, f);
+                write!(f, hard_line_break());
+            }
+        }
+        write_top_level_list_element(&decl.value, value_ctx, f);
+    });
+    if indented {
+        // No `dedent` unlike `write_declaration`: the value opens no indent of its own (`no_leading_softline`)
+        write!(f, indent(&body));
+    } else {
+        write!(f, body);
     }
-    // postcss-less drops (block) comments between the name and the colon
-    let _ = f.context().comments().take_before(colon_end);
-    write!(f, [":", space()]);
-    crate::print::scss::write_top_level_value(&decl.value, value_ctx, f);
+    write_terminator_tail_comments(to_span(&decl.span).end, f);
     true
 }
 

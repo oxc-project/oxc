@@ -171,18 +171,13 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         if fused {
             write!(f, text(source.text_for(&prelude_span)));
         } else if is_control_directive {
-            // A fully parenthesized condition keeps `{` on the `)` line
-            // (Prettier's `hasParensAroundNode`).
-            let has_parens = matches!(
-                prelude,
-                AtRulePrelude::SassExpr(value)
-                    if matches!(&**value, ComponentValue::SassParenthesizedExpression(_))
-            );
-            if has_parens {
+            if let AtRulePrelude::SassExpr(value) = prelude {
+                // `@while cond` / `@else cond`: `@if`'s condition layout
+                // (operator chain break, `{` placement, comments leading their operand).
                 write!(f, space());
-                write_at_rule_prelude(prelude, f);
-                write!(f, space());
+                scss::write_control_condition(value, f);
             } else {
+                // `@each` / `@for`: the prelude and the gap before `{` share one group.
                 let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     write!(f, space());
                     write_at_rule_prelude(prelude, f);

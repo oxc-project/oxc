@@ -1,0 +1,14 @@
+// A comment before an `@include` argument leads that argument (`/* c */ 1`),
+// never crossing it or its comma; `//` keeps its own line.
+// Same rule as function arguments (`fn( // c`) and paren list elements.
+@include m( // c
+  1);
+@include m( /* c */ 1);
+@include m(1, // c
+  2);
+@include m(1, /* c */ 2);
+@include m( // c
+  $k: 1);
+@include m($a: 1, /* c */ $b: 2);
+@include m( // c
+  1 2, 3);

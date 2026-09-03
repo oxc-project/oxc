@@ -677,8 +677,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl_start = self.cur_start();
 
         // export default /* @__NO_SIDE_EFFECTS__ */ ...
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
         // export default @decorator ...
         if self.at(Kind::At) {
@@ -729,8 +729,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         /* r#async */ true,
                         FunctionKind::DefaultExport,
                     );
-                    if has_no_side_effects_comment {
+                    if let Some(comments) = no_side_effects_comments {
                         func.pure = true;
+                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
                     }
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
                 }
@@ -771,8 +772,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 /* r#async */ false,
                 FunctionKind::DefaultExport,
             );
-            if has_no_side_effects_comment {
+            if let Some(comments) = no_side_effects_comments {
                 func.pure = true;
+                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
             return ExportDefaultDeclarationKind::FunctionDeclaration(func);
         }

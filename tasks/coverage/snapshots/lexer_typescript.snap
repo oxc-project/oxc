@@ -1,0 +1,783 @@
+commit: b465fdbf
+
+lexer_typescript Summary:
+AST Parsed     : 12419/12419 (100.00%)
+Positive Passed: 12030/12419 (96.87%)
+Tokens: tasks/coverage/typescript/tests/cases/compiler/allowJscheckJsTypeParameterNoCrash.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/amdDeclarationEmitNoExtraDeclare.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/arrayConcat3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/asyncYieldStarContextualType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/awaitedType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeCrash.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeJQuery.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeNoLib.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeStrictNull.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/baseTypeWrappingInstantiationChain.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/bindingPatternCannotBeOnlyInferenceSource.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/cachedContextualTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/cannotIndexGenericWritingError.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/circularConstrainedMappedTypeNoCrash.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/circularReferenceInReturnType2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/circularlyConstrainedMappedTypeContainingConditionalNoInfiniteInstantiationDepth.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/circularlySimplifyingConditionalTypesNoCrash.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/classReferencedInContextualParameterWithinItsOwnBaseExpression.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/collectionPatternNoError.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/comparisonOfPartialDeepAndIndexedAccessTerminatesWithoutError.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/complexRecursiveCollections.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexedAccessKeyofReliesOnKeyofNeverUpperBound.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexesOfIntersectionsAreInferencable.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/conditionalDoesntLeakUninstantiatedTypeParameter.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeDiscriminatingLargeUnionRegularTypeFetchingSpeedReasonable.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeDoesntSpinForever.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeSimplification.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/conditionalTypesSimplifyWhenTrivial.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/constraintOfRecursivelyMappedTypeWithConditionalIsResolvable.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/constraintReferencingTypeParameterFromSameTypeParameterList.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/constraintWithIndexedAccess.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualParamTypeVsNestedReturnTypeInference4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualTupleTypeParameterReadonly.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix5.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualTypeFunctionObjectPropertyIntersection.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualTypesNegatedTypeLikeConstraintInGenericMappedType2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfOptionalMembers.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypeAsyncFunctionReturnTypeFromUnion.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contravariantInferenceAndTypeGuard.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/contravariantOnlyInferenceFromAnnotatedFunction.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/customAsyncIterator.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentOfGenericInterface.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declFileGenericType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationAssertionNodeNotReusedWhenTypeNotEquivalent1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitBindingPatternWithReservedWord.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGlobalThisPreserved.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitHigherOrderRetainedGenerics.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIsolatedDeclarationErrorNotEmittedForNonEmittedFile.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLocalClassDeclarationMixin.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPrivatePromiseLikeInterface.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPromise.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/declarationsWithRecursiveInternalTypesProduceUniqueTypeParams.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedCheck.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/deeplyNestedMappedTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/destructureOfVariableSameAsShorthand.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/discriminateWithOptionalProperty2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/divideAndConquerIntersections.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/errorElaboration.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/errorsInGenericTypeReference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/excessPropertyCheckIntersectionWithRecursiveType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/exportClassExtendingIntersection.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/extractInferenceImprovement.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/fileWithNextLine2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/fileWithNextLine3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericAssignmentCompatWithInterfaces1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceInConditionalTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericCallbacksAndClassHierarchy.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericClassPropertyInheritanceSpecialization.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericConstraint2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericConstraint3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericDefaults.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericFunctionInference1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsAndConditionalInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericInheritedDefaultConstructors.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericRestTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions6.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/genericUnboundedTypeParamAssignability.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeNesting.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/icomparable.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/identicalGenericConditionalsWithInferRelated.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/identicalTypesNoDifferByCheckOrder.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/ignoredJsxAttributes.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/importedAliasedConditionalTypeInstantiation.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inKeywordTypeguard.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/indexedAccessKeyofNestedSimplifiedSubstituteUnwrapped.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/indexedAccessRelation.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/indexedAccessRetainsIndexSignature.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/indexedAccessTypeConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/indexingTypesWithNever.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferConditionalConstraintMappedMember.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferTypeConstraintInstantiationCircularity.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferTypeParameterConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceAndSelfReferentialConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceContextualReturnTypeUnion2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceExactOptionalProperties2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceLimit.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceOptionalProperties.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceOptionalPropertiesStrict.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferenceOuterResultNotIncorrectlyInstantiatedWithInnerResult.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferredReturnTypeIncorrectReuse1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inferrenceInfiniteLoopWithSubtyping.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infiniteConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infiniteExpandingTypeThroughInheritanceInstantiation.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingBaseTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingOverloads.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypeAssignability.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/infinitelyExpandingTypes4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/inlineMappedTypeModifierDeclarationEmit.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/instanceSubtypeCheck1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/instantiateConstraintsToTypeArguments2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/instantiateContextualTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/instantiatedBaseTypeConstraints2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/instantiationExpressionErrorNoCrash.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/interfaceMergedUnconstrainedNoErrorIrrespectiveOfOrder.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/interfaceWithMultipleDeclarations.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/intersectionConstraintReduction.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/invariantGenericErrorElaboration.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsDeclarationsWithDefaultAsNamespaceLikeMerge.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxComponentTypeErrors.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxElementType.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxGenericComponentWithSpreadingResultOfGenericFunction.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsTypeArgumentErrors.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexport.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexportMissingAliasTarget.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespace.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceReexports.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/keyofGenericExtendingClassDoubleLayer.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/keywordInJsxIdentifier.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/largeTupleTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/lateBoundConstraintTypeChecksCorrectly.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/limitDeepInstantiations.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/localTypeParameterInferencePriority.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeAndIndexSignatureRelation.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesInlineForm.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericWithKnownKeys.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeIndexedAccessConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceAliasSubstitution.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeTupleConstraintAssignability.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mappedTypeUnionConstraintInferences.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/maxConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/missingTypeArguments3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mixinOverMappedTypeNoCrash.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mixinPrivateAndProtected.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/mixingApparentTypeOverrides.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/multipleInferenceContexts.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/narrowingAssignmentReadonlyRespectsAssertion.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/narrowingPastLastAssignment.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/nestedCallbackErrorNotFlattened.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/nestedGenerics.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/nestedHomomorphicMappedTypesWithArrayConstraint1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/nestedInfinitelyExpandedRecursiveTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/noExcessiveStackDepthError.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/nonInferrableTypePropagation1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/nondistributiveConditionalTypeInfer.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/observableInferenceCanBeMade.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/overrideBaseIntersectionMethod.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/performanceComparisonOfStructurallyIdenticalInterfacesWithGenericSignatures.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExportedGenericInterface1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/promiseType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/propTypeValidatorInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/quickinfoTypeAtReturnPositionsInaccurate.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reactNamespaceJSXEmit.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reactReduxLikeDeferredInferenceAllowsAssignment.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalCrash3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalCrash4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalTypes2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveGenericTypeHierarchy.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveIdenticalAssignment.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveTupleTypeInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeAliasWithSpreadConditionalReturnNotCircular.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeParameterReferenceError1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeParameterReferenceError2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeRelations.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/recursiveTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reorderProperties.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/resolvingClassDeclarationWhenInBaseTypeResolution.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/returnTypeInferenceContextualParameterTypesInGenerator1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTupleContext.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeContextualTypesPerElementOfTupleConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceWidening2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeIntersectionConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/selfReferencingTypeReferenceInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/slashBeforeVariableDeclaration1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/sourceMap-LineBreaks.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/specedNoStackBlown.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/spuriousCircularityOnTypeImport.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/strictFunctionTypesErrors.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/strictSubtypeAndNarrowing.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable01.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable02.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/substituteReturnTypeSatisfiesConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/substitutionTypeNoMergeOfAssignableType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/substitutionTypePassedToExtends.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/symbolLinkDeclarationEmitModuleNames.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/testTypings.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/thisIndexOnExistingReadonlyFieldIsNotNever.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/thislessFunctionsNotContextSensitive1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/thislessFunctionsNotContextSensitive3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/tsxUnionMemberChecksFilterDataProps.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/twiceNestedKeyofIndexInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeArgumentInferenceApparentType2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeInferenceCacheInvalidation.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeParameterConstrainedToOuterTypeParameter2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeParameterExplicitlyExtendsAny.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeParameterOrderReversal.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typePartameterConstraintInstantiatedWithDefaultWhenCheckingDefault.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeVariableTypeGuards.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/typeofImportInstantiationExpression.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/underscoreTest1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/unionPropertyOfProtectedAndIntersectionProperty.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/unionReductionWithStringMappingAndIdenticalBaseTypeExistsNoCrash.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/unspecializedConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/varianceCallbacksAndIndexedAccesses.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/varianceProblingAndZeroOrderIndexSignatureRelationsAlign.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/varianceProblingAndZeroOrderIndexSignatureRelationsAlign2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/wideningWithTopLevelTypeParameter.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/compiler/wrappedRecursiveGenericType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/async/es2017/await_incorrectThisType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/classes/mixinClassesAnnotated.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/classes/mixinClassesAnonymous.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowGenericTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration10.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck29.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck30.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck31.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck64.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiteralInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/generatedContextualTyping.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessNumericLiterals.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadErrors.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/generators/generatorYieldContextualType.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/twoGenericInterfacesWithDifferentConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceExtendsObjectIntersection.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxSubtleSkipContextSensitiveBug.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsingError4.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution1.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution10.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution15.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution2.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution7.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentPreserveEmit.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxFragmentReactEmit.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxParseTests2.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit7.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution4.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload1.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload2.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload4.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload5.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments2.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments4.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType3.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType6.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericConstraint3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericConstraint5.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericConstraint6.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericConstraint7.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericsInTypeContexts2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserGenericsInVariableDeclaration1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens19.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeWithInterfaceMethod.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInitializer.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithInitializer.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/invalidMultipleVariableDeclarations.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/forStatements/forStatements.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/forStatements/forStatementsMultipleInvalidDecl.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/statements/throwStatements/throwStatements.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/forAwait/types.forAwait.es2018.1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionWithIndexSignatures.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/keyof/circularIndexedAccessErrors.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccess.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccess2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccessErrors.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofIntersection.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringLiteralsAssignedToStringMappings.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringMappingDeferralInConditionalTypes.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringMappingOverPatternLiterals.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringMappingReduction.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/isomorphicMappedTypeInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeAsClauses.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeModifiers.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes5.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesArraysTuples.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesGenericTuples.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericRestParameters3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/tuple/contextualTypeTupleEnd.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/partiallyNamedTuples2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/recurringTypeParamForContainerOfBase01.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/instantiationExpressions.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/wrappedAndRecursiveConstraints2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterIndirectlyConstrainedToItself.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithCallSignatures4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithConstructSignatures3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithConstructSignatures4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithGenericCallSignatures4.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance5.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance5.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/arrayLiteralsWithRecursiveGenerics.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/infiniteExpansionThroughInstantiation.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/infiniteExpansionThroughInstantiation2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/infiniteExpansionThroughTypeInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/nominalSubtypeCheckOfTypeParameter.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/nominalSubtypeCheckOfTypeParameter2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/objectTypeWithRecursiveWrappedProperty.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/objectTypeWithRecursiveWrappedProperty2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/objectTypeWithRecursiveWrappedPropertyCheckedNominally.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/recursiveTypeInGenericConstraint.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/recursiveTypeReferences1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/recursiveTypes/recursiveTypesUsedAsFunctionParameters.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithRecursiveConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithConstructSignatures2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithConstructSignatures3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithConstructSignatures5.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByConstraints2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingByConstraints3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericCallSignaturesDifferingTypeParameterCounts.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByConstraints.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByConstraints2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingByConstraints3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithGenericConstructSignaturesDifferingTypeParameterCounts.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/discriminatedUnionInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes2.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericFunctionParameters.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/noInfer.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/unionAndIntersectionInference3.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/unionTypeInference.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/union/contextualTypeWithUnionTypeMembers.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownControlFlow.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/types/unknown/unknownType2.ts
+

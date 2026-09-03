@@ -4,7 +4,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 ## array-hole-trailing-comment
 
-- Why: prettier-bug (attachment artifact)
+- Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
 
 ```js
@@ -18,11 +18,11 @@ const a = [1, ,/* c */];
 const a = [1 /* c */, ,];
 ```
 
-Prettier's attachment relocates the comment backward across the commas to the last real element; we keep it in place.
+Prettier's attachment relocates the comment backward across the commas (user content) to the last real element; we keep it in place.
 
 ## type-alias-trailing-comment-move
 
-- Why: uniform-rule
+- Why: uniform-rule (same construct, same output: exported type alias)
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
 
 ```ts
@@ -43,7 +43,7 @@ Prettier's attachment moves the comment behind the `;` only in the exported form
 
 ## paren-trailing-comment-operand-chain
 
-- Why: uniform-rule
+- Why: uniform-rule (same construct, same output: return / call / assign / arrow paren sites)
 - Pin: `tests/fixtures/js/comments/unary-argument-parens.js`
 
 ```js
@@ -71,7 +71,7 @@ Conditions are a separate shared rule (logical operands always break).
 
 ## operator-position-comment-double-space
 
-- Why: prettier-bug (separator-space artifact)
+- Why: uniform-rule (comment presence never changes layout)
 - Pin: `tests/fixtures/js/operator-position/comments.js`
 
 `experimentalOperatorPosition: "start"`, binary-like chains: a single space before the previous operand's flushed trailing line comment.
@@ -98,10 +98,11 @@ y =
 ```
 
 An artifact of Prettier's comment-extraction doc surgery: an unconditional separator space that its end-of-line trimming can only remove when no line-suffix comment flushes behind it.
+Same rule as CSS `comment-preceded-map-indent`: the comment stays, the tokens around it keep their comment-free layout.
 
 ## operator-position-intersection-own-line-comment
 
-- Why: uniform-rule
+- Why: invariant
 - Pin: `tests/fixtures/ts/operator-position/intersection.ts`
 
 `experimentalOperatorPosition: "start"`, intersection types: a leading own-line comment stays own-line, above the leading `&`.
@@ -123,12 +124,12 @@ type WithComment = SerializedProps
   { cause: unknown };
 ```
 
-Prettier prints it behind `& `, losing its own-line-ness and idempotency (the second pass inlines the type with the comment behind `;`).
-Binary-like chains hoist the comment in both formatters; one uniform rule (and the own-line invariant) over Prettier's internal inconsistency.
+Prettier's output changes line (own-line to same-line, behind `& `) and is not a fixpoint (the second pass inlines the type with the comment behind `;`).
+Binary-like chains hoist the comment in both formatters; the own-line invariant over Prettier's internal inconsistency.
 
 ## union-added-paren-comment-side
 
-- Why: uniform-rule
+- Why: uniform-rule (same construct, same output: array / indexed-access types)
 - Pin: `tests/fixtures/ts/union/paren-comments.ts`
 
 ```ts
@@ -147,9 +148,10 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 ## eol-comment-after-assign-colon
 
-- Why: uniform-rule (prettier#14617-family attachment artifact)
+- Why: invariant (prettier/prettier#14617)
 - Pin: `tests/fixtures/js/comments/assignment-eol-line-comment.js`, `tests/fixtures/ts/comments/operator-eol-line-comment.ts`
 
+Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined in TS).
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
 
 ```ts
@@ -174,7 +176,7 @@ type Alias =
 
 Prettier treats the same shape three ways:
 
-- JS keeps it only when the right-hand side breaks and flushes it past a fitting one (the prettier#14617-family attachment artifact)
+- JS keeps it only when the right-hand side breaks and flushes it past a fitting one (the prettier/prettier#14617-family attachment artifact)
 - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
 - simple-typed property signatures get it flushed past the member and its `;` separator
 
@@ -182,7 +184,7 @@ Not yet covered: default parameters, destructuring defaults, enum members (diffe
 
 ## union-leading-pipe-comment-normalization
 
-- Why: uniform-rule (Prettier's exceptions are not idempotent)
+- Why: uniform-rule (same construct, same output: an un-parenthesized union source, `| /* c */ A`)
 - Pin: `tests/fixtures/ts/union/leading-pipe-comments.ts`
 
 A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape.
@@ -210,11 +212,11 @@ type NestedParens =
   | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines;
 ```
 
-Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not idempotent); we normalize directly.
+Prettier does the same normalization except for nested single-member paren sources and multiline block comments starting their line, where it keeps `/* c */ | A` — an output it then reformats into `| /* c */ A` itself for the first shape (not a fixpoint); we normalize directly.
 
 ## deferred-own-line-comment-stays-own-line
 
-- Why: uniform-rule (the own-line invariant; Prettier's glue is an attachment artifact)
+- Why: invariant
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments.ts`
 
 An own-line comment deferred across a statement terminator (printed behind the previous node) stays own-line, with its blank lines preserved; the already-printed `;` is transparent to the break measurement (`lines_after_skipping_terminators`):
@@ -238,14 +240,14 @@ bar = 2;
 /* own line */ quux();
 ```
 
-Prettier attaches the comment as the next statement's leading and measures its break from the source `;`, gluing them; ours keeps the comment's own-line-ness and its distance to both neighbors as written.
+Prettier attaches the comment as the next statement's leading and measures its break from the source `;`, gluing them (the output changes line, own-line to same-line); ours keeps the comment own-line and its distance to both neighbors as written.
 
 ## paren-comment-fixpoint
 
-- Why: uniform-rule (upstream converging piecewise: prettier#19893 / prettier#19894 / prettier#19930 merged, prettier#19956 open)
+- Why: invariant (prettier/prettier#19893, prettier/prettier#19894, prettier/prettier#19930, prettier/prettier#19956)
 - Pin: `tests/fixtures/ts/semicolons/trailing-comments-parens.ts`, `tests/fixtures/ts/semicolons/trailing-comments-class-members.ts`, `tests/fixtures/js/sequence-expression/leading-comment-in-first-element-parens.js`
 
-Comment placements printing Prettier's second-pass fixpoint directly, where the pinned Prettier is not idempotent:
+Comment placements printing Prettier's second-pass fixpoint directly, where the pin's output is not a fixpoint:
 
 ```js
 // input
@@ -273,9 +275,9 @@ chained = (a) => (b) => {
 asiLeaf = someValue /* c4 */;
 ```
 
-- A trailing comment inside a statement's dropped parentheses moves behind the `;`, including the chain-leaf shapes prettier#19893 left out
+- A trailing comment inside a statement's dropped parentheses moves behind the `;`, including the chain-leaf shapes prettier/prettier#19893 left out
 - The chain passes through arrow expression bodies, and a dropped `)` counts as the terminator even without a source `;`
-  - prettier#19930 covers assignment/arrow links, the open prettier#19956 the rest; ours is one uniform rule
+  - prettier/prettier#19930 covers assignment/arrow links, prettier/prettier#19956 the rest; ours is one uniform rule
 - The walk stops where the comment stays inside re-added parens (sequence, assignment, JSX); conditional bodies move
 - Applied at every semicolon-terminated site: expression statements, export defaults, variable declarations, class property values, return arguments
 - A class member's same-line comment moves even when an own-line comment sits between it and the `;` (the pinned Prettier cancels the move on its first pass, then moves on its second — the `d = 4` and `dmixed` pins); the own-line one defers to the next element, like statements
@@ -285,9 +287,10 @@ Known limitation, shared with upstream: whether these parens survive is a group-
 
 ## binary-cast-own-line-comment
 
-- Why: uniform-rule (upstream converging piecewise: prettier#19939 merged, prettier#19958 open)
+- Why: invariant (prettier/prettier#19939, prettier/prettier#19958)
 - Pin: `tests/fixtures/ts/comments/binary-cast-own-line-comment.ts`
 
+Prettier's output crosses user content (the operator, the type and its `;`) and changes line (own-line to the operator's line).
 Comments around the operator keep their source side and their line-start side — the head-body comment policy applied to the operator gap, unifying it with `=`/`:` (`eol-comment-after-assign-colon`) and statement head-body gaps:
 
 - before the operator: trail the expression, never cross the operator — except what the grammar-defined slot cannot hold (no line terminator may precede the operator, a multiline comment's interior counts): those normalize to the type side so the output re-parses
@@ -327,7 +330,7 @@ const eolLine = 1 as Foo; // c
 const eolBlock = {} /* c */ satisfies {};
 ```
 
-Prettier is converging on its own piecewise fixes (own-line comments in prettier#19939, endOfLine comments reattached in the open prettier#19958, both normalizing toward own-line); we preserve the written position instead, so the entry outlives them.
+Prettier is converging on its own piecewise fixes (own-line comments in prettier/prettier#19939, endOfLine comments reattached in prettier/prettier#19958, both normalizing toward own-line); we preserve the written position instead, so the entry outlives them.
 
 `as const` follows the same policy (`const` is a type like any other; the pinned Prettier relocates its comments across `const` and the `;`).
 The one exclusion, pinned in the fixture: union types defer to the union printer's own comment claiming (a same-line line comment before a union still moves behind the statement, crossing the type — an invariant violation tolerated only here) — that claiming is its own subsystem, see #union-leading-pipe-comment-normalization and #union-added-paren-comment-side.
@@ -335,11 +338,10 @@ Drop when: the union printer's claiming is bounded to its own gap; this exclusio
 
 ## head-body-comment-relocation
 
-- Why: prettier-bug (attachment artifacts of the class Prettier is fixing elsewhere: the prettier#19894 family, open prettier#12880 / prettier#7745 / prettier#5900)
+- Why: invariant (prettier/prettier#19894, prettier/prettier#12880, prettier/prettier#7745, prettier/prettier#5900)
 - Pin: see the per-shape list below
-- Drop when: the family fixes cover these shapes and the pin catches up
 
-The head-body comment policy family (see AGENTS.md "Comment placement invariants"): comments between a head and its body keep their position, where Prettier's attachment relocates them.
+The head-body comment policy family (see AGENTS.md "Comment placement invariants"): comments between a head and its body keep their position, where Prettier's attachment relocates them across the delimiters (a body's braces, a head's parens), user content.
 
 ```js
 // input
@@ -371,7 +373,7 @@ The shapes, each pinned by its fixture:
   - `tests/fixtures/js/comments/for-head-slots.js`
 - Comments between a `}` and a following `else`/`catch`/`finally`/`while` keep their side of the keyword; Prettier pulls them into the next block (or past a do-while's whole `while (x);` head)
   - `tests/fixtures/js/comments/try-catch-finally-head.js`, `tests/fixtures/js/comments/do-while-head.js`
-- A line comment inside a for-in/for-of head stays before the `)` (the head flushes it); Prettier moves it past the body's `{` and is not idempotent there (prettier#12880)
+- A line comment inside a for-in/for-of head stays before the `)` (the head flushes it); Prettier moves it past the body's `{` and is not a fixpoint there (prettier/prettier#12880)
   - `tests/fixtures/js/comments/head-paren-line-comment.js`
 - A blank line between an own-line comment and a following `else` is preserved like any other leading position; Prettier collapses it
   - `tests/fixtures/ts/comments/if.ts`
@@ -382,7 +384,7 @@ The shapes, each pinned by its fixture:
 
 ## union-annotation-flat-retry
 
-- Why: style-hold (oxc-project/oxc#25841)
+- Why: style-hold (oxc#25841)
 - Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts` (also tracked by oxfmt's conformance suite, e.g. vue-vben-admin `api-component.vue`, webawesome `*.ts`)
 - Drop when: the wait-and-see on Prettier 3.9's union style resolves (follow, or re-classify)
 
@@ -426,18 +428,17 @@ const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength =
   (x) => (y) => (cond ? longlonglong : shortshort);
 ```
 
-An arrow chain with a parens-adding conditional body keeps a signature line that EXACTLY fills
-the print width (the signature alone is measured; both idempotent). Prettier counts the hug layout's
-literal trailing space, so the exact fill overflows: it breaks the assignment and retries the chain
-flat on the indented next line. One char over and the outputs converge; a naive port of the
-literal-space structure regresses `js/arrows/currying-4.js` (Prettier gates the hug on the chain's
-expand state), so matching costs more than this exact-width edge is worth.
+An arrow chain with a parens-adding conditional body keeps a signature line that EXACTLY fills the print width (the signature alone is measured; both idempotent).
+Prettier counts the hug layout's literal trailing space, so the exact fill overflows:
+it breaks the assignment and retries the chain flat on the indented next line.
+One char over and the outputs converge;
+a naive port of the literal-space structure regresses `js/arrows/currying-4.js` (Prettier gates the hug on the chain's expand state),
+so matching costs more than this exact-width edge is worth.
 
 ## suppressed-for-head-declaration
 
 - Why: semantics (Prettier's output no longer parses)
 - Pin: `tests/fixtures/js/semicolons/suppressed-for-head-declaration.js`
-- Drop when: Prettier stops re-adding `;` for a suppressed `for` head declaration
 
 ```js
 // input
@@ -451,15 +452,13 @@ for (/* prettier-ignore */ var i   =   1;; ;) [].sort();
 ```
 
 Prettier's `shouldIgnoredNodePrintSemicolon` lists `VariableDeclaration` unconditionally,
-so a suppressed declaration in a `for` head gets an extra `;` and the head no longer parses
-(a `for (;;)` head admits exactly two semicolons).
+so a suppressed declaration in a `for` head gets an extra `;` and the head no longer parses (a `for (;;)` head admits exactly two semicolons).
 In the head the declaration has no terminator of its own; we keep it verbatim and let the `for` statement print its separators.
 
 ## suppressed-source-paren-asi-guard
 
 - Why: semantics (Prettier's output re-parses as a call)
 - Pin: `tests/fixtures/js/semicolons/suppressed-source-paren-asi-guard.js`
-- Drop when: Prettier guards a suppressed statement whose verbatim text starts with `(`
 
 ```js
 // input (semi: false)
@@ -489,7 +488,6 @@ We check the verbatim range's first byte instead and print the guard.
 
 - Why: semantics (Prettier's guard placement detaches the type cast; verified with tsc)
 - Pin: `tests/fixtures/js/semicolons/suppressed-cast-comment-asi-guard.js`
-- Drop when: Prettier prints the ignored-slice ASI guard before a leading type cast comment
 
 ```js
 // input (semi: false)
