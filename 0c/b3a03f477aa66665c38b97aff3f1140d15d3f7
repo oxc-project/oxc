@@ -1,0 +1,21 @@
+tasks/transform_conformance/reporter.mjs
+  s_8a0b3fc1091d46::t_daf712d98414fa 30
+tasks/transform_conformance/snapshots/babel_exec.snap.md
+  s_8a0b3fc1091d46::t_7c15035bb99cf6 10-20,41-51,146-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0cb3a03f477aa66665c38b97aff3f1140d15d3f7",
+  "prompts": {},
+  "sessions": {
+    "s_8a0b3fc1091d46": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06836-2779-76f1-94ac-cd83fa13bcdc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
