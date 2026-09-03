@@ -163,6 +163,9 @@ ast:
 # and so that the two builds get separate target dirs instead of invalidating each other.
 #
 # On an ARM host the SIMD build is cross-compiled and run under emulation - macOS provides that via Rosetta 2.
+# On Mac, ensure x86_64 target is installed: `rustup target add x86_64-apple-darwin`.
+# If it's not, you'll get a "can't find crate for std" error.
+#
 # On ARM Linux or ARM Windows it will fail, loudly, when linking or running.
 _lexer-simd-target := if os() == "macos" { "x86_64-apple-darwin" } else if os() == "windows" { "x86_64-pc-windows-msvc" } else { "x86_64-unknown-linux-gnu" }
 _lexer-simd := "--target " + _lexer-simd-target + " --config .cargo/lexer-simd.toml"
