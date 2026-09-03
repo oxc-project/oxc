@@ -508,16 +508,7 @@ fn pure_comment() {
     test_same(
         "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
     );
-    // A misplaced `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
-    // must be preserved for downstream consumers to warn about, without replacing the
-    // valid pure-call annotation.
-    test(
-        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
-        "/* @__NO_SIDE_EFFECTS__ */ /* @__PURE__ */ pureOperation();\n",
-    );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
-
-    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
@@ -537,6 +528,20 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ a?.b();\n");
     test_same("true && /* @__PURE__ */ noEffect();\n");
     test_same("false || /* @__PURE__ */ noEffect();\n");
+}
+
+#[test]
+fn unapplied_annotation_comments() {
+    test_same("/* #__PURE__ */ function foo() {}\n");
+    test_same("/* #__NO_SIDE_EFFECTS__ */ value;\n");
+
+    // A misplaced `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
+    // must be preserved for downstream consumers to warn about, without replacing the
+    // valid pure-call annotation.
+    test(
+        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
+        "/* @__NO_SIDE_EFFECTS__ */ /* @__PURE__ */ pureOperation();\n",
+    );
 }
 
 #[test]
