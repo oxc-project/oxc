@@ -508,13 +508,12 @@ fn pure_comment() {
     test_same(
         "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
     );
-    // A `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
-    // must not be emitted in place of the pure-call annotation. Without the
-    // kind filter, `FxHashMap` last-write-wins would print the wrong
-    // annotation kind in front of a CallExpression.
+    // A misplaced `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
+    // must be preserved for downstream consumers to warn about, without replacing the
+    // valid pure-call annotation.
     test(
         "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
-        "/* @__PURE__ */ pureOperation();\n",
+        "/* @__NO_SIDE_EFFECTS__ */ /* @__PURE__ */ pureOperation();\n",
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 

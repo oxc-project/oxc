@@ -272,8 +272,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         // Capture annotation flags before bumping `(` since bump resets them
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
         let (mut expressions, comma_start) = self.context(Context::In, Context::Decorator, |p| {
@@ -312,14 +312,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match &mut expression {
             Expression::ArrowFunctionExpression(arrow_expr) => {
                 arrow_expr.pife = true;
-                if has_no_side_effects_comment {
+                if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
+                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
-                if has_no_side_effects_comment {
+                if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
+                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
                 }
             }
             _ => {}
@@ -1489,8 +1491,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // [+Yield] YieldExpression
         if self.is_yield_expression() {
             return self.parse_yield_expression();
@@ -1499,10 +1501,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(mut arrow_expr) = self
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment
+            if let Some(comments) = no_side_effects_comments
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
+                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
             return arrow_expr;
         }
@@ -1510,10 +1513,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment
+            if let Some(comments) = no_side_effects_comments
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
+                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
             return arrow_expr;
         }
@@ -1534,10 +1538,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
-            if has_no_side_effects_comment
+            if let Some(comments) = no_side_effects_comments
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
+                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
             return arrow_expr;
         }
@@ -1554,8 +1559,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expr =
             self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function);
 
-        if has_no_side_effects_comment {
-            Self::set_pure_on_function_expr(&mut expr);
+        if let Some(comments) = no_side_effects_comments
+            && Self::set_pure_on_function_expr(&mut expr)
+        {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
         expr
@@ -1592,15 +1599,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) {
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::FunctionExpression(func) => {
                 func.pure = true;
+                true
             }
             Expression::ArrowFunctionExpression(func) => {
                 func.pure = true;
+                true
             }
-            _ => {}
+            _ => false,
         }
     }
 
