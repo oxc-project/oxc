@@ -66,10 +66,16 @@ impl<'a> ClassProperties<'a> {
         function.r#type = FunctionType::FunctionDeclaration;
         sync_function_symbol_flags(&function, ctx);
 
-        // Change parent scope of function to current scope id and remove
-        // strict mode flag if parent scope is not strict mode.
+        // Change parent scope of function to the scope where it will be emitted, and remove
+        // strict mode flag if that parent scope is not strict mode.
+        //
+        // Class expressions emit the helper into the surrounding hoist scope (as a `var` +
+        // function-expression assignment in the class sequence). Class declarations emit a
+        // function declaration after the class statement, still under the current scope.
         let scope_id = function.scope_id();
-        let new_parent_id = if Self::is_inside_static_property_initializer(ctx) {
+        let new_parent_id = if Self::is_inside_static_property_initializer(ctx)
+            || !self.current_class().is_declaration
+        {
             ctx.current_hoist_scope_id()
         } else {
             ctx.current_scope_id()
