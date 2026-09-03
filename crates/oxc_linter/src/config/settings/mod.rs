@@ -371,6 +371,24 @@ mod test {
     }
 
     #[test]
+    fn test_parse_vitest_imports_settings() {
+        let json_value = serde_json::json!({
+            "vitest": {
+                "typecheck": true,
+                "vitestImports": ["@/test/fixtures"]
+            }
+        });
+
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
+
+        assert!(settings.vitest.typecheck);
+        assert_eq!(settings.vitest.vitest_imports, vec!["@/test/fixtures".to_string()]);
+
+        let raw_json = settings.json.unwrap();
+        assert_eq!(raw_json["vitest"]["vitestImports"][0], "@/test/fixtures");
+    }
+
+    #[test]
     fn test_negative_integer_jest_version_fail() {
         let json_value = serde_json::json!({
             "jest": {

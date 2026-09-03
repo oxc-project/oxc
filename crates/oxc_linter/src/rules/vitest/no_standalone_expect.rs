@@ -386,3 +386,66 @@ fn test() {
     Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
+
+#[test]
+fn test_vitest_imports() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // `expect` imported from a module that is NOT configured via
+        // `settings.vitest.vitestImports` stays invisible to the rule.
+        (
+            r"
+            import { expect } from './fixtures';
+            expect(1).toBe(1);
+            ",
+            None,
+            None,
+            None,
+        ),
+        // With `vitestImports` configured, `expect` inside a test imported from
+        // the same fixture module is no longer flagged as standalone.
+        // See https://github.com/oxc-project/oxc/issues/22323
+        (
+            r"
+            import { test, expect } from '$test/setup/fixtures';
+            test('does not show banner', () => {
+                expect(1).toBe(1);
+            });
+            ",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "vitest": {
+                        "vitestImports": ["$test/setup/fixtures"]
+                    }
+                }
+            })),
+            None,
+        ),
+    ];
+
+    let fail = vec![
+        // A `vitestImports`-configured module is a Vitest import source, so a
+        // top-level `expect` imported from it is reported as standalone.
+        (
+            r"
+            import { expect } from '$test/setup/fixtures';
+            expect(1).toBe(1);
+            ",
+            None,
+            Some(serde_json::json!({
+                "settings": {
+                    "vitest": {
+                        "vitestImports": ["$test/setup/fixtures"]
+                    }
+                }
+            })),
+            None,
+        ),
+    ];
+
+    Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::PLUGIN, pass, fail)
+        .with_snapshot_suffix("vitest_imports")
+        .test_and_snapshot();
+}

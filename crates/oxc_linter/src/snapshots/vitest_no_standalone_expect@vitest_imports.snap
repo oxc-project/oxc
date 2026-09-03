@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-standalone-expect): `expect` must be inside of a test block.
+   ╭─[no_standalone_expect.tsx:3:13]
+ 2 │             import { expect } from '$test/setup/fixtures';
+ 3 │             expect(1).toBe(1);
+   ·             ──────
+ 4 │             
+   ╰────
+  help: Did you forget to wrap `expect` in a `test` or `it` block?
