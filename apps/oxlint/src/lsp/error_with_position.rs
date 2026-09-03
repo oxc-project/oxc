@@ -147,16 +147,6 @@ pub fn message_to_lsp_diagnostic(
         diagnostic_message.push_str(note);
     }
 
-    // 1) Use `fixed_content.message` if it exists
-    // 2) Try to parse the report diagnostic message
-    // 3) Fallback to "Fix this problem"
-    let alternative_fix_title: Cow<'static, str> =
-        if let Some(code) = message.error.message.split(':').next() {
-            format!("Fix this {code} problem").into()
-        } else {
-            std::borrow::Cow::Borrowed("Fix this problem")
-        };
-
     let diagnostic = Diagnostic {
         range,
         severity: Some(severity),
@@ -171,13 +161,10 @@ pub fn message_to_lsp_diagnostic(
 
     let mut fixed_content = Vec::with_capacity(message.fixes.len());
 
-    // Convert PossibleFixes directly to PossibleFixContent
+    // Convert PossibleFixes directly to FixedContent
     match message.fixes {
         PossibleFixes::None => {}
-        PossibleFixes::Single(mut fix) => {
-            if fix.message.is_none() {
-                fix.message = Some(alternative_fix_title);
-            }
+        PossibleFixes::Single(fix) => {
             fixed_content.push(fix_to_fixed_content(
                 fix,
                 source_text,
@@ -185,10 +172,7 @@ pub fn message_to_lsp_diagnostic(
             ));
         }
         PossibleFixes::Multiple(fixes) => {
-            fixed_content.extend(fixes.into_iter().map(|mut fix| {
-                if fix.message.is_none() {
-                    fix.message = Some(alternative_fix_title.clone());
-                }
+            fixed_content.extend(fixes.into_iter().map(|fix| {
                 fix_to_fixed_content(
                     fix,
                     source_text,
@@ -211,9 +195,18 @@ fn fix_to_fixed_content(fix: Fix, source_text: &str, fix_kind: FixedContentKind)
     let start_position = offset_to_position(fix.span.start, source_text);
     let end_position = offset_to_position(fix.span.end, source_text);
 
+    let message = fix.message.unwrap_or_else(|| {
+        let rule_name = match &fix_kind {
+            FixedContentKind::LintRule(code) => {
+                get_full_rule_name(code).unwrap_or(Cow::Borrowed("this"))
+            }
+            FixedContentKind::UnusedDirective => Cow::Borrowed("this"),
+        };
+        Cow::Owned(format!("Fix {rule_name} problem"))
+    });
+
     FixedContent {
-        message: fix.message.expect("Fix message should be present. `message_to_lsp_diagnostic` should modify lint fixes to include messages.
-        Unused Disable directives always calls `Fix.with_message`"),
+        message,
         code: fix.content,
         range: Range::new(start_position, end_position),
         kind: fix.kind,

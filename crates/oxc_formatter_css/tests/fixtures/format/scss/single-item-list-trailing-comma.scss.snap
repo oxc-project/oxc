@@ -1,0 +1,204 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// `(x,)` is a single-element list in Sass: the trailing comma IS the list,
+// so it is preserved regardless of the `trailingComma` option (prettier#19928).
+$single-string: ("a",);
+$single-space-list: (1 2 3,);
+$single-nested-list: ((1, 2),);
+$single-call: (fn(1),);
+@include assert-equal(daff-string-split(".a", "."), ("a",));
+
+// Same without parens (`$x: "a",` is a list, `$x: "a"` a string).
+$bare-string: "a",;
+$bare-space-list: 1 2,;
+$bare-comment: "a" /* c */,;
+@function g() {
+  @return "a",;
+}
+
+// Multi-element lists and function arguments still drop it.
+$bare-multiple: "a", "b",;
+$multiple-items: (1, 2,);
+$single-argument: foo(1,);
+
+// A map is not a list: its trailing comma follows `trailingComma`, not the source.
+$single-entry-map: (a: 1,);
+
+// Nested in arguments / operations / control directives.
+$nested-in-args: foo(("a",));
+$nested-list: (("a",), ("b",));
+$operation: ("a",) + ("b",);
+@each $x in ("a",) {
+  a: $x;
+}
+@function f() {
+  @return ("a",);
+}
+
+// Map item values: a single-item list of ONE component value stays flat (not a map item),
+// a multi-token item (space list, binary expression) takes the map-item break.
+$map: (k: ("a",), j: (1, 2,), i: ((1 2),), f: (fn(1),), h: (1 2,), g: ($a + $b,));
+
+// Comments around the comma.
+$comment-before-comma: ("a" /* c */,);
+$comment-after-comma: ("a", // ,
+);
+$comment-without-comma: ("a" // ,
+);
+// Declaration value position (the Prettier test case updated by prettier#19928).
+.simplification {
+  foo: (
+    calc(), // It is a comment
+  );
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// `(x,)` is a single-element list in Sass: the trailing comma IS the list,
+// so it is preserved regardless of the `trailingComma` option (prettier#19928).
+$single-string: ("a",);
+$single-space-list: (1 2 3,);
+$single-nested-list: ((1, 2),);
+$single-call: (fn(1),);
+@include assert-equal(daff-string-split(".a", "."), ("a",));
+
+// Same without parens (`$x: "a",` is a list, `$x: "a"` a string).
+$bare-string: "a",;
+$bare-space-list: 1 2,;
+$bare-comment: "a" /* c */,;
+@function g() {
+  @return "a",;
+}
+
+// Multi-element lists and function arguments still drop it.
+$bare-multiple: "a", "b";
+$multiple-items: (1, 2);
+$single-argument: foo(1);
+
+// A map is not a list: its trailing comma follows `trailingComma`, not the source.
+$single-entry-map: (
+  a: 1,
+);
+
+// Nested in arguments / operations / control directives.
+$nested-in-args: foo(("a",));
+$nested-list: (("a",), ("b",));
+$operation: ("a",) + ("b",);
+@each $x in ("a",) {
+  a: $x;
+}
+@function f() {
+  @return ("a",);
+}
+
+// Map item values: a single-item list of ONE component value stays flat (not a map item),
+// a multi-token item (space list, binary expression) takes the map-item break.
+$map: (
+  k: ("a",),
+  j: (
+    1,
+    2,
+  ),
+  i: ((1 2),),
+  f: (fn(1),),
+  h: (
+    1 2,
+  ),
+  g: (
+    $a + $b,
+  ),
+);
+
+// Comments around the comma.
+$comment-before-comma: ("a" /* c */,);
+$comment-after-comma: (
+  "a", // ,
+);
+$comment-without-comma: (
+  "a" // ,
+);
+// Declaration value position (the Prettier test case updated by prettier#19928).
+.simplification {
+  foo: (
+    calc(), // It is a comment
+  );
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// `(x,)` is a single-element list in Sass: the trailing comma IS the list,
+// so it is preserved regardless of the `trailingComma` option (prettier#19928).
+$single-string: ("a",);
+$single-space-list: (1 2 3,);
+$single-nested-list: ((1, 2),);
+$single-call: (fn(1),);
+@include assert-equal(daff-string-split(".a", "."), ("a",));
+
+// Same without parens (`$x: "a",` is a list, `$x: "a"` a string).
+$bare-string: "a",;
+$bare-space-list: 1 2,;
+$bare-comment: "a" /* c */,;
+@function g() {
+  @return "a",;
+}
+
+// Multi-element lists and function arguments still drop it.
+$bare-multiple: "a", "b";
+$multiple-items: (1, 2);
+$single-argument: foo(1);
+
+// A map is not a list: its trailing comma follows `trailingComma`, not the source.
+$single-entry-map: (
+  a: 1,
+);
+
+// Nested in arguments / operations / control directives.
+$nested-in-args: foo(("a",));
+$nested-list: (("a",), ("b",));
+$operation: ("a",) + ("b",);
+@each $x in ("a",) {
+  a: $x;
+}
+@function f() {
+  @return ("a",);
+}
+
+// Map item values: a single-item list of ONE component value stays flat (not a map item),
+// a multi-token item (space list, binary expression) takes the map-item break.
+$map: (
+  k: ("a",),
+  j: (
+    1,
+    2,
+  ),
+  i: ((1 2),),
+  f: (fn(1),),
+  h: (
+    1 2,
+  ),
+  g: (
+    $a + $b,
+  ),
+);
+
+// Comments around the comma.
+$comment-before-comma: ("a" /* c */,);
+$comment-after-comma: (
+  "a", // ,
+);
+$comment-without-comma: (
+  "a" // ,
+);
+// Declaration value position (the Prettier test case updated by prettier#19928).
+.simplification {
+  foo: (
+    calc(), // It is a comment
+  );
+}
+
+===================== End =====================

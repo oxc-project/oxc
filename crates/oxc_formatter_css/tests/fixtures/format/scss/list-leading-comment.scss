@@ -1,0 +1,21 @@
+// A comment before a bare scalar element of a comma list leads that element
+// (`/* c */ 1,`), never crossing it or its comma; `//` keeps its own line.
+// Where the source put a block comment (same line, own line) makes no difference.
+// Multi-token elements (`1 2`) already did this through their comma group.
+$first: (k: (/* c */ 1, 2));
+$later: (k: (1, /* c */ 2));
+$line: (k: (
+  // c
+  1, 2));
+$after-comma: (k: (1, // c
+  2));
+$after-comma-block: (k: (1, /* c */
+  2));
+$multi-token: (k: (/* c */ 1 2, 3));
+$flat: (/* c */ 1, 2);
+$bare: 1, /* c */ 2;
+@include m((/* c */ 1, 2));
+@each $k in /* c */ a, b {}
+@each $k in a, /* c */ b {}
+@each $k in a, // c
+  b {}

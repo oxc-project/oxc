@@ -370,10 +370,16 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Called at very end of parsing.
     pub(crate) fn finalize_tokens(&mut self) -> ArenaVec<'a, Token> {
         if self.config.tokens() {
-            // Tokens are enabled. Discard last token, which is `Eof`.
+            // Tokens are enabled. Discard the last token, which marks the end of input.
+            // Usually that is `Eof`. Where the lexer cannot lex any further - an unterminated string,
+            // for example - it emits `Undetermined` instead, and no `Eof` ever follows.
+            // The parser treats the two alike, and neither is a real token, so both are discarded.
             let mut tokens = self.take_tokens();
             let last_token = tokens.pop();
-            debug_assert!(last_token.is_some_and(|token| token.kind() == Kind::Eof));
+            debug_assert!(
+                last_token
+                    .is_some_and(|token| matches!(token.kind(), Kind::Eof | Kind::Undetermined))
+            );
             tokens
         } else {
             // Tokens are disabled. Just return an empty vec.

@@ -88,8 +88,6 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "externals/prettier/js/multiparser-graphql/graphql-tag.js":
-        "`{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter",
       "edge-cases/gql-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },

@@ -12,6 +12,7 @@ use oxc_ast::{
         JSXFragment, JSXMemberExpression, JSXMemberExpressionObject, ModuleExportName, PropertyKey,
     },
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -147,13 +148,13 @@ impl Rule for JsxNoLiterals {
                 if Self::has_parent_jsx_element(node, ctx) {
                     return;
                 }
-                self.check_element(jsx_el, None, ctx);
+                JsxNoLiteralsVisitor::new(self, ctx).visit_jsx_element(jsx_el);
             }
             AstKind::JSXFragment(fragment) => {
                 if Self::has_parent_jsx_element(node, ctx) {
                     return;
                 }
-                self.check_fragment(fragment, None, ctx);
+                JsxNoLiteralsVisitor::new(self, ctx).visit_jsx_fragment(fragment);
             }
             _ => {}
         }
@@ -405,54 +406,22 @@ impl JsxNoLiterals {
         None
     }
 
-    fn descend_child_elements(
-        &self,
-        children: &[JSXChild],
-        options: Option<&ElementOverrideOptions>,
-        ctx: &LintContext,
-    ) {
-        for child in children {
-            match child {
-                JSXChild::Element(jsx_el) => {
-                    self.check_element(jsx_el, options, ctx);
-                }
-                JSXChild::Fragment(fragment) => {
-                    self.check_fragment(fragment, options, ctx);
-                }
-                _ => {}
-            }
-        }
-    }
-
     fn check_element(
         &self,
         jsx_el: &JSXElement,
-        inherited_opts: Option<&ElementOverrideOptions>,
+        element_override_opts: Option<&ElementOverrideOptions>,
         ctx: &LintContext,
     ) {
-        let element_override_opts = self.get_element_override_opts(jsx_el, ctx).or(inherited_opts);
-
-        let (options, allow_element, apply_to_nested_elements) =
-            if let Some(element_override_opts) = element_override_opts {
-                (
-                    &element_override_opts.options,
-                    element_override_opts.allow_element,
-                    element_override_opts.apply_to_nested_elements,
-                )
-            } else {
-                (&self.0.options, false, true)
-            };
+        let (options, allow_element) = if let Some(element_override_opts) = element_override_opts {
+            (&element_override_opts.options, element_override_opts.allow_element)
+        } else {
+            (&self.0.options, false)
+        };
 
         if !allow_element {
             Self::inspect_element_literals(&jsx_el.children, options, ctx);
             Self::inspect_element_attributes(jsx_el, options, ctx);
         }
-
-        self.descend_child_elements(
-            &jsx_el.children,
-            if apply_to_nested_elements { element_override_opts } else { None },
-            ctx,
-        );
     }
 
     fn check_fragment(
@@ -461,10 +430,52 @@ impl JsxNoLiterals {
         inherited_opts: Option<&ElementOverrideOptions>,
         ctx: &LintContext,
     ) {
+        if inherited_opts.is_some_and(|opts| opts.allow_element) {
+            return;
+        }
+
         let options = inherited_opts.map_or(&self.0.options, |opts| &opts.options);
 
         Self::inspect_element_literals(&fragment.children, options, ctx);
-        self.descend_child_elements(&fragment.children, inherited_opts, ctx);
+    }
+}
+
+struct JsxNoLiteralsVisitor<'rule, 'ctx, 'a> {
+    rule: &'rule JsxNoLiterals,
+    ctx: &'ctx LintContext<'a>,
+    /// Override resolved for the closest JSX element. Fragments do not start a new element scope.
+    current_element_opts: Option<&'rule ElementOverrideOptions>,
+    /// Closest ancestor override which applies to nested JSX elements.
+    inherited_opts: Option<&'rule ElementOverrideOptions>,
+}
+
+impl<'rule, 'ctx, 'a> JsxNoLiteralsVisitor<'rule, 'ctx, 'a> {
+    fn new(rule: &'rule JsxNoLiterals, ctx: &'ctx LintContext<'a>) -> Self {
+        Self { rule, ctx, current_element_opts: None, inherited_opts: None }
+    }
+}
+
+impl<'a> Visit<'a> for JsxNoLiteralsVisitor<'_, '_, 'a> {
+    fn visit_jsx_element(&mut self, jsx_el: &JSXElement<'a>) {
+        let own_opts = self.rule.get_element_override_opts(jsx_el, self.ctx);
+        let element_opts = own_opts.or(self.inherited_opts);
+        self.rule.check_element(jsx_el, element_opts, self.ctx);
+
+        let previous_element_opts = self.current_element_opts;
+        let previous_inherited_opts = self.inherited_opts;
+        self.current_element_opts = element_opts;
+        self.inherited_opts =
+            own_opts.filter(|opts| opts.apply_to_nested_elements).or(previous_inherited_opts);
+
+        walk::walk_jsx_element(self, jsx_el);
+
+        self.current_element_opts = previous_element_opts;
+        self.inherited_opts = previous_inherited_opts;
+    }
+
+    fn visit_jsx_fragment(&mut self, fragment: &JSXFragment<'a>) {
+        self.rule.check_fragment(fragment, self.current_element_opts, self.ctx);
+        walk::walk_jsx_fragment(self, fragment);
     }
 }
 
@@ -1007,6 +1018,20 @@ fn test() {
                   "#,
             Some(
                 serde_json::json!([{ "noAttributeStrings": true, "elementOverrides": { "Button": { "restrictedAttributes": ["type"] }, }, }]),
+            ),
+        ),
+        (
+            "<T>{ok && <div>Text</div>}</T>",
+            Some(serde_json::json!([{ "elementOverrides": { "T": { "allowElement": true } } }])),
+        ),
+        (
+            "<T>{<>Text</>}</T>",
+            Some(serde_json::json!([{ "elementOverrides": { "T": { "allowElement": true } } }])),
+        ),
+        (
+            "<T>{<>Text</>}</T>",
+            Some(
+                serde_json::json!([{ "elementOverrides": { "T": { "allowElement": true, "applyToNestedElements": false } } }]),
             ),
         ),
     ];
@@ -1573,6 +1598,19 @@ const { T: U } = props;
                   "#,
             Some(
                 serde_json::json!([{ "noAttributeStrings": true, "elementOverrides": { "T": { "restrictedAttributes": ["foo2"] }, }, }]),
+            ),
+        ),
+        ("<div>{ok && <div>Text</div>}</div>", None),
+        ("<div>{ok ? <span>Text</span> : null}</div>", None),
+        ("<div>{<span>Text</span>}</div>", None),
+        (
+            r#"<div data-testid="x">{ok && <div data-testid="y">Text</div>}</div>"#,
+            Some(serde_json::json!([{ "noStrings": true, "ignoreProps": true }])),
+        ),
+        (
+            "<T>{ok && <div>Text</div>}</T>",
+            Some(
+                serde_json::json!([{ "elementOverrides": { "T": { "allowElement": true, "applyToNestedElements": false } } }]),
             ),
         ),
     ];

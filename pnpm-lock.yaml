@@ -79,8 +79,8 @@ importers:
         specifier: 4.1.1
         version: 4.1.1(prettier@3.9.6)(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       prettier-plugin-tailwindcss:
-        specifier: 0.0.0-insiders.2b6f3c2
-        version: 0.0.0-insiders.2b6f3c2(prettier-plugin-svelte@4.1.1(prettier@3.9.6)(svelte@5.57.0(@typescript-eslint/types@8.68.0)))(prettier@3.9.6)
+        specifier: 0.0.0-insiders.19faf8b
+        version: 0.0.0-insiders.19faf8b(prettier-plugin-svelte@4.1.1(prettier@3.9.6)(svelte@5.57.0(@typescript-eslint/types@8.68.0)))(prettier@3.9.6)
       tinypool:
         specifier: 2.1.2
         version: 2.1.2
@@ -5082,8 +5082,8 @@ packages:
       prettier: ^3.0.0
       svelte: ^5.0.0
 
-  prettier-plugin-tailwindcss@0.0.0-insiders.2b6f3c2:
-    resolution: {integrity: sha512-bAwh6xzGCT0NvJUenof34s+JME2Fl7wRvUYUE8fEOGl41QgJGAEHWtjlgWC3p3bbPfx3O2ykNcvN1GFoDTM86g==}
+  prettier-plugin-tailwindcss@0.0.0-insiders.19faf8b:
+    resolution: {integrity: sha512-LuZow87w5Xoh+BAXljYTaesgrzh9jJ0PAaTASPifhVgrgG1TaoiYTx7p5J6HNErsx/joCEv9wnqmx+X8Ln1hRA==}
     engines: {node: '>=20.19'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
@@ -10170,7 +10170,7 @@ snapshots:
       prettier: 3.9.6
       svelte: 5.57.0(@typescript-eslint/types@8.68.0)
 
-  prettier-plugin-tailwindcss@0.0.0-insiders.2b6f3c2(prettier-plugin-svelte@4.1.1(prettier@3.9.6)(svelte@5.57.0(@typescript-eslint/types@8.68.0)))(prettier@3.9.6):
+  prettier-plugin-tailwindcss@0.0.0-insiders.19faf8b(prettier-plugin-svelte@4.1.1(prettier@3.9.6)(svelte@5.57.0(@typescript-eslint/types@8.68.0)))(prettier@3.9.6):
     dependencies:
       prettier: 3.9.6
     optionalDependencies:
