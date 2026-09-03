@@ -324,8 +324,35 @@ impl CommentAttachmentCollector<'_> {
             return;
         }
 
-        let assignments =
+        let mut assignments =
             Attacher::new(program.source_text, &self.nodes, &program.comments).attach();
+        let mut function_header_comments = vec![false; program.comments.len()];
+        for function in &self.nodes {
+            if function.kind != AstType::Function {
+                continue;
+            }
+            let mut child = function.first_child;
+            let mut params = None;
+            while child != NO_NODE {
+                if self.nodes[child as usize].kind == AstType::FormalParameters {
+                    params = Some(child);
+                    break;
+                }
+                child = self.nodes[child as usize].next_sibling;
+            }
+            let Some(params) = params else { continue };
+            let params_start = self.nodes[params as usize].span.start;
+            let first = program
+                .comments
+                .partition_point(|comment| comment.span.start < function.span.start);
+            let last =
+                program.comments.partition_point(|comment| comment.span.start < params_start);
+            for comment_index in first..last {
+                assignments[comment_index].host = params;
+                assignments[comment_index].position = AttachedCommentPosition::Before;
+                function_header_comments[comment_index] = true;
+            }
+        }
 
         let mut offsets = vec![0_u32; self.nodes.len() + 1];
         for assignment in &assignments {
@@ -342,7 +369,9 @@ impl CommentAttachmentCollector<'_> {
                 source_only_hosts[assignment.host as usize] = true;
             }
         }
-        for (mut comment, assignment) in program.comments.iter().copied().zip(assignments) {
+        for (comment_index, (mut comment, assignment)) in
+            program.comments.iter().copied().zip(assignments).enumerate()
+        {
             if assignment.force_newline_after {
                 comment.set_followed_by_newline(true);
             }
@@ -369,10 +398,13 @@ impl CommentAttachmentCollector<'_> {
                 comment,
                 position: assignment.position,
                 same_line: assignment.same_line,
-                node_owned: !source_only_hosts[host] && owned_position,
-                node_exclusive: !source_only_hosts[host]
-                    && owned_position
-                    && (!exact_leading || assignment.position != AttachedCommentPosition::Before),
+                node_owned: function_header_comments[comment_index]
+                    || (!source_only_hosts[host] && owned_position),
+                node_exclusive: function_header_comments[comment_index]
+                    || (!source_only_hosts[host]
+                        && owned_position
+                        && (!exact_leading
+                            || assignment.position != AttachedCommentPosition::Before)),
             };
             sorted[target as usize] = attached;
             write_offsets[host] += 1;

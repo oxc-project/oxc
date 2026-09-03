@@ -99,6 +99,19 @@ impl NodeCommentStore {
         Some(std::mem::take(&mut self.hosts[host_index].1))
     }
 
+    fn has_before(&self, node_id: NodeId) -> bool {
+        let index = node_id.index();
+        let Some(word) = self.presence.get(index >> 6) else { return false };
+        if word & (1 << (index & 63)) == 0 {
+            return false;
+        }
+        let Ok(host_index) = self.hosts.binary_search_by_key(&index, |(id, _)| id.index()) else {
+            return false;
+        };
+        let comments = &self.hosts[host_index].1;
+        !comments.before.is_empty() || !comments.inside.is_empty()
+    }
+
     fn remove_comments(&mut self, removed: &[Comment]) {
         for comment in removed {
             let Some(node_id) = self.owners.remove(&comment.span.start) else { continue };
@@ -569,6 +582,10 @@ impl Codegen<'_> {
     #[inline]
     pub(crate) fn take_node_comments(&mut self, node_id: NodeId) -> Option<NodeComments> {
         self.node_comments.take_all(node_id)
+    }
+
+    pub(crate) fn has_node_comments_before_id(&self, node_id: NodeId) -> bool {
+        self.node_comments.has_before(node_id)
     }
 
     #[inline]
@@ -1099,9 +1116,12 @@ impl Codegen<'_> {
     /// Print comments attached to any position in the given range `(start, end)` (exclusive).
     /// Returns `true` if any comments were printed.
     pub(crate) fn print_comments_in_range(&mut self, start: u32, end: u32) -> bool {
-        let comments = self.comments.take_between(start, end, |comment| {
+        let source_text = self.source_text;
+        let mut comments = self.comments.take_between(start, end, |comment| {
             !comment.is_pure() && !comment.is_no_side_effects()
         });
+        comments
+            .retain(|comment| !comment.is_trailing() || !is_html_comment(*comment, source_text));
         if comments.is_empty() {
             return false;
         }
@@ -1115,7 +1135,9 @@ impl Codegen<'_> {
 
     pub(crate) fn comments_in_range_need_space_after(&self, start: u32, end: u32) -> bool {
         let Some(comment) = self.comments.first_between(start, end, |comment| {
-            !comment.is_pure() && !comment.is_no_side_effects()
+            !comment.is_pure()
+                && !comment.is_no_side_effects()
+                && (!comment.is_trailing() || !is_html_comment(*comment, self.source_text))
         }) else {
             return false;
         };

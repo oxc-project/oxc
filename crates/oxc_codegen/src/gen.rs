@@ -864,11 +864,17 @@ impl Gen for Function<'_> {
             p.print_str("function");
             let next_node_start =
                 self.id.as_ref().map_or(self.params.span.start, |id| id.span.start);
+            let has_comments_at_params = p.has_comment(self.params.span.start);
             if p.has_comments_in_range(self.span.start, next_node_start) {
                 p.print_soft_space();
                 p.print_comments_in_range(self.span.start, next_node_start);
                 if p.last_byte() == Some(b'\n') {
                     p.print_indent();
+                } else if has_comments_at_params {
+                    // The parameter-anchor path below owns the separator. This
+                    // occurs when a transform removes a function-expression
+                    // name between two source comment groups.
+                    p.clear_pending_indent_space();
                 } else {
                     p.consume_pending_indent_space();
                 }
@@ -884,9 +890,14 @@ impl Gen for Function<'_> {
             if let Some(type_parameters) = &self.type_parameters {
                 type_parameters.print(p, ctx);
             }
-            if p.has_comment(self.params.span.start) {
+            if has_comments_at_params {
                 p.print_soft_space();
                 p.print_leading_comments_anchored_to_self(self.params.span.start);
+            }
+            if p.has_node_comments_before_id(self.params.node_id())
+                && !matches!(p.last_byte(), Some(b' ' | b'\n' | b'\t'))
+            {
+                p.print_soft_space();
             }
             p.print_node_comments_before_id(self.params.node_id());
             p.print_ascii_byte(b'(');
