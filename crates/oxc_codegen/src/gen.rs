@@ -4019,6 +4019,46 @@ impl Gen for TSExternalModuleDeclaration<'_> {
     }
 }
 
+impl Gen for TSModuleDeclarationAttributeClause<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_curly_braces(self.span, self.entries.is_empty(), |p| {
+            for attribute in &self.entries {
+                p.print_leading_comments(attribute.span.start);
+                p.print_indent();
+                attribute.print(p, ctx);
+                p.print_semicolon();
+                p.print_soft_newline();
+            }
+        });
+    }
+}
+
+impl Gen for TSModuleDeclarationAttribute<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.readonly {
+            p.print_str("readonly ");
+        }
+        match &self.key {
+            ImportAttributeKey::Identifier(identifier) => identifier.print(p, ctx),
+            ImportAttributeKey::StringLiteral(literal) => {
+                p.print_string_literal(literal, false);
+            }
+        }
+        p.print_colon();
+        p.print_soft_space();
+        self.value.print(p, ctx);
+    }
+}
+
+impl Gen for TSModuleDeclarationAttributeValue<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        match self {
+            Self::StringLiteral(literal) => p.print_string_literal(literal, false),
+            Self::TemplateLiteral(literal) => literal.print(p, ctx),
+        }
+    }
+}
+
 impl Gen for TSNamespaceDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {

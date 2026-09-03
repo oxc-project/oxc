@@ -1004,6 +1004,21 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_ts_module_declaration_attribute_clause(
+        &mut self,
+        it: &mut TSModuleDeclarationAttributeClause<'a>,
+    ) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_module_declaration_attribute_clause(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ts_module_declaration_attribute(&mut self, it: &mut TSModuleDeclarationAttribute<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_module_declaration_attribute(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_ts_namespace_declaration(&mut self, it: &mut TSNamespaceDeclaration<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_namespace_declaration(self, it);

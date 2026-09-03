@@ -694,7 +694,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    pub(super) fn parse_type_literal(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
+    fn parse_type_literal(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
         let start = self.cur_start();
         let member_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
@@ -1587,7 +1587,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_type_member_semicolon(&mut self) {
+    pub(super) fn parse_type_member_semicolon(&mut self) {
         // We allow type members to be separated by commas or (possibly ASI) semicolons.
         // First check if it was a comma.  If so, we're done with the member.
         if self.eat(Kind::Comma) {
