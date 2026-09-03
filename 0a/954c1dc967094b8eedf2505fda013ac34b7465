@@ -1,0 +1,64 @@
+crates/oxc_minifier/src/peephole/mod.rs
+  s_98d85a95571ac7::t_0cb81b8297ade4 638-641
+  s_1023f2b5fb8128::t_e451fdcfe56076 1
+crates/oxc_minifier/tests/peephole/mod.rs
+  s_98d85a95571ac7::t_f458926f3184b1 3
+crates/oxc_minifier/src/peephole/minimize_statements.rs
+  s_98d85a95571ac7::t_6d112922af3930 51-58
+tasks/minsize/minsize.snap
+  s_98d85a95571ac7::t_f05d26db97c30d 4,6,10,14,16,18,20,22,24
+  s_0f808fe6c71e31::t_e6abeb113a0bd3 26
+Cargo.lock
+  s_98d85a95571ac7::t_2779d9389d88fa 2362
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_0f808fe6c71e31::t_c571d5f4701324 6,10,17,21,32,39,43,52-54,65,72,76
+crates/oxc_minifier/tests/peephole/conflate_assignments.rs
+  s_98d85a95571ac7::t_f8f369a60cd841 1-138
+crates/oxc_minifier/Cargo.toml
+  s_98d85a95571ac7::t_97d9d4d74612b6 41
+crates/oxc_minifier/src/peephole/conflate_assignments.rs
+  s_8d5c341ef39b90::t_365e1df643c243 3-328
+  s_8d5c341ef39b90::t_fa2f339d4524d6 1-2
+crates/oxc_minifier/tests/peephole/dead_code_elimination.rs
+  s_98d85a95571ac7::t_7becdf9481fa7e 209-213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0a954c1dc967094b8eedf2505fda013ac34b7465",
+  "prompts": {},
+  "sessions": {
+    "s_0f808fe6c71e31": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a067c8-3d5d-7251-b7ba-420add57fe55",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_1023f2b5fb8128": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a066b3-bea5-7960-aaa8-6c16e192b7e6",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8d5c341ef39b90": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd2a4-9dd6-7050-9aa2-fd882e51e24d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_98d85a95571ac7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06689-4a42-71b3-8cc3-d0c682ebbbd9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
