@@ -337,17 +337,14 @@ debug = true # Include maximum amount of debug information
 # Profile for `cargo coverage`
 [profile.coverage]
 inherits = "release"
+# The conformance harnesses catch panics.
+# Inheriting the release profile's `panic = "abort"` would prevent `catch_unwind` working.
+panic = "unwind"
 opt-level = 2 # Compile faster
 codegen-units = 256 # Compile faster
 lto = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
 overflow-checks = true # Catch arithmetic overflow errors
-
-# Profile for the codegen conformance addon. It catches panics and converts them to JS errors, so
-# it must unwind rather than inherit the release profile's `panic = "abort"` setting.
-[profile.codegen-conformance]
-inherits = "coverage"
-panic = "unwind"
 
 # Profile for linting with release mode-like settings.
 # Catches lint errors which only appear in release mode.
