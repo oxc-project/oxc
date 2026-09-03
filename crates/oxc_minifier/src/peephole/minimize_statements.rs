@@ -116,6 +116,7 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         *stmts = new_stmts;
+        Self::conflate_assignments_after_statement_fusion(stmts, ctx);
     }
 
     /// Some parsers cannot parse long conditional expressions.
@@ -549,12 +550,57 @@ impl<'a> PeepholeOptimizations {
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
             ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
-                Self::join_sequence(a, expr, ctx)
+                Self::join_sequence_and_conflate(a, expr, ctx)
             });
         } else {
             result.push(Statement::new_expression_statement(expr.span(), expr, ctx));
             ctx.notice_change();
         }
+    }
+
+    fn join_sequence_and_conflate(
+        a: Expression<'a>,
+        b: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // `join_sequence` deliberately nests the right side when both operands are sequences.
+        // Finish each sequence and their shared boundary without extending either arena vector:
+        // flattening here would add reallocations on this statement-fusion hot path.
+        if !ctx.is_tree_shake_only()
+            && matches!(a, Expression::SequenceExpression(_))
+            && matches!(b, Expression::SequenceExpression(_))
+        {
+            let Expression::SequenceExpression(mut previous) = a else {
+                unreachable!()
+            };
+            let Expression::SequenceExpression(mut current) = b else {
+                unreachable!()
+            };
+            let mut changed = Self::conflate_assignments(&mut previous, ctx);
+            changed |= Self::conflate_assignments(&mut current, ctx);
+            changed |=
+                Self::conflate_assignment_sequence_boundary(&mut previous, &mut current, ctx);
+
+            let mut expression = if previous.expressions.is_empty() {
+                Expression::SequenceExpression(current)
+            } else {
+                previous.expressions.push(Expression::SequenceExpression(current));
+                Expression::SequenceExpression(previous)
+            };
+            if changed {
+                Self::remove_sequence_expression(&mut expression, ctx);
+            }
+            return expression;
+        }
+
+        let mut expression = Self::join_sequence(a, b, ctx);
+        if !ctx.is_tree_shake_only()
+            && let Expression::SequenceExpression(sequence) = &mut expression
+            && Self::conflate_assignments(sequence, ctx)
+        {
+            Self::remove_sequence_expression(&mut expression, ctx);
+        }
+        expression
     }
 
     /// Fold `target` expression into previous expression as sequence
@@ -572,7 +618,7 @@ impl<'a> PeepholeOptimizations {
         let last_epr = result.pop().unwrap();
         let Statement::ExpressionStatement(prev_expr_stmt) = last_epr else { unreachable!() };
         let a = prev_expr_stmt.unbox().expression;
-        ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
+        ctx.replace_expression_with(target, |b, ctx| Self::join_sequence_and_conflate(a, b, ctx));
     }
 
     /// For variable declarations:

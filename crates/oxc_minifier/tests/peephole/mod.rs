@@ -1,5 +1,6 @@
 mod collapse_variable_declarations;
 mod compression_pass;
+mod conflate_assignments;
 mod convert_to_dotted_properties;
 mod dead_code_elimination;
 mod esbuild;

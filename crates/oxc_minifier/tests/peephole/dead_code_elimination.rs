@@ -207,6 +207,11 @@ fn dce_if_statement() {
 }
 
 #[test]
+fn dce_does_not_conflate_assignments() {
+    test_same("export let x, y; export function f(value) { x = value, y = value; }");
+}
+
+#[test]
 fn dce_while_statement() {
     test_same("while (true);");
     test_same("while (false);");
