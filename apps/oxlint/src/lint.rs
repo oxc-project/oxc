@@ -1184,6 +1184,15 @@ mod test {
     }
 
     #[test]
+    fn lint_vue_multiline_script_open_tag() {
+        let output = Tester::new().test_output_verbose(&["fixtures/cli/vue/multiline-script.vue"]);
+
+        assert_eq!(output.matches("eslint(no-debugger)").count(), 2);
+        assert!(output.contains("fixtures/cli/vue/multiline-script.vue:2:5"));
+        assert!(output.contains("fixtures/cli/vue/multiline-script.vue:11:5"));
+    }
+
+    #[test]
     fn lint_astro_file() {
         let args = &["fixtures/cli/astro/debugger.astro"];
         Tester::new().test_and_snapshot(args);
