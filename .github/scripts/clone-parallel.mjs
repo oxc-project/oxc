@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 // Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
 const TEST262_SHA = "be13516fb6441b950ba8a3df97eb34062c186972";
 const BABEL_SHA = "1eac4481473df52fbbcb452c4dca8d79039dbb63";
-const TYPESCRIPT_SHA = "f52473a2ed51bfddc972bb509517f85342d859df";
+const TYPESCRIPT_SHA = "0e32aa196a8f1814fb6a4fa294e2f49029d6de88";
 const ESTREE_CONFORMANCE_SHA = "12bcc047d1d902fd8f4da5c26a8c5acc4b1303e2";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 

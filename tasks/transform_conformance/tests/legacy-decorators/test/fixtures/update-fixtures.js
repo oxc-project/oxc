@@ -14,7 +14,7 @@ import { dirname, extname, join } from "path";
 
 const __dirname = new URL(".", import.meta.url).pathname;
 
-// https://github.com/microsoft/TypeScript/blob/f52473a2ed51bfddc972bb509517f85342d859df/tsc/testdata/tests/cases/conformance/decorators/class
+// https://github.com/microsoft/TypeScript/blob/0e32aa196a8f1814fb6a4fa294e2f49029d6de88/tsc/testdata/tests/cases/conformance/decorators/class
 const typescriptTestFolderPath = join(
   __dirname,
   "../../../../../coverage/typescript/tsc/testdata/tests/cases/conformance/decorators/class",
