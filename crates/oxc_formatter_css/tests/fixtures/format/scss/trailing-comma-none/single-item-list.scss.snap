@@ -26,6 +26,9 @@ $map-item-own-line-block: (k: (1, 2,
   /* own */
 ));
 
+// A comment before the FIRST item changes nothing either: the comma follows the option.
+$map-leading-comment: (/* c */ a: 1,);
+
 ==================== Output ====================
 -----------------------------------------
 { printWidth: 80, trailingComma: "none" }
@@ -80,6 +83,11 @@ $map-item-own-line-block: (
   )
 );
 
+// A comment before the FIRST item changes nothing either: the comma follows the option.
+$map-leading-comment: (
+  /* c */ a: 1
+);
+
 ------------------------------------------
 { printWidth: 100, trailingComma: "none" }
 ------------------------------------------
@@ -131,6 +139,11 @@ $map-item-own-line-block: (
     2
     /* own */
   )
+);
+
+// A comment before the FIRST item changes nothing either: the comma follows the option.
+$map-leading-comment: (
+  /* c */ a: 1
 );
 
 ===================== End =====================

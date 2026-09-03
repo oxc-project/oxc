@@ -21,3 +21,6 @@ $map-item-own-line-comment: (k: (1, 2,
 $map-item-own-line-block: (k: (1, 2,
   /* own */
 ));
+
+// A comment before the FIRST item changes nothing either: the comma follows the option.
+$map-leading-comment: (/* c */ a: 1,);

@@ -273,7 +273,6 @@ pub(super) fn write_sass_map<'a>(
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write!(f, hard_line_break());
         let source = f.context().source_text();
-        let mut first_item_has_leading_comment = false;
         for (i, item) in map.items.iter().enumerate() {
             if i > 0 {
                 value::write_group_comma(map.comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
@@ -305,9 +304,7 @@ pub(super) fn write_sass_map<'a>(
             // `//` comments and pairs that don't fit keep their own line.
             let item_start = to_span(item.span()).start;
             let item_width = to_span(item.span()).end - item_start;
-            let mut had_leading_comment = false;
             for &comment in f.context().comments().take_before(item_start) {
-                had_leading_comment = true;
                 let comment_width = comment.span.end - comment.span.start;
                 let fits = !value_is_block
                     && u32::from(f.options().indent_width.value()) + comment_width + 2 + item_width
@@ -318,9 +315,6 @@ pub(super) fn write_sass_map<'a>(
                 } else {
                     write!(f, " ");
                 }
-            }
-            if i == 0 {
-                first_item_has_leading_comment = had_leading_comment;
             }
             let key_is_block = is_paren_block(&item.key);
             if key_is_block && !value_is_block {
@@ -370,13 +364,9 @@ pub(super) fn write_sass_map<'a>(
                 write!(f, group(&indent(&pair)));
             }
         }
-        // A comment before the FIRST item drops the trailing comma:
-        // the comment becomes `groups[0]` of the paren group,
-        // so `isKeyValuePairInParenGroupNode` no longer sees a key-value pair and the group stops being an SCSS map item.
-        // A comment before a LATER item never does
-        // (Prettier keeps the comma there whether or not the source had one — required for idempotency).
-        let printed_comma = trailing && !first_item_has_leading_comment;
-        if printed_comma {
+        // NOTE: Comment presence never changes the comma (Prettier drops it after a leading comment on the FIRST item);
+        // see DIVERGENCES.md "map-leading-comment-layout".
+        if trailing {
             write!(f, ",");
         }
         // The comment goes to its own line only when BOTH a comma is printed
@@ -386,7 +376,7 @@ pub(super) fn write_sass_map<'a>(
                 map.comma_spans.get(map.items.len() - 1).map_or(u32::MAX, |sp| to_span(sp).start);
             // Only inside function/include arguments does the comment move
             // to the next slot; `$map:` declarations keep it attached.
-            let next_slot = printed_comma
+            let next_slot = trailing
                 && ctx.in_args
                 && f.context().comments().peek().is_some_and(|c| c.span.start > source_comma_start);
             if !next_slot {

@@ -517,9 +517,9 @@ and in paren lists, call/`@include` arguments and `@mixin` parameters
 Prettier's output changes line, own-line to the last item's line, a `lineSuffix` artifact of its comma-group printing.
 Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the author's visual grouping.
 
-## map-leading-comment-forced-break
+## map-leading-comment-layout
 
-- Why: cost
+- Why: uniform-rule (comment presence never changes layout)
 - Pin: `tests/fixtures/format/scss/map-comment-only.scss`
 
 ```scss
@@ -528,17 +528,17 @@ $b: (/* c */ a: 1,);
 
 /* ours */
 $b: (
-  /* c */ a: 1
+  /* c */ a: 1,
 );
 
 /* prettier */
 $b: (/* c */ a: 1);
 ```
 
-A map whose FIRST item is preceded by a block comment loses map-item-ness in Prettier
-(the comment becomes `groups[0]`, so `isKeyValuePairInParenGroupNode` fails) and inlines when it fits.
-We reproduce the loss for the trailing comma (dropped, like Prettier) but keep the forced break;
-matching the inline layout needs comment support in the soft map path.
+A map whose FIRST item is preceded by a block comment loses map-item-ness in Prettier:
+it inlines when it fits and drops the trailing comma.
+We print it as the same map without the comment (`$b: (a: 1,)`): one item per line, comma per `trailingComma`.
+A comment before a LATER item keeps both in Prettier too.
 
 ## comment-only-map-indent
 
