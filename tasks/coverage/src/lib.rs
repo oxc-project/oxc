@@ -10,15 +10,9 @@ mod typescript;
 
 mod tools;
 
-// Mirrors `oxc_lexer`'s crate gate: the lexer compiles to an empty stub without
-// static AVX2/BMI2 x86_64, so the differential harness only exists where the
-// lexer does (`--all-features` builds must pass on every target).
-#[cfg(all(
-    feature = "lexer",
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-))]
+// Gated by `lexer` Cargo feature, because `oxc_lexer` is still incubating.
+// `oxc_lexer` only supports little endian at present.
+#[cfg(all(feature = "lexer", target_endian = "little"))]
 mod lexer_diff;
 
 use std::{
@@ -373,26 +367,40 @@ impl AppArgs {
         }
     }
 
-    /// Differential lexer conformance: compare `oxc_lexer`'s significant-token
-    /// spans against the parser's token stream over the corpora. Opt-in (kept out
-    /// of `run_all`) — requires the `lexer` feature and a static AVX2/BMI2 x86_64
-    /// build of `oxc_lexer`.
-    #[cfg(all(
-        feature = "lexer",
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-    ))]
+    /// Differential lexer conformance.
+    ///
+    /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
+    /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
+    /// Runs against whichever of the lexer's two implementations the build selects -
+    /// the SIMD core on a static AVX2/BMI2 x86_64 build, the scalar fallback otherwise.
+    /// `oxc_lexer` only supports little endian at present.
+    ///
+    /// # Panics
+    /// Panics if `lexer` Cargo feature is not enabled, or on a big endian machine.
     pub fn run_lexer(&self, data: &TestData) {
-        self.run_tool("lexer_test262", TEST262_PATH, &data.test262, lexer_diff::run_lexer_test262);
-        self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
-        self.run_tool(
-            "lexer_typescript",
-            TYPESCRIPT_PATH,
-            &data.typescript,
-            lexer_diff::run_lexer_typescript,
-        );
-        self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
+        #[cfg(all(feature = "lexer", target_endian = "little"))]
+        {
+            self.run_tool(
+                "lexer_test262",
+                TEST262_PATH,
+                &data.test262,
+                lexer_diff::run_lexer_test262,
+            );
+            self.run_tool("lexer_babel", BABEL_PATH, &data.babel, lexer_diff::run_lexer_babel);
+            self.run_tool(
+                "lexer_typescript",
+                TYPESCRIPT_PATH,
+                &data.typescript,
+                lexer_diff::run_lexer_typescript,
+            );
+            self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
+        }
+
+        #[cfg(not(all(feature = "lexer", target_endian = "little")))]
+        {
+            let _ = (self, data);
+            panic!("`lexer` conformance requires `lexer` Cargo feature and a little-endian system");
+        }
     }
 
     pub fn run_semantic(&self, data: &TestData) {

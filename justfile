@@ -147,6 +147,42 @@ ast:
 
 # Parser-specific commands will be added here as needed
 
+# ==================== LEXER ====================
+
+# `oxc_lexer` compiles to one of two implementations, chosen at build time:
+#
+# * SIMD core, on x86_64 with `avx2` + `bmi2` enabled
+# * Scalar fallback, everywhere else
+#
+# Both need testing, and they should produce identical results. Neither `avx2` nor `bmi2` is in the x86_64 baseline
+# on any platform, so reaching the SIMD core always means asking for them explicitly - even on an x86_64 host.
+# The flags live in `.cargo/lexer-simd.toml`, passed with `cargo --config`, which avoids shell quoting entirely
+# (this justfile runs PowerShell on Windows).
+#
+# `--target` is always passed, so that the flags land on the triple the config file names,
+# and so that the two builds get separate target dirs instead of invalidating each other.
+#
+# On an ARM host the SIMD build is cross-compiled and run under emulation - macOS provides that via Rosetta 2.
+# On ARM Linux or ARM Windows it will fail, loudly, when linking or running.
+_lexer-simd-target := if os() == "macos" { "x86_64-apple-darwin" } else if os() == "windows" { "x86_64-pc-windows-msvc" } else { "x86_64-unknown-linux-gnu" }
+_lexer-simd := "--target " + _lexer-simd-target + " --config .cargo/lexer-simd.toml"
+
+# Run `oxc_lexer`'s tests against the scalar fallback
+test-lexer *args='':
+  cargo test -p oxc_lexer {{args}}
+
+# Run `oxc_lexer`'s tests against the SIMD core
+test-lexer-simd *args='':
+  cargo test -p oxc_lexer {{_lexer-simd}} {{args}}
+
+# Run lexer conformance against the scalar fallback
+conformance-lexer *args='':
+  cargo run -p oxc_coverage --profile coverage --features lexer -- lexer {{args}}
+
+# Run lexer conformance against the SIMD core
+conformance-lexer-simd *args='':
+  cargo run -p oxc_coverage --profile coverage {{_lexer-simd}} --features lexer -- lexer {{args}}
+
 # ==================== LINTER ====================
 
 # oxlint release build
