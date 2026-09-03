@@ -13,3 +13,6 @@ declare module "*.css" with {
 declare module "*.text" with {
 	type: "text";
 };
+declare module "*.config" with {
+	readonly mode: `strict`;
+} {}

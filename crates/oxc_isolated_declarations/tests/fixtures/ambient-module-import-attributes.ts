@@ -3,3 +3,5 @@ declare module "*.css" with { type: "css" } {
 }
 
 declare module "*.text" with { type: "text" };
+
+declare module "*.config" with { readonly mode: `strict` } {}

@@ -7127,6 +7127,79 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSExternalModuleDec
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'_, 'a, TSModuleDeclarationAttributeClause<'a>>
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSModuleDeclarationAttribute<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'_, 'a, TSModuleDeclarationAttributeValue<'a>>
+{
+    #[inline]
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let parent = self.parent;
+        match self.inner {
+            TSModuleDeclarationAttributeValue::StringLiteral(inner) => {
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+            TSModuleDeclarationAttributeValue::TemplateLiteral(inner) => {
+                AstNode::<TemplateLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
+            }
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_quiet(
