@@ -1,0 +1,19 @@
+crates/oxc_codegen/tests/integration/js.rs
+  s_4b3a425ee5348e::t_d6c13f3a1d3bd4 533-546
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d6612fa61bf79d36a75b379cdc1ec51cfcccbbee",
+  "prompts": {},
+  "sessions": {
+    "s_4b3a425ee5348e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0679c-6528-7b81-bb3e-deb4cb7293bc",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
