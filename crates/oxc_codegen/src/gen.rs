@@ -2,10 +2,10 @@ use std::ops::Not;
 
 use cow_utils::CowUtils;
 
-use oxc_ast::GetNodeId;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
+    GetNodeId,
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
@@ -26,7 +26,7 @@ pub trait Gen: GetSpan + GetNodeId {
     #[inline]
     fn print(&self, p: &mut Codegen, ctx: Context) {
         let span = self.span();
-        let mut boundary = p.take_boundary_comments(self.get_node_id(), span.start, span.end);
+        let mut boundary = p.take_boundary_comments(self.node_id(), span.start, span.end);
         if let Some(boundary) = boundary.as_mut() {
             if let Some(comments) = boundary.node.as_mut() {
                 p.print_node_comments_before(comments);
@@ -63,7 +63,7 @@ pub trait GenExpr: GetSpan + GetNodeId {
     #[inline]
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let span = self.span();
-        let mut boundary = p.take_boundary_comments(self.get_node_id(), span.start, span.end);
+        let mut boundary = p.take_boundary_comments(self.node_id(), span.start, span.end);
         if let Some(boundary) = boundary.as_mut() {
             if let Some(comments) = boundary.node.as_mut() {
                 p.print_node_comments_before(comments);
@@ -888,7 +888,7 @@ impl Gen for Function<'_> {
                 p.print_soft_space();
                 p.print_leading_comments_anchored_to_self(self.params.span.start);
             }
-            p.print_node_comments_before_id(self.params.get_node_id());
+            p.print_node_comments_before_id(self.params.node_id());
             p.print_ascii_byte(b'(');
             if let Some(this_param) = &self.this_param {
                 this_param.print(p, ctx);
@@ -999,7 +999,7 @@ impl Gen for FormalParameterRest<'_> {
 impl Gen for FormalParameters<'_> {
     #[inline]
     fn print(&self, p: &mut Codegen, ctx: Context) {
-        let mut node_comments = p.take_node_comments(self.get_node_id());
+        let mut node_comments = p.take_node_comments(self.node_id());
         if let Some(comments) = node_comments.as_mut() {
             p.print_node_comments_before(comments);
         }
@@ -2032,8 +2032,8 @@ impl Gen for ObjectProperty<'_> {
                 if let Some(type_parameters) = &func.type_parameters {
                     type_parameters.print(p, ctx);
                 }
-                p.print_node_comments_before_id(func.get_node_id());
-                p.print_node_comments_before_id(func.params.get_node_id());
+                p.print_node_comments_before_id(func.node_id());
+                p.print_node_comments_before_id(func.params.node_id());
                 p.print_ascii_byte(b'(');
                 if let Some(this_param) = &func.this_param {
                     this_param.print(p, ctx);
@@ -2145,7 +2145,7 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                         && param.initializer.is_none()
                         && !param.optional
                 };
-            p.print_node_comments_before_id(self.params.get_node_id());
+            p.print_node_comments_before_id(self.params.node_id());
             p.wrap(!remove_params_wrap, |p| {
                 self.params.print(p, params_ctx);
             });
@@ -3222,8 +3222,8 @@ impl Gen for MethodDefinition<'_> {
         if let Some(type_parameters) = self.value.type_parameters.as_ref() {
             type_parameters.print(p, ctx);
         }
-        p.print_node_comments_before_id(self.value.get_node_id());
-        p.print_node_comments_before_id(self.value.params.get_node_id());
+        p.print_node_comments_before_id(self.value.node_id());
+        p.print_node_comments_before_id(self.value.params.node_id());
         p.print_ascii_byte(b'(');
         if let Some(this_param) = &self.value.this_param {
             this_param.print(p, ctx);
@@ -4022,7 +4022,7 @@ impl Gen for TSFunctionType<'_> {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
-        p.print_node_comments_before_id(self.params.get_node_id());
+        p.print_node_comments_before_id(self.params.node_id());
         p.print_ascii_byte(b'(');
         if let Some(this_param) = &self.this_param {
             this_param.print(p, ctx);
@@ -4061,7 +4061,7 @@ impl Gen for TSSignature<'_> {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
                     type_parameters.print(p, ctx);
                 }
-                p.print_node_comments_before_id(signature.params.get_node_id());
+                p.print_node_comments_before_id(signature.params.node_id());
                 p.print_ascii_byte(b'(');
                 if let Some(this_param) = &signature.this_param {
                     this_param.print(p, ctx);
@@ -4084,7 +4084,7 @@ impl Gen for TSSignature<'_> {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
                     type_parameters.print(p, ctx);
                 }
-                p.print_node_comments_before_id(signature.params.get_node_id());
+                p.print_node_comments_before_id(signature.params.node_id());
                 p.print_ascii_byte(b'(');
                 signature.params.print(p, ctx);
                 p.print_ascii_byte(b')');
@@ -4127,7 +4127,7 @@ impl Gen for TSSignature<'_> {
                 if let Some(type_parameters) = &signature.type_parameters {
                     type_parameters.print(p, ctx);
                 }
-                p.print_node_comments_before_id(signature.params.get_node_id());
+                p.print_node_comments_before_id(signature.params.node_id());
                 p.print_ascii_byte(b'(');
                 if let Some(this_param) = &signature.this_param {
                     this_param.print(p, ctx);
@@ -4552,7 +4552,7 @@ impl Gen for TSConstructorType<'_> {
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
         }
-        p.print_node_comments_before_id(self.params.get_node_id());
+        p.print_node_comments_before_id(self.params.node_id());
         p.print_ascii_byte(b'(');
         self.params.print(p, ctx);
         p.print_ascii_byte(b')');

@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 
 use oxc_ast::{
-    AttachedCommentPosition, Comment, CommentContent, CommentKind, GetNodeId,
+    AttachedCommentPosition, Comment, CommentContent, CommentKind,
     ast::{Expression, Program},
 };
 use oxc_span::GetSpan;
@@ -593,7 +593,7 @@ impl Codegen<'_> {
         &mut self,
         expression: &Expression<'_>,
     ) -> Option<BoundaryComments> {
-        let node = self.node_comments.take_all(expression.get_node_id());
+        let node = self.node_comments.take_all(expression.node_id());
         let leading = self.may_have_comments_before_expression(expression);
         let trailing = self.comments.may_have_anchor(expression.span().end);
         (node.is_some() || leading || trailing).then_some(BoundaryComments {

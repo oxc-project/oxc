@@ -84,14 +84,6 @@ pub use trivia::{
     CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
 };
 
-/// Uniform access to an AST node's semantic identity.
-///
-/// Returns [`oxc_syntax::node::NodeId::DUMMY`] for AST helper types without
-/// their own node identity.
-pub trait GetNodeId {
-    fn get_node_id(&self) -> oxc_syntax::node::NodeId;
-}
-
 // After experimenting with two types of boxed enum variants:
 //   1.
 //   ```
