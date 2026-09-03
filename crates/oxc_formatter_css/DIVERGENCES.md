@@ -452,6 +452,36 @@ dropping the comma changes the value for `nth()` / `@each` / `list.append()`.
 Prettier 3.9.6 drops it everywhere but `var()`; we keep it whenever the list has exactly one element
 (multi-element lists and function arguments still drop theirs, the list is a list without it).
 
+## bracket-list-layout
+
+- Why: uniform-rule (same construct, same output: paren comma list `(1, 2)`)
+- Pin: `tests/fixtures/format/scss/bracket-list.scss`
+
+```scss
+/* input */
+$a: [1, /* c */ 2];
+$b: [1, 2] 3;
+
+/* ours */
+$a: [1, /* c */ 2];
+$b: [1, 2] 3;
+
+/* prettier */
+$a:
+  [1,
+  /* c */ 2];
+$b:
+  [1,
+  2] 3;
+```
+
+A bracketed Sass list is a list like `(1, 2)`; we print it with the paren list's layout
+(fits on one line or breaks one element per line, comments stay inside the brackets).
+Prettier's value parser has no bracket node: `[1,` and `2]` are words of the OUTER comma list,
+so a comment, a sibling token or an overflow hard-breaks that outer list around the brackets
+(and `[1, 2, ]` keeps a trailing comma with a space).
+`[1,]` keeps its comma for the same reason as `(1,)` (see `single-item-list-trailing-comma`).
+
 ## trailing-comma-none-before-tail-comment
 
 - Why: uniform-rule (option governs: trailingComma)

@@ -14,8 +14,8 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 use oxc_css_parser::{
     ast::{
-        Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension, Function,
-        FunctionName, InterpolableIdent, InterpolableStr, LessBinaryOperation,
+        BracketBlock, Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension,
+        Function, FunctionName, InterpolableIdent, InterpolableStr, LessBinaryOperation,
         LessOperationOperatorKind, LessParenthesizedOperation, Number, SassBinaryExpression,
         SassBinaryOperator, SassBinaryOperatorKind, SassInterpolatedIdent,
         SassInterpolatedIdentElement, SassUnaryOperatorKind, Str, Url, UrlValue,
@@ -29,6 +29,7 @@ use oxc_formatter_core::{
         empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
         soft_line_break, soft_line_break_or_space, space, text, token,
     },
+    format_args,
     spec::{format_trimmed_number, normalize_string},
     write,
 };
@@ -727,18 +728,22 @@ pub(super) fn comment_is_own_line(comment: comments::CssComment, source: SourceT
 ///   - With `body_hard_broken` it keeps its own line instead:
 ///     the body already prints one element per line, so there is no wrapped layout to pin.
 /// - After a `//`: always a new line, or the `//` would swallow the next comment.
+/// - `after_content == false` (`[ /* c */ ]`): the comments ARE the body, nothing to space them off.
+///
+/// Returns true when the last comment was a `//`.
 fn write_paren_tail_comments(
     tail: &[comments::CssComment],
     body_hard_broken: bool,
+    after_content: bool,
     f: &mut CssFormatter<'_, '_>,
-) {
+) -> bool {
     let source = f.context().source_text();
     let mut after_inline = false;
-    for &comment in tail {
+    for (i, &comment) in tail.iter().enumerate() {
         let keeps_line = comment.inline || body_hard_broken;
         if after_inline || (keeps_line && comment_is_own_line(comment, source)) {
             write!(f, hard_line_break());
-        } else {
+        } else if i > 0 || after_content {
             write!(f, space());
         }
         comments::write_single_comment(comment, f);
@@ -747,6 +752,7 @@ fn write_paren_tail_comments(
         }
         after_inline = comment.inline;
     }
+    after_inline
 }
 
 /// Drains the comments before `r_paren` and writes them per [`write_paren_tail_comments`].
@@ -756,7 +762,67 @@ pub(super) fn flush_paren_tail_comments(
     f: &mut CssFormatter<'_, '_>,
 ) {
     let tail = f.context().comments().take_before(r_paren);
-    write_paren_tail_comments(tail, body_hard_broken, f);
+    write_paren_tail_comments(tail, body_hard_broken, /* after_content */ true, f);
+}
+
+/// `[a, b]` is a Sass list like `(a, b)`: same construct, same output
+/// (Prettier prints the brackets as words of the OUTER comma list, see DIVERGENCES.md "bracket-list-layout").
+fn write_bracket_block<'a>(
+    bracket: &BracketBlock<'a>,
+    ctx: ValueContext<'a>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    let groups = split_comma_groups(&bracket.value);
+    let r_bracket = to_span(bracket.span()).end.saturating_sub(1);
+    // `[1,]` is a COMMA list, `[1]` a space list (dart-sass `list.separator`):
+    // the source comma is the value, like `(1,)` (see `scss::is_single_item_list`).
+    // A multi-element list drops it: the separator is comma either way.
+    let keep_trailing_comma = groups.len() == 1;
+    // Comments before `]` are the tail's; nothing past the bracket belongs inside.
+    let inner_ctx = ValueContext { paren_break: false, tail_bound: None, ..ctx };
+    // Grid values never break (Prettier keeps them on one line, see `grid_did_break`):
+    // a line name stays `[top-end]` however long the declaration.
+    let flat = ctx.no_break || ctx.is_grid();
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        for (i, &(group, comma)) in groups.iter().enumerate() {
+            if i > 0 {
+                if flat {
+                    write!(f, " ");
+                } else {
+                    write!(f, soft_line_break_or_space());
+                }
+            }
+            write_comma_group(group, inner_ctx, f);
+            if i + 1 < groups.len() || (keep_trailing_comma && comma.is_some()) {
+                write_group_comma(comma, f);
+            }
+        }
+        let tail: &'a [comments::CssComment] = f.context().comments().take_before(r_bracket);
+        let ends_with_line_comment = write_paren_tail_comments(
+            tail,
+            /* body_hard_broken */ false,
+            !bracket.value.is_empty(),
+            f,
+        );
+        if flat && ends_with_line_comment {
+            // No group to expand here: keep `]` out of the `//` comment
+            // (the `expand_parent` still reaches the declaration group).
+            write!(f, hard_line_break());
+        }
+    });
+    if flat {
+        write!(f, ["[", body, "]"]);
+    } else {
+        write!(
+            f,
+            group(&format_args!(
+                "[",
+                indent(&format_args!(soft_line_break(), body)),
+                soft_line_break(),
+                "]"
+            ))
+        );
+    }
 }
 
 /// Emits pending comments that precede `upper_bound` inline
@@ -1568,16 +1634,7 @@ pub(super) fn write_component_value<'a>(
         }
         ComponentValue::Url(url) => write_url(url, f),
         // Less lookups / nth bracket blocks: `[...]` hugs its contents
-        ComponentValue::BracketBlock(bracket) => {
-            write!(f, "[");
-            for (i, v) in bracket.value.iter().enumerate() {
-                if i > 0 {
-                    write!(f, " ");
-                }
-                write_component_value(v, ctx, f);
-            }
-            write!(f, "]");
-        }
+        ComponentValue::BracketBlock(bracket) => write_bracket_block(bracket, ctx, f),
         ComponentValue::UnicodeRange(range) => {
             let span = to_span(range.span());
             write!(f, text(source.text_for(&span)));
@@ -2252,7 +2309,9 @@ pub(super) fn write_function<'a>(
         // with a `//` among them they take the paren-tail layout instead.
         let tail: &'a [comments::CssComment] = f.context().comments().take_before(r_paren);
         if tail.iter().any(|c| c.inline) {
-            write_paren_tail_comments(tail, /* body_hard_broken */ false, f);
+            write_paren_tail_comments(
+                tail, /* body_hard_broken */ false, /* after_content */ true, f,
+            );
         } else if !tail.is_empty() {
             let inner = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 let mut filler = f.fill();
