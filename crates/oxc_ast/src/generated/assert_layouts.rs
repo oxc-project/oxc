@@ -1585,14 +1585,34 @@ const _: () = {
     assert!(align_of::<TSTypePredicateName>() == 8);
 
     // Padding: 7 bytes
-    assert!(size_of::<TSExternalModuleDeclaration>() == 80);
+    assert!(size_of::<TSExternalModuleDeclaration>() == 88);
     assert!(align_of::<TSExternalModuleDeclaration>() == 8);
     assert!(offset_of!(TSExternalModuleDeclaration, span) == 0);
     assert!(offset_of!(TSExternalModuleDeclaration, node_id) == 8);
     assert!(offset_of!(TSExternalModuleDeclaration, scope_id) == 12);
     assert!(offset_of!(TSExternalModuleDeclaration, id) == 16);
-    assert!(offset_of!(TSExternalModuleDeclaration, body) == 64);
-    assert!(offset_of!(TSExternalModuleDeclaration, declare) == 72);
+    assert!(offset_of!(TSExternalModuleDeclaration, attributes) == 64);
+    assert!(offset_of!(TSExternalModuleDeclaration, body) == 72);
+    assert!(offset_of!(TSExternalModuleDeclaration, declare) == 80);
+
+    // Padding: 4 bytes
+    assert!(size_of::<TSModuleDeclarationAttributeClause>() == 40);
+    assert!(align_of::<TSModuleDeclarationAttributeClause>() == 8);
+    assert!(offset_of!(TSModuleDeclarationAttributeClause, span) == 0);
+    assert!(offset_of!(TSModuleDeclarationAttributeClause, node_id) == 8);
+    assert!(offset_of!(TSModuleDeclarationAttributeClause, entries) == 16);
+
+    // Padding: 3 bytes
+    assert!(size_of::<TSModuleDeclarationAttribute>() == 88);
+    assert!(align_of::<TSModuleDeclarationAttribute>() == 8);
+    assert!(offset_of!(TSModuleDeclarationAttribute, span) == 0);
+    assert!(offset_of!(TSModuleDeclarationAttribute, node_id) == 8);
+    assert!(offset_of!(TSModuleDeclarationAttribute, readonly) == 12);
+    assert!(offset_of!(TSModuleDeclarationAttribute, key) == 16);
+    assert!(offset_of!(TSModuleDeclarationAttribute, value) == 72);
+
+    assert!(size_of::<TSModuleDeclarationAttributeValue>() == 16);
+    assert!(align_of::<TSModuleDeclarationAttributeValue>() == 8);
 
     // Padding: 6 bytes
     assert!(size_of::<TSNamespaceDeclaration>() == 72);
@@ -3427,14 +3447,34 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<TSTypePredicateName>() == 4);
 
     // Padding: 3 bytes
-    assert!(size_of::<TSExternalModuleDeclaration>() == 56);
+    assert!(size_of::<TSExternalModuleDeclaration>() == 60);
     assert!(align_of::<TSExternalModuleDeclaration>() == 4);
     assert!(offset_of!(TSExternalModuleDeclaration, span) == 0);
     assert!(offset_of!(TSExternalModuleDeclaration, node_id) == 8);
     assert!(offset_of!(TSExternalModuleDeclaration, scope_id) == 12);
     assert!(offset_of!(TSExternalModuleDeclaration, id) == 16);
-    assert!(offset_of!(TSExternalModuleDeclaration, body) == 48);
-    assert!(offset_of!(TSExternalModuleDeclaration, declare) == 52);
+    assert!(offset_of!(TSExternalModuleDeclaration, attributes) == 48);
+    assert!(offset_of!(TSExternalModuleDeclaration, body) == 52);
+    assert!(offset_of!(TSExternalModuleDeclaration, declare) == 56);
+
+    // Padding: 0 bytes
+    assert!(size_of::<TSModuleDeclarationAttributeClause>() == 28);
+    assert!(align_of::<TSModuleDeclarationAttributeClause>() == 4);
+    assert!(offset_of!(TSModuleDeclarationAttributeClause, span) == 0);
+    assert!(offset_of!(TSModuleDeclarationAttributeClause, node_id) == 8);
+    assert!(offset_of!(TSModuleDeclarationAttributeClause, entries) == 12);
+
+    // Padding: 3 bytes
+    assert!(size_of::<TSModuleDeclarationAttribute>() == 60);
+    assert!(align_of::<TSModuleDeclarationAttribute>() == 4);
+    assert!(offset_of!(TSModuleDeclarationAttribute, span) == 0);
+    assert!(offset_of!(TSModuleDeclarationAttribute, node_id) == 8);
+    assert!(offset_of!(TSModuleDeclarationAttribute, readonly) == 12);
+    assert!(offset_of!(TSModuleDeclarationAttribute, key) == 16);
+    assert!(offset_of!(TSModuleDeclarationAttribute, value) == 52);
+
+    assert!(size_of::<TSModuleDeclarationAttributeValue>() == 8);
+    assert!(align_of::<TSModuleDeclarationAttributeValue>() == 4);
 
     // Padding: 2 bytes
     assert!(size_of::<TSNamespaceDeclaration>() == 56);

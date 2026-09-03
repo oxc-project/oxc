@@ -1249,10 +1249,45 @@ pub struct TSExternalModuleDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: StringLiteral<'a>,
+    #[estree(skip)]
+    pub attributes: Option<Box<'a, TSModuleDeclarationAttributeClause<'a>>>,
     #[scope(enter_before)]
     pub body: Option<Box<'a, TSModuleBlock<'a>>>,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
+}
+
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(skip, no_type, no_ts_def)]
+pub struct TSModuleDeclarationAttributeClause<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub entries: Vec<'a, TSModuleDeclarationAttribute<'a>>,
+}
+
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(skip, no_type, no_ts_def)]
+pub struct TSModuleDeclarationAttribute<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub readonly: bool,
+    pub key: ImportAttributeKey<'a>,
+    pub value: TSModuleDeclarationAttributeValue<'a>,
+}
+
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, GetAddress, GetSpan, GetSpanMut)]
+pub enum TSModuleDeclarationAttributeValue<'a> {
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 1,
 }
 
 /// TypeScript namespace or identifier-based module declaration.

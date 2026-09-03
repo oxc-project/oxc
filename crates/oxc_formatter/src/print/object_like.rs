@@ -18,6 +18,7 @@ use crate::{
 #[derive(Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {
     ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
+    TSModuleDeclarationAttributeClause(&'b AstNode<'a, TSModuleDeclarationAttributeClause<'a>>),
     TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
 }
 
@@ -25,6 +26,7 @@ impl<'a> ObjectLike<'a, '_> {
     fn span(&self) -> Span {
         match self {
             ObjectLike::ObjectExpression(o) => o.span,
+            ObjectLike::TSModuleDeclarationAttributeClause(o) => o.span,
             ObjectLike::TSTypeLiteral(o) => o.span,
         }
     }
@@ -61,6 +63,11 @@ impl<'a> ObjectLike<'a, '_> {
             Self::ObjectExpression(o) => o.as_ref().properties.first().is_some_and(|p| {
                 f.source_text().contains_newline_between(o.span.start, p.span().start)
             }),
+            Self::TSModuleDeclarationAttributeClause(o) => {
+                o.as_ref().entries.first().is_some_and(|attribute| {
+                    f.source_text().contains_newline_between(o.span.start, attribute.span.start)
+                })
+            }
             Self::TSTypeLiteral(o) => o.as_ref().members.first().is_some_and(|p| {
                 f.source_text().contains_newline_between(o.span().start, p.span().start)
             }),
@@ -70,6 +77,7 @@ impl<'a> ObjectLike<'a, '_> {
     fn members_are_empty(&self) -> bool {
         match self {
             Self::ObjectExpression(o) => o.properties().is_empty(),
+            Self::TSModuleDeclarationAttributeClause(o) => o.entries().is_empty(),
             Self::TSTypeLiteral(o) => o.members().is_empty(),
         }
     }
@@ -77,6 +85,7 @@ impl<'a> ObjectLike<'a, '_> {
     fn write_members(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::ObjectExpression(o) => o.properties().fmt(f),
+            Self::TSModuleDeclarationAttributeClause(o) => o.entries().fmt(f),
             Self::TSTypeLiteral(o) => o.members().fmt(f),
         }
     }

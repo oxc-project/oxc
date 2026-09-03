@@ -2654,6 +2654,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_ambient_context(decl.declare);
         self.visit_span(&decl.span);
         self.visit_string_literal(&decl.id);
+        if let Some(attributes) = &decl.attributes {
+            self.visit_ts_module_declaration_attribute_clause(attributes);
+        }
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;

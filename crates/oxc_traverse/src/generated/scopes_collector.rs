@@ -1954,7 +1954,39 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
+        if let Some(attributes) = &it.attributes {
+            self.visit_ts_module_declaration_attribute_clause(attributes);
+        }
         self.add_scope(&it.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_attribute_clause(
+        &mut self,
+        it: &TSModuleDeclarationAttributeClause<'a>,
+    ) {
+        self.visit_ts_module_declaration_attributes(&it.entries);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_attribute(&mut self, it: &TSModuleDeclarationAttribute<'a>) {
+        self.visit_ts_module_declaration_attribute_value(&it.value);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_attribute_value(
+        &mut self,
+        it: &TSModuleDeclarationAttributeValue<'a>,
+    ) {
+        match it {
+            TSModuleDeclarationAttributeValue::TemplateLiteral(it) => {
+                self.visit_template_literal(it)
+            }
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `StringLiteral`
+            }
+        }
     }
 
     #[inline]

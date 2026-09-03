@@ -5555,6 +5555,62 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclara
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttributeClause<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            self.write_suppressed(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttribute<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            self.write_suppressed(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttributeValue<'a>> {
+    #[inline]
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            TSModuleDeclarationAttributeValue::StringLiteral(inner) => {
+                allocator
+                    .alloc(AstNode::<StringLiteral> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            TSModuleDeclarationAttributeValue::TemplateLiteral(inner) => {
+                allocator
+                    .alloc(AstNode::<TemplateLiteral> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);

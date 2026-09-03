@@ -483,7 +483,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if self.lookahead(Self::is_start_of_mapped_type) {
                     self.parse_mapped_type()
                 } else {
-                    self.parse_type_literal()
+                    TSType::TSTypeLiteral(self.parse_type_literal())
                 }
             }
             Kind::LBrack => self.parse_tuple_type(),
@@ -694,11 +694,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_type_literal(&mut self) -> TSType<'a> {
+    fn parse_type_literal(&mut self) -> ArenaBox<'a, TSTypeLiteral<'a>> {
         let start = self.cur_start();
         let member_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
-        TSType::new_ts_type_literal(self.end_span(start), member_list, self)
+        TSTypeLiteral::boxed(self.end_span(start), member_list, self)
     }
 
     fn parse_type_query(&mut self) -> TSType<'a> {
@@ -1587,7 +1587,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         )
     }
 
-    fn parse_type_member_semicolon(&mut self) {
+    pub(super) fn parse_type_member_semicolon(&mut self) {
         // We allow type members to be separated by commas or (possibly ASI) semicolons.
         // First check if it was a comma.  If so, we're done with the member.
         if self.eat(Kind::Comma) {
