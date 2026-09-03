@@ -24,11 +24,13 @@ catalog:
   publint: 0.3.24
   rolldown: 1.2.7
   tsdown: 0.22.14
+  vite: 8.2.2
   vite-plus: 0.3.0
-  vitest: 4.1.11
+  vitest: 5.0.0
 
 overrides:
   rolldown: "catalog:"
+  vite: "catalog:"
   emnapi: "catalog:"
 
 allowBuilds:

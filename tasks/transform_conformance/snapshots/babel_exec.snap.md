@@ -7,8 +7,17 @@ Passed: 318 of 413 (77.00%)
 Failures:
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js
-Parse failure: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
-At file: /fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js:4:5
+./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js:5
+	var arguments = [
+	    ^^^^^^^^^
+
+SyntaxError: Unexpected eval or arguments in strict mode
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1273:80)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1180:73)
 
 ./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
 AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
@@ -29,8 +38,17 @@ AssertionError: expected undefined to be 'hello' // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-call-in-decorator-exec.test.js:21:28
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js
-Parse failure: Unexpected token `[`. Expected * for generator, private key, identifier or async
-At file: /fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:14:16
+./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:15
+	      accessor [super.toString()] = "hello";
+	               ^
+
+SyntaxError: Unexpected token '['
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1273:80)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1180:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 AssertionError: expected undefined to be 'hello' // Object.is equality
@@ -103,8 +121,6 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.11/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.11/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
@@ -127,8 +143,17 @@ TypeError: attempted to use private field on non-instance
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js:13:9
 
 ./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
-Parse failure: 'import', and 'export' cannot be used outside of module code
-At file: /fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:1
+./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:6
+	export { A };
+	^^^^^^
+
+SyntaxError: Unexpected token 'export'
+    at new Script (node:vm:118:7)
+    at createScript (node:vm:270:10)
+    at Object.runInThisContext (node:vm:318:10)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1273:80)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1180:73)
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
@@ -496,8 +521,6 @@ AssertionError: expected 2 to be 5 // Object.is equality
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.11/node_modules/@vitest/expect/dist/index.js:1552:16)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@4.1.11/node_modules/@vitest/expect/dist/index.js:1156:15)
     at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 
