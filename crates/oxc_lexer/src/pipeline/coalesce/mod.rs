@@ -1,166 +1,21 @@
-use crate::error::diag_code;
-use crate::lanes::Lanes;
-use crate::opmap::{KwSet, OP_QDOT};
-use crate::tables::{Tables, is_digit, is_op_char, is_word};
+use crate::{
+    error::diag_code,
+    lanes::Lanes,
+    opmap::{KwSet, OP_QDOT},
+    tables::{Tables, is_digit, is_op_char, is_word},
+};
 
-use super::NUM;
-use super::bitmap::{bm_clear_range, bm_next0, bm_set1};
-use super::find::scan_number;
-use super::keywords::{KWB, kw_verify_batch};
+use super::{
+    NUM,
+    bitmap::{bm_clear_range, bm_next0, bm_set1},
+    find::scan_number,
+};
 
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-#[inline(always)]
-fn prefetch(p: *const u8) {
-    unsafe { core::arch::x86_64::_mm_prefetch(p as *const i8, core::arch::x86_64::_MM_HINT_T0) }
-}
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
-#[inline(always)]
-fn prefetch(_p: *const u8) {}
+mod keywords;
+pub use keywords::KWB;
+use keywords::kw_verify_batch;
 
-unsafe fn munch_walk(
-    t: &Tables,
-    src: *const u8,
-    n: usize,
-    st: *mut u64,
-    opch: *const u64,
-    kind: *mut u8,
-    mut pos: usize,
-) -> usize {
-    let end = bm_next0(opch, pos, n);
-    while end - pos >= 2 {
-        bm_set1(st, pos);
-        let rem = end - pos;
-        let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
-        let b0 = *src.add(pos);
-        let b1 = *src.add(pos + 1);
-        let b2 = *src.add(pos + 2);
-        let b3 = *src.add(pos + 3);
-        let mut opk: u32 = 0;
-        let mut opl: u32 = 0;
-        let mut l = lmax;
-        while l >= 2 {
-            let k = t.op.opmap_lookup(b0, b1, b2, b3, l);
-            if k != 0 && !(k == OP_QDOT as u32 && pos + 2 < n && is_digit(*src.add(pos + 2))) {
-                opk = k;
-                opl = l;
-                break;
-            }
-            l -= 1;
-        }
-        if opk != 0 {
-            *kind.add(pos) = opk as u8;
-            let mut j = 1usize;
-            while j < opl as usize {
-                *st.add((pos + j) >> 6) &= !(1u64 << ((pos + j) & 63));
-                j += 1;
-            }
-            pos += opl as usize;
-        } else {
-            pos += 1;
-        }
-    }
-    if end - pos == 1 {
-        bm_set1(st, pos);
-    }
-    pos
-}
-unsafe fn glue_number(
-    t: &Tables,
-    kw: &KwSet,
-    src: *const u8,
-    n: usize,
-    st: *mut u64,
-    opch: *mut u64,
-    word: *const u64,
-    kind: *mut u8,
-    mut p: usize,
-    lanes: &mut Lanes,
-) -> usize {
-    loop {
-        let e2 = scan_number(src, n, p);
-        *kind.add(p) = NUM + (*src.add(e2 - 1) == b'n') as u8;
-        if e2 > p + 1 {
-            bm_clear_range(st, p + 1, e2 - 1);
-            bm_clear_range(opch, p, e2 - 1);
-        }
-        if e2 >= n {
-            return n;
-        }
-        bm_set1(st, e2);
-        let c = *src.add(e2);
-        // A word char abutting the number end (`1.5n`, `3in`, `0b12`, `1π`)
-        // is a spec-invalid adjacency. Never true on valid input, so the
-        // whole arm is cold.
-        if is_word(c) {
-            let srcs = core::slice::from_raw_parts(src, n);
-            if c < 0x80 {
-                // A surviving `n` is a misplaced bigint suffix; scan_number
-                // consumes legal ones. Token spans are unchanged either way.
-                let code = if c == b'n' {
-                    diag_code::INVALID_BIGINT
-                } else {
-                    diag_code::INVALID_NUMERIC_LITERAL
-                };
-                lanes.push_num_end_diag(srcs, e2, code);
-                if is_digit(c) {
-                    // Digit invalid for the radix (`0b12`) or after a bigint
-                    // suffix (`1n2`): keep gluing from it.
-                    p = e2;
-                    continue;
-                }
-                // This token start postdates the kwc mask built in the word
-                // prelude, so resolve any keyword kind inline (`3in` is `3`
-                // + KW_IN). Same inputs as kw_verify_batch: length from the
-                // word bitmap, no match right after a member `.` (a number
-                // ending in `.` is that dot-run's first dot).
-                if *src.add(e2 - 1) != b'.' {
-                    let wb = word as *const u8;
-                    let x = core::ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
-                    let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
-                    if kk != 0 {
-                        *kind.add(e2) = kk as u8;
-                    }
-                }
-            } else {
-                // Cold decode; flags only a real Unicode IdentifierStart.
-                lanes.push_num_end_diag_unicode(srcs, e2);
-            }
-            return e2; // token start already set at e2
-        }
-        if e2 + 1 < n && is_op_char(c) && (*opch.add((e2 + 1) >> 6) >> ((e2 + 1) & 63)) & 1 != 0 {
-            let q = munch_walk(t, src, n, st, opch, kind, e2);
-            if q < n
-                && *src.add(q) == b'.'
-                && is_digit(*src.add(q + 1))
-                && (*st.add(q >> 6) >> (q & 63)) & 1 != 0
-            {
-                p = q;
-                continue;
-            }
-            return q;
-        }
-        return e2;
-    }
-}
-/// Dispatch to the key-monomorphized verify without duplicating `coalesce`
-/// itself: one predictable branch per flush, not per candidate, keyed off
-/// the set itself so the walk carries no extra mode scalar.
-#[inline(always)]
-unsafe fn kw_flush(
-    kw: &KwSet,
-    src: *const u8,
-    word: *const u64,
-    kind: *mut u8,
-    kwpos: *const u32,
-    k: usize,
-) {
-    if kw.ts_key {
-        kw_verify_batch::<true>(kw, src, word, kind, kwpos, k);
-    } else {
-        kw_verify_batch::<false>(kw, src, word, kind, kwpos, k);
-    }
-}
-pub(super) unsafe fn coalesce(
+pub unsafe fn coalesce(
     t: &Tables,
     kw: &KwSet,
     src: *const u8,
@@ -329,4 +184,163 @@ pub(super) unsafe fn coalesce(
         }
     }
     kw_flush(kw, src, word, kind, kwpos, k);
+}
+
+unsafe fn glue_number(
+    t: &Tables,
+    kw: &KwSet,
+    src: *const u8,
+    n: usize,
+    st: *mut u64,
+    opch: *mut u64,
+    word: *const u64,
+    kind: *mut u8,
+    mut p: usize,
+    lanes: &mut Lanes,
+) -> usize {
+    loop {
+        let e2 = scan_number(src, n, p);
+        *kind.add(p) = NUM + (*src.add(e2 - 1) == b'n') as u8;
+        if e2 > p + 1 {
+            bm_clear_range(st, p + 1, e2 - 1);
+            bm_clear_range(opch, p, e2 - 1);
+        }
+        if e2 >= n {
+            return n;
+        }
+        bm_set1(st, e2);
+        let c = *src.add(e2);
+        // A word char abutting the number end (`1.5n`, `3in`, `0b12`, `1π`)
+        // is a spec-invalid adjacency. Never true on valid input, so the
+        // whole arm is cold.
+        if is_word(c) {
+            let srcs = core::slice::from_raw_parts(src, n);
+            if c < 0x80 {
+                // A surviving `n` is a misplaced bigint suffix; scan_number
+                // consumes legal ones. Token spans are unchanged either way.
+                let code = if c == b'n' {
+                    diag_code::INVALID_BIGINT
+                } else {
+                    diag_code::INVALID_NUMERIC_LITERAL
+                };
+                lanes.push_num_end_diag(srcs, e2, code);
+                if is_digit(c) {
+                    // Digit invalid for the radix (`0b12`) or after a bigint
+                    // suffix (`1n2`): keep gluing from it.
+                    p = e2;
+                    continue;
+                }
+                // This token start postdates the kwc mask built in the word
+                // prelude, so resolve any keyword kind inline (`3in` is `3`
+                // + KW_IN). Same inputs as kw_verify_batch: length from the
+                // word bitmap, no match right after a member `.` (a number
+                // ending in `.` is that dot-run's first dot).
+                if *src.add(e2 - 1) != b'.' {
+                    let wb = word as *const u8;
+                    let x = core::ptr::read_unaligned(wb.add(e2 >> 3) as *const u64) >> (e2 & 7);
+                    let kk = kw.lookup(src.add(e2), (!x).trailing_zeros() as usize);
+                    if kk != 0 {
+                        *kind.add(e2) = kk as u8;
+                    }
+                }
+            } else {
+                // Cold decode; flags only a real Unicode IdentifierStart.
+                lanes.push_num_end_diag_unicode(srcs, e2);
+            }
+            return e2; // token start already set at e2
+        }
+        if e2 + 1 < n && is_op_char(c) && (*opch.add((e2 + 1) >> 6) >> ((e2 + 1) & 63)) & 1 != 0 {
+            let q = munch_walk(t, src, n, st, opch, kind, e2);
+            if q < n
+                && *src.add(q) == b'.'
+                && is_digit(*src.add(q + 1))
+                && (*st.add(q >> 6) >> (q & 63)) & 1 != 0
+            {
+                p = q;
+                continue;
+            }
+            return q;
+        }
+        return e2;
+    }
+}
+
+unsafe fn munch_walk(
+    t: &Tables,
+    src: *const u8,
+    n: usize,
+    st: *mut u64,
+    opch: *const u64,
+    kind: *mut u8,
+    mut pos: usize,
+) -> usize {
+    let end = bm_next0(opch, pos, n);
+    while end - pos >= 2 {
+        bm_set1(st, pos);
+        let rem = end - pos;
+        let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
+        let b0 = *src.add(pos);
+        let b1 = *src.add(pos + 1);
+        let b2 = *src.add(pos + 2);
+        let b3 = *src.add(pos + 3);
+        let mut opk: u32 = 0;
+        let mut opl: u32 = 0;
+        let mut l = lmax;
+        while l >= 2 {
+            let k = t.op.opmap_lookup(b0, b1, b2, b3, l);
+            if k != 0 && !(k == OP_QDOT as u32 && pos + 2 < n && is_digit(*src.add(pos + 2))) {
+                opk = k;
+                opl = l;
+                break;
+            }
+            l -= 1;
+        }
+        if opk != 0 {
+            *kind.add(pos) = opk as u8;
+            let mut j = 1usize;
+            while j < opl as usize {
+                *st.add((pos + j) >> 6) &= !(1u64 << ((pos + j) & 63));
+                j += 1;
+            }
+            pos += opl as usize;
+        } else {
+            pos += 1;
+        }
+    }
+    if end - pos == 1 {
+        bm_set1(st, pos);
+    }
+    pos
+}
+
+/// Dispatch to the key-monomorphized verify without duplicating `coalesce`
+/// itself: one predictable branch per flush, not per candidate, keyed off
+/// the set itself so the walk carries no extra mode scalar.
+#[inline(always)]
+unsafe fn kw_flush(
+    kw: &KwSet,
+    src: *const u8,
+    word: *const u64,
+    kind: *mut u8,
+    kwpos: *const u32,
+    k: usize,
+) {
+    if kw.ts_key {
+        kw_verify_batch::<true>(kw, src, word, kind, kwpos, k);
+    } else {
+        kw_verify_batch::<false>(kw, src, word, kind, kwpos, k);
+    }
+}
+
+#[inline(always)]
+fn prefetch(p: *const u8) {
+    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    unsafe {
+        core::arch::x86_64::_mm_prefetch(p as *const i8, core::arch::x86_64::_MM_HINT_T0)
+    }
+
+    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    {
+        let _ = p;
+    }
 }
