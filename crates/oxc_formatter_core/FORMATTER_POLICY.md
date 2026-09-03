@@ -44,6 +44,8 @@ Every reason is OUR decision factor; Prettier's mechanism (comment attachment, `
   - Mandatory: Formatting must NEVER do that
   - Verify semantics claims with the reference compiler/parser (tsc, dart-sass, lessc, ...), not intuition
 - (2) `invariant`: Prettier's output breaks one of our formatter contract invariants; that set is closed, extending it is a policy change
+  - Lossless: every comment is printed, exactly once; comments are the user's, and losing one outranks moving one
+    (whatever the compiler makes of it: a comment may carry tool meaning, `/*! */`, `-disable`, etc)
   - The comment placement invariants (see "Comment placement invariants" below): the output moves content the user owns
   - Idempotency: a second pass must reproduce the first, layout included; a formatter with no fixpoint has no defined output
   - Mandatory: the output is inadmissible whatever its layout merits
@@ -87,7 +89,7 @@ Two layers of rules; know which one you are editing:
 - Invariants hold uniformly: violating one is a bug even where Prettier disagrees
 - Compat tables record measured Prettier behavior that is not derivable from principle: extend them by measuring Prettier, never by analogy, and pin every entry in a fixture
 
-The invariants:
+The invariants (placement only; losing a comment is the lossless contract under reason (2), above all of these):
 
 - A comment never crosses user content (code, other comments, other tokens): it stays on its source side of every token
   - When Prettier relocates a comment across tokens, that is a divergence under reason (2) `invariant` (see "Known divergences"), not a rule to emulate

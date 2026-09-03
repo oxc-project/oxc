@@ -51,21 +51,34 @@ pub(super) fn write_sass_variable_declaration<'a>(
     write!(f, space());
 
     let ctx = ValueContext { decl_prop: Some("$"), map_break: true, ..ValueContext::default() };
-    // Comments between the colon and the value:
-    // inline ones get their own line under the colon (`$x:\n  // c\n  value`).
+    // Comments between the colon and the value keep their line:
+    // a same-line `//` stays on the colon's (`$x: // c`), an own-line one stays own-line,
+    // and the value then continues one level under the name.
+    // A hard-broken comma list indents itself and claims an own-line lead inside that indent.
     let value_start = to_span(decl.value.span()).start;
-    if f.context().comments().peek().is_some_and(|c| c.inline && c.span.end <= value_start) {
-        let lead = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-            for &comment in f.context().comments().take_before(value_start) {
-                write!(f, hard_line_break());
-                comments::write_single_comment(comment, f);
-            }
-        });
-        write!(f, indent(&lead));
+    let inline_lead = f.context().comments().iter_before(value_start).any(|c| c.inline);
+    let own_line_lead = f
+        .context()
+        .comments()
+        .iter_before(value_start)
+        .next()
+        .is_some_and(|c| value::comment_is_own_line(c, source));
+    let hard_list = top_level_value_breaks_hard(&decl.value, ctx, f);
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        if own_line_lead {
+            write!(f, hard_line_break());
+        }
+        if hard_list && own_line_lead {
+            write_top_level_value(&decl.value, ctx, f);
+        } else {
+            write_top_level_list_element(&decl.value, ctx, f);
+        }
+    });
+    if (inline_lead || own_line_lead) && !hard_list {
+        write!(f, indent(&body));
     } else {
-        value::flush_value_comments(value_start, f);
+        write!(f, body);
     }
-    write_top_level_value(&decl.value, ctx, f);
 
     for flag in &decl.flags {
         let span = to_span(flag.span());
@@ -73,16 +86,7 @@ pub(super) fn write_sass_variable_declaration<'a>(
         write!(f, space());
         write!(f, text(source.text_for(&span)));
     }
-    // Comments between the value/flags and the `;`.
-    let decl_end = to_span(decl.span()).end;
-    let end = statement::end_with_semicolon(decl_end, f);
-    let bound = if end > decl_end { end - 1 } else { decl_end };
-    if let Some(comment_end) = value::flush_trailing_value_comments(bound, f)
-        && end > decl_end
-        && comment_end < end - 1
-    {
-        write!(f, space());
-    }
+    statement::write_terminator_tail_comments(to_span(decl.span()).end, f);
 }
 
 /// `("a",)` / `$x: "a",`: a single element followed by a comma is a one-element LIST in Sass,
@@ -97,6 +101,43 @@ pub(super) fn is_single_item_list(list: &SassList<'_>) -> bool {
 /// Start offset of the source comma after element `i` (for [`value::write_group_comma`]).
 pub(super) fn list_comma_start(list: &SassList<'_>, i: usize) -> Option<u32> {
     list.comma_spans.as_ref().and_then(|s| s.get(i)).map(|sp| to_span(sp).start)
+}
+
+/// Whether [`write_top_level_value`] prints `value` one comma entry per line:
+/// a comma list whose entries have multiple parts or carry comments, except under a custom property.
+/// Such a list indents itself, callers must not add a level.
+pub(super) fn top_level_value_breaks_hard<'a>(
+    value: &ComponentValue<'a>,
+    ctx: ValueContext<'a>,
+    f: &CssFormatter<'_, 'a>,
+) -> bool {
+    let elements = match value {
+        ComponentValue::SassList(list) if list.comma_spans.is_some() => &list.elements,
+        ComponentValue::LessList(list) if list.comma_spans.is_some() => &list.elements,
+        _ => return false,
+    };
+    if elements.len() < 2 || ctx.decl_prop.is_some_and(|p| p.starts_with("--")) {
+        return false;
+    }
+    let value_span = to_span(value.span());
+    let has_comments = f
+        .context()
+        .comments()
+        .iter_before(value_span.end)
+        .any(|c| c.span.start >= value_span.start);
+    has_comments
+        || elements.iter().enumerate().any(|(i, el)| {
+            let group = match el {
+                ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
+                    &inner.elements[..]
+                }
+                ComponentValue::LessList(inner) if inner.comma_spans.is_none() => {
+                    &inner.elements[..]
+                }
+                other => std::slice::from_ref(other),
+            };
+            value::comma_group_is_multi(group, i == 0)
+        })
 }
 
 /// A single `ComponentValue` in declaration-value position:
@@ -138,18 +179,7 @@ pub(super) fn write_top_level_value<'a>(
                 (group, comma_spans.get(i).map(|sp| to_span(sp).start))
             })
             .collect();
-        let value_span = to_span(value.span());
-        let has_comments = f
-            .context()
-            .comments()
-            .iter_before(value_span.end)
-            .any(|c| c.span.start >= value_span.start);
-        let force_hard_line = !ctx.decl_prop.is_some_and(|p| p.starts_with("--"))
-            && (groups
-                .iter()
-                .enumerate()
-                .any(|(i, (g, _))| value::comma_group_is_multi(g, i == 0))
-                || has_comments);
+        let force_hard_line = top_level_value_breaks_hard(value, ctx, f);
         value::write_value_groups(&groups, ctx, force_hard_line, keep_trailing_comma, f);
     } else {
         value::write_comma_group(elements, ctx, f);

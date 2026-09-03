@@ -49,14 +49,14 @@ The shared policy applies; CSS specifics:
 `oxc-css-parser` does not attach comments to the AST;
 they are collected via `ParserBuilder::comments()` into a positional cursor over `CssComment { span, inline }` (`inline` = `//`).
 
-- Statement-level comments: flushed before each statement (`flush_leading_comments`);
-  consecutive same-line comments stay glued (`*/ /*!`), but a comment is always followed by a line break before a node
-- Value-level comments: block comments between fill runs are standalone fill items (own-line or not);
-  the rest (leads before the first component, own-line `//`) flush at the next entry's head (`flush_value_comments`),
-  where `//` comments expand the parent group and force a hardline after
-- Trailing (`value /* c */;`): flushed by `write_declaration` with the source gap before `;` preserved
-- After each statement, the sequence DISCARDS unclaimed comments inside the statement span
-  (cursor must never point before a printed position)
+Ownership is a claim discipline, not attachment: each printer claims the comments inside what it prints, in source order.
+
+- Statement level: `flush_leading_comments` before the statement, `write_terminator_tail_comments` before its `;`
+- Value level: a comma group claims its own head (`write_comma_group`); a bare value has no group to do so,
+  its CALLER claims (`write_list_element` / `write_top_level_list_element`), never `write_component_value` itself (a `//` hardline would land inside the indent an arm opens)
+- After each statement, the sequence DISCARDS unclaimed comments inside the statement span:
+  a monotonicity guard (the cursor must never point before a printed position), not a placement rule.
+  A comment reaching it is LOST (the lossless contract), so every new value position must claim its leads
 
 #### Placement invariants
 
@@ -70,6 +70,9 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
   - Adopted by every comma writer (function/include args, maps, paren/sass lists, `@mixin` params, `@each` bindings, keyframe selectors)
 - `;` is a declaration TERMINATOR, but unlike JS statements Prettier does NOT move comments behind it:
   - `value /* c */;` keeps the comment before `;` (measured behavior, not principle, may change in the future)
+  - `oxc_formatter` prints `1; /* c */` (comment behind the terminator); CSS keeps it before, uniformly for declarations, `$var` / `@var` values and `!flag`s (`write_terminator_tail_comments`).
+    - Revisit together with JS if the policy ever picks one side
+  - The gap before the `;` is the formatter's and is dropped (`/* c */ ;` -> `/* c */;`), see DIVERGENCES.md "terminator-gap-normalized"
 - The positional cursor makes ownership a bounds discipline, not an attachment one:
   - a flush's upper bound must never extend past the next piece of user content,
   - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
@@ -197,8 +200,8 @@ The harness snapshots both `--print-width 80` and `100`; verify fixtures at both
 
 At the current version (v3.9.6), these divergences have been confirmed and are intentional (see DIVERGENCES.md):
 
-- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`
-- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`, `css/comments/declaration.css` (terminator-gap-normalized)
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss` (terminator-gap-normalized)
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 

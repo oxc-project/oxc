@@ -1,0 +1,51 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// The trivia up to a `;` is the formatter's: a comment before it keeps its place,
+// the gap between the comment and the `;` does not.
+// DIVERGENCE (DIVERGENCES.md "terminator-gap-normalized"): after `!important` /
+// `!default` / `!global` Prettier keeps the source gap (`/* c */ ;`).
+$a: 1 /* c */ ;
+$b: 1 !default /* c */ ;
+$c: 1 !global /* c */;
+a {
+  color: red /* c */ ;
+  width: 1px !important /* c */ ;
+  height: 1px !important /* c */;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// The trivia up to a `;` is the formatter's: a comment before it keeps its place,
+// the gap between the comment and the `;` does not.
+// DIVERGENCE (DIVERGENCES.md "terminator-gap-normalized"): after `!important` /
+// `!default` / `!global` Prettier keeps the source gap (`/* c */ ;`).
+$a: 1 /* c */;
+$b: 1 !default /* c */;
+$c: 1 !global /* c */;
+a {
+  color: red /* c */;
+  width: 1px !important /* c */;
+  height: 1px !important /* c */;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// The trivia up to a `;` is the formatter's: a comment before it keeps its place,
+// the gap between the comment and the `;` does not.
+// DIVERGENCE (DIVERGENCES.md "terminator-gap-normalized"): after `!important` /
+// `!default` / `!global` Prettier keeps the source gap (`/* c */ ;`).
+$a: 1 /* c */;
+$b: 1 !default /* c */;
+$c: 1 !global /* c */;
+a {
+  color: red /* c */;
+  width: 1px !important /* c */;
+  height: 1px !important /* c */;
+}
+
+===================== End =====================

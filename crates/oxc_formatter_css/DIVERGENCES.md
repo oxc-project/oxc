@@ -364,7 +364,7 @@ Prettier double-indents it (closing `)` floating between levels) when the neares
 ## comment-preceded-map-indent
 
 - Why: uniform-rule (comment presence never changes layout)
-- Pin: `tests/fixtures/format/scss/map-comment-block-value-comma.scss`
+- Pin: `tests/fixtures/format/scss/map-comment-block-value-comma.scss`, `tests/fixtures/format/scss/variable-inline-comment.scss`
 
 ```scss
 /* input */
@@ -394,6 +394,7 @@ A comment-preceded block map value prints at the normal nested-map indent;
 Prettier double-indents it (+6 body / +4 `)`) because its dedent applies only when the pair doc is a plain `group(indent(fill))` and a leading comment changes the doc shape.
 Comment presence must not change layout: same dedent-skip artifact class as `nested-map-context-indent`
 (paren-block KEYS still keep the pair indent, matching Prettier: that trigger is content, not trivia).
+The other direction of the same artifact: a map value after `$v: // c` keeps its shape under the continuation indent (`(\n    k: v,\n  )`), Prettier dedents it to `(\n  k: v,\n)` with the body level with the `(`.
 
 ## map-item-break-comma-lists-only
 
@@ -481,6 +482,30 @@ Prettier's value parser has no bracket node: `[1,` and `2]` are words of the OUT
 so a comment, a sibling token or an overflow hard-breaks that outer list around the brackets
 (and `[1, 2, ]` keeps a trailing comma with a space).
 `[1,]` keeps its comma for the same reason as `(1,)` (see `single-item-list-trailing-comma`).
+
+## terminator-gap-normalized
+
+- Why: uniform-rule (the formatter owns the trivia up to a terminator)
+- Pin: `tests/fixtures/format/scss/terminator-gap.scss`
+
+```scss
+/* input */
+a { color: red !important /* c */ ; }
+
+/* ours */
+a {
+  color: red !important /* c */;
+}
+
+/* prettier */
+a {
+  color: red !important /* c */ ;
+}
+```
+
+A comment before the `;` keeps its place; the gap between it and the `;` is the formatter's (FORMATTER_POLICY.md "Comment placement invariants": terminators and the trivia up to them),
+so it is dropped as after any other value (`color: red /* c */ ;` -> `red /* c */;`, matching Prettier).
+Prettier keeps the source gap only after `!important` / `!default` / `!global`: postcss stores the text after the flag verbatim in `raws.important`.
 
 ## trailing-comma-none-before-tail-comment
 
@@ -634,6 +659,29 @@ Prettier keeps the whole run verbatim (postcss swallows everything past the `}` 
 This falls out of the AST shape: SCSS parses `{...}` declaration values as `SassNestingDeclaration`;
 CSS/Less don't structure them, so their token-soup fallback incidentally matches Prettier.
 The value syntax's only intended consumer was the dropped CSS Apply Rule proposal, so the cross-mode difference is theoretical.
+
+## less-variable-value-comments
+
+- Why: invariant
+- Pin: `tests/fixtures/format/less/variable-value-comments.less`
+
+```less
+/* input */
+@a: /* c */ 1;
+@c: 1 /* c */;
+
+/* ours */
+@a: /* c */ 1;
+@c: 1 /* c */;
+
+/* prettier */
+@a: 1;
+@c: 1/* c */ ;
+```
+
+A comment inside a variable's value stays in place, as in a declaration (`color: /* c */ red`).
+Prettier loses it (the lossless contract): postcss-less parses `@a: 1` as an at-rule with the value as a params string,
+and its at-rule printer drops the block comments in there (a trailing one survives glued to the value, in front of the `;` gap).
 
 ## less-extend-statement-break
 
