@@ -1,0 +1,19 @@
+.github/labeler.yml
+  s_555bdd00191282::t_536827edec40be 47-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5c6e9ca393eedfc57444cf9b1065243b5f660525",
+  "prompts": {},
+  "sessions": {
+    "s_555bdd00191282": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c10-95a3-78e3-bfeb-a54856c3231d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
