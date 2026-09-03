@@ -1,0 +1,41 @@
+.github/workflows/autofix.yml
+  s_edcebb8a986c2d::t_5464ad62e28b82 20
+.github/workflows/ci.yml
+  s_edcebb8a986c2d::t_8528bc4872e93b 27,46,61,85,170,209,250,273,308,353,406,446,489,547,590,699,733
+.github/workflows/codecov.yml
+  s_edcebb8a986c2d::t_7a809573f80abd 37
+.github/workflows/lint_rules.yml
+  s_edcebb8a986c2d::t_544cd5b5d352d2 26
+.github/workflows/prepare_release_apps.yml
+  s_edcebb8a986c2d::t_34d06316192989 35
+.github/workflows/prepare_release_crates.yml
+  s_edcebb8a986c2d::t_243c2b1d41fb70 26,56
+.github/workflows/release_apps.yml
+  s_edcebb8a986c2d::t_c4d77c3b60434b 30,162,225,301,452,515,578
+.github/workflows/release_codegen.yml
+  s_edcebb8a986c2d::t_df87cacdb08a50 44
+.github/workflows/release_runtime.yml
+  s_edcebb8a986c2d::t_d6bc2cd30aa796 44
+.github/workflows/release_types.yml
+  s_edcebb8a986c2d::t_122194b57155e3 44
+.github/workflows/reusable_release_napi.yml
+  s_edcebb8a986c2d::t_092b1e0fc2a6b1 137,177,219
+.github/workflows/update_submodules.yml
+  s_edcebb8a986c2d::t_8369b1c7db0367 50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3115c6b0b4e59c5d71f885dcc8a83d8add85bbb5",
+  "prompts": {},
+  "sessions": {
+    "s_edcebb8a986c2d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a067ba-1c1b-7c81-be25-64df96e10f76",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
