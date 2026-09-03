@@ -318,13 +318,9 @@ fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
     let Some(source) = source_value.as_str() else {
         // Filesystem paths cannot contain lone surrogates, but the rule should still recognize
         // the declaration-file suffix instead of reporting a style error for valid JS syntax.
-        let code_points = source_value.code_points().collect::<Vec<_>>();
-        let has_declaration_marker = code_points
-            .windows(3)
-            .any(|window| window == [u32::from(b'.'), u32::from(b'd'), u32::from(b'.')]);
-        let has_ts_extension = [".ts", ".mts", ".cts"].iter().any(|extension| {
-            code_points.ends_with(&extension.bytes().map(u32::from).collect::<Vec<_>>())
-        });
+        let has_declaration_marker = source_value.contains(".d.");
+        let has_ts_extension =
+            [".ts", ".mts", ".cts"].iter().any(|extension| source_value.ends_with(extension));
         return has_declaration_marker && has_ts_extension;
     };
     // Relatively fast check to avoid unnecessary Path and extension parsing

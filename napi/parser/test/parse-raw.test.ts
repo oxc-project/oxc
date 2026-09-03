@@ -239,6 +239,8 @@ describe.concurrent("edge cases", () => {
     "`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;",
     "`�\\u{FFFD}${x}�\\u{FFFD}`;",
     "`�\\u{FFFD}\\uD800${x}\\uDBFF�\\u{FFFD}`;",
+    // Tagged template with an invalid escape has a null cooked value
+    "tag`\\unicode`;",
     // Hashbangs
     "#!/usr/bin/env node\nlet x;",
     "#!/usr/bin/env node\nlet x;\n// foo",

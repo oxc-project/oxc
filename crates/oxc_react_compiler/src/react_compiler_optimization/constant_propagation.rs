@@ -31,7 +31,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{StringToNumber, ToInt32, ToUint32};
-use oxc_str::{Ident, JSStrBuilder};
+use oxc_str::{Ident, JSStr, JSStrBuilder};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::keyword::is_reserved_keyword;
 use oxc_syntax::number::ToJsString;
@@ -528,6 +528,7 @@ fn evaluate_instruction<'a>(
 
             let mut quasi_index = 0usize;
             let mut result_string = JSStrBuilder::new_in(env.allocator);
+            // All cooked values were checked above.
             result_string.push_js_str(quasis[quasi_index].cooked.unwrap());
             quasi_index += 1;
 
@@ -706,10 +707,7 @@ fn evaluate_binary_op<'a>(
                 Some(PrimitiveValue::Number(FloatValue::new(l.value() + r.value())))
             }
             (PrimitiveValue::String(l), PrimitiveValue::String(r)) => {
-                let mut value = JSStrBuilder::new_in(allocator);
-                value.push_js_str(*l);
-                value.push_js_str(*r);
-                Some(PrimitiveValue::String(value.finish()))
+                Some(PrimitiveValue::String(JSStr::from_js_strs_array_in([*l, *r], &allocator)))
             }
             _ => None,
         },

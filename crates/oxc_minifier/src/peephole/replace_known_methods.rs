@@ -298,8 +298,6 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                // Template cooked values still use `Str` in this first version. Keep this
-                // optimization on the UTF-8 fast path until templates migrate to `JSStr`.
                 let base_value = base_str.value.as_str()?;
                 if args.iter().any(|arg| {
                     matches!(arg, Argument::StringLiteral(lit) if lit.value.as_str().is_none())

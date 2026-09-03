@@ -39,10 +39,17 @@ it("preserves lone surrogates in strings, templates, and module requests", () =>
 
   expect(data.module.staticImports[0].moduleRequest.value).toBe("\ud800");
   expect(data.program.body[1].expression.value).toBe("\udc00");
-  expect(data.program.body[2].expression.quasis[0].value).toEqual({
-    raw: "�\\u{FFFD}\\uD800",
-    cooked: "��\ud800",
-  });
+  const value = data.program.body[2].expression.quasis[0].value;
+  expect(value.raw).toBe("�\\u{FFFD}\\uD800");
+  expect(value.cooked).toBe("��\ud800");
+});
+
+it("preserves a null cooked value for an invalid tagged-template escape", () => {
+  const data = parseSyncLazy("test.js", "tag`\\unicode`;");
+
+  const value = data.program.body[0].expression.quasi.quasis[0].value;
+  expect(value.raw).toBe("\\unicode");
+  expect(value.cooked).toBeNull();
 });
 
 it("returns same node objects and node arrays on each access", () => {

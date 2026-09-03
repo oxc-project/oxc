@@ -530,7 +530,7 @@ fn get_array_minimum_length(arr: &ArrayExpression) -> usize {
         .map(|e| match e {
             ArrayExpressionElement::SpreadElement(spread) => match &spread.argument {
                 Expression::ArrayExpression(arr) => get_array_minimum_length(arr),
-                Expression::StringLiteral(str) => str.value.code_points().count(),
+                Expression::StringLiteral(str) => str.value.chars().count(),
                 _ => 0,
             },
             _ => 1,

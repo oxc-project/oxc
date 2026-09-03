@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     with_number_literal,
 };
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::JSStrBuilder;
+use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::TraverseCtx;
@@ -628,13 +628,8 @@ impl<'a> PeepholeOptimizations {
         if let (Expression::StringLiteral(left), Expression::StringLiteral(right)) =
             (&*left_expr, &*right_expr)
         {
-            let mut value = JSStrBuilder::with_capacity_in(
-                left.value.len() + right.value.len(),
-                ctx.allocator(),
-            );
-            value.push_js_str(left.value);
-            value.push_js_str(right.value);
-            return Some(Expression::new_string_literal(parent_span, value.finish(), None, ctx));
+            let value = JSStr::from_js_strs_array_in([left.value, right.value], ctx);
+            return Some(Expression::new_string_literal(parent_span, value, None, ctx));
         }
 
         if let Expression::TemplateLiteral(left) = left_expr {
@@ -654,13 +649,7 @@ impl<'a> PeepholeOptimizations {
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    let mut cooked = JSStrBuilder::with_capacity_in(
-                        cooked1.len() + cooked2.len(),
-                        ctx.allocator(),
-                    );
-                    cooked.push_js_str(cooked1);
-                    cooked.push_js_str(cooked2);
-                    Some(cooked.finish())
+                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
                 } else {
                     None
                 };
@@ -1068,8 +1057,10 @@ impl<'a> PeepholeOptimizations {
                 .first()
                 .or_else(|| next_raw.as_bytes().first())
                 .is_some_and(u8::is_ascii_digit);
-            let cooked_ends_with_null =
-                quasi.value.cooked.is_some_and(|cooked| cooked.code_points().last() == Some(0));
+            let cooked_ends_with_null = quasi
+                .value
+                .cooked
+                .is_some_and(|cooked| cooked.chars().last().is_some_and(|c| c.value() == 0));
             quasi.value.raw = if starts_with_digit
                 && cooked_ends_with_null
                 && let Some(prefix) = raw.strip_suffix("\\0")

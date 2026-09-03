@@ -122,7 +122,7 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
             };
 
             if let Some(JSXAttributeValue::StringLiteral(strategy_value)) = &strategy.value
-                && strategy_value.value.as_str() == Some("beforeInteractive")
+                && strategy_value.value == "beforeInteractive"
             {
                 if is_document_page(file_path) {
                     return;

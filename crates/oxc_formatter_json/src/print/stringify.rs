@@ -198,7 +198,8 @@ fn json_stringify_escape(content: JSStr<'_>) -> Cow<'_, str> {
     }
 
     let mut out = String::with_capacity(content.len() + 8);
-    for code_point in content.code_points() {
+    for js_char in content.chars() {
+        let code_point = js_char.value();
         let short_escape = match code_point {
             0x22 => Some("\\\""),
             0x5C => Some("\\\\"),
@@ -221,7 +222,9 @@ fn json_stringify_escape(content: JSStr<'_>) -> Cow<'_, str> {
                 out.push(HEX[((code_point >> shift) & 0xF) as usize] as char);
             }
         } else {
-            out.push(char::from_u32(code_point).unwrap());
+            // `code_point` is not a surrogate in this branch, so it is a
+            // Unicode scalar value.
+            out.push(js_char.to_char().unwrap());
         }
     }
     Cow::Owned(out)

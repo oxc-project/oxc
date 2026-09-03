@@ -137,10 +137,11 @@ impl Rule for ValidTypeof {
 
         if let Expression::TemplateLiteral(template) = sibling
             && let Some(quasi) = template.single_quasi()
-            && let Some(quasi) = quasi.as_str()
         {
-            if !VALID_TYPES.contains(&quasi) {
-                let help = get_typo_suggestion(quasi)
+            let value = quasi.as_str();
+            if !value.is_some_and(|value| VALID_TYPES.contains(&value)) {
+                let help = value
+                    .and_then(get_typo_suggestion)
                     .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
                 ctx.diagnostic(invalid_value(help, sibling.span()));
             }
@@ -231,6 +232,8 @@ fn test() {
 
     let fail = vec![
         (r#"typeof foo === "\uD800""#, None),
+        (r"typeof foo === `\uD800`", None),
+        (r"typeof foo === `\uD800`", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === 'strnig'", None),
         ("'strnig' === typeof foo", None),
         ("if (typeof bar === 'umdefined') {}", None),

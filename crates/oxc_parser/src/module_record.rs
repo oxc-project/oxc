@@ -530,15 +530,19 @@ mod module_record_tests {
         let module_record = build(&allocator, r#"import "\uD800"; export * from "\uDC00""#);
 
         assert_eq!(module_record.requested_modules.len(), 2);
-        assert!(module_record.requested_modules.keys().any(|name| name.code_points().eq([0xD800])));
-        assert!(module_record.requested_modules.keys().any(|name| name.code_points().eq([0xDC00])));
+        assert!(
+            module_record.requested_modules.keys().any(|name| name.encode_utf16().eq([0xD800]))
+        );
+        assert!(
+            module_record.requested_modules.keys().any(|name| name.encode_utf16().eq([0xDC00]))
+        );
         assert_eq!(
             module_record.star_export_entries[0]
                 .module_request
                 .as_ref()
                 .unwrap()
                 .name
-                .code_points()
+                .encode_utf16()
                 .collect::<Vec<_>>(),
             [0xDC00]
         );

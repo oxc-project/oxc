@@ -418,14 +418,16 @@ pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '
     }
 
     // Hug when the cooked content has both leading and trailing whitespace
-    let has_leading_ws =
-        template.quasis.first().and_then(|q| q.value.cooked.as_ref()).is_some_and(|s| {
-            s.code_points().next().and_then(char::from_u32).is_some_and(|c| c.is_ascii_whitespace())
-        });
-    let has_trailing_ws =
-        template.quasis.last().and_then(|q| q.value.cooked.as_ref()).is_some_and(|s| {
-            s.code_points().last().and_then(char::from_u32).is_some_and(|c| c.is_ascii_whitespace())
-        });
+    let has_leading_ws = template
+        .quasis
+        .first()
+        .and_then(|q| q.value.cooked.as_ref())
+        .is_some_and(|s| s.chars().next().is_some_and(oxc_str::JSChar::is_ascii_whitespace));
+    let has_trailing_ws = template
+        .quasis
+        .last()
+        .and_then(|q| q.value.cooked.as_ref())
+        .is_some_and(|s| s.chars().last().is_some_and(oxc_str::JSChar::is_ascii_whitespace));
     has_leading_ws && has_trailing_ws
 }
 

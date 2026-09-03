@@ -10,6 +10,18 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === `\uD800`
+   ·                ────────
+   ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === `\uD800`
+   ·                ────────
+   ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
  1 │ typeof foo === 'strnig'
    ·                ────────
    ╰────

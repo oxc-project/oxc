@@ -1,8 +1,7 @@
 //! Adversarial property test: JSStrBuilder vs a UTF-16 reference model.
-//! Temporary review test - not part of the POC.
 
 use oxc_allocator::Allocator;
-use oxc_str::{JSStr, JSStrBuilder};
+use oxc_str::{JSChar, JSStr, JSStrBuilder};
 
 #[derive(Clone, Copy, Debug)]
 enum Op {
@@ -98,12 +97,16 @@ fn concat2<'a>(x: JSStr<'_>, y: JSStr<'_>, allocator: &'a Allocator) -> JSStr<'a
     builder.finish()
 }
 
+fn code_points(value: JSStr<'_>) -> Vec<u32> {
+    value.chars().map(JSChar::value).collect()
+}
+
 fn check(ops: &[Op]) {
     let allocator = Allocator::new();
     let (result, units) = apply_ops(ops, &allocator);
     let (expected_points, expected_lone) = reference(&units);
 
-    let actual_points: Vec<u32> = result.code_points().collect();
+    let actual_points = code_points(result);
     assert_eq!(
         actual_points, expected_points,
         "code_points mismatch for ops {ops:?} (units {units:04X?})"

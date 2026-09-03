@@ -64,7 +64,7 @@ pub fn is_import_from_module(
         return false;
     };
 
-    import_decl.source.value.as_str() == Some(module_name)
+    import_decl.source.value == module_name
 }
 
 /// Returns `true` when `ident` resolves to a named import with the given source module and

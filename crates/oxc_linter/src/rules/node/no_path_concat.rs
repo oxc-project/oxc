@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
-use oxc_str::static_ident;
+use oxc_str::{JSChar, static_ident};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -96,7 +96,7 @@ fn is_path_sep(expr: &Expression) -> bool {
     expr.is_specific_member_access("path", "sep")
 }
 
-fn is_path_separator(c: char) -> bool {
+fn is_path_separator(c: JSChar) -> bool {
     c == '/' || c == '\\'
 }
 
@@ -110,9 +110,7 @@ fn is_dirname_or_filename(expr: &Expression, ctx: &LintContext) -> bool {
 
 fn starts_with_path_separator(expr: &Expression) -> bool {
     match expr {
-        Expression::StringLiteral(s) => {
-            s.value.code_points().next().and_then(char::from_u32).is_some_and(is_path_separator)
-        }
+        Expression::StringLiteral(s) => s.value.chars().next().is_some_and(is_path_separator),
         Expression::TemplateLiteral(temp_lit) => {
             template_element_starts_with_path_separator(temp_lit, 0)
         }
@@ -140,8 +138,7 @@ fn template_element_starts_with_path_separator(temp_lit: &TemplateLiteral, i: us
         return false;
     };
 
-    if let Some(c) =
-        quasi.value.cooked.and_then(|cooked| cooked.code_points().next()).and_then(char::from_u32)
+    if let Some(c) = quasi.value.cooked.and_then(|cooked| cooked.chars().next())
         && is_path_separator(c)
     {
         return true;

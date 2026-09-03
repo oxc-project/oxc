@@ -427,7 +427,7 @@ impl<'a> Codegen<'a> {
 
     /// Print a string as a JavaScript string literal.
     pub fn print_string(&mut self, s: &str) {
-        self.print_string_impl(s, false, false);
+        self.print_string_impl(s, false);
     }
 }
 

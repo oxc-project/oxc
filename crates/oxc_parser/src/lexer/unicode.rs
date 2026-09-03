@@ -1,6 +1,6 @@
 use crate::{config::LexerConfig as Config, diagnostics};
 use oxc_allocator::ArenaStringBuilder;
-use oxc_str::JSStrBuilder;
+use oxc_str::{JSChar, JSStrBuilder};
 use oxc_syntax::{
     identifier::{
         FF, TAB, VT, is_identifier_part, is_identifier_start, is_identifier_start_unicode,
@@ -23,7 +23,7 @@ enum UnicodeEscape {
     SurrogatePair(char),
     // `\u Hex4Digits` or `\u{ HexDigits }`, which forms an invalid Unicode code point.
     // Code unit is in the range 0xD800..=0xDFFF.
-    LoneSurrogate(u32),
+    LoneSurrogate(JSChar),
 }
 
 impl<'a, C: Config> Lexer<'a, C> {
@@ -158,13 +158,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                 // Surrogate pair is always >= 0x10000, so cannot be 0xFFFD
                 text.push_char(ch);
             }
-            UnicodeEscape::LoneSurrogate(code_point) => {
-                #[expect(
-                    clippy::cast_possible_truncation,
-                    reason = "lone surrogates are always within u16"
-                )]
-                text.push_code_unit(code_point as u16);
-            }
+            UnicodeEscape::LoneSurrogate(js_char) => text.push_js_char(js_char),
         }
     }
 
@@ -223,10 +217,11 @@ impl<'a, C: Config> Lexer<'a, C> {
             }
         }
 
-        match char::from_u32(value) {
-            Some(ch) => Some(UnicodeEscape::CodePoint(ch)),
-            None => Some(UnicodeEscape::LoneSurrogate(value)),
-        }
+        let js_char = JSChar::from_code_point(value)?;
+        Some(match js_char.to_char() {
+            Some(ch) => UnicodeEscape::CodePoint(ch),
+            None => UnicodeEscape::LoneSurrogate(js_char),
+        })
     }
 
     /// Unicode code unit (`\uXXXX`).
@@ -255,17 +250,18 @@ impl<'a, C: Config> Lexer<'a, C> {
             assert!(char::from_u32(pair_to_code_point(MAX_HIGH, MAX_LOW)).is_some());
         };
 
-        let high = self.hex_4_digits()?;
-        if let Some(ch) = char::from_u32(high) {
+        let high_value = self.hex_4_digits()?;
+        let high = JSChar::from_code_point(high_value)?;
+        if let Some(ch) = high.to_char() {
             return Some(UnicodeEscape::CodePoint(ch));
         }
 
         // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF,
         // and is called a high surrogate or a lead surrogate.
-        // Note: `high` must be >= `MIN_HIGH`, otherwise `char::from_u32` would have returned `Some`,
-        // and already exited.
-        debug_assert!(high >= MIN_HIGH);
-        let is_pair = high <= MAX_HIGH && self.peek_2_bytes() == Some([b'\\', b'u']);
+        // `high_value` must be at least `MIN_HIGH`, otherwise `JSChar::to_char`
+        // would have returned `Some` and exited above.
+        debug_assert!(high_value >= MIN_HIGH);
+        let is_pair = high_value <= MAX_HIGH && self.peek_2_bytes() == Some([b'\\', b'u']);
         if !is_pair {
             return Some(UnicodeEscape::LoneSurrogate(high));
         }
@@ -283,7 +279,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         if let Some(low) = self.hex_4_digits()
             && (MIN_LOW..=MAX_LOW).contains(&low)
         {
-            let code_point = pair_to_code_point(high, low);
+            let code_point = pair_to_code_point(high_value, low);
             // SAFETY: `high` and `low` have been checked to be in ranges which always yield a `code_point`
             // which is a valid `char`
             let ch = unsafe { char::from_u32_unchecked(code_point) };

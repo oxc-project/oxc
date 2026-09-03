@@ -246,16 +246,7 @@ fn infer_module_type(init: &Expression) -> ModuleType {
         return ModuleType::Core;
     }
 
-    let mut code_points = value.code_points();
-    let is_relative = match code_points.next() {
-        Some(value) if value == u32::from(b'/') => true,
-        Some(value) if value == u32::from(b'.') => match code_points.next() {
-            Some(value) if value == u32::from(b'/') => true,
-            Some(value) if value == u32::from(b'.') => code_points.next() == Some(u32::from(b'/')),
-            _ => false,
-        },
-        _ => false,
-    };
+    let is_relative = value.starts_with("/") || value.starts_with("./") || value.starts_with("../");
     if is_relative {
         return ModuleType::File;
     }

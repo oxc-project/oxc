@@ -253,10 +253,6 @@ impl Rule for JsxNoTargetBlank {
     }
 }
 
-fn check_is_external_link(link: &str) -> bool {
-    link.contains("//")
-}
-
 fn match_href_expression(
     expr: &Expression,
     is_external_link: &mut bool,
@@ -264,7 +260,7 @@ fn match_href_expression(
 ) {
     match expr {
         Expression::StringLiteral(str) => {
-            *is_external_link = str.value.as_str().is_some_and(check_is_external_link);
+            *is_external_link = str.value.contains("//");
         }
         Expression::Identifier(_) => *is_dynamic_link = true,
         Expression::ConditionalExpression(expr) => {
@@ -285,7 +281,7 @@ fn check_href(
         matches!(enforce_dynamic_links, EnforceDynamicLinksEnum::Never);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            is_external_link = str.value.as_str().is_some_and(check_is_external_link);
+            is_external_link = str.value.contains("//");
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
@@ -316,7 +312,8 @@ fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
         let mut index = 0;
         let mut token_matches = true;
 
-        for code_point in str.value.code_points().chain(std::iter::once(u32::from(b' '))) {
+        for js_char in str.value.chars().chain(std::iter::once(' '.into())) {
+            let code_point = js_char.value();
             if code_point == u32::from(b' ') {
                 if token_matches && index == expected.len() {
                     return true;

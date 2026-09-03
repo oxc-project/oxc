@@ -379,13 +379,12 @@ fn decode_js_str_entities_with_lone_surrogates<'a>(
 
     let mut output = JSStrBuilder::with_capacity_in(value.len(), allocator);
     let mut segment = String::new();
-    for code_point in value.code_points() {
-        if let Some(character) = char::from_u32(code_point) {
+    for js_char in value.chars() {
+        if let Some(character) = js_char.to_char() {
             segment.push(character);
         } else {
             flush_segment(&mut segment, &mut output, allocator);
-            #[expect(clippy::cast_possible_truncation, reason = "lone surrogates fit in u16")]
-            output.push_code_unit(code_point as u16);
+            output.push_js_char(js_char);
         }
     }
     flush_segment(&mut segment, &mut output, allocator);
@@ -430,7 +429,7 @@ mod tests {
 
         let decoded = decode_js_str_entities(input, &allocator);
         assert_eq!(
-            decoded.code_points().collect::<Vec<_>>(),
+            decoded.encode_utf16().collect::<Vec<_>>(),
             [b'a'.into(), b'&'.into(), 0xD800, b'>'.into()]
         );
     }

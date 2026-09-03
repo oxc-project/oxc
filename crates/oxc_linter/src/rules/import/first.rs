@@ -87,16 +87,7 @@ declare_oxc_lint!(
 fn is_relative_path(path: oxc_str::JSStr<'_>) -> bool {
     // A path is considered relative if it starts with "/", "./", or "../"
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#module_specifier_resolution
-    let mut code_points = path.code_points();
-    match code_points.next() {
-        Some(value) if value == u32::from(b'/') => true,
-        Some(value) if value == u32::from(b'.') => match code_points.next() {
-            Some(value) if value == u32::from(b'/') => true,
-            Some(value) if value == u32::from(b'.') => code_points.next() == Some(u32::from(b'/')),
-            _ => false,
-        },
-        _ => false,
-    }
+    path.starts_with("/") || path.starts_with("./") || path.starts_with("../")
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/first.md>

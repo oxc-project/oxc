@@ -596,12 +596,14 @@ fn report_unnecessary_curly<'a>(
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
                 let mut fix = fixer.codegen();
+                // The guard above ensures there is one UTF-8 cooked quasi.
                 fix.print_str(template_lit.single_quasi().unwrap().as_str().unwrap());
 
                 fixer.replace(container.span, fix.into_source_text())
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
+                // The guard above ensures this value is valid UTF-8.
                 fix.print_str(string_literal.value.as_str().unwrap());
 
                 fixer.replace(container.span, fix.into_source_text())
@@ -636,9 +638,13 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
         let str = match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
+                // The guard above ensures there is one UTF-8 cooked quasi.
                 template_lit.single_quasi().unwrap().as_str().unwrap()
             }
-            JSXExpression::StringLiteral(string_lit) => string_lit.value.as_str().unwrap(),
+            JSXExpression::StringLiteral(string_lit) => {
+                // The guard above ensures this value is valid UTF-8.
+                string_lit.value.as_str().unwrap()
+            }
             JSXExpression::JSXElement(el) => {
                 return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
             }

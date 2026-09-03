@@ -351,10 +351,6 @@ struct OxcCompiledFunction<'a> {
 /// JSX text children containing any of these characters must be wrapped in an
 /// expression container (`{"..."}`) rather than emitted as raw JSX text.
 const JSX_TEXT_CHILD_REQUIRES_EXPR_CONTAINER_PATTERN: &[char] = &['<', '>', '&', '{', '}'];
-/// JSX string attribute values containing these characters must be wrapped in an
-/// expression container.
-const STRING_REQUIRES_EXPR_CONTAINER_CHARS: &str = "\"\\";
-
 /// Reference to an lvalue target during pattern codegen.
 enum LvalueRef<'a> {
     Place(&'a Place),
@@ -3166,15 +3162,14 @@ fn ox_codegen_jsx_expression<'a>(
 }
 
 fn ox_string_requires_expr_container(s: JSStr<'_>) -> bool {
-    for value in s.code_points() {
-        let Some(c) = char::from_u32(value) else {
-            return true;
-        };
-        if STRING_REQUIRES_EXPR_CONTAINER_CHARS.contains(c) {
-            return true;
-        }
-        let code = c as u32;
-        if code <= 0x1F || code == 0x7F || (0x80..=0x9F).contains(&code) || code >= 0xA0 {
+    for value in s.chars() {
+        let code = value.value();
+        if matches!(code, 0x22 | 0x5C)
+            || code <= 0x1F
+            || code == 0x7F
+            || (0x80..=0x9F).contains(&code)
+            || code >= 0xA0
+        {
             return true;
         }
     }

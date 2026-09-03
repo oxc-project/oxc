@@ -1,8 +1,8 @@
-use std::{fmt::Write, slice};
+use std::slice;
 
 use oxc_ast::ast::StringLiteral;
 use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
-use oxc_str::JSStr;
+use oxc_str::{JSChar, JSStr};
 use oxc_syntax::{
     identifier::NBSP,
     line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
@@ -43,33 +43,70 @@ impl Codegen<'_> {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
         Quote::Backtick.print(self);
-        self.print_js_string_body(s.value, Some(Quote::Backtick), true);
+        self.print_js_string_body(s.value, Quote::Backtick, true);
     }
 
     fn print_js_string_impl(&mut self, s: JSStr<'_>, allow_backtick: bool) {
         if let Some(s) = s.as_str() {
-            self.print_string_impl(s, false, allow_backtick);
+            self.print_string_impl(s, allow_backtick);
         } else {
-            let escaped = js_str_to_lone_surrogate_markers(s);
-            self.print_string_impl(&escaped, true, allow_backtick);
+            let quote = if self.options.minify {
+                calculate_js_quote(s, allow_backtick)
+            } else {
+                self.quote
+            };
+            quote.print(self);
+            self.print_js_string_content(s, quote, allow_backtick);
+            quote.print(self);
         }
     }
 
-    fn print_js_string_body(&mut self, s: JSStr<'_>, quote: Option<Quote>, allow_backtick: bool) {
+    fn print_js_string_body(&mut self, s: JSStr<'_>, quote: Quote, allow_backtick: bool) {
         if let Some(s) = s.as_str() {
-            self.print_string_body(s, false, quote, allow_backtick);
+            self.print_string_body(s, Some(quote), allow_backtick);
         } else {
-            let escaped = js_str_to_lone_surrogate_markers(s);
-            self.print_string_body(&escaped, true, quote, allow_backtick);
+            self.print_js_string_content(s, quote, allow_backtick);
+            quote.print(self);
         }
     }
 
-    pub(super) fn print_string_impl(
-        &mut self,
-        s: &str,
-        lone_surrogates: bool,
-        allow_backtick: bool,
-    ) {
+    /// Print a JavaScript string containing lone surrogates without its quotes.
+    fn print_js_string_content(&mut self, s: JSStr<'_>, quote: Quote, allow_backtick: bool) {
+        let mut segment = String::with_capacity(s.len());
+        for js_char in s.chars() {
+            if let Some(ch) = js_char.to_char() {
+                segment.push(ch);
+            } else {
+                if !segment.is_empty() {
+                    self.print_string_content(&segment, Some(quote), allow_backtick);
+                    segment.clear();
+                }
+                self.print_lone_surrogate(js_char);
+            }
+        }
+        if !segment.is_empty() {
+            self.print_string_content(&segment, Some(quote), allow_backtick);
+        }
+    }
+
+    fn print_lone_surrogate(&mut self, value: JSChar) {
+        const HEX: &[u8; 16] = b"0123456789abcdef";
+
+        debug_assert!(value.is_lone_surrogate());
+        let value = value.value();
+        let bytes = [
+            b'\\',
+            b'u',
+            HEX[((value >> 12) & 0xF) as usize],
+            HEX[((value >> 8) & 0xF) as usize],
+            HEX[((value >> 4) & 0xF) as usize],
+            HEX[(value & 0xF) as usize],
+        ];
+        // SAFETY: `bytes` contains only ASCII bytes.
+        unsafe { self.code.print_bytes_unchecked(&bytes) };
+    }
+
+    pub(super) fn print_string_impl(&mut self, s: &str, allow_backtick: bool) {
         // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
         // What is the best quote to use will be determined when first character needing escape is found.
         // This avoids iterating through the string twice if it contains no quotes (common case).
@@ -84,30 +121,29 @@ impl Codegen<'_> {
             Some(quote)
         };
 
-        self.print_string_body(s, lone_surrogates, quote, allow_backtick);
+        self.print_string_body(s, quote, allow_backtick);
     }
 
     /// Print the contents of a string, and its closing quote.
     ///
     /// `quote` is `None` where it has yet to be chosen - it is then calculated from the contents,
     /// and the opening quote printed, when the first character needing an escape is found.
-    fn print_string_body(
+    fn print_string_body(&mut self, s: &str, quote: Option<Quote>, allow_backtick: bool) {
+        let quote = self.print_string_content(s, quote, allow_backtick);
+        quote.print(self);
+    }
+
+    /// Print the contents of a UTF-8 string without its closing quote.
+    fn print_string_content(
         &mut self,
         s: &str,
-        lone_surrogates: bool,
         quote: Option<Quote>,
         allow_backtick: bool,
-    ) {
+    ) -> Quote {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.as_bytes().iter();
-        let mut state = PrintStringState {
-            chunk_start: bytes.ptr(),
-            bytes,
-            quote,
-            lone_surrogates,
-            allow_backtick,
-        };
+        let mut state = PrintStringState { chunk_start: bytes.ptr(), bytes, quote, allow_backtick };
 
         // Loop through bytes.
         while let Some(b) = state.peek() {
@@ -137,27 +173,60 @@ impl Codegen<'_> {
         // Flush any remaining bytes
         state.flush(self);
 
-        // Print closing quote.
+        // `flush` calculates the quote if it was not already known.
         // SAFETY: `flush` calls `calculate_quote` which ensures `state.quote` is `Some`.
-        let quote = unsafe { state.quote.unwrap_unchecked() };
-        quote.print(self);
+        unsafe { state.quote.unwrap_unchecked() }
     }
 }
 
-/// Adapt canonical WTF-8 to the old string printer's marker format on the rare
-/// path where a JavaScript string contains a lone surrogate.
-fn js_str_to_lone_surrogate_markers(value: JSStr<'_>) -> String {
-    let mut escaped = String::with_capacity(value.len());
-    for value in value.code_points() {
-        if value == 0xFFFD {
-            escaped.push_str("\u{FFFD}fffd");
-        } else if let Some(value) = char::from_u32(value) {
-            escaped.push(value);
-        } else {
-            write!(escaped, "\u{FFFD}{value:04x}").unwrap();
+/// Calculate the shortest quote for a JavaScript string containing lone surrogates.
+///
+/// Lone surrogates are always printed as `\uXXXX`, so they have the same cost
+/// for every quote choice and do not contribute here.
+fn calculate_js_quote(value: JSStr<'_>, allow_backtick: bool) -> Quote {
+    let mut single_cost: isize = 0;
+    let mut double_cost: isize = 0;
+
+    if !allow_backtick {
+        for js_char in value.chars() {
+            match js_char.value() {
+                value if value == u32::from(b'\'') => single_cost += 1,
+                value if value == u32::from(b'"') => single_cost -= 1,
+                _ => {}
+            }
+        }
+        return if single_cost < 0 { Quote::Single } else { Quote::Double };
+    }
+
+    let mut backtick_cost: isize = 0;
+    let mut chars = value.chars().peekable();
+    while let Some(js_char) = chars.next() {
+        match js_char.value() {
+            value if value == u32::from(b'\n') => backtick_cost -= 1,
+            value if value == u32::from(b'\'') => single_cost += 1,
+            value if value == u32::from(b'"') => double_cost += 1,
+            value if value == u32::from(b'`') => backtick_cost += 1,
+            value
+                if value == u32::from(b'$')
+                    && chars.peek().is_some_and(|next| next.value() == u32::from(b'{')) =>
+            {
+                backtick_cost += 1;
+            }
+            _ => {}
         }
     }
-    escaped
+
+    // If equal cost for different quotes prefer, in order:
+    // 1. Backtick
+    // 2. Double quote
+    // 3. Single quote
+    if backtick_cost <= double_cost {
+        if backtick_cost <= single_cost { Quote::Backtick } else { Quote::Single }
+    } else if double_cost <= single_cost {
+        Quote::Double
+    } else {
+        Quote::Single
+    }
 }
 
 /// String printer state.
@@ -168,7 +237,6 @@ struct PrintStringState<'s> {
     chunk_start: *const u8,
     bytes: slice::Iter<'s, u8>,
     quote: Option<Quote>,
-    lone_surrogates: bool,
     allow_backtick: bool,
 }
 
@@ -368,12 +436,6 @@ const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
 const _: () = assert!(NBSP_BYTES[0] == 0xC2);
 const NBSP_LAST_BYTE: u8 = NBSP_BYTES[1];
 
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
-const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
-    [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
-
 /// Escape codes.
 ///
 /// Discriminant - 1 is used as index into `BYTE_HANDLERS` (except for `__` variant).
@@ -397,7 +459,6 @@ enum Escape {
     LT = 14, // <     - Less-than sign
     LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
     NB = 16, // NBSP  - Non-breaking space (first byte)
-    LO = 17, // �     - U+FFFD lossy replacement character (first byte)
 }
 
 /// Struct which ensures content is aligned on 128.
@@ -428,7 +489,7 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
         __, __, NB, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
-        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, LO, // E
+        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, __, // E
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
     ])
 };
@@ -440,10 +501,8 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 /// Must be in same order as discriminants in `Escape`.
 ///
-/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 136 bytes in total.
-/// Aligned on 128, so first 16 occupy a pair of L1 cache lines.
-/// The last will be in separate cache line, but it should be vanishingly rare that it's accessed.
-static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
+/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 128 bytes in total.
+static BYTE_HANDLERS: Aligned128<[ByteHandler; 16]> = Aligned128([
     print_null,
     print_bell,
     print_backspace,
@@ -460,7 +519,6 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 17]> = Aligned128([
     print_less_than,
     print_ls_or_ps,
     print_non_breaking_space,
-    print_lossy_replacement,
 ]);
 
 /// Call byte handler for byte which needs escaping.
@@ -703,69 +761,6 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
         unsafe { state.consume_bytes_unchecked(2) };
     }
-}
-
-// 0xEF - first byte of lossy replacement character (U+FFFD)
-unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) {
-    debug_assert_eq!(state.peek(), Some(0xEF));
-
-    if state.lone_surrogates {
-        // String contains lone surrogates which use the lossy replacement character (U+FFFD)
-        // as an escape marker.
-        // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-        let next2: [u8; 2] = {
-            // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-            // so there must be 2 more bytes available to consume
-            let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
-            next2.try_into().unwrap()
-        };
-
-        if next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
-            // Get the 4 hex bytes
-            let bytes = &mut state.bytes;
-            let hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
-
-            if hex == *b"fffd" {
-                // Actual lossy replacement character.
-                // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                unsafe { state.consume_bytes_unchecked(3) };
-                state.flush(codegen);
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
-                // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
-                // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                unsafe { state.consume_bytes_unchecked(4) };
-                // Start next chunk after the 4 hex bytes
-                state.start_chunk();
-                return;
-            }
-
-            // Flush text before the lossy replacement character
-            state.flush(codegen);
-
-            // Check all 4 hex bytes are ASCII
-            assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-
-            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
-            // remaining. First 3 bytes are lossy replacement character, and we just checked that
-            // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked(7) };
-
-            // Start next chunk after the 4 hex bytes
-            state.start_chunk();
-
-            codegen.print_str("\\u");
-            // SAFETY: Just checked all 4 hex bytes are ASCII
-            unsafe { codegen.code.print_bytes_unchecked(&hex) };
-
-            return;
-        }
-    }
-
-    // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
-    // Advance past the character.
-    // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-    unsafe { state.consume_bytes_unchecked(3) };
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
