@@ -917,7 +917,7 @@ function bar() {}";
     }
 
     #[test]
-    fn pure_comment_not_applied() {
+    fn pure_comments_not_applied() {
         let cases = [
             "/* #__PURE__ */ React.createElement;",
             "/* @__PURE__ */ someVariable;",
@@ -1027,20 +1027,28 @@ function bar() {}";
     }
 
     #[test]
-    fn pure_comments_are_applied_independently() {
+    fn annotation_comments_track_application_independently() {
         // The first pure comment is invalid (before `foo`), the second is valid (before `bar()`).
         let source_text = "/*#__PURE__*/ foo + /*#__PURE__*/ bar()";
         let comments = get_comments(source_text);
-        assert_eq!(
-            comments[0].content,
-            CommentContent::PureNotApplied,
-            "first comment should be PureNotApplied"
+
+        assert_eq!(comments.len(), 2, "{source_text}");
+        assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
+        assert_eq!(comments[1].content, CommentContent::Pure, "{source_text}");
+        let source_text = concat!(
+            "/*#__NO_SIDE_EFFECTS__*/ value;",
+            "/*#__NO_SIDE_EFFECTS__*/ /* comment */ /*@__NO_SIDE_EFFECTS__*/ function foo() {}",
         );
-        assert_eq!(comments[1].content, CommentContent::Pure, "second comment should remain Pure");
+        let comments = get_comments(source_text);
+        assert_eq!(comments.len(), 4);
+        assert_eq!(comments[0].content, CommentContent::NoSideEffectsNotApplied,);
+        assert_eq!(comments[1].content, CommentContent::NoSideEffects);
+        assert_eq!(comments[2].content, CommentContent::None);
+        assert_eq!(comments[3].content, CommentContent::NoSideEffects);
     }
 
     #[test]
-    fn no_side_effects_comment_not_applied() {
+    fn no_side_effects_comments_not_applied() {
         let cases = [
             "/* #__NO_SIDE_EFFECTS__ */",
             "/* @__NO_SIDE_EFFECTS__ */ assert.ok(true);",
@@ -1077,21 +1085,6 @@ function bar() {}";
             let comments = get_comments(source_text);
             assert_eq!(comments[0].content, CommentContent::NoSideEffects, "{source_text}");
         }
-    }
-
-    #[test]
-    fn no_side_effects_comments_are_applied_independently() {
-        let source_text = concat!(
-            "/*#__NO_SIDE_EFFECTS__*/ value;",
-            "/*#__NO_SIDE_EFFECTS__*/ /* comment */ /*@__NO_SIDE_EFFECTS__*/ function foo() {}",
-        );
-        let comments = get_comments(source_text);
-
-        assert_eq!(comments.len(), 4);
-        assert_eq!(comments[0].content, CommentContent::NoSideEffectsNotApplied);
-        assert_eq!(comments[1].content, CommentContent::NoSideEffects);
-        assert_eq!(comments[2].content, CommentContent::None);
-        assert_eq!(comments[3].content, CommentContent::NoSideEffects);
     }
 
     #[test]
