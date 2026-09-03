@@ -44,6 +44,7 @@ impl Utf8ToUtf16 {
     ///
     /// `offset` is the number of bytes to subtract from UTF-8 offsets before converting to UTF-16.
     /// These bytes should not be part of `source_text` string.
+    /// Offsets passed to the converter should be relative to the *untrimmed* source.
     ///
     /// If file starts with a BOM and UTF-16 offsets should be for the source text without the BOM,
     /// pass `source_text` with the BOM trimmed from the start, and `offset` as 3 (length of BOM in UTF-8 bytes).
