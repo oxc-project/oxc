@@ -4,7 +4,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 ## comment-after-keyword
 
-- Why: prettier-bug (attachment artifact)
+- Why: invariant
 - Pin: `tests/fixtures/graphql/comments-inside-node-spans.graphql`
 
 ```graphql
@@ -28,11 +28,11 @@ type A {
 }
 ```
 
-Prettier pulls the comment backwards across the keyword onto the description's line.
+Prettier's attachment pulls the comment backwards across the `type` keyword (user content) onto the description's line.
 
 ## own-line-comment-after-description
 
-- Why: prettier-bug (attachment artifact)
+- Why: invariant
 - Pin: `tests/fixtures/graphql/comments-inside-node-spans.graphql`
 
 ```graphql
@@ -58,11 +58,11 @@ A {
 }
 ```
 
-Prettier pushes the comment forward across the keyword.
+Prettier's attachment pushes the comment forward across the `type` keyword (user content), own-line to same-line.
 
 ## trailing-comment-before-continuation
 
-- Why: prettier-bug (attachment artifact)
+- Why: invariant
 - Pin: `tests/fixtures/graphql/comments-inside-node-spans.graphql`
 
 ```graphql
@@ -84,11 +84,11 @@ type A implements B { # c
 }
 ```
 
-Prettier scatters the comment to the line end; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`).
+Prettier's attachment scatters the comment to the line end, across `implements B {`; same class: `f(x) # c` + break + `: T` is pulled inside the parens (`x # c` before the `)`), user content crossed in both.
 
 ## comment-after-opening-delimiter
 
-- Why: prettier-bug (attachment artifact)
+- Why: invariant
 - Pin: `tests/fixtures/graphql/comment-after-opening-delimiter.graphql`
 
 ```graphql
@@ -109,4 +109,4 @@ Prettier scatters the comment to the line end; same class: `f(x) # c` + break + 
 } # e
 ```
 
-Prettier moves the comment own-line as the first child's leading; asymmetric, `test # t` / `} # e` stay inline in both.
+Prettier's attachment moves the comment own-line (same-line to own-line) as the first child's leading; asymmetric, `test # t` / `} # e` stay inline in both.
