@@ -22,6 +22,7 @@ use oxc_css_parser::{
     },
     token::Token,
 };
+use oxc_span::Span;
 
 use oxc_formatter_core::{
     Buffer, SourceText, arena_cow_str,
@@ -825,6 +826,13 @@ fn write_bracket_block<'a>(
     }
 }
 
+/// A raw source token that owns its leading comments (`/* c */ $param`, `/* c */ ==`).
+pub(super) fn write_text_with_leading_comments(span: Span, f: &mut CssFormatter<'_, '_>) {
+    flush_value_comments(span.start, f);
+    let source = f.context().source_text();
+    write!(f, text(source.text_for(&span)));
+}
+
 /// Emits pending comments that precede `upper_bound` inline
 /// (`//` comments force a break after themselves and expand the parent).
 /// Returns true when the last emitted comment was a `//` comment.
@@ -1561,7 +1569,7 @@ pub(super) fn write_component_value<'a>(
                         }
                     }
                 } else {
-                    write_component_value(&paren.expr, inner_ctx, f);
+                    write_list_element(&paren.expr, inner_ctx, f);
                 }
                 flush_paren_tail_comments(r_paren, /* body_hard_broken */ false, f);
             });
