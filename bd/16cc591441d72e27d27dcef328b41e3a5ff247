@@ -1,0 +1,39 @@
+tasks/coverage/snapshots/codegen_typescript.snap
+  s_ff31726993a587::t_2f8baa7f204133 4-5
+tasks/coverage/snapshots/estree_typescript.snap
+  s_ff31726993a587::t_b397ec825c508a 4-5
+tasks/coverage/snapshots/estree_typescript_tokens.snap
+  s_ff31726993a587::t_62b2f1923f7f53 4-5
+tasks/coverage/snapshots/formatter_typescript.snap
+  s_ff31726993a587::t_f5dd89e0d5fba5 4-5
+tasks/coverage/snapshots/parser_typescript.snap
+  s_ff31726993a587::t_7f36ca521a5d69 4-6,10833-10840,13909-13924
+tasks/coverage/snapshots/semantic_typescript.snap
+  s_ff31726993a587::t_0ad45f04900006 4-5
+tasks/coverage/snapshots/transformer_typescript.snap
+  s_ff31726993a587::t_cb27f2c7024eff 4-5
+tasks/coverage/src/load.rs
+  s_ff31726993a587::t_33960df0b77355 218
+tasks/coverage/src/typescript/constants.rs
+  s_ff31726993a587::t_248c3b0ed18c50 51-64
+tasks/coverage/src/typescript/diagnostics_code_collector.rs
+  s_ff31726993a587::t_97e59ae358ebbb 168-169
+tasks/coverage/src/typescript/meta.rs
+  s_ff31726993a587::t_06d3af7bb2df3c 34-35,54-55,366-370,376-379
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bd16cc591441d72e27d27dcef328b41e3a5ff247",
+  "prompts": {},
+  "sessions": {
+    "s_ff31726993a587": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c16-6434-74c3-b140-a59f82feba34",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
