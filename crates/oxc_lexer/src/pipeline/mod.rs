@@ -16,7 +16,6 @@ mod classify;
 mod coalesce;
 mod compress;
 mod find;
-mod keywords;
 mod regex_div;
 mod replay;
 
@@ -31,9 +30,8 @@ use crate::token::SPAN_SENTINELS;
 use bitmap::bm_any;
 use carve::{carve, carve_jsx};
 use classify::{classify, misc_post, misc_pre};
-use coalesce::coalesce;
+use coalesce::{KWB, coalesce};
 use compress::{build_spans, compress, lanes_post, write_sentinels};
-use keywords::KWB;
 
 use crate::token::TokenKind;
 
