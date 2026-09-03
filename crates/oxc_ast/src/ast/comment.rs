@@ -79,7 +79,6 @@ pub enum CommentContent {
     NoSideEffects = 6,
 
     /// `/* #__NO_SIDE_EFFECTS__ */` that could not be applied to a function
-    /// <https://github.com/oxc-project/oxc/issues/26088>
     NoSideEffectsNotApplied = 7,
 
     /// Webpack magic comment
