@@ -460,7 +460,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
-        let attributes = self.eat(Kind::With).then(|| self.parse_type_literal());
+        let attributes =
+            self.eat(Kind::With).then(|| self.parse_ts_module_declaration_attributes());
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
             Some(self.parse_ts_module_block(/* in_ts_namespace_body */ false))
@@ -482,6 +483,50 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_declare(),
             self,
         )
+    }
+
+    fn parse_ts_module_declaration_attributes(
+        &mut self,
+    ) -> ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>> {
+        let start = self.cur_start();
+        let attributes = self.parse_normal_list(
+            Kind::LCurly,
+            Kind::RCurly,
+            Self::parse_ts_module_declaration_attribute,
+        );
+        TSModuleDeclarationAttributeClause::boxed(self.end_span(start), attributes, self)
+    }
+
+    fn parse_ts_module_declaration_attribute(&mut self) -> TSModuleDeclarationAttribute<'a> {
+        let start = self.cur_start();
+        let readonly = self.parse_contextual_modifier(Kind::Readonly);
+        let key = match self.cur_kind() {
+            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
+            kind if kind.is_identifier_name() => {
+                ImportAttributeKey::Identifier(self.parse_identifier_name())
+            }
+            _ => return self.unexpected(),
+        };
+        self.expect(Kind::Colon);
+        let value = match self.cur_kind() {
+            Kind::Str => {
+                let literal = self.parse_literal_string();
+                TSModuleDeclarationAttributeValue::StringLiteral(self.alloc(literal))
+            }
+            Kind::NoSubstitutionTemplate => {
+                let literal = self.parse_template_literal(false);
+                TSModuleDeclarationAttributeValue::TemplateLiteral(self.alloc(literal))
+            }
+            _ => {
+                return self.fatal_error(
+                    diagnostics::import_attribute_value_must_be_string_literal(
+                        self.cur_token().span(),
+                    ),
+                );
+            }
+        };
+        self.parse_type_member_semicolon();
+        TSModuleDeclarationAttribute::new(self.end_span(start), readonly, key, value, self)
     }
 
     /// Validate a statement that appears directly in an *internal* namespace body

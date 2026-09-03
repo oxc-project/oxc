@@ -11,3 +11,5 @@ declare module "*.sqlite" with { type: "sqlite"; embed: "true" } {
 declare module "*.empty" with {} {}
 
 declare module "*.text" with { "type": "text" };
+
+declare module "*.config" with { readonly mode: `strict` } {}
