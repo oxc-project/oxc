@@ -22,6 +22,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str, format_ident, static_ident};
+use oxc_syntax::number::ToJsString;
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
@@ -5586,7 +5587,10 @@ fn lower_object_property_key<'a>(
         }
         oxc::PropertyKey::NumericLiteral(lit) if !computed => {
             Ok(Some(ObjectPropertyKey::Identifier {
-                name: format_ident!(builder.environment().allocator, "{}", lit.value),
+                name: Ident::from_str_in(
+                    &lit.value.to_js_string(),
+                    &builder.environment().allocator,
+                ),
                 span: Some(lit.span),
             }))
         }
