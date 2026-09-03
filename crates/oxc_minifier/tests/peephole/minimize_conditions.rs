@@ -122,10 +122,10 @@ fn test_fold_returns() {
 #[test]
 fn test_combine_ifs1() {
     test("function f() {if (x) return 1; if (y) return 1}", "function f() {if (x || y) return 1;}");
-    // test(
-    //     "function f() {if (x) return 1; if (y) foo(); else return 1}",
-    //     "function f() {if ((!x)&&y) foo(); else return 1;}",
-    // );
+    test(
+        "function f() {if (x) return 1; if (y) foo(); else return 1}",
+        "function f() {if (x || !y) return 1; foo();}",
+    );
 }
 
 #[test]
