@@ -295,12 +295,6 @@ impl Comment {
         self.content == CommentContent::NoSideEffects
     }
 
-    /// Is `/* @__NO_SIDE_EFFECTS__*/` that could not be applied to a function.
-    #[inline]
-    pub fn is_no_side_effects_not_applied(self) -> bool {
-        self.content == CommentContent::NoSideEffectsNotApplied
-    }
-
     /// Is a leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation.
     #[inline]
     pub fn is_property_key_annotation(self) -> bool {
