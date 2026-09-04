@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 505
 ---
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
