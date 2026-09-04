@@ -695,8 +695,8 @@ A `//` on a comma's line stays on that line (the block comments glued before it 
 Prettier moves it below as the next element's leading comment, across the line boundary (`a, // stylelint-disable-line` loses its target).
 Prettier keeps the same comment after the LAST comma (`"bar": 2, // Comment`) and its JS printer keeps `1, // c` everywhere:
 the move is where postcss-value-parser hands the comment to the next comma group, not a rule.
-Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`, `@import` paths,
-`@media` query lists and `selector()` lists.
+Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`,
+`@import` paths and modifiers, `@layer`, `@custom-selector`, `@media` query lists and `selector()` lists.
 For `@media` Prettier's move also swallows the next query (`@media a, // c b {`), a semantics bug on its side.
 
 ## semiless-custom-property-block

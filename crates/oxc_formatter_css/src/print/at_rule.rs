@@ -27,7 +27,7 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
     print::{
         CssFormatter, format_with, normalize_whitespace, scss, selector, statement,
@@ -100,7 +100,8 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     }
 
     // `//` comments have their own layout rules (e.g. less `selector(...)`)
-    // handled by the structural printers below.
+    // handled by the structural printers below
+    // (which place their comments themselves; a verbatim prelude prints them as part of its text).
     let has_inline_params_comment = f
         .context()
         .comments()
@@ -169,7 +170,7 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         let fused =
             name_end == prelude_span.start && !source.text_for(&prelude_span).starts_with('(');
         if fused {
-            write!(f, text(source.text_for(&prelude_span)));
+            write_verbatim_prelude(prelude_span, f);
         } else if is_control_directive {
             if let AtRulePrelude::SassExpr(value) = prelude {
                 // `@while cond` / `@else cond`: `@if`'s condition layout
@@ -191,25 +192,55 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         }
     }
 
+    // Whatever the prelude printer left pending (before `region_end`: the `{` or the `;`)
+    // is written here, so nothing inside the prelude is lost to the statement loop's cursor guard.
     if let Some(block) = &at_rule.block {
         // An inline comment between the prelude and `{` keeps its own line
         // (Prettier's `lastLineHasInlineComment` → line instead of space).
-        let block_start = to_span(&block.span).start;
-        let mut wrote_comment = false;
-        if f.context().comments().peek().is_some_and(|c| c.inline && c.span.end <= block_start) {
+        if f.context().comments().peek().is_some_and(|c| c.inline && c.span.end <= region_end) {
             write!(f, hard_line_break());
-            for &comment in f.context().comments().take_before(block_start) {
+            for &comment in f.context().comments().take_before(region_end) {
                 write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
-            wrote_comment = true;
-        }
-        if !is_control_directive && !wrote_comment {
-            write!(f, space());
+        } else {
+            value::flush_trailing_value_comments(region_end, f);
+            if !is_control_directive {
+                write!(f, space());
+            }
         }
         statement::write_block(block, f);
     } else {
+        // A `//` rides past the `;` (`@charset "a"; // c`), a block comment stays before it
+        for &comment in f.context().comments().take_before(region_end) {
+            if comment.inline {
+                write!(f, FormatLineCommentSuffix::new(comment).with_leading_space());
+            } else {
+                write!(
+                    f,
+                    [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]
+                );
+            }
+        }
         write!(f, ";");
     }
+}
+
+/// The separator between a prelude head and its list:
+/// a `//` in the list breaks the list (its hardline), but the head keeps the first element
+/// on its line either way (Prettier's `:--x a, // c`, `url(a) screen, // c`).
+fn head_separator(list_end: u32, f: &mut CssFormatter<'_, '_>) {
+    if f.context().comments().iter_before(list_end).any(|c| c.inline) {
+        write!(f, space());
+    } else {
+        write!(f, soft_line_break_or_space());
+    }
+}
+
+/// A prelude printed as its source text: the comments inside it are printed with it.
+fn write_verbatim_prelude(span: oxc_span::Span, f: &mut CssFormatter<'_, '_>) {
+    let source = f.context().source_text();
+    write!(f, text(source.text_for(&span)));
+    f.context().comments().take_before(span.end);
 }
 
 /// Emits `@apply` params with the sortable class list as a single `FormatElement::TailwindClass`.
@@ -728,14 +759,17 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
                 // oxc-css-parser's CustomSelector span excludes the leading `:`
                 write!(f, ":");
                 write!(f, text(source.text_for(&custom_span)));
-                write!(f, soft_line_break_or_space());
+                head_separator(to_span(custom.selector.span()).end, f);
                 // Selectors share THIS group: when the prelude breaks,
                 // each selector gets its own line.
                 for (i, complex) in custom.selector.selectors.iter().enumerate() {
                     if i > 0 {
-                        write!(f, ",");
+                        let comma =
+                            custom.selector.comma_spans.get(i - 1).map(|sp| to_span(sp).start);
+                        value::write_group_comma(comma, f);
                         write!(f, soft_line_break_or_space());
                     }
+                    value::flush_value_comments(to_span(complex.span()).start, f);
                     selector::write_complex_selector(complex, f);
                 }
             });
@@ -748,39 +782,49 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
         AtRulePrelude::Import(import) => write_import_prelude(import, f),
         AtRulePrelude::LessImport(import) => write_less_import_prelude(import, f),
         AtRulePrelude::Namespace(namespace) => {
-            if let Some(prefix) = &namespace.prefix {
-                let span = to_span(prefix.span());
-                write!(f, text(source.text_for(&span)));
-                write!(f, space());
-            }
-            match &namespace.uri {
-                NamespacePreludeUri::Str(InterpolableStr::Literal(str)) => {
-                    value::write_str(str, f);
+            // A `//` between the prefix and the uri breaks the prelude; the uri continues one level in
+            let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                if let Some(prefix) = &namespace.prefix {
+                    let span = to_span(prefix.span());
+                    write!(f, text(source.text_for(&span)));
+                    value::flush_glued_comments(span.end, to_span(namespace.span()).end, f);
+                    write!(f, space());
+                    value::flush_value_comments(to_span(namespace.uri.span()).start, f);
                 }
-                NamespacePreludeUri::Url(url) => value::write_url(url, f),
-                // Interpolated strings (`'#{$url}'` etc.):
-                // outer quote is still requoted per `singleQuote`, content is verbatim
-                // (postcss-values' `value-unknown` path, same as `ComponentValue::InterpolableStr` in value position).
-                uri @ NamespacePreludeUri::Str(_) => {
-                    let span = to_span(uri.span());
-                    value::write_requoted_verbatim(source.text_for(&span), f);
+                match &namespace.uri {
+                    NamespacePreludeUri::Str(InterpolableStr::Literal(str)) => {
+                        value::write_str(str, f);
+                    }
+                    NamespacePreludeUri::Url(url) => value::write_url(url, f),
+                    // Interpolated strings (`'#{$url}'` etc.):
+                    // outer quote is still requoted per `singleQuote`, content is verbatim
+                    // (postcss-values' `value-unknown` path, same as `ComponentValue::InterpolableStr` in value position).
+                    uri @ NamespacePreludeUri::Str(_) => {
+                        let span = to_span(uri.span());
+                        value::write_requoted_verbatim(source.text_for(&span), f);
+                    }
                 }
-            }
+            });
+            write!(f, indent(&body));
         }
         // Prettier keeps `@page` params verbatim (e.g. `@page:first` stays)
-        AtRulePrelude::Page(page) => {
-            let span = to_span(page.span());
-            write!(f, text(source.text_for(&span)));
-        }
+        AtRulePrelude::Page(page) => write_verbatim_prelude(to_span(page.span()), f),
         AtRulePrelude::Supports(condition) => write_supports_condition(condition, f),
         AtRulePrelude::Layer(layers) => {
-            for (i, layer) in layers.names.iter().enumerate() {
-                if i > 0 {
-                    write!(f, [",", space()]);
+            let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+                for (i, layer) in layers.names.iter().enumerate() {
+                    if i > 0 {
+                        let comma = layers.comma_spans.get(i - 1).map(|sp| to_span(sp).start);
+                        value::write_group_comma(comma, f);
+                        write!(f, space());
+                    }
+                    let span = to_span(layer.span());
+                    value::flush_value_comments(span.start, f);
+                    write!(f, text(source.text_for(&span)));
                 }
-                let span = to_span(layer.span());
-                write!(f, text(source.text_for(&span)));
-            }
+            });
+            // A `//` breaks the list; the rest continues one level in
+            write!(f, indent(&body));
         }
         AtRulePrelude::Property(ident)
         | AtRulePrelude::CounterStyle(ident)
@@ -797,10 +841,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
             SassAtRootKind::Selector(list) => {
                 selector::write_selector_list(list, selector::SelectorListStyle::Line, f);
             }
-            SassAtRootKind::Query(query) => {
-                let span = to_span(query.span());
-                write!(f, text(source.text_for(&span)));
-            }
+            SassAtRootKind::Query(query) => write_verbatim_prelude(to_span(query.span()), f),
         },
         AtRulePrelude::SassExpr(value) => {
             value::write_component_value(value, ValueContext::default(), f);
@@ -830,8 +871,7 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
         AtRulePrelude::Unknown(unknown) => match &**unknown {
             UnknownAtRulePrelude::ComponentValue(value) => {
                 if matches!(value, ComponentValue::InterpolableStr(_)) {
-                    let span = to_span(value.span());
-                    write!(f, text(source.text_for(&span)));
+                    write_verbatim_prelude(to_span(value.span()), f);
                 } else {
                     value::write_component_value(value, ValueContext::default(), f);
                 }
@@ -844,18 +884,10 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
             }
         },
         // Sass/Less and not-yet-ported preludes: verbatim
-        _ => {
-            let span = to_span(prelude.span());
-            write!(f, text(source.text_for(&span)));
-        }
+        _ => write_verbatim_prelude(to_span(prelude.span()), f),
     }
 }
 
-/// Prints an `@import` path list (`@import "a", "b", ...`) like Prettier's value-parsed params (module rule):
-/// paths fill at the line width with a continuation indent, and comments force one path per line.
-/// Used by the SCSS `SassImportPrelude` AND by `ImportPrelude`
-/// when its non-standard tail is exactly a comma-separated string list (see `import_as_path_list`).
-/// Paths arrive as `(span, raw)` pairs so both callers can feed it without fabricating AST nodes.
 /// One `@import` path with the start of its trailing comma (see [`value::write_group_comma`]'s pairing).
 struct ImportPath<'a> {
     span: Span,
@@ -863,6 +895,11 @@ struct ImportPath<'a> {
     comma_start: Option<u32>,
 }
 
+/// Prints an `@import` path list (`@import "a", "b", ...`) like Prettier's value-parsed params (module rule):
+/// paths fill at the line width with a continuation indent, and comments force one path per line.
+/// Used by the SCSS `SassImportPrelude` AND by `ImportPrelude`
+/// when its non-standard tail is exactly a comma-separated string list (see `import_as_path_list`).
+/// Paths arrive as [`ImportPath`]s so both callers can feed it without fabricating AST nodes.
 fn write_import_path_list<'a>(
     paths: &[ImportPath<'a>],
     last_end: u32,
@@ -1434,11 +1471,20 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
         write_import_modifiers(import, &modifiers.values, f);
         return;
     }
-    write_import_href(&import.href, f);
+    // A `//` between the parts breaks the prelude either way
+    let prelude_end = to_span(import.span()).end;
+    let write_part = |span: oxc_span::Span,
+                      f: &mut CssFormatter<'_, 'a>,
+                      write: &dyn Fn(&mut CssFormatter<'_, 'a>)| {
+        value::flush_value_comments(span.start, f);
+        write(f);
+        value::flush_glued_comments(span.end, prelude_end, f);
+    };
+    write_part(to_span(import.href.span()), f, &|f| write_import_href(&import.href, f));
     if let Some(layer) = &import.layer {
         write!(f, space());
         let span = to_span(layer.span());
-        write!(f, text(source.text_for(&span)));
+        write_part(span, f, &|f| write!(f, text(source.text_for(&span))));
     }
     if let Some(supports) = &import.supports {
         // `@import ... supports(<cond>)`.
@@ -1449,21 +1495,26 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
         // (uppercase props lowercase; a source-glued `not`/`and` gains a space),
         // plus one of our own (a width-overflowing condition with no trailing media breaks INSIDE the parens, not before `supports`).
         // Empty `supports()` was the prior data-loss stub.
-        write!(f, [space(), "supports("]);
-        match &supports.kind {
-            // `supports(not (display: inline-grid))`, `supports(font-format(woff2))`
-            ImportPreludeSupportsKind::SupportsCondition(condition) => {
-                write_supports_condition(condition, f);
+        write!(f, space());
+        write_part(to_span(supports.span()), f, &|f| {
+            write!(f, "supports(");
+            match &supports.kind {
+                // `supports(not (display: inline-grid))`, `supports(font-format(woff2))`
+                ImportPreludeSupportsKind::SupportsCondition(condition) => {
+                    write_supports_condition(condition, f);
+                }
+                // `supports(display: flex)`: a bare declaration (no inner parens)
+                ImportPreludeSupportsKind::Declaration(decl) => {
+                    statement::write_declaration(decl, f);
+                }
             }
-            // `supports(display: flex)`: a bare declaration (no inner parens)
-            ImportPreludeSupportsKind::Declaration(decl) => {
-                statement::write_declaration(decl, f);
-            }
-        }
-        write!(f, ")");
+            write!(f, ")");
+        });
     }
     if let Some(media) = &import.media {
-        write!(f, soft_line_break_or_space());
+        let media_span = to_span(media.span());
+        head_separator(media_span.end, f);
+        value::flush_value_comments(media_span.start, f);
         // No own group/indent: the queries share the prelude-level group
         write_media_query_list_inner(media, f);
     }
@@ -1479,26 +1530,11 @@ fn write_import_modifiers<'a>(
     values: &[ComponentValue<'a>],
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    // Split into subslices at top-level commas (mirrors `write_token_value`).
     // A leading comma (`@import "a", "b"`) leaves an empty first group,
     // whose comma glues straight onto the href.
-    let mut groups: Vec<&[ComponentValue<'a>]> = vec![];
-    let mut depth = 0i32;
-    let mut start = 0;
-    for (i, value) in values.iter().enumerate() {
-        if let ComponentValue::TokenWithSpan(tok) = value {
-            if depth == 0 && matches!(&tok.token, Token::Comma(_)) {
-                groups.push(&values[start..i]);
-                start = i + 1;
-                continue;
-            }
-            depth += value::token_depth_delta(&tok.token);
-        }
-    }
-    groups.push(&values[start..]);
-
+    let groups = value::split_comma_groups(values);
     let last = groups.len() - 1;
-    let first_group = groups[0];
+    let (first_group, first_comma) = groups[0];
     let mut filler = f.fill();
     let head = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write_import_href(&import.href, f);
@@ -1507,15 +1543,18 @@ fn write_import_modifiers<'a>(
             write_import_modifier_group(first_group, f);
         }
         if last > 0 {
-            write!(f, ",");
+            value::write_group_comma(first_comma, f);
         }
     });
     filler.entry(&soft_line_break_or_space(), &head);
-    for (i, group_values) in groups.iter().enumerate().skip(1) {
+    for (i, &(group_values, comma)) in groups.iter().enumerate().skip(1) {
         let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            if let Some(first) = group_values.first() {
+                value::flush_value_comments(to_span(first.span()).start, f);
+            }
             write_import_modifier_group(group_values, f);
             if i < last {
-                write!(f, ",");
+                value::write_group_comma(comma, f);
             }
         });
         filler.entry(&soft_line_break_or_space(), &content);
@@ -1625,10 +1664,7 @@ fn write_media_query_list<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_
 fn write_media_query_list_inner<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_, 'a>) {
     for (i, query) in list.queries.iter().enumerate() {
         if i > 0 {
-            write!(f, ",");
-            if let Some(comma) = list.comma_spans.get(i - 1) {
-                value::flush_line_comment_after_comma(to_span(comma).start, f);
-            }
+            value::write_group_comma(list.comma_spans.get(i - 1).map(|sp| to_span(sp).start), f);
             write!(f, soft_line_break_or_space());
         }
         write_media_query(query, f);

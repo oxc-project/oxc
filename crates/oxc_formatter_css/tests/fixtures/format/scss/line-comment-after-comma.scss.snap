@@ -121,8 +121,7 @@ a {
   d
 ) {
 }
-@import url(e)
-  screen, // c
+@import url(e) screen, // c
   print;
 
 -------------------
@@ -191,8 +190,7 @@ a {
   d
 ) {
 }
-@import url(e)
-  screen, // c
+@import url(e) screen, // c
   print;
 
 ===================== End =====================

@@ -509,7 +509,7 @@ impl ValueContext<'_> {
 /// Each group is paired with the start offset of the comma that follows it (`None` for the last group):
 /// comments between a group and its comma stay BEFORE the comma (`a /* c */, b`),
 /// so group printers need the boundary.
-fn split_comma_groups<'b, 'a>(
+pub(super) fn split_comma_groups<'b, 'a>(
     values: &'b [ComponentValue<'a>],
 ) -> Vec<(&'b [ComponentValue<'a>], Option<u32>)> {
     let mut groups = vec![];
@@ -619,6 +619,41 @@ pub(super) fn flush_line_comment_after_comma(comma_start: u32, f: &mut CssFormat
     let run_end = line_comment_run_end(comma_end, f.context().comments().iter_remaining(), source);
     if let Some(run_end) = run_end {
         flush_same_line_comments(comma_end, run_end, f);
+    }
+}
+
+/// Emits the comments glued right after `prev_end` (only spaces/tabs between, up to `upper_bound`)
+/// as ` /* c */` / ` // c`, stopping after a `//` (it ends the line).
+/// Unlike [`flush_same_line_comments`] a comment further along the line, past other tokens, stays pending.
+pub(super) fn flush_glued_comments(prev_end: u32, upper_bound: u32, f: &mut CssFormatter<'_, '_>) {
+    flush_trailing_comments_while(prev_end, upper_bound, f, |prev_end, comment, source| {
+        source.all_bytes_match(prev_end, comment.span.start, |b| matches!(b, b' ' | b'\t'))
+    });
+}
+
+/// Emits pending comments before `upper_bound` as ` /* c */` / ` // c` while `keep` accepts them
+/// (`prev_end` is the previous comment's end from the second one on), stopping after a `//`.
+fn flush_trailing_comments_while(
+    mut prev_end: u32,
+    upper_bound: u32,
+    f: &mut CssFormatter<'_, '_>,
+    keep: impl Fn(u32, comments::CssComment, SourceText<'_>) -> bool,
+) {
+    loop {
+        let Some(comment) = f.context().comments().peek() else { return };
+        let source = f.context().source_text();
+        if comment.span.start < prev_end
+            || comment.span.end > upper_bound
+            || !keep(prev_end, comment, source)
+        {
+            return;
+        }
+        f.context().comments().take_before(comment.span.end);
+        write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
+        if comment.inline {
+            return;
+        }
+        prev_end = comment.span.end;
     }
 }
 
@@ -887,22 +922,9 @@ pub(super) fn flush_same_line_comments(
     upper_bound: u32,
     f: &mut CssFormatter<'_, '_>,
 ) {
-    loop {
-        let Some(comment) = f.context().comments().peek() else { return };
-        let source = f.context().source_text();
-        if comment.span.start < prev_end
-            || comment.span.end > upper_bound
-            || comment_is_own_line(comment, source)
-        {
-            return;
-        }
-        f.context().comments().take_before(comment.span.end);
-        write!(f, " ");
-        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
-        if comment.inline {
-            return;
-        }
-    }
+    flush_trailing_comments_while(prev_end, upper_bound, f, |_, comment, source| {
+        !comment_is_own_line(comment, source)
+    });
 }
 
 /// Emits pending comments before `upper_bound` as ` /* c */` suffixes
