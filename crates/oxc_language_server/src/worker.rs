@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
@@ -123,8 +123,6 @@ impl WorkspaceWorker {
     where
         F: Fn(&Box<dyn Tool>, &TextDocument) -> DiagnosticResult,
     {
-        let mut aggregated: FxHashMap<Uri, Vec<Diagnostic>> = FxHashMap::default();
-
         let tool_diagnostics = {
             let tool_guard = self.tool.read().await;
             let Some(tool) = tool_guard.as_ref() else {
@@ -134,28 +132,22 @@ impl WorkspaceWorker {
             run(tool, document)
         };
 
-        match tool_diagnostics {
-            Ok(diags) => {
-                for (entry_uri, mut diags) in diags {
-                    aggregated.entry(entry_uri).or_default().append(&mut diags);
-                }
-            }
+        let diagnostics = match tool_diagnostics {
+            Ok(diags) => diags,
             Err(err) => {
                 return Err(err);
             }
-        }
+        };
 
         // In push mode, keep track of published diagnostics to clear them on shutdown
         if self.diagnostic_mode == DiagnosticMode::Push {
-            let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
-            self.published_diagnostics.lock().await.extend(new_published_uris);
+            self.published_diagnostics
+                .lock()
+                .await
+                .extend(diagnostics.iter().map(|(uri, _)| uri.clone()));
         }
 
-        let mut result = Vec::with_capacity(aggregated.len());
-        for (uri, diags) in aggregated {
-            result.push((uri, diags));
-        }
-        Ok(result)
+        Ok(diagnostics)
     }
 
     /// Run different tools to collect diagnostics.
