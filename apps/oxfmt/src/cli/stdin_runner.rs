@@ -11,8 +11,7 @@ use super::{
 };
 use crate::core::{
     ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
-    resolve_file_scope_config, utils,
+    ResolveOutcome, SourceFormatter, resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
 
 pub struct StdinRunner {
@@ -134,7 +133,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+        let Some(kind) = config_resolver.classify(Arc::from(filepath)) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };

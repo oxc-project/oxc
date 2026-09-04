@@ -30,14 +30,7 @@ impl OxfmtrcOverrides {
     /// Collect the options of every override matching `path`, in config order.
     /// Empty when nothing matches, so callers can gate on `is_empty()` without a separate probe.
     pub fn matching(&self, path: &Path) -> Vec<&FormatConfig> {
-        // NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
-        // This is OK since `fast_glob::glob_match()` supports both `/` and `\` via `std::path::is_separator`.
-        let relative = self
-            .base_dir
-            .as_ref()
-            .and_then(|dir| path.strip_prefix(dir).ok())
-            .unwrap_or(path)
-            .to_string_lossy();
+        let relative = super::relative_to_config_dir(self.base_dir.as_deref(), path);
 
         self.entries
             .iter()

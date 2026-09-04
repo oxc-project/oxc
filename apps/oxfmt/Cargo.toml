@@ -51,7 +51,7 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true, features = ["unbounded_depth"] }
+serde_json = { workspace = true, features = ["preserve_order", "unbounded_depth"] } # preserve_order: `associations` precedence follows config order
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }

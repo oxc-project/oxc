@@ -11,6 +11,7 @@ import { toFormatFileResult, toNullable } from "./libs/napi-callbacks";
 import type {
   Oxfmtrc,
   FormatConfig,
+  Language,
   SortImportsConfig,
   SortPackageJsonConfig,
   SortTailwindcssConfig,
@@ -26,6 +27,16 @@ export type * from "./config.generated";
 // Using `interface extends` so that TypeScript displays `OxfmtConfig` in errors
 // and hovers instead of resolving to the generated `Oxfmtrc` name.
 export interface OxfmtConfig extends Oxfmtrc {}
+
+/**
+ * Options for the `format()` API.
+ *
+ * `language` routes the document explicitly instead of detecting it from `fileName`,
+ * the API counterpart of the `associations` config (like Prettier's `parser` option).
+ */
+export type FormatApiOptions = FormatConfig & {
+  language?: Language;
+};
 
 // Backward-compatible type aliases using `Options` suffix.
 
@@ -82,7 +93,7 @@ let BINDINGS_CACHE = null as typeof import("./bindings") | null;
 /**
  * Format the given source text according to the specified options.
  */
-export async function format(fileName: string, sourceText: string, options?: FormatConfig) {
+export async function format(fileName: string, sourceText: string, options?: FormatApiOptions) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 

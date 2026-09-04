@@ -1,12 +1,12 @@
-use std::path::Path;
+use std::{fmt, path::Path};
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use serde_json::Value;
 
-use oxc_config::GlobSet;
+use oxc_config::{GlobSet, validate_glob_pattern};
 
-use crate::core::utils;
+use crate::core::{support::Language, utils};
 
 /// Configuration options for the Oxfmt.
 ///
@@ -30,6 +30,64 @@ pub struct Oxfmtrc {
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
+    /// Route files matching a glob pattern to a language, overriding built-in extension detection.
+    ///
+    /// Keys are glob patterns relative to the directory containing the configuration file, values are language IDs.
+    /// When a file matches multiple patterns, the later entry takes precedence (object order matters).
+    /// Use it for custom extensions (`"*.wxml": "html"`) or dialects sharing an extension (`"*.html": "angular"`).
+    ///
+    /// - Default: `{}`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schemars(with = "Option<std::collections::BTreeMap<String, Language>>")]
+    pub associations: Option<AssociationsConfig>,
+}
+
+// ---
+
+/// Ordered `glob → language` entries of `associations`.
+/// Object order is the precedence order (later wins), so entries are kept as a list, not a map.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct AssociationsConfig(Vec<(String, Language)>);
+
+impl AssociationsConfig {
+    pub fn entries(&self) -> &[(String, Language)] {
+        &self.0
+    }
+
+    pub fn into_entries(self) -> Vec<(String, Language)> {
+        self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for AssociationsConfig {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct MapVisitor;
+
+        impl<'de> de::Visitor<'de> for MapVisitor {
+            type Value = AssociationsConfig;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a map of glob pattern to language ID")
+            }
+
+            fn visit_map<A: de::MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+                let mut entries = Vec::with_capacity(map.size_hint().unwrap_or(0));
+                while let Some((pattern, language)) = map.next_entry::<String, Language>()? {
+                    validate_glob_pattern(&pattern).map_err(de::Error::custom)?;
+                    entries.push((pattern, language));
+                }
+                Ok(AssociationsConfig(entries))
+            }
+        }
+
+        deserializer.deserialize_map(MapVisitor)
+    }
+}
+
+impl Serialize for AssociationsConfig {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_map(self.0.iter().map(|(pattern, language)| (pattern, language)))
+    }
 }
 
 // ---
@@ -1025,5 +1083,58 @@ mod tests_reject_experimental {
         }"#;
         let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
         assert!(err.to_string().contains("experimentalTernaries"));
+    }
+}
+
+// ---
+
+#[cfg(test)]
+mod tests_associations_parsing {
+    use serde_json::json;
+
+    use super::*;
+    use crate::core::support::Language;
+
+    #[test]
+    fn associations_keep_object_order() {
+        // Alphabetical order would put `**/*.html` first; config order must win.
+        let raw = json!({
+            "associations": {
+                "src/**/*.html": "angular",
+                "**/*.html": "html",
+                "*.wxml": "html"
+            }
+        });
+        let config = Oxfmtrc::deserialize(&raw).unwrap();
+        let associations = config.associations.unwrap();
+        assert_eq!(
+            associations.entries(),
+            &[
+                ("src/**/*.html".to_string(), Language::Angular),
+                ("**/*.html".to_string(), Language::Html),
+                ("*.wxml".to_string(), Language::Html),
+            ]
+        );
+    }
+
+    #[test]
+    fn associations_serialize_as_object() {
+        let raw = json!({ "associations": { "*.wxml": "html" } });
+        let config = Oxfmtrc::deserialize(&raw).unwrap();
+        assert_eq!(serde_json::to_value(&config).unwrap()["associations"], raw["associations"]);
+    }
+
+    #[test]
+    fn associations_reject_unknown_language() {
+        let raw = json!({ "associations": { "*.svg": "xml" } });
+        let err = Oxfmtrc::deserialize(&raw).unwrap_err().to_string();
+        assert!(err.contains("xml"), "{err}");
+    }
+
+    #[test]
+    fn associations_reject_invalid_glob() {
+        let raw = json!({ "associations": { "src/**/*.{html": "angular" } });
+        let err = Oxfmtrc::deserialize(&raw).unwrap_err().to_string();
+        assert!(err.contains("Invalid glob pattern"), "{err}");
     }
 }
