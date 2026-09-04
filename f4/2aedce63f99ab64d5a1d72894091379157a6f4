@@ -1,0 +1,23 @@
+crates/oxc_mangler/src/lib.rs
+  s_153ef086812d03::t_0a7f48e0ec10e1 19,491,493,496,507,533,537-542,545,560-562,577,599,625,796-797,799-801,803-804,814,872,874,883,887,899,901,904-906
+crates/oxc_str/src/ident.rs
+  s_153ef086812d03::t_c8bb65e9fa77b9 545-548
+crates/oxc_str/src/lib.rs
+  s_153ef086812d03::t_eafa253d9ea53e 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f42aedce63f99ab64d5a1d72894091379157a6f4",
+  "prompts": {},
+  "sessions": {
+    "s_153ef086812d03": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06aca-9b43-7fd1-aeee-14c302ff88bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
