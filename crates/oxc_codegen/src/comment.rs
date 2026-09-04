@@ -7,14 +7,87 @@ use oxc_ast::{
     Comment, CommentKind,
     ast::{Expression, Program},
 };
+use oxc_ast_visit::{CommentAttachments, CommentPlacement};
 use oxc_span::GetSpan;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
+use oxc_syntax::node::NodeId;
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
 type CommentList = SmallVec<[Comment; 1]>;
 
 pub type CommentsMap = FxHashMap</* attached_to */ u32, CommentList>;
+
+/// Destructive claim state kept by codegen alongside the immutable sidecar.
+///
+/// This costs one bit per actively attached comment and avoids copying either
+/// the parser's [`Comment`] records or the attachment mapping.
+pub struct AttachedComments<'a> {
+    attachments: &'a CommentAttachments,
+    claimed: Box<[u64]>,
+}
+
+impl<'a> AttachedComments<'a> {
+    pub fn new(attachments: &'a CommentAttachments) -> Self {
+        let claimed = vec![0; attachments.active_comment_count().div_ceil(u64::BITS as usize)]
+            .into_boxed_slice();
+        Self { attachments, claimed }
+    }
+
+    pub fn comment_range(&self, node_id: NodeId) -> Option<std::ops::Range<usize>> {
+        self.attachments.comments_for_with_range(node_id).map(|(range, _)| range)
+    }
+
+    fn take_boundary_comments(
+        &mut self,
+        range: std::ops::Range<usize>,
+        placement: CommentPlacement,
+        source_comments: &[Comment],
+        options: &crate::CodegenOptions,
+    ) -> CommentList {
+        let attached_comments = self.attachments.comments_in_range(range.clone());
+
+        let mut comments = CommentList::new();
+        for (offset, attached) in attached_comments.iter().enumerate() {
+            if attached.placement != placement {
+                continue;
+            }
+
+            let attachment_index = range.start + offset;
+            let word_index = attachment_index / u64::BITS as usize;
+            let mask = 1 << (attachment_index % u64::BITS as usize);
+            if self.claimed[word_index] & mask != 0 {
+                continue;
+            }
+
+            let comment = *attached.comment(source_comments);
+            // PURE and NO_SIDE_EFFECTS are claimed by their semantic emission
+            // sites in a later integration step. Consuming them at the generic
+            // boundary would lose their verbatim source spelling.
+            if comment.is_pure() || comment.is_no_side_effects() {
+                continue;
+            }
+
+            self.claimed[word_index] |= mask;
+            if should_print_attached_comment(options, comment) {
+                comments.push(comment);
+            }
+        }
+        comments
+    }
+}
+
+fn should_print_attached_comment(options: &crate::CodegenOptions, comment: Comment) -> bool {
+    if comment.is_legal() {
+        options.print_legal_comment()
+    } else if comment.is_jsdoc() {
+        options.print_jsdoc_comment()
+    } else if comment.is_annotation() {
+        options.print_annotation_comment()
+    } else {
+        options.print_normal_comment()
+    }
+}
 
 /// Whether a comment remains meaningful if its original AST anchor is removed.
 fn preserve_when_orphaned(comment: Comment) -> bool {
@@ -71,6 +144,38 @@ impl AnnotationKind {
 }
 
 impl Codegen<'_> {
+    pub(crate) fn print_attached_comments_before(&mut self, range: std::ops::Range<usize>) {
+        self.print_attached_comments(range, CommentPlacement::Before);
+    }
+
+    pub(crate) fn print_attached_comments_after(&mut self, range: std::ops::Range<usize>) {
+        self.print_attached_comments(range, CommentPlacement::After);
+    }
+
+    fn print_attached_comments(
+        &mut self,
+        range: std::ops::Range<usize>,
+        placement: CommentPlacement,
+    ) {
+        let Some(source_comments) = self.source_comments else { return };
+        let Some(attached_comments) = &mut self.attached_comments else { return };
+        let comments = attached_comments.take_boundary_comments(
+            range,
+            placement,
+            source_comments,
+            &self.options,
+        );
+        if comments.is_empty() {
+            return;
+        }
+        if placement == CommentPlacement::After {
+            // In minified statement printers the semicolon is deferred. It
+            // must precede a trailing comment, especially a line comment.
+            self.print_semicolon_if_needed();
+        }
+        self.print_comments(&comments);
+    }
+
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
         if self.options.comments == CommentOptions::disabled() {
             return;

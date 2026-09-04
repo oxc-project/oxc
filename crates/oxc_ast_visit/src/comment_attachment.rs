@@ -97,15 +97,44 @@ impl CommentAttachments {
     /// Returns comments owned by `node_id`, in original source order.
     #[inline]
     pub fn comments_for(&self, node_id: NodeId) -> &[AttachedComment] {
+        self.comments_for_with_range(node_id).map_or(&[], |(_, comments)| comments)
+    }
+
+    /// Returns the storage range and comments owned by `node_id`.
+    ///
+    /// This supports consumers which keep compact per-comment claim state
+    /// alongside the immutable attachment mapping.
+    #[doc(hidden)]
+    #[inline]
+    pub fn comments_for_with_range(
+        &self,
+        node_id: NodeId,
+    ) -> Option<(Range<usize>, &[AttachedComment])> {
         if !self.has_comments(node_id) {
-            return &[];
+            return None;
         }
         let Ok(host_index) = self.hosts.binary_search_by_key(&node_id, |host| host.node_id) else {
             debug_assert!(false, "presence bit must have a corresponding comment host");
-            return &[];
+            return None;
         };
         let range = self.hosts[host_index].comment_range.clone();
-        &self.comments[range.start as usize..range.end as usize]
+        let range = range.start as usize..range.end as usize;
+        Some((range.clone(), &self.comments[range]))
+    }
+
+    /// Returns attached comments in a range previously returned by
+    /// [`Self::comments_for_with_range`].
+    #[doc(hidden)]
+    #[inline]
+    pub fn comments_in_range(&self, range: Range<usize>) -> &[AttachedComment] {
+        &self.comments[range]
+    }
+
+    /// Number of comments which still have active hosts.
+    #[doc(hidden)]
+    #[inline]
+    pub fn active_comment_count(&self) -> usize {
+        self.comments.len()
     }
 
     /// Presence bits for active comment hosts.

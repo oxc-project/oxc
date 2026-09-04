@@ -5,6 +5,7 @@ use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
+    GetNodeId,
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
@@ -17,28 +18,36 @@ use crate::{
 };
 
 /// Generate source code for an AST node.
-pub trait Gen: GetSpan {
+pub trait Gen: GetSpan + GetNodeId {
     /// Generate code for an AST node.
     fn r#gen(&self, p: &mut Codegen, ctx: Context);
 
     /// Generate code for an AST node. Alias for `gen`.
     #[inline]
     fn print(&self, p: &mut Codegen, ctx: Context) {
+        let boundary = p.begin_node(self.node_id());
         self.r#gen(p, ctx);
+        if let Some(boundary) = boundary {
+            p.end_node(boundary);
+        }
     }
 }
 
 /// Generate source code for an expression.
-pub trait GenExpr: GetSpan {
+pub trait GenExpr: GetSpan + GetNodeId {
     /// Generate code for an expression, respecting operator precedence.
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 
     /// Generate code for an expression, respecting operator precedence. Alias for `gen_expr`.
     #[inline]
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let boundary = p.begin_node(self.node_id());
         self.gen_expr(p, precedence, ctx);
         // Map chain punctuation after a postfix operand ending in `)`/`]`.
         p.add_source_mapping_after_postfix(self.span(), precedence);
+        if let Some(boundary) = boundary {
+            p.end_node(boundary);
+        }
     }
 }
 
@@ -230,6 +239,7 @@ impl Gen for IfStatement<'_> {
 }
 
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
+    let boundary = p.begin_node(if_stmt.node_id());
     p.print_space_before_identifier();
     p.add_source_mapping(if_stmt.span);
     p.print_str("if");
@@ -283,6 +293,9 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
             }
             stmt => p.print_body(stmt, ctx),
         }
+    }
+    if let Some(boundary) = boundary {
+        p.end_node(boundary);
     }
 }
 
@@ -634,7 +647,7 @@ impl Gen for TryStatement<'_> {
         p.print_soft_space();
         p.print_block_statement(&self.block, ctx);
         if let Some(handler) = &self.handler {
-            handler.r#gen(p, ctx);
+            handler.print(p, ctx);
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -1989,6 +2002,7 @@ impl GenExpr for BinaryExpression<'_> {
             operator: BinaryishOperator::Binary(self.operator),
             wrap: false,
             right_precedence: Precedence::Lowest,
+            boundary: None,
         };
         BinaryExpressionVisitor::gen_expr(v, p);
     }
@@ -2019,6 +2033,7 @@ impl GenExpr for LogicalExpression<'_> {
             operator: BinaryishOperator::Logical(self.operator),
             wrap: false,
             right_precedence: Precedence::Lowest,
+            boundary: None,
         };
         BinaryExpressionVisitor::gen_expr(v, p);
     }
@@ -2328,7 +2343,7 @@ impl GenExpr for ImportExpression<'_> {
                 } else {
                     p.print_soft_space();
                 }
-                options.gen_expr(p, Precedence::Comma, Context::empty());
+                options.print_expr(p, Precedence::Comma, Context::empty());
             }
             if has_comment {
                 // Handle `/* comment */);`
@@ -3753,7 +3768,7 @@ impl Gen for TSSignature<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::TSIndexSignature(signature) => signature.print(p, ctx),
-            Self::TSPropertySignature(signature) => signature.r#gen(p, ctx),
+            Self::TSPropertySignature(signature) => signature.print(p, ctx),
             Self::TSCallSignatureDeclaration(signature) => {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
                     type_parameters.print(p, ctx);
