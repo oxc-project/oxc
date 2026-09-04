@@ -148,6 +148,14 @@ Arguments:
 
 
 
+## Suppress Violations
+- **`    --suppress-all`** &mdash; 
+  Generate suppressions for all current violations
+- **`    --prune-suppressions`** &mdash; 
+  Remove entries for violations that no longer exist
+
+
+
 ## Available positional items:
 - _`PATH`_ &mdash; 
   Single file, single path or list of paths
