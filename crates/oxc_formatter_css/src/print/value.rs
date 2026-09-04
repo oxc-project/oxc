@@ -975,6 +975,14 @@ pub(super) fn write_text_with_leading_comments(span: Span, f: &mut CssFormatter<
     write!(f, text(source.text_for(&span)));
 }
 
+/// A value printed verbatim from source (raw custom-property text, `progid:`, ...):
+/// its leading comments are flushed as usual,
+/// and the ones inside the slice are claimed so the terminator-tail pass does not print them again.
+pub(super) fn write_verbatim_value(span: Span, f: &mut CssFormatter<'_, '_>) {
+    write_text_with_leading_comments(span, f);
+    let _ = f.context().comments().take_before(span.end);
+}
+
 /// Emits pending comments that precede `upper_bound` inline
 /// (`//` comments force a break after themselves and expand the parent).
 /// Returns true when the last emitted comment was a `//` comment.

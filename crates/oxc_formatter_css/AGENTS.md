@@ -25,12 +25,7 @@ The fork adds:
   - the css-in-js parse mode, enabled only by `format_to_ir`
   - Rationale, gating and per-position coverage: see "css-in-js specifics" below
 - Bug fixes toward the reference compilers for valid CSS/SCSS/Less syntax `raffia` miss parses or rejects;
-  - unlike the leniencies below these may change the AST of input that already parsed
-    - e.g. lessc's whitespace-sensitive `+`/`-`: `margin: -@a -@b` is two values, not subtraction
-- Additive leniencies for syntax reference compilers reject but postcss (and so Prettier) accepts
-  - e.g. the IE `*color` hack, raw-prelude rules like `sans: "Sans" { ... }`
-  - Contract (additive-only, code comment + test pin per leniency) and triage:
-    - see "Policy: how to take in non-spec / non-Sass dialect syntax" below
+- The acceptance line: the fork's README "Acceptance", see "Acceptance" below
 
 Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
@@ -41,9 +36,10 @@ Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `
 The shared policy applies; CSS specifics:
 
 - `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error still bails out
-- Exception: `TopLevelDeclaration`, tolerated ONLY by `format_to_ir()`
-  - The dominant css-in-js shape, `` css`display: flex;` ``
-  - Standalone `format()` still rejects it as invalid CSS/SCSS/Less (Dart Sass rejects it too)
+- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (README "Acceptance")
+  - In the css-in-js parse mode (`template_placeholder`, Scss-only) the parser treats it as a statement and emits nothing
+    - `` css`display: flex;` `` is the dominant css-in-js shape
+  - Less parses and formats it: less.js accepts it at parse time and fails only at eval
 
 ### Comments
 
@@ -129,71 +125,60 @@ FM behavior is verified through oxfmt; this crate carries no dispatcher-wired FM
 
 ## Prettier mapping
 
-### Unknown at-rule params print VERBATIM
+### Acceptance
 
-Prettier's parser hands params to sub-parsers only for a fixed allowlist (`is_value_parsed_at_rule`);
-everything else (`@apply`, `@tailwind`, `@custom-variant`, `@variant`, `@source`, ICSS `@value`, etc) stays a plain string the printer emits raw (`write_verbatim_at_rule_tail`).
+What the parser takes in is the oxc-css-parser's README "Acceptance": one grammar owner per variant.
+Never "postcss keeps the bytes", never "Prettier prints it".
 
-Re-spacing those tokens CORRUPTS Tailwind syntax: `dark:bg-x` → `dark: bg-x`, `py-1.5` → `py-10.5`, `@custom-variant dark (&:is(...))` → `dark(&: is(...))`.
+The formatter's side: postcss gives Prettier statements whose selectors, values and params are strings, and Prettier re-tokenizes those with its own sub-parsers and word rules.
+We have a typed grammar instead, so Prettier is the oracle for the layout of what both sides structure the same way;
+where its string handling produces a shape our grammar does not (a re-spaced raw run, a re-split word), DIVERGENCES.md records the case and we do not follow.
+Below a statement the typed grammar is the only structure; raw is an admission (a hole in our grammar, or bytes that ARE the value).
 
-We also follow this to keep Prettier compatibility.
+What the formatter relies on per shape:
+
+- postcss property names: printed verbatim, lowercased
+- raw-prelude rules (`x: { ... }`, numeric-led statements): `UnknownQualifiedRule`, the prelude prints verbatim
+- root declarations: see "Error semantics"
+- `.scss` / `.less` must compile; a shape only postcss-scss / postcss-less accepts is a report to close, not a gap
+- Tailwind (`@tailwindcss/postcss`), postcss-simple-vars, nested-config dialects all sit inside the lines above
+
+### Printing raw vs typed
+
+- Raw is verbatim where the grammar owner says the bytes ARE the value:
+  a raw name (with the usual lowercasing), a raw prelude, unknown at-rule params, and a custom property value the typed grammar could not read.
+  A postcss-simple-vars value the typed grammar could not read is verbatim too: the plugin substitutes those bytes textually.
+  "Raw plus a little normalization" is the failure mode: re-spacing unknown params corrupts Tailwind syntax (`dark:bg-x` → `dark: bg-x`, `py-1.5` → `py-10.5`).
+  A normal property's `<any-value>` fallback is not raw in this sense; it rides the value writer
+- The print-layer word heuristics (`value.rs`) rebuild postcss's word model from spec tokens.
+  A new one is admitted when its scope is bounded and it improves how structured output is laid out;
+  never to match a fixture, and never to reproduce Prettier's string handling
+
+### Absorbing dialect tokens
+
+Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plugin at-rules, ...) are absorbed at the highest rung that covers them, cheapest first:
+
+1. Unknown at-rule params verbatim: Tailwind, postcss-mixins, ICSS ride it for free
+2. Raw fallbacks when the typed grammar rejects
+3. A word heuristic, under the conditions above
+4. A typed node, no flag, ONLY when the formatter must make layout decisions INSIDE the construct and Prettier formats it structurally (`PostcssSimpleVar`)
+5. A dedicated `CssVariant` only for real languages with reference compilers. Never for a plugin
+
+A report is first translated into "which line, which shape or which rung is this?", never "how do we support plugin Xxx?".
+Triage follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`.
+Specific plugin names accumulating in code is the red flag.
 
 ### Tailwind `@apply` sorting (`CssFormatOptions::sort_tailwindcss`)
 
-Ports prettier-plugin-tailwindcss's `transformCss`: with the option on, `@apply` params become `FormatElement::TailwindClass(index)` elements, and a host-supplied `TailwindSorter` performs the actual ordering/dedup outside this crate.
+Ports prettier-plugin-tailwindcss's `transformCss`: `@apply` params become `FormatElement::TailwindClass(index)` elements
+and a host-supplied `TailwindSorter` does the ordering and dedup outside this crate.
 
-See `write_apply_prelude` in `at_rule.rs` (collection + `!important` / Less `~"..."` extraction) and `format.rs` (sorter dispatch).
+### postcss-simple-vars (Css only)
 
-### postcss plugin syntax
+Covered: `$var: value !important;` declarations (root and inside rules), `$var` references in property values and at-rule preludes,
+`$(var)` interpolation in property names.
 
-`postcss` parses everything permissively and lets plugins interpret syntax at runtime; `oxc-css-parser` parses strictly, so plugin-specific syntax is rejected by default. Failures emit a LOUD diagnostic.
-
-However, some plugin-flavored constructs work anyway, because:
-
-- 1: Now standard CSS
-  - CSS nesting
-  - Tailwind v3/v4 at-rules (`@tailwind`, `@apply`, `@layer`, `@theme`, `@utility`, `@variant`, `@config`, `@custom-media`)
-  - CSS Modules (`@value` incl. `from`, `:global`/`:local`, `composes`, plain `:import`/`:export`)
-- 2: CSS forward-compat
-  - Unknown at-rules (`postcss-mixins`'s `@define-mixin`, `@mixin`, etc.) round-trip as `UnknownAtRule` with the prelude held as a verbatim `TokenSeq`
-  - `@media`/`@supports` preludes `oxc-css-parser` can't structure fall through to `<general-enclosed>` as a verbatim `TokenSeq`
-
-Beyond those, we add support per-plugin when there's real demand.
-
-#### Policy: how to take in non-spec / non-Sass dialect syntax
-
-Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plugin at-rules, ...) look like an unbounded support surface.
-They are not — the oracle is never "the dialect", it is what Prettier does with the bytes, and Prettier's answer is almost always "preserve verbatim".
-`postcss` is a token-soup preserver, not a grammar: everything it doesn't positively recognize is a "word" that round-trips untouched.
-So the target behavior is finite: never destroy tokens Prettier wouldn't destroy.
-
-When a dialect report comes in, first translate it: "which GENERAL postcss behavior are we missing?" Not "how do we support plugin Xxx?".
-Then absorb it at the highest possible rung of the escape-hatch hierarchy (top = cheapest, each rung covers whole classes of dialects at once):
-
-1. Unknown at-rule prelude verbatim (`write_verbatim_at_rule_tail`) zero-cost bucket: Tailwind, postcss-mixins, ICSS ride it for free
-2. Raw fallbacks when the typed grammar rejects (raw component values, `TokenSeq`, `ImportPrelude.modifiers`, `UnknownQualifiedRule`) `[attr=;]`, weird import tails, nested config blocks
-3. postcss word rules at the separator layer (`is_word_glued_number`, the `1#{$var}` glue, solidus words) variant-agnostic, fixes xstyled + `theme()` + future unknown tokens in one place
-4. `ParserOptions` flag + typed node (postcss-simple-vars) ONLY when the formatter must make layout decisions INSIDE the construct.
-   Promotion criteria, all three:
-   (a) real user demand, (b) Prettier itself formats it structurally (not verbatim), (c) rungs 1-3 can't express it
-5. A dedicated `CssVariant` only for real languages with reference compilers (css/scss/less).
-   Never for a plugin.
-
-Parser-side leniencies (in the `oxc-css-parser` fork) must be additive:
-accept only input that previously errored, and never change the AST of input that already parsed (e.g. dotted words try the typed `foo.$var` / `foo.bar(...)` parse first; only dart-sass-invalid shapes take the lenient path).
-Every lenient path carries a comment citing the reference-compiler vs postcss behavior, a test pinning the strict shapes, and shows up as a visible expected-error flip in the parser's conformance snapshots.
-
-Triage order for reports follows the shared policy (don't corrupt → then accept → then pretty-print); the CSS-shaped example of the UNSAFE failure is silent token corruption like `sandstone.10` → `sandstone 0.1`.
-
-Red flags that the approach is drifting:
-specific plugin names accumulating in code, or a leniency that reinterprets previously-valid input.
-Either means the fix is at the wrong rung.
-
-#### Supported: postcss-simple-vars (auto-enabled for `CssVariant::Css`)
-
-Covered: `$var: value !important;` declarations (top-level and inside rules), `$var` references in property values and `@media`/at-rule preludes.
-
-NOT covered: `$(var)` interpolation (`margin-$(dir): 10px`, `.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
+NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(network)`), selector-position bare `$var` (`.$prefix`), comment substitutions (`<<$(var)>>`).
 
 ## Verification
 
@@ -205,10 +190,11 @@ The harness snapshots both `--print-width 80` and `100`; verify fixtures at both
 
 At the current version (v3.9.6), these divergences have been confirmed and are intentional (see DIVERGENCES.md):
 
-- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`, `css/comments/declaration.css` (terminator-gap-normalized)
-- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss` (terminator-gap-normalized),
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`, `css/comments/declaration.css` (terminator-gap-normalized),
+  `css/postcss-8-improment/test.css` (custom-property-raw-verbatim), `css/parens/empty-lines.css` (postcss-simple-var-raw-verbatim)
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss` (terminator-gap-normalized), `scss/variables/postcss-8-improment.scss` (custom-property-raw-verbatim),
   `scss/comments/4594.scss`, `scss/comments/lists.scss`, `scss/comments/maps.scss`, `scss/trailing-comma/issue-6920.scss` and one more hunk of `scss/trailing-comma/comments.scss` (line-comment-after-comma)
-- Less: `less/comments/value-lists.less` (line-comment-after-comma)
+- Less: `less/comments/value-lists.less` (line-comment-after-comma), `less/postcss-8-improment/test.less` (custom-property-raw-verbatim)
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 

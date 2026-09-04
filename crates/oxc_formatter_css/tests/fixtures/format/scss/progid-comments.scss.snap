@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* `progid:` is a verbatim value, so its comments must be claimed from the
+   positional cursor rather than printed again as declaration-tail comments. */
+a {
+  filter: progid:DXImageTransform.Microsoft.#{$f /* inner */}(opacity=20);
+  filter: PROGID:DXImageTransform.Microsoft.Alpha(/* upper */ opacity=20);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* `progid:` is a verbatim value, so its comments must be claimed from the
+   positional cursor rather than printed again as declaration-tail comments. */
+a {
+  filter: progid:DXImageTransform.Microsoft.#{$f /* inner */}(opacity=20);
+  filter: PROGID:DXImageTransform.Microsoft.Alpha(/* upper */ opacity=20);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* `progid:` is a verbatim value, so its comments must be claimed from the
+   positional cursor rather than printed again as declaration-tail comments. */
+a {
+  filter: progid:DXImageTransform.Microsoft.#{$f /* inner */}(opacity=20);
+  filter: PROGID:DXImageTransform.Microsoft.Alpha(/* upper */ opacity=20);
+}
+
+===================== End =====================

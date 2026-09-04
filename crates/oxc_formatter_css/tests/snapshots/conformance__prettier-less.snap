@@ -2,13 +2,14 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-less compatibility: 39/40 (97.50%), 7 files skipped
+less compatibility: 38/40 (95.00%), 7 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | less/comments/value-lists.less | 💥 | 76.92% |
+| less/postcss-8-improment/test.less | 💥 | 88.24% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 
