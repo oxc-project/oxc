@@ -3504,6 +3504,11 @@ impl RuleRunner for crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife 
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_unused_properties::NoUnusedProperties {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::no_useless_collection_argument::NoUselessCollectionArgument
 {
