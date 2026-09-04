@@ -1,4 +1,4 @@
-use std::{iter, ops::ControlFlow};
+use std::iter;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
@@ -74,14 +74,15 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(stmt, &mut old_stmts, stmts, ctx).is_break() {
-                break;
-            }
+            Self::minimize_statement(stmt, &mut old_stmts, stmts, ctx);
             // A statement that never completes normally — a direct jump, a
             // kept block ending in a jump, an if/else or try/catch where
             // every branch jumps — makes the rest of the list unreachable.
             // https://github.com/rolldown/rolldown/issues/10184
-            if !is_control_flow_dead && stmts.last().is_some_and(Statement::is_terminated) {
+            if !is_control_flow_dead
+                && !old_stmts.is_empty()
+                && stmts.last().is_some_and(Statement::is_terminated)
+            {
                 is_control_flow_dead = true;
             }
         }
@@ -163,7 +164,7 @@ impl<'a> PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> ControlFlow<()> {
+    ) {
         match stmt {
             Statement::EmptyStatement(_) => (),
             Statement::VariableDeclaration(var_decl) => {
@@ -176,9 +177,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(stmts, if_stmt, result, ctx).is_break() {
-                    return ControlFlow::Break(());
-                }
+                Self::handle_if_statement(stmts, if_stmt, result, ctx);
             }
             Statement::ReturnStatement(ret_stmt) => {
                 Self::handle_return_statement(ret_stmt, result, ctx);
@@ -198,7 +197,6 @@ impl<'a> PeepholeOptimizations {
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
         }
-        ControlFlow::Continue(())
     }
 
     fn join_sequence(
@@ -567,7 +565,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
-    ) -> ControlFlow<()> {
+    ) {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
         // "var a; if (a = b(), c) d;" => "var a = b(); if (c) d;"
@@ -657,7 +655,7 @@ impl<'a> PeepholeOptimizations {
                             });
                         result.push(if_stmt);
                         ctx.notice_change();
-                        return ControlFlow::Break(());
+                        return;
                     }
                 }
             }
@@ -669,12 +667,12 @@ impl<'a> PeepholeOptimizations {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 ctx.notice_change();
                 result.push(Statement::IfStatement(if_stmt));
-                return Self::minimize_statement(stmt, stmts, result, ctx);
+                Self::minimize_statement(stmt, stmts, result, ctx);
+                return;
             }
         }
 
         result.push(Statement::IfStatement(if_stmt));
-        ControlFlow::Continue(())
     }
 
     fn handle_return_statement(
