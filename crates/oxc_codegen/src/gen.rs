@@ -6,6 +6,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     GetNodeId,
+    node::NodeId,
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
@@ -64,6 +65,9 @@ impl Gen for Program<'_> {
         p.print_semicolon_if_needed();
         // Print trailing statement comments.
         p.print_comments_at(self.span.end);
+        if p.print_attached_comments_inside(NodeId::ROOT) {
+            p.clear_pending_indent_space();
+        }
     }
 }
 
@@ -838,11 +842,8 @@ impl Gen for FunctionBody<'_> {
             false
         };
         p.print_curly_braces(self.span, single_line, |p| {
-            if has_attached_comments_inside && p.print_attached_comments_inside(self.node_id()) {
-                if p.last_byte() != Some(b'\n') {
-                    p.print_hard_newline();
-                }
-                p.clear_pending_indent_space();
+            if has_attached_comments_inside {
+                p.print_attached_comments_inside_body(self.node_id());
             }
             p.print_directives_and_statements(
                 &self.directives,
@@ -2634,14 +2635,22 @@ impl Gen for Class<'_> {
 
 impl Gen for ClassBody<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_curly_braces(self.span, self.body.is_empty(), |p| {
-            for item in &self.body {
-                p.print_semicolon_if_needed();
-                p.print_leading_comments(item.span().start);
-                p.print_indent();
-                item.print(p, ctx);
-            }
-        });
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.node_id());
+        p.print_curly_braces(
+            self.span,
+            self.body.is_empty() && !has_attached_comments_inside,
+            |p| {
+                if has_attached_comments_inside {
+                    p.print_attached_comments_inside_body(self.node_id());
+                }
+                for item in &self.body {
+                    p.print_semicolon_if_needed();
+                    p.print_leading_comments(item.span().start);
+                    p.print_indent();
+                    item.print(p, ctx);
+                }
+            },
+        );
     }
 }
 
@@ -2739,6 +2748,7 @@ impl Gen for JSXAttribute<'_> {
 impl Gen for JSXEmptyExpression {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.end);
+        p.print_attached_comments_inside(self.node_id());
         // Clear the flag so the comment doesn't leak a space onto the next indent.
         p.print_next_indent_as_space = false;
     }
@@ -2906,8 +2916,14 @@ impl Gen for StaticBlock<'_> {
         p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
-        let single_line = self.body.is_empty() && !p.has_orphan_comments_before(self.span.end);
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.node_id());
+        let single_line = self.body.is_empty()
+            && !has_attached_comments_inside
+            && !p.has_orphan_comments_before(self.span.end);
         p.print_curly_braces(self.span, single_line, |p| {
+            if has_attached_comments_inside {
+                p.print_attached_comments_inside_body(self.node_id());
+            }
             p.print_stmts_with_orphan_flush(&self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
@@ -3372,6 +3388,12 @@ impl Gen for TSArrayType<'_> {
 impl Gen for TSTupleType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ascii_byte(b'[');
+        if self.element_types.is_empty() && p.print_attached_comments_inside(self.node_id()) {
+            if p.last_byte() == Some(b'\n') {
+                p.print_indent();
+            }
+            p.clear_pending_indent_space();
+        }
         p.print_list(&self.element_types, ctx);
         p.print_ascii_byte(b']');
     }
@@ -3689,15 +3711,23 @@ impl Gen for TSTemplateLiteralType<'_> {
 
 impl Gen for TSTypeLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_curly_braces(self.span, self.members.is_empty(), |p| {
-            for item in &self.members {
-                p.print_leading_comments(item.span().start);
-                p.print_indent();
-                item.print(p, ctx);
-                p.print_semicolon();
-                p.print_soft_newline();
-            }
-        });
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.node_id());
+        p.print_curly_braces(
+            self.span,
+            self.members.is_empty() && !has_attached_comments_inside,
+            |p| {
+                if has_attached_comments_inside {
+                    p.print_attached_comments_inside_body(self.node_id());
+                }
+                for item in &self.members {
+                    p.print_leading_comments(item.span().start);
+                    p.print_indent();
+                    item.print(p, ctx);
+                    p.print_semicolon();
+                    p.print_soft_newline();
+                }
+            },
+        );
     }
 }
 
@@ -4101,7 +4131,11 @@ impl Gen for TSGlobalDeclaration<'_> {
 impl Gen for TSModuleBlock<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
-        p.print_curly_braces(self.span, is_empty, |p| {
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.node_id());
+        p.print_curly_braces(self.span, is_empty && !has_attached_comments_inside, |p| {
+            if has_attached_comments_inside {
+                p.print_attached_comments_inside_body(self.node_id());
+            }
             p.print_directives_and_statements(&self.directives, &self.body, self.span.end, ctx);
         });
         p.needs_semicolon = false;
@@ -4186,15 +4220,27 @@ impl Gen for TSInterfaceDeclaration<'_> {
             p.print_list(&self.extends, ctx);
         }
         p.print_soft_space();
-        p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
-            for item in &self.body.body {
-                p.print_leading_comments(item.span().start);
-                p.print_indent();
-                item.print(p, ctx);
-                p.print_semicolon();
-                p.print_soft_newline();
-            }
-        });
+        let body_boundary = p.begin_node(self.body.node_id());
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.body.node_id());
+        p.print_curly_braces(
+            self.body.span,
+            self.body.body.is_empty() && !has_attached_comments_inside,
+            |p| {
+                if has_attached_comments_inside {
+                    p.print_attached_comments_inside_body(self.body.node_id());
+                }
+                for item in &self.body.body {
+                    p.print_leading_comments(item.span().start);
+                    p.print_indent();
+                    item.print(p, ctx);
+                    p.print_semicolon();
+                    p.print_soft_newline();
+                }
+            },
+        );
+        if let Some(body_boundary) = body_boundary {
+            p.end_node(body_boundary);
+        }
     }
 }
 
@@ -4225,17 +4271,25 @@ impl Gen for TSEnumDeclaration<'_> {
 
 impl Gen for TSEnumBody<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_curly_braces(self.span, self.members.is_empty(), |p| {
-            for (index, member) in self.members.iter().enumerate() {
-                p.print_leading_comments(member.span().start);
-                p.print_indent();
-                member.print(p, ctx);
-                if index != self.members.len() - 1 {
-                    p.print_comma();
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.node_id());
+        p.print_curly_braces(
+            self.span,
+            self.members.is_empty() && !has_attached_comments_inside,
+            |p| {
+                if has_attached_comments_inside {
+                    p.print_attached_comments_inside_body(self.node_id());
                 }
-                p.print_soft_newline();
-            }
-        });
+                for (index, member) in self.members.iter().enumerate() {
+                    p.print_leading_comments(member.span().start);
+                    p.print_indent();
+                    member.print(p, ctx);
+                    if index != self.members.len() - 1 {
+                        p.print_comma();
+                    }
+                    p.print_soft_newline();
+                }
+            },
+        );
     }
 }
 

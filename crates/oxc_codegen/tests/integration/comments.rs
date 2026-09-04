@@ -173,6 +173,63 @@ fn test_node_id_comments_inside_empty_literal_delimiters() {
     assert!(reparsed.diagnostics.is_empty(), "{code:?}");
 }
 
+#[test]
+fn test_node_id_comment_only_program() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, "/*program*/", SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code, "/*program*/");
+}
+
+#[test]
+fn test_node_id_comments_inside_empty_structural_bodies() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "class C {//class\n}\n",
+        "class S { static { /*static*/ } }\n",
+        "type ObjectType = { /*type*/ };\n",
+        "type Tuple = [/*tuple*/];\n",
+        "interface I { /*interface*/ }\n",
+        "namespace N { /*module*/ }\n",
+        "enum E { /*enum*/ }\n",
+        "const jsx = <div>{/*jsx*/}</div>;\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::tsx()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    for marker in [
+        "//class",
+        "/*static*/",
+        "/*type*/",
+        "/*tuple*/",
+        "/*interface*/",
+        "/*module*/",
+        "/*enum*/",
+        "/*jsx*/",
+    ] {
+        assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
+    }
+    let reparsed = Parser::new(&allocator, &code, SourceType::tsx()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
 // A leading comment inside a `pife` arrow alternate of a `?:` must stay
 // inside the paren wrap on every codegen pass; otherwise the parser re-
 // anchors the shifted comment and the next pass drops it.
