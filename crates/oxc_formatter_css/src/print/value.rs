@@ -37,7 +37,7 @@ use oxc_span::Span;
 
 use crate::{
     CssFormatOptions,
-    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
     print::{CssFormatter, format_with, less, scss, statement},
 };
@@ -596,17 +596,45 @@ pub(super) fn comma_group_is_multi(group: &[ComponentValue<'_>], is_first: bool)
 }
 
 /// A group's separator comma:
-/// comments between the group and its comma stay before the comma (`a /* c */, b`);
-/// a same-line `//` right after it stays on its line (`a, // c`, the line-boundary invariant),
-/// only comments past those lead the next group.
+/// a block comment between the group and its comma stays before the comma (`a /* c */, b`),
+/// a same-line `//` there rides past it (`a // c\n,` -> `a, // c`: the comma cannot follow a `//`),
+/// a same-line `//` right after it stays on its line (`a, // c`);
+/// own-line comments and anything past those lead the next group (the line-boundary invariant).
 pub(super) fn write_group_comma(comma_start: Option<u32>, f: &mut CssFormatter<'_, '_>) {
     let Some(comma) = comma_start else {
         write!(f, ",");
         return;
     };
-    flush_trailing_value_comments(comma, f);
+    let line_comment_deferred = flush_comments_before_separator(comma, f);
     write!(f, ",");
     flush_line_comment_after_comma(comma, f);
+    if line_comment_deferred {
+        // Flushes the deferred `//` right behind the comma and ends the line.
+        // A hardline, not `expand_parent`:
+        // inside a `fill` the latter would also break the separator BEFORE this entry (`@each $k\n in a, // c`),
+        // the former keeps it (`@each $k in a, // c`).
+        write!(f, hard_line_break());
+    }
+}
+
+/// The same-line comments before a separator at `separator_start`:
+/// block comments glue before it, a `//` rides a `line_suffix` past it (its line ends after the separator).
+/// Own-line comments stay pending, they lead what follows the separator.
+/// Returns `true` when a `//` was deferred: the caller must end the line right after the separator.
+fn flush_comments_before_separator(separator_start: u32, f: &mut CssFormatter<'_, '_>) -> bool {
+    flush_trailing_comments_while(0, separator_start, LineCommentAs::Suffix, f, |_, c, source| {
+        !comment_is_own_line(c, source)
+    })
+}
+
+/// How a trailing `//` is emitted by [`flush_trailing_comments_while`].
+#[derive(Clone, Copy)]
+enum LineCommentAs {
+    /// In place, ending the line (`FormatCommentBeforeContent`)
+    InPlace,
+    /// A `line_suffix`: the token written next (a separator) precedes it on the line;
+    /// the caller ends the line after that token
+    Suffix,
 }
 
 /// A `//` on the line of the comma just written (`a, // c`, `a, /* b */ // c`) stays on that line,
@@ -626,34 +654,80 @@ pub(super) fn flush_line_comment_after_comma(comma_start: u32, f: &mut CssFormat
 /// as ` /* c */` / ` // c`, stopping after a `//` (it ends the line).
 /// Unlike [`flush_same_line_comments`] a comment further along the line, past other tokens, stays pending.
 pub(super) fn flush_glued_comments(prev_end: u32, upper_bound: u32, f: &mut CssFormatter<'_, '_>) {
-    flush_trailing_comments_while(prev_end, upper_bound, f, |prev_end, comment, source| {
-        source.all_bytes_match(prev_end, comment.span.start, |b| matches!(b, b' ' | b'\t'))
-    });
+    flush_trailing_comments_while(
+        prev_end,
+        upper_bound,
+        LineCommentAs::InPlace,
+        f,
+        |prev_end, comment, source| {
+            source.all_bytes_match(prev_end, comment.span.start, |b| matches!(b, b' ' | b'\t'))
+        },
+    );
+}
+
+/// A word with the comments around it: own-line ones before it lead it (`flush_value_comments`),
+/// the run glued after it trails it (`flush_glued_comments`, bounded by `upper_bound`).
+/// The shape of every structured prelude word (`@import` parts, `@media` words, `@supports` terms, ...).
+pub(super) fn write_with_comments<'a>(
+    span: Span,
+    upper_bound: u32,
+    f: &mut CssFormatter<'_, 'a>,
+    write: impl FnOnce(&mut CssFormatter<'_, 'a>),
+) {
+    flush_value_comments(span.start, f);
+    write(f);
+    flush_glued_comments(span.end, upper_bound, f);
 }
 
 /// Emits pending comments before `upper_bound` as ` /* c */` / ` // c` while `keep` accepts them
 /// (`prev_end` is the previous comment's end from the second one on), stopping after a `//`.
+/// Returns `true` when it stopped at a `//`.
 fn flush_trailing_comments_while(
     mut prev_end: u32,
     upper_bound: u32,
+    line_comment_as: LineCommentAs,
     f: &mut CssFormatter<'_, '_>,
     keep: impl Fn(u32, comments::CssComment, SourceText<'_>) -> bool,
-) {
+) -> bool {
     loop {
-        let Some(comment) = f.context().comments().peek() else { return };
+        let Some(comment) = f.context().comments().peek() else { return false };
         let source = f.context().source_text();
         if comment.span.start < prev_end
             || comment.span.end > upper_bound
             || !keep(prev_end, comment, source)
         {
-            return;
+            return false;
         }
         f.context().comments().take_before(comment.span.end);
+        if comment.inline && matches!(line_comment_as, LineCommentAs::Suffix) {
+            write!(f, FormatLineCommentSuffix::new(comment).with_leading_space());
+            return true;
+        }
         write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
         if comment.inline {
-            return;
+            return true;
         }
         prev_end = comment.span.end;
+    }
+}
+
+/// Comments between a prelude ending at `prelude_end` and its `{` at `block_start`:
+/// a run glued to the prelude stays on its line (`@page :first // c`, the `//` ends it so `{` starts the next),
+/// own-line ones keep their line before the `{`.
+/// Either way the caller's space before `{` is safe: the printer drops it at the start of a line.
+pub(super) fn write_comments_before_block(
+    prelude_end: u32,
+    block_start: u32,
+    f: &mut CssFormatter<'_, '_>,
+) {
+    flush_glued_comments(prelude_end, block_start, f);
+    let own_line = f.context().comments().take_before(block_start);
+    if own_line.is_empty() {
+        return;
+    }
+    write!(f, hard_line_break());
+    for &comment in own_line {
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
     }
 }
 
@@ -922,9 +996,13 @@ pub(super) fn flush_same_line_comments(
     upper_bound: u32,
     f: &mut CssFormatter<'_, '_>,
 ) {
-    flush_trailing_comments_while(prev_end, upper_bound, f, |_, comment, source| {
-        !comment_is_own_line(comment, source)
-    });
+    flush_trailing_comments_while(
+        prev_end,
+        upper_bound,
+        LineCommentAs::InPlace,
+        f,
+        |_, c, source| !comment_is_own_line(c, source),
+    );
 }
 
 /// Emits pending comments before `upper_bound` as ` /* c */` suffixes

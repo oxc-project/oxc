@@ -563,11 +563,16 @@ Its JS printer follows the option (`[1, 2\n // own]`), and so do all our formatt
 );
 ```
 
-An own-line trailing comment before a closing `)` keeps its own line:
-in maps and `@use`/`@forward with (...)` configs (any comment kind),
-in map-item lists (any kind, the body is already one item per line),
-and in paren lists, call/`@include` arguments and `@mixin` parameters
-(`//` only: an own-line block comment in a fill body is a fill item, see AGENTS.md).
+An own-line trailing comment before a closing `)` keeps its own line
+(so does an own-line comment before a list comma: it leads the next element, `a,\n  // c\n  b`, pinned in `line-comment-before-comma.scss`):
+- maps
+- `@use`/`@forward with (...)` configs (any comment kind)
+- map-item lists (any kind, the body is already one item per line)
+- paren lists
+- call/`@include` arguments
+- `@mixin` parameters
+
+`//` only: an own-line block comment in a fill body is a fill item, see AGENTS.md.
 
 Prettier's output changes line, own-line to the last item's line, a `lineSuffix` artifact of its comma-group printing.
 Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the author's visual grouping.
@@ -698,6 +703,66 @@ the move is where postcss-value-parser hands the comment to the next comma group
 Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`,
 `@import` paths and modifiers, `@layer`, `@custom-selector`, `@media` query lists and `selector()` lists.
 For `@media` Prettier's move also swallows the next query (`@media a, // c b {`), a semantics bug on its side.
+
+## line-comment-before-block
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
+
+```scss
+/* input */
+@supports (a: b) // c
+{
+  color: red;
+}
+
+/* ours */
+@supports (a: b) // c
+{
+  color: red;
+}
+
+/* prettier */
+@supports (a: b) { // c
+  color: red;
+}
+```
+
+A `//` glued to the end of an at-rule prelude stays on that line and the `{` starts the next;
+Prettier moves it past the `{` as the block's first comment for `@media` / `@supports` / `@mixin` / `@include`
+(and keeps it before the `{` for `@page` / `@keyframes` / `@font-face` / `@if`):
+the comment crosses the `{`, a grammar-fixed delimiter.
+For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
+
+## line-comment-before-comma-fill-head
+
+- Why: uniform-rule (same construct, same output: `@each $k in a, // c` with the `//` after the comma)
+- Pin: `tests/fixtures/format/scss/line-comment-before-comma.scss`
+
+```scss
+/* input */
+@each $k in a // c
+  , b {
+}
+
+/* ours */
+@each $k in a, // c
+  b
+{
+}
+
+/* prettier */
+@each $k
+    in a, // c
+  b
+{
+}
+```
+
+A `//` before a list comma rides past the comma and ends the line there; the fill entries before it stay on their line,
+exactly as when the `//` follows the comma in the source.
+Prettier attaches a `breakParent` to the deferred comment, which its fill measures as never fitting,
+so the entry BEFORE the comment (`in a,`) breaks away from `$k` too; the same source with the `//` after the comma keeps `$k in a,`.
 
 ## semiless-custom-property-block
 

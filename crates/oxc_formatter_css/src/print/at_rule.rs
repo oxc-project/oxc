@@ -195,18 +195,11 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
     // Whatever the prelude printer left pending (before `region_end`: the `{` or the `;`)
     // is written here, so nothing inside the prelude is lost to the statement loop's cursor guard.
     if let Some(block) = &at_rule.block {
-        // An inline comment between the prelude and `{` keeps its own line
-        // (Prettier's `lastLineHasInlineComment` → line instead of space).
-        if f.context().comments().peek().is_some_and(|c| c.inline && c.span.end <= region_end) {
-            write!(f, hard_line_break());
-            for &comment in f.context().comments().take_before(region_end) {
-                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
-            }
-        } else {
-            value::flush_trailing_value_comments(region_end, f);
-            if !is_control_directive {
-                write!(f, space());
-            }
+        let prelude_end =
+            at_rule.prelude.as_ref().map_or(name_span.end, |prelude| to_span(prelude.span()).end);
+        value::write_comments_before_block(prelude_end, region_end, f);
+        if !is_control_directive {
+            write!(f, space());
         }
         statement::write_block(block, f);
     } else {
@@ -786,8 +779,10 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
             let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 if let Some(prefix) = &namespace.prefix {
                     let span = to_span(prefix.span());
-                    write!(f, text(source.text_for(&span)));
-                    value::flush_glued_comments(span.end, to_span(namespace.span()).end, f);
+                    let prelude_end = to_span(namespace.span()).end;
+                    value::write_with_comments(span, prelude_end, f, |f| {
+                        write!(f, text(source.text_for(&span)));
+                    });
                     write!(f, space());
                     value::flush_value_comments(to_span(namespace.uri.span()).start, f);
                 }
@@ -1473,18 +1468,15 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
     }
     // A `//` between the parts breaks the prelude either way
     let prelude_end = to_span(import.span()).end;
-    let write_part = |span: oxc_span::Span,
-                      f: &mut CssFormatter<'_, 'a>,
-                      write: &dyn Fn(&mut CssFormatter<'_, 'a>)| {
-        value::flush_value_comments(span.start, f);
-        write(f);
-        value::flush_glued_comments(span.end, prelude_end, f);
-    };
-    write_part(to_span(import.href.span()), f, &|f| write_import_href(&import.href, f));
+    value::write_with_comments(to_span(import.href.span()), prelude_end, f, |f| {
+        write_import_href(&import.href, f);
+    });
     if let Some(layer) = &import.layer {
         write!(f, space());
         let span = to_span(layer.span());
-        write_part(span, f, &|f| write!(f, text(source.text_for(&span))));
+        value::write_with_comments(span, prelude_end, f, |f| {
+            write!(f, text(source.text_for(&span)));
+        });
     }
     if let Some(supports) = &import.supports {
         // `@import ... supports(<cond>)`.
@@ -1496,7 +1488,7 @@ fn write_import_prelude_inner<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatt
         // plus one of our own (a width-overflowing condition with no trailing media breaks INSIDE the parens, not before `supports`).
         // Empty `supports()` was the prior data-loss stub.
         write!(f, space());
-        write_part(to_span(supports.span()), f, &|f| {
+        value::write_with_comments(to_span(supports.span()), prelude_end, f, |f| {
             write!(f, "supports(");
             match &supports.kind {
                 // `supports(not (display: inline-grid))`, `supports(font-format(woff2))`
@@ -1649,10 +1641,12 @@ fn write_media_query_list<'a>(list: &MediaQueryList<'a>, f: &mut CssFormatter<'_
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         write_media_query_list_inner(list, f);
     });
-    // The indent only governs the inter-query `,`-breaks; a single query never breaks internally,
-    // so dropping it avoids leaking a level into an embedded `${}` placeholder break
-    // (a media value is flat text, like Prettier).
-    if list.queries.len() > 1 {
+    // The indent governs the inter-query `,`-breaks and a `//` break inside a query;
+    // without either a single query never breaks, and dropping the indent avoids
+    // leaking a level into an embedded `${}` placeholder break (a media value is flat text, like Prettier).
+    let breaks_inside =
+        f.context().comments().iter_before(to_span(list.span()).end).any(|c| c.inline);
+    if list.queries.len() > 1 || breaks_inside {
         write!(f, group(&indent(&body)));
     } else {
         write!(f, group(&body));
@@ -1676,18 +1670,23 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
     match query {
         MediaQuery::ConditionOnly(condition) => write_media_condition(condition, f),
         MediaQuery::WithType(with_type) => {
+            // A `//` among the words breaks the query
+            let query_end = to_span(query.span()).end;
+            let write_word = |span: oxc_span::Span, f: &mut CssFormatter<'_, 'a>| {
+                value::write_with_comments(span, query_end, f, |f| {
+                    write_maybe_lowercase(source.text_for(&span), f);
+                });
+            };
             if let Some(modifier) = &with_type.modifier {
-                let span = to_span(modifier.span());
-                write_maybe_lowercase(source.text_for(&span), f);
+                write_word(to_span(modifier.span()), f);
                 write!(f, space());
             }
-            let span = to_span(with_type.media_type.span());
-            write_maybe_lowercase(source.text_for(&span), f);
+            write_word(to_span(with_type.media_type.span()), f);
             if let Some(condition) = &with_type.condition {
                 write!(f, space());
-                let and_span = to_span(condition.and.span());
-                write_maybe_lowercase(source.text_for(&and_span), f);
+                write_word(to_span(condition.and.span()), f);
                 write!(f, space());
+                value::flush_value_comments(to_span(condition.condition.span()).start, f);
                 write_media_condition(&condition.condition, f);
             }
         }
@@ -1700,11 +1699,12 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
 
 fn write_media_condition<'a>(condition: &MediaCondition<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
+    let condition_end = to_span(condition.span()).end;
     for (i, kind) in condition.conditions.iter().enumerate() {
         if i > 0 {
             write!(f, space());
         }
-        match kind {
+        value::write_with_comments(to_span(kind.span()), condition_end, f, |f| match kind {
             MediaConditionKind::MediaInParens(in_parens) => {
                 write_media_in_parens(in_parens, f);
             }
@@ -1726,7 +1726,7 @@ fn write_media_condition<'a>(condition: &MediaCondition<'a>, f: &mut CssFormatte
                 write!(f, space());
                 write_media_in_parens(&not.media_in_parens, f);
             }
-        }
+        });
     }
 }
 
@@ -1866,6 +1866,7 @@ fn write_supports_condition<'a>(condition: &SupportsCondition<'a>, f: &mut CssFo
     // A fill of keywords and parenthesized terms:
     // a long condition breaks AFTER `and`/`or`, one indent in
     // (`postcss-values` prints the params as a value group, so each word/paren is its own fill entry).
+    let condition_end = to_span(condition.span()).end;
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         let mut filler = f.fill();
         for kind in &condition.conditions {
@@ -1875,15 +1876,20 @@ fn write_supports_condition<'a>(condition: &SupportsCondition<'a>, f: &mut CssFo
                 SupportsConditionKind::Or(or) => (Some(&or.keyword), &or.condition),
                 SupportsConditionKind::Not(not) => (Some(&not.keyword), &not.condition),
             };
+            // A `//` among the entries breaks the condition
             if let Some(keyword) = keyword {
                 let kw = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     let span = to_span(keyword.span());
-                    write_maybe_lowercase(f.context().source_text().text_for(&span), f);
+                    value::write_with_comments(span, condition_end, f, |f| {
+                        write_maybe_lowercase(f.context().source_text().text_for(&span), f);
+                    });
                 });
                 filler.entry(&soft_line_break_or_space(), &kw);
             }
             let term = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write_supports_in_parens(in_parens, f);
+                value::write_with_comments(to_span(in_parens.span()), condition_end, f, |f| {
+                    write_supports_in_parens(in_parens, f);
+                });
             });
             filler.entry(&soft_line_break_or_space(), &term);
         }

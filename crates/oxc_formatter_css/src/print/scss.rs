@@ -5,7 +5,7 @@ use oxc_css_parser::ast::{
     ComponentValue, InterpolableStr, SassEach, SassFor, SassForBoundaryKind, SassForward,
     SassForwardVisibilityModifierKind, SassFunction, SassIfAtRule, SassInclude, SassList, SassMap,
     SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
-    SassUseNamespaceKind, SassVariableDeclaration,
+    SassUseNamespaceKind, SassVariableDeclaration, SimpleBlock,
 };
 use oxc_formatter_core::{
     Buffer,
@@ -681,7 +681,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
 pub(super) fn write_sass_if_at_rule<'a>(if_rule: &SassIfAtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, ["@if", space()]);
     write_control_condition(&if_rule.if_clause.condition, f);
-    statement::write_block(&if_rule.if_clause.block, f);
+    write_block_after(to_span(if_rule.if_clause.condition.span()).end, &if_rule.if_clause.block, f);
     for (clause, else_span) in if_rule.else_if_clauses.iter().zip(&if_rule.else_spans) {
         write_else_join(to_span(else_span).start, f);
         // `if` is a value word in postcss, so the condition may break after it
@@ -691,16 +691,21 @@ pub(super) fn write_sass_if_at_rule<'a>(if_rule: &SassIfAtRule<'a>, f: &mut CssF
         } else {
             write_condition_chain(Some("if"), &clause.condition, f);
         }
-        statement::write_block(&clause.block, f);
+        write_block_after(to_span(clause.condition.span()).end, &clause.block, f);
     }
     if let Some(else_block) = &if_rule.else_clause {
-        let else_start = if_rule
-            .else_spans
-            .last()
-            .map_or_else(|| to_span(&else_block.span).start, |sp| to_span(sp).start);
-        write_else_join(else_start, f);
-        statement::write_block(else_block, f);
+        let block_start = to_span(&else_block.span).start;
+        let else_span = if_rule.else_spans.last().map_or(Span::empty(block_start), to_span);
+        write_else_join(else_span.start, f);
+        write_block_after(else_span.end, else_block, f);
     }
+}
+
+/// A clause's block, with the comments between its head (ending at `head_end`)
+/// and `{` placed first (`@if $a // c\n{`), so they do not fall into the block as its first leading comment.
+fn write_block_after<'a>(head_end: u32, block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 'a>) {
+    value::write_comments_before_block(head_end, to_span(&block.span).start, f);
+    statement::write_block(block, f);
 }
 
 /// `} @else`: comments between them break the join; each keeps its line
@@ -904,10 +909,10 @@ pub(super) fn write_sass_forward<'a>(forward: &SassForward<'a>, f: &mut CssForma
                 let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     value::write_text_with_leading_comments(to_span(member.span()), f);
                     if i + 1 < members.len() {
-                        let comma = to_span(&visibility.comma_spans[i]).start;
-                        write_same_line_trailing_comments(comma, f);
-                        write!(f, ",");
-                        value::flush_line_comment_after_comma(comma, f);
+                        value::write_group_comma(
+                            Some(to_span(&visibility.comma_spans[i]).start),
+                            f,
+                        );
                     }
                 });
                 filler.entry(&soft_line_break_or_space(), &entry);
@@ -990,12 +995,7 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
                 write!(f, text(source.text_for(&span)));
             }
             if i + 1 < config.items.len() {
-                // An own-line comment before the comma stays pending and
-                // leads the next item instead.
-                let comma = to_span(&config.comma_spans[i]).start;
-                write_same_line_trailing_comments(comma, f);
-                write!(f, ",");
-                value::flush_line_comment_after_comma(comma, f);
+                value::write_group_comma(Some(to_span(&config.comma_spans[i]).start), f);
             } else {
                 // Comments before `)` (past a trailing comma, which is dropped):
                 // same-line ones glue to the last item, own-line ones keep their line.
