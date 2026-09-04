@@ -30,9 +30,10 @@ pub struct OxlintOptions {
     ///
     /// Equivalent to passing `--type-aware` on the CLI.
     ///
-    /// A nested config may set this option: it then applies to the files that config governs,
-    /// and inherits the root value when left unset. The `--type-aware` CLI flag and the editor
-    /// setting apply to every file.
+    /// Resolved from the config which governs each file, so a nested config may enable
+    /// type-aware linting for its own directory. It is *not* inherited from the root config:
+    /// share it with `extends`, which a child config can still override. The `--type-aware` CLI
+    /// flag and the editor setting apply to every file.
     ///
     /// Note that this requires the `oxlint-tsgolint` package to be installed.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -66,16 +67,16 @@ pub struct OxlintOptions {
     ///
     /// Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
     /// CLI flags take precedence over this value when both are set.
-    /// Resolved per file: a nested config may set it for the files it governs, and inherits the
-    /// root value when left unset.
+    /// Resolved from the config which governs each file, and not inherited from the root config:
+    /// share it with `extends`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report_unused_disable_directives: Option<AllowWarnDeny>,
     /// Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
     /// directives in addition to its native `oxlint-*` directives.
     ///
     /// Defaults to `true`.
-    /// Resolved per file: a nested config may set it for the files it governs, and inherits the
-    /// root value when left unset.
+    /// Resolved from the config which governs each file, and not inherited from the root config:
+    /// share it with `extends`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub respect_eslint_disable_directives: Option<bool>,
 }
