@@ -846,6 +846,7 @@ pub use crate::rules::vue::no_computed_properties_in_data::NoComputedPropertiesI
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
 pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as VueNoDeprecatedDeleteSet;
 pub use crate::rules::vue::no_deprecated_destroyed_lifecycle::NoDeprecatedDestroyedLifecycle as VueNoDeprecatedDestroyedLifecycle;
+pub use crate::rules::vue::no_deprecated_dollar_listeners_api::NoDeprecatedDollarListenersApi as VueNoDeprecatedDollarListenersApi;
 pub use crate::rules::vue::no_deprecated_events_api::NoDeprecatedEventsApi as VueNoDeprecatedEventsApi;
 pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefinition as VueNoDeprecatedModelDefinition;
 pub use crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis as VueNoDeprecatedPropsDefaultThis;
@@ -1734,6 +1735,7 @@ pub enum RuleEnum {
     VueNoDeprecatedDataObjectDeclaration(VueNoDeprecatedDataObjectDeclaration),
     VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet),
     VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle),
+    VueNoDeprecatedDollarListenersApi(VueNoDeprecatedDollarListenersApi),
     VueNoDeprecatedEventsApi(VueNoDeprecatedEventsApi),
     VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition),
     VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis),
@@ -2710,7 +2712,9 @@ const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize =
 const VUE_NO_DEPRECATED_DELETE_SET_ID: usize =
     VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID + 1usize;
 const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = VUE_NO_DEPRECATED_DELETE_SET_ID + 1usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID + 1usize;
+const VUE_NO_DEPRECATED_DOLLAR_LISTENERS_API_ID: usize =
+    VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID + 1usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = VUE_NO_DEPRECATED_DOLLAR_LISTENERS_API_ID + 1usize;
 const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = VUE_NO_DEPRECATED_EVENTS_API_ID + 1usize;
 const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize =
     VUE_NO_DEPRECATED_MODEL_DEFINITION_ID + 1usize;
@@ -2748,7 +2752,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3585,6 +3589,7 @@ static RULE_NAMES: [&str; 870usize] = [
     VueNoDeprecatedDataObjectDeclaration::NAME,
     VueNoDeprecatedDeleteSet::NAME,
     VueNoDeprecatedDestroyedLifecycle::NAME,
+    VueNoDeprecatedDollarListenersApi::NAME,
     VueNoDeprecatedEventsApi::NAME,
     VueNoDeprecatedModelDefinition::NAME,
     VueNoDeprecatedPropsDefaultThis::NAME,
@@ -4587,6 +4592,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedDeleteSet(_) => VUE_NO_DEPRECATED_DELETE_SET_ID,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID,
+            Self::VueNoDeprecatedDollarListenersApi(_) => VUE_NO_DEPRECATED_DOLLAR_LISTENERS_API_ID,
             Self::VueNoDeprecatedEventsApi(_) => VUE_NO_DEPRECATED_EVENTS_API_ID,
             Self::VueNoDeprecatedModelDefinition(_) => VUE_NO_DEPRECATED_MODEL_DEFINITION_ID,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID,
@@ -5638,6 +5644,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::CATEGORY
             }
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::CATEGORY
+            }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::CATEGORY,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::CATEGORY,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::CATEGORY,
@@ -6627,6 +6636,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::FIX,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::FIX,
+            Self::VueNoDeprecatedDollarListenersApi(_) => VueNoDeprecatedDollarListenersApi::FIX,
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::FIX,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::FIX,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::FIX,
@@ -7881,6 +7891,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::documentation(),
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::documentation()
+            }
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::documentation()
             }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::documentation(),
             Self::VueNoDeprecatedModelDefinition(_) => {
@@ -10332,6 +10345,10 @@ impl RuleEnum {
                 VueNoDeprecatedDestroyedLifecycle::config_schema(generator)
                     .or_else(|| VueNoDeprecatedDestroyedLifecycle::schema(generator))
             }
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::config_schema(generator)
+                    .or_else(|| VueNoDeprecatedDollarListenersApi::schema(generator))
+            }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::config_schema(generator)
                 .or_else(|| VueNoDeprecatedEventsApi::schema(generator)),
             Self::VueNoDeprecatedModelDefinition(_) => {
@@ -11265,6 +11282,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(_) => "vue",
             Self::VueNoDeprecatedDeleteSet(_) => "vue",
             Self::VueNoDeprecatedDestroyedLifecycle(_) => "vue",
+            Self::VueNoDeprecatedDollarListenersApi(_) => "vue",
             Self::VueNoDeprecatedEventsApi(_) => "vue",
             Self::VueNoDeprecatedModelDefinition(_) => "vue",
             Self::VueNoDeprecatedPropsDefaultThis(_) => "vue",
@@ -13273,6 +13291,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedEventsApi(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run(node, ctx),
@@ -14160,6 +14179,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedEventsApi(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_once(ctx),
@@ -15162,6 +15182,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedEventsApi(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16052,6 +16073,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.should_run(ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedEventsApi(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.should_run(ctx),
@@ -17304,6 +17326,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::IS_TSGOLINT_RULE
             }
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::IS_TSGOLINT_RULE
+            }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::IS_TSGOLINT_RULE,
             Self::VueNoDeprecatedModelDefinition(_) => {
                 VueNoDeprecatedModelDefinition::IS_TSGOLINT_RULE
@@ -18361,6 +18386,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::VERSION,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::VERSION
+            }
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::VERSION
             }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::VERSION,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::VERSION,
@@ -19449,6 +19477,9 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::HAS_CONFIG
             }
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::HAS_CONFIG
+            }
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::HAS_CONFIG,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::HAS_CONFIG,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::HAS_CONFIG,
@@ -20441,6 +20472,7 @@ impl RuleEnum {
             }
             Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::INFO,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::INFO,
+            Self::VueNoDeprecatedDollarListenersApi(_) => VueNoDeprecatedDollarListenersApi::INFO,
             Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::INFO,
             Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::INFO,
             Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::INFO,
@@ -21322,6 +21354,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.types_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.types_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.types_info(),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.types_info(),
             Self::VueNoDeprecatedEventsApi(rule) => rule.types_info(),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.types_info(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.types_info(),
@@ -22196,6 +22229,7 @@ impl RuleEnum {
             Self::VueNoDeprecatedDataObjectDeclaration(rule) => rule.run_info(),
             Self::VueNoDeprecatedDeleteSet(rule) => rule.run_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_info(),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run_info(),
             Self::VueNoDeprecatedEventsApi(rule) => rule.run_info(),
             Self::VueNoDeprecatedModelDefinition(rule) => rule.run_info(),
             Self::VueNoDeprecatedPropsDefaultThis(rule) => rule.run_info(),
@@ -23204,6 +23238,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::VueNoDeprecatedDeleteSet(VueNoDeprecatedDeleteSet::default()),
         RuleEnum::VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle::default()),
+        RuleEnum::VueNoDeprecatedDollarListenersApi(VueNoDeprecatedDollarListenersApi::default()),
         RuleEnum::VueNoDeprecatedEventsApi(VueNoDeprecatedEventsApi::default()),
         RuleEnum::VueNoDeprecatedModelDefinition(VueNoDeprecatedModelDefinition::default()),
         RuleEnum::VueNoDeprecatedPropsDefaultThis(VueNoDeprecatedPropsDefaultThis::default()),
