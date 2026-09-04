@@ -1,0 +1,23 @@
+crates/oxc_minifier/src/lib.rs
+  s_63b9cbb8d8b521::t_4910c3b3bc772e 153-154
+crates/oxc_minifier/tests/mangler/property_mangler.rs
+  s_63b9cbb8d8b521::t_e14e90db5a29d3 32-33,496-497,518-520,543-544,549
+tasks/benchmark/benches/minifier.rs
+  s_63b9cbb8d8b521::t_b78ccb0abd8c91 150-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fd746fbcdf719df2b5fb0cd1db3113157afe1a4e",
+  "prompts": {},
+  "sessions": {
+    "s_63b9cbb8d8b521": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06bf8-3724-7082-894a-a2f7808996c6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
