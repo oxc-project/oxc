@@ -29,8 +29,8 @@ fn mangle_with(
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let mut program = parsed.program;
     let mut mangler = PropertyMangler::new(options);
-    mangler.collect(&program);
-    mangler.assign();
+    mangler.collect(&program, &allocator);
+    mangler.assign(&allocator);
     mangler.rewrite(&mut program, &allocator);
     let code = Codegen::new().build(&program).code;
     (code, mangler.into_cache())
@@ -493,8 +493,8 @@ fn duplicated_spans_do_not_skip_property_rewrites() {
     ZeroSpans.visit_program(&mut program);
 
     let mut mangler = PropertyMangler::new(options("^_"));
-    mangler.collect(&program);
-    mangler.assign();
+    mangler.collect(&program, &allocator);
+    mangler.assign(&allocator);
     mangler.rewrite(&mut program, &allocator);
 
     assert_eq!(
@@ -515,9 +515,9 @@ fn one_assignment_can_be_shared_across_programs() {
             .program;
 
     let mut mangler = PropertyMangler::new(options("^_"));
-    mangler.collect(&program_a);
-    mangler.collect(&program_b);
-    mangler.assign();
+    mangler.collect(&program_a, &allocator_a);
+    mangler.collect(&program_b, &allocator_b);
+    mangler.assign(&allocator_a);
     mangler.rewrite(&mut program_a, &allocator_a);
     mangler.rewrite(&mut program_b, &allocator_b);
 
@@ -540,13 +540,13 @@ fn independently_collected_programs_can_be_merged_before_assignment() {
             .program;
 
     let options = options("^_");
-    let collected_a = PropertyMangleCollection::from_program(&options, &program_a);
-    let collected_b = PropertyMangleCollection::from_program(&options, &program_b);
+    let collected_a = PropertyMangleCollection::from_program(&options, &program_a, &allocator_a);
+    let collected_b = PropertyMangleCollection::from_program(&options, &program_b, &allocator_b);
 
     let mut mangler = PropertyMangler::new(options);
     mangler.merge_collected(collected_a);
     mangler.merge_collected(collected_b);
-    mangler.assign();
+    mangler.assign(&allocator_a);
     mangler.rewrite(&mut program_a, &allocator_a);
     mangler.rewrite(&mut program_b, &allocator_b);
 

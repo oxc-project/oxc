@@ -147,8 +147,8 @@ fn bench_property_mangler(criterion: &mut Criterion) {
                 let mut program = transform_to_js(&allocator, source_text, source_type, path);
                 runner.run(|| {
                     let mut mangler = PropertyMangler::new(options.clone());
-                    mangler.collect(&program);
-                    mangler.assign();
+                    mangler.collect(&program, &allocator);
+                    mangler.assign(&allocator);
                     mangler.rewrite(&mut program, &allocator);
                     std::hint::black_box(mangler.into_cache());
                 });

@@ -14,7 +14,7 @@ use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
 use oxc_ecmascript::StringToNumber;
 use oxc_mangler::base54;
 use oxc_span::Span;
-use oxc_str::{CompactStr, Ident, Str};
+use oxc_str::{CompactStr, Ident, IdentHashMap, IdentHashSet, Str, format_ident};
 use oxc_syntax::{identifier::is_identifier_name, number::ToJsString};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -95,11 +95,12 @@ impl std::fmt::Display for InvalidManglePropertyCacheTarget {
 
 impl std::error::Error for InvalidManglePropertyCacheTarget {}
 
-/// A single-application mapping from original property names to their final names.
+/// An allocator-backed, single-application mapping from original property names to their final
+/// names.
 ///
 /// Applying a mapping more than once is not generally idempotent: a cache target may also be
 /// another cache key or source candidate. Each program must therefore be rewritten exactly once.
-pub type PropertyMapping = FxHashMap<CompactStr, CompactStr>;
+pub type PropertyMapping<'a> = IdentHashMap<'a, Ident<'a>>;
 
 /// Options for opt-in property-name mangling.
 #[derive(Debug, Clone)]
@@ -172,11 +173,11 @@ fn key_annotated_spans(program: &Program<'_>) -> FxHashSet<u32> {
 
 /// Data gathered by the read-only collection phase.
 #[derive(Debug, Default)]
-struct PropertyCollectState {
+struct PropertyCollectState<'a> {
     /// Number of candidate occurrences before eligibility filtering.
-    frequencies: FxHashMap<CompactStr, u32>,
+    frequencies: IdentHashMap<'a, u32>,
     /// Spellings that remain in the output and therefore cannot be automatic output names.
-    occupied: FxHashSet<CompactStr>,
+    occupied: IdentHashSet<'a>,
 }
 
 /// Property candidates and occupied names collected from one program.
@@ -185,20 +186,28 @@ struct PropertyCollectState {
 /// the results into one [`PropertyMangler`] without cloning caches or reserved-name sets per
 /// program.
 #[derive(Debug)]
-pub struct PropertyMangleCollection(PropertyCollectState);
+pub struct PropertyMangleCollection<'a>(PropertyCollectState<'a>);
 
-impl PropertyMangleCollection {
+impl<'a> PropertyMangleCollection<'a> {
     /// Collect property candidates from one program without mutating its AST.
-    pub fn from_program(options: &ManglePropertiesOptions, program: &Program<'_>) -> Self {
+    ///
+    /// The allocator must remain alive until the collection and any mangler it is merged into are
+    /// dropped.
+    pub fn from_program(
+        options: &ManglePropertiesOptions,
+        program: &Program<'a>,
+        allocator: &'a Allocator,
+    ) -> Self {
         let key_annotated = key_annotated_spans(program);
-        Self(collect(options, program, &key_annotated))
+        Self(collect(options, program, &key_annotated, allocator))
     }
 }
 
-struct PropertyCollector<'o> {
+struct PropertyCollector<'o, 'a> {
     options: &'o ManglePropertiesOptions,
     key_annotated: &'o FxHashSet<u32>,
-    state: PropertyCollectState,
+    allocator: &'a Allocator,
+    state: PropertyCollectState<'a>,
 }
 
 fn is_eligible(options: &ManglePropertiesOptions, name: &str) -> bool {
@@ -216,22 +225,25 @@ fn is_eligible(options: &ManglePropertiesOptions, name: &str) -> bool {
     true
 }
 
-impl<'o> PropertyCollector<'o> {
-    fn new(options: &'o ManglePropertiesOptions, key_annotated: &'o FxHashSet<u32>) -> Self {
-        Self { options, key_annotated, state: PropertyCollectState::default() }
+impl<'o, 'a> PropertyCollector<'o, 'a> {
+    fn new(
+        options: &'o ManglePropertiesOptions,
+        key_annotated: &'o FxHashSet<u32>,
+        allocator: &'a Allocator,
+    ) -> Self {
+        Self { options, key_annotated, allocator, state: PropertyCollectState::default() }
     }
 
-    fn candidate(&mut self, name: &str) {
-        // Avoid constructing an owned key for repeated occurrences.
-        if let Some(count) = self.state.frequencies.get_mut(name) {
+    fn candidate(&mut self, name: Ident<'a>) {
+        if let Some(count) = self.state.frequencies.get_mut(&name) {
             *count = count.saturating_add(1);
             return;
         }
-        let count = self.state.frequencies.entry(CompactStr::from(name)).or_default();
+        let count = self.state.frequencies.entry(name).or_default();
         *count = count.saturating_add(1);
     }
 
-    fn quoted(&mut self, name: &str) {
+    fn quoted(&mut self, name: Ident<'a>) {
         if self.options.mangle_quoted {
             self.candidate(name);
         } else {
@@ -239,15 +251,15 @@ impl<'o> PropertyCollector<'o> {
         }
     }
 
-    fn occupy(&mut self, name: &str) {
-        self.state.occupied.insert(CompactStr::from(name));
+    fn occupy(&mut self, name: Ident<'a>) {
+        self.state.occupied.insert(name);
     }
 
     fn special_literal(&self, span: Span) -> bool {
         self.key_annotated.contains(&span.start)
     }
 
-    fn observe_literal(&mut self, span: Span, name: &str) {
+    fn observe_literal(&mut self, span: Span, name: Ident<'a>) {
         if self.special_literal(span) {
             self.candidate(name);
         } else {
@@ -258,17 +270,17 @@ impl<'o> PropertyCollector<'o> {
         }
     }
 
-    fn classify_key_expression(&mut self, expression: &Expression<'_>) {
+    fn classify_key_expression(&mut self, expression: &Expression<'a>) {
         match expression.get_inner_expression() {
             Expression::StringLiteral(literal) if self.special_literal(literal.span) => {}
-            Expression::StringLiteral(literal) => self.quoted(literal.value.as_str()),
+            Expression::StringLiteral(literal) => self.quoted(Ident::from(literal.value)),
             Expression::TemplateLiteral(template)
                 if template.expressions.is_empty() && self.special_literal(template.span) => {}
             Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
                 if let [quasi] = template.quasis.as_slice()
                     && let Some(cooked) = quasi.value.cooked
                 {
-                    self.quoted(cooked.as_str());
+                    self.quoted(Ident::from(cooked));
                 }
             }
             Expression::ConditionalExpression(expression) => {
@@ -280,17 +292,21 @@ impl<'o> PropertyCollector<'o> {
                     self.classify_key_expression(last);
                 }
             }
-            Expression::NumericLiteral(literal) => self.occupy(&numeric_key_string(literal.value)),
+            Expression::NumericLiteral(literal) => {
+                let name = numeric_key_string(literal.value);
+                self.occupy(Ident::from_str_in(&name, &self.allocator));
+            }
             _ => {}
         }
     }
 
-    fn classify_property_key(&mut self, key: &PropertyKey<'_>) {
+    fn classify_property_key(&mut self, key: &PropertyKey<'a>) {
         match key {
-            PropertyKey::StaticIdentifier(identifier) => self.candidate(identifier.name.as_str()),
+            PropertyKey::StaticIdentifier(identifier) => self.candidate(identifier.name),
             PropertyKey::PrivateIdentifier(_) => {}
             PropertyKey::NumericLiteral(literal) => {
-                self.occupy(&numeric_key_string(literal.value));
+                let name = numeric_key_string(literal.value);
+                self.occupy(Ident::from_str_in(&name, &self.allocator));
             }
             key => {
                 if let Some(expression) = key.as_expression() {
@@ -301,10 +317,10 @@ impl<'o> PropertyCollector<'o> {
     }
 }
 
-impl<'a> Visit<'a> for PropertyCollector<'_> {
+impl<'a> Visit<'a> for PropertyCollector<'_, 'a> {
     fn visit_directive(&mut self, directive: &Directive<'a>) {
         // Directives are not property-name positions.
-        self.occupy(directive.expression.value.as_str());
+        self.occupy(Ident::from(directive.expression.value));
     }
 
     fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
@@ -314,7 +330,7 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
     fn visit_ts_method_signature(&mut self, _signature: &TSMethodSignature<'a>) {}
 
     fn visit_static_member_expression(&mut self, expression: &StaticMemberExpression<'a>) {
-        self.candidate(expression.property.name.as_str());
+        self.candidate(expression.property.name);
         walk::walk_static_member_expression(self, expression);
     }
 
@@ -332,23 +348,25 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
         &mut self,
         property: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        self.candidate(property.binding.name.as_str());
+        self.candidate(property.binding.name);
         walk::walk_assignment_target_property_identifier(self, property);
     }
 
     fn visit_jsx_attribute_name(&mut self, name: &JSXAttributeName<'a>) {
         match name {
-            JSXAttributeName::Identifier(identifier) => self.candidate(identifier.name.as_str()),
+            JSXAttributeName::Identifier(identifier) => {
+                self.candidate(Ident::from(identifier.name));
+            }
             JSXAttributeName::NamespacedName(name) => {
-                self.occupy(name.namespace.name.as_str());
-                self.occupy(name.name.name.as_str());
+                self.occupy(Ident::from(name.namespace.name));
+                self.occupy(Ident::from(name.name.name));
             }
         }
         walk::walk_jsx_attribute_name(self, name);
     }
 
     fn visit_jsx_member_expression(&mut self, expression: &JSXMemberExpression<'a>) {
-        self.candidate(expression.property.name.as_str());
+        self.candidate(Ident::from(expression.property.name));
         walk::walk_jsx_member_expression(self, expression);
     }
 
@@ -360,7 +378,7 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
     }
 
     fn visit_string_literal(&mut self, literal: &StringLiteral<'a>) {
-        self.observe_literal(literal.span, literal.value.as_str());
+        self.observe_literal(literal.span, Ident::from(literal.value));
     }
 
     fn visit_template_literal(&mut self, template: &TemplateLiteral<'a>) {
@@ -368,38 +386,40 @@ impl<'a> Visit<'a> for PropertyCollector<'_> {
             && let [quasi] = template.quasis.as_slice()
             && let Some(cooked) = quasi.value.cooked
         {
-            self.observe_literal(template.span, cooked.as_str());
+            self.observe_literal(template.span, Ident::from(cooked));
         }
         walk::walk_template_literal(self, template);
     }
 }
 
-fn collect(
+fn collect<'a>(
     options: &ManglePropertiesOptions,
-    program: &Program<'_>,
+    program: &Program<'a>,
     key_annotated: &FxHashSet<u32>,
-) -> PropertyCollectState {
-    let mut collector = PropertyCollector::new(options, key_annotated);
+    allocator: &'a Allocator,
+) -> PropertyCollectState<'a> {
+    let mut collector = PropertyCollector::new(options, key_annotated, allocator);
     collector.visit_program(program);
     collector.state
 }
 
-fn debug_name(original: &str, attempt: u32) -> CompactStr {
+fn debug_name<'a>(original: &str, attempt: u32, allocator: &'a Allocator) -> Ident<'a> {
     if is_identifier_name(original) {
         if attempt == 0 {
-            CompactStr::from(format!("_${original}$_"))
+            format_ident!(allocator, "_${original}$_")
         } else {
-            CompactStr::from(format!("_${original}${attempt}$_"))
+            format_ident!(allocator, "_${original}${attempt}$_")
         }
     } else {
-        CompactStr::from(format!("_$property{attempt}$_"))
+        format_ident!(allocator, "_$property{attempt}$_")
     }
 }
 
-fn assign(
+fn assign<'a>(
     options: &ManglePropertiesOptions,
-    state: &PropertyCollectState,
-) -> (PropertyMapping, ManglePropertyCache) {
+    state: &PropertyCollectState<'a>,
+    allocator: &'a Allocator,
+) -> (PropertyMapping<'a>, ManglePropertyCache) {
     // Eligibility depends only on the name, so evaluate it once after collection.
     let mut names: Vec<_> =
         state.frequencies.iter().filter(|(name, _)| is_eligible(options, name.as_str())).collect();
@@ -409,10 +429,19 @@ fn assign(
 
     // Generated names must avoid collected names, reservations, cache keys, and pinned targets.
     let mut occupied = state.occupied.clone();
-    occupied.extend(state.frequencies.keys().cloned());
-    occupied.extend(options.reserved.iter().cloned());
-    occupied.extend(options.cache.0.keys().cloned());
-    occupied.extend(options.cache.0.values().flatten().cloned());
+    occupied.extend(state.frequencies.keys().copied());
+    occupied
+        .extend(options.reserved.iter().map(|name| Ident::from_str_in(name.as_str(), &allocator)));
+    occupied
+        .extend(options.cache.0.keys().map(|name| Ident::from_str_in(name.as_str(), &allocator)));
+    occupied.extend(
+        options
+            .cache
+            .0
+            .values()
+            .flatten()
+            .map(|name| Ident::from_str_in(name.as_str(), &allocator)),
+    );
 
     let mut mapping = PropertyMapping::default();
     let mut cache = options.cache.clone();
@@ -420,29 +449,30 @@ fn assign(
 
     for (original, _) in names {
         if let Some(Some(target)) = options.cache.get(original.as_str()) {
-            mapping.insert(original.clone(), target.clone());
+            mapping.insert(*original, Ident::from_str_in(target.as_str(), &allocator));
             continue;
         }
 
         let mut debug_attempt = 0u32;
         let target = loop {
             let candidate = if options.debug {
-                let candidate = debug_name(original.as_str(), debug_attempt);
+                let candidate = debug_name(original.as_str(), debug_attempt, allocator);
                 debug_attempt =
                     debug_attempt.checked_add(1).expect("debug property name space exhausted");
                 candidate
             } else {
-                let candidate = CompactStr::from(base54(counter).as_str());
+                let name = base54(counter);
+                let candidate = Ident::from_str_in(name.as_str(), &allocator);
                 counter = counter.checked_add(1).expect("property name space exhausted");
                 candidate
             };
-            if !occupied.contains(candidate.as_str()) && !is_hard_reserved(candidate.as_str()) {
+            if !occupied.contains(&candidate) && !is_hard_reserved(candidate.as_str()) {
                 break candidate;
             }
         };
-        occupied.insert(target.clone());
-        cache.insert_generated(original.clone(), Some(target.clone()));
-        mapping.insert(original.clone(), target);
+        occupied.insert(target);
+        cache.insert_generated(original.to_compact_str(), Some(target.to_compact_str()));
+        mapping.insert(*original, target);
     }
 
     (mapping, cache)
@@ -450,14 +480,14 @@ fn assign(
 
 // Property keys can share syntax with local bindings. Expand shorthand when needed so only the
 // property key changes.
-struct PropertyRewriter<'a, 'm> {
-    mapping: &'m PropertyMapping,
+struct PropertyRewriter<'a, 'm, 'p> {
+    mapping: &'m PropertyMapping<'p>,
     mangle_quoted: bool,
     key_annotated: &'m FxHashSet<u32>,
     ast: AstBuilder<'a>,
 }
 
-impl<'a> PropertyRewriter<'a, '_> {
+impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
     fn special_literal(&self, span: Span) -> bool {
         self.key_annotated.contains(&span.start)
     }
@@ -466,15 +496,15 @@ impl<'a> PropertyRewriter<'a, '_> {
         self.key_annotated.contains(&span.start) || self.mangle_quoted
     }
 
-    fn target(&self, original: &str) -> Option<&CompactStr> {
-        self.mapping.get(original)
+    fn target(&self, original: Ident<'_>) -> Option<Ident<'p>> {
+        self.mapping.get(&original).copied()
     }
 
     fn rename_string_literal(&self, literal: &mut StringLiteral<'a>) {
         if !self.should_rewrite_literal(literal.span) {
             return;
         }
-        if let Some(target) = self.target(literal.value.as_str()) {
+        if let Some(target) = self.target(Ident::from(literal.value)) {
             literal.value = Str::from_str_in(target.as_str(), &self.ast);
             literal.raw = None;
         }
@@ -486,7 +516,7 @@ impl<'a> PropertyRewriter<'a, '_> {
         }
         if let [quasi] = template.quasis.as_mut_slice()
             && let Some(cooked) = quasi.value.cooked
-            && let Some(target) = self.target(cooked.as_str())
+            && let Some(target) = self.target(Ident::from(cooked))
         {
             let target = Str::from_str_in(target.as_str(), &self.ast);
             quasi.value.cooked = Some(target);
@@ -516,9 +546,9 @@ impl<'a> PropertyRewriter<'a, '_> {
         }
     }
 
-    fn direct_string_key(key: &PropertyKey<'a>) -> Option<(CompactStr, Span)> {
+    fn direct_string_key(key: &PropertyKey<'a>) -> Option<(Str<'a>, Span)> {
         if let PropertyKey::StringLiteral(literal) = key {
-            Some((CompactStr::from(literal.value.as_str()), literal.span))
+            Some((literal.value, literal.span))
         } else {
             None
         }
@@ -528,11 +558,11 @@ impl<'a> PropertyRewriter<'a, '_> {
         &self,
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
-        original_string: Option<(CompactStr, Span)>,
+        original_string: Option<(Str<'a>, Span)>,
     ) {
         if let Some((original, span)) = original_string
             && self.should_rewrite_literal(span)
-            && let Some(target) = self.target(original.as_str())
+            && let Some(target) = self.target(Ident::from(original))
         {
             *key = PropertyKey::StaticIdentifier(IdentifierName::boxed(
                 span,
@@ -549,14 +579,14 @@ impl<'a> PropertyRewriter<'a, '_> {
 
     fn rename_static_key(&self, key: &mut PropertyKey<'a>) {
         if let PropertyKey::StaticIdentifier(identifier) = key
-            && let Some(target) = self.target(identifier.name.as_str())
+            && let Some(target) = self.target(identifier.name)
         {
             identifier.name = Ident::from_str_in(target.as_str(), &self.ast);
         }
     }
 }
 
-impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
+impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
     // Codegen emits the directive's separate raw value, so leave directives unchanged.
     fn visit_directive(&mut self, _directive: &mut Directive<'a>) {}
 
@@ -567,9 +597,9 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     fn visit_ts_method_signature(&mut self, _signature: &mut TSMethodSignature<'a>) {}
 
     fn visit_static_member_expression(&mut self, expression: &mut StaticMemberExpression<'a>) {
-        let original = CompactStr::from(expression.property.name.as_str());
+        let original = expression.property.name;
         walk_mut::walk_static_member_expression(self, expression);
-        if let Some(target) = self.target(original.as_str()) {
+        if let Some(target) = self.target(original) {
             expression.property.name = Ident::from_str_in(target.as_str(), &self.ast);
         }
     }
@@ -578,10 +608,10 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
         if let Expression::ComputedMemberExpression(member) = expression
             && let Expression::StringLiteral(literal) = &member.expression
         {
-            let original = CompactStr::from(literal.value.as_str());
+            let original = literal.value;
             let property_span = literal.span;
             if self.should_rewrite_literal(property_span)
-                && let Some(target) = self.target(original.as_str())
+                && let Some(target) = self.target(Ident::from(original))
             {
                 let property = IdentifierName::new(
                     property_span,
@@ -618,7 +648,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     fn visit_object_property(&mut self, property: &mut ObjectProperty<'a>) {
         let original_string = Self::direct_string_key(&property.key);
         let expands_shorthand = property.shorthand
-            && matches!(&property.key, PropertyKey::StaticIdentifier(identifier) if self.target(identifier.name.as_str()).is_some());
+            && matches!(&property.key, PropertyKey::StaticIdentifier(identifier) if self.target(identifier.name).is_some());
         walk_mut::walk_object_property(self, property);
         if expands_shorthand {
             property.shorthand = false;
@@ -629,7 +659,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     fn visit_binding_property(&mut self, property: &mut BindingProperty<'a>) {
         let original_string = Self::direct_string_key(&property.key);
         let expands_shorthand = property.shorthand
-            && matches!(&property.key, PropertyKey::StaticIdentifier(identifier) if self.target(identifier.name.as_str()).is_some());
+            && matches!(&property.key, PropertyKey::StaticIdentifier(identifier) if self.target(identifier.name).is_some());
         walk_mut::walk_binding_property(self, property);
         if expands_shorthand {
             property.shorthand = false;
@@ -639,8 +669,8 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
 
     fn visit_assignment_target_property(&mut self, property: &mut AssignmentTargetProperty<'a>) {
         if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) = property {
-            let original = CompactStr::from(identifier.binding.name.as_str());
-            let target = self.target(original.as_str()).cloned();
+            let original = identifier.binding.name;
+            let target = self.target(original);
             walk_mut::walk_assignment_target_property(self, property);
             if let Some(target) = target
                 && let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) =
@@ -733,10 +763,10 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
 
     fn visit_jsx_attribute_name(&mut self, name: &mut JSXAttributeName<'a>) {
         if let JSXAttributeName::Identifier(identifier) = name {
-            let original = CompactStr::from(identifier.name.as_str());
+            let original = identifier.name;
             walk_mut::walk_jsx_attribute_name(self, name);
             if let JSXAttributeName::Identifier(identifier) = name
-                && let Some(target) = self.target(original.as_str())
+                && let Some(target) = self.target(Ident::from(original))
             {
                 identifier.name = Str::from_str_in(target.as_str(), &self.ast);
             }
@@ -746,9 +776,9 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
     }
 
     fn visit_jsx_member_expression(&mut self, expression: &mut JSXMemberExpression<'a>) {
-        let original = CompactStr::from(expression.property.name.as_str());
+        let original = expression.property.name;
         walk_mut::walk_jsx_member_expression(self, expression);
-        if let Some(target) = self.target(original.as_str()) {
+        if let Some(target) = self.target(Ident::from(original)) {
             expression.property.name = Str::from_str_in(target.as_str(), &self.ast);
         }
     }
@@ -768,14 +798,14 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_> {
 }
 
 /// Three-phase property-name mangler.
-pub struct PropertyMangler {
+pub struct PropertyMangler<'a> {
     options: ManglePropertiesOptions,
-    state: PropertyCollectState,
-    mapping: PropertyMapping,
+    state: PropertyCollectState<'a>,
+    mapping: PropertyMapping<'a>,
     cache: ManglePropertyCache,
 }
 
-impl PropertyMangler {
+impl<'a> PropertyMangler<'a> {
     pub fn new(options: ManglePropertiesOptions) -> Self {
         Self {
             cache: ManglePropertyCache::default(),
@@ -786,8 +816,10 @@ impl PropertyMangler {
     }
 
     /// Collect property occurrences and occupied spellings without mutating the AST.
-    pub fn collect(&mut self, program: &Program<'_>) {
-        let collection = PropertyMangleCollection::from_program(&self.options, program);
+    ///
+    /// The allocator must remain alive until the mangler is dropped.
+    pub fn collect(&mut self, program: &Program<'a>, allocator: &'a Allocator) {
+        let collection = PropertyMangleCollection::from_program(&self.options, program, allocator);
         self.merge_collected(collection);
     }
 
@@ -795,7 +827,7 @@ impl PropertyMangler {
     ///
     /// This allows callers to collect programs in parallel, merge the results, and assign one
     /// mapping.
-    pub fn merge_collected(&mut self, collection: PropertyMangleCollection) {
+    pub fn merge_collected(&mut self, collection: PropertyMangleCollection<'a>) {
         for (name, frequency) in collection.0.frequencies {
             let total = self.state.frequencies.entry(name).or_default();
             *total = total.saturating_add(frequency);
@@ -804,8 +836,8 @@ impl PropertyMangler {
     }
 
     /// Assign deterministic names by descending occurrence frequency and lexical tie-break.
-    pub fn assign(&mut self) -> &PropertyMapping {
-        let (mapping, cache) = assign(&self.options, &self.state);
+    pub fn assign(&mut self, allocator: &'a Allocator) -> &PropertyMapping<'a> {
+        let (mapping, cache) = assign(&self.options, &self.state, allocator);
         self.mapping = mapping;
         self.cache = cache;
         &self.mapping
@@ -815,7 +847,7 @@ impl PropertyMangler {
     ///
     /// Do not apply this mapping to already-rewritten code. Cache targets are allowed to equal
     /// other cache keys, so a second application can incorrectly follow a mapping chain.
-    pub fn rewrite<'a>(&self, program: &mut Program<'a>, allocator: &'a Allocator) {
+    pub fn rewrite(&self, program: &mut Program<'a>, allocator: &'a Allocator) {
         if self.mapping.is_empty() {
             return;
         }
@@ -829,7 +861,7 @@ impl PropertyMangler {
         rewriter.visit_program(program);
     }
 
-    pub fn mapping(&self) -> &PropertyMapping {
+    pub fn mapping(&self) -> &PropertyMapping<'a> {
         &self.mapping
     }
 
@@ -845,6 +877,7 @@ impl PropertyMangler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use oxc_str::static_ident;
 
     fn options(pattern: &str) -> ManglePropertiesOptions {
         ManglePropertiesOptions::new(lazy_regex::Regex::new(pattern).unwrap())
@@ -852,16 +885,17 @@ mod tests {
 
     #[test]
     fn assignment_prefers_frequency_then_name() {
+        let allocator = Allocator::default();
         let options = options("^_");
         let state = PropertyCollectState {
-            frequencies: FxHashMap::from_iter([
-                (CompactStr::from("_rare"), 1),
-                (CompactStr::from("_often"), 3),
-                (CompactStr::from("_also_often"), 3),
+            frequencies: IdentHashMap::from_iter([
+                (static_ident!("_rare"), 1),
+                (static_ident!("_often"), 3),
+                (static_ident!("_also_often"), 3),
             ]),
-            occupied: FxHashSet::default(),
+            occupied: IdentHashSet::default(),
         };
-        let (mapping, _) = assign(&options, &state);
+        let (mapping, _) = assign(&options, &state, &allocator);
         assert_eq!(mapping["_also_often"].as_str(), "e");
         assert_eq!(mapping["_often"].as_str(), "t");
         assert_eq!(mapping["_rare"].as_str(), "n");
@@ -869,19 +903,20 @@ mod tests {
 
     #[test]
     fn assignment_honors_cache_and_allows_duplicate_targets() {
+        let allocator = Allocator::default();
         let mut options = options("^_");
         options.cache.insert("_a".into(), Some("A".into())).unwrap();
         options.cache.insert("_b".into(), Some("A".into())).unwrap();
         options.cache.insert("_keep".into(), None).unwrap();
         let state = PropertyCollectState {
-            frequencies: FxHashMap::from_iter([
-                (CompactStr::from("_a"), 1),
-                (CompactStr::from("_b"), 1),
-                (CompactStr::from("_auto"), 1),
+            frequencies: IdentHashMap::from_iter([
+                (static_ident!("_a"), 1),
+                (static_ident!("_b"), 1),
+                (static_ident!("_auto"), 1),
             ]),
-            occupied: FxHashSet::from_iter([CompactStr::from("_keep")]),
+            occupied: IdentHashSet::from_iter([static_ident!("_keep")]),
         };
-        let (mapping, cache) = assign(&options, &state);
+        let (mapping, cache) = assign(&options, &state, &allocator);
         assert_eq!(mapping["_a"].as_str(), "A");
         assert_eq!(mapping["_b"].as_str(), "A");
         assert_ne!(mapping["_auto"].as_str(), "A");
@@ -890,23 +925,24 @@ mod tests {
 
     #[test]
     fn assignment_filters_ineligible_collected_names() {
+        let allocator = Allocator::default();
         let mut options = options("^(?:_|1$|constructor$)");
         options.exclude = Some(lazy_regex::Regex::new("^_excluded(?:One|Two)$").unwrap());
         options.reserved.insert("_reserved".into());
         options.cache.insert("_cached".into(), None).unwrap();
         let state = PropertyCollectState {
-            frequencies: FxHashMap::from_iter([
-                (CompactStr::from("_mangle"), 1),
-                (CompactStr::from("_excludedOne"), 10),
-                (CompactStr::from("_reserved"), 10),
-                (CompactStr::from("_cached"), 10),
-                (CompactStr::from("public"), 10),
-                (CompactStr::from("1"), 10),
-                (CompactStr::from("constructor"), 10),
+            frequencies: IdentHashMap::from_iter([
+                (static_ident!("_mangle"), 1),
+                (static_ident!("_excludedOne"), 10),
+                (static_ident!("_reserved"), 10),
+                (static_ident!("_cached"), 10),
+                (static_ident!("public"), 10),
+                (static_ident!("1"), 10),
+                (static_ident!("constructor"), 10),
             ]),
-            occupied: FxHashSet::default(),
+            occupied: IdentHashSet::default(),
         };
-        let (mapping, cache) = assign(&options, &state);
+        let (mapping, cache) = assign(&options, &state, &allocator);
         assert_eq!(mapping.len(), 1);
         assert!(mapping.contains_key("_mangle"));
         assert_eq!(cache.get("_cached"), Some(&None));
