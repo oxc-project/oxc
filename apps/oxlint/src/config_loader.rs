@@ -238,6 +238,30 @@ impl ConfigLoadError {
     }
 }
 
+/// Non-fatal problems found while loading configuration files.
+///
+/// Unlike [`ConfigLoadError`], none of these stop the config from being used.
+#[derive(Debug, Default)]
+pub struct ConfigLoadWarnings {
+    /// Report these unconditionally, e.g. a root-only option set in a nested config.
+    pub always: Vec<OxcDiagnostic>,
+    /// Report these only when type-aware linting was *not* forced on from the CLI (`--type-aware`,
+    /// `--type-check-only`) or from the editor: a nested config names type-aware rules but does
+    /// not enable `options.typeAware`, so those rules never run.
+    pub unless_type_aware_forced: Vec<OxcDiagnostic>,
+}
+
+impl ConfigLoadWarnings {
+    /// The warnings to report, given whether type-aware linting was forced on.
+    pub fn to_report(&self, type_aware_forced: bool) -> impl Iterator<Item = &OxcDiagnostic> {
+        self.always.iter().chain(self.unless_type_aware_forced.iter().take(if type_aware_forced {
+            0
+        } else {
+            self.unless_type_aware_forced.len()
+        }))
+    }
+}
+
 /// High-level errors that can occur when loading CLI configurations.
 ///
 /// This groups together failures related to the root configuration file
@@ -262,7 +286,7 @@ pub struct LoadedConfigs {
     pub nested_ignore_patterns: Vec<(Vec<String>, PathBuf)>,
     /// Non-fatal problems found while loading nested configs, e.g. a root-only option set in a
     /// nested config. The option is ignored and linting continues.
-    pub warnings: Vec<OxcDiagnostic>,
+    pub warnings: ConfigLoadWarnings,
 }
 
 pub fn materialize_default_plugins(config: &mut Oxlintrc) {
@@ -360,10 +384,10 @@ impl<'a> ConfigLoader<'a> {
         &mut self,
         paths: impl IntoIterator<Item = DiscoveredConfigFile>,
         root_config_dir: Option<&Path>,
-    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>, Vec<OxcDiagnostic>) {
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>, ConfigLoadWarnings) {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
-        let mut warnings = Vec::new();
+        let mut warnings = ConfigLoadWarnings::default();
 
         // Group by parent dir to catch multiple configs in the same directory.
         // NOTE: CLI path (`discover_configs_in_ancestors`) already enforces uniqueness,
@@ -439,19 +463,28 @@ impl<'a> ConfigLoader<'a> {
             if !is_root_config {
                 let display_path = config_display_path(&path, root_config_dir);
                 if config.options.deny_warnings.take().is_some() {
-                    warnings.push(nested_deny_warnings_not_supported(&display_path));
+                    warnings.always.push(nested_deny_warnings_not_supported(&display_path));
                 }
                 if config.options.max_warnings.take().is_some() {
-                    warnings.push(nested_max_warnings_not_supported(&display_path));
+                    warnings.always.push(nested_max_warnings_not_supported(&display_path));
                 }
                 // Unlike `typeAware`, `typeCheck` cannot be scoped to the files this config
                 // governs: `tsgolint` reports type-checking diagnostics for a whole run. Keep the
                 // option working, but say so, because either it belongs in the root config or it
                 // was not meant to be there at all.
                 if config.options.type_check == Some(true) {
-                    warnings.push(nested_type_check_is_run_wide(&display_path));
+                    warnings.always.push(nested_type_check_is_run_wide(&display_path));
                 }
             }
+
+            // Captured before the config is consumed, to warn below if these rules can never run.
+            let explicit_type_aware_rules = if is_root_config {
+                // Only nested configs are checked: this is where dropping the implicit inheritance
+                // from the root config changes behaviour.
+                Vec::new()
+            } else {
+                config.rules.explicitly_enabled_type_aware_rules()
+            };
 
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
@@ -474,12 +507,25 @@ impl<'a> ConfigLoader<'a> {
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build { path: path.clone(), error: e.to_string() })
             {
-                Ok(config) => built_configs.push(LoadedConfig {
-                    dir,
-                    config,
-                    ignore_patterns,
-                    extended_paths,
-                }),
+                Ok(config) => {
+                    // `typeAware` is resolved from the config which governs the file, and is not
+                    // inherited from the root config, so a nested config which names type-aware
+                    // rules without enabling the option silently runs none of them.
+                    if !explicit_type_aware_rules.is_empty() && config.type_aware() != Some(true) {
+                        warnings.unless_type_aware_forced.push(
+                            nested_type_aware_rules_without_type_aware(
+                                &config_display_path(&path, root_config_dir),
+                                &explicit_type_aware_rules,
+                            ),
+                        );
+                    }
+                    built_configs.push(LoadedConfig {
+                        dir,
+                        config,
+                        ignore_patterns,
+                        extended_paths,
+                    });
+                }
                 Err(e) => errors.push(e),
             }
         }
@@ -491,7 +537,7 @@ impl<'a> ConfigLoader<'a> {
         &mut self,
         root_dir: &Path,
         configs: impl IntoIterator<Item = DiscoveredConfigFile>,
-    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>, Vec<OxcDiagnostic>) {
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>, ConfigLoadWarnings) {
         self.load_many(configs, Some(root_dir))
     }
 
@@ -640,7 +686,7 @@ impl<'a> ConfigLoader<'a> {
                 root: oxlintrc,
                 nested: FxHashMap::default(),
                 nested_ignore_patterns: vec![],
-                warnings: vec![],
+                warnings: ConfigLoadWarnings::default(),
             });
         }
 
@@ -728,6 +774,18 @@ fn nested_deny_warnings_not_supported(path: &str) -> OxcDiagnostic {
     .with_help("Move `options.denyWarnings` to the root configuration file.")
 }
 
+fn nested_type_aware_rules_without_type_aware(path: &str, rules: &[String]) -> OxcDiagnostic {
+    let (plural, subject) =
+        if rules.len() == 1 { ("", "it never runs") } else { ("s", "they never run") };
+    OxcDiagnostic::warn(format!(
+        "{path} enables the type-aware rule{plural} {}, but does not set `options.typeAware`, so {subject}.",
+        rules.join(", "),
+    ))
+    .with_help(
+        "Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.",
+    )
+}
+
 fn nested_type_check_is_run_wide(path: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "The `options.typeCheck` option was found in {path}, but it applies to the whole run, not only to that directory."
@@ -748,7 +806,7 @@ fn nested_max_warnings_not_supported(path: &str) -> OxcDiagnostic {
 mod test {
     use std::path::PathBuf;
 
-    use oxc_diagnostics::OxcDiagnostic;
+    use super::ConfigLoadWarnings;
 
     use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
@@ -865,7 +923,7 @@ mod test {
 
     /// Loads a single nested config from a temporary directory and returns
     /// `(number of configs, errors, warnings)`.
-    fn load_nested_json(contents: &str) -> (usize, Vec<ConfigLoadError>, Vec<OxcDiagnostic>) {
+    fn load_nested_json(contents: &str) -> (usize, Vec<ConfigLoadError>, ConfigLoadWarnings) {
         let root_dir = tempfile::tempdir().unwrap();
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
@@ -886,7 +944,8 @@ mod test {
             load_nested_json(r#"{ "options": { "typeAware": true } }"#);
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert!(warnings.is_empty());
+        assert!(warnings.always.is_empty());
+        assert!(warnings.unless_type_aware_forced.is_empty());
     }
 
     #[test]
@@ -896,8 +955,8 @@ mod test {
         // `typeCheck` still applies, but it cannot be scoped to this directory.
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert_eq!(warnings.len(), 1);
-        assert!(warnings[0].message.contains("options.typeCheck"));
+        assert_eq!(warnings.always.len(), 1);
+        assert!(warnings.always[0].message.contains("options.typeCheck"));
     }
 
     #[test]
@@ -906,7 +965,8 @@ mod test {
             load_nested_json(r#"{ "options": { "typeCheck": false } }"#);
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert!(warnings.is_empty());
+        assert!(warnings.always.is_empty());
+        assert!(warnings.unless_type_aware_forced.is_empty());
     }
 
     #[test]
@@ -916,8 +976,8 @@ mod test {
         // The option is ignored, but the rest of the config still applies.
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert_eq!(warnings.len(), 1);
-        assert!(warnings[0].message.contains("options.denyWarnings"));
+        assert_eq!(warnings.always.len(), 1);
+        assert!(warnings.always[0].message.contains("options.denyWarnings"));
     }
 
     #[test]
@@ -926,8 +986,8 @@ mod test {
             load_nested_json(r#"{ "options": { "maxWarnings": 10 } }"#);
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert_eq!(warnings.len(), 1);
-        assert!(warnings[0].message.contains("options.maxWarnings"));
+        assert_eq!(warnings.always.len(), 1);
+        assert!(warnings.always[0].message.contains("options.maxWarnings"));
     }
 
     #[test]
@@ -936,7 +996,8 @@ mod test {
             load_nested_json(r#"{ "options": { "reportUnusedDisableDirectives": "warn" } }"#);
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert!(warnings.is_empty());
+        assert!(warnings.always.is_empty());
+        assert!(warnings.unless_type_aware_forced.is_empty());
     }
 
     #[test]
@@ -945,27 +1006,54 @@ mod test {
             load_nested_json(r#"{ "options": { "respectEslintDisableDirectives": false } }"#);
         assert_eq!(configs, 1);
         assert!(errors.is_empty());
-        assert!(warnings.is_empty());
+        assert!(warnings.always.is_empty());
+        assert!(warnings.unless_type_aware_forced.is_empty());
     }
 
-    #[test]
-    fn test_nested_json_config_allows_type_aware_from_extends() {
+    /// `options` is not inherited from the root config, so `extends` is how a package picks up a
+    /// shared `typeAware`. Returns the `typeAware` of the built nested config.
+    fn load_nested_json_extending(base: &str, nested: &str) -> Option<bool> {
         let root_dir = tempfile::tempdir().unwrap();
         let base_path = root_dir.path().join("base/.oxlintrc.json");
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(base_path.parent().unwrap()).unwrap();
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(&base_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
-        std::fs::write(&nested_path, r#"{ "extends": ["../base/.oxlintrc.json"] }"#).unwrap();
+        std::fs::write(&base_path, base).unwrap();
+        std::fs::write(&nested_path, nested).unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
-        let (configs, errors, _warnings) = loader.load_discovered_with_root_dir(
+        let (configs, errors, warnings) = loader.load_discovered_with_root_dir(
             root_dir.path(),
             [DiscoveredConfigFile::Json(nested_path)],
         );
         assert!(errors.is_empty());
+        assert!(warnings.always.is_empty());
         assert_eq!(configs.len(), 1);
+        configs[0].config.type_aware()
+    }
+
+    #[test]
+    fn test_nested_json_config_allows_type_aware_from_extends() {
+        assert_eq!(
+            load_nested_json_extending(
+                r#"{ "options": { "typeAware": true } }"#,
+                r#"{ "extends": ["../base/.oxlintrc.json"] }"#,
+            ),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn test_nested_json_config_can_turn_off_extended_type_aware() {
+        // The child wins over the config it extends, so a package can opt out of a shared setting.
+        assert_eq!(
+            load_nested_json_extending(
+                r#"{ "options": { "typeAware": true } }"#,
+                r#"{ "extends": ["../base/.oxlintrc.json"], "options": { "typeAware": false } }"#,
+            ),
+            Some(false)
+        );
     }
 
     #[cfg(feature = "napi")]
@@ -1080,7 +1168,8 @@ mod test {
             [DiscoveredConfigFile::Js(nested_path)],
         );
         assert!(errors.is_empty());
-        assert!(warnings.is_empty());
+        assert!(warnings.always.is_empty());
+        assert!(warnings.unless_type_aware_forced.is_empty());
         assert_eq!(configs.len(), 1);
     }
 
@@ -1108,7 +1197,8 @@ mod test {
             [DiscoveredConfigFile::Js(nested_path)],
         );
         assert!(errors.is_empty());
-        assert!(warnings.is_empty());
+        assert!(warnings.always.is_empty());
+        assert!(warnings.unless_type_aware_forced.is_empty());
         assert_eq!(configs.len(), 1);
     }
 
@@ -1142,8 +1232,8 @@ mod test {
         );
         assert!(errors.is_empty());
         assert_eq!(configs.len(), 1);
-        assert_eq!(warnings.len(), 1);
-        assert!(warnings[0].message.contains("options.denyWarnings"));
+        assert_eq!(warnings.always.len(), 1);
+        assert!(warnings.always[0].message.contains("options.denyWarnings"));
     }
 
     #[cfg(feature = "napi")]
