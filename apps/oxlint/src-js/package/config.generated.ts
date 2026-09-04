@@ -1761,6 +1761,7 @@ export interface DummyRuleMap {
   "vue/no-deprecated-data-object-declaration"?: RuleNoConfig;
   "vue/no-deprecated-delete-set"?: RuleNoConfig;
   "vue/no-deprecated-destroyed-lifecycle"?: RuleNoConfig;
+  "vue/no-deprecated-dollar-scopedslots-api"?: RuleNoConfig;
   "vue/no-deprecated-events-api"?: RuleNoConfig;
   "vue/no-deprecated-model-definition"?: RuleNoConfig | [AllowWarnDeny, NoDeprecatedModelDefinitionConfig];
   "vue/no-deprecated-props-default-this"?: RuleNoConfig;

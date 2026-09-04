@@ -947,6 +947,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_delete_set;
     pub mod no_deprecated_destroyed_lifecycle;
+    pub mod no_deprecated_dollar_scopedslots_api;
     pub mod no_deprecated_events_api;
     pub mod no_deprecated_model_definition;
     pub mod no_deprecated_props_default_this;
