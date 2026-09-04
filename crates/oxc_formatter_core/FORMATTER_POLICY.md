@@ -145,6 +145,7 @@ node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print
 NOTE: Prettier's default `printWidth` is `80`, but Oxfmt is `100`.
 
 Fixture tests and Prettier conformance re-format every output and record idempotency violations in their snapshots/reports.
+Fixture tests also assert the lossless contract through `FixtureFormatter::fingerprint` (`oxc_formatter_tests`): a loss fails the test instead of being pinned.
 
 ### Fixture tests
 

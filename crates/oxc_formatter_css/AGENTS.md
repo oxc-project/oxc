@@ -13,6 +13,7 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
   - `format()`: standalone files, on a service-less session
   - `format_with_session()`: standalone, on the caller's `FormatSession`
   - `format_to_ir()`: embedded use via the dispatcher (`template_placeholders` = the css-in-js parse mode)
+  - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 
 ### Forked parser
 

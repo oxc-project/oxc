@@ -8,7 +8,7 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
+use oxc_formatter_css::{CssFormatOptions, CssVariant, format, parse_for_format};
 use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
 
 mod options;
@@ -16,8 +16,15 @@ use options::apply_css_options;
 
 struct CssHarness;
 
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+#[derive(Debug, PartialEq)]
+struct Fingerprint {
+    comments: usize,
+}
+
 impl FixtureFormatter for CssHarness {
     type Options = CssFormatOptions;
+    type Fingerprint = Fingerprint;
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = CssFormatOptions::default();
@@ -26,18 +33,9 @@ impl FixtureFormatter for CssHarness {
     }
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
-        // The dialect comes from the fixture extension, like oxfmt's classifier.
-        let variant = match path.extension().and_then(|e| e.to_str()) {
-            Some("scss") => CssVariant::Scss,
-            Some("less") => CssVariant::Less,
-            _ => CssVariant::Css,
-        };
-        let options = CssFormatOptions { variant, ..*options };
+        let options = CssFormatOptions { variant: variant_of(path), ..*options };
 
-        // Fixtures under `embedded/` exercise the dispatcher entry point
-        // (`format_to_ir`, css-in-js), which tolerates
-        // `` `PLACEHOLDER-N` `` markers in value/selector position.
-        if path.components().any(|c| c.as_os_str() == "embedded") {
+        if is_embedded(path) {
             return format_embedded(source, options);
         }
 
@@ -48,6 +46,35 @@ impl FixtureFormatter for CssHarness {
             .expect("print should succeed")
             .into_code()
     }
+
+    fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
+        let options = CssFormatOptions { variant: variant_of(path), ..*options };
+        let allocator = Allocator::default();
+        let parsed = parse_for_format(
+            &allocator,
+            source,
+            options,
+            /* template_placeholders */ is_embedded(path),
+        )
+        .expect("source should parse");
+        Fingerprint { comments: parsed.comments.len() }
+    }
+}
+
+/// The dialect comes from the fixture extension, like oxfmt's classifier.
+fn variant_of(path: &Path) -> CssVariant {
+    match path.extension().and_then(|e| e.to_str()) {
+        Some("scss") => CssVariant::Scss,
+        Some("less") => CssVariant::Less,
+        _ => CssVariant::Css,
+    }
+}
+
+/// Fixtures under `embedded/` exercise the dispatcher entry point
+/// (`format_to_ir`, css-in-js), which tolerates
+/// `` `PLACEHOLDER-N` `` markers in value/selector position.
+fn is_embedded(path: &Path) -> bool {
+    path.components().any(|c| c.as_os_str() == "embedded")
 }
 
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
