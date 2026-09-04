@@ -10,7 +10,13 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
+use crate::{
+    Codegen, Context, Operator, cjs_module_lexer,
+    r#gen::GenExpr,
+    typescript::{
+        expression_ends_with_ts_type_argument_open, expression_starts_with_ts_type_argument_close,
+    },
+};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -214,11 +220,55 @@ impl<'a> BinaryExpressionVisitor<'a> {
                     self.left_precedence = Precedence::Call;
                 }
             }
-            BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
+            BinaryishOperator::Binary(
+                BinaryOperator::GreaterThan
+                | BinaryOperator::ShiftRight
+                | BinaryOperator::ShiftRightZeroFill,
+            ) if p.is_typescript
+                && expression_ends_with_ts_type_argument_open(
+                    e.left(),
+                    self.left_precedence,
+                    self.ctx,
+                ) =>
+            {
+                // TypeScript can reinterpret `<...>`, `<...>>`, and `<...>>>` as type
+                // arguments. Isolate an opening angle before emitting a possible closer.
+                self.left_precedence = Precedence::Shift;
+            }
+            BinaryishOperator::Binary(BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
+                if p.is_typescript
+                    && expression_starts_with_ts_type_argument_close(
+                        e.right(),
+                        self.right_precedence,
+                        self.ctx,
+                    ) =>
+            {
+                // A right shift can be re-lexed into multiple generic closers. Keep it
+                // grouped when the current operator can supply the matching opener.
+                self.right_precedence = Precedence::Shift;
+            }
+            BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd)
+                if p.is_typescript =>
+            {
                 // Without parentheses, `|` or `&` becomes part of the type in
                 // `(value satisfies Type) | other` or `(value satisfies Type) & other`.
                 if matches!(e.left(), Expression::TSSatisfiesExpression(_)) {
                     self.left_precedence = Precedence::Compare;
+                }
+
+                if expression_ends_with_ts_type_argument_open(
+                    e.left(),
+                    self.left_precedence,
+                    self.ctx,
+                ) {
+                    self.left_precedence = Precedence::Shift;
+                }
+                if expression_ends_with_ts_type_argument_open(
+                    e.right(),
+                    self.right_precedence,
+                    self.ctx,
+                ) {
+                    self.right_precedence = Precedence::Shift;
                 }
             }
 
