@@ -407,7 +407,7 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
-    code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
+    code_actions: Arc<ConcurrentHashMap<Uri, Vec<LinterCodeAction>>>,
     runner: LintRunner,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
@@ -735,7 +735,7 @@ impl ServerLinter {
         is_open: Option<bool>,
     ) -> Option<Vec<LinterCodeAction>> {
         if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
-            cached_code_actions.clone()
+            Some(cached_code_actions.clone())
         }
         // only run linting and generate code actions when the code action is explicitly invoked,
         // otherwise it will be too heavy to run linting on every file open or cursor move, which will cause performance issues and a bad user experience.
@@ -744,7 +744,7 @@ impl ServerLinter {
         else if trigger_kind == Some(CodeActionTriggerKind::INVOKED) && !is_open.unwrap_or(false)
         {
             let _ = self.run_file(uri, None);
-            self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
+            self.code_actions.pin().get(uri).cloned()
         } else {
             None
         }
@@ -808,7 +808,7 @@ impl ServerLinter {
             }
         }
 
-        self.code_actions.pin().insert(uri.clone(), Some(code_actions));
+        self.code_actions.pin().insert(uri.clone(), code_actions);
 
         Ok(diagnostics)
     }
