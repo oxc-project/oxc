@@ -1,0 +1,19 @@
+crates/oxc_minifier/src/keep_var.rs
+  s_4315759e8a5d88::t_ac26e0101f06db 6,10,48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "463cc5ee3df506380e351329ae806b73046664ee",
+  "prompts": {},
+  "sessions": {
+    "s_4315759e8a5d88": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06aaa-4a18-7792-bedb-c2f4d3d80dbe",
+        "model": "unknown"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
