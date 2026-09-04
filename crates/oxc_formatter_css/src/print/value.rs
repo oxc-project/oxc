@@ -12,6 +12,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+
 use oxc_css_parser::{
     ast::{
         BracketBlock, Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension,
@@ -22,8 +23,6 @@ use oxc_css_parser::{
     },
     token::Token,
 };
-use oxc_span::Span;
-
 use oxc_formatter_core::{
     Buffer, SourceText, arena_cow_str,
     builders::{
@@ -34,6 +33,7 @@ use oxc_formatter_core::{
     spec::{format_trimmed_number, normalize_string},
     write,
 };
+use oxc_span::Span;
 
 use crate::{
     CssFormatOptions,
@@ -597,12 +597,52 @@ pub(super) fn comma_group_is_multi(group: &[ComponentValue<'_>], is_first: bool)
 
 /// A group's separator comma:
 /// comments between the group and its comma stay before the comma (`a /* c */, b`);
-/// only comments past it lead the next group.
+/// a same-line `//` right after it stays on its line (`a, // c`, the line-boundary invariant),
+/// only comments past those lead the next group.
 pub(super) fn write_group_comma(comma_start: Option<u32>, f: &mut CssFormatter<'_, '_>) {
-    if let Some(comma) = comma_start {
-        flush_trailing_value_comments(comma, f);
-    }
+    let Some(comma) = comma_start else {
+        write!(f, ",");
+        return;
+    };
+    flush_trailing_value_comments(comma, f);
     write!(f, ",");
+    flush_line_comment_after_comma(comma, f);
+}
+
+/// A `//` on the line of the comma just written (`a, // c`, `a, /* b */ // c`) stays on that line,
+/// the line-boundary invariant; the block comments glued before it on that line come along.
+/// Prettier's CSS moves them below as the next element's leading comments instead
+/// (its other printers keep them, and so do the other formatter crates), see DIVERGENCES.md "line-comment-after-comma".
+pub(super) fn flush_line_comment_after_comma(comma_start: u32, f: &mut CssFormatter<'_, '_>) {
+    let comma_end = comma_start + 1;
+    let source = f.context().source_text();
+    let run_end = line_comment_run_end(comma_end, f.context().comments().iter_remaining(), source);
+    if let Some(run_end) = run_end {
+        flush_same_line_comments(comma_end, run_end, f);
+    }
+}
+
+/// End of the comment run glued right after `prev_end` (only spaces/tabs between) that ends in a `//`;
+/// `None` when no `//` is glued there (a lone block comment leads the next element instead).
+/// `comments` are the pending comments in source order.
+pub(super) fn line_comment_run_end(
+    prev_end: u32,
+    comments: impl Iterator<Item = comments::CssComment>,
+    source: SourceText<'_>,
+) -> Option<u32> {
+    let mut prev_end = prev_end;
+    for comment in comments {
+        if comment.span.start < prev_end
+            || !source.all_bytes_match(prev_end, comment.span.start, |b| matches!(b, b' ' | b'\t'))
+        {
+            return None;
+        }
+        if comment.inline {
+            return Some(comment.span.end);
+        }
+        prev_end = comment.span.end;
+    }
+    None
 }
 
 /// Top-level comma-group list layout, shared between flat component streams and SCSS comma lists.
@@ -628,9 +668,9 @@ pub(super) fn write_value_groups<'a>(
                 let is_last = i + 1 == groups.len();
                 // The declaration tail belongs to the LAST group only
                 let gctx = if is_last { ctx } else { ValueContext { tail_bound: None, ..ctx } };
-                // Comments between groups (e.g. after the previous comma)
-                // fill together with the group they precede;
-                // `//` comments (and leading own-line comments) keep their own line.
+                // Comments between groups lead the group they precede
+                // (a `//` on the previous comma's line already went with the comma, see `write_group_comma`);
+                // own-line ones keep their line.
                 let lead: &'a [comments::CssComment] = group_values.first().map_or(&[], |first| {
                     f.context().comments().take_before(to_span(first.span()).start)
                 });
@@ -747,10 +787,7 @@ fn write_paren_tail_comments(
         } else if i > 0 || after_content {
             write!(f, space());
         }
-        write!(
-            f,
-            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None).with_expand_parent()
-        );
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
         after_inline = comment.inline;
     }
     after_inline
@@ -835,10 +872,7 @@ pub(super) fn write_text_with_leading_comments(span: Span, f: &mut CssFormatter<
 pub(super) fn flush_value_comments(upper_bound: u32, f: &mut CssFormatter<'_, '_>) -> bool {
     let mut last_inline = false;
     for &comment in f.context().comments().take_before(upper_bound) {
-        write!(
-            f,
-            FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space).with_expand_parent()
-        );
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
         last_inline = comment.inline;
     }
     last_inline
@@ -864,10 +898,7 @@ pub(super) fn flush_same_line_comments(
         }
         f.context().comments().take_before(comment.span.end);
         write!(f, " ");
-        write!(
-            f,
-            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None).with_expand_parent()
-        );
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
         if comment.inline {
             return;
         }
@@ -884,10 +915,7 @@ pub(super) fn flush_trailing_value_comments(
     let mut last_end = None;
     for &comment in f.context().comments().take_before(upper_bound) {
         write!(f, " ");
-        write!(
-            f,
-            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None).with_expand_parent()
-        );
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
         last_end = Some(comment.span.end);
     }
     last_end
@@ -1059,7 +1087,6 @@ pub(super) fn write_comma_group<'a>(
                         write!(
                             f,
                             FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
-                                .with_expand_parent()
                         );
                     }
                 }
@@ -1103,11 +1130,7 @@ pub(super) fn write_comma_group<'a>(
         for (k, &comment) in tail_comments.iter().enumerate() {
             let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 f.context().comments().take_before(comment.span.end);
-                write!(
-                    f,
-                    FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
-                        .with_expand_parent()
-                );
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
             });
             if k == 0 && ctx.tail_break {
                 filler.entry(&hard_line_break(), &entry);

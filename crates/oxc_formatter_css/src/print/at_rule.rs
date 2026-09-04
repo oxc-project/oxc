@@ -813,8 +813,16 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
         AtRulePrelude::SassUse(sass_use) => scss::write_sass_use(sass_use, f),
         AtRulePrelude::SassForward(forward) => scss::write_sass_forward(forward, f),
         AtRulePrelude::SassImport(import) => {
-            let paths: Vec<(Span, &str)> =
-                import.paths.iter().map(|path| (path.span, path.raw)).collect();
+            let paths: Vec<ImportPath<'_>> = import
+                .paths
+                .iter()
+                .enumerate()
+                .map(|(i, path)| ImportPath {
+                    span: path.span,
+                    raw: path.raw,
+                    comma_start: import.comma_spans.get(i).map(|sp| to_span(sp).start),
+                })
+                .collect();
             write_import_path_list(&paths, to_span(import.span()).end, f);
         }
         // Only reached for SCSS-family names parsed AS CSS (see `is_value_parsed_at_rule`);
@@ -848,8 +856,15 @@ fn write_at_rule_prelude<'a>(prelude: &AtRulePrelude<'a>, f: &mut CssFormatter<'
 /// Used by the SCSS `SassImportPrelude` AND by `ImportPrelude`
 /// when its non-standard tail is exactly a comma-separated string list (see `import_as_path_list`).
 /// Paths arrive as `(span, raw)` pairs so both callers can feed it without fabricating AST nodes.
+/// One `@import` path with the start of its trailing comma (see [`value::write_group_comma`]'s pairing).
+struct ImportPath<'a> {
+    span: Span,
+    raw: &'a str,
+    comma_start: Option<u32>,
+}
+
 fn write_import_path_list<'a>(
-    paths: &[(Span, &'a str)],
+    paths: &[ImportPath<'a>],
     last_end: u32,
     f: &mut CssFormatter<'_, 'a>,
 ) {
@@ -862,16 +877,29 @@ fn write_import_path_list<'a>(
         // So the separator breaks are simulated here with static widths.
         let all: Vec<comments::CssComment> = f.context().comments().iter_before(last_end).collect();
         let n = paths.len();
+        let source = f.context().source_text();
+        // A `//` on a path's comma line stays there (`"a", // c`, `value::flush_line_comment_after_comma`):
+        // `trailing[i]` is that comma, `leads[i + 1]` starts past the run.
+        let mut trailing: Vec<Option<u32>> = vec![None; n];
         let mut leads: Vec<Vec<comments::CssComment>> = Vec::with_capacity(n);
         for (i, path) in paths.iter().enumerate() {
-            let path_start = to_span(&path.0).start;
-            leads.push(
-                all.iter()
-                    .filter(|c| c.span.end <= path_start)
-                    .filter(|c| i == 0 || c.span.start >= to_span(&paths[i - 1].0).end)
-                    .copied()
-                    .collect(),
-            );
+            let path_start = to_span(&path.span).start;
+            let prev = (i > 0).then(|| &paths[i - 1]);
+            let prev_end = prev.map(|prev| to_span(&prev.span).end);
+            let mut lead: Vec<comments::CssComment> = all
+                .iter()
+                .filter(|c| c.span.end <= path_start)
+                .filter(|c| prev_end.is_none_or(|prev_end| c.span.start >= prev_end))
+                .copied()
+                .collect();
+            if let Some(comma) = prev.and_then(|prev| prev.comma_start)
+                && let Some(run_end) =
+                    value::line_comment_run_end(comma + 1, lead.iter().copied(), source)
+            {
+                lead.retain(|c| c.span.end > run_end);
+                trailing[i - 1] = Some(comma);
+            }
+            leads.push(lead);
         }
         // Prettier fill: separator stays flat only when
         // [chunk, ", ", next chunk] fits and neither chunk has a comment (hardline).
@@ -881,7 +909,7 @@ fn write_import_path_list<'a>(
             .iter()
             .enumerate()
             .map(|(i, p)| {
-                let span = to_span(&p.0);
+                let span = to_span(&p.span);
                 span.end - span.start + u32::from(i + 1 < n)
             })
             .collect();
@@ -891,7 +919,7 @@ fn write_import_path_list<'a>(
             if i + 1 == n {
                 break;
             }
-            let hard = leads[i].iter().any(|c| c.inline);
+            let hard = leads[i].iter().any(|c| c.inline) || trailing[i].is_some();
             let next_hard = leads[i + 1].iter().any(|c| c.inline);
             let fits2 = !hard && !next_hard && x + chunk_w[i] + 1 + chunk_w[i + 1] <= width;
             if fits2 {
@@ -914,22 +942,25 @@ fn write_import_path_list<'a>(
                     f.context().comments().take_before(comment.span.end);
                     write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
                 }
-                value::write_str_raw(path.1, f);
+                value::write_str_raw(path.raw, f);
                 if i + 1 < n {
                     write!(f, ",");
+                    if let Some(comma) = trailing[i] {
+                        value::flush_line_comment_after_comma(comma, f);
+                    }
                 }
             }
         });
         write!(f, indent(&body));
     } else if has_comments {
         let path = &paths[0];
-        let path_start = to_span(&path.0).start;
+        let path_start = to_span(&path.span).start;
         let lead: Vec<comments::CssComment> =
             f.context().comments().take_before(path_start).to_vec();
         for &comment in &lead {
             write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
         }
-        value::write_str_raw(path.1, f);
+        value::write_str_raw(path.raw, f);
     } else {
         // Comma-separated path list:
         // Prettier value-parses `@import` params (module rule) and fills them,
@@ -939,7 +970,7 @@ fn write_import_path_list<'a>(
             let n = paths.len();
             for (i, path) in paths.iter().enumerate() {
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    value::write_str_raw(path.1, f);
+                    value::write_str_raw(path.raw, f);
                     if i + 1 < n {
                         write!(f, ",");
                     }
@@ -1346,12 +1377,12 @@ fn write_import_prelude<'a>(import: &ImportPrelude<'a>, f: &mut CssFormatter<'_,
     write!(f, group(&indent(&body)));
 }
 
-/// `Some(paths)` (as `(span, raw)` pairs) when the prelude is a plain multi-path import:
+/// `Some(paths)` when the prelude is a plain multi-path import:
 /// a string href whose whole tail is `, <string> (, <string>)*` held as raw tokens.
 fn import_as_path_list<'a>(
     import: &ImportPrelude<'a>,
     f: &CssFormatter<'_, 'a>,
-) -> Option<Vec<(Span, &'a str)>> {
+) -> Option<Vec<ImportPath<'a>>> {
     let modifiers = import.modifiers.as_ref()?;
     let ImportPreludeHref::Str(InterpolableStr::Literal(href)) = &import.href else {
         return None;
@@ -1365,16 +1396,25 @@ fn import_as_path_list<'a>(
     }
     let source = f.context().source_text();
     let mut paths = Vec::with_capacity(1 + modifiers.values.len() / 2);
-    paths.push((href.span, href.raw));
+    paths.push(ImportPath { span: href.span, raw: href.raw, comma_start: None });
     let mut expect_comma = true;
     for value in &modifiers.values {
         let ComponentValue::TokenWithSpan(tok) = value else {
             return None;
         };
         match &tok.token {
-            Token::Comma(_) if expect_comma => expect_comma = false,
+            Token::Comma(_) if expect_comma => {
+                expect_comma = false;
+                if let Some(last) = paths.last_mut() {
+                    last.comma_start = Some(to_span(&tok.span).start);
+                }
+            }
             Token::Str(_) if !expect_comma => {
-                paths.push((tok.span, source.text_for(&to_span(&tok.span))));
+                paths.push(ImportPath {
+                    span: tok.span,
+                    raw: source.text_for(&to_span(&tok.span)),
+                    comma_start: None,
+                });
                 expect_comma = true;
             }
             _ => return None,
@@ -1586,6 +1626,9 @@ fn write_media_query_list_inner<'a>(list: &MediaQueryList<'a>, f: &mut CssFormat
     for (i, query) in list.queries.iter().enumerate() {
         if i > 0 {
             write!(f, ",");
+            if let Some(comma) = list.comma_spans.get(i - 1) {
+                value::flush_line_comment_after_comma(to_span(comma).start, f);
+            }
             write!(f, soft_line_break_or_space());
         }
         write_media_query(query, f);

@@ -228,11 +228,7 @@ pub(super) fn write_sass_map<'a>(
                 if i > 0 && !tail[i - 1].inline {
                     write!(f, space());
                 }
-                write!(
-                    f,
-                    FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
-                        .with_expand_parent()
-                );
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
             }
         });
         write!(
@@ -908,11 +904,10 @@ pub(super) fn write_sass_forward<'a>(forward: &SassForward<'a>, f: &mut CssForma
                 let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     value::write_text_with_leading_comments(to_span(member.span()), f);
                     if i + 1 < members.len() {
-                        write_same_line_trailing_comments(
-                            to_span(&visibility.comma_spans[i]).start,
-                            f,
-                        );
+                        let comma = to_span(&visibility.comma_spans[i]).start;
+                        write_same_line_trailing_comments(comma, f);
                         write!(f, ",");
+                        value::flush_line_comment_after_comma(comma, f);
                     }
                 });
                 filler.entry(&soft_line_break_or_space(), &entry);
@@ -997,8 +992,10 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
             if i + 1 < config.items.len() {
                 // An own-line comment before the comma stays pending and
                 // leads the next item instead.
-                write_same_line_trailing_comments(to_span(&config.comma_spans[i]).start, f);
+                let comma = to_span(&config.comma_spans[i]).start;
+                write_same_line_trailing_comments(comma, f);
                 write!(f, ",");
+                value::flush_line_comment_after_comma(comma, f);
             } else {
                 // Comments before `)` (past a trailing comma, which is dropped):
                 // same-line ones glue to the last item, own-line ones keep their line.

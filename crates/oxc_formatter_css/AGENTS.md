@@ -63,7 +63,7 @@ Ownership is a claim discipline, not attachment: each printer claims the comment
 The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply; this section records their CSS translation:
 
 - `,` is a list SEPARATOR: a comment between an element and its comma stays BEFORE the comma
-  - `a /* c */, b`; comments after it lead the next element
+  - `a /* c */, b`; comments after it lead the next element, except a `//` on the comma's line (line-boundary rule below)
   - Declaration value lists (`write_value_groups`) and function arguments (`write_function`) route every comma through `write_group_comma` with the comma offset paired to its group
   - `split_comma_groups` returns `(group, Option<comma_start>)`; SCSS/Less lists pair `comma_spans`
   - A new comma site must take the pair, the shape makes taking the groups without the commas a visible choice, not an accident
@@ -77,8 +77,8 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
   - a flush's upper bound must never extend past the next piece of user content,
   - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
 - Line-boundary rule in CSS terms: `//` comments force a hardline after;
-  - besides the policy's opener exception, a same-line `//` after a list `,` also leads the next element on its own line
-    (Prettier's CSS; JS keeps `1, // c` trailing)
+  - a `//` on a list `,`'s line stays there (`1, // c`, like JS), together with the block comments glued before it on that line;
+    Prettier's CSS moves it below as the next element's leading comment (DIVERGENCES.md "line-comment-after-comma")
   - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
     - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
 
@@ -201,7 +201,9 @@ The harness snapshots both `--print-width 80` and `100`; verify fixtures at both
 At the current version (v3.9.6), these divergences have been confirmed and are intentional (see DIVERGENCES.md):
 
 - CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`, `css/comments/declaration.css` (terminator-gap-normalized)
-- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss` (terminator-gap-normalized)
+- SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss` (terminator-gap-normalized),
+  `scss/comments/4594.scss`, `scss/comments/lists.scss`, `scss/comments/maps.scss`, `scss/trailing-comma/issue-6920.scss` and one more hunk of `scss/trailing-comma/comments.scss` (line-comment-after-comma)
+- Less: `less/comments/value-lists.less` (line-comment-after-comma)
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 

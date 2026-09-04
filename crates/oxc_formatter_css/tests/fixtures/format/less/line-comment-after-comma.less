@@ -1,0 +1,10 @@
+// A `//` on a comma's line stays on that line (DIVERGENCES.md "line-comment-after-comma").
+@list: #aaaaaa, // Start with A
+  #bbbbbb, // then some B
+  #cccccc; // and round it out with C
+a {
+  transition: a 1s, // c
+    b 2s;
+  b: f(a, // c
+    b);
+}

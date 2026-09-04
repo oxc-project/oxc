@@ -2,13 +2,16 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-scss compatibility: 78/90 (86.67%), 6 files skipped
+scss compatibility: 74/90 (82.22%), 6 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| scss/comments/4594.scss | 💥 | 83.78% |
 | scss/comments/4878.scss | 💥 | 89.39% |
+| scss/comments/lists.scss | 💥 | 76.92% |
+| scss/comments/maps.scss | 💥 | 66.67% |
 | scss/comments/variable-declaration.scss | 💥 | 81.25% |
 | scss/function/arbitrary-arguments-comment.scss | 💥💥 | 72.73% |
 | scss/map/15193.scss | 💥✨ | 42.86% |
@@ -16,7 +19,8 @@ scss compatibility: 78/90 (86.67%), 6 files skipped
 | scss/map/function-argument/functional-argument.scss | 💥 | 96.00% |
 | scss/parens/2.scss | 💥 | 75.00% |
 | scss/parens/issue-16594.scss | 💥 | 71.43% |
-| scss/trailing-comma/comments.scss | 💥💥 | 95.00% |
+| scss/trailing-comma/comments.scss | 💥💥 | 87.18% |
+| scss/trailing-comma/issue-6920.scss | 💥💥 | 66.67% |
 | scss/trailing-comma/list.scss | 💥💥 | 95.56% |
 | scss/trailing-comma/variable.scss | 💥💥 | 50.00% |
 | scss/variables/apply-rule.scss | 💥 | 87.88% |

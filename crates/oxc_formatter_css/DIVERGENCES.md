@@ -665,6 +665,40 @@ a comma list holding a `//` it keeps verbatim instead, source whitespace include
 A second `//` indents like the first; Prettier prints it with a stray leading space and no indent,
 the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-indent".
 
+## line-comment-after-comma
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/line-comment-after-comma.scss`, `tests/fixtures/format/less/line-comment-after-comma.less`
+
+```scss
+/* input */
+$my-map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+
+/* ours */
+$my-map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+
+/* prettier */
+$my-map: (
+  "foo": 1,
+  // Comment
+  "bar": 2, // Comment
+);
+```
+
+A `//` on a comma's line stays on that line (the block comments glued before it come along);
+Prettier moves it below as the next element's leading comment, across the line boundary (`a, // stylelint-disable-line` loses its target).
+Prettier keeps the same comment after the LAST comma (`"bar": 2, // Comment`) and its JS printer keeps `1, // c` everywhere:
+the move is where postcss-value-parser hands the comment to the next comma group, not a rule.
+Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`, `@import` paths,
+`@media` query lists and `selector()` lists.
+For `@media` Prettier's move also swallows the next query (`@media a, // c b {`), a semantics bug on its side.
+
 ## semiless-custom-property-block
 
 - Why: cost

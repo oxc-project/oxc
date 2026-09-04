@@ -3,7 +3,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // A comment before a bare scalar element of a comma list leads that element
-// (`/* c */ 1,`), never crossing it or its comma; `//` keeps its own line.
+// (`/* c */ 1,`), never crossing it or its comma; an own-line `//` keeps its own line,
+// a `//` on the comma's line stays there (`1, // c`, see `line-comment-after-comma.scss`).
 // Where the source put a block comment (same line, own line) makes no difference.
 // Multi-token elements (`1 2`) already did this through their comma group.
 $first: (k: (/* c */ 1, 2));
@@ -29,7 +30,8 @@ $bare: 1, /* c */ 2;
 { printWidth: 80 }
 ------------------
 // A comment before a bare scalar element of a comma list leads that element
-// (`/* c */ 1,`), never crossing it or its comma; `//` keeps its own line.
+// (`/* c */ 1,`), never crossing it or its comma; an own-line `//` keeps its own line,
+// a `//` on the comma's line stays there (`1, // c`, see `line-comment-after-comma.scss`).
 // Where the source put a block comment (same line, own line) makes no difference.
 // Multi-token elements (`1 2`) already did this through their comma group.
 $first: (
@@ -53,8 +55,7 @@ $line: (
 );
 $after-comma: (
   k: (
-    1,
-    // c
+    1, // c
     2,
   ),
 );
@@ -79,8 +80,7 @@ $bare:
 }
 @each $k in a, /* c */ b {
 }
-@each $k in a,
-  // c
+@each $k in a, // c
   b
 {
 }
@@ -89,7 +89,8 @@ $bare:
 { printWidth: 100 }
 -------------------
 // A comment before a bare scalar element of a comma list leads that element
-// (`/* c */ 1,`), never crossing it or its comma; `//` keeps its own line.
+// (`/* c */ 1,`), never crossing it or its comma; an own-line `//` keeps its own line,
+// a `//` on the comma's line stays there (`1, // c`, see `line-comment-after-comma.scss`).
 // Where the source put a block comment (same line, own line) makes no difference.
 // Multi-token elements (`1 2`) already did this through their comma group.
 $first: (
@@ -113,8 +114,7 @@ $line: (
 );
 $after-comma: (
   k: (
-    1,
-    // c
+    1, // c
     2,
   ),
 );
@@ -139,8 +139,7 @@ $bare:
 }
 @each $k in a, /* c */ b {
 }
-@each $k in a,
-  // c
+@each $k in a, // c
   b
 {
 }

@@ -58,20 +58,11 @@ pub enum BlockCommentAfter {
 pub struct FormatCommentBeforeContent {
     comment: CssComment,
     block_after: BlockCommentAfter,
-    expand_parent: bool,
 }
 
 impl FormatCommentBeforeContent {
     pub const fn new(comment: CssComment, block_after: BlockCommentAfter) -> Self {
-        Self { comment, block_after, expand_parent: false }
-    }
-
-    /// Inside a `fill`, also break the separator BEFORE a `//` (the `//` takes its own line).
-    /// A fill measures `expand_parent` as not fitting but a hardline as fitting,
-    /// so the hardline alone only protects what FOLLOWS the comment.
-    pub const fn with_expand_parent(mut self) -> Self {
-        self.expand_parent = true;
-        self
+        Self { comment, block_after }
     }
 }
 
@@ -79,7 +70,7 @@ impl<'a> Format<'a, CssFormatContext<'a>> for FormatCommentBeforeContent {
     fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
         write_comment_text(self.comment, f);
         if self.comment.inline {
-            write!(f, [self.expand_parent.then_some(expand_parent()), hard_line_break()]);
+            write!(f, hard_line_break());
             return;
         }
         match self.block_after {
@@ -176,6 +167,7 @@ pub fn flush_leading_comments(value_start: u32, f: &mut CssFormatter<'_, '_>) {
 /// as `prev_end` as trailing comments (`red; /* x */ /* y */`); a `//` comment ends the run.
 /// Look-alike of `scss::write_same_line_trailing_comments`, which deliberately differs:
 /// no `expand_parent` there (its map/config bodies already hard-break).
+/// For the run on a list comma's line, see `value::flush_line_comment_after_comma`.
 pub fn write_trailing_same_line_comments(
     mut prev_end: u32,
     upper: u32,
