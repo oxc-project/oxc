@@ -270,7 +270,7 @@ impl<'a> PeepholeOptimizations {
         match &mut s.body {
             Statement::BreakStatement(break_stmt)
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
-            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            Statement::BlockStatement(block) if block.body.is_empty() || block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
             Statement::EmptyStatement(_) => {
                 let new_stmt = Statement::new_empty_statement(s.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
@@ -466,6 +466,13 @@ impl<'a> PeepholeOptimizations {
             }
         };
         ctx.replace_expression(expr, new_expr);
+    }
+
+    /// Attempt to replace jump statements with empty statements when the parent is not a block-like statement.
+    pub fn try_remove_jump_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if Self::can_remove_termination_statement(stmt, false, ctx) {
+            ctx.replace_statement(stmt, Statement::new_empty_statement(stmt.span(), ctx));
+        }
     }
 
     pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
