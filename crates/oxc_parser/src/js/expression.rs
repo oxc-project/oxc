@@ -926,9 +926,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             self,
                         );
                     } else {
-                        // `re_lex_as_typescript_l_angle` may have popped the original token
-                        // (e.g. `<<`) from the collected token stream. Rewind restored the
-                        // parser's current token, so write it back to the stream.
+                        // `re_lex_as_typescript_l_angle` may have overwritten the original `<<`
+                        // in the collected token stream with the single `<` it re-lexed.
+                        // Rewind restored the parser's current token, so write it back over that `<`.
                         // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
                         self.lexer.rewrite_last_collected_token(self.token);
                         return lhs;
@@ -1127,9 +1127,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     if let Some(args) = self.parse_type_arguments_in_expression() {
                         type_arguments = Some(args);
                     } else {
-                        // `re_lex_as_typescript_l_angle` may have popped the original token
-                        // (e.g. `<<`) from the collected token stream. Rewind restored the
-                        // parser's current token, so write it back to the stream.
+                        // `re_lex_as_typescript_l_angle` may have overwritten the original `<<`
+                        // in the collected token stream with the single `<` it re-lexed.
+                        // Rewind restored the parser's current token, so write it back over that `<`.
                         // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
                         self.lexer.rewrite_last_collected_token(self.token);
                     }

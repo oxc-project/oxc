@@ -210,9 +210,21 @@ describeRangeParent.concurrent("range & parent TypeScript", () => {
   );
 });
 
+// TS-ESLint drops the first `<` of a `<<` which opens a type argument list,
+// e.g. `ReturnType<<T>(x: T) => number>`. Oxc emits both `<` tokens.
+// These fixtures' ASTs match TS-ESLint, so only their token tests are skipped.
+// https://github.com/typescript-eslint/typescript-eslint/issues/12820
+const TS_TOKENS_SKIP_PATHS = new Set([
+  "tests/cases/compiler/importTypeWithUnparenthesizedGenericFunctionParsed.ts.md",
+  "tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts.md",
+]);
+const tsTokensFixturePaths = tsFixturePaths.filter((path) => !TS_TOKENS_SKIP_PATHS.has(path));
+
 describeTokens.concurrent("tokens TypeScript", () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(tsFixturePaths)("%s", (path) => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_TOKENS, path));
+  it.each(tsTokensFixturePaths)("%s", (path) =>
+    runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_TOKENS, path),
+  );
 });
 
 // Check lazy deserialization doesn't throw
