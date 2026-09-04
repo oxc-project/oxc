@@ -264,22 +264,25 @@ impl CliRunner {
             )
         };
 
-        let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
-            Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
-            Err(error) => {
-                match error {
-                    CliConfigLoadError::RootConfig(error) => {
-                        print_and_flush_stdout(
-                            stdout,
-                            &format!(
-                                "Failed to parse oxlint configuration file.\n{}\n",
-                                render_report(&handler, &error)
-                            ),
-                        );
-                    }
-                    CliConfigLoadError::NestedConfigs(errors) => {
-                        if let Some(error) = errors.into_iter().next() {
-                            let message = match &error {
+        let (mut root_config, nested_configs, nested_ignore_patterns, config_warnings) =
+            match config_result {
+                Ok(loaded) => {
+                    (loaded.root, loaded.nested, loaded.nested_ignore_patterns, loaded.warnings)
+                }
+                Err(error) => {
+                    match error {
+                        CliConfigLoadError::RootConfig(error) => {
+                            print_and_flush_stdout(
+                                stdout,
+                                &format!(
+                                    "Failed to parse oxlint configuration file.\n{}\n",
+                                    render_report(&handler, &error)
+                                ),
+                            );
+                        }
+                        CliConfigLoadError::NestedConfigs(errors) => {
+                            if let Some(error) = errors.into_iter().next() {
+                                let message = match &error {
                                 ConfigLoadError::Parse { path, error } => {
                                     format!(
                                         "Failed to parse oxlint configuration file at {}.\n{}\n",
@@ -307,14 +310,19 @@ impl CliRunner {
                                     format!("Failed to parse oxlint configuration file.\n{report}\n")
                                 }
                             };
-                            print_and_flush_stdout(stdout, &message);
+                                print_and_flush_stdout(stdout, &message);
+                            }
                         }
                     }
-                }
 
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            };
+
+        // Root-only options set in a nested config are ignored, not fatal: report them and carry on.
+        for warning in &config_warnings {
+            print_and_flush_stdout(stdout, &format!("{}\n", render_report(&handler, warning)));
+        }
 
         materialize_default_plugins(&mut root_config);
         let mut plugins = root_config.plugins.unwrap_or_default();
@@ -407,8 +415,10 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_check_only = self.options.type_check_only;
-        let type_aware =
-            type_check_only || self.options.type_aware || config_store.type_aware_enabled();
+        // `--type-aware` / `--type-check-only` apply type-aware linting to every file, whereas
+        // `options.typeAware` in a config only applies to the files that config governs.
+        let type_aware_forced = type_check_only || self.options.type_aware;
+        let type_aware = type_aware_forced || config_store.type_aware_enabled();
         let type_check =
             type_check_only || self.options.type_check || config_store.type_check_enabled();
         if type_check && !type_aware {
@@ -437,20 +447,16 @@ impl CliRunner {
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
-        // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
+        // The CLI flag overrides the config. `Some(AllowWarnDeny::Allow)` means "explicitly off",
+        // `None` means "not set on the CLI", in which case the config which governs each file
+        // decides (see `LintRunner::report_unused_directive_for`).
         let report_unused_directives = if type_check_only {
-            None
+            Some(AllowWarnDeny::Allow)
         } else {
             match inline_config_options.report_unused_directives {
                 ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-                ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
-                    Some(severity)
-                }
-                ReportUnusedDirectives::WithSeverity(Some(_)) => None,
-                _ => match config_store.report_unused_disable_directives() {
-                    Some(severity) if severity.is_warn_deny() => Some(severity),
-                    _ => None,
-                },
+                ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
+                _ => None,
             }
         };
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
@@ -519,6 +525,7 @@ impl CliRunner {
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
+            .with_type_aware_forced(type_aware_forced)
             .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
@@ -549,7 +556,7 @@ impl CliRunner {
 
         match lint_result {
             Ok(lint_runner) => {
-                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+                lint_runner.report_unused_directives(&tx_error);
             }
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
@@ -1770,6 +1777,46 @@ mod test {
         let args =
             &["-c", "config-type-aware-false-with-overrides.json", "no-floating-promises.ts"];
         Tester::new().with_cwd("fixtures/cli/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    /// `reportUnusedDisableDirectives` is resolved per file, so a package can turn it on without
+    /// the rest of the monorepo reporting unused directives.
+    #[test]
+    fn test_nested_config_report_unused_directives() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_report_unused_directives".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `denyWarnings` and `maxWarnings` decide the process exit code, so they stay root-only.
+    /// A nested config which sets one of them gets a warning and keeps working, instead of being
+    /// dropped entirely. See <https://github.com/oxc-project/oxc/issues/19937>.
+    #[test]
+    fn test_nested_config_root_only_option_warns() {
+        Tester::new()
+            .with_cwd("fixtures/cli/nested_root_only_option".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `options.typeAware` in a nested config only enables type-aware linting for the files that
+    /// config governs. `packages/plain` enables the same rule without `typeAware`, and must not
+    /// report it. See <https://github.com/oxc-project/oxc/issues/19937>.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `--type-aware` applies to every file, including the packages whose config never asked
+    /// for it.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware_forced_by_cli_flag() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware".into())
+            .test_and_snapshot(&["--type-aware"]);
     }
 
     #[test]
