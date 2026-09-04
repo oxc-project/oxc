@@ -2590,6 +2590,8 @@ pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TEXT: usize = offset_of!(Program, source_text);
 pub(crate) const OFFSET_PROGRAM_COMMENTS: usize = offset_of!(Program, comments);
+pub(crate) const OFFSET_PROGRAM_COMMENT_ATTACHMENTS: usize =
+    offset_of!(Program, comment_attachments);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
 pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
@@ -2627,6 +2629,14 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
     pub fn comments(self) -> &'t ArenaVec<'a, Comment> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const ArenaVec<'a, Comment>)
+        }
+    }
+
+    #[inline]
+    pub fn comment_attachments(self) -> &'t CommentAttachmentsStore<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENT_ATTACHMENTS)
+                as *const CommentAttachmentsStore<'a>)
         }
     }
 
@@ -2696,6 +2706,14 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
     }
 
     #[inline]
+    pub fn comment_attachments(self) -> &'t CommentAttachmentsStore<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENT_ATTACHMENTS)
+                as *const CommentAttachmentsStore<'a>)
+        }
+    }
+
+    #[inline]
     pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
@@ -2756,6 +2774,14 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
     pub fn comments(self) -> &'t ArenaVec<'a, Comment> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const ArenaVec<'a, Comment>)
+        }
+    }
+
+    #[inline]
+    pub fn comment_attachments(self) -> &'t CommentAttachmentsStore<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENT_ATTACHMENTS)
+                as *const CommentAttachmentsStore<'a>)
         }
     }
 

@@ -204,8 +204,8 @@ fn test_new() {
     );
     test(
         "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
-    ); // Not currently handled
+        "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
     test(
         "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
         "new Worker(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
@@ -272,8 +272,8 @@ fn test_call() {
     );
     test(
         "require(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
-    ); // Not currently handled
+        "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
     test(
         "require(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
         "require(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
@@ -704,8 +704,8 @@ fn test_import() {
     );
     test(
         "import(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n);\n",
-    ); // Not currently handled
+        "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",
+    );
     test(
         "import(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
         "import(\n\t/* webpackFoo: 1 */\n\t\"path\"\n\t/* webpackBar:2 */\n);\n",

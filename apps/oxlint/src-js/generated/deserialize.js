@@ -69,7 +69,7 @@ function deserializeProgram(pos) {
       __proto__: NodeProto,
       type: "Program",
       body: null,
-      sourceType: deserializeModuleKind(pos + 137),
+      sourceType: deserializeModuleKind(pos + 145),
       get comments() {
         comments === null && initComments();
         return comments;
@@ -83,8 +83,8 @@ function deserializeProgram(pos) {
       range: [0, end],
       parent: null,
     }),
-    body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
+    body = (program.body = deserializeVecDirective(pos + 96));
+  body.push(...deserializeVecStatement(pos + 120));
   {
     let start;
     if (body.length > 0) {

@@ -1,3 +1,7 @@
 transformer_misc Summary:
 AST Parsed     : 80/80 (100.00%)
-Positive Passed: 80/80 (100.00%)
+Positive Passed: 78/80 (97.50%)
+Mismatch: tasks/coverage/misc/pass/oxc-2674.tsx
+
+Mismatch: tasks/coverage/misc/pass/oxc-3948-1.ts
+

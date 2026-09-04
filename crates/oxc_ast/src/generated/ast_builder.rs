@@ -53,6 +53,7 @@ impl<'a> Program<'a> {
             source_type,
             source_text,
             comments: comments.into_in(builder.allocator()),
+            comment_attachments: Default::default(),
             hashbang,
             directives: directives.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),
@@ -60,23 +61,25 @@ impl<'a> Program<'a> {
         }
     }
 
-    /// Build a [`Program`] with `scope_id`.
+    /// Build a [`Program`] with `comment_attachments` and `scope_id`.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `source_type`
     /// * `source_text`
     /// * `comments`: Sorted comments
+    /// * `comment_attachments`: Post-parse source-comment ownership. This is intentionally not exposed
     /// * `hashbang`
     /// * `directives`
     /// * `body`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id(
+    pub fn new_with_comment_attachments_and_scope_id(
         span: Span,
         source_type: SourceType,
         source_text: &'a str,
         comments: impl IntoIn<'a, ArenaVec<'a, Comment>>,
+        comment_attachments: CommentAttachmentsStore<'a>,
         hashbang: Option<Hashbang<'a>>,
         directives: impl IntoIn<'a, ArenaVec<'a, Directive<'a>>>,
         body: impl IntoIn<'a, ArenaVec<'a, Statement<'a>>>,
@@ -90,6 +93,7 @@ impl<'a> Program<'a> {
             source_type,
             source_text,
             comments: comments.into_in(builder.allocator()),
+            comment_attachments,
             hashbang,
             directives: directives.into_in(builder.allocator()),
             body: body.into_in(builder.allocator()),

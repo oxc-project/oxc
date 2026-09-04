@@ -849,6 +849,11 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
+    pub fn comment_attachments(&self) -> &CommentAttachmentsStore<'a> {
+        &self.inner.comment_attachments
+    }
+
+    #[inline]
     pub fn hashbang(&self) -> Option<&AstNode<'a, Hashbang<'a>>> {
         let following_span_start = self
             .inner

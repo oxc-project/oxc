@@ -77,7 +77,11 @@ fn run_fixture(source: &str) -> String {
     // compile-only run; `lint` then re-runs the same pipeline read-only so we can
     // cross-check its diagnostics against `compile`'s below.
     let (output, diagnostics, fatal, lint_result) = {
-        let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
+        let semantic = SemanticBuilder::new()
+            .with_build_nodes(true)
+            .with_build_comment_attachments(true)
+            .build(&program)
+            .semantic;
         let (output, diagnostics, fatal) =
             match compile(&program, &semantic, &allocator, options.clone()) {
                 CompileResult::Success { output, diagnostics } => (output, diagnostics, false),

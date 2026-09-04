@@ -3,6 +3,7 @@
 
 /** Mapping from node type name to node type ID */
 export const NODE_TYPE_IDS_MAP = /* @__PURE__ */ new Map([
+  // Leaf nodes
   ["DebuggerStatement", 0],
   ["EmptyStatement", 1],
   ["Literal", 2],
@@ -30,6 +31,7 @@ export const NODE_TYPE_IDS_MAP = /* @__PURE__ */ new Map([
   ["TSUndefinedKeyword", 24],
   ["TSUnknownKeyword", 25],
   ["TSVoidKeyword", 26],
+  // Non-leaf nodes
   ["AccessorProperty", 27],
   ["ArrayExpression", 28],
   ["ArrayPattern", 29],
@@ -168,6 +170,7 @@ export const NODE_TYPE_IDS_MAP = /* @__PURE__ */ new Map([
   ["TSTypeQuery", 162],
   ["TSTypeReference", 163],
   ["TSUnionType", 164],
+  // CFG selectors
   ["onCodePathStart", 165],
   ["onCodePathEnd", 166],
   ["onCodePathSegmentStart", 167],

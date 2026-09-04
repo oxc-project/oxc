@@ -89,6 +89,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
+    CommentAttachments,
     ast::{Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
@@ -758,6 +759,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
+        if !program.comments.is_empty() {
+            let attachments =
+                CommentAttachments::new_in(self.ast.allocator(), program.comments.len());
+            program.comment_attachments.0 = Some(ArenaBox::new_in(attachments, &self.ast));
+        }
 
         ParserReturn {
             program,
