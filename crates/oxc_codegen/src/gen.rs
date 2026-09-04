@@ -915,16 +915,8 @@ impl Gen for FormalParameterRest<'_> {
 
 impl Gen for FormalParameters<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.items.is_empty()
-            && self.rest.is_none()
-            && p.print_attached_comments_inside(self.node_id())
-        {
-            if p.last_byte() == Some(b'\n') {
-                p.print_indent();
-            } else {
-                p.print_soft_space();
-            }
-            p.clear_pending_indent_space();
+        if self.items.is_empty() && self.rest.is_none() {
+            p.print_attached_comments_inside_compact(self.node_id());
         }
         p.print_list(&self.items, ctx);
         if let Some(rest) = &self.rest {
@@ -1058,7 +1050,9 @@ impl Gen for WithClause<'_> {
         p.print_soft_space();
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
-        if !self.with_entries.is_empty() {
+        if self.with_entries.is_empty() {
+            p.print_attached_comments_inside_compact(self.node_id());
+        } else {
             p.print_soft_space();
             p.print_list(&self.with_entries, ctx);
             p.print_soft_space();
@@ -1133,14 +1127,28 @@ impl Gen for ExportDeclaration<'_> {
 
 impl Gen for ExportNamedDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        gen_export_specifiers(p, ctx, self.span, self.export_kind, &self.specifiers);
+        gen_export_specifiers(
+            p,
+            ctx,
+            self.node_id(),
+            self.span,
+            self.export_kind,
+            &self.specifiers,
+        );
         p.print_semicolon_after_statement();
     }
 }
 
 impl Gen for ExportFromDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        gen_export_specifiers(p, ctx, self.span, self.export_kind, &self.specifiers);
+        gen_export_specifiers(
+            p,
+            ctx,
+            self.node_id(),
+            self.span,
+            self.export_kind,
+            &self.specifiers,
+        );
         p.print_soft_space();
         p.print_str("from");
         p.print_soft_space();
@@ -1156,6 +1164,7 @@ impl Gen for ExportFromDeclaration<'_> {
 fn gen_export_specifiers(
     p: &mut Codegen,
     ctx: Context,
+    node_id: NodeId,
     span: Span,
     export_kind: ImportOrExportKind,
     specifiers: &[ExportSpecifier<'_>],
@@ -1170,7 +1179,9 @@ fn gen_export_specifiers(
     }
     p.print_soft_space();
     p.print_ascii_byte(b'{');
-    if !specifiers.is_empty() {
+    if specifiers.is_empty() {
+        p.print_attached_comments_inside_compact(node_id);
+    } else {
         p.print_soft_space();
         p.print_list(specifiers, ctx);
         p.print_soft_space();
@@ -1680,11 +1691,8 @@ impl Gen for ArrayExpression<'_> {
         let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        if self.elements.is_empty() && p.print_attached_comments_inside(self.node_id()) {
-            if p.last_byte() == Some(b'\n') {
-                p.print_indent();
-            }
-            p.clear_pending_indent_space();
+        if self.elements.is_empty() {
+            p.print_attached_comments_inside_compact(self.node_id());
         }
         if is_multi_line {
             p.indent();
@@ -1730,11 +1738,8 @@ impl GenExpr for ObjectExpression<'_> {
             }
             p.add_source_mapping(self.span);
             p.print_ascii_byte(b'{');
-            if self.properties.is_empty() && p.print_attached_comments_inside(self.node_id()) {
-                if p.last_byte() == Some(b'\n') {
-                    p.print_indent();
-                }
-                p.clear_pending_indent_space();
+            if self.properties.is_empty() {
+                p.print_attached_comments_inside_compact(self.node_id());
             }
             if is_multi_line {
                 p.indent();
@@ -2180,6 +2185,9 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
+        if self.elements.is_empty() && self.rest.is_none() {
+            p.print_attached_comments_inside_compact(self.node_id());
+        }
         for (i, item) in self.elements.iter().enumerate() {
             if i != 0 {
                 p.print_comma();
@@ -2206,6 +2214,9 @@ impl Gen for ObjectAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
+        if self.properties.is_empty() && self.rest.is_none() {
+            p.print_attached_comments_inside_compact(self.node_id());
+        }
         p.print_list(&self.properties, ctx);
         if let Some(target) = &self.rest {
             if !self.properties.is_empty() {
@@ -2748,7 +2759,7 @@ impl Gen for JSXAttribute<'_> {
 impl Gen for JSXEmptyExpression {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_comments_at(self.span.end);
-        p.print_attached_comments_inside(self.node_id());
+        p.print_attached_comments_inside_compact(self.node_id());
         // Clear the flag so the comment doesn't leak a space onto the next indent.
         p.print_next_indent_as_space = false;
     }
@@ -3160,7 +3171,9 @@ impl Gen for ObjectPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         if self.is_empty() {
-            p.print_str("{}");
+            p.print_ascii_byte(b'{');
+            p.print_attached_comments_inside_compact(self.node_id());
+            p.print_ascii_byte(b'}');
             return;
         }
         p.print_ascii_byte(b'{');
@@ -3227,6 +3240,9 @@ impl Gen for ArrayPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
+        if self.elements.is_empty() && self.rest.is_none() {
+            p.print_attached_comments_inside_compact(self.node_id());
+        }
         for (index, item) in self.elements.iter().enumerate() {
             if index != 0 {
                 p.print_comma();
@@ -3388,11 +3404,8 @@ impl Gen for TSArrayType<'_> {
 impl Gen for TSTupleType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ascii_byte(b'[');
-        if self.element_types.is_empty() && p.print_attached_comments_inside(self.node_id()) {
-            if p.last_byte() == Some(b'\n') {
-                p.print_indent();
-            }
-            p.clear_pending_indent_space();
+        if self.element_types.is_empty() {
+            p.print_attached_comments_inside_compact(self.node_id());
         }
         p.print_list(&self.element_types, ctx);
         p.print_ascii_byte(b']');

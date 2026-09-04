@@ -188,6 +188,19 @@ impl Codegen<'_> {
         self.print_attached_comments(range, CommentPlacement::Inside)
     }
 
+    /// Print comments inside a compact delimiter pair and clear any spacing
+    /// state before the caller prints the closing delimiter.
+    pub(crate) fn print_attached_comments_inside_compact(&mut self, node_id: NodeId) -> bool {
+        if !self.print_attached_comments_inside(node_id) {
+            return false;
+        }
+        if self.last_byte() == Some(b'\n') {
+            self.print_indent();
+        }
+        self.clear_pending_indent_space();
+        true
+    }
+
     /// Print comments inside a brace-delimited body and leave the closing
     /// brace at the body's indentation level.
     pub(crate) fn print_attached_comments_inside_body(&mut self, node_id: NodeId) -> bool {

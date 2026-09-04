@@ -753,8 +753,14 @@ impl<'a> Codegen<'a> {
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         let boundary = self.begin_node(stmt.node_id());
-        let single_line = stmt.body.is_empty() && !self.has_orphan_comments_before(stmt.span.end);
+        let has_attached_comments_inside = self.has_attached_comments_inside(stmt.node_id());
+        let single_line = stmt.body.is_empty()
+            && !has_attached_comments_inside
+            && !self.has_orphan_comments_before(stmt.span.end);
         self.print_curly_braces(stmt.span, single_line, |p| {
+            if has_attached_comments_inside {
+                p.print_attached_comments_inside_body(stmt.node_id());
+            }
             p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
