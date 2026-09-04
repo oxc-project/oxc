@@ -1,0 +1,130 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `FooBar: fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `FooBar: fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar: FooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `FooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `FooBar: fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar: FooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `FooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "foo-bar" is not PascalCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         'foo-bar': FooBar
+   ·                         ─────────
+ 6 │                       }
+   ╰────
+  help: Replace `'foo-bar'` with `FooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "FooBar" is not camelCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         FooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `FooBar` with `fooBar: FooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "FooBar" is not camelCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         FooBar: fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `FooBar` with `fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "foo-bar" is not camelCase.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         'foo-bar': fooBar
+   ·                         ─────────
+ 6 │                       }
+   ╰────
+  help: Replace `'foo-bar'` with `fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "FooBar" is not kebab-case.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         FooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `FooBar` with `'foo-bar': FooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "FooBar" is not kebab-case.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         FooBar: fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `FooBar` with `'foo-bar'`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not kebab-case.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `'foo-bar': fooBar`.
+
+  ⚠ vue(component-options-name-casing): Component name "fooBar" is not kebab-case.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         fooBar: FooBar
+   ·                         ──────
+ 6 │                       }
+   ╰────
+  help: Replace `fooBar` with `'foo-bar'`.
+
+  ⚠ vue(component-options-name-casing): Component name "FooBar" is not kebab-case.
+   ╭─[component_options_name_casing.tsx:5:25]
+ 4 │                       components: {
+ 5 │                         FooBar,
+   ·                         ──────
+ 6 │                         'my-component': MyComponent
+   ╰────
+  help: Replace `FooBar` with `'foo-bar': FooBar`.
