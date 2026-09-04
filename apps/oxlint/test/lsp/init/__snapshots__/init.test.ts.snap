@@ -1,0 +1,24 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP initialization > should show an error message when configPath points to an invalid config 1`] = `
+"--- Show Messages ---------
+[0] type=1
+Failed to parse config <cwd>/test/lsp/init/fixtures/invalid-custom-config-path/not-found.json with error Os { code: 2, kind: NotFound, message: "No such file or directory" }"
+`;
+
+exports[`LSP initialization > should show an error message when the nested config is invalid 1`] = `
+"--- Show Messages ---------
+[0] type=1
+Failed to build config from file <cwd>/test/lsp/init/fixtures/invalid-config-nested/nested/.oxlintrc.json: Invalid configuration for rule \`no-return-assign\`:
+  unknown variant \`foobar\`, expected \`always\` or \`except-parens\`
+  received config: \`"foobar"\`"
+`;
+
+exports[`LSP initialization > should show an error message when the root config is invalid 1`] = `
+"--- Show Messages ---------
+[0] type=1
+Failed to build config from oxlintrc:
+Invalid configuration for rule \`no-return-assign\`:
+  unknown variant \`foobar\`, expected \`always\` or \`except-parens\`
+  received config: \`"foobar"\`"
+`;
