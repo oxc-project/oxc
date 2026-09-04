@@ -792,7 +792,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.private_member_usage.record_use(node.field.name.into());
+        ctx.state.private_member_usage.record_use(node.field.name);
     }
 
     fn exit_private_in_expression(
@@ -803,6 +803,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.private_member_usage.record_use(node.left.name.into());
+        ctx.state.private_member_usage.record_use(node.left.name);
     }
 }
