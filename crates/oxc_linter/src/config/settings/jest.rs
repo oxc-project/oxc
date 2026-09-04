@@ -4,6 +4,8 @@ use schemars::JsonSchema;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer, Serialize};
 
+use oxc_config::GlobSet;
+
 /// Configure Jest plugin rules.
 ///
 /// See [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest)'s
@@ -18,6 +20,35 @@ pub struct JestPluginSettings {
     #[serde(default, deserialize_with = "jest_version_deserialize")]
     #[schemars(with = "Option<JestVersionSchema>")]
     pub version: Option<usize>,
+
+    /// Extra glob patterns that mark a file as a Jest test file, on top of the built-in
+    /// conventions: a `__tests__` path segment, or a file name whose second-to-last
+    /// dot-separated segment is `test` or `spec` (`foo.test.ts`, `foo.spec.tsx`).
+    ///
+    /// Most Jest rules only run on files recognized as test files, so a helper module that
+    /// calls `test()` or `expect()` under a project-specific name — BDD step definitions,
+    /// shared assertion helpers — is skipped by most of them. List such files here to lint
+    /// them:
+    ///
+    /// ```json
+    /// {
+    ///   "settings": {
+    ///     "jest": {
+    ///       "additionalTestPatterns": ["**/*.steps.ts", "**/*.helper.ts"]
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Patterns are matched against the file path relative to the directory holding the
+    /// config file, the same way `overrides[].files` is matched. A pattern without a `/`
+    /// is made recursive, so `"*.steps.ts"` and `"**/*.steps.ts"` are equivalent.
+    ///
+    /// Purely additive: it never stops a file from being recognized, and it takes effect only
+    /// when the `jest` or `vitest` plugin is enabled. Use
+    /// `settings.vitest.additionalTestPatterns` to mark a file as Vitest instead.
+    #[serde(default, rename = "additionalTestPatterns")]
+    pub additional_test_patterns: GlobSet,
 }
 
 #[derive(JsonSchema)]
