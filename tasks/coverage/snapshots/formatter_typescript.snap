@@ -1,33 +1,33 @@
-commit: b465fdbf
+commit: 0e32aa19
 
 formatter_typescript Summary:
-AST Parsed     : 9783/9783 (100.00%)
-Positive Passed: 9769/9783 (99.86%)
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
+AST Parsed     : 9937/9937 (100.00%)
+Positive Passed: 9923/9937 (99.86%)
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/commentsAfterSpread.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/commentsAfterSpread.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/controlFlowAliasedDiscriminants.ts
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/controlFlowAliasedDiscriminants.ts
 An implementation cannot be declared in ambient contexts.
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericTypeAssertions3.ts
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/genericTypeAssertions3.ts
 Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes2.ts
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/letDeclarations-scopes2.ts
 Expected `{` but found `Identifier`
-Mismatch: tasks/coverage/typescript/tests/cases/compiler/parenthesizedExpressionInternalComments.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parenthesizedExpressionInternalComments.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
 Initializers are not allowed in ambient contexts.
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
 Initializers are not allowed in ambient contexts.
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
+Mismatch: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 

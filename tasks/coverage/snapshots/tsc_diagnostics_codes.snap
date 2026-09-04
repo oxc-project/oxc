@@ -1,4 +1,4 @@
-commit: b465fdbf
+commit: 0e32aa19
 
 ---
 NOTE: If you are seeing this file with Git diffs, please follow the instructions below to review the changes.
@@ -16,6 +16,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1009
 1010
 1011
+1012
 1013
 1014
 1015
@@ -47,13 +48,11 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1052
 1053
 1054
-1055
 1058
 1061
 1062
 1063
 1064
-1065
 1066
 1068
 1069
@@ -114,7 +113,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1145
 1146
 1147
-1148
 1155
 1156
 1160
@@ -165,10 +163,8 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1214
 1215
 1216
-1218
 1221
 1222
-1223
 1225
 1228
 1229
@@ -190,14 +186,11 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1247
 1248
 1249
-1250
-1251
 1253
 1254
 1255
 1257
 1258
-1259
 1260
 1262
 1263
@@ -275,6 +268,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1368
 1375
 1378
+1379
 1380
 1381
 1382
@@ -301,10 +295,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1451
 1453
 1454
-1455
-1456
-1463
-1464
 1470
 1471
 1472
@@ -338,6 +328,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1510
 1511
 1512
+1514
 1515
 1516
 1517
@@ -372,6 +363,10 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 1546
 1547
 1548
+1550
+1551
+1555
+1557
 2011
 2206
 2207
@@ -397,19 +392,16 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2320
 2322
 2323
-2328
 2331
 2332
 2335
 2336
 2337
 2339
-2340
 2341
 2343
 2344
 2345
-2346
 2347
 2348
 2349
@@ -440,6 +432,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2376
 2377
 2378
+2379
 2383
 2384
 2385
@@ -453,7 +446,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2393
 2394
 2395
-2396
 2397
 2398
 2401
@@ -503,10 +495,8 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2454
 2456
 2457
-2458
 2459
 2460
-2461
 2462
 2463
 2464
@@ -531,8 +521,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2492
 2493
 2495
-2496
-2497
 2498
 2499
 2500
@@ -552,7 +540,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2514
 2515
 2516
-2522
 2523
 2524
 2526
@@ -569,7 +556,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2540
 2542
 2545
-2548
 2550
 2551
 2552
@@ -602,9 +588,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2592
 2593
 2595
-2596
 2597
-2598
 2604
 2607
 2608
@@ -615,7 +599,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2614
 2615
 2616
-2617
 2628
 2629
 2630
@@ -634,7 +617,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2654
 2655
 2657
-2659
 2660
 2661
 2662
@@ -666,7 +648,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2693
 2694
 2695
-2696
 2698
 2699
 2700
@@ -696,7 +677,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2729
 2730
 2731
-2732
 2736
 2737
 2739
@@ -729,20 +709,19 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2786
 2790
 2791
-2792
 2795
 2796
 2797
 2799
 2800
 2801
-2802
 2803
 2804
 2806
 2807
 2808
 2809
+2810
 2812
 2813
 2814
@@ -763,14 +742,12 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 2845
 2846
 2848
-2850
 2851
 2852
 2853
 2854
 2855
 2856
-2857
 2858
 2859
 2860
@@ -795,6 +772,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 4023
 4025
 4032
+4060
 4081
 4094
 4104
@@ -815,20 +793,16 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 4123
 5009
 5011
+5023
+5024
 5052
 5053
 5055
 5056
 5059
 5061
-5062
-5063
-5064
-5066
 5067
 5069
-5070
-5071
 5074
 5076
 5085
@@ -839,20 +813,13 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 5091
 5095
 5097
-5098
-5101
 5102
-5103
-5105
-5107
-5108
 5109
 5110
+6046
 6053
 6054
 6059
-6082
-6131
 6133
 6137
 6138
@@ -863,14 +830,13 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 6196
 6198
 6199
-6200
 6205
 6229
 6231
-6232
 6234
 6263
 6379
+6424
 6504
 6807
 7005
@@ -878,9 +844,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 7008
 7009
 7010
-7012
 7013
-7014
 7015
 7016
 7017
@@ -912,6 +876,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 7059
 7060
 7061
+7080
 8002
 8003
 8004
@@ -926,8 +891,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 8016
 8017
 8020
-8021
-8022
 8023
 8024
 8026
@@ -938,8 +901,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 8037
 8038
 8039
-9005
-9006
 9007
 9008
 9009
@@ -956,6 +917,7 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 9021
 9022
 9023
+9025
 9026
 9037
 9038
@@ -991,7 +953,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 18024
 18026
 18027
-18028
 18029
 18030
 18033
@@ -1001,7 +962,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 18041
 18042
 18043
-18045
 18046
 18047
 18048
@@ -1015,3 +975,6 @@ Q. Is it possible for `oxc_parser` to detect and report this error during static
 18059
 18060
 18061
+18062
+18063
+18064

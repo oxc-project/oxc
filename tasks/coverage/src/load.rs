@@ -208,14 +208,14 @@ fn load_typescript(filter: Option<&str>) -> Vec<TypeScriptFile> {
         !supported || unsupported
     };
 
-    walk_and_read(Path::new("typescript/tests/cases"), filter, skip_path)
+    walk_and_read(Path::new(typescript::CASES_PATH), filter, skip_path)
         .into_par_iter()
         .map(|(path, code)| {
             let content = typescript::meta::TestCaseContent::make_units_from_test(&path, &code);
             let should_fail = content
                 .error_codes
                 .iter()
-                .any(|c| !typescript::constants::NOT_SUPPORTED_ERROR_CODES.contains(c.as_str()));
+                .any(|c| !typescript::constants::is_not_supported_error_code(&path, c));
             TypeScriptFile {
                 path,
                 code,
