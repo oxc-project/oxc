@@ -624,6 +624,47 @@ Consecutive `//` comments in a comment-only map indent uniformly;
 Prettier misaligns the second with a stray extra leading space, an artifact of its `join(line)` separator printing before the deferred `lineSuffix` flushes.
 A meaningless glitch.
 
+## supports-selector-inline-comment-list
+
+- Why: uniform-rule (same construct, same output: `selector(a // c\n)`)
+- Pin: `tests/fixtures/format/scss/supports-selector-inline-comments.scss`
+
+```scss
+/* input */
+@supports selector(a, // c
+ b) {}
+@supports selector(a // c
+ // d
+) {}
+
+/* ours */
+@supports selector(
+  a, // c
+  b
+) {
+}
+@supports selector(
+  a // c
+  // d
+) {
+}
+
+/* prettier */
+@supports selector(a, // c
+ b) {
+}
+@supports selector(
+  a // c
+ // d
+) {
+}
+```
+
+A `//` inside `selector()` opens the parens and ends its line, the shape Prettier itself prints for a single selector (`selector(a // c\n)`);
+a comma list holding a `//` it keeps verbatim instead, source whitespace included.
+A second `//` indents like the first; Prettier prints it with a stray leading space and no indent,
+the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-indent".
+
 ## semiless-custom-property-block
 
 - Why: cost

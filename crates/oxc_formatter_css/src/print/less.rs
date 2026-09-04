@@ -15,7 +15,7 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    comments::write_single_comment,
+    comments::{BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{
         CssFormatter, format_with,
@@ -79,8 +79,7 @@ pub(super) fn write_less_variable_declaration<'a>(
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         if inline_after_colon {
             for &comment in f.context().comments().take_before(value_start) {
-                write_single_comment(comment, f);
-                write!(f, hard_line_break());
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
         }
         write_top_level_list_element(&decl.value, value_ctx, f);
@@ -244,11 +243,10 @@ fn write_less_detached_ruleset<'a>(
     ruleset: &LessDetachedRuleset<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    // Comments before `{` stay on the same line
+    // Block comments before `{` stay inline; `//` ends its line.
     let block_start = to_span(&ruleset.block.span).start;
     for &comment in f.context().comments().take_before(block_start) {
-        write_single_comment(comment, f);
-        write!(f, space());
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
     }
     let was = f.context().in_less_detached().replace(true);
     write_block(&ruleset.block, f);

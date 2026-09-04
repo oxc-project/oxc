@@ -27,7 +27,7 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    comments,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{
         CssFormatter, format_with, normalize_whitespace, scss, selector, statement,
@@ -197,11 +197,10 @@ pub(super) fn write_at_rule<'a>(at_rule: &AtRule<'a>, f: &mut CssFormatter<'_, '
         let block_start = to_span(&block.span).start;
         let mut wrote_comment = false;
         if f.context().comments().peek().is_some_and(|c| c.inline && c.span.end <= block_start) {
-            for &comment in f.context().comments().take_before(block_start) {
-                write!(f, hard_line_break());
-                comments::write_single_comment(comment, f);
-            }
             write!(f, hard_line_break());
+            for &comment in f.context().comments().take_before(block_start) {
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
+            }
             wrote_comment = true;
         }
         if !is_control_directive && !wrote_comment {
@@ -913,12 +912,7 @@ fn write_import_path_list<'a>(
                 }
                 for &comment in &leads[i] {
                     f.context().comments().take_before(comment.span.end);
-                    comments::write_single_comment(comment, f);
-                    if comment.inline {
-                        write!(f, hard_line_break());
-                    } else {
-                        write!(f, space());
-                    }
+                    write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
                 }
                 value::write_str_raw(path.1, f);
                 if i + 1 < n {
@@ -933,12 +927,7 @@ fn write_import_path_list<'a>(
         let lead: Vec<comments::CssComment> =
             f.context().comments().take_before(path_start).to_vec();
         for &comment in &lead {
-            comments::write_single_comment(comment, f);
-            if comment.inline {
-                write!(f, hard_line_break());
-            } else {
-                write!(f, space());
-            }
+            write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space));
         }
         value::write_str_raw(path.1, f);
     } else {
@@ -1863,7 +1852,10 @@ fn write_supports_in_parens<'a>(in_parens: &SupportsInParens<'a>, f: &mut CssFor
                     selector::write_selector_list(list, selector::SelectorListStyle::Line, f);
                     for &comment in f.context().comments().take_before(r_paren) {
                         write!(f, space());
-                        comments::write_single_comment(comment, f);
+                        write!(
+                            f,
+                            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                        );
                     }
                 });
                 write!(f, [indent(&body), hard_line_break(), ")"]);

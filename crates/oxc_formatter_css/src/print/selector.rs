@@ -19,7 +19,8 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
+    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
 };
@@ -85,6 +86,7 @@ pub(super) fn write_selector_list<'a>(
                 write!(f, ",");
                 // A comment trailing the comma stays on the same line
                 let next_start = to_span(complex.span()).start;
+                let mut line_comment_broke = false;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
                 {
@@ -95,19 +97,24 @@ pub(super) fn write_selector_list<'a>(
                     {
                         f.context().comments().take_before(comment.span.end);
                         write!(f, " ");
-                        comments::write_single_comment(comment, f);
+                        line_comment_broke = comment.inline;
+                        write!(
+                            f,
+                            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                        );
                     }
                 }
-                match style {
-                    SelectorListStyle::Hard => write!(f, hard_line_break()),
-                    SelectorListStyle::Line => write!(f, soft_line_break_or_space()),
+                if !line_comment_broke {
+                    match style {
+                        SelectorListStyle::Hard => write!(f, hard_line_break()),
+                        SelectorListStyle::Line => write!(f, soft_line_break_or_space()),
+                    }
                 }
             }
             // Comments on their own line between selectors
             let start = to_span(complex.span()).start;
             for &comment in f.context().comments().take_before(start) {
-                comments::write_single_comment(comment, f);
-                write!(f, hard_line_break());
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
             if placeholder_idx == Some(i) {
                 let source = f.context().source_text();

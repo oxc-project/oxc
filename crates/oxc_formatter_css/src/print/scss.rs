@@ -10,15 +10,15 @@ use oxc_css_parser::ast::{
 use oxc_formatter_core::{
     Buffer,
     builders::{
-        dedent, empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
-        line_suffix, soft_line_break, soft_line_break_or_space, space, text,
+        dedent, empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
+        soft_line_break_or_space, space, text,
     },
     write,
 };
 use oxc_span::Span;
 
 use crate::{
-    comments,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
     print::{
         CssFormatter, format_with, statement,
@@ -225,19 +225,14 @@ pub(super) fn write_sass_map<'a>(
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             write!(f, soft_line_break());
             for (i, &comment) in tail.iter().enumerate() {
-                if i > 0 {
-                    if tail[i - 1].inline {
-                        // Prettier leaves a stray leading space here
-                        // (`   // b`, the `join(line)` separator prints before the deferred `lineSuffix` flushes);
-                        write!(f, hard_line_break());
-                    } else {
-                        write!(f, space());
-                    }
+                if i > 0 && !tail[i - 1].inline {
+                    write!(f, space());
                 }
-                comments::write_single_comment(comment, f);
-                if comment.inline {
-                    write!(f, expand_parent());
-                }
+                write!(
+                    f,
+                    FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                        .with_expand_parent()
+                );
             }
         });
         write!(
@@ -350,12 +345,9 @@ pub(super) fn write_sass_map<'a>(
                 let fits = !value_is_block
                     && u32::from(f.options().indent_width.value()) + comment_width + 2 + item_width
                         <= u32::from(f.options().line_width.value());
-                comments::write_single_comment(comment, f);
-                if comment.inline || !fits {
-                    write!(f, hard_line_break());
-                } else {
-                    write!(f, " ");
-                }
+                let block_after =
+                    if fits { BlockCommentAfter::Space } else { BlockCommentAfter::HardLine };
+                write!(f, FormatCommentBeforeContent::new(comment, block_after));
             }
             let key_is_block = is_paren_block(&item.key);
             if key_is_block && !value_is_block {
@@ -429,14 +421,17 @@ pub(super) fn write_sass_map<'a>(
         // Not `write_paren_tail_comments`:
         // a next-slot comment (above) is same-line in source but still starts a line here,
         // and consecutive own-line block comments glue.
-        let mut after_inline = true;
-        for &comment in f.context().comments().take_before(r_paren) {
-            if after_inline || comment.inline {
-                write!(f, hard_line_break());
-            } else {
-                write!(f, " ");
+        let mut after_inline = false;
+        for (i, &comment) in f.context().comments().take_before(r_paren).iter().enumerate() {
+            // A `//` already ended its line
+            if !after_inline {
+                if i == 0 || comment.inline {
+                    write!(f, hard_line_break());
+                } else {
+                    write!(f, " ");
+                }
             }
-            comments::write_single_comment(comment, f);
+            write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
             after_inline = comment.inline;
         }
     });
@@ -725,7 +720,7 @@ fn write_else_join(else_start: u32, f: &mut CssFormatter<'_, '_>) {
         } else {
             write!(f, space());
         }
-        comments::write_single_comment(comment, f);
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
     }
     if between.is_empty() {
         write!(f, [space(), "@else", space()]);
@@ -1012,7 +1007,7 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
                     write_same_line_trailing_comments(bound, f).unwrap_or(item_span.end);
                 for &comment in f.context().comments().take_before(bound) {
                     comments::write_gap(source.bytes_range(prev_end, comment.span.start), f);
-                    comments::write_single_comment(comment, f);
+                    write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
                     prev_end = comment.span.end;
                 }
             }
@@ -1029,9 +1024,9 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
 /// the map/config bodies this serves already hard-break,
 /// so propagating a break out of a still-flat head (`@use "a" /* c */ with (`) would be a behavior change.
 /// Returns the end offset of the last emitted comment.
-fn write_same_line_trailing_comments<'a>(
+fn write_same_line_trailing_comments(
     upper_bound: u32,
-    f: &mut CssFormatter<'_, 'a>,
+    f: &mut CssFormatter<'_, '_>,
 ) -> Option<u32> {
     let mut last_end = None;
     while let Some(comment) = f.context().comments().peek() {
@@ -1042,14 +1037,9 @@ fn write_same_line_trailing_comments<'a>(
         }
         f.context().comments().take_before(comment.span.end);
         if comment.inline {
-            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write!(f, space());
-                comments::write_single_comment(comment, f);
-            });
-            write!(f, line_suffix(&content));
+            write!(f, FormatLineCommentSuffix::new(comment).with_leading_space());
         } else {
-            write!(f, space());
-            comments::write_single_comment(comment, f);
+            write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
         }
         last_end = Some(comment.span.end);
     }

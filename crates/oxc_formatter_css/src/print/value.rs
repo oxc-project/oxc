@@ -27,8 +27,8 @@ use oxc_span::Span;
 use oxc_formatter_core::{
     Buffer, SourceText, arena_cow_str,
     builders::{
-        empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
-        soft_line_break, soft_line_break_or_space, space, text, token,
+        empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
+        soft_line_break_or_space, space, text, token,
     },
     format_args,
     spec::{format_trimmed_number, normalize_string},
@@ -36,7 +36,8 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    CssFormatOptions, comments,
+    CssFormatOptions,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{CssFormatter, format_with, less, scss, statement},
 };
@@ -639,12 +640,12 @@ pub(super) fn write_value_groups<'a>(
                     let source = f.context().source_text();
                     for &comment in lead {
                         let own_line = comment_is_own_line(comment, source);
-                        comments::write_single_comment(comment, f);
-                        if comment.inline || own_line {
-                            write!(f, hard_line_break());
+                        let block_after = if own_line {
+                            BlockCommentAfter::HardLine
                         } else {
-                            write!(f, " ");
-                        }
+                            BlockCommentAfter::Space
+                        };
+                        write!(f, FormatCommentBeforeContent::new(comment, block_after));
                     }
                     write_comma_group(group_values, gctx, f);
                 } else {
@@ -658,19 +659,16 @@ pub(super) fn write_value_groups<'a>(
                         }) + u32::from(!is_last);
                     let mut x = 4u32; // hardline indent under the value
                     for (k, &comment) in lead.iter().enumerate() {
-                        comments::write_single_comment(comment, f);
                         x += comment.span.end - comment.span.start;
                         let next_w = lead.get(k + 1).map_or(group_w, |c| c.span.end - c.span.start);
-                        if comment.inline {
-                            write!(f, hard_line_break());
-                            x = 4;
-                        } else if x + 1 + next_w <= width {
-                            write!(f, space());
-                            x += 1;
+                        let fits = x + 1 + next_w <= width;
+                        let block_after = if fits {
+                            BlockCommentAfter::Space
                         } else {
-                            write!(f, hard_line_break());
-                            x = 4;
-                        }
+                            BlockCommentAfter::HardLine
+                        };
+                        write!(f, FormatCommentBeforeContent::new(comment, block_after));
+                        x = if !comment.inline && fits { x + 1 } else { 4 };
                     }
                     write_comma_group(group_values, gctx, f);
                 }
@@ -728,7 +726,7 @@ pub(super) fn comment_is_own_line(comment: comments::CssComment, source: SourceT
 ///   - it carries no line semantics, and keeping it own-line would pin a wrapped layout
 ///   - With `body_hard_broken` it keeps its own line instead:
 ///     the body already prints one element per line, so there is no wrapped layout to pin.
-/// - After a `//`: always a new line, or the `//` would swallow the next comment.
+/// - After a `//`: always a new line (the `//` ends its own line).
 /// - `after_content == false` (`[ /* c */ ]`): the comments ARE the body, nothing to space them off.
 ///
 /// Returns true when the last comment was a `//`.
@@ -742,15 +740,17 @@ fn write_paren_tail_comments(
     let mut after_inline = false;
     for (i, &comment) in tail.iter().enumerate() {
         let keeps_line = comment.inline || body_hard_broken;
-        if after_inline || (keeps_line && comment_is_own_line(comment, source)) {
+        if after_inline {
+            // Already on a fresh line
+        } else if keeps_line && comment_is_own_line(comment, source) {
             write!(f, hard_line_break());
         } else if i > 0 || after_content {
             write!(f, space());
         }
-        comments::write_single_comment(comment, f);
-        if comment.inline {
-            write!(f, expand_parent());
-        }
+        write!(
+            f,
+            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None).with_expand_parent()
+        );
         after_inline = comment.inline;
     }
     after_inline
@@ -799,17 +799,13 @@ fn write_bracket_block<'a>(
             }
         }
         let tail: &'a [comments::CssComment] = f.context().comments().take_before(r_bracket);
-        let ends_with_line_comment = write_paren_tail_comments(
+        // A trailing `//` ends its own line, so `]` stays out of it even with no group to expand here.
+        write_paren_tail_comments(
             tail,
             /* body_hard_broken */ false,
             !bracket.value.is_empty(),
             f,
         );
-        if flat && ends_with_line_comment {
-            // No group to expand here: keep `]` out of the `//` comment
-            // (the `expand_parent` still reaches the declaration group).
-            write!(f, hard_line_break());
-        }
     });
     if flat {
         write!(f, ["[", body, "]"]);
@@ -839,12 +835,10 @@ pub(super) fn write_text_with_leading_comments(span: Span, f: &mut CssFormatter<
 pub(super) fn flush_value_comments(upper_bound: u32, f: &mut CssFormatter<'_, '_>) -> bool {
     let mut last_inline = false;
     for &comment in f.context().comments().take_before(upper_bound) {
-        comments::write_single_comment(comment, f);
-        if comment.inline {
-            write!(f, [expand_parent(), hard_line_break()]);
-        } else {
-            write!(f, " ");
-        }
+        write!(
+            f,
+            FormatCommentBeforeContent::new(comment, BlockCommentAfter::Space).with_expand_parent()
+        );
         last_inline = comment.inline;
     }
     last_inline
@@ -870,9 +864,11 @@ pub(super) fn flush_same_line_comments(
         }
         f.context().comments().take_before(comment.span.end);
         write!(f, " ");
-        comments::write_single_comment(comment, f);
+        write!(
+            f,
+            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None).with_expand_parent()
+        );
         if comment.inline {
-            write!(f, [expand_parent()]);
             return;
         }
     }
@@ -888,10 +884,10 @@ pub(super) fn flush_trailing_value_comments(
     let mut last_end = None;
     for &comment in f.context().comments().take_before(upper_bound) {
         write!(f, " ");
-        comments::write_single_comment(comment, f);
-        if comment.inline {
-            write!(f, [expand_parent(), hard_line_break()]);
-        }
+        write!(
+            f,
+            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None).with_expand_parent()
+        );
         last_end = Some(comment.span.end);
     }
     last_end
@@ -1060,8 +1056,11 @@ pub(super) fn write_comma_group<'a>(
                         }
                         f.context().comments().take_before(comment.span.end);
                         write!(f, " ");
-                        comments::write_single_comment(comment, f);
-                        write!(f, expand_parent());
+                        write!(
+                            f,
+                            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                                .with_expand_parent()
+                        );
                     }
                 }
             });
@@ -1089,7 +1088,10 @@ pub(super) fn write_comma_group<'a>(
                     let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                         if f.context().comments().peek().is_some_and(|c| c.span == comment.span) {
                             f.context().comments().take_before(comment.span.end);
-                            comments::write_single_comment(comment, f);
+                            write!(
+                                f,
+                                FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                            );
                         }
                     });
                     filler.entry(&soft_line_break_or_space(), &entry);
@@ -1101,10 +1103,11 @@ pub(super) fn write_comma_group<'a>(
         for (k, &comment) in tail_comments.iter().enumerate() {
             let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                 f.context().comments().take_before(comment.span.end);
-                comments::write_single_comment(comment, f);
-                if comment.inline {
-                    write!(f, expand_parent());
-                }
+                write!(
+                    f,
+                    FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                        .with_expand_parent()
+                );
             });
             if k == 0 && ctx.tail_break {
                 filler.entry(&hard_line_break(), &entry);
@@ -2328,7 +2331,10 @@ pub(super) fn write_function<'a>(
                 filler.entry(&soft_line_break_or_space(), &format_with(|_| {}));
                 for &comment in tail {
                     let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                        comments::write_single_comment(comment, f);
+                        write!(
+                            f,
+                            FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)
+                        );
                     });
                     filler.entry(&soft_line_break_or_space(), &entry);
                 }
