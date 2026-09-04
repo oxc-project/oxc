@@ -758,6 +758,7 @@ vitest/valid-expect-in-promise                             |      0
 vitest/valid-title                                         |      0
 vitest/warn-todo                                           |      0
 vue/component-definition-name-casing                       |  76731
+vue/match-component-import-name                            |  14125
 vue/no-arrow-functions-in-watch                            |  62608
 vue/no-deprecated-destroyed-lifecycle                      |      2
 vue/no-deprecated-events-api                               |  62606
