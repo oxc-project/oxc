@@ -856,6 +856,7 @@ pub use crate::rules::vue::no_expose_after_await::NoExposeAfterAwait as VueNoExp
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
 pub use crate::rules::vue::no_lifecycle_after_await::NoLifecycleAfterAwait as VueNoLifecycleAfterAwait;
 pub use crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs as VueNoMultipleSlotArgs;
+pub use crate::rules::vue::no_mutating_props::NoMutatingProps as VueNoMutatingProps;
 pub use crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefault as VueNoRequiredPropWithDefault;
 pub use crate::rules::vue::no_reserved_component_names::NoReservedComponentNames as VueNoReservedComponentNames;
 pub use crate::rules::vue::no_reserved_keys::NoReservedKeys as VueNoReservedKeys;
@@ -1744,6 +1745,7 @@ pub enum RuleEnum {
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
     VueNoLifecycleAfterAwait(VueNoLifecycleAfterAwait),
     VueNoMultipleSlotArgs(VueNoMultipleSlotArgs),
+    VueNoMutatingProps(VueNoMutatingProps),
     VueNoRequiredPropWithDefault(VueNoRequiredPropWithDefault),
     VueNoReservedComponentNames(VueNoReservedComponentNames),
     VueNoReservedKeys(VueNoReservedKeys),
@@ -2722,7 +2724,8 @@ const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID + 1
 const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = VUE_NO_EXPOSE_AFTER_AWAIT_ID + 1usize;
 const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = VUE_NO_IMPORT_COMPILER_MACROS_ID + 1usize;
 const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = VUE_NO_LIFECYCLE_AFTER_AWAIT_ID + 1usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = VUE_NO_MULTIPLE_SLOT_ARGS_ID + 1usize;
+const VUE_NO_MUTATING_PROPS_ID: usize = VUE_NO_MULTIPLE_SLOT_ARGS_ID + 1usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = VUE_NO_MUTATING_PROPS_ID + 1usize;
 const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID + 1usize;
 const VUE_NO_RESERVED_KEYS_ID: usize = VUE_NO_RESERVED_COMPONENT_NAMES_ID + 1usize;
 const VUE_NO_RESERVED_PROPS_ID: usize = VUE_NO_RESERVED_KEYS_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3595,6 +3598,7 @@ static RULE_NAMES: [&str; 870usize] = [
     VueNoImportCompilerMacros::NAME,
     VueNoLifecycleAfterAwait::NAME,
     VueNoMultipleSlotArgs::NAME,
+    VueNoMutatingProps::NAME,
     VueNoRequiredPropWithDefault::NAME,
     VueNoReservedComponentNames::NAME,
     VueNoReservedKeys::NAME,
@@ -4597,6 +4601,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VUE_NO_IMPORT_COMPILER_MACROS_ID,
             Self::VueNoLifecycleAfterAwait(_) => VUE_NO_LIFECYCLE_AFTER_AWAIT_ID,
             Self::VueNoMultipleSlotArgs(_) => VUE_NO_MULTIPLE_SLOT_ARGS_ID,
+            Self::VueNoMutatingProps(_) => VUE_NO_MUTATING_PROPS_ID,
             Self::VueNoRequiredPropWithDefault(_) => VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID,
             Self::VueNoReservedComponentNames(_) => VUE_NO_RESERVED_COMPONENT_NAMES_ID,
             Self::VueNoReservedKeys(_) => VUE_NO_RESERVED_KEYS_ID,
@@ -5648,6 +5653,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::CATEGORY,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::CATEGORY,
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::CATEGORY,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::CATEGORY,
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::CATEGORY,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::CATEGORY,
@@ -6637,6 +6643,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::FIX,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::FIX,
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::FIX,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::FIX,
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::FIX,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::FIX,
@@ -7898,6 +7905,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::documentation(),
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::documentation(),
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::documentation(),
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::documentation(),
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::documentation(),
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::documentation(),
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::documentation(),
@@ -10361,6 +10369,8 @@ impl RuleEnum {
                 .or_else(|| VueNoLifecycleAfterAwait::schema(generator)),
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::config_schema(generator)
                 .or_else(|| VueNoMultipleSlotArgs::schema(generator)),
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::config_schema(generator)
+                .or_else(|| VueNoMutatingProps::schema(generator)),
             Self::VueNoRequiredPropWithDefault(_) => {
                 VueNoRequiredPropWithDefault::config_schema(generator)
                     .or_else(|| VueNoRequiredPropWithDefault::schema(generator))
@@ -11275,6 +11285,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => "vue",
             Self::VueNoLifecycleAfterAwait(_) => "vue",
             Self::VueNoMultipleSlotArgs(_) => "vue",
+            Self::VueNoMutatingProps(_) => "vue",
             Self::VueNoRequiredPropWithDefault(_) => "vue",
             Self::VueNoReservedComponentNames(_) => "vue",
             Self::VueNoReservedKeys(_) => "vue",
@@ -12375,6 +12386,9 @@ impl RuleEnum {
             Self::VueNoDupeKeys(_) => {
                 Ok(Self::VueNoDupeKeys(VueNoDupeKeys::from_configuration(value)?))
             }
+            Self::VueNoMutatingProps(_) => {
+                Ok(Self::VueNoMutatingProps(VueNoMutatingProps::from_configuration(value)?))
+            }
             Self::VueNoReservedComponentNames(_) => Ok(Self::VueNoReservedComponentNames(
                 VueNoReservedComponentNames::from_configuration(value)?,
             )),
@@ -13283,6 +13297,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run(node, ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.run(node, ctx),
+            Self::VueNoMutatingProps(rule) => rule.run(node, ctx),
             Self::VueNoRequiredPropWithDefault(rule) => rule.run(node, ctx),
             Self::VueNoReservedComponentNames(rule) => rule.run(node, ctx),
             Self::VueNoReservedKeys(rule) => rule.run(node, ctx),
@@ -14170,6 +14185,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_once(ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_once(ctx),
+            Self::VueNoMutatingProps(rule) => rule.run_once(ctx),
             Self::VueNoRequiredPropWithDefault(rule) => rule.run_once(ctx),
             Self::VueNoReservedComponentNames(rule) => rule.run_once(ctx),
             Self::VueNoReservedKeys(rule) => rule.run_once(ctx),
@@ -15172,6 +15188,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueNoMutatingProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoRequiredPropWithDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoReservedComponentNames(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoReservedKeys(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16062,6 +16079,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.should_run(ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.should_run(ctx),
+            Self::VueNoMutatingProps(rule) => rule.should_run(ctx),
             Self::VueNoRequiredPropWithDefault(rule) => rule.should_run(ctx),
             Self::VueNoReservedComponentNames(rule) => rule.should_run(ctx),
             Self::VueNoReservedKeys(rule) => rule.should_run(ctx),
@@ -17320,6 +17338,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::IS_TSGOLINT_RULE,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::IS_TSGOLINT_RULE,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::IS_TSGOLINT_RULE,
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::IS_TSGOLINT_RULE,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::IS_TSGOLINT_RULE,
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::IS_TSGOLINT_RULE,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::IS_TSGOLINT_RULE,
@@ -18372,6 +18391,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::VERSION,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::VERSION,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::VERSION,
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::VERSION,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::VERSION,
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::VERSION,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::VERSION,
@@ -19461,6 +19481,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::HAS_CONFIG,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::HAS_CONFIG,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::HAS_CONFIG,
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::HAS_CONFIG,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::HAS_CONFIG,
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::HAS_CONFIG,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::HAS_CONFIG,
@@ -20451,6 +20472,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::INFO,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::INFO,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::INFO,
+            Self::VueNoMutatingProps(_) => VueNoMutatingProps::INFO,
             Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::INFO,
             Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::INFO,
             Self::VueNoReservedKeys(_) => VueNoReservedKeys::INFO,
@@ -21332,6 +21354,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.types_info(),
             Self::VueNoMultipleSlotArgs(rule) => rule.types_info(),
+            Self::VueNoMutatingProps(rule) => rule.types_info(),
             Self::VueNoRequiredPropWithDefault(rule) => rule.types_info(),
             Self::VueNoReservedComponentNames(rule) => rule.types_info(),
             Self::VueNoReservedKeys(rule) => rule.types_info(),
@@ -22206,6 +22229,7 @@ impl RuleEnum {
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_info(),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_info(),
+            Self::VueNoMutatingProps(rule) => rule.run_info(),
             Self::VueNoRequiredPropWithDefault(rule) => rule.run_info(),
             Self::VueNoReservedComponentNames(rule) => rule.run_info(),
             Self::VueNoReservedKeys(rule) => rule.run_info(),
@@ -23214,6 +23238,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),
         RuleEnum::VueNoLifecycleAfterAwait(VueNoLifecycleAfterAwait::default()),
         RuleEnum::VueNoMultipleSlotArgs(VueNoMultipleSlotArgs::default()),
+        RuleEnum::VueNoMutatingProps(VueNoMutatingProps::default()),
         RuleEnum::VueNoRequiredPropWithDefault(VueNoRequiredPropWithDefault::default()),
         RuleEnum::VueNoReservedComponentNames(VueNoReservedComponentNames::default()),
         RuleEnum::VueNoReservedKeys(VueNoReservedKeys::default()),

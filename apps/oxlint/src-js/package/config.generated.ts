@@ -1771,6 +1771,7 @@ export interface DummyRuleMap {
   "vue/no-import-compiler-macros"?: RuleNoConfig;
   "vue/no-lifecycle-after-await"?: RuleNoConfig;
   "vue/no-multiple-slot-args"?: RuleNoConfig;
+  "vue/no-mutating-props"?: RuleNoConfig | [AllowWarnDeny, NoMutatingPropsConfig];
   "vue/no-required-prop-with-default"?: RuleNoConfig;
   "vue/no-reserved-component-names"?: RuleNoConfig | [AllowWarnDeny, NoReservedComponentNames];
   "vue/no-reserved-keys"?: RuleNoConfig | [AllowWarnDeny, NoReservedKeysConfig];
@@ -7080,6 +7081,14 @@ export interface NoDupeKeysConfig {
    * built-in `props`, `computed`, `data`, `methods` and `setup` groups.
    */
   groups?: string[];
+}
+export interface NoMutatingPropsConfig {
+  /**
+   * When `true`, only mutations that write directly to a prop itself
+   * (e.g. `props.a = 1`, `props.a++`) are reported; mutations of nested
+   * values (e.g. `props.a.b = 1`, `props.a.push(1)`) are allowed.
+   */
+  shallowOnly?: boolean;
 }
 export interface NoReservedComponentNames {
   /**
