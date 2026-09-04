@@ -787,12 +787,9 @@ fn test_remove_else_cause2() {
 
 #[test]
 fn test_remove_else_cause3() {
-    test(
-        "function f() { a: { if (x) break a; else f() } }",
-        "function f() { a: { if (x) break a; f() } }",
-    );
-    test("function f() { if (x) { a:{ break a } } else f() }", "function f() { x || f() }");
-    test("function f() { if (x) a:{ break a } else f() }", "function f() { x || f() }");
+    test("function f() { a: { if (x) break a; else f() } }", "function f() { a: x || f(); }");
+    test("function f() { if (x) { a:{ break a } } else f() }", "function f() { x || f(); }");
+    test("function f() { if (x) a:{ break a } else f() }", "function f() { x || f(); }");
 }
 
 #[test]
