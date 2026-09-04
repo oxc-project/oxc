@@ -2,10 +2,13 @@ crates/oxc_ast_visit/src/comment_attachment.rs
   s_43cff1d112befe::t_4d507e97175da5 1-145,147-159,156,162-172,176,178-183,192-196,196,202,203-204,209-211,213-221,225-227,230-232,238-245,252-276,278-300,302-699
   s_43cff1d112befe::t_0d906cf17fb9a1 160-161,175,177,184-185,188,190-191,205-208,212,222-224,228-229,233-237,247-248
   s_43cff1d112befe::t_87d7222be5b852 146,160-161,173-175,177,184-191,197-201,205-208,212,222-224,228-229,233-237,246-251,277,301
+  s_43cff1d112befe::t_d66c65fb689ff4 77,83
 crates/oxc_ast_visit/src/lib.rs
   s_43cff1d112befe::t_0f08973389379d 10,13-16
+  s_43cff1d112befe::t_96c976d1216bf4 11-12,18
 crates/oxc_semantic/tests/integration/node_ids.rs
   s_98d85a95571ac7::t_3e1076ab5bfe28 3,41-69
+  s_43cff1d112befe::t_1fb5385914b05c 1-2,4-40,70-92
 Cargo.lock
   s_8a0b3fc1091d46::t_b49ce7911b0df9 1831
 crates/oxc_ast_visit/Cargo.toml
@@ -20,6 +23,11 @@ napi/transform/src/transformer.rs
 crates/oxc_ast_visit/src/node_id.rs
   s_43cff1d112befe::t_f5ec60d4299768 10
   s_43cff1d112befe::t_76b370ef1f6361 10
+  s_43cff1d112befe::t_40f7bc69af27a2 1-9,11-35
+crates/oxc_semantic/tests/integration/main.rs
+  s_43cff1d112befe::t_b0993eab482424 7
+crates/oxc_codegen/src/gen.rs
+  s_43cff1d112befe::t_03831720622cf7 4189
 ---
 {
   "schema_version": "authorship/3.0.0",
@@ -27,6 +35,14 @@ crates/oxc_ast_visit/src/node_id.rs
   "base_commit_sha": "8f9da2f8698d148a7d8e2acd6057a562886b5a55",
   "prompts": {},
   "sessions": {
+    "s_1c41bc2cb2a617": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06bf3-a7aa-74c2-8337-80b837a583d4",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
     "s_43cff1d112befe": {
       "agent_id": {
         "tool": "codex",
