@@ -1,4 +1,5 @@
 use oxc_allocator::Allocator;
+use oxc_ast_visit::CommentAttachmentBuilder;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -53,6 +54,24 @@ fn bench_semantic(criterion: &mut Criterion) {
                     // baseline. Attachments and diagnostics normally outlive
                     // semantic construction, so drop them outside it.
                     (ret.comment_attachments, ret.diagnostics)
+                });
+            });
+        });
+
+        let rehome_id = BenchmarkId::new("rehome", &file.file_name);
+        group.bench_function(rehome_id, |b| {
+            b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+
+                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let mut attachments = CommentAttachmentBuilder::build(&program);
+                let program = black_box(program);
+
+                runner.run(|| {
+                    let ret = SemanticBuilder::new_compiler()
+                        .build_and_rehome_comments(&program, &mut attachments);
+                    let ret = black_box(ret);
+                    (attachments, ret.diagnostics)
                 });
             });
         });

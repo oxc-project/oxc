@@ -67,6 +67,53 @@ fn semantic_comment_attachments_are_opt_in() {
     assert!(semantic.comment_attachments.is_none());
 }
 
+#[test]
+fn semantic_rebuild_rehomes_surviving_comments_and_discards_removed_comments() {
+    let allocator = Allocator::default();
+    let source = "/* first */ first();\n/* second */ second();\n";
+    let mut parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+
+    let mut attachments = CommentAttachmentBuilder::build(&parsed.program);
+    parsed.program.body.swap(0, 1);
+
+    let rebuilt = SemanticBuilder::new_compiler()
+        .build_and_rehome_comments(&parsed.program, &mut attachments);
+    assert!(rebuilt.diagnostics.is_empty());
+    assert_eq!(comment_indices(attachments.comments_for(parsed.program.body[1].node_id())), [0]);
+    assert_eq!(comment_indices(attachments.comments_for(parsed.program.body[0].node_id())), [1]);
+    drop(rebuilt);
+
+    parsed.program.body.remove(1);
+    let rebuilt = SemanticBuilder::new_compiler()
+        .build_and_rehome_comments(&parsed.program, &mut attachments);
+    assert!(rebuilt.diagnostics.is_empty());
+    assert_eq!(comment_indices(attachments.comments_for(parsed.program.body[0].node_id())), [1]);
+    assert_eq!(attachments.len(), 1);
+}
+
+#[test]
+fn semantic_rebuild_does_not_rehome_program_comments_to_dummy_nodes() {
+    let allocator = Allocator::default();
+    let mut parsed = Parser::new(&allocator, "/* program */", SourceType::mjs()).parse();
+    let mut generated = Parser::new(&allocator, "generated();", SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    assert!(generated.diagnostics.is_empty());
+
+    let mut attachments = CommentAttachmentBuilder::build(&parsed.program);
+    parsed.program.body.push(generated.program.body.pop().unwrap());
+
+    let rebuilt = SemanticBuilder::new_compiler()
+        .build_and_rehome_comments(&parsed.program, &mut attachments);
+    assert!(rebuilt.diagnostics.is_empty());
+    assert_eq!(comment_indices(attachments.comments_for(NodeId::ROOT)), [0]);
+    assert!(attachments.comments_for(parsed.program.body[0].node_id()).is_empty());
+}
+
+fn comment_indices(comments: &[oxc_ast_visit::AttachedComment]) -> Vec<u32> {
+    comments.iter().map(|comment| comment.comment_index).collect()
+}
+
 fn collect_node_ids<'a>(program: &'a oxc_ast::ast::Program<'a>) -> Vec<NodeRecord> {
     let mut collector = NodeIdCollector::default();
     collector.visit_program(program);

@@ -107,6 +107,88 @@ impl CommentAttachments {
         let range = self.hosts[host_index].comment_range.clone();
         &self.comments[range.start as usize..range.end as usize]
     }
+
+    /// Presence bits for active comment hosts.
+    #[doc(hidden)]
+    #[inline]
+    pub fn host_presence(&self) -> &[u64] {
+        &self.host_presence
+    }
+
+    /// Rehome active comments after an AST traversal has reassigned node IDs.
+    ///
+    /// Each pair is `(old_id, new_id)`. When an old host appears more than
+    /// once, only its first mapping is used, so cloned nodes do not duplicate
+    /// comments. Comments on hosts without a mapping are discarded.
+    #[doc(hidden)]
+    pub fn remap_node_ids(&mut self, remaps: &[(NodeId, NodeId)], node_count: usize) {
+        if remaps.len() == self.hosts.len()
+            && remaps
+                .iter()
+                .zip(&self.hosts)
+                .all(|(&(old_id, new_id), host)| old_id == host.node_id && old_id == new_id)
+        {
+            self.node_count = node_count;
+            return;
+        }
+
+        let mut remaps = remaps.to_vec();
+        remaps.sort_by_key(|(old_id, _)| *old_id);
+        remaps.dedup_by_key(|(old_id, _)| *old_id);
+
+        let mut grouped = Vec::with_capacity(self.comments.len());
+        let mut remap_index = 0;
+        for host in &self.hosts {
+            while remap_index < remaps.len() && remaps[remap_index].0 < host.node_id {
+                remap_index += 1;
+            }
+            let range = host.comment_range.start as usize..host.comment_range.end as usize;
+            if remap_index < remaps.len() && remaps[remap_index].0 == host.node_id {
+                let new_id = remaps[remap_index].1;
+                grouped.extend(self.comments[range].iter().map(|&comment| (new_id, comment)));
+            }
+        }
+
+        *self = Self::from_grouped(node_count, grouped);
+    }
+
+    fn from_grouped(node_count: usize, mut grouped: Vec<(NodeId, AttachedComment)>) -> Self {
+        grouped.sort_by_key(|(host_id, _)| *host_id);
+
+        let mut host_presence = if grouped.is_empty() {
+            Vec::new()
+        } else {
+            vec![0_u64; node_count.div_ceil(u64::BITS as usize)]
+        };
+        let mut hosts = Vec::new();
+        let mut comments = Vec::with_capacity(grouped.len());
+        let mut grouped_index = 0;
+        while grouped_index < grouped.len() {
+            let host_id = grouped[grouped_index].0;
+            let start = comments.len();
+            while grouped_index < grouped.len() && grouped[grouped_index].0 == host_id {
+                comments.push(grouped[grouped_index].1);
+                grouped_index += 1;
+            }
+            let end = comments.len();
+            debug_assert!(host_id.index() < node_count);
+            #[expect(clippy::cast_possible_truncation)]
+            hosts.push(CommentHost {
+                node_id: host_id,
+                comment_range: (start as u32)..(end as u32),
+            });
+            let host_index = host_id.index();
+            host_presence[host_index / u64::BITS as usize] |=
+                1 << (host_index % u64::BITS as usize);
+        }
+
+        Self {
+            node_count,
+            host_presence: host_presence.into_boxed_slice(),
+            hosts: hosts.into_boxed_slice(),
+            comments: comments.into_boxed_slice(),
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -269,40 +351,7 @@ impl<'c> CommentAttachmentCollector<'c> {
                 },
             ));
         }
-        grouped.sort_by_key(|(host_id, _)| *host_id);
-
-        let mut host_presence = if grouped.is_empty() {
-            Vec::new()
-        } else {
-            vec![0_u64; node_count.div_ceil(u64::BITS as usize)]
-        };
-        let mut hosts = Vec::new();
-        let mut comments = Vec::with_capacity(grouped.len());
-        let mut grouped_index = 0;
-        while grouped_index < grouped.len() {
-            let host_id = grouped[grouped_index].0;
-            let start = comments.len();
-            while grouped_index < grouped.len() && grouped[grouped_index].0 == host_id {
-                comments.push(grouped[grouped_index].1);
-                grouped_index += 1;
-            }
-            let end = comments.len();
-            #[expect(clippy::cast_possible_truncation)]
-            hosts.push(CommentHost {
-                node_id: host_id,
-                comment_range: (start as u32)..(end as u32),
-            });
-            let host_index = host_id.index();
-            host_presence[host_index / u64::BITS as usize] |=
-                1 << (host_index % u64::BITS as usize);
-        }
-
-        CommentAttachments {
-            node_count,
-            host_presence: host_presence.into_boxed_slice(),
-            hosts: hosts.into_boxed_slice(),
-            comments: comments.into_boxed_slice(),
-        }
+        CommentAttachments::from_grouped(node_count, grouped)
     }
 }
 
@@ -562,6 +611,34 @@ mod tests {
     #[test]
     fn attached_comment_is_compact() {
         assert_eq!(size_of::<AttachedComment>(), 8);
+    }
+
+    #[test]
+    fn remaps_surviving_hosts_and_discards_removed_hosts() {
+        let attached = |comment_index| AttachedComment {
+            comment_index,
+            placement: CommentPlacement::Before,
+            same_line: false,
+        };
+        let mut attachments = CommentAttachments::from_grouped(
+            3,
+            vec![(NodeId::new(1), attached(0)), (NodeId::new(2), attached(1))],
+        );
+
+        attachments.remap_node_ids(
+            &[
+                (NodeId::new(1), NodeId::new(2)),
+                // A cloned host must not duplicate its comments.
+                (NodeId::new(1), NodeId::new(3)),
+            ],
+            4,
+        );
+
+        assert!(attachments.comments_for(NodeId::new(1)).is_empty());
+        assert_eq!(attachments.comments_for(NodeId::new(2)), [attached(0)]);
+        assert!(attachments.comments_for(NodeId::new(3)).is_empty());
+        assert_eq!(attachments.len(), 1);
+        assert_eq!(attachments.node_count(), 4);
     }
 
     #[test]
