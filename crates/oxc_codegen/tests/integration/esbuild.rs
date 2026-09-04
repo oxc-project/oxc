@@ -2,7 +2,7 @@
 //! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer_test.go>
 //! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_parser/js_parser_test.go>
 
-use crate::tester::{test, test_minify};
+use crate::tester::{test, test_ascii, test_minify, test_minify_ascii};
 
 // NOTE: These values are aligned with terser, not esbuild.
 #[test]
@@ -883,38 +883,35 @@ fn test_ascii_only() {
     test("let π = 'π'", "let π = \"π\";\n");
     test("let π_ = 'π'", "let π_ = \"π\";\n");
     test("let _π = 'π'", "let _π = \"π\";\n");
-    // testASCII(t, "let π = 'π'", "let \\u03C0 = \"\\u03C0\";\n");
-    // testASCII(t, "let π_ = 'π'", "let \\u03C0_ = \"\\u03C0\";\n");
-    // testASCII(t, "let _π = 'π'", "let _\\u03C0 = \"\\u03C0\";\n");
+    test_ascii("let π = 'π'", "let \\u03C0 = \"\\u03C0\";\n");
+    test_ascii("let π_ = 'π'", "let \\u03C0_ = \"\\u03C0\";\n");
+    test_ascii("let _π = 'π'", "let _\\u03C0 = \"\\u03C0\";\n");
 
     test("let 貓 = '🐈'", "let 貓 = \"🐈\";\n");
     test("let 貓abc = '🐈'", "let 貓abc = \"🐈\";\n");
     test("let abc貓 = '🐈'", "let abc貓 = \"🐈\";\n");
-    // testASCII(t, "let 貓 = '🐈'", "let \\u8C93 = \"\\u{1F408}\";\n");
-    // testASCII(t, "let 貓abc = '🐈'", "let \\u8C93abc = \"\\u{1F408}\";\n");
-    // testASCII(t, "let abc貓 = '🐈'", "let abc\\u8C93 = \"\\u{1F408}\";\n");
+    test_ascii("let 貓 = '🐈'", "let \\u8C93 = \"\\u{1F408}\";\n");
+    test_ascii("let 貓abc = '🐈'", "let \\u8C93abc = \"\\u{1F408}\";\n");
+    test_ascii("let abc貓 = '🐈'", "let abc\\u8C93 = \"\\u{1F408}\";\n");
 
     // Test a character outside the BMP
     test("var 𐀀", "var 𐀀;\n");
     test("var \\u{10000}", "var 𐀀;\n");
-    // testASCII(t, "var 𐀀", "var \\u{10000};\n");
-    // testASCII(t, "var \\u{10000}", "var \\u{10000};\n");
-    // testTargetASCII(t, 2015, "'𐀀'", "\"\\u{10000}\";\n");
+    test_ascii("var 𐀀", "var \\u{10000};\n");
+    test_ascii("var \\u{10000}", "var \\u{10000};\n");
+    test_ascii("'𐀀'", "\"\\u{10000}\";\n");
     // testTargetASCII(t, 5, "'𐀀'", "\"\\uD800\\uDC00\";\n");
-    // testTargetASCII(t, 2015, "x.𐀀", "x[\"\\u{10000}\"];\n");
+    // esbuild rewrites an astral member name to a computed key for ES5; as ES2015+ it stays an identifier.
+    test_ascii("x.𐀀", "x.\\u{10000};\n");
     // testTargetASCII(t, 5, "x.𐀀", "x[\"\\uD800\\uDC00\"];\n");
 
     // Escapes should use consistent case
-    // testASCII(
-    // t,
-    // "var \\u{100a} = {\\u100A: '\\u100A'}",
-    // "var \\u100A = { \\u100A: \"\\u100A\" };\n",
-    // );
-    // testASCII(
-    // t,
-    // "var \\u{1000a} = {\\u{1000A}: '\\u{1000A}'}",
-    // "var \\u{1000A} = { \"\\u{1000A}\": \"\\u{1000A}\" };\n",
-    // );
+    test_ascii("var \\u{100a} = {\\u100A: '\\u100A'}", "var \\u100A = { \\u100A: \"\\u100A\" };\n");
+    // esbuild quotes an astral property key for its ES5 targets; as an ES2015+ identifier it can stay bare.
+    test_ascii(
+        "var \\u{1000a} = {\\u{1000A}: '\\u{1000A}'}",
+        "var \\u{1000A} = { \\u{1000A}: \"\\u{1000A}\" };\n",
+    );
 
     // These characters should always be escaped
     // test( "let x = '\u2028'", "let x = \"\\u2028\";\n");
@@ -922,10 +919,10 @@ fn test_ascii_only() {
     // test( "let x = '\uFEFF'", "let x = \"\\uFEFF\";\n");
 
     // There should still be a space before "extends"
-    // testASCII(t, "class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {\n}\n");
-    // testASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {\n});\n");
-    // test_minifyASCII(t, "class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
-    // test_minifyASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
+    test_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {}\n");
+    test_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {});\n");
+    test_minify_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
+    test_minify_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
 }
 
 #[test]

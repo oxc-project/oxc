@@ -95,7 +95,7 @@ impl Gen for Directive<'_> {
             }
         }
         quote.print(p);
-        p.print_str(directive);
+        p.print_directive_raw(directive);
         quote.print(p);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
@@ -1038,7 +1038,7 @@ impl Gen for ImportAttribute<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
-                p.print_str(identifier.name.as_str());
+                p.print_name(identifier.name.as_str());
             }
             ImportAttributeKey::StringLiteral(literal) => {
                 p.print_string_literal(literal, false);
@@ -1389,7 +1389,7 @@ impl Gen for IdentifierReference<'_> {
         let name = p.get_identifier_reference_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_name(name);
     }
 }
 
@@ -1397,7 +1397,7 @@ impl Gen for IdentifierName<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_name(self.name.as_str());
     }
 }
 
@@ -1406,7 +1406,7 @@ impl Gen for BindingIdentifier<'_> {
         let name = p.get_binding_identifier_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_name(name);
     }
 }
 
@@ -1414,7 +1414,7 @@ impl Gen for LabelIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_name(self.name.as_str());
     }
 }
 
@@ -1507,7 +1507,7 @@ impl Gen for RegExpLiteral<'_> {
             p.print_hard_space();
         }
         p.print_ascii_byte(b'/');
-        p.print_str(self.regex.pattern.text.as_str());
+        p.print_regex_pattern(self.regex.pattern.text.as_str());
         p.print_ascii_byte(b'/');
         p.print_str(self.regex.flags.to_inline_string().as_str());
         p.prev_reg_exp_end = p.code().len();
@@ -2206,10 +2206,10 @@ impl Gen for AssignmentTargetPropertyIdentifier<'_> {
             self.binding.print(p, ctx);
         } else {
             // `({x: a} = y);`
-            p.print_str(self.binding.name.as_str());
+            p.print_name(self.binding.name.as_str());
             p.print_colon();
             p.print_soft_space();
-            p.print_str(ident_name);
+            p.print_name(ident_name);
         }
         if let Some(expr) = &self.init {
             p.print_soft_space();
@@ -2351,14 +2351,21 @@ impl Gen for TemplateLiteral<'_> {
         p.print_ascii_byte(b'`');
         debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
         let (first_quasi, remaining_quasis) = self.quasis.split_first().unwrap();
-        p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
+        // The tag observes raw text; only the outermost quasis belong to it, nested
+        // templates inside `${}` are ordinary again.
+        let tagged = std::mem::take(&mut p.in_tagged_template);
+        p.in_tagged_template = tagged;
+        p.print_template_quasi_raw(first_quasi.value.raw.as_str());
+        p.in_tagged_template = false;
         for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
             p.print_leading_comments_before_expression(expr);
             p.print_expression(expr);
             p.print_ascii_byte(b'}');
             p.add_source_mapping(quasi.span);
-            p.print_str_escaping_script_close_tag(quasi.value.raw.as_str());
+            p.in_tagged_template = tagged;
+            p.print_template_quasi_raw(quasi.value.raw.as_str());
+            p.in_tagged_template = false;
         }
         p.print_ascii_byte(b'`');
     }
@@ -2372,7 +2379,9 @@ impl GenExpr for TaggedTemplateExpression<'_> {
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
+        p.in_tagged_template = true;
         self.quasi.print(p, ctx);
+        p.in_tagged_template = false;
     }
 }
 
@@ -2633,10 +2642,20 @@ impl Gen for JSXIdentifier<'_> {
     }
 }
 
+/// A component reference in JSX position (`<Foo/>`, `<Foo.Bar/>`). JSX names have no escape
+/// syntax, so — unlike [`IdentifierReference`] elsewhere — the (possibly renamed) name is
+/// printed verbatim even under `ascii_only`; JSX-preserving output with non-ASCII component
+/// names is the one construct that cannot be made 7-bit clean.
+fn print_jsx_identifier_reference(ident: &IdentifierReference<'_>, p: &mut Codegen) {
+    let name = p.get_identifier_reference_name(ident);
+    p.add_source_mapping_for_name(ident.span, name);
+    p.print_str(name);
+}
+
 impl Gen for JSXMemberExpressionObject<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::IdentifierReference(ident) => print_jsx_identifier_reference(ident, p),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
         }
@@ -2655,7 +2674,7 @@ impl Gen for JSXElementName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.print(p, ctx),
-            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::IdentifierReference(identifier) => print_jsx_identifier_reference(identifier, p),
             Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
@@ -3079,7 +3098,7 @@ impl Gen for PrivateIdentifier<'_> {
 
         p.add_source_mapping_for_private_name(self.span, name);
         p.print_ascii_byte(b'#');
-        p.print_str(name);
+        p.print_name(name);
     }
 }
 
@@ -3635,7 +3654,7 @@ impl Gen for TSTemplateLiteralType<'_> {
                 types.print(p, ctx);
                 p.print_ascii_byte(b'}');
             }
-            p.print_str(item.value.raw.as_str());
+            p.print_template_quasi_raw(item.value.raw.as_str());
         }
         p.print_ascii_byte(b'`');
     }
@@ -3918,7 +3937,7 @@ impl Gen for TSImportTypeQualifier<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             TSImportTypeQualifier::Identifier(ident) => {
-                p.print_str(ident.name.as_str());
+                p.print_name(ident.name.as_str());
             }
             TSImportTypeQualifier::QualifiedName(qualified) => {
                 qualified.print(p, ctx);
@@ -3931,7 +3950,7 @@ impl Gen for TSImportTypeQualifiedName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         self.left.print(p, ctx);
         p.print_ascii_byte(b'.');
-        p.print_str(self.right.name.as_str());
+        p.print_name(self.right.name.as_str());
     }
 }
 
@@ -3952,7 +3971,7 @@ impl Gen for TSIndexSignature<'_> {
             p.print_str("readonly ");
         }
         p.print_ascii_byte(b'[');
-        p.print_str(self.parameter.name.as_str());
+        p.print_name(self.parameter.name.as_str());
         p.print_colon();
         p.print_soft_space();
         self.parameter.type_annotation.print(p, ctx);
@@ -4208,7 +4227,7 @@ impl Gen for TSEnumMember<'_> {
                 p.add_source_mapping(quasi.span);
 
                 p.print_str("[`");
-                p.print_str(quasi.value.raw.as_str());
+                p.print_template_quasi_raw(quasi.value.raw.as_str());
                 p.print_str("`]");
             }
         }
