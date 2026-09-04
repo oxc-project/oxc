@@ -150,8 +150,8 @@ impl<'a> Minifier {
         // keys.
         let property_mangle_cache = mangle_properties.map(|options| {
             let mut mangler = PropertyMangler::new(options);
-            mangler.collect(program);
-            mangler.assign();
+            mangler.collect(program, allocator);
+            mangler.assign(allocator);
             mangler.rewrite(program, allocator);
             mangler.into_cache()
         });
