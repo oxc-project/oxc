@@ -827,8 +827,10 @@ impl Gen for FunctionBody<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let span_end = self.span.end;
         let comments_at_end = if span_end > 0 { p.get_comments(span_end - 1) } else { None };
+        let has_attached_comments_inside = p.has_attached_comments_inside(self.node_id());
         let single_line = if self.is_empty() {
             !p.has_orphan_comments_before(self.span.end)
+                && !has_attached_comments_inside
                 && comments_at_end
                     .as_ref()
                     .is_none_or(|comments| comments.iter().all(|c| !c.has_newlines_around()))
@@ -836,6 +838,12 @@ impl Gen for FunctionBody<'_> {
             false
         };
         p.print_curly_braces(self.span, single_line, |p| {
+            if has_attached_comments_inside && p.print_attached_comments_inside(self.node_id()) {
+                if p.last_byte() != Some(b'\n') {
+                    p.print_hard_newline();
+                }
+                p.clear_pending_indent_space();
+            }
             p.print_directives_and_statements(
                 &self.directives,
                 &self.statements,
@@ -906,6 +914,17 @@ impl Gen for FormalParameterRest<'_> {
 
 impl Gen for FormalParameters<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.items.is_empty()
+            && self.rest.is_none()
+            && p.print_attached_comments_inside(self.node_id())
+        {
+            if p.last_byte() == Some(b'\n') {
+                p.print_indent();
+            } else {
+                p.print_soft_space();
+            }
+            p.clear_pending_indent_space();
+        }
         p.print_list(&self.items, ctx);
         if let Some(rest) = &self.rest {
             if !self.items.is_empty() {

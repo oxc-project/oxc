@@ -21,12 +21,9 @@ fn test_node_id_comment_boundaries() {
     let attachments = CommentAttachmentBuilder::build(&parsed.program);
     let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
 
-    for marker in ["/*a*/", "/*b*/", "/*c*/", "/*d*/", "//e", "/*f*/"] {
+    for marker in ["/*a*/", "/*b*/", "/*c*/", "/*d*/", "//e", "/*f*/", "/*g*/", "/*h*/"] {
         assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
     }
-    // Inside placement is intentionally the next integration slice.
-    assert!(!code.contains("/*g*/"), "{code:?}");
-    assert!(!code.contains("/*h*/"), "{code:?}");
 
     let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
     assert!(reparsed.diagnostics.is_empty(), "{code:?}");
@@ -126,6 +123,27 @@ fn test_node_id_removed_host_comments_are_dropped() {
 
     let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
     assert!(!code.contains("/*removed*/"), "{code:?}");
+}
+
+#[test]
+fn test_node_id_line_comments_inside_function_delimiters() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = "function f(//params\n) { //body\n}";
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code.matches("//params").count(), 1, "{code:?}");
+    assert_eq!(code.matches("//body").count(), 1, "{code:?}");
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
 }
 // A leading comment inside a `pife` arrow alternate of a `?:` must stay
 // inside the paren wrap on every codegen pass; otherwise the parser re-

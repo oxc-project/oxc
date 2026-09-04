@@ -38,6 +38,24 @@ impl<'a> AttachedComments<'a> {
         self.attachments.comments_for_with_range(node_id).map(|(range, _)| range)
     }
 
+    fn has_printable_comments(
+        &self,
+        range: std::ops::Range<usize>,
+        placement: CommentPlacement,
+        source_comments: &[Comment],
+        options: &crate::CodegenOptions,
+    ) -> bool {
+        self.attachments.comments_in_range(range).iter().any(|attached| {
+            if attached.placement != placement {
+                return false;
+            }
+            let comment = *attached.comment(source_comments);
+            !comment.is_pure()
+                && !comment.is_no_side_effects()
+                && should_print_attached_comment(options, comment)
+        })
+    }
+
     fn take_boundary_comments(
         &mut self,
         range: std::ops::Range<usize>,
@@ -152,13 +170,31 @@ impl Codegen<'_> {
         self.print_attached_comments(range, CommentPlacement::After);
     }
 
+    pub(crate) fn has_attached_comments_inside(&self, node_id: NodeId) -> bool {
+        let Some(source_comments) = self.source_comments else { return false };
+        let Some(attached_comments) = &self.attached_comments else { return false };
+        let Some(range) = attached_comments.comment_range(node_id) else { return false };
+        attached_comments.has_printable_comments(
+            range,
+            CommentPlacement::Inside,
+            source_comments,
+            &self.options,
+        )
+    }
+
+    pub(crate) fn print_attached_comments_inside(&mut self, node_id: NodeId) -> bool {
+        let Some(attached_comments) = &self.attached_comments else { return false };
+        let Some(range) = attached_comments.comment_range(node_id) else { return false };
+        self.print_attached_comments(range, CommentPlacement::Inside)
+    }
+
     fn print_attached_comments(
         &mut self,
         range: std::ops::Range<usize>,
         placement: CommentPlacement,
-    ) {
-        let Some(source_comments) = self.source_comments else { return };
-        let Some(attached_comments) = &mut self.attached_comments else { return };
+    ) -> bool {
+        let Some(source_comments) = self.source_comments else { return false };
+        let Some(attached_comments) = &mut self.attached_comments else { return false };
         let comments = attached_comments.take_boundary_comments(
             range,
             placement,
@@ -166,7 +202,7 @@ impl Codegen<'_> {
             &self.options,
         );
         if comments.is_empty() {
-            return;
+            return false;
         }
         if placement == CommentPlacement::After {
             // In minified statement printers the semicolon is deferred. It
@@ -174,6 +210,7 @@ impl Codegen<'_> {
             self.print_semicolon_if_needed();
         }
         self.print_comments(&comments);
+        true
     }
 
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
