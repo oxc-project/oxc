@@ -1,0 +1,23 @@
+crates/oxc_minifier/src/peephole/mod.rs
+  s_823b5e1442969e::t_80dfda5982f694 795,806
+crates/oxc_minifier/src/peephole/remove_unused_private_members.rs
+  s_823b5e1442969e::t_ab8162bb567161 3,25,34,40,63,69,75,81
+crates/oxc_minifier/src/state.rs
+  s_823b5e1442969e::t_9bb4040089b405 5,196,201,210,214,222,226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a4eda43233eb54c5b02b7a5af9171500e52e5c8e",
+  "prompts": {},
+  "sessions": {
+    "s_823b5e1442969e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06a89-295b-7cd3-8c9a-f08aab2c3c3a",
+        "model": "unknown"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
