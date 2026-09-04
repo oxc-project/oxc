@@ -91,6 +91,7 @@ pnpm-lock.yaml
 /crates/oxc_ast @overlookmotel
 /crates/oxc_ast_macros @overlookmotel
 /crates/oxc_ast_visit @overlookmotel
+/crates/oxc_lexer @overlookmotel
 /crates/oxc_macros @overlookmotel
 /crates/oxc_span @overlookmotel
 /crates/oxc_str @overlookmotel
