@@ -117,6 +117,34 @@ interface PluginDetails {
   ruleNames: string[];
 }
 
+// Messages of the `SyntaxError`s Node throws when a file containing ESM syntax is evaluated as CommonJS.
+// A plugin file is evaluated as CommonJS when the nearest `package.json` does not opt into ES modules.
+// `import` statements produce the first message, a file whose only ESM syntax is `export` the second.
+const COMMONJS_SYNTAX_ERROR_MESSAGES = new Set([
+  "Cannot use import statement outside a module",
+  "Unexpected token 'export'",
+]);
+
+const NOT_A_MODULE_HINT =
+  'Plugins must be ES modules. Add `"type": "module"` to the nearest '
+  + "`package.json`, or give the plugin file an `.mjs` or `.mts` extension.";
+
+/**
+ * Get hint to append to a plugin load error message.
+ *
+ * Node's error for a plugin file which was evaluated as CommonJS names neither the ES module
+ * requirement nor how to satisfy it, so add that.
+ *
+ * @param err - Error thrown while loading the plugin
+ * @returns Hint to append to the error message, or empty string if the error is unrelated
+ */
+function getPluginLoadErrorHint(err: unknown): string {
+  if (!(err instanceof SyntaxError)) return "";
+  const { message } = err;
+  if (!COMMONJS_SYNTAX_ERROR_MESSAGES.has(message)) return "";
+  return `\n\n${NOT_A_MODULE_HINT}`;
+}
+
 /**
  * Load a plugin.
  *
@@ -139,7 +167,7 @@ export async function loadPlugin(
     const res = registerPlugin(plugin, pluginName, pluginNameIsAlias, workspaceUri);
     return JSON.stringify({ Success: res });
   } catch (err) {
-    return JSON.stringify({ Failure: getErrorMessage(err) });
+    return JSON.stringify({ Failure: getErrorMessage(err) + getPluginLoadErrorHint(err) });
   }
 }
 

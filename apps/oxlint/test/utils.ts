@@ -218,6 +218,7 @@ const ESLINT_SPACES_MIN = 4;
  * Normalize output, so it's the same on every machine.
  *
  * - Remove timing + thread count info.
+ * - Replace process IDs in Node.js process warnings.
  * - Replace start of file paths with `<root>`.
  * - Remove irrelevant lines from stack traces.
  * - Normalize line breaks.
@@ -257,6 +258,10 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
 
     // Handle uris with `?cache=...` query param, which are used to bypass Node.js module cache when loading config files in LSP tests.
     line = line.replaceAll(/\?cache=\d+/g, "");
+
+    // Replace process ID in Node.js process warnings, which varies between runs.
+    // e.g. `(node:12345) Warning: ...` -> `(node:XXXXX) Warning: ...`
+    line = line.replace(/^\(node:\d+\) /, "(node:XXXXX) ");
 
     // Handle stack trace lines.
     // e.g. ` at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
