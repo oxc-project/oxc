@@ -93,6 +93,30 @@ impl<'a> AttachedComments<'a> {
         }
         comments
     }
+
+    fn take_annotation_comment(
+        &mut self,
+        node_id: NodeId,
+        kind: AnnotationKind,
+        source_comments: &[Comment],
+        allow_line: bool,
+    ) -> Option<Comment> {
+        let (range, attached_comments) = self.attachments.comments_for_with_range(node_id)?;
+        for (offset, attached) in attached_comments.iter().enumerate() {
+            let attachment_index = range.start + offset;
+            let word_index = attachment_index / u64::BITS as usize;
+            let mask = 1 << (attachment_index % u64::BITS as usize);
+            if self.claimed[word_index] & mask != 0 {
+                continue;
+            }
+            let comment = *attached.comment(source_comments);
+            if kind.matches(&comment) {
+                self.claimed[word_index] |= mask;
+                return (allow_line || !comment.is_line()).then_some(comment);
+            }
+        }
+        None
+    }
 }
 
 fn should_print_attached_comment(options: &crate::CodegenOptions, comment: Comment) -> bool {
@@ -122,8 +146,8 @@ fn is_pife_function(expression: &Expression<'_>) -> bool {
     }
 }
 
-/// Which annotation kind an emission site expects to recover from
-/// [`Codegen::annotation_comments`].
+/// Which annotation kind an emission site expects to recover from the NodeId
+/// sidecar or the legacy [`Codegen::annotation_comments`] map.
 ///
 /// `@__PURE__` / `#__PURE__` on a `CallExpression` or `NewExpression`, and
 /// `@__NO_SIDE_EFFECTS__` / `#__NO_SIDE_EFFECTS__` on a function declaration or
@@ -284,9 +308,9 @@ impl Codegen<'_> {
         self.comments.contains_key(&start)
     }
 
-    /// Emit a pure / no-side-effects annotation comment for the AST node at
-    /// `start`, falling back to the canonical literal when no verbatim source
-    /// can be recovered.
+    /// Emit a pure / no-side-effects annotation comment for an AST node,
+    /// falling back to the canonical literal when no verbatim source can be
+    /// recovered.
     ///
     /// The fallback covers four cases:
     /// - no annotation comment is stashed at `start`,
@@ -304,11 +328,30 @@ impl Codegen<'_> {
     /// falls back to canonical here.
     pub(crate) fn print_annotation_comment(
         &mut self,
+        node_id: NodeId,
         start: u32,
         kind: AnnotationKind,
         newline_after: bool,
     ) {
-        if self.source_text.is_some()
+        let attached_comment = if let (Some(source_comments), Some(attached_comments)) =
+            (self.source_comments, &mut self.attached_comments)
+        {
+            attached_comments.take_annotation_comment(node_id, kind, source_comments, newline_after)
+        } else {
+            None
+        };
+        if let Some(comment) = attached_comment {
+            self.print_comment(&comment);
+            if newline_after {
+                self.print_hard_newline();
+            } else {
+                self.print_str(" ");
+            }
+            return;
+        }
+
+        if self.attached_comments.is_none()
+            && self.source_text.is_some()
             && let Some(comment) = self.annotation_comments.get(&start).copied()
             && kind.matches(&comment)
             // Inline line comments would swallow the rest of the line.

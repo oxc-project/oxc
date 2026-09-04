@@ -59,13 +59,41 @@ fn test_node_id_pure_comment_remains_annotation_owned() {
     use oxc_span::SourceType;
 
     let allocator = Allocator::default();
-    let source = "const x = /* @__PURE__ */ foo();";
+    let source = "const x = /*ordinary*/ /* #__PURE__ */ foo();";
     let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
     assert!(parsed.diagnostics.is_empty());
     let attachments = CommentAttachmentBuilder::build(&parsed.program);
     let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
 
-    assert_eq!(code.matches("@__PURE__").count(), 1, "{code:?}");
+    assert_eq!(code.matches("/*ordinary*/").count(), 1, "{code:?}");
+    assert_eq!(code.matches("#__PURE__").count(), 1, "{code:?}");
+    assert!(!code.contains("@__PURE__"), "{code:?}");
+}
+
+#[test]
+fn test_node_id_no_side_effects_comments_remain_verbatim() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "/* #__NO_SIDE_EFFECTS__ */ function declaration() {}\n",
+        "const expression = /* #__NO_SIDE_EFFECTS__ */ function() {};\n",
+        "const arrow = /* #__NO_SIDE_EFFECTS__ */ () => 0;\n",
+        "/* #__NO_SIDE_EFFECTS__ */ export function exported() {}\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code.matches("#__NO_SIDE_EFFECTS__").count(), 4, "{code:?}");
+    assert!(!code.contains("@__NO_SIDE_EFFECTS__"), "{code:?}");
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
 }
 
 #[test]
