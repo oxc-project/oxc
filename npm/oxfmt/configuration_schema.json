@@ -186,6 +186,15 @@
       "minimum": 0.0,
       "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Languages: All\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
     },
+    "toml": {
+      "description": "TOML-specific formatting options.\n\n- Languages: TOML\n- Default: `{}`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/TomlConfig"
+        }
+      ],
+      "markdownDescription": "TOML-specific formatting options.\n\n- Languages: TOML\n- Default: `{}`"
+    },
     "trailingComma": {
       "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML\n- Default: `\"all\"`",
       "allOf": [
@@ -444,6 +453,15 @@
           "format": "uint8",
           "minimum": 0.0,
           "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Languages: All\n- Default: `2`\n- Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)"
+        },
+        "toml": {
+          "description": "TOML-specific formatting options.\n\n- Languages: TOML\n- Default: `{}`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/TomlConfig"
+            }
+          ],
+          "markdownDescription": "TOML-specific formatting options.\n\n- Languages: TOML\n- Default: `{}`"
         },
         "trailingComma": {
           "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Languages: JS, JSX, TS, TSX, JSONC, JSON5, TOML, CSS, Less, SCSS, YAML\n- Default: `\"all\"`",
@@ -884,6 +902,89 @@
           "$ref": "#/definitions/SvelteConfig"
         }
       ]
+    },
+    "TomlConfig": {
+      "type": "object",
+      "properties": {
+        "alignComments": {
+          "description": "Align consecutive comments after entries and items vertically.\n\nThis applies to comments after entries or array items.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Align consecutive comments after entries and items vertically.\n\nThis applies to comments after entries or array items.\n\n- Default: `false`"
+        },
+        "alignEntries": {
+          "description": "Align entries vertically.\n\nEntries that have table headers, comments, or blank lines between them are not aligned.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Align entries vertically.\n\nEntries that have table headers, comments, or blank lines between them are not aligned.\n\n- Default: `false`"
+        },
+        "alignSingleComments": {
+          "description": "Apply comment alignment when `alignComments` is enabled and there is only one comment.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Apply comment alignment when `alignComments` is enabled and there is only one comment.\n\n- Default: `false`"
+        },
+        "allowedBlankLines": {
+          "description": "Set the maximum number of consecutive blank lines.\n\n- Default: `2`",
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0.0,
+          "markdownDescription": "Set the maximum number of consecutive blank lines.\n\n- Default: `2`"
+        },
+        "arrayAutoCollapse": {
+          "description": "Automatically collapse arrays when they fit on one line.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Automatically collapse arrays when they fit on one line.\n\n- Default: `true`"
+        },
+        "arrayAutoExpand": {
+          "description": "Automatically expand arrays to multiple lines when they exceed `printWidth` characters.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Automatically expand arrays to multiple lines when they exceed `printWidth` characters.\n\n- Default: `true`"
+        },
+        "compactArrays": {
+          "description": "Omit whitespace padding inside single-line arrays.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Omit whitespace padding inside single-line arrays.\n\n- Default: `true`"
+        },
+        "compactEntries": {
+          "description": "Omit whitespace around `=`.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Omit whitespace around `=`.\n\n- Default: `false`"
+        },
+        "compactInlineTables": {
+          "description": "Omit whitespace padding inside inline tables.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Omit whitespace padding inside inline tables.\n\n- Default: `false`"
+        },
+        "indentEntries": {
+          "description": "Indent entries under tables.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Indent entries under tables.\n\n- Default: `false`"
+        },
+        "indentTables": {
+          "description": "Indent subtables when they appear in order.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Indent subtables when they appear in order.\n\n- Default: `false`"
+        },
+        "inlineTableExpand": {
+          "description": "Expand values, such as arrays, inside inline tables.\n\n- Default: `true`",
+          "type": "boolean",
+          "markdownDescription": "Expand values, such as arrays, inside inline tables.\n\n- Default: `true`"
+        },
+        "reorderArrays": {
+          "description": "Alphabetically reorder array values that are not separated by blank lines.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Alphabetically reorder array values that are not separated by blank lines.\n\n- Default: `false`"
+        },
+        "reorderInlineTables": {
+          "description": "Alphabetically reorder entries in inline tables.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Alphabetically reorder entries in inline tables.\n\n- Default: `false`"
+        },
+        "reorderKeys": {
+          "description": "Alphabetically reorder keys that are not separated by blank lines.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Alphabetically reorder keys that are not separated by blank lines.\n\n- Default: `false`"
+        }
+      },
+      "additionalProperties": false
     },
     "TrailingCommaConfig": {
       "type": "string",

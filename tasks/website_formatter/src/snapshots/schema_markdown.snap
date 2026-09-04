@@ -841,6 +841,171 @@ Specify the number of spaces per indentation-level.
 - Overrides `.editorconfig.indent_size` (falls back to `.editorconfig.tab_width`)
 
 
+## toml
+
+type: `object`
+
+
+TOML-specific formatting options.
+
+- Languages: TOML
+- Default: `{}`
+
+
+### toml.alignComments
+
+type: `boolean`
+
+
+Align consecutive comments after entries and items vertically.
+
+This applies to comments after entries or array items.
+
+- Default: `false`
+
+
+### toml.alignEntries
+
+type: `boolean`
+
+
+Align entries vertically.
+
+Entries that have table headers, comments, or blank lines between them are not aligned.
+
+- Default: `false`
+
+
+### toml.alignSingleComments
+
+type: `boolean`
+
+
+Apply comment alignment when `alignComments` is enabled and there is only one comment.
+
+- Default: `false`
+
+
+### toml.allowedBlankLines
+
+type: `integer`
+
+
+Set the maximum number of consecutive blank lines.
+
+- Default: `2`
+
+
+### toml.arrayAutoCollapse
+
+type: `boolean`
+
+
+Automatically collapse arrays when they fit on one line.
+
+- Default: `true`
+
+
+### toml.arrayAutoExpand
+
+type: `boolean`
+
+
+Automatically expand arrays to multiple lines when they exceed `printWidth` characters.
+
+- Default: `true`
+
+
+### toml.compactArrays
+
+type: `boolean`
+
+
+Omit whitespace padding inside single-line arrays.
+
+- Default: `true`
+
+
+### toml.compactEntries
+
+type: `boolean`
+
+
+Omit whitespace around `=`.
+
+- Default: `false`
+
+
+### toml.compactInlineTables
+
+type: `boolean`
+
+
+Omit whitespace padding inside inline tables.
+
+- Default: `false`
+
+
+### toml.indentEntries
+
+type: `boolean`
+
+
+Indent entries under tables.
+
+- Default: `false`
+
+
+### toml.indentTables
+
+type: `boolean`
+
+
+Indent subtables when they appear in order.
+
+- Default: `false`
+
+
+### toml.inlineTableExpand
+
+type: `boolean`
+
+
+Expand values, such as arrays, inside inline tables.
+
+- Default: `true`
+
+
+### toml.reorderArrays
+
+type: `boolean`
+
+
+Alphabetically reorder array values that are not separated by blank lines.
+
+- Default: `false`
+
+
+### toml.reorderInlineTables
+
+type: `boolean`
+
+
+Alphabetically reorder entries in inline tables.
+
+- Default: `false`
+
+
+### toml.reorderKeys
+
+type: `boolean`
+
+
+Alphabetically reorder keys that are not separated by blank lines.
+
+- Default: `false`
+
+
 ## trailingComma
 
 type: `"all" | "es5" | "none"`

@@ -287,6 +287,13 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub svelte: Option<SvelteUserConfig>,
+
+    /// TOML-specific formatting options.
+    ///
+    /// - Languages: TOML
+    /// - Default: `{}`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub toml: Option<TomlConfig>,
 }
 
 impl FormatConfig {
@@ -901,6 +908,92 @@ pub enum CommentLineStrategyConfig {
     SingleLine,
     Multiline,
     Keep,
+}
+
+// ---
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TomlConfig {
+    /// Align entries vertically.
+    ///
+    /// Entries that have table headers, comments, or blank lines between them are not aligned.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub align_entries: Option<bool>,
+    /// Align consecutive comments after entries and items vertically.
+    ///
+    /// This applies to comments after entries or array items.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub align_comments: Option<bool>,
+    /// Apply comment alignment when `alignComments` is enabled and there is only one comment.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub align_single_comments: Option<bool>,
+    /// Automatically expand arrays to multiple lines when they exceed `printWidth` characters.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub array_auto_expand: Option<bool>,
+    /// Automatically collapse arrays when they fit on one line.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub array_auto_collapse: Option<bool>,
+    /// Expand values, such as arrays, inside inline tables.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inline_table_expand: Option<bool>,
+    /// Omit whitespace padding inside single-line arrays.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compact_arrays: Option<bool>,
+    /// Omit whitespace padding inside inline tables.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compact_inline_tables: Option<bool>,
+    /// Omit whitespace around `=`.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compact_entries: Option<bool>,
+    /// Indent subtables when they appear in order.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_tables: Option<bool>,
+    /// Indent entries under tables.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_entries: Option<bool>,
+    /// Alphabetically reorder keys that are not separated by blank lines.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reorder_keys: Option<bool>,
+    /// Alphabetically reorder array values that are not separated by blank lines.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reorder_arrays: Option<bool>,
+    /// Alphabetically reorder entries in inline tables.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reorder_inline_tables: Option<bool>,
+    /// Set the maximum number of consecutive blank lines.
+    ///
+    /// - Default: `2`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed_blank_lines: Option<usize>,
 }
 
 // ---

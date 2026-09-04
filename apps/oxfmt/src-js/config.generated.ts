@@ -273,6 +273,13 @@ export interface Oxfmtrc {
    */
   tabWidth?: number;
   /**
+   * TOML-specific formatting options.
+   *
+   * - Languages: TOML
+   * - Default: `{}`
+   */
+  toml?: TomlConfig;
+  /**
    * Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
    *
    * A single-line array, for example, never gets trailing commas.
@@ -595,6 +602,13 @@ export interface FormatConfig {
    */
   tabWidth?: number;
   /**
+   * TOML-specific formatting options.
+   *
+   * - Languages: TOML
+   * - Default: `{}`
+   */
+  toml?: TomlConfig;
+  /**
    * Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
    *
    * A single-line array, for example, never gets trailing commas.
@@ -867,4 +881,100 @@ export interface SvelteConfig {
    */
   sortOrder?: string;
   [k: string]: unknown;
+}
+export interface TomlConfig {
+  /**
+   * Align consecutive comments after entries and items vertically.
+   *
+   * This applies to comments after entries or array items.
+   *
+   * - Default: `false`
+   */
+  alignComments?: boolean;
+  /**
+   * Align entries vertically.
+   *
+   * Entries that have table headers, comments, or blank lines between them are not aligned.
+   *
+   * - Default: `false`
+   */
+  alignEntries?: boolean;
+  /**
+   * Apply comment alignment when `alignComments` is enabled and there is only one comment.
+   *
+   * - Default: `false`
+   */
+  alignSingleComments?: boolean;
+  /**
+   * Set the maximum number of consecutive blank lines.
+   *
+   * - Default: `2`
+   */
+  allowedBlankLines?: number;
+  /**
+   * Automatically collapse arrays when they fit on one line.
+   *
+   * - Default: `true`
+   */
+  arrayAutoCollapse?: boolean;
+  /**
+   * Automatically expand arrays to multiple lines when they exceed `printWidth` characters.
+   *
+   * - Default: `true`
+   */
+  arrayAutoExpand?: boolean;
+  /**
+   * Omit whitespace padding inside single-line arrays.
+   *
+   * - Default: `true`
+   */
+  compactArrays?: boolean;
+  /**
+   * Omit whitespace around `=`.
+   *
+   * - Default: `false`
+   */
+  compactEntries?: boolean;
+  /**
+   * Omit whitespace padding inside inline tables.
+   *
+   * - Default: `false`
+   */
+  compactInlineTables?: boolean;
+  /**
+   * Indent entries under tables.
+   *
+   * - Default: `false`
+   */
+  indentEntries?: boolean;
+  /**
+   * Indent subtables when they appear in order.
+   *
+   * - Default: `false`
+   */
+  indentTables?: boolean;
+  /**
+   * Expand values, such as arrays, inside inline tables.
+   *
+   * - Default: `true`
+   */
+  inlineTableExpand?: boolean;
+  /**
+   * Alphabetically reorder array values that are not separated by blank lines.
+   *
+   * - Default: `false`
+   */
+  reorderArrays?: boolean;
+  /**
+   * Alphabetically reorder entries in inline tables.
+   *
+   * - Default: `false`
+   */
+  reorderInlineTables?: boolean;
+  /**
+   * Alphabetically reorder keys that are not separated by blank lines.
+   *
+   * - Default: `false`
+   */
+  reorderKeys?: boolean;
 }
