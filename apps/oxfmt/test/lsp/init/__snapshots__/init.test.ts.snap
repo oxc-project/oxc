@@ -1,0 +1,8 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP initialization > should show a client message when the workspace config is invalid 1`] = `
+"--- Show Messages ---------
+[0] type=1
+Failed to load config at <cwd>/test/lsp/init/fixtures/invalid-config: Invalid tabWidth: The indent width should be between 0 and 24
+, falling back to default"
+`;
