@@ -1,3 +1,4 @@
+mod conflate_assignments;
 mod convert_to_dotted_properties;
 mod fold_constants;
 mod inline;
@@ -634,7 +635,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::minimize_assignment_to_update_expression(expr, ctx);
                     Self::remove_unused_assignment_expr(expr, ctx);
                 }
-                Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
+                Expression::SequenceExpression(sequence) => {
+                    Self::conflate_assignments(sequence, ctx);
+                    Self::remove_sequence_expression(expr, ctx);
+                }
                 Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
                 Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
                 Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),

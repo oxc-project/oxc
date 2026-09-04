@@ -38,6 +38,7 @@ cow-utils = { workspace = true }
 itoa = { workspace = true }
 lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
+smallvec = { workspace = true }
 
 [dev-dependencies]
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
