@@ -1679,6 +1679,12 @@ impl Gen for ArrayExpression<'_> {
         let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
+        if self.elements.is_empty() && p.print_attached_comments_inside(self.node_id()) {
+            if p.last_byte() == Some(b'\n') {
+                p.print_indent();
+            }
+            p.clear_pending_indent_space();
+        }
         if is_multi_line {
             p.indent();
         }
@@ -1723,6 +1729,12 @@ impl GenExpr for ObjectExpression<'_> {
             }
             p.add_source_mapping(self.span);
             p.print_ascii_byte(b'{');
+            if self.properties.is_empty() && p.print_attached_comments_inside(self.node_id()) {
+                if p.last_byte() == Some(b'\n') {
+                    p.print_indent();
+                }
+                p.clear_pending_indent_space();
+            }
             if is_multi_line {
                 p.indent();
             }
