@@ -319,11 +319,6 @@ impl CliRunner {
                 }
             };
 
-        // Root-only options set in a nested config are ignored, not fatal: report them and carry on.
-        for warning in &config_warnings {
-            print_and_flush_stdout(stdout, &format!("{}\n", render_report(&handler, warning)));
-        }
-
         materialize_default_plugins(&mut root_config);
         let mut plugins = root_config.plugins.unwrap_or_default();
         enable_plugins.apply_overrides(&mut plugins);
@@ -419,6 +414,14 @@ impl CliRunner {
         // `options.typeAware` in a config only applies to the files that config governs.
         let type_aware_forced = type_check_only || self.options.type_aware;
         let type_aware = type_aware_forced || config_store.type_aware_enabled();
+
+        // Config problems which are not fatal: report them and carry on. Whether a config which
+        // names type-aware rules without enabling `options.typeAware` is worth reporting depends
+        // on `type_aware_forced`, hence the placement here.
+        for warning in config_warnings.to_report(type_aware_forced) {
+            print_and_flush_stdout(stdout, &format!("{}\n", render_report(&handler, warning)));
+        }
+
         let type_check =
             type_check_only || self.options.type_check || config_store.type_check_enabled();
         if type_check && !type_aware {
@@ -1806,6 +1809,16 @@ mod test {
     fn test_tsgolint_nested_config_type_aware() {
         Tester::new()
             .with_cwd("fixtures/cli/tsgolint_nested_type_aware".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `options` is not inherited from the root config, so `extends` is how a package picks up a
+    /// shared `typeAware`. End-to-end check of the recommended monorepo pattern.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware_from_extends() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware_extends".into())
             .test_and_snapshot(&[]);
     }
 

@@ -17066,23 +17066,23 @@
           "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.\nOnly supported in the root configuration file: it decides the exit code of the whole run.\nSetting it in a nested config warns and ignores it."
         },
         "reportUnusedDisableDirectives": {
-          "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nResolved per file: a nested config may set it for the files it governs, and inherits the\nroot value when left unset.",
+          "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`.",
           "allOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
             }
           ],
-          "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nResolved per file: a nested config may set it for the files it governs, and inherits the\nroot value when left unset."
+          "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`."
         },
         "respectEslintDisableDirectives": {
-          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nResolved per file: a nested config may set it for the files it governs, and inherits the\nroot value when left unset.",
+          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`.",
           "type": "boolean",
-          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nResolved per file: a nested config may set it for the files it governs, and inherits the\nroot value when left unset."
+          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`."
         },
         "typeAware": {
-          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nA nested config may set this option: it then applies to the files that config governs,\nand inherits the root value when left unset. The `--type-aware` CLI flag and the editor\nsetting apply to every file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nResolved from the config which governs each file, so a nested config may enable\ntype-aware linting for its own directory. It is *not* inherited from the root config:\nshare it with `extends`, which a child config can still override. The `--type-aware` CLI\nflag and the editor setting apply to every file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": "boolean",
-          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nA nested config may set this option: it then applies to the files that config governs,\nand inherits the root value when left unset. The `--type-aware` CLI flag and the editor\nsetting apply to every file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nResolved from the config which governs each file, so a nested config may enable\ntype-aware linting for its own directory. It is *not* inherited from the root config:\nshare it with `extends`, which a child config can still override. The `--type-aware` CLI\nflag and the editor setting apply to every file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         },
         "typeCheck": {
           "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\n`tsgolint` reports these diagnostics for a whole run rather than per directory, so\nenabling this in a nested config enables it for the whole run, and oxlint warns about it.\nIt belongs in the root configuration file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",

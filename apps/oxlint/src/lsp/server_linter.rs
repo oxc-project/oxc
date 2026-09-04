@@ -106,6 +106,9 @@ impl ServerLinterBuilder {
             }
         }
 
+        // The editor setting applies type-aware linting to every file; `options.typeAware` in a
+        // config only applies to the files that config governs.
+        let type_aware_forced = options.type_aware == Some(true);
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
         let loader = ConfigLoader::new(
             external_linter,
@@ -134,15 +137,17 @@ impl ServerLinterBuilder {
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
         let nested_configs = if options.use_nested_configs() {
-            self.create_nested_configs(
+            let (nested_configs, messages) = self.create_nested_configs(
                 &root_path,
                 &oxlintrc.path,
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
                 Some(root_uri.as_str()),
-                &mut client_messages,
-            )
+                type_aware_forced,
+            );
+            client_messages.extend(messages);
+            nested_configs
         } else {
             FxHashMap::default()
         };
@@ -199,9 +204,6 @@ impl ServerLinterBuilder {
             ..Default::default()
         };
 
-        // The editor setting applies type-aware linting to every file; `options.typeAware` in a
-        // config only applies to the files that config governs.
-        let type_aware_forced = options.type_aware == Some(true);
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
@@ -239,7 +241,16 @@ impl ServerLinterBuilder {
         {
             Ok(runner) => runner,
             Err(e) => {
+                // Falling back silently leaves the user with no type-aware diagnostics and no
+                // explanation, which in a monorepo usually means `oxlint-tsgolint` is missing from
+                // the workspace root.
                 warn!("Failed to initialize type-aware linting: {e}");
+                client_messages.push(ClientMessage {
+                    r#type: MessageType::ERROR,
+                    message: format!(
+                        "oxlint: type-aware linting is enabled but could not be started, continuing without it. {e}"
+                    ),
+                });
                 let linter =
                     Linter::new(lint_options, config_store_clone, external_linter.cloned())
                         .with_workspace_uri(Some(root_uri.as_str()));
@@ -342,8 +353,9 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
-        client_messages: &mut Vec<ClientMessage>,
-    ) -> FxHashMap<PathBuf, Config> {
+        type_aware_forced: bool,
+    ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
+        let mut client_messages = Vec::new();
         let config_paths = discover_configs_in_tree(root_path, base_config_path);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
@@ -387,13 +399,16 @@ impl ServerLinterBuilder {
             }
         }
 
-        for warning in warnings {
+        for warning in warnings.to_report(type_aware_forced) {
             warn!("{warning}");
             client_messages
                 .push(ClientMessage { r#type: MessageType::WARNING, message: warning.to_string() });
         }
 
-        build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
+        (
+            build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
+            client_messages,
+        )
     }
 
     #[expect(clippy::filetype_is_file)]
@@ -1205,15 +1220,17 @@ mod test {
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
         let base_config_path = get_file_path("fixtures/lsp/init_nested_configs/.oxlintrc.json");
-        let configs = builder.create_nested_configs(
-            &get_file_path("fixtures/lsp/init_nested_configs"),
-            &base_config_path,
-            &mut external_plugin_store,
-            &mut nested_ignore_patterns,
-            &mut extended_paths,
-            None,
-            &mut Vec::new(),
-        );
+        let configs = builder
+            .create_nested_configs(
+                &get_file_path("fixtures/lsp/init_nested_configs"),
+                &base_config_path,
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+                None,
+                false,
+            )
+            .0;
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
         configs_dirs.sort();
