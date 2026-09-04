@@ -1605,6 +1605,7 @@ export interface DummyRuleMap {
   "unicorn/no-useless-spread"?: RuleNoConfig;
   "unicorn/no-useless-switch-case"?: RuleNoConfig;
   "unicorn/no-useless-undefined"?: RuleNoConfig | [AllowWarnDeny, NoUselessUndefined];
+  "unicorn/no-xor-as-exponentiation"?: RuleNoConfig;
   "unicorn/no-zero-fractions"?: RuleNoConfig;
   "unicorn/number-literal-case"?: RuleNoConfig;
   "unicorn/numeric-separators-style"?: RuleNoConfig | [AllowWarnDeny, NumericSeparatorsStyleConfig];
