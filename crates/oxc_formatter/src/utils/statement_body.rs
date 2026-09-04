@@ -7,7 +7,7 @@ use crate::{
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments},
     },
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
@@ -115,11 +115,7 @@ pub fn write_trailing_comments_before(
         } else {
             write!(f, hard_line_break());
         }
-        f.context_mut().comments_mut().increment_printed_count();
-        write!(f, comment);
-        if comment.is_line() {
-            write!(f, hard_line_break());
-        }
+        write!(f, FormatCommentBeforeContent::new(comment));
     }
     // The own-line loop's breaks have already flushed a pending same-line line comment
     own_line.is_empty() && same_line.last().is_some_and(|comment| comment.is_line())
