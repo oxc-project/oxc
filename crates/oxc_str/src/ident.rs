@@ -542,6 +542,10 @@ pub type ArenaIdentHashMap<'alloc, V> =
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
 
+/// Arena-allocated hash set keyed by [`Ident`], using precomputed ident hash.
+pub type ArenaIdentHashSet<'alloc, 'ident> =
+    oxc_allocator::ArenaHashSet<'alloc, Ident<'ident>, IdentBuildHasher>;
+
 /// Creates an [`Ident<'static>`] for a string literal, evaluated at compile time.
 ///
 /// ```
