@@ -144,6 +144,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if func.r#async
+            && !func.generator
             && !func.is_typescript_syntax()
             && AsyncGeneratorExecutor::is_class_method_like_ancestor(ctx.parent())
         {
