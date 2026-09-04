@@ -199,7 +199,6 @@ import/no-absolute-path                                    |  62709
 import/no-amd                                              |  62606
 import/no-anonymous-default-export                         |      2
 import/no-commonjs                                         | 157903
-import/no-cycle                                            |      7
 import/no-default-export                                   |      7
 import/no-duplicates                                       |      7
 import/no-dynamic-require                                  |  62623

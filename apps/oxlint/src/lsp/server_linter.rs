@@ -1398,7 +1398,7 @@ mod test {
     #[test]
     fn test_cross_module_no_cycle() {
         Tester::new("fixtures/lsp/cross_module", json!({}))
-            .test_and_snapshot_single_file("dep-a.ts");
+            .test_and_snapshot_multiple_file(&["dep-a.ts", "dep-b.ts"]);
     }
 
     #[test]

@@ -16,6 +16,7 @@ use crate::rule::RuleFixMeta;
 use crate::{
     FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings, WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
+    config::plugins::plugin_display_name,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
@@ -23,7 +24,9 @@ use crate::{
 };
 
 mod host;
+mod project;
 pub use host::{ContextHost, ContextSubHost, ContextSubHostOptions};
+pub use project::{ProjectLintContext, ProjectModules, diagnostics_to_messages};
 
 /// Contains all of the state and context specific to this lint rule.
 ///
@@ -264,19 +267,20 @@ impl<'a> LintContext<'a> {
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
     fn add_diagnostic(&self, mut message: Message) {
-        if self.parent.disable_directives().contains(self.current_rule_name, message.span) {
+        let Some(error) = build_diagnostic(
+            message.error,
+            message.span,
+            RuleLabel {
+                plugin: self.current_plugin_name,
+                plugin_display: self.current_plugin_display_name,
+                rule: self.current_rule_name,
+            },
+            self.severity,
+            Some(self.parent.disable_directives()),
+        ) else {
             return;
-        }
-        message.error = message
-            .error
-            .with_error_code(self.current_plugin_display_name, self.current_rule_name)
-            .with_url(format!(
-                "{}/{}/{}.html",
-                WEBSITE_BASE_RULES_URL, self.current_plugin_name, self.current_rule_name
-            ));
-        if message.error.severity != self.severity {
-            message.error = message.error.with_severity(self.severity);
-        }
+        };
+        message.error = error;
 
         self.parent.push_diagnostic(message);
     }
@@ -551,5 +555,39 @@ impl<'a> LintContext<'a> {
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct RuleLabel {
+    plugin: &'static str,
+    plugin_display: &'static str,
+    rule: &'static str,
+}
+
+impl RuleLabel {
+    pub fn new(plugin: &'static str, rule: &'static str) -> Self {
+        Self { plugin, plugin_display: plugin_display_name(plugin), rule }
+    }
+}
+
+pub fn build_diagnostic(
+    error: OxcDiagnostic,
+    span: Span,
+    rule: RuleLabel,
+    severity: Severity,
+    disable_directives: Option<&DisableDirectives>,
+) -> Option<OxcDiagnostic> {
+    if let Some(directives) = disable_directives
+        && directives.contains(rule.rule, span)
+    {
+        None
+    } else {
+        Some(
+            error
+                .with_error_code(rule.plugin_display, rule.rule)
+                .with_url(format!("{}/{}/{}.html", WEBSITE_BASE_RULES_URL, rule.plugin, rule.rule))
+                .with_severity(severity),
+        )
     }
 }

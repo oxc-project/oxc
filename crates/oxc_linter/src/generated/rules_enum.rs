@@ -882,12 +882,18 @@ pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefin
 pub use crate::rules::vue::valid_next_tick::ValidNextTick as VueValidNextTick;
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
-    rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
+    context::{ContextHost, LintContext, ProjectLintContext},
+    rule::{
+        ProjectRule, Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented,
+        RuleRunner,
+    },
     timing::RuleTimingStat,
     utils::PossibleJestNode,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstTypesBitset;
+use rustc_hash::FxHashMap;
+use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub enum RuleEnum {
     ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle),
@@ -13319,6 +13325,15 @@ impl RuleEnum {
             timing_stat.expect("missing rule timing stat").time(|| self.run_dispatch(node, ctx));
         } else {
             self.run_dispatch(node, ctx);
+        }
+    }
+    pub(crate) fn run_on_project(
+        &self,
+        ctx: &ProjectLintContext<'_>,
+    ) -> Option<FxHashMap<PathBuf, Vec<OxcDiagnostic>>> {
+        match self {
+            Self::ImportNoCycle(rule) => Some(rule.run_on_project(ctx)),
+            _ => None,
         }
     }
     #[inline(never)]

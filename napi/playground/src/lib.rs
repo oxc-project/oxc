@@ -135,7 +135,7 @@ impl Oxc {
             self.build_semantic(&program, run_options, parser_options, &control_flow_options);
 
         // Phase 3: Run linter
-        let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
+        let linter_module_record = Arc::new(ModuleRecord::new(&path, 0, &module_record, &semantic));
         self.run_linter(
             run_options,
             &linter_options,
