@@ -35,12 +35,25 @@ pub const fn soft_line_break() -> Line {
 }
 
 /// A forced line break that is always printed.
+///
+/// Consecutive hard line breaks print as ONE newline:
+/// the printer only emits a newline when the current line holds content,
+/// so an element that ends its own line (a line comment, [block_indent]) may be followed by
+/// another `hard_line_break` without leaving a blank line.
+/// Emitters rely on this instead of tracking "did the previous element already break" (pinned by printer tests).
+///
+/// NOTE: Prettier's printer does not merge; `apps/oxfmt`'s `prettier_compat` mirrors the rule at the IR <-> Doc boundary.
+///
+/// Where the newline count IS the content, use [exact_line_breaks] or [literal_line_break] instead.
 #[inline]
 pub const fn hard_line_break() -> Line {
     Line::new(LineMode::Hard)
 }
 
 /// A forced empty line.
+///
+/// Merges like [hard_line_break] (never more than one blank line in a row),
+/// but a preceding `hard_line_break` does not absorb it: the blank line still prints.
 #[inline]
 pub const fn empty_line() -> Line {
     Line::new(LineMode::Empty)
