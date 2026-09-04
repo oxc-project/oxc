@@ -326,6 +326,12 @@ impl Linter {
         self.external_linter.is_some()
     }
 
+    /// Returns the list of tsgolint (type-aware) rule names that are configured.
+    /// These rules would be run if type-aware mode was enabled.
+    pub fn tsgolint_rules(&self) -> Vec<String> {
+        self.config.tsgolint_rules()
+    }
+
     /// # Panics
     /// Panics if running in debug mode and the number of diagnostics does not match when running with/without optimizations
     pub fn run<'a>(
