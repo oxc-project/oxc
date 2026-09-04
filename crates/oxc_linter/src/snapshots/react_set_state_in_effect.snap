@@ -3,14 +3,14 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders
-   ╭─[set_state_in_effect.tsx:6:5]
+   ╭─[set_state_in_effect.tsx:5:3]
  4 │   const [state, setState] = useState(0);
  5 │   useEffect(() => {
    ·   ────┬────
-   ·       ╰── This is the containing effect
+   ·       ╰── This effect triggers a synchronous state update
  6 │     setState(s => s + 1);
    ·     ────┬───
-   ·         ╰── Avoid calling setState() directly within an effect
+   ·         ╰── The state update occurs here
  7 │   });
    ╰────
   help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
