@@ -1828,6 +1828,7 @@ version = "0.148.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_parser",
  "oxc_span",
  "oxc_syntax",
 ]
@@ -1881,6 +1882,7 @@ dependencies = [
  "insta",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_visit",
  "oxc_data_structures",
  "oxc_ecmascript",
  "oxc_index",

@@ -8,6 +8,7 @@ use std::marker::PhantomData;
 use std::{borrow::Cow, cmp, slice};
 
 use oxc_ast::ast::*;
+use oxc_ast_visit::CommentAttachments;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_ecmascript::with_number_literal;
 use oxc_index::IndexVec;
@@ -17,6 +18,7 @@ use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
+    node::NodeId,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -34,7 +36,7 @@ mod sourcemap_builder;
 mod str;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
-use comment::CommentsMap;
+use comment::{AttachedComments, CommentsMap};
 use operator::Operator;
 #[cfg(feature = "sourcemap")]
 use sourcemap_builder::SourcemapBuilder;
@@ -127,6 +129,14 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+    /// NodeId-based comment ownership, present only for the opt-in build path.
+    attached_comments: Option<AttachedComments<'a>>,
+    /// Parser comments referenced by `attached_comments`.
+    source_comments: Option<&'a [Comment]>,
+    /// Outermost NodeId boundary currently being printed. Enum wrappers and
+    /// their concrete variants share an ID, so only the outer boundary owns
+    /// comment emission.
+    current_node_id: Option<NodeId>,
     has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
@@ -196,6 +206,9 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            attached_comments: None,
+            source_comments: None,
+            current_node_id: None,
             has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),
@@ -253,12 +266,36 @@ impl<'a> Codegen<'a> {
     ///
     /// A source map will be generated if [`CodegenOptions::source_map_path`] is set.
     #[must_use]
-    pub fn build(mut self, program: &Program<'a>) -> CodegenReturn<'a> {
+    pub fn build(self, program: &Program<'a>) -> CodegenReturn<'a> {
+        self.build_impl(program)
+    }
+
+    /// Print a [`Program`] using its NodeId-based comment attachment sidecar.
+    ///
+    /// Claims are destructive within this codegen run, while the immutable
+    /// sidecar remains reusable. It must have been built from `program.comments`
+    /// and rehomed after any traversal which reassigned the program's node IDs.
+    #[must_use]
+    pub fn build_with_comment_attachments(
+        mut self,
+        program: &'a Program<'a>,
+        attachments: &'a CommentAttachments,
+    ) -> CodegenReturn<'a> {
+        if self.options.comments != CommentOptions::disabled() {
+            self.source_comments = Some(&program.comments);
+            self.attached_comments = Some(AttachedComments::new(attachments));
+        }
+        self.build_impl(program)
+    }
+
+    fn build_impl(mut self, program: &Program<'a>) -> CodegenReturn<'a> {
         self.quote = if self.options.single_quote { Quote::Single } else { Quote::Double };
         self.source_text = Some(program.source_text);
         self.indent = self.options.initial_indent;
         self.code.reserve(program.source_text.len());
-        self.build_comments(&program.comments);
+        if self.attached_comments.is_none() {
+            self.build_comments(&program.comments);
+        }
         #[cfg(feature = "sourcemap")]
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
@@ -427,8 +464,56 @@ impl<'a> Codegen<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct NodePrintBoundary {
+    node_id: NodeId,
+    previous_node_id: Option<NodeId>,
+    comment_start: usize,
+    comment_end: usize,
+}
+
 // Private APIs
 impl<'a> Codegen<'a> {
+    /// Enter the outermost print wrapper for `node_id`.
+    ///
+    /// AST enums delegate to concrete variants with the same NodeId. Keeping
+    /// the previous ID in the caller's stack frame makes those inner wrappers
+    /// free of comment work while retaining the concrete node's punctuation
+    /// in the outer boundary.
+    #[inline]
+    pub(crate) fn begin_node(&mut self, node_id: NodeId) -> Option<NodePrintBoundary> {
+        if self.attached_comments.is_none()
+            || node_id == NodeId::DUMMY
+            || self.current_node_id == Some(node_id)
+        {
+            return None;
+        }
+        let previous_node_id = self.current_node_id.replace(node_id);
+        let comment_range = self
+            .attached_comments
+            .as_ref()
+            .and_then(|comments| comments.comment_range(node_id))
+            .unwrap_or(0..0);
+        if !comment_range.is_empty() {
+            self.print_attached_comments_before(comment_range.clone());
+        }
+        Some(NodePrintBoundary {
+            node_id,
+            previous_node_id,
+            comment_start: comment_range.start,
+            comment_end: comment_range.end,
+        })
+    }
+
+    #[inline]
+    pub(crate) fn end_node(&mut self, boundary: NodePrintBoundary) {
+        debug_assert_eq!(self.current_node_id, Some(boundary.node_id));
+        if boundary.comment_start != boundary.comment_end {
+            self.print_attached_comments_after(boundary.comment_start..boundary.comment_end);
+        }
+        self.current_node_id = boundary.previous_node_id;
+    }
+
     #[inline]
     fn code(&self) -> &CodeBuffer {
         &self.code
@@ -647,9 +732,13 @@ impl<'a> Codegen<'a> {
                 self.print_block_statement(stmt, ctx);
                 self.print_soft_newline();
             }
-            Statement::EmptyStatement(_) => {
+            Statement::EmptyStatement(stmt) => {
+                let boundary = self.begin_node(stmt.node_id());
                 self.print_semicolon();
                 self.print_soft_newline();
+                if let Some(boundary) = boundary {
+                    self.end_node(boundary);
+                }
             }
             stmt => {
                 // The statement's first token inserts a hard space itself (via
@@ -663,11 +752,21 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        let single_line = stmt.body.is_empty() && !self.has_orphan_comments_before(stmt.span.end);
+        let boundary = self.begin_node(stmt.node_id());
+        let has_attached_comments_inside = self.has_attached_comments_inside(stmt.node_id());
+        let single_line = stmt.body.is_empty()
+            && !has_attached_comments_inside
+            && !self.has_orphan_comments_before(stmt.span.end);
         self.print_curly_braces(stmt.span, single_line, |p| {
+            if has_attached_comments_inside {
+                p.print_attached_comments_inside_body(stmt.node_id());
+            }
             p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
+        if let Some(boundary) = boundary {
+            self.end_node(boundary);
+        }
     }
 
     /// Print `stmts`, flushing orphan comments before each and at `scope_end`.
@@ -723,6 +822,7 @@ impl<'a> Codegen<'a> {
             && let expr = stmt.expression.without_parentheses()
             && let Expression::StringLiteral(string) = expr
         {
+            let boundary = self.begin_node(stmt.node_id());
             // Mirror `ExpressionStatement`'s printer, which this path stands in for
             self.print_comments_at(stmt.span.start);
             if self.indent > 0 || self.print_next_indent_as_space {
@@ -737,6 +837,9 @@ impl<'a> Codegen<'a> {
                 self.print_ascii_byte(b')');
             }
             self.print_semicolon_after_statement();
+            if let Some(boundary) = boundary {
+                self.end_node(boundary);
+            }
         } else {
             first.print(self, ctx);
         }

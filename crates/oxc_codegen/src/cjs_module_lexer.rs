@@ -54,7 +54,7 @@ pub fn try_print_require_call(p: &mut Codegen<'_>, call: &CallExpression<'_>) ->
         return false;
     };
     p.print_ascii_byte(b'(');
-    p.print_string_literal(str_lit, false);
+    p.print_string_literal_without_comments(str_lit, false);
     p.add_source_mapping_end(call.span);
     p.print_ascii_byte(b')');
     true
@@ -88,7 +88,7 @@ pub fn try_print_define_property_call(
             p.print_soft_space();
         }
         if i == 1 {
-            p.print_string_literal(name, false);
+            p.print_string_literal_without_comments(name, false);
         } else {
             arg.print(p, ctx);
         }
@@ -125,7 +125,7 @@ pub fn try_print_exports_computed_target(
         p.print_str("?.");
     }
     p.print_ascii_byte(b'[');
-    p.print_string_literal(key, false);
+    p.print_string_literal_without_comments(key, false);
     p.print_ascii_byte(b']');
     true
 }
@@ -161,6 +161,6 @@ pub fn try_print_equality_string(
     if !matches!(str_lit.value.as_str(), "default" | "__esModule") {
         return false;
     }
-    p.print_string_literal(str_lit, false);
+    p.print_string_literal_without_comments(str_lit, false);
     true
 }

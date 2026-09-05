@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
 use oxc_ast::{AstKind, ast::*};
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{CommentAttachmentCollector, CommentAttachments, Visit};
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -104,6 +104,10 @@ pub struct SemanticBuilder<'a> {
     stats: Option<Stats>,
     excess_capacity: f64,
 
+    /// Whether to collect the separate comment-attachment sidecar during traversal.
+    build_comment_attachments: bool,
+    comment_node_ids: CommentNodeIds<'a>,
+
     /// Should enum member values be evaluated?
     enum_eval: bool,
 
@@ -130,6 +134,41 @@ pub struct SemanticBuilderReturn<'a> {
     pub semantic: Semantic<'a>,
     /// Diagnostics collected during semantic analysis.
     pub diagnostics: Diagnostics,
+    /// Comment ownership sidecar, when requested with
+    /// [`SemanticBuilder::with_comment_attachments`].
+    pub comment_attachments: Option<CommentAttachments>,
+}
+
+enum CommentNodeIds<'a> {
+    None,
+    Attach(CommentAttachmentCollector<'a>),
+    Remap(CommentHostRemapper),
+}
+
+struct CommentHostRemapper {
+    host_presence: Box<[u64]>,
+    remaps: Vec<(NodeId, NodeId)>,
+}
+
+impl CommentHostRemapper {
+    fn new(attachments: &CommentAttachments) -> Self {
+        Self { host_presence: attachments.host_presence().into(), remaps: Vec::new() }
+    }
+
+    #[inline]
+    fn record(&mut self, old_id: NodeId, new_id: NodeId, is_program: bool) {
+        if !is_program && old_id == NodeId::DUMMY {
+            return;
+        }
+        let index = old_id.index();
+        if self
+            .host_presence
+            .get(index / u64::BITS as usize)
+            .is_some_and(|word| word & (1 << (index % u64::BITS as usize)) != 0)
+        {
+            self.remaps.push((old_id, new_id));
+        }
+    }
 }
 
 impl Default for SemanticBuilder<'_> {
@@ -161,6 +200,8 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            build_comment_attachments: false,
+            comment_node_ids: CommentNodeIds::None,
             enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
@@ -230,6 +271,17 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_build_nodes(mut self, yes: bool) -> Self {
         self.node_store.set_build_nodes(yes);
+        self
+    }
+
+    /// Enable or disable building a separate comment-attachment sidecar during
+    /// semantic traversal.
+    ///
+    /// Disabled by default. When enabled, the sidecar is returned in
+    /// [`SemanticBuilderReturn::comment_attachments`].
+    #[must_use]
+    pub fn with_comment_attachments(mut self, yes: bool) -> Self {
+        self.build_comment_attachments = yes;
         self
     }
 
@@ -304,9 +356,39 @@ impl<'a> SemanticBuilder<'a> {
     /// Finalize the builder.
     ///
     /// # Panics
-    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+    pub fn build(self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+        self.build_impl(program, None)
+    }
+
+    /// Rebuild semantic data and update an existing comment sidecar to the
+    /// node IDs assigned by this traversal.
+    ///
+    /// This performs no additional AST traversal. Surviving comment hosts are
+    /// rehomed to their new IDs; comments on hosts not encountered are
+    /// discarded.
+    /// [`SemanticBuilderReturn::comment_attachments`] is `None`; the supplied
+    /// sidecar is updated in place.
+    pub fn build_and_rehome_comments(
+        self,
+        program: &'a Program<'a>,
+        attachments: &mut CommentAttachments,
+    ) -> SemanticBuilderReturn<'a> {
+        self.build_impl(program, Some(attachments))
+    }
+
+    fn build_impl(
+        mut self,
+        program: &'a Program<'a>,
+        existing_attachments: Option<&mut CommentAttachments>,
+    ) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
+        if let Some(attachments) = existing_attachments.as_deref() {
+            self.comment_node_ids = CommentNodeIds::Remap(CommentHostRemapper::new(attachments));
+        } else if self.build_comment_attachments && !program.comments.is_empty() {
+            self.comment_node_ids =
+                CommentNodeIds::Attach(CommentAttachmentCollector::new(&program.comments));
+        }
         #[cfg(feature = "jsdoc")]
         {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
@@ -372,6 +454,20 @@ impl<'a> SemanticBuilder<'a> {
         self.unused_labels.assert_empty();
 
         let node_count = self.node_store.node_count();
+        let comment_attachments =
+            match std::mem::replace(&mut self.comment_node_ids, CommentNodeIds::None) {
+                CommentNodeIds::Attach(collector) => Some(collector.finish(node_count as usize)),
+                CommentNodeIds::Remap(remapper) => {
+                    if let Some(attachments) = existing_attachments {
+                        attachments.remap_node_ids(&remapper.remaps, node_count as usize);
+                    }
+                    None
+                }
+                CommentNodeIds::None if self.build_comment_attachments => {
+                    Some(CommentAttachments::empty(node_count as usize))
+                }
+                CommentNodeIds::None => None,
+            };
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
@@ -389,7 +485,11 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(not(feature = "cfg"))]
             cfg: (),
         };
-        SemanticBuilderReturn { semantic, diagnostics: self.errors.into_inner() }
+        SemanticBuilderReturn {
+            semantic,
+            diagnostics: self.errors.into_inner(),
+            comment_attachments,
+        }
     }
 
     /// Push a Syntax Error
@@ -438,7 +538,18 @@ impl<'a> SemanticBuilder<'a> {
 
         // 1. Standalone node-id increment.
         let node_id = self.node_store.alloc_node_id();
-        kind.set_node_id(node_id);
+        match &mut self.comment_node_ids {
+            CommentNodeIds::Attach(collector) => {
+                kind.set_node_id(node_id);
+                collector.enter_node(kind);
+            }
+            CommentNodeIds::Remap(remapper) => {
+                let old_node_id = kind.node_id();
+                kind.set_node_id(node_id);
+                remapper.record(old_node_id, node_id, false);
+            }
+            CommentNodeIds::None => kind.set_node_id(node_id),
+        }
         let parent_node_id = self.node_store.current_node_id;
         self.node_store.current_node_id = node_id;
 
@@ -864,6 +975,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     )]
     #[inline(always)]
     fn leave_node(&mut self, kind: AstKind<'a>) {
+        if let CommentNodeIds::Attach(collector) = &mut self.comment_node_ids {
+            collector.leave_node();
+        }
         if self.check_syntax_error {
             checker::check(kind, self);
         }
@@ -889,7 +1003,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // 1. Standalone node-id increment: `Program` is always `NodeId::ROOT`.
         let node_id = self.node_store.alloc_node_id();
         debug_assert_eq!(node_id, NodeId::ROOT);
-        kind.set_node_id(node_id);
+        match &mut self.comment_node_ids {
+            CommentNodeIds::Attach(collector) => {
+                kind.set_node_id(node_id);
+                collector.enter_node(kind);
+            }
+            CommentNodeIds::Remap(remapper) => {
+                let old_node_id = kind.node_id();
+                kind.set_node_id(node_id);
+                remapper.record(old_node_id, node_id, true);
+            }
+            CommentNodeIds::None => kind.set_node_id(node_id),
+        }
         self.node_store.current_node_id = node_id;
         // 2 & 3. Either the full node store or the ancestry stack — never both.
         #[cfg(feature = "cfg")]
