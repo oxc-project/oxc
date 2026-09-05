@@ -138,7 +138,8 @@
           "tagNamePreference": {}
         },
         "vitest": {
-          "typecheck": false
+          "typecheck": false,
+          "vitestImports": []
         },
         "jest": {
           "version": null
@@ -17250,7 +17251,8 @@
         },
         "vitest": {
           "default": {
-            "typecheck": false
+            "typecheck": false,
+            "vitestImports": []
           },
           "allOf": [
             {
@@ -19661,6 +19663,15 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios."
+        },
+        "vitestImports": {
+          "description": "Import sources whose exported `test`/`describe`/`it`/`expect` bindings\nshould be treated as Vitest functions, in addition to the built-in\nVitest import sources (`vitest`, `vite-plus/test`, `@effect/vitest`).\n\nUseful when tests import their test functions from a custom fixture or\nwrapper module instead of `vitest` directly, for example:\n\n```jsonc\n{\n\"settings\": {\n\"vitest\": {\n\"vitestImports\": [\"@/test/fixtures\"]\n}\n}\n}\n```\n\nSee the [custom fixtures](https://github.com/vitest-dev/eslint-plugin-vitest#custom-fixtures)\ndocumentation of `eslint-plugin-vitest`. Note that regular expressions\nare not supported yet, only exact module names.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Import sources whose exported `test`/`describe`/`it`/`expect` bindings\nshould be treated as Vitest functions, in addition to the built-in\nVitest import sources (`vitest`, `vite-plus/test`, `@effect/vitest`).\n\nUseful when tests import their test functions from a custom fixture or\nwrapper module instead of `vitest` directly, for example:\n\n```jsonc\n{\n\"settings\": {\n\"vitest\": {\n\"vitestImports\": [\"@/test/fixtures\"]\n}\n}\n}\n```\n\nSee the [custom fixtures](https://github.com/vitest-dev/eslint-plugin-vitest#custom-fixtures)\ndocumentation of `eslint-plugin-vitest`. Note that regular expressions\nare not supported yet, only exact module names."
         }
       },
       "markdownDescription": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest)'s\nconfiguration for a full reference."

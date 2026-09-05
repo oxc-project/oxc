@@ -7436,5 +7436,28 @@ export interface VitestPluginSettings {
    * to accommodate TypeScript type checking scenarios.
    */
   typecheck?: boolean;
+  /**
+   * Import sources whose exported `test`/`describe`/`it`/`expect` bindings
+   * should be treated as Vitest functions, in addition to the built-in
+   * Vitest import sources (`vitest`, `vite-plus/test`, `@effect/vitest`).
+   *
+   * Useful when tests import their test functions from a custom fixture or
+   * wrapper module instead of `vitest` directly, for example:
+   *
+   * ```jsonc
+   * {
+   * "settings": {
+   * "vitest": {
+   * "vitestImports": ["@/test/fixtures"]
+   * }
+   * }
+   * }
+   * ```
+   *
+   * See the [custom fixtures](https://github.com/vitest-dev/eslint-plugin-vitest#custom-fixtures)
+   * documentation of `eslint-plugin-vitest`. Note that regular expressions
+   * are not supported yet, only exact module names.
+   */
+  vitestImports?: string[];
   [k: string]: unknown | undefined;
 }
