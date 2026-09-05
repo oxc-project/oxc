@@ -31,7 +31,7 @@ fn test_break_optimization() {
     test("f:{if(a){break f;}else{c();}break f;}", "f:{if(a)break f;c();break f}"); // f:a||c();
     test("f:{if(a)break f;if(b)break f;break f;}", "f:{a||b;break f}"); // f:a||b;
     test("f:{if(a&&b){break f;}else{break f;}break f;}", "f:{a&&b;break f}"); // f:a&&b;
-    test("f:{if(a){break f;}else if(b){break f;}break f;}", "f:{if(a)break f;b;break f}"); // f:a
+    test("f:{if(a){break f;}else if(b){break f;}break f;}", "f:{a||b;break f}"); // f:a||b;
     test_same("f:{if(a){b();break f;}break f;}"); // f:a&&b();
     test("f:{if(a){break f;}else{b();break f;}break f;}", "f:{if(a)break f;b();break f}");
     test_same("f:{if(a){b();break g;}break f;}");
@@ -350,12 +350,12 @@ fn test_for_continue_optimization() {
     ); // for(x=0;x<y;x++)g:a();
     test(
         "for(x=0;x<y;x++){g:{if(a()){continue;}else{continue;} continue;}}",
-        "for(x=0;x<y;x++)g:{if(a())continue;continue;}",
+        "for(x=0;x<y;x++)g:{a();continue;}",
     ); // for(x=0;x<y;x++)g:a();
     test(
         "for(x=0;x<y;x++){g:{a();if(b()){continue;}else{continue;} continue;}}",
         "for(x=0;x<y;x++)g:{a(),b();continue}",
-    );
+    ); // for(x=0;x<y;x++)g:a(),b();
 
     test("for(x=0;x<y;x++){if(a){b();continue;}continue;}", "for(x=0;x<y;x++)if(a){b();continue}"); // for(x=0;x<y;x++)a&&b();
     test(
