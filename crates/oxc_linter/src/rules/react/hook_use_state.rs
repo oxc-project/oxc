@@ -149,6 +149,10 @@ impl Rule for HookUseState {
             return;
         };
 
+        if value_variable_name.starts_with('_') || setter_variable_name.starts_with('_') {
+            return;
+        }
+
         let Some((lowercase_prefix, suffix)) =
             split_leading_lowercase(value_variable_name.as_str())
         else {
@@ -222,6 +226,42 @@ fn test() {
             import React from 'react';
             export default function useColor() {
                 return React.useState('');
+            }",
+            None,
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useId() {
+                const [_, id] = useState(1);
+                return id;
+            }",
+            None,
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useId() {
+                const [id, _] = useState(1);
+                return id;
+            }",
+            None,
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useId() {
+                const [_unusedValue, id] = useState(1);
+                return id;
+            }",
+            None,
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useId() {
+                const [id, _unusedSetter] = useState(1);
+                return id;
             }",
             None,
         ),
