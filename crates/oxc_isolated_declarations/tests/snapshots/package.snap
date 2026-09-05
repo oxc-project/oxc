@@ -1,0 +1,33 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/json/package.json
+---
+```
+==================== .D.TS ====================
+
+declare const _default: {
+	name: string;
+	type: string;
+	version: string;
+	count: number;
+	negative: number;
+	flag: boolean;
+	nothing: null;
+	keywords: string[];
+	mixed: (number | string | boolean)[];
+	empty: never[];
+	objects: {
+		x: number;
+	}[];
+	nested: {
+		deep: {
+			value: number;
+		};
+		list: {
+			z: number;
+		}[];
+	};
+	"with-dash": string;
+	"123number": string;
+};
+export default _default;
