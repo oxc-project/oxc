@@ -922,34 +922,54 @@ impl RestrictedPattern {
         };
 
         let case_insensitive = !self.case_sensitive.unwrap_or(false);
+        let name =
+            if case_insensitive { name.cow_to_ascii_lowercase() } else { Cow::Borrowed(name) };
+        let mut any_whitelisted = false;
 
-        let mut decision = GlobResult::None;
-
-        for raw_pat in groups {
-            let (negated, pat) = match raw_pat.strip_prefix('!') {
-                Some(rest) => (true, rest),
-                None => (false, raw_pat.as_str()),
-            };
-
-            // roughly based on https://github.com/BurntSushi/ripgrep/blob/6dfaec03/crates/ignore/src/gitignore.rs#L436-L516
-            let pat = if pat.contains('/') {
-                Cow::Borrowed(pat)
-            } else {
-                Cow::Owned(format!("**/{pat}"))
-            };
-
-            let (pat, name) = if case_insensitive {
-                (pat.cow_to_ascii_lowercase(), name.cow_to_ascii_lowercase())
-            } else {
-                (pat, name.into())
-            };
-
-            if fast_glob::glob_match(pat.as_ref(), name.as_ref()) {
-                decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
+        // Gitignore patterns also apply to parent directories. Evaluate each module path prefix
+        // separately so a later negation cannot re-include a child of an excluded parent.
+        for end in
+            name.match_indices('/').map(|(index, _)| index).chain(std::iter::once(name.len()))
+        {
+            let prefix = &name[..end];
+            if prefix.is_empty() {
+                continue;
             }
+
+            let basename = prefix.rsplit('/').next().unwrap_or(prefix);
+            let mut decision = GlobResult::None;
+
+            for raw_pat in groups {
+                let (negated, pat) = match raw_pat.strip_prefix('!') {
+                    Some(rest) => (true, rest),
+                    None => (false, raw_pat.as_str()),
+                };
+                if pat.is_empty() {
+                    continue;
+                }
+
+                let pat = if case_insensitive {
+                    pat.cow_to_ascii_lowercase()
+                } else {
+                    Cow::Borrowed(pat)
+                };
+                // `fast_glob` treats leading bangs as its own negation syntax. The first bang was
+                // already consumed above, so any remaining one is part of the pattern.
+                let pat = if pat.starts_with('!') { Cow::Owned(format!(r"\{pat}")) } else { pat };
+                let candidate = if pat.contains('/') { prefix } else { basename };
+
+                if fast_glob::glob_match(pat.as_ref(), candidate) {
+                    decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
+                }
+            }
+
+            if matches!(decision, GlobResult::Found) {
+                return GlobResult::Found;
+            }
+            any_whitelisted |= matches!(decision, GlobResult::Whitelist);
         }
 
-        decision
+        if any_whitelisted { GlobResult::Whitelist } else { GlobResult::None }
     }
 
     fn get_regex_result(&self, name: &str) -> bool {
@@ -2348,6 +2368,27 @@ fn test() {
         ("import foo from 'foo';", Some(serde_json::json!([{"paths": [],},]))),
         ("import foo from 'foo';", Some(serde_json::json!([{"patterns": [],},]))),
         ("import foo from 'foo';", Some(serde_json::json!([{"paths": [], "patterns": [],},]))),
+        (
+            r#"import allowed from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo", "!foo", "!foo/bar"] }] }])),
+        ),
+        (
+            r#"import literalBang from "!foo";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["*", "!!foo"] }] }])),
+        ),
+        (r#"import emptyPattern from "/foo";"#, Some(serde_json::json!([{ "patterns": [""] }]))),
+        (
+            r#"import caseSensitive from "foo/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["FOO"], "caseSensitive": true }] }]),
+            ),
+        ),
+        (
+            r#"import { allowed } from "foo/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "allowImportNames": ["allowed"] }] }]),
+            ),
+        ),
     ];
 
     let mut fail = vec![
@@ -2358,13 +2399,28 @@ fn test() {
             r#"import withPaths from "foo/bar";"#,
             Some(serde_json::json!([{ "paths": ["foo/bar"] }])),
         ),
-        // (
-        //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
-        // ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        ),
         (
             r#"import withPatterns from "foo/bar";"#,
             Some(serde_json::json!([{ "patterns": ["bar"] }])),
+        ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo", "!foo/bar"] }] }])),
+        ),
+        (
+            r#"import caseInsensitive from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["FOO"] }] }])),
+        ),
+        (r#"export * from "foo/bar";"#, Some(serde_json::json!([{ "patterns": ["foo"] }]))),
+        (
+            r#"import { restricted } from "foo/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "importNames": ["restricted"] }] }]),
+            ),
         ),
         (
             r#"import withPatterns from "foo/baz";"#,
