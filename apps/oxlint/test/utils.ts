@@ -240,10 +240,15 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
   // `Finished in 123ms on 4 files with 10 rules using 2 threads.`
   // `Finished in 1.23s on 1 file using 8 threads.`
   // `Finished in 456us on 2 files with 5 rules using 4 threads.`
-  lines[lines.length - 1] = lines[lines.length - 1].replace(
-    /^Finished in \d+(?:\.\d+)?(?:s|ms|us|ns) on (\d+) file(s?) (?:with (\d+) rule(?:s?) )?using \d+ threads.$/,
-    (_match, filesCount, filePlural, rulesCount) =>
-      `Finished in Xms on ${filesCount} file${filePlural}${rulesCount ? ` with ${rulesCount} rules` : ""} using X threads.`,
+  lines = lines.map((line) =>
+    line
+      .replace(
+        /^Finished in \d+(?:\.\d+)?(?:s|ms|us|ns) on (\d+) file(s?) (?:with (\d+) rule(?:s?) )?using \d+ threads.$/,
+        (_match, filesCount, filePlural, rulesCount) =>
+          `Finished in Xms on ${filesCount} file${filePlural}${rulesCount ? ` with ${rulesCount} rules` : ""} using X threads.`,
+      )
+      .replace(/\b\d+\.\d{3}(?=\s+\d+\.\d%\s+\d+\s+(?:native|type-aware|js-plugin)$)/, "X.XXX")
+      .replace(/\b\d+\.\d%(?=\s+\d+\s+(?:native|type-aware|js-plugin)$)/, "X.X%"),
   );
 
   // Remove lines from stack traces which are outside `fixtures` directory.
