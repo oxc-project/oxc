@@ -111,13 +111,24 @@ use crate::{
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
+//
 // Length is constrained by 2 factors:
 // 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
-// https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//    https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//
+// On 64-bit systems, the limit is 256 bytes below `u32::MAX` rather than `u32::MAX` itself:
+//
+// 1. `oxc_lexer` will require source text to be followed by 64 bytes of padding.
+//    This means *padded* length can fit in a `u32`.
+//    256 instead of 64 to leave headroom, in case the padding requirement expands in future.
+// 2. Counts of tokens, comments and errors are all bounded by source length plus a small constant,
+//    so they can be stored as `u32`s without any possibility of overflow.
+// 3. No real `Span` can have `start` or `end` of `u32::MAX`, so such a `Span` can be used as a sentinel.
+//    `oxc_transformer`'s styled-components plugin relies on this.
 pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
-    u32::MAX as usize
+    u32::MAX as usize - 256
 } else {
     // 32-bit or 16-bit systems
     isize::MAX as usize

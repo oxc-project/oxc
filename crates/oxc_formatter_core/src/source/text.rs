@@ -12,7 +12,8 @@ use oxc_span::{GetSpan, Span};
 /// This is the only hard prerequisite for any consumer:
 /// - `u32` means byte offsets, not UTF-16 code units or `char` indices
 /// - `u32` is the oxc-wide convention
-///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `u32::MAX` bytes
+///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `MAX_LEN` bytes
+///     (which is less than `u32::MAX`)
 ///   - so casting a `usize` offset down to `u32` never truncates for parsed sources)
 #[derive(Debug, Clone, Copy)]
 pub struct SourceText<'a> {
