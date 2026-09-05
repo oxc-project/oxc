@@ -2,12 +2,28 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* postcss-simple-vars: $var declarations and references (auto-enabled for Css) */
+/* postcss-simple-vars: $var declarations and references (Css only; a typed node for layout, not an option) */
 $primary: red;
 $breakpoint-md: 62em;
 $padding: 10px 20px;
 $important: red !important;
 $brand: sandstone.10;
+$typed-tail-comment: red /* keep typed tail */;
+
+/* A $var declaration keeps Css's <any-value> raw fallback.
+   `$raw-close` and `$raw-paren` DIVERGE from Prettier:
+   textual substitution makes raw bytes semantic
+   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+$raw-close: */;
+$raw-tail-comment: */ /* keep raw tail */;
+$raw-selector: .foo > bar;
+$raw-bang: 1px !foo;
+$raw-paren: (
+    "text": $light-100,
+
+
+    "background": $dark-300
+);
 
 .demo {
   color: $primary;
@@ -34,12 +50,28 @@ $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-ser
 ------------------
 { printWidth: 80 }
 ------------------
-/* postcss-simple-vars: $var declarations and references (auto-enabled for Css) */
+/* postcss-simple-vars: $var declarations and references (Css only; a typed node for layout, not an option) */
 $primary: red;
 $breakpoint-md: 62em;
 $padding: 10px 20px;
 $important: red !important;
 $brand: sandstone.10;
+$typed-tail-comment: red /* keep typed tail */;
+
+/* A $var declaration keeps Css's <any-value> raw fallback.
+   `$raw-close` and `$raw-paren` DIVERGE from Prettier:
+   textual substitution makes raw bytes semantic
+   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+$raw-close: */;
+$raw-tail-comment: */ /* keep raw tail */;
+$raw-selector: .foo > bar;
+$raw-bang: 1px !foo;
+$raw-paren: (
+    "text": $light-100,
+
+
+    "background": $dark-300
+);
 
 .demo {
   color: $primary;
@@ -71,12 +103,28 @@ $fontFamily:
 -------------------
 { printWidth: 100 }
 -------------------
-/* postcss-simple-vars: $var declarations and references (auto-enabled for Css) */
+/* postcss-simple-vars: $var declarations and references (Css only; a typed node for layout, not an option) */
 $primary: red;
 $breakpoint-md: 62em;
 $padding: 10px 20px;
 $important: red !important;
 $brand: sandstone.10;
+$typed-tail-comment: red /* keep typed tail */;
+
+/* A $var declaration keeps Css's <any-value> raw fallback.
+   `$raw-close` and `$raw-paren` DIVERGE from Prettier:
+   textual substitution makes raw bytes semantic
+   (DIVERGENCES.md "postcss-simple-var-raw-verbatim"). */
+$raw-close: */;
+$raw-tail-comment: */ /* keep raw tail */;
+$raw-selector: .foo > bar;
+$raw-bang: 1px !foo;
+$raw-paren: (
+    "text": $light-100,
+
+
+    "background": $dark-300
+);
 
 .demo {
   color: $primary;
