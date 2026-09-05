@@ -979,6 +979,18 @@ mod test {
     }
 
     #[test]
+    // https://github.com/oxc-project/oxc/issues/23182
+    fn ignore_patterns_nested_config_in_ignored_dir() {
+        // A root config's `ignorePatterns` that excludes a directory must keep that
+        // directory ignored even when it contains its own nested oxlint config.
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/cli/ignore_patterns_nested_config_in_ignored_dir".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
     fn ignore_patterns_with_symlink() {
         let args1 = &[];
         let args2 = &["."];
