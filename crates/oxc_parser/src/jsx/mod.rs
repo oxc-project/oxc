@@ -170,14 +170,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // In case of a fatal error in `parse_jsx_identifier`, `name` is an empty string,
         // so `!contains_dash` check must be first to avoid a panic in `name.as_bytes()[0]`.
         //
-        // The identifier has already been validated by the parser, so for ASCII characters
-        // we know it can only be `a-z`, `A-Z`, `_` or `$`.
-        // Use a fast path for ASCII to avoid expensive Unicode operations in the common case.
+        // The identifier has already been validated by `parse_jsx_identifier`,
+        // so for ASCII characters we know it can only be `a-z`, `A-Z`, `_` or `$`.
+        // The 3-arm match below compiles down to a single `cmp` instruction.
+        // https://godbolt.org/z/jq3Gd7YrP
         let name = identifier.name.as_str();
         let is_reference = !contains_dash // Exclude hyphenated custom elements
             && match name.as_bytes()[0] {
-                b if b.is_ascii() => !b.is_ascii_lowercase(), // Matches A-Z, _, $
-                _ => true, // Non-ASCII characters are always treated as references
+                // Non-ASCII characters are always treated as references
+                b if !b.is_ascii() => true,
+                // Matches A-Z, _, $
+                b if b < b'a' => true,
+                // Matches a-z
+                _ => false
             };
 
         if is_reference {
