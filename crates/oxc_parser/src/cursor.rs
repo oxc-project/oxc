@@ -11,7 +11,6 @@ use crate::{
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
-#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,

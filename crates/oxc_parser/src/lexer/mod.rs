@@ -47,7 +47,7 @@ pub use token::Token;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
@@ -57,7 +57,7 @@ pub struct LexerCheckpoint<'a> {
     no_side_effects_comments: Option<(usize, usize)>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum ErrorSnapshot<'a> {
     Empty,
     Count(usize),
