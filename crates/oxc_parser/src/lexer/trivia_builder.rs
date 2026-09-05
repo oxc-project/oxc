@@ -1,4 +1,7 @@
+use std::num::NonZeroU32;
+
 use memchr::memchr_iter;
+
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
@@ -30,11 +33,18 @@ pub struct TriviaBuilder<'a> {
     previous_token: Token,
 
     /// Range of comments preceding the current token that contains pure comments.
-    pure_comments: Option<(usize, usize)>,
+    ///
+    /// `(start, end)` indexes into `comments`, with `end` exclusive.
+    /// `end` is always at least `start + 1`, so it is a `NonZeroU32`.
+    /// That gives the `Option` a niche, so the field is 8 bytes.
+    pure_comments: Option<(u32, NonZeroU32)>,
 
     /// Range of comments preceding the current token that contains no-side-effects comments.
-    no_side_effects_comments: Option<(usize, usize)>,
+    /// Same representation as `pure_comments`.
+    no_side_effects_comments: Option<(u32, NonZeroU32)>,
 }
+
+const _: () = assert!(size_of::<Option<(u32, NonZeroU32)>>() == 8);
 
 impl<'a> TriviaBuilder<'a> {
     pub fn new_in(allocator: &'a Allocator) -> Self {
@@ -52,15 +62,15 @@ impl<'a> TriviaBuilder<'a> {
         }
     }
 
-    pub fn previous_token_pure_comments(&self) -> Option<(usize, usize)> {
+    pub fn previous_token_pure_comments(&self) -> Option<(u32, NonZeroU32)> {
         self.pure_comments
     }
 
-    pub fn previous_token_no_side_effects_comments(&self) -> Option<(usize, usize)> {
+    pub fn previous_token_no_side_effects_comments(&self) -> Option<(u32, NonZeroU32)> {
         self.no_side_effects_comments
     }
 
-    pub(super) fn set_pure_comments(&mut self, pure_comments: Option<(usize, usize)>) {
+    pub(super) fn set_pure_comments(&mut self, pure_comments: Option<(u32, NonZeroU32)>) {
         self.pure_comments = pure_comments;
     }
 
@@ -68,7 +78,7 @@ impl<'a> TriviaBuilder<'a> {
         self.pure_comments = None;
     }
 
-    pub(super) fn set_no_side_effects_comments(&mut self, comments: Option<(usize, usize)>) {
+    pub(super) fn set_no_side_effects_comments(&mut self, comments: Option<(u32, NonZeroU32)>) {
         self.no_side_effects_comments = comments;
     }
 
@@ -76,16 +86,16 @@ impl<'a> TriviaBuilder<'a> {
         self.no_side_effects_comments = None;
     }
 
-    pub fn mark_pure_comments_applied(&mut self, (start, end): (usize, usize)) {
-        for comment in &mut self.comments[start..end] {
+    pub fn mark_pure_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
+        for comment in &mut self.comments[start as usize..end.get() as usize] {
             if comment.content == CommentContent::PureNotApplied {
                 comment.content = CommentContent::Pure;
             }
         }
     }
 
-    pub fn mark_no_side_effects_comments_applied(&mut self, (start, end): (usize, usize)) {
-        for comment in &mut self.comments[start..end] {
+    pub fn mark_no_side_effects_comments_applied(&mut self, (start, end): (u32, NonZeroU32)) {
+        for comment in &mut self.comments[start as usize..end.get() as usize] {
             if comment.content == CommentContent::NoSideEffectsNotApplied {
                 comment.content = CommentContent::NoSideEffects;
             }
@@ -273,18 +283,21 @@ impl<'a> TriviaBuilder<'a> {
 
     /// Update annotation state for the comment at `index`.
     fn set_annotation_flags(&mut self, comment: &Comment, index: usize) {
-        if comment.content == CommentContent::PureNotApplied {
-            if let Some((_, end)) = &mut self.pure_comments {
-                *end = index + 1;
-            } else {
-                self.pure_comments = Some((index, index + 1));
-            }
-        } else if comment.content == CommentContent::NoSideEffectsNotApplied {
-            if let Some((_, end)) = &mut self.no_side_effects_comments {
-                *end = index + 1;
-            } else {
-                self.no_side_effects_comments = Some((index, index + 1));
-            }
+        let range = match comment.content {
+            CommentContent::PureNotApplied => &mut self.pure_comments,
+            CommentContent::NoSideEffectsNotApplied => &mut self.no_side_effects_comments,
+            _ => return,
+        };
+
+        // Comment count cannot exceed `u32::MAX` because of `MAX_LEN` check in `Source::new`,
+        // so `index + 1` cannot overflow, and is never zero
+        #[expect(clippy::cast_possible_truncation)]
+        let index = index as u32;
+        let end = NonZeroU32::new(index + 1).unwrap();
+        if let Some((_, range_end)) = range {
+            *range_end = end;
+        } else {
+            *range = Some((index, end));
         }
     }
 

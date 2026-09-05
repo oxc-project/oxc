@@ -5,7 +5,7 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
-use std::mem;
+use std::{mem, num::NonZeroU32};
 
 use rustc_hash::FxHashMap;
 
@@ -52,8 +52,8 @@ pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     errors_snapshot: ErrorSnapshot<'a>,
     tokens_len: usize,
-    pure_comments: Option<(usize, usize)>,
-    no_side_effects_comments: Option<(usize, usize)>,
+    pure_comments: Option<(u32, NonZeroU32)>,
+    no_side_effects_comments: Option<(u32, NonZeroU32)>,
 }
 
 #[derive(Debug)]
