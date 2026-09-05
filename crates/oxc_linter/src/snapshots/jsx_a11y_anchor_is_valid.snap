@@ -270,6 +270,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.
    ╭─[anchor_is_valid.tsx:1:2]
+ 1 │ <Link />
+   ·  ────
+   ╰────
+  help: Provide one of these attributes for the `a` element: `href`, `to`
+
+  ⚠ jsx-a11y(anchor-is-valid): Use of incorrect `href` for the 'a' element.
+   ╭─[anchor_is_valid.tsx:1:2]
+ 1 │ <Link to='#' />
+   ·  ────
+   ╰────
+  help: Provide a correct `href` for the `a` element.
+
+  ⚠ jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.
+   ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a hrefLeft={undefined} />
    ·  ─
    ╰────
