@@ -93,6 +93,7 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     let minifier_ret = Minifier::new(minifier_options).minify(&allocator, &mut program);
     let scoping = minifier_ret.scoping;
+    let class_private_mappings = minifier_ret.class_private_mappings;
     let mangle_cache = parser_ret
         .diagnostics
         .is_empty()
@@ -122,7 +123,11 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
         codegen_options.source_map_path = Some(PathBuf::from(&filename));
     }
 
-    let ret = Codegen::new().with_options(codegen_options).with_scoping(scoping).build(&program);
+    let ret = Codegen::new()
+        .with_options(codegen_options)
+        .with_scoping(scoping)
+        .with_private_member_mappings(class_private_mappings)
+        .build(&program);
 
     let legal_comments =
         ret.legal_comments.iter().map(|c| c.span.source_text(source_text).to_string()).collect();
