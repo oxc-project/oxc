@@ -2474,8 +2474,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_decorators(&method.decorators);
         if method.computed && (method.r#type.is_abstract() || self.in_ambient_context()) {
             // declare class A { [prop](): string }
-            //                    ^^^^  The property can reference value or [`SymbolFlags::TypeImport`] symbol
-            self.current_reference_flags = ReferenceFlags::ValueAsType;
+            //                    ^^^^  The key is evaluated as a value, but it may also be
+            // backed by a type-only import. `ValueAsType` lets it bind a
+            // [`SymbolFlags::TypeImport`] symbol; `Read` keeps the reference a value one
+            // when it resolves to a real value, instead of collapsing it to `Type`.
+            self.current_reference_flags = ReferenceFlags::ValueAsType | ReferenceFlags::Read;
         }
         self.visit_property_key(&method.key);
         self.current_reference_flags = ReferenceFlags::empty();
@@ -2497,8 +2500,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_ambient_context(prop.declare);
         if prop.computed && (prop.r#type.is_abstract() || self.in_ambient_context()) {
             // class A { declare [prop]: string }
-            //                   ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
-            self.current_reference_flags = ReferenceFlags::ValueAsType;
+            //                   ^^^^^ The key is evaluated as a value, but it may also be
+            // backed by a type-only import. `ValueAsType` lets it bind a
+            // [`SymbolFlags::TypeImport`] symbol; `Read` keeps the reference a value one
+            // when it resolves to a real value, instead of collapsing it to `Type`.
+            self.current_reference_flags = ReferenceFlags::ValueAsType | ReferenceFlags::Read;
         }
         self.visit_property_key(&prop.key);
         self.current_reference_flags = ReferenceFlags::empty();
