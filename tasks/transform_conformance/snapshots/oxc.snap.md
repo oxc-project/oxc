@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 271/399
+Passed: 269/399
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (41/60)
+# babel-plugin-transform-typescript (40/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -146,6 +146,9 @@ Symbol redeclarations mismatch for "T":
 after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
 rebuilt        : SymbolId(8): []
 
+* jsx/issue-10956/input.tsx
+x Output mismatch
+
 * namespace/import-=/input.ts
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
@@ -208,7 +211,10 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (51/54)
+# babel-plugin-transform-react-jsx (50/54)
+* issues/issue-20669/input.jsx
+x Output mismatch
+
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"

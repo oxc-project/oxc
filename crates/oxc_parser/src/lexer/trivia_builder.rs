@@ -167,15 +167,17 @@ impl<'a> TriviaBuilder<'a> {
     #[cold]
     fn attach_pending_comments_to_token(&mut self, token: Token, len: usize) {
         let previous_kind = self.previous_token.kind();
+        let continues_previous_expression = Self::can_end_expression(previous_kind)
+            && Self::continues_previous_expression(token.kind());
         let can_attach_to_previous = previous_kind != Kind::Undetermined
-            && (token.kind() == Kind::Eof
-                || (Self::can_end_expression(previous_kind)
-                    && Self::continues_previous_expression(token.kind())));
+            && (token.kind() == Kind::Eof || continues_previous_expression);
         let previous_token_end = self.previous_token.end();
         for comment in &mut self.comments[self.processed..len] {
             if can_attach_to_previous
                 && !comment.preceded_by_newline()
-                && !Self::should_stay_leading(comment)
+                && ((comment.content == CommentContent::PureNotApplied
+                    && continues_previous_expression)
+                    || !Self::should_stay_leading(comment))
             {
                 comment.position = CommentPosition::Trailing;
                 comment.attached_to = previous_token_end;
@@ -973,6 +975,10 @@ function bar() {}";
             let comments = get_comments_typescript(source_text);
             assert_eq!(comments[0].content, CommentContent::PureNotApplied, "{source_text}");
         }
+
+        let comments = get_comments_typescript("const foo /* #__PURE__ */ = pureOperation();");
+        assert!(comments[0].is_trailing());
+        assert_eq!(comments[0].attached_to, 9);
     }
 
     #[test]

@@ -2,14 +2,20 @@ commit: b465fdbf
 
 transformer_typescript Summary:
 AST Parsed     : 9783/9783 (100.00%)
-Positive Passed: 9763/9783 (99.80%)
+Positive Passed: 9743/9783 (99.59%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitArrowFunctionNoRenaming.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierReferencingOuterDeclaration2.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/funClodule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressionNotCountedAsChild.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNestedWithinTernaryParsesCorrectly.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/reExportGlobalDeclaration1.ts
 
@@ -33,13 +39,47 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/members/inst
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
 
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/strictPropertyInitialization.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.3.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.5.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commentPreservation.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.3.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.5.ts
 
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonLocalDeclarations.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty13.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty4.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty9.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJsx1.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformNestedSelfClosingChild.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution14.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments2.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
 

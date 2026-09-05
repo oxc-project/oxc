@@ -261,6 +261,7 @@ pub trait CompilerInterface {
         }
 
         builder
+            .with_build_comment_attachments(self.codegen_options().is_some())
             .with_check_syntax_error(self.check_semantic_error())
             .with_build_nodes(self.build_semantic_nodes())
             .build(program)

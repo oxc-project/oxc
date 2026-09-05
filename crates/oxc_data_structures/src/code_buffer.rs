@@ -249,6 +249,12 @@ impl CodeBuffer {
         self.buf.last().copied()
     }
 
+    /// Remove and return the final byte in the buffer.
+    #[inline]
+    pub fn pop_byte(&mut self) -> Option<u8> {
+        self.buf.pop()
+    }
+
     /// Peek the last char from the end of the buffer.
     #[inline]
     pub fn last_char(&self) -> Option<char> {

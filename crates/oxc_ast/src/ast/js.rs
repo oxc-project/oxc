@@ -62,6 +62,13 @@ pub struct Program<'a> {
     #[content_eq(skip)]
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
+    /// Post-parse source-comment ownership. This is intentionally not exposed
+    /// through ESTree and is rebuilt when cloning without semantic identity.
+    #[builder(default)]
+    #[clone_in(default)]
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub comment_attachments: CommentAttachmentsStore<'a>,
     pub hashbang: Option<Hashbang<'a>>,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,

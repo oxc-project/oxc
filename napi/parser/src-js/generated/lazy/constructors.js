@@ -36,19 +36,19 @@ export class Program {
 
   get sourceType() {
     const internal = this.#internal;
-    return new SourceType(internal.pos + 136, internal.ast);
+    return new SourceType(internal.pos + 144, internal.ast);
   }
 
   get hashbang() {
     const internal = this.#internal;
-    return constructOptionHashbang(internal.pos + 56, internal.ast);
+    return constructOptionHashbang(internal.pos + 64, internal.ast);
   }
 
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return (internal.$body = constructVecStatement(internal.pos + 112, internal.ast));
+    return (internal.$body = constructVecStatement(internal.pos + 120, internal.ast));
   }
 
   toJSON() {
@@ -12569,19 +12569,19 @@ export class RawTransferData {
     const internal = this.#internal,
       cached = internal.$comments;
     if (cached !== void 0) return cached;
-    return (internal.$comments = constructVecComment(internal.pos + 144, internal.ast));
+    return (internal.$comments = constructVecComment(internal.pos + 152, internal.ast));
   }
 
   get module() {
     const internal = this.#internal;
-    return new EcmaScriptModule(internal.pos + 168, internal.ast);
+    return new EcmaScriptModule(internal.pos + 176, internal.ast);
   }
 
   get errors() {
     const internal = this.#internal,
       cached = internal.$errors;
     if (cached !== void 0) return cached;
-    return (internal.$errors = constructVecError(internal.pos + 272, internal.ast));
+    return (internal.$errors = constructVecError(internal.pos + 280, internal.ast));
   }
 
   toJSON() {
@@ -14037,6 +14037,15 @@ function constructBoxTSExternalModuleReference(pos, ast) {
 
 function constructU32(pos, ast) {
   return ast.buffer.int32[pos >> 2] >>> 0;
+}
+
+function constructBoxU8(pos, ast) {
+  return constructU8(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructOptionBoxU8(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructBoxU8(pos, ast);
 }
 
 function constructU64(pos, ast) {

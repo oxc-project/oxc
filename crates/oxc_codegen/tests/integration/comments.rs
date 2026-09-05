@@ -1,7 +1,437 @@
+use oxc_allocator::Allocator;
+use oxc_ast::{AttachedCommentPosition, CommentPosition};
+use oxc_codegen::Codegen;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
+use oxc_span::{GetSpan, SourceType};
+
 use crate::{
-    test_idempotency, test_idempotency_options,
+    codegen, codegen_options, test_idempotency, test_idempotency_options,
     tester::{test, test_same},
 };
+
+#[test]
+fn comments_are_not_lost() {
+    for case in [
+        "/* comment */ const value = initializer;",
+        "const /* comment */ value = initializer;",
+        "const value /* comment */ = initializer;",
+        "const value = /* comment */ initializer;",
+        "/* comment 1 */ function /* comment 2 */ foo /* comment 3 */ ();",
+        "/* comment 1 */ function /* comment 2 */ * /* comment 3 */ foo() {}",
+    ] {
+        let allocator = Allocator::default();
+        let source_type = SourceType::ts();
+        let ret = Parser::new(&allocator, case, source_type).parse();
+        assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
+        assert!(!ret.program.comments.is_empty());
+        let codegen_ret = Codegen::new().build(&ret.program);
+        let original_source_text = case;
+        let printed = codegen_ret.code;
+        for comment in ret.program.comments {
+            let expected_comment_content = comment.content_span().source_text(original_source_text);
+            assert_eq!(
+                printed.matches(expected_comment_content).count(),
+                1,
+                "expected comment content `{expected_comment_content}` exactly once in printed: `{printed}`, original: `{original_source_text}`"
+            );
+        }
+    }
+}
+
+#[test]
+fn semantic_comment_hosts_are_assigned_and_printed_once() {
+    for source in [
+        "/* c0 */async/* c1 */ function/* c2 */* /* c3 */foo/* c4 */() /* c5 */ {}",
+        "const foo /* #__PURE__ */ = pureOperation();",
+        "const values = [/* inside */]; class C {/* class-inside */}",
+        "test(function() {\n  var a = 1;\n  // one\n}\n// two\n);",
+        "(/* 1 */ { /* 2 */ f /* 3 */ (/* 4 */ a /* 5 */, /* 6 */) /* 7 */ { /* 8 */ } /* 9 */ } /* 10 */);",
+        "function commentedParameters(\na /* parameter a */,\nb /* parameter b */,\n/* extra comment */\n) {}",
+    ] {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source, SourceType::ts()).parse();
+        assert!(ret.diagnostics.is_empty());
+        let semantic = SemanticBuilder::new()
+            .with_build_nodes(true)
+            .with_build_comment_attachments(true)
+            .build(&ret.program)
+            .semantic;
+        let attachments = ret.program.comment_attachments.0.as_deref().unwrap();
+        assert!(
+            (0..attachments.host_len())
+                .all(|index| attachments.host(index).node_id.index() < semantic.nodes().len())
+        );
+
+        let printed = Codegen::new().build(&ret.program).code;
+        for comment in &ret.program.comments {
+            let marker = comment.content_span().source_text(source);
+            assert_eq!(printed.matches(marker).count(), 1, "{marker}: {printed}");
+        }
+
+        let allocator2 = Allocator::default();
+        let ret2 = Parser::new(&allocator2, &printed, SourceType::ts()).parse();
+        SemanticBuilder::new()
+            .with_build_nodes(true)
+            .with_build_comment_attachments(true)
+            .build(&ret2.program);
+        let printed2 = Codegen::new().build(&ret2.program).code;
+        assert_eq!(printed2, printed, "semantic codegen is not idempotent for {source}");
+    }
+}
+
+#[test]
+fn semantic_comment_attachment() {
+    let allocator = Allocator::default();
+    let source = "first(); /* after */\n/* before */ second(); const empty = [/* inside */];";
+    let ret = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    SemanticBuilder::new().with_build_comment_attachments(true).build(&ret.program);
+    let attachments = ret.program.comment_attachments.0.as_deref().unwrap();
+    let host_ids = (0..attachments.host_len())
+        .map(|index| attachments.host(index).node_id)
+        .collect::<Vec<_>>();
+    SemanticBuilder::new().with_build_comment_attachments(true).build(&ret.program);
+    assert_eq!(
+        host_ids,
+        (0..attachments.host_len())
+            .map(|index| attachments.host(index).node_id)
+            .collect::<Vec<_>>()
+    );
+
+    let position = |marker: &str| {
+        (0..ret.program.comments.len())
+            .map(|index| attachments.comment(index))
+            .find(|attached| attached.comment.span.source_text(source).contains(marker))
+            .map(|attached| attached.position)
+            .unwrap()
+    };
+    assert_eq!(position("after"), AttachedCommentPosition::After);
+    assert_eq!(position("before"), AttachedCommentPosition::Before);
+    assert_eq!(position("inside"), AttachedCommentPosition::Inside);
+
+    let pure_source = "const foo /* #__PURE__ */ = pureOperation();";
+    let ret = Parser::new(&allocator, pure_source, SourceType::ts()).parse();
+    SemanticBuilder::new().with_build_comment_attachments(true).build(&ret.program);
+    let attachments = ret.program.comment_attachments.0.as_deref().unwrap();
+    assert_eq!(attachments.comment(0).position, AttachedCommentPosition::After);
+}
+
+#[test]
+fn comments_are_claimed_exactly_once_across_boundaries_and_fallbacks() {
+    const TORTURE: &str =
+        "/* c0 */async/* c1 */ function/* c2 */* /* c3 */foo3/* c4 */() /* c5 */ {}";
+    let printed = codegen(TORTURE);
+    for marker in ["c0", "c1", "c2", "c3", "c4", "c5"] {
+        assert_eq!(printed.matches(marker).count(), 1, "{marker}: {printed}");
+    }
+    test_idempotency(TORTURE);
+
+    let non_generator = codegen("/* ng0 */async/* ng1 */ function/* ng2 */ foo() {}");
+    for marker in ["ng0", "ng1", "ng2"] {
+        assert_eq!(non_generator.matches(marker).count(), 1, "{marker}: {non_generator}");
+    }
+
+    let repeated = codegen("/* same-anchor-a */ /* same-anchor-b */ const value = 1;");
+    for marker in ["same-anchor-a", "same-anchor-b"] {
+        assert_eq!(repeated.matches(marker).count(), 1, "{marker}: {repeated}");
+    }
+
+    let empty = codegen(
+        "const array = [/* empty-array */]; const object = {/* empty-object */}; function f(/* empty-params */) {}",
+    );
+    for marker in ["empty-array", "empty-object", "empty-params"] {
+        assert_eq!(empty.matches(marker).count(), 1, "{marker}: {empty}");
+    }
+}
+
+#[test]
+fn semantic_annotations_are_printed_exactly_once() {
+    for (source, marker) in [
+        ("/* @__PURE__ */ (factory());", "PURE"),
+        ("const obj = { props: /*#__PURE__*/ extend({}, validators) };", "PURE"),
+        ("const symbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol));", "PURE"),
+        ("/* @__NO_SIDE_EFFECTS__ */ (function factory() {});", "NO_SIDE_EFFECTS"),
+    ] {
+        let printed = codegen(source);
+        assert_eq!(printed.matches(marker).count(), 1, "{source} -> {printed}");
+    }
+}
+
+#[test]
+fn comments_are_claimed_without_global_source_order() {
+    let allocator = Allocator::default();
+    let source = "/* reorder-a */ first(); /* reorder-b */ second();";
+    let ret = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    program.body.swap(0, 1);
+    let printed = Codegen::new().build(&program).code;
+    for marker in ["reorder-a", "reorder-b"] {
+        assert_eq!(printed.matches(marker).count(), 1, "{marker}: {printed}");
+    }
+
+    let source = "/* @__PURE__ reorder-pure-a */ first(); /* #__PURE__ reorder-pure-b */ second();";
+    let ret = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    program.body.swap(0, 1);
+    let printed = Codegen::new().build(&program).code;
+    for marker in ["reorder-pure-a", "reorder-pure-b"] {
+        assert_eq!(printed.matches(marker).count(), 1, "{marker}: {printed}");
+    }
+}
+
+#[test]
+fn mixed_leading_and_trailing_comments_share_an_anchor() {
+    let allocator = Allocator::default();
+    let source = "/* mixed-trailing */ first(); /* mixed-leading */ second();";
+    let ret = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    let anchor = program.body[1].span().start;
+    program.comments[0].attached_to = anchor;
+    program.comments[0].position = CommentPosition::Trailing;
+    program.comments[1].attached_to = anchor;
+    program.comments[1].position = CommentPosition::Leading;
+    let printed = Codegen::new().build(&program).code;
+    for marker in ["mixed-trailing", "mixed-leading"] {
+        assert_eq!(printed.matches(marker).count(), 1, "{marker}: {printed}");
+    }
+}
+
+#[test]
+fn removed_node_and_comments_disabled_fallbacks() {
+    use oxc_codegen::CodegenOptions;
+
+    let allocator = Allocator::default();
+    let source = "/* removed */ removed(); survivor();";
+    let ret = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let mut program = ret.program;
+    program.body.remove(0);
+    let printed = Codegen::new().build(&program).code;
+    assert_eq!(printed.matches("removed").count(), 0, "{printed}");
+
+    let ret = Parser::new(&allocator, "/* disabled */ enabled();", SourceType::ts()).parse();
+    assert!(ret.diagnostics.is_empty());
+    let printed = Codegen::new().with_options(CodegenOptions::minify()).build(&ret.program).code;
+    assert_eq!(printed.matches("disabled").count(), 0, "{printed}");
+}
+
+#[test]
+fn test_parser_attached_comments_survive_unhandled_slots() {
+    for (slot, source, marker) in [
+        (
+            "initializer",
+            "const value = /* v8 ignore next: initializer */ initializer;",
+            "initializer",
+        ),
+        ("array element", "const values = [/* v8 ignore next: array */ value];", "array"),
+        (
+            "trailing array element",
+            "const values = [value /* v8 ignore next: trailing array */\n, other];",
+            "trailing array",
+        ),
+        ("array spread", "const values = [.../* v8 ignore next: spread */ iterable];", "spread"),
+        ("computed member", "const value = object[/* v8 ignore next: key */ key];", "key"),
+        ("sequence", "const value = (first, /* v8 ignore next: sequence */ second);", "sequence"),
+        ("assignment", "target = /* v8 ignore next: assignment */ source;", "assignment"),
+        ("unary", "const value = void /* v8 ignore next: unary */ source;", "unary"),
+        ("binary", "const value = left + /* v8 ignore next: binary */ right;", "binary"),
+        (
+            "trailing binary",
+            "const value = left /* v8 ignore next: trailing binary */ + right;",
+            "trailing binary",
+        ),
+        (
+            "conditional test",
+            "const value = /* v8 ignore next: conditional */ test ? yes : no;",
+            "conditional",
+        ),
+        (
+            "await",
+            "async function f() { return await /* v8 ignore next: await */ value; }",
+            "await",
+        ),
+        ("yield", "function* f() { yield /* v8 ignore next: yield */ value; }", "yield"),
+        ("for of", "for (const item of /* v8 ignore next: iterable */ items) {}", "iterable"),
+        ("if", "if (/* v8 ignore next: if */ test) {}", "ignore next: if"),
+        ("while", "while (/* v8 ignore next: while */ test) {}", "while"),
+        ("for test", "for (; /* v8 ignore next: for test */ test; update()) {}", "for test"),
+        ("for update", "for (; test; /* v8 ignore next: for update */ update()) {}", "for update"),
+        ("update", "++/* v8 ignore next: update */ value;", "update"),
+        ("throw", "throw /* v8 ignore next: throw */ error;", "throw"),
+        (
+            "object key",
+            "const value = { [/* v8 ignore next: object key */ key]: item };",
+            "object key",
+        ),
+        ("class field", "class C { field = /* v8 ignore next: field */ value; }", "field"),
+        ("heritage", "class Derived extends /* v8 ignore next: heritage */ Base {}", "heritage"),
+        (
+            "declarator",
+            "const first = 1, /* v8 ignore next: declarator */ second = value;",
+            "declarator",
+        ),
+        ("array pattern", "const [/* v8 ignore next: binding */ item] = values;", "binding"),
+        (
+            "object pattern",
+            "const { /* v8 ignore next: property */ key: value } = object;",
+            "property",
+        ),
+        ("parameter", "function f(/** parameter */ value) {}", "parameter"),
+        ("parameter type", "function f(value: /** parameter type */ string) {}", "parameter type"),
+        ("return type", "function f(): /** return type */ string { return \"\"; }", "return type"),
+        ("type parameter", "function f</** type parameter */ T>() {}", "type parameter"),
+        ("type alias", "type Alias = /** type alias */ string;", "type alias"),
+        ("tuple", "type Tuple = [/** tuple */ string];", "tuple"),
+        ("union", "type Union = /** union */ A | B;", "union"),
+        ("type argument", "type Generic = Container</** type argument */ Arg>;", "type argument"),
+        (
+            "import specifier",
+            "import { /** import specifier */ imported as local } from \"module\";",
+            "import specifier",
+        ),
+        (
+            "import attribute",
+            "import data from \"data\" with { /** import attribute */ type: \"json\" };",
+            "import attribute",
+        ),
+    ] {
+        let generated = codegen(source);
+        assert!(generated.contains(marker), "{slot} comment was dropped: {generated}");
+    }
+}
+
+#[test]
+fn test_parser_attached_comments_survive_additional_slots() {
+    for (slot, source, marker) in [
+        (
+            "array binding rest",
+            "const [.../* v8 ignore next: array binding rest */ rest] = values;",
+            "array binding rest",
+        ),
+        (
+            "object binding value",
+            "const { key: /* v8 ignore next: object binding value */ value } = object;",
+            "object binding value",
+        ),
+        (
+            "parameter default",
+            "function f(value = /* v8 ignore next: parameter default */ fallback) {}",
+            "parameter default",
+        ),
+        (
+            "assignment target value",
+            "({ key: /* v8 ignore next: assignment target value */ value } = object);",
+            "assignment target value",
+        ),
+        ("rest parameter", "function f(.../** rest parameter */ values) {}", "rest parameter"),
+        (
+            "this parameter",
+            "function f(/** this parameter */ this: Context, value: string) {}",
+            "this parameter",
+        ),
+        (
+            "arrow parameter",
+            "const f = (/** arrow parameter */ value) => value;",
+            "arrow parameter",
+        ),
+        (
+            "function type parameter",
+            "type F = (/** function type parameter */ value: string) => string;",
+            "function type parameter",
+        ),
+        (
+            "type parameter constraint",
+            "function f<T extends /** type parameter constraint */ Base>() {}",
+            "type parameter constraint",
+        ),
+        (
+            "type parameter default",
+            "function f<T = /** type parameter default */ Default>() {}",
+            "type parameter default",
+        ),
+        (
+            "intersection arm",
+            "type Intersection = /** intersection arm */ A & B;",
+            "intersection arm",
+        ),
+        (
+            "indexed access index",
+            "type Indexed = Container[/** indexed access index */ Key];",
+            "indexed access index",
+        ),
+        (
+            "conditional extends type",
+            "type Conditional<T> = T extends /** conditional extends */ string ? A : B;",
+            "conditional extends",
+        ),
+        (
+            "mapped constraint",
+            "type Mapped<T> = { [K in /** mapped constraint */ keyof T]: T[K] };",
+            "mapped constraint",
+        ),
+        (
+            "mapped value",
+            "type Mapped<T> = { [K in keyof T]: /** mapped value */ T[K] };",
+            "mapped value",
+        ),
+        (
+            "type operator operand",
+            "type Operator<T> = keyof /** type operator operand */ T;",
+            "type operator operand",
+        ),
+    ] {
+        let generated = codegen(source);
+        assert!(generated.contains(marker), "{slot} comment was dropped: {generated}");
+    }
+}
+
+#[test]
+fn test_parser_attached_comments_survive_special_paths() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    for (source, marker) in [
+        ("<Component /** jsx attribute */ property />;", "jsx attribute"),
+        ("<Component {... /** jsx spread */ properties} />;", "jsx spread"),
+    ] {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
+        assert!(ret.diagnostics.is_empty());
+        assert!(Codegen::new().build(&ret.program).code.contains(marker));
+    }
+
+    let pure = codegen("/* @__PURE__ */ /* #__PURE__ */ factory();");
+    assert!(pure.contains("@__PURE__") && pure.contains("#__PURE__"), "{pure}");
+
+    let no_side_effects =
+        codegen("/* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ function factory() {}");
+    assert!(
+        no_side_effects.contains("@__NO_SIDE_EFFECTS__")
+            && no_side_effects.contains("#__NO_SIDE_EFFECTS__"),
+        "{no_side_effects}"
+    );
+}
+
+#[test]
+fn test_cjs_fast_paths_deliberately_skip_attached_comments_when_minified() {
+    use oxc_codegen::CodegenOptions;
+
+    let options = CodegenOptions { minify: true, ..CodegenOptions::default() };
+    for (source, marker) in [
+        ("require(/* v8 require */ \"module\");", "v8 require"),
+        ("exports[/* v8 exports */ \"name\"] = value;", "v8 exports"),
+        ("key === /* v8 equality */ \"default\";", "v8 equality"),
+    ] {
+        let generated = codegen_options(source, &options).code;
+        assert!(!generated.contains(marker), "{source} -> {generated}");
+    }
+}
 
 // A leading comment inside a `pife` arrow alternate of a `?:` must stay
 // inside the paren wrap on every codegen pass; otherwise the parser re-

@@ -4570,3 +4570,386 @@ pub mod walk {
         }
     }
 }
+macro_rules! generate_comment_pruning_visit_methods {
+    () => {
+        comment_pruning_visit_method!(visit_program, walk_program, Program, Program < 'a
+        >); comment_pruning_visit_method!(visit_identifier_name, walk_identifier_name,
+        IdentifierName, IdentifierName < 'a >);
+        comment_pruning_visit_method!(visit_identifier_reference,
+        walk_identifier_reference, IdentifierReference, IdentifierReference < 'a >);
+        comment_pruning_visit_method!(visit_binding_identifier, walk_binding_identifier,
+        BindingIdentifier, BindingIdentifier < 'a >);
+        comment_pruning_visit_method!(visit_label_identifier, walk_label_identifier,
+        LabelIdentifier, LabelIdentifier < 'a >);
+        comment_pruning_visit_method!(visit_this_expression, walk_this_expression,
+        ThisExpression, ThisExpression);
+        comment_pruning_visit_method!(visit_array_expression, walk_array_expression,
+        ArrayExpression, ArrayExpression < 'a >);
+        comment_pruning_visit_method!(visit_elision, walk_elision, Elision, Elision);
+        comment_pruning_visit_method!(visit_object_expression, walk_object_expression,
+        ObjectExpression, ObjectExpression < 'a >);
+        comment_pruning_visit_method!(visit_object_property, walk_object_property,
+        ObjectProperty, ObjectProperty < 'a >);
+        comment_pruning_visit_method!(visit_template_literal, walk_template_literal,
+        TemplateLiteral, TemplateLiteral < 'a >);
+        comment_pruning_visit_method!(visit_tagged_template_expression,
+        walk_tagged_template_expression, TaggedTemplateExpression,
+        TaggedTemplateExpression < 'a >);
+        comment_pruning_visit_method!(visit_template_element, walk_template_element,
+        TemplateElement, TemplateElement < 'a >);
+        comment_pruning_visit_method!(visit_computed_member_expression,
+        walk_computed_member_expression, ComputedMemberExpression,
+        ComputedMemberExpression < 'a >);
+        comment_pruning_visit_method!(visit_static_member_expression,
+        walk_static_member_expression, StaticMemberExpression, StaticMemberExpression <
+        'a >); comment_pruning_visit_method!(visit_private_field_expression,
+        walk_private_field_expression, PrivateFieldExpression, PrivateFieldExpression <
+        'a >); comment_pruning_visit_method!(visit_call_expression, walk_call_expression,
+        CallExpression, CallExpression < 'a >);
+        comment_pruning_visit_method!(visit_new_expression, walk_new_expression,
+        NewExpression, NewExpression < 'a >);
+        comment_pruning_visit_method!(visit_import_meta, walk_import_meta, ImportMeta,
+        ImportMeta); comment_pruning_visit_method!(visit_new_target, walk_new_target,
+        NewTarget, NewTarget); comment_pruning_visit_method!(visit_spread_element,
+        walk_spread_element, SpreadElement, SpreadElement < 'a >);
+        comment_pruning_visit_method!(visit_update_expression, walk_update_expression,
+        UpdateExpression, UpdateExpression < 'a >);
+        comment_pruning_visit_method!(visit_unary_expression, walk_unary_expression,
+        UnaryExpression, UnaryExpression < 'a >);
+        comment_pruning_visit_method!(visit_binary_expression, walk_binary_expression,
+        BinaryExpression, BinaryExpression < 'a >);
+        comment_pruning_visit_method!(visit_private_in_expression,
+        walk_private_in_expression, PrivateInExpression, PrivateInExpression < 'a >);
+        comment_pruning_visit_method!(visit_logical_expression, walk_logical_expression,
+        LogicalExpression, LogicalExpression < 'a >);
+        comment_pruning_visit_method!(visit_conditional_expression,
+        walk_conditional_expression, ConditionalExpression, ConditionalExpression < 'a
+        >); comment_pruning_visit_method!(visit_assignment_expression,
+        walk_assignment_expression, AssignmentExpression, AssignmentExpression < 'a >);
+        comment_pruning_visit_method!(visit_array_assignment_target,
+        walk_array_assignment_target, ArrayAssignmentTarget, ArrayAssignmentTarget < 'a
+        >); comment_pruning_visit_method!(visit_object_assignment_target,
+        walk_object_assignment_target, ObjectAssignmentTarget, ObjectAssignmentTarget <
+        'a >); comment_pruning_visit_method!(visit_assignment_target_rest,
+        walk_assignment_target_rest, AssignmentTargetRest, AssignmentTargetRest < 'a >);
+        comment_pruning_visit_method!(visit_assignment_target_with_default,
+        walk_assignment_target_with_default, AssignmentTargetWithDefault,
+        AssignmentTargetWithDefault < 'a >);
+        comment_pruning_visit_method!(visit_assignment_target_property_identifier,
+        walk_assignment_target_property_identifier, AssignmentTargetPropertyIdentifier,
+        AssignmentTargetPropertyIdentifier < 'a >);
+        comment_pruning_visit_method!(visit_assignment_target_property_property,
+        walk_assignment_target_property_property, AssignmentTargetPropertyProperty,
+        AssignmentTargetPropertyProperty < 'a >);
+        comment_pruning_visit_method!(visit_sequence_expression,
+        walk_sequence_expression, SequenceExpression, SequenceExpression < 'a >);
+        comment_pruning_visit_method!(visit_super, walk_super, Super, Super);
+        comment_pruning_visit_method!(visit_await_expression, walk_await_expression,
+        AwaitExpression, AwaitExpression < 'a >);
+        comment_pruning_visit_method!(visit_chain_expression, walk_chain_expression,
+        ChainExpression, ChainExpression < 'a >);
+        comment_pruning_visit_method!(visit_parenthesized_expression,
+        walk_parenthesized_expression, ParenthesizedExpression, ParenthesizedExpression <
+        'a >); comment_pruning_visit_method!(visit_directive, walk_directive, Directive,
+        Directive < 'a >); comment_pruning_visit_method!(visit_hashbang, walk_hashbang,
+        Hashbang, Hashbang < 'a >); comment_pruning_visit_method!(visit_block_statement,
+        walk_block_statement, BlockStatement, BlockStatement < 'a >);
+        comment_pruning_visit_method!(visit_variable_declaration,
+        walk_variable_declaration, VariableDeclaration, VariableDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_variable_declarator,
+        walk_variable_declarator, VariableDeclarator, VariableDeclarator < 'a >);
+        comment_pruning_visit_method!(visit_empty_statement, walk_empty_statement,
+        EmptyStatement, EmptyStatement);
+        comment_pruning_visit_method!(visit_expression_statement,
+        walk_expression_statement, ExpressionStatement, ExpressionStatement < 'a >);
+        comment_pruning_visit_method!(visit_if_statement, walk_if_statement, IfStatement,
+        IfStatement < 'a >); comment_pruning_visit_method!(visit_do_while_statement,
+        walk_do_while_statement, DoWhileStatement, DoWhileStatement < 'a >);
+        comment_pruning_visit_method!(visit_while_statement, walk_while_statement,
+        WhileStatement, WhileStatement < 'a >);
+        comment_pruning_visit_method!(visit_for_statement, walk_for_statement,
+        ForStatement, ForStatement < 'a >);
+        comment_pruning_visit_method!(visit_for_in_statement, walk_for_in_statement,
+        ForInStatement, ForInStatement < 'a >);
+        comment_pruning_visit_method!(visit_for_of_statement, walk_for_of_statement,
+        ForOfStatement, ForOfStatement < 'a >);
+        comment_pruning_visit_method!(visit_continue_statement, walk_continue_statement,
+        ContinueStatement, ContinueStatement < 'a >);
+        comment_pruning_visit_method!(visit_break_statement, walk_break_statement,
+        BreakStatement, BreakStatement < 'a >);
+        comment_pruning_visit_method!(visit_return_statement, walk_return_statement,
+        ReturnStatement, ReturnStatement < 'a >);
+        comment_pruning_visit_method!(visit_with_statement, walk_with_statement,
+        WithStatement, WithStatement < 'a >);
+        comment_pruning_visit_method!(visit_switch_statement, walk_switch_statement,
+        SwitchStatement, SwitchStatement < 'a >);
+        comment_pruning_visit_method!(visit_switch_case, walk_switch_case, SwitchCase,
+        SwitchCase < 'a >); comment_pruning_visit_method!(visit_labeled_statement,
+        walk_labeled_statement, LabeledStatement, LabeledStatement < 'a >);
+        comment_pruning_visit_method!(visit_throw_statement, walk_throw_statement,
+        ThrowStatement, ThrowStatement < 'a >);
+        comment_pruning_visit_method!(visit_try_statement, walk_try_statement,
+        TryStatement, TryStatement < 'a >);
+        comment_pruning_visit_method!(visit_catch_clause, walk_catch_clause, CatchClause,
+        CatchClause < 'a >); comment_pruning_visit_method!(visit_catch_parameter,
+        walk_catch_parameter, CatchParameter, CatchParameter < 'a >);
+        comment_pruning_visit_method!(visit_debugger_statement, walk_debugger_statement,
+        DebuggerStatement, DebuggerStatement);
+        comment_pruning_visit_method!(visit_assignment_pattern, walk_assignment_pattern,
+        AssignmentPattern, AssignmentPattern < 'a >);
+        comment_pruning_visit_method!(visit_object_pattern, walk_object_pattern,
+        ObjectPattern, ObjectPattern < 'a >);
+        comment_pruning_visit_method!(visit_binding_property, walk_binding_property,
+        BindingProperty, BindingProperty < 'a >);
+        comment_pruning_visit_method!(visit_array_pattern, walk_array_pattern,
+        ArrayPattern, ArrayPattern < 'a >);
+        comment_pruning_visit_method!(visit_binding_rest_element,
+        walk_binding_rest_element, BindingRestElement, BindingRestElement < 'a >);
+        comment_pruning_visit_method!(visit_function, walk_function, Function, Function <
+        'a >, flags : ScopeFlags); comment_pruning_visit_method!(visit_formal_parameters,
+        walk_formal_parameters, FormalParameters, FormalParameters < 'a >);
+        comment_pruning_visit_method!(visit_formal_parameter, walk_formal_parameter,
+        FormalParameter, FormalParameter < 'a >);
+        comment_pruning_visit_method!(visit_formal_parameter_rest,
+        walk_formal_parameter_rest, FormalParameterRest, FormalParameterRest < 'a >);
+        comment_pruning_visit_method!(visit_function_body, walk_function_body,
+        FunctionBody, FunctionBody < 'a >);
+        comment_pruning_visit_method!(visit_arrow_function_expression,
+        walk_arrow_function_expression, ArrowFunctionExpression, ArrowFunctionExpression
+        < 'a >); comment_pruning_visit_method!(visit_yield_expression,
+        walk_yield_expression, YieldExpression, YieldExpression < 'a >);
+        comment_pruning_visit_method!(visit_class, walk_class, Class, Class < 'a >);
+        comment_pruning_visit_method!(visit_class_body, walk_class_body, ClassBody,
+        ClassBody < 'a >); comment_pruning_visit_method!(visit_method_definition,
+        walk_method_definition, MethodDefinition, MethodDefinition < 'a >);
+        comment_pruning_visit_method!(visit_property_definition,
+        walk_property_definition, PropertyDefinition, PropertyDefinition < 'a >);
+        comment_pruning_visit_method!(visit_private_identifier, walk_private_identifier,
+        PrivateIdentifier, PrivateIdentifier < 'a >);
+        comment_pruning_visit_method!(visit_static_block, walk_static_block, StaticBlock,
+        StaticBlock < 'a >); comment_pruning_visit_method!(visit_accessor_property,
+        walk_accessor_property, AccessorProperty, AccessorProperty < 'a >);
+        comment_pruning_visit_method!(visit_import_expression, walk_import_expression,
+        ImportExpression, ImportExpression < 'a >);
+        comment_pruning_visit_method!(visit_import_declaration, walk_import_declaration,
+        ImportDeclaration, ImportDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_import_specifier, walk_import_specifier,
+        ImportSpecifier, ImportSpecifier < 'a >);
+        comment_pruning_visit_method!(visit_import_default_specifier,
+        walk_import_default_specifier, ImportDefaultSpecifier, ImportDefaultSpecifier <
+        'a >); comment_pruning_visit_method!(visit_import_namespace_specifier,
+        walk_import_namespace_specifier, ImportNamespaceSpecifier,
+        ImportNamespaceSpecifier < 'a >);
+        comment_pruning_visit_method!(visit_with_clause, walk_with_clause, WithClause,
+        WithClause < 'a >); comment_pruning_visit_method!(visit_import_attribute,
+        walk_import_attribute, ImportAttribute, ImportAttribute < 'a >);
+        comment_pruning_visit_method!(visit_export_declaration, walk_export_declaration,
+        ExportDeclaration, ExportDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_export_named_declaration,
+        walk_export_named_declaration, ExportNamedDeclaration, ExportNamedDeclaration <
+        'a >); comment_pruning_visit_method!(visit_export_from_declaration,
+        walk_export_from_declaration, ExportFromDeclaration, ExportFromDeclaration < 'a
+        >); comment_pruning_visit_method!(visit_export_default_declaration,
+        walk_export_default_declaration, ExportDefaultDeclaration,
+        ExportDefaultDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_export_all_declaration,
+        walk_export_all_declaration, ExportAllDeclaration, ExportAllDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_export_specifier, walk_export_specifier,
+        ExportSpecifier, ExportSpecifier < 'a >);
+        comment_pruning_visit_method!(visit_v8_intrinsic_expression,
+        walk_v8_intrinsic_expression, V8IntrinsicExpression, V8IntrinsicExpression < 'a
+        >); comment_pruning_visit_method!(visit_boolean_literal, walk_boolean_literal,
+        BooleanLiteral, BooleanLiteral);
+        comment_pruning_visit_method!(visit_null_literal, walk_null_literal, NullLiteral,
+        NullLiteral); comment_pruning_visit_method!(visit_numeric_literal,
+        walk_numeric_literal, NumericLiteral, NumericLiteral < 'a >);
+        comment_pruning_visit_method!(visit_string_literal, walk_string_literal,
+        StringLiteral, StringLiteral < 'a >);
+        comment_pruning_visit_method!(visit_big_int_literal, walk_big_int_literal,
+        BigIntLiteral, BigIntLiteral < 'a >);
+        comment_pruning_visit_method!(visit_reg_exp_literal, walk_reg_exp_literal,
+        RegExpLiteral, RegExpLiteral < 'a >);
+        comment_pruning_visit_method!(visit_jsx_element, walk_jsx_element, JSXElement,
+        JSXElement < 'a >); comment_pruning_visit_method!(visit_jsx_opening_element,
+        walk_jsx_opening_element, JSXOpeningElement, JSXOpeningElement < 'a >);
+        comment_pruning_visit_method!(visit_jsx_closing_element,
+        walk_jsx_closing_element, JSXClosingElement, JSXClosingElement < 'a >);
+        comment_pruning_visit_method!(visit_jsx_fragment, walk_jsx_fragment, JSXFragment,
+        JSXFragment < 'a >); comment_pruning_visit_method!(visit_jsx_opening_fragment,
+        walk_jsx_opening_fragment, JSXOpeningFragment, JSXOpeningFragment);
+        comment_pruning_visit_method!(visit_jsx_closing_fragment,
+        walk_jsx_closing_fragment, JSXClosingFragment, JSXClosingFragment);
+        comment_pruning_visit_method!(visit_jsx_namespaced_name,
+        walk_jsx_namespaced_name, JSXNamespacedName, JSXNamespacedName < 'a >);
+        comment_pruning_visit_method!(visit_jsx_member_expression,
+        walk_jsx_member_expression, JSXMemberExpression, JSXMemberExpression < 'a >);
+        comment_pruning_visit_method!(visit_jsx_expression_container,
+        walk_jsx_expression_container, JSXExpressionContainer, JSXExpressionContainer <
+        'a >); comment_pruning_visit_method!(visit_jsx_empty_expression,
+        walk_jsx_empty_expression, JSXEmptyExpression, JSXEmptyExpression);
+        comment_pruning_visit_method!(visit_jsx_attribute, walk_jsx_attribute,
+        JSXAttribute, JSXAttribute < 'a >);
+        comment_pruning_visit_method!(visit_jsx_spread_attribute,
+        walk_jsx_spread_attribute, JSXSpreadAttribute, JSXSpreadAttribute < 'a >);
+        comment_pruning_visit_method!(visit_jsx_identifier, walk_jsx_identifier,
+        JSXIdentifier, JSXIdentifier < 'a >);
+        comment_pruning_visit_method!(visit_jsx_spread_child, walk_jsx_spread_child,
+        JSXSpreadChild, JSXSpreadChild < 'a >);
+        comment_pruning_visit_method!(visit_jsx_text, walk_jsx_text, JSXText, JSXText <
+        'a >); comment_pruning_visit_method!(visit_ts_this_parameter,
+        walk_ts_this_parameter, TSThisParameter, TSThisParameter < 'a >);
+        comment_pruning_visit_method!(visit_ts_enum_declaration,
+        walk_ts_enum_declaration, TSEnumDeclaration, TSEnumDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_enum_body, walk_ts_enum_body, TSEnumBody,
+        TSEnumBody < 'a >); comment_pruning_visit_method!(visit_ts_enum_member,
+        walk_ts_enum_member, TSEnumMember, TSEnumMember < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_annotation, walk_ts_type_annotation,
+        TSTypeAnnotation, TSTypeAnnotation < 'a >);
+        comment_pruning_visit_method!(visit_ts_literal_type, walk_ts_literal_type,
+        TSLiteralType, TSLiteralType < 'a >);
+        comment_pruning_visit_method!(visit_ts_conditional_type,
+        walk_ts_conditional_type, TSConditionalType, TSConditionalType < 'a >);
+        comment_pruning_visit_method!(visit_ts_union_type, walk_ts_union_type,
+        TSUnionType, TSUnionType < 'a >);
+        comment_pruning_visit_method!(visit_ts_intersection_type,
+        walk_ts_intersection_type, TSIntersectionType, TSIntersectionType < 'a >);
+        comment_pruning_visit_method!(visit_ts_parenthesized_type,
+        walk_ts_parenthesized_type, TSParenthesizedType, TSParenthesizedType < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_operator, walk_ts_type_operator,
+        TSTypeOperator, TSTypeOperator < 'a >);
+        comment_pruning_visit_method!(visit_ts_array_type, walk_ts_array_type,
+        TSArrayType, TSArrayType < 'a >);
+        comment_pruning_visit_method!(visit_ts_indexed_access_type,
+        walk_ts_indexed_access_type, TSIndexedAccessType, TSIndexedAccessType < 'a >);
+        comment_pruning_visit_method!(visit_ts_tuple_type, walk_ts_tuple_type,
+        TSTupleType, TSTupleType < 'a >);
+        comment_pruning_visit_method!(visit_ts_named_tuple_member,
+        walk_ts_named_tuple_member, TSNamedTupleMember, TSNamedTupleMember < 'a >);
+        comment_pruning_visit_method!(visit_ts_optional_type, walk_ts_optional_type,
+        TSOptionalType, TSOptionalType < 'a >);
+        comment_pruning_visit_method!(visit_ts_rest_type, walk_ts_rest_type, TSRestType,
+        TSRestType < 'a >); comment_pruning_visit_method!(visit_ts_any_keyword,
+        walk_ts_any_keyword, TSAnyKeyword, TSAnyKeyword);
+        comment_pruning_visit_method!(visit_ts_string_keyword, walk_ts_string_keyword,
+        TSStringKeyword, TSStringKeyword);
+        comment_pruning_visit_method!(visit_ts_boolean_keyword, walk_ts_boolean_keyword,
+        TSBooleanKeyword, TSBooleanKeyword);
+        comment_pruning_visit_method!(visit_ts_number_keyword, walk_ts_number_keyword,
+        TSNumberKeyword, TSNumberKeyword);
+        comment_pruning_visit_method!(visit_ts_never_keyword, walk_ts_never_keyword,
+        TSNeverKeyword, TSNeverKeyword);
+        comment_pruning_visit_method!(visit_ts_intrinsic_keyword,
+        walk_ts_intrinsic_keyword, TSIntrinsicKeyword, TSIntrinsicKeyword);
+        comment_pruning_visit_method!(visit_ts_unknown_keyword, walk_ts_unknown_keyword,
+        TSUnknownKeyword, TSUnknownKeyword);
+        comment_pruning_visit_method!(visit_ts_null_keyword, walk_ts_null_keyword,
+        TSNullKeyword, TSNullKeyword);
+        comment_pruning_visit_method!(visit_ts_undefined_keyword,
+        walk_ts_undefined_keyword, TSUndefinedKeyword, TSUndefinedKeyword);
+        comment_pruning_visit_method!(visit_ts_void_keyword, walk_ts_void_keyword,
+        TSVoidKeyword, TSVoidKeyword);
+        comment_pruning_visit_method!(visit_ts_symbol_keyword, walk_ts_symbol_keyword,
+        TSSymbolKeyword, TSSymbolKeyword);
+        comment_pruning_visit_method!(visit_ts_this_type, walk_ts_this_type, TSThisType,
+        TSThisType); comment_pruning_visit_method!(visit_ts_object_keyword,
+        walk_ts_object_keyword, TSObjectKeyword, TSObjectKeyword);
+        comment_pruning_visit_method!(visit_ts_big_int_keyword, walk_ts_big_int_keyword,
+        TSBigIntKeyword, TSBigIntKeyword);
+        comment_pruning_visit_method!(visit_ts_type_reference, walk_ts_type_reference,
+        TSTypeReference, TSTypeReference < 'a >);
+        comment_pruning_visit_method!(visit_ts_qualified_name, walk_ts_qualified_name,
+        TSQualifiedName, TSQualifiedName < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_parameter_instantiation,
+        walk_ts_type_parameter_instantiation, TSTypeParameterInstantiation,
+        TSTypeParameterInstantiation < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_parameter, walk_ts_type_parameter,
+        TSTypeParameter, TSTypeParameter < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_parameter_declaration,
+        walk_ts_type_parameter_declaration, TSTypeParameterDeclaration,
+        TSTypeParameterDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_alias_declaration,
+        walk_ts_type_alias_declaration, TSTypeAliasDeclaration, TSTypeAliasDeclaration <
+        'a >); comment_pruning_visit_method!(visit_ts_class_implements,
+        walk_ts_class_implements, TSClassImplements, TSClassImplements < 'a >);
+        comment_pruning_visit_method!(visit_ts_interface_declaration,
+        walk_ts_interface_declaration, TSInterfaceDeclaration, TSInterfaceDeclaration <
+        'a >); comment_pruning_visit_method!(visit_ts_interface_body,
+        walk_ts_interface_body, TSInterfaceBody, TSInterfaceBody < 'a >);
+        comment_pruning_visit_method!(visit_ts_property_signature,
+        walk_ts_property_signature, TSPropertySignature, TSPropertySignature < 'a >);
+        comment_pruning_visit_method!(visit_ts_index_signature, walk_ts_index_signature,
+        TSIndexSignature, TSIndexSignature < 'a >);
+        comment_pruning_visit_method!(visit_ts_call_signature_declaration,
+        walk_ts_call_signature_declaration, TSCallSignatureDeclaration,
+        TSCallSignatureDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_method_signature,
+        walk_ts_method_signature, TSMethodSignature, TSMethodSignature < 'a >);
+        comment_pruning_visit_method!(visit_ts_construct_signature_declaration,
+        walk_ts_construct_signature_declaration, TSConstructSignatureDeclaration,
+        TSConstructSignatureDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_index_signature_name,
+        walk_ts_index_signature_name, TSIndexSignatureName, TSIndexSignatureName < 'a >);
+        comment_pruning_visit_method!(visit_ts_interface_heritage,
+        walk_ts_interface_heritage, TSInterfaceHeritage, TSInterfaceHeritage < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_predicate, walk_ts_type_predicate,
+        TSTypePredicate, TSTypePredicate < 'a >);
+        comment_pruning_visit_method!(visit_ts_external_module_declaration,
+        walk_ts_external_module_declaration, TSExternalModuleDeclaration,
+        TSExternalModuleDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_namespace_declaration,
+        walk_ts_namespace_declaration, TSNamespaceDeclaration, TSNamespaceDeclaration <
+        'a >); comment_pruning_visit_method!(visit_ts_global_declaration,
+        walk_ts_global_declaration, TSGlobalDeclaration, TSGlobalDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_module_block, walk_ts_module_block,
+        TSModuleBlock, TSModuleBlock < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_literal, walk_ts_type_literal,
+        TSTypeLiteral, TSTypeLiteral < 'a >);
+        comment_pruning_visit_method!(visit_ts_infer_type, walk_ts_infer_type,
+        TSInferType, TSInferType < 'a >);
+        comment_pruning_visit_method!(visit_ts_type_query, walk_ts_type_query,
+        TSTypeQuery, TSTypeQuery < 'a >);
+        comment_pruning_visit_method!(visit_ts_import_type, walk_ts_import_type,
+        TSImportType, TSImportType < 'a >);
+        comment_pruning_visit_method!(visit_ts_import_type_qualified_name,
+        walk_ts_import_type_qualified_name, TSImportTypeQualifiedName,
+        TSImportTypeQualifiedName < 'a >);
+        comment_pruning_visit_method!(visit_ts_function_type, walk_ts_function_type,
+        TSFunctionType, TSFunctionType < 'a >);
+        comment_pruning_visit_method!(visit_ts_constructor_type,
+        walk_ts_constructor_type, TSConstructorType, TSConstructorType < 'a >);
+        comment_pruning_visit_method!(visit_ts_mapped_type, walk_ts_mapped_type,
+        TSMappedType, TSMappedType < 'a >);
+        comment_pruning_visit_method!(visit_ts_template_literal_type,
+        walk_ts_template_literal_type, TSTemplateLiteralType, TSTemplateLiteralType < 'a
+        >); comment_pruning_visit_method!(visit_ts_as_expression, walk_ts_as_expression,
+        TSAsExpression, TSAsExpression < 'a >);
+        comment_pruning_visit_method!(visit_ts_satisfies_expression,
+        walk_ts_satisfies_expression, TSSatisfiesExpression, TSSatisfiesExpression < 'a
+        >); comment_pruning_visit_method!(visit_ts_type_assertion,
+        walk_ts_type_assertion, TSTypeAssertion, TSTypeAssertion < 'a >);
+        comment_pruning_visit_method!(visit_ts_import_equals_declaration,
+        walk_ts_import_equals_declaration, TSImportEqualsDeclaration,
+        TSImportEqualsDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_external_module_reference,
+        walk_ts_external_module_reference, TSExternalModuleReference,
+        TSExternalModuleReference < 'a >);
+        comment_pruning_visit_method!(visit_ts_non_null_expression,
+        walk_ts_non_null_expression, TSNonNullExpression, TSNonNullExpression < 'a >);
+        comment_pruning_visit_method!(visit_decorator, walk_decorator, Decorator,
+        Decorator < 'a >); comment_pruning_visit_method!(visit_ts_export_assignment,
+        walk_ts_export_assignment, TSExportAssignment, TSExportAssignment < 'a >);
+        comment_pruning_visit_method!(visit_ts_namespace_export_declaration,
+        walk_ts_namespace_export_declaration, TSNamespaceExportDeclaration,
+        TSNamespaceExportDeclaration < 'a >);
+        comment_pruning_visit_method!(visit_ts_instantiation_expression,
+        walk_ts_instantiation_expression, TSInstantiationExpression,
+        TSInstantiationExpression < 'a >);
+        comment_pruning_visit_method!(visit_js_doc_nullable_type,
+        walk_js_doc_nullable_type, JSDocNullableType, JSDocNullableType < 'a >);
+        comment_pruning_visit_method!(visit_js_doc_non_nullable_type,
+        walk_js_doc_non_nullable_type, JSDocNonNullableType, JSDocNonNullableType < 'a
+        >); comment_pruning_visit_method!(visit_js_doc_unknown_type,
+        walk_js_doc_unknown_type, JSDocUnknownType, JSDocUnknownType);
+    };
+}
+pub(crate) use generate_comment_pruning_visit_methods;

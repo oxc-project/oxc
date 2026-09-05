@@ -89,6 +89,7 @@ fn transform_impl(
 
     let SemanticBuilderReturn { semantic, diagnostics: semantic_diagnostics } =
         SemanticBuilder::new_compiler()
+            .with_build_comment_attachments(true)
             .with_excess_capacity(2.0)
             .with_enum_eval(true)
             .with_build_nodes(react_compiler_options.is_some())

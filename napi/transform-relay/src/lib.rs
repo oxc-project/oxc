@@ -80,7 +80,8 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let semantic_return = SemanticBuilder::new().build(&program);
+    let semantic_return =
+        SemanticBuilder::new().with_build_comment_attachments(true).build(&program);
     if !semantic_return.diagnostics.is_empty() {
         diagnostics.extend(semantic_return.diagnostics);
         return error_result(filename, source_text, diagnostics);

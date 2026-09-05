@@ -27,6 +27,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
             source_type: CloneIn::clone_in_impl(&self.source_type, with_semantic_ids, allocator),
             source_text: CloneIn::clone_in_impl(&self.source_text, with_semantic_ids, allocator),
             comments: CloneIn::clone_in_impl(&self.comments, with_semantic_ids, allocator),
+            comment_attachments: Default::default(),
             hashbang: CloneIn::clone_in_impl(&self.hashbang, with_semantic_ids, allocator),
             directives: CloneIn::clone_in_impl(&self.directives, with_semantic_ids, allocator),
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),

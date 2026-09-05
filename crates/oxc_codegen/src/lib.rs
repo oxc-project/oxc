@@ -34,7 +34,7 @@ mod sourcemap_builder;
 mod str;
 
 use binary_expr_visitor::BinaryExpressionVisitor;
-use comment::CommentsMap;
+use comment::{CommentStore, NodeCommentStore};
 use operator::Operator;
 #[cfg(feature = "sourcemap")]
 use sourcemap_builder::SourcemapBuilder;
@@ -126,23 +126,13 @@ pub struct Codegen<'a> {
     quote: Quote,
 
     // Builders
-    comments: CommentsMap,
+    comments: CommentStore,
+    node_comments: NodeCommentStore,
     has_property_key_annotations: bool,
 
-    /// Pure / no-side-effects annotation comments keyed by `attached_to`,
-    /// so the emission site can recover verbatim source text instead of a
-    /// canonicalised literal (rolldown#9408). The emission site falls back
-    /// to the canonical literal when (a) no comment is stashed, (b) the
-    /// stashed comment's kind doesn't match the emission site (mixed
-    /// `@__PURE__` and `@__NO_SIDE_EFFECTS__` on the same `attached_to`),
-    /// (c) the comment is a line comment but the site can't break the line,
-    /// or (d) source text isn't available.
-    annotation_comments: FxHashMap<u32, Comment>,
-
-    /// Sorted, deduped `attached_to` keys for comments that must survive a
-    /// removed anchor. Lets `print_orphan_comments_before` flush via
-    /// `partition_point` + `drain`.
-    orphan_comment_keys: Vec<u32>,
+    /// Suppress normal comments at a moved expression boundary. They remain
+    /// unclaimed for the enclosing statement's safe fallback.
+    suppress_normal_comments: bool,
 
     #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
@@ -195,10 +185,10 @@ impl<'a> Codegen<'a> {
             is_jsx: false,
             indent: 0,
             quote: Quote::Double,
-            comments: CommentsMap::default(),
+            comments: CommentStore::default(),
+            node_comments: NodeCommentStore::default(),
             has_property_key_annotations: false,
-            annotation_comments: FxHashMap::default(),
-            orphan_comment_keys: Vec::new(),
+            suppress_normal_comments: false,
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
@@ -258,12 +248,15 @@ impl<'a> Codegen<'a> {
         self.source_text = Some(program.source_text);
         self.indent = self.options.initial_indent;
         self.code.reserve(program.source_text.len());
-        self.build_comments(&program.comments);
+        if !self.build_node_comments(program) {
+            self.build_comments(&program.comments);
+        }
         #[cfg(feature = "sourcemap")]
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
         program.print(&mut self, Context::default());
+        self.print_all_remaining_orphan_comments();
         let legal_comments = self.handle_eof_linked_or_external_comments(program);
         let code = self.code.into_string();
         #[cfg(feature = "sourcemap")]
@@ -578,6 +571,14 @@ impl<'a> Codegen<'a> {
         self.print_next_indent_as_space = false;
     }
 
+    fn with_suppressed_normal_comments<R>(&mut self, f: impl FnOnce(&mut Self) -> R) -> R {
+        let previous = self.suppress_normal_comments;
+        self.suppress_normal_comments = true;
+        let result = f(self);
+        self.suppress_normal_comments = previous;
+        result
+    }
+
     #[inline]
     fn print_semicolon_after_statement(&mut self) {
         if self.options.minify {
@@ -620,7 +621,23 @@ impl<'a> Codegen<'a> {
         op(self);
         if !single_line {
             self.dedent();
+            let close = span.end.saturating_sub(1);
+            if self.has_comment(close) {
+                self.indent();
+                self.print_indent();
+                self.print_comments_before_closing_delimiter(close);
+                self.dedent();
+                if self.last_byte() != Some(b'\n') {
+                    self.trim_trailing_indent_space();
+                    self.print_hard_newline();
+                }
+            }
             self.print_indent();
+        } else if span.end > 0 {
+            self.print_comments_before_closing_delimiter(span.end - 1);
+            if self.last_byte() == Some(b'\n') {
+                self.print_indent();
+            }
         }
         self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
@@ -634,10 +651,18 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_end(&mut self, span: Span) {
+        self.trim_trailing_indent_space();
         self.dedent();
         self.print_indent();
         self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
+    }
+
+    #[inline]
+    fn trim_trailing_indent_space(&mut self) {
+        while matches!(self.last_byte(), Some(b' ' | b'\t')) {
+            self.code.pop_byte();
+        }
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
@@ -773,18 +798,23 @@ impl<'a> Codegen<'a> {
     fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
         self.print_ascii_byte(b'(');
 
-        let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
+        let right_paren = span.end.saturating_sub(1);
+        let trailing_gap_start =
+            arguments.last().map_or(span.start, |argument| argument.span().end);
+        let has_comment_in_trailing_gap =
+            self.has_comments_in_range(trailing_gap_start, right_paren);
+        let has_comment_before_right_paren = span.end > 0 && self.has_comment(right_paren);
 
-        let has_comment = has_comment_before_right_paren
+        let has_comment = has_comment_in_trailing_gap
+            || has_comment_before_right_paren
             || arguments.iter().any(|item| self.has_comment(item.span().start));
 
         if has_comment {
             self.indent();
             self.print_list_with_comments(arguments, ctx);
-            // Handle `/* comment */);`
-            if !has_comment_before_right_paren
-                || (span.end > 0 && !self.print_expr_comments(span.end - 1))
-            {
+            let printed_trailing_comment =
+                self.print_expr_comments_before_closing_delimiter(trailing_gap_start, right_paren);
+            if !printed_trailing_comment {
                 self.print_soft_newline();
             }
             self.dedent();
@@ -900,8 +930,10 @@ impl<'a> Codegen<'a> {
             decorator.print(self, ctx);
             // Only separate from the following token when the decorator ends in an
             // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
-            self.print_soft_space();
-            self.print_space_before_identifier();
+            if self.last_byte() != Some(b'\n') {
+                self.print_soft_space();
+                self.print_space_before_identifier();
+            }
         }
     }
 
