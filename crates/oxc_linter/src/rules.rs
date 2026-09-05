@@ -679,6 +679,7 @@ pub(crate) mod unicorn {
     pub mod prefer_single_call;
     pub mod prefer_spread;
     pub mod prefer_string_raw;
+    pub mod prefer_string_repeat;
     pub mod prefer_string_replace_all;
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
