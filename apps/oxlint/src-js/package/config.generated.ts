@@ -1656,6 +1656,7 @@ export interface DummyRuleMap {
   "unicorn/prefer-single-call"?: RuleNoConfig | [AllowWarnDeny, PreferSingleCallConfig];
   "unicorn/prefer-spread"?: RuleNoConfig;
   "unicorn/prefer-string-raw"?: RuleNoConfig;
+  "unicorn/prefer-string-repeat"?: RuleNoConfig | [AllowWarnDeny, PreferStringRepeat];
   "unicorn/prefer-string-replace-all"?: RuleNoConfig;
   "unicorn/prefer-string-slice"?: RuleNoConfig;
   "unicorn/prefer-string-starts-ends-with"?: RuleNoConfig;
@@ -2113,6 +2114,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, PreferNumberPropertiesConfig]
     | [AllowWarnDeny, PreferObjectFromEntriesConfig]
     | [AllowWarnDeny, PreferSingleCallConfig]
+    | [AllowWarnDeny, PreferStringRepeat]
     | [AllowWarnDeny, PreferStructuredCloneConfig]
     | [AllowWarnDeny, PreferTernaryOption]
     | [AllowWarnDeny, RelativeUrlStyleConfig]
@@ -6985,6 +6987,12 @@ export interface PreferSingleCallConfig {
    * Methods to ignore.
    */
   ignore?: string[];
+}
+export interface PreferStringRepeat {
+  /**
+   * The minimum number of repetitions required before reporting a string.
+   */
+  minimumRepetitions?: number;
 }
 export interface PreferStructuredCloneConfig {
   /**
