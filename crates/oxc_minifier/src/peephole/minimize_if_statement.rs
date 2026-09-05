@@ -87,18 +87,11 @@ impl<'a> PeepholeOptimizations {
             && if2_stmt.alternate.is_none()
         {
             // `if (a) if (b) x;` => `if (a && b) x;`
-            let a = if_stmt.test.take_in(ctx);
-            let b = if2_stmt.test.take_in(ctx);
-            let new_test = Self::join_with_left_associative_op(
-                if_stmt.test.span(),
-                LogicalOperator::And,
-                a,
-                b,
-                ctx,
-            );
-            let new_consequent = if2_stmt.consequent.take_in(ctx);
-            ctx.replace_expression(&mut if_stmt.test, new_test);
-            ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
+            let IfStatement { test, consequent, .. } = if2_stmt.take_in(ctx);
+            ctx.replace_expression_with(&mut if_stmt.test, |a, ctx| {
+                Self::join_with_left_associative_op(test.span(), LogicalOperator::And, a, test, ctx)
+            });
+            ctx.replace_statement(&mut if_stmt.consequent, consequent);
         }
 
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
