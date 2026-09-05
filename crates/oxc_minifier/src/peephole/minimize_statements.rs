@@ -110,46 +110,6 @@ impl<'a> PeepholeOptimizations {
             let dropped = stmts.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
-
-        // Merge certain statements in reverse order
-        if stmts.len() >= 2 && ctx.options().sequences {
-            if matches!(
-                stmts.last(),
-                Some(Statement::BreakStatement(_) | Statement::ContinueStatement(_))
-            ) {
-                'jump_loop: while stmts.len() >= 2 {
-                    let prev_index = stmts.len() - 2;
-                    let prev_stmt = &stmts[prev_index];
-
-                    let Statement::IfStatement(if_stmt) = prev_stmt else {
-                        break 'jump_loop;
-                    };
-                    if let Some(alternate) = &if_stmt.alternate {
-                        if Self::jump_stmts_look_the_same(stmts.last().unwrap(), alternate) {
-                            let Statement::IfStatement(prev_if) = &mut stmts[prev_index] else {
-                                unreachable!()
-                            };
-                            ctx.drop_statement(&prev_if.alternate.take().unwrap());
-                            continue 'jump_loop;
-                        }
-                    } else if Self::jump_stmts_look_the_same(
-                        stmts.last().unwrap(),
-                        &if_stmt.consequent,
-                    ) {
-                        let test = if let Statement::IfStatement(prev_if) = &mut stmts[prev_index] {
-                            prev_if.test.take_in(ctx)
-                        } else {
-                            unreachable!()
-                        };
-
-                        let new_expr = Statement::new_expression_statement(test.span(), test, ctx);
-                        ctx.replace_statement(&mut stmts[prev_index], new_expr);
-                        continue 'jump_loop;
-                    }
-                    break 'jump_loop;
-                }
-            }
-        }
     }
 
     /// Some parsers cannot parse long conditional expressions.
@@ -219,6 +179,12 @@ impl<'a> PeepholeOptimizations {
                 if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
                     return ControlFlow::Break(());
                 }
+            }
+            Statement::ContinueStatement(continue_stmt) => {
+                Self::handle_continue_statement(continue_stmt, result, ctx);
+            }
+            Statement::BreakStatement(break_stmt) => {
+                Self::handle_break_statement(break_stmt, result, ctx);
             }
             Statement::ReturnStatement(ret_stmt) => {
                 Self::handle_return_statement(ret_stmt, result, ctx);
@@ -912,6 +878,58 @@ impl<'a> PeepholeOptimizations {
         }
 
         result.push(Statement::ThrowStatement(throw_stmt));
+    }
+
+    fn handle_break_statement(
+        break_stmt: ArenaBox<'a, BreakStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.is_tree_shake_only()
+            && let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+        {
+            if if_stmt.alternate.is_some()
+                && matches!(&if_stmt.alternate, Some(Statement::BreakStatement(alt_stmt)) if break_stmt.content_eq(alt_stmt))
+            {
+                ctx.drop_statement(&if_stmt.alternate.take().unwrap());
+            }
+            if if_stmt.alternate.is_none()
+                && matches!(&if_stmt.consequent, Statement::BreakStatement(cons_stmt) if break_stmt.content_eq(cons_stmt))
+            {
+                let last_stmt = result.pop().unwrap();
+                let Statement::IfStatement(prev_if) = last_stmt else { unreachable!() };
+                let prev_if = prev_if.unbox();
+
+                result.push(Statement::new_expression_statement(prev_if.span, prev_if.test, ctx));
+            }
+        }
+        result.push(Statement::BreakStatement(break_stmt));
+    }
+
+    fn handle_continue_statement(
+        continue_stmt: ArenaBox<'a, ContinueStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.is_tree_shake_only()
+            && let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+        {
+            if if_stmt.alternate.is_some()
+                && matches!(&if_stmt.alternate, Some(Statement::ContinueStatement(alt_stmt)) if continue_stmt.content_eq(alt_stmt))
+            {
+                ctx.drop_statement(&if_stmt.alternate.take().unwrap());
+            }
+            if if_stmt.alternate.is_none()
+                && matches!(&if_stmt.consequent, Statement::ContinueStatement(cons_stmt) if continue_stmt.content_eq(cons_stmt))
+            {
+                let last_stmt = result.pop().unwrap();
+                let Statement::IfStatement(prev_if) = last_stmt else { unreachable!() };
+                let prev_if = prev_if.unbox();
+
+                result.push(Statement::new_expression_statement(prev_if.span, prev_if.test, ctx));
+            }
+        }
+        result.push(Statement::ContinueStatement(continue_stmt));
     }
 
     fn handle_for_statement(
