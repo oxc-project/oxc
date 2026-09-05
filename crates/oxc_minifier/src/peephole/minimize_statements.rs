@@ -201,13 +201,27 @@ impl<'a> PeepholeOptimizations {
         ControlFlow::Continue(())
     }
 
+    fn merge_last_expression_into_sequence(
+        target: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.options().sequences
+            || !matches!(result.last(), Some(Statement::ExpressionStatement(_)))
+        {
+            return;
+        }
+        let last_epr = result.pop().unwrap();
+        let Statement::ExpressionStatement(prev_expr_stmt) = last_epr else { unreachable!() };
+        let a = prev_expr_stmt.unbox().expression;
+        ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
+    }
+
     fn join_sequence(
-        a: &mut Expression<'a>,
-        b: &mut Expression<'a>,
+        a: Expression<'a>,
+        b: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let a = a.take_in(ctx);
-        let b = b.take_in(ctx);
         if let Expression::SequenceExpression(mut sequence_expr) = a {
             // `(a, b); c`
             sequence_expr.expressions.push(b);
@@ -332,16 +346,10 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let b = &mut expr_stmt.expression;
-            expr_stmt.expression = Self::join_sequence(a, b, ctx);
-            let dropped = result.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
-        // "var a; a = b();" => "var a = b();"
+        // `a; b;` => `a, b;`
+        Self::merge_last_expression_into_sequence(&mut expr_stmt.expression, result, ctx);
+
+        // `var a; a = b();` => `var a = b();`
         if Self::merge_leading_assignments_to_declaration(
             &mut expr_stmt.expression,
             true,
@@ -489,17 +497,10 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let b = &mut switch_stmt.discriminant;
-            switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
-            let dropped = result.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
+        // `a; switch(b){}` => `switch(a, b){}`
+        Self::merge_last_expression_into_sequence(&mut switch_stmt.discriminant, result, ctx);
 
-        // "var a; switch (a = b(), c) {}" => "var a = b(); switch (c) {}"
+        // `var a; switch (a = b(), c) {}` => `var a = b(); switch (c) {}`
         Self::merge_leading_assignments_to_declaration(
             &mut switch_stmt.discriminant,
             false,
@@ -571,19 +572,14 @@ impl<'a> PeepholeOptimizations {
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
-        // "var a; if (a = b(), c) d;" => "var a = b(); if (c) d;"
+        // `var a; if (a = b(), c) d;` => `var a = b(); if (c) d;`
         Self::merge_leading_assignments_to_declaration(&mut if_stmt.test, false, result, ctx);
+
+        // `a; if (b) c;` => `if (a, b) c;`
+        Self::merge_last_expression_into_sequence(&mut if_stmt.test, result, ctx);
 
         // Absorb a previous expression statement
         if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut if_stmt.test;
-                if_stmt.test = Self::join_sequence(a, b, ctx);
-                let dropped = result.pop().unwrap();
-                ctx.drop_statement(&dropped);
-            }
-
             if if_stmt.consequent.is_jump_statement() {
                 // Absorb a previous if statement
                 if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
@@ -697,30 +693,28 @@ impl<'a> PeepholeOptimizations {
             // `return undefined` has a different semantic in async generator function.
             && !ctx.is_closest_function_scope_an_async_generator()
         {
+            let argument = ret_stmt.argument.take().unwrap();
             if argument.may_have_side_effects(ctx) {
                 if ctx.options().sequences
                     && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
                 {
-                    let a = &mut prev_expr_stmt.expression;
-                    prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
+                    // `x; return a,void 0;` -> `x,a,void 0; return;`
+                    ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
+                        Self::join_sequence(a, argument, ctx)
+                    });
                 } else {
+                    // `return a,void 0;` -> `a,void 0; return;`
                     let span = argument.span();
-                    let argument = ret_stmt.argument.take().unwrap();
                     result.push(Statement::new_expression_statement(span, argument, ctx));
                     ctx.notice_change();
                 }
+            } else {
+                // `return void 0;` -> `return;`
+                ctx.drop_expression(&argument);
             }
-            if let Some(old) = ret_stmt.argument.take() {
-                ctx.drop_expression(&old);
-            }
-        } else if ctx.options().sequences
-            && let Some(argument) = &mut ret_stmt.argument
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let new_arg = Self::join_sequence(a, argument, ctx);
-            ctx.replace_expression(argument, new_arg);
-            result.pop();
+        } else if let Some(argument) = &mut ret_stmt.argument {
+            // `a; return b;` => `return b, c;`
+            Self::merge_last_expression_into_sequence(argument, result, ctx);
         }
 
         // `if (a) return b; return c;` => `return a ? b : c;`
@@ -821,16 +815,8 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
-        // `a; throw x` => `throw a, x`
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let b = &mut throw_stmt.argument;
-            throw_stmt.argument = Self::join_sequence(a, b, ctx);
-            let dropped = result.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
+        // `a; throw b;` => `throw a, b;`
+        Self::merge_last_expression_into_sequence(&mut throw_stmt.argument, result, ctx);
 
         // `var a; throw a = b(), c;` => `var a = b(); throw c;`
         Self::merge_leading_assignments_to_declaration(
@@ -942,14 +928,11 @@ impl<'a> PeepholeOptimizations {
 
         if ctx.options().sequences {
             match result.last_mut() {
-                Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
+                Some(Statement::ExpressionStatement(_)) => {
                     if let Some(init) = &mut for_stmt.init {
                         if let Some(init) = init.as_expression_mut() {
-                            let a = &mut prev_expr_stmt.expression;
-                            let new_init = Self::join_sequence(a, init, ctx);
-                            ctx.replace_expression(init, new_init);
-                            let dropped = result.pop().unwrap();
-                            ctx.drop_statement(&dropped);
+                            // `a; for (b;;) c;` => `for (a, b;;) c;`
+                            Self::merge_last_expression_into_sequence(init, result, ctx);
                         }
                     } else {
                         let previous = result.pop().unwrap();
@@ -1019,7 +1002,7 @@ impl<'a> PeepholeOptimizations {
         if ctx.options().sequences {
             match result.last_mut() {
                 // "a; for (var b in c) d" => "for (var b in a, c) d"
-                Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
+                Some(Statement::ExpressionStatement(_)) => {
                     // Annex B.3.5 allows initializers in non-strict mode
                     // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
                     // Only allow inlining when the for-in variable is declared with `var` and
@@ -1046,10 +1029,11 @@ impl<'a> PeepholeOptimizations {
                         true
                     };
                     if can_inline {
-                        let a = &mut prev_expr_stmt.expression;
-                        for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
-                        let dropped = result.pop().unwrap();
-                        ctx.drop_statement(&dropped);
+                        Self::merge_last_expression_into_sequence(
+                            &mut for_in_stmt.right,
+                            result,
+                            ctx,
+                        );
                     }
                 }
                 // "var a; for (a in b) c" => "for (var a in b) c"

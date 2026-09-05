@@ -12,6 +12,9 @@ fn test_fold_return_result() {
     test("function f(){return void 0;}", "function f(){}");
     test("function f(){return void foo();}", "function f(){foo()}");
     test("function f(){return undefined;}", "function f(){}");
+    test("function f(){return a,void 0;}", "function f(){a;}");
+    test("function f(){b;return a,void 0;}", "function f(){b,a;}");
+    test("function f(){b,c;return a,void 0;}", "function f(){b,c,a;}");
     test("function f(){if(a()){return undefined;}}", "function f(){a()}");
     test_same("function a(undefined) { return undefined; }");
     test_same("function f(){return foo()}");
