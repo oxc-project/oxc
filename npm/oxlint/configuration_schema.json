@@ -3578,6 +3578,9 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/no-blank-block-descriptions": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "jsdoc/no-blank-blocks": {
           "anyOf": [
             {
