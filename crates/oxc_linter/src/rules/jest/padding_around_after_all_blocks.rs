@@ -35,6 +35,8 @@ fn test() {
 
     let pass = vec![
         "afterAll(() => {});",
+        "afterAll(() => {});\n\nconst thing = 123;",
+        "afterAll(() => {});\n\nafterAll(() => {});",
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
@@ -42,11 +44,15 @@ fn test() {
 
     let fail = vec![
         "const thing = 123;\nafterAll(() => {});",
+        "afterAll(() => {});\nconst thing = 123;",
+        "afterAll(() => {});\nafterAll(() => {});",
         "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
     ];
 
     let fix = vec![
         ("const thing = 123;\nafterAll(() => {});", "const thing = 123;\n\nafterAll(() => {});"),
+        ("afterAll(() => {});\nconst thing = 123;", "afterAll(() => {});\n\nconst thing = 123;"),
+        ("afterAll(() => {});\nafterAll(() => {});", "afterAll(() => {});\n\nafterAll(() => {});"),
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
             "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
