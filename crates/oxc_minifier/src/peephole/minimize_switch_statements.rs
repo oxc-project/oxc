@@ -1,7 +1,7 @@
 use super::PeepholeOptimizations;
 use crate::keep_var::KeepVar;
 use crate::{TraverseCtx, is_terminated::IsTerminated};
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::{Expression, Statement, SwitchCase};
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
@@ -9,6 +9,7 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::BinaryOperator;
 
 impl<'a> PeepholeOptimizations {
+    /// Collapses a one-case switch into an if condition when the case can be safely inlined.
     pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::SwitchStatement(switch_stmt) = stmt else {
             return;
@@ -18,44 +19,47 @@ impl<'a> PeepholeOptimizations {
             && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
             && let Some(mut case) = switch_stmt.cases.pop()
         {
-            ctx.notice_change();
-
             let block_stmt = if case.consequent.len() == 1
-                && matches!(case.consequent[0], Statement::BlockStatement(_))
+                && matches!(case.consequent.last(), Some(Statement::BlockStatement(_)))
             {
                 case.consequent.pop().unwrap()
             } else {
                 Statement::new_block_statement_with_scope_id(
                     case.span,
-                    case.consequent.take_in(ctx),
+                    case.consequent,
                     switch_stmt.scope_id(),
                     ctx,
                 )
             };
 
-            let expression = if let Some(test) = case.test {
-                Expression::new_binary_expression(
-                    SPAN,
-                    switch_stmt.discriminant.take_in(ctx),
-                    BinaryOperator::StrictEquality,
-                    test,
-                    ctx,
-                )
-            } else {
-                Expression::new_sequence_expression(
-                    SPAN,
-                    [
-                        switch_stmt.discriminant.take_in(ctx),
-                        Expression::new_boolean_literal(switch_stmt.discriminant.span(), true, ctx),
-                    ],
-                    ctx,
-                )
-            };
+            ctx.notice_change();
+            stmt.replace_with(|stmt| {
+                let Statement::SwitchStatement(switch_stmt) = stmt else {
+                    unreachable!();
+                };
+                let switch_stmt = switch_stmt.unbox();
+                let expression = if let Some(test) = case.test {
+                    Expression::new_binary_expression(
+                        SPAN,
+                        switch_stmt.discriminant,
+                        BinaryOperator::StrictEquality,
+                        test,
+                        ctx,
+                    )
+                } else {
+                    let span = switch_stmt.discriminant.span();
+                    Expression::new_sequence_expression(
+                        SPAN,
+                        [
+                            switch_stmt.discriminant,
+                            Expression::new_boolean_literal(span, true, ctx),
+                        ],
+                        ctx,
+                    )
+                };
 
-            let new_if =
-                Statement::new_if_statement(switch_stmt.span, expression, block_stmt, None, ctx);
-
-            ctx.replace_statement(stmt, new_if);
+                Statement::new_if_statement(switch_stmt.span, expression, block_stmt, None, ctx)
+            });
         }
     }
 
