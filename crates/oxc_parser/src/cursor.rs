@@ -15,7 +15,7 @@ use crate::{
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
-    prev_span_end: u32,
+    prev_token_end: u32,
     errors_pos: usize,
     fatal_error: Option<FatalError<'a>>,
 }
@@ -311,7 +311,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
         }
@@ -321,19 +321,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint_with_error_recovery(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
+        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
             checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
-        self.prev_token_end = prev_span_end;
+        self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
     }
