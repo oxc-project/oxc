@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - uses: ./.github/actions/check-version
         id: oxfmt
@@ -150,7 +150,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
+        uses: taiki-e/install-action@37f7c5781271959fb65b6b35224e28652ff2b63d # v2.87.0
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -159,7 +159,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -221,43 +221,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - name: Build
-        id: build
-        uses: cross-platform-actions/action@24ef01df165c76df1ed2b9f9e9212e78dc2fc963 # v1.4.0
-        env:
-          DEBUG: napi:*
-          RUSTUP_IO_THREADS: 1
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - run: rustup target add x86_64-unknown-freebsd
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
         with:
-          operating_system: freebsd
-          version: "14.2"
-          memory: 8G
-          cpu_count: 3
-          environment_variables: "DEBUG RUSTUP_IO_THREADS"
-          shell: bash
-          run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
-            curl https://sh.rustup.rs -sSf --output rustup.sh
-            sh rustup.sh -y --profile minimal --default-toolchain stable
-            source "$HOME/.cargo/env"
-            echo "~~~~ rustc --version ~~~~"
-            rustc --version
-            echo "~~~~ node -v ~~~~"
-            node -v
-            pwd
-            ls -lah
-            whoami
-            env
-            export COREPACK_INTEGRITY_KEYS=0
-            sudo corepack enable
-            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
-            cd apps/oxlint
-            pnpm run build-napi-release --target x86_64-unknown-freebsd
-            cd ../..
-            cargo build --release -p oxlint --features allocator --target=x86_64-unknown-freebsd
-            rm -rf node_modules
-            rm -rf target/x86_64-unknown-freebsd/release/build
-            rm -rf target/x86_64-unknown-freebsd/release/deps
-            rm -rf target/x86_64-unknown-freebsd/release/incremental
+          version: "0.15.2"
+
+      - name: Install cargo-zigbuild
+        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+        with:
+          repo: rust-cross/cargo-zigbuild
+
+      - name: Build oxlint for node.js
+        working-directory: apps/oxlint
+        run: pnpm run build-napi-release --target x86_64-unknown-freebsd -x
+
+      - name: Build Rust binary
+        run: cargo zigbuild --release -p oxlint --features allocator --target=x86_64-unknown-freebsd
 
       - name: Upload NAPI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -314,7 +298,7 @@ jobs:
           path: artifacts
           pattern: oxlint-bindings-*
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
@@ -456,7 +440,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
+        uses: taiki-e/install-action@37f7c5781271959fb65b6b35224e28652ff2b63d # v2.87.0
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -465,7 +449,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -527,43 +511,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - name: Build
-        id: build
-        uses: cross-platform-actions/action@24ef01df165c76df1ed2b9f9e9212e78dc2fc963 # v1.4.0
-        env:
-          DEBUG: napi:*
-          RUSTUP_IO_THREADS: 1
+
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - run: rustup target add x86_64-unknown-freebsd
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
         with:
-          operating_system: freebsd
-          version: "14.2"
-          memory: 8G
-          cpu_count: 3
-          environment_variables: "DEBUG RUSTUP_IO_THREADS"
-          shell: bash
-          run: |
-            sudo pkg install -y -f curl libnghttp2 node22 npm cmake ca_root_nss
-            curl https://sh.rustup.rs -sSf --output rustup.sh
-            sh rustup.sh -y --profile minimal --default-toolchain stable
-            source "$HOME/.cargo/env"
-            echo "~~~~ rustc --version ~~~~"
-            rustc --version
-            echo "~~~~ node -v ~~~~"
-            node -v
-            pwd
-            ls -lah
-            whoami
-            env
-            export COREPACK_INTEGRITY_KEYS=0
-            sudo corepack enable
-            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
-            cd apps/oxfmt
-            pnpm run build-napi-release --target x86_64-unknown-freebsd
-            cd ../..
-            cargo build --release -p oxfmt --no-default-features --features allocator --target=x86_64-unknown-freebsd
-            rm -rf node_modules
-            rm -rf target/x86_64-unknown-freebsd/release/build
-            rm -rf target/x86_64-unknown-freebsd/release/deps
-            rm -rf target/x86_64-unknown-freebsd/release/incremental
+          version: "0.15.2"
+
+      - name: Install cargo-zigbuild
+        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+        with:
+          repo: rust-cross/cargo-zigbuild
+
+      - name: Build oxfmt for node.js
+        working-directory: apps/oxfmt
+        run: pnpm run build-napi-release --target x86_64-unknown-freebsd -x
+
+      - name: Build Rust binary
+        run: cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=x86_64-unknown-freebsd
 
       - name: Upload NAPI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -607,7 +575,7 @@ jobs:
           path: artifacts
           pattern: oxfmt-bindings-*
 
-      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt

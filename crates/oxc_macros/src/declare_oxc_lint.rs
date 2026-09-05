@@ -17,6 +17,15 @@ pub enum DocumentationSource {
     Path(syn::Path),
 }
 
+/// Short description source for a lint rule
+#[cfg(feature = "ruledocs")]
+pub enum ShortDescriptionSource {
+    /// Inline string literal
+    Inline(LitStr),
+    /// Reference to a shared short description constant
+    Path(syn::Path),
+}
+
 pub struct LintRuleMeta {
     name: Ident,
     // Whether this rule should be exposed to tsgolint integration
@@ -35,7 +44,8 @@ pub struct LintRuleMeta {
     /// The version of oxlint in which this rule was first available.
     version: LitStr,
     /// A short, one-line summary of what the rule does.
-    short_description: Option<LitStr>,
+    #[cfg(feature = "ruledocs")]
+    short_description: Option<ShortDescriptionSource>,
 }
 
 impl Parse for LintRuleMeta {
@@ -108,7 +118,8 @@ impl Parse for LintRuleMeta {
         let mut fix: Option<Ident> = None;
         let mut config: Option<Path> = None;
         let mut version: Option<LitStr> = None;
-        let mut short_description: Option<LitStr> = None;
+        #[cfg(feature = "ruledocs")]
+        let mut short_description: Option<ShortDescriptionSource> = None;
 
         // remaining options are `key = value` pairs, with the exception of
         // fix kinds. Those can be short-handed to just the fix kind
@@ -155,9 +166,18 @@ impl Parse for LintRuleMeta {
                     version.replace(input.parse()?);
                 }
                 // short_description = "One-line summary."
+                // or short_description = path::to::SHARED_SHORT_DESCRIPTION_CONSTANT
                 "short_description" => {
-                    input.parse::<Token!(=)>()?;
-                    short_description.replace(input.parse()?);
+                    #[cfg(feature = "ruledocs")]
+                    {
+                        input.parse::<Token!(=)>()?;
+                        if input.peek(LitStr) {
+                            short_description
+                                .replace(ShortDescriptionSource::Inline(input.parse()?));
+                        } else {
+                            short_description.replace(ShortDescriptionSource::Path(input.parse()?));
+                        }
+                    }
                 }
                 _ => {
                     if input.peek(Token!(=)) || fix.is_some() {
@@ -212,6 +232,7 @@ impl Parse for LintRuleMeta {
             used_in_test: false,
             config,
             version,
+            #[cfg(feature = "ruledocs")]
             short_description,
         })
     }
@@ -233,6 +254,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         used_in_test,
         config,
         version,
+        #[cfg(feature = "ruledocs")]
         short_description,
     } = metadata;
 
@@ -313,7 +335,15 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }
     };
 
+    #[cfg(not(feature = "ruledocs"))]
+    let info_const: Option<proc_macro2::TokenStream> = None;
+
+    #[cfg(feature = "ruledocs")]
     let info_const = short_description.map(|short_description| {
+        let short_description = match short_description {
+            ShortDescriptionSource::Inline(lit) => quote! { #lit },
+            ShortDescriptionSource::Path(path) => quote! { #path },
+        };
         quote! {
             const INFO: RuleInfo = RuleInfo {
                 short_description: #short_description,

@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "test-plugin/noop": "error",
+    "typescript/no-explicit-any": "error"
+  },
+  "options": {
+    "reportUnusedDisableDirectives": "warn"
+  }
+}

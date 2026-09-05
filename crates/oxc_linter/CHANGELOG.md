@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.81.0] - 2026-08-31
+
+### 🚀 Features
+
+- 60b945d linter/nextjs/no-typos: Implement suggestion (#26091) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 33ac4b0 linter/lsp: Prevent tsgolint from holding onto processes (#25570) (Adrian Schaedle)
+- baf4b1e linter/import/no-empty-named-blocks: Make empty value import removal a suggestion (#26155) (camc314)
+- 77cfaec linter/eslint/object-shorthand: Preserve `__proto__` semantics (#26154) (camc314)
+- fa3c082 linter/unicorn/prefer-set-size: Ignore shadowed `Set` constructors (#26153) (camc314)
+- e412cf2 linter: Clamp invalid JS plugin locations (#26144) (camc314)
+- d86c113 linter: Normalize reversed JS plugin locations (#26138) (camc314)
+- 73c09b2 linter/eslint/no-use-before-define: Run on JS, JSX files (#26114) (camc314)
+- 03ef0f2 linter/unicorn/no-useless-spread: Treat typed arrays as a distinct value hint (#26067) (Aadharsh  Pannirselvam)
+- bd15905 linter/react/no-unstable-nested-components: Check nested component object property names (#26101) (camc314)
+- 3910e2b linter/eslint/no-unassigned-vars: Skip Svelte and Vue files (#26042) (Hamody We)
+- 047f7ca linter/plugins: Fix interaction between JS plugins and Vue rules (#26080) (overlookmotel)
+- 8531b9b linter/plugins: Alter method for obtaining mutable `Program` when sending AST to JS plugins (#26077) (overlookmotel)
+- dc464ff linter/unicorn/prefer-math-min-max: Avoid unsafe autofix (#26060) (camc314)
+
+### 📚 Documentation
+
+- 464ddd1 linter: Support a shared short description for jest/vitest rules (#26186) (connorshea)
+- 9db5ad3 linter: Add short description to `vue/no-dupe-keys` (#26183) (connorshea)
+- db66f58 linter: Correct export/import mismatch in bar and foo example (#25927) (billychannnnnn)
+- d5be037 linter/typescript/switch-exhaustiveness-check: Clarify default case comment pattern (#26100) (camc314)
+
+## [1.80.0] - 2026-08-24
+
+### 🚀 Features
+
+- 70c3e35 linter/typescript/no-confusing-non-null-assertion: Implement suggestion (#26012) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 8a353a7 linter/eslint/no-control-regex: Refine help message text (#25996) (Rahul Mishra)
+- 8d94cd1 linter/eslint/no-useless-rename: Preserve type modifiers (#26020) (Cameron)
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+- 51d36d7 linter/vue: Resolve `vue` imports via shared import helpers (#25903) (Connor Shea)
+- 83a68d2 linter/react/no-react-children: Resolve `react` imports by symbol (#25901) (Connor Shea)
+- 124e196 linter: Resolve globals by reference, not by name (#25905) (Connor Shea)
+- a701bcc linter: Remove invalid React compiler doc links (#25900) (Boshen)
+
+### 📚 Documentation
+
+- 9b7e153 linter: Set `version` to 1.79.0 for rules shipped in 1.79.0 (#25902) (connorshea)
+
 ## [1.79.0] - 2026-08-18
 
 ### 💥 BREAKING CHANGES

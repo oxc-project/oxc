@@ -2,12 +2,13 @@
 source: crates/oxc_formatter_yaml/tests/conformance.rs
 expression: report
 ---
-yaml compatibility: 346/354 (97.74%), 0 files skipped
+yaml compatibility: 345/354 (97.46%), 0 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| yaml/block-folded/block-folded-strip.yml | 💥💥 | 80.00% |
 | yaml/flow-mapping/comments/key.yml | 💥 | 43.75% |
 | yaml/mapping/duplicated-keys/flow-mapping.yml | 💥 | 85.71% |
 | yaml/spec/anchors-and-tags.yml | 💥💥 | 75.00% |

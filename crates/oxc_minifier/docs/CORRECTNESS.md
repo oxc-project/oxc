@@ -19,16 +19,14 @@ Run conformance tests:
 # Run all conformance tests
 cargo coverage
 
-# Run specific suite
-cargo coverage js    # test262
-cargo coverage babel # Babel tests
-cargo coverage ts    # TypeScript tests
+# Run minifier conformance tests (test262 and Babel)
+cargo coverage minifier
 
 # Debug mode
-cargo coverage -- --debug
+cargo coverage minifier --debug
 
-# Filter specific tests
-cargo coverage -- --filter "test-name"
+# Filter by test file path
+cargo coverage minifier --filter "path/to/test.js"
 ```
 
 ### Size Tracking

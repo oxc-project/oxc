@@ -30,18 +30,29 @@ type Source = {
 };
 
 // Shared note strings for deliberate Prettier divergences (deduped).
-const NOTE_LESS_MATH_FILL =
-  "Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md";
+// A note only IDENTIFIES the known diff; the explanation lives in the linked DIVERGENCES.md entry.
+const NOTE_FILL_BREAK_POSITION =
+  "fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position";
 const NOTE_MQ_OP_SPACING =
-  "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
+  "media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing";
 const NOTE_EOL_LINE_COMMENT_WIDTH =
-  "Allowed: trailing `// comment` rides a line_suffix, never counts toward print width; Prettier only treats CSS-family `//` inline and breaks the value. See crates/oxc_formatter_css/AGENTS.md";
-const NOTE_CALC_VAR_FILL =
-  "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md";
+  "trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width";
+
 const NOTE_EMBEDDED_EXPRESSION_INDENT =
-  "We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently";
+  "embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent";
+
 const NOTE_UNION_ANNOTATION_FLAT =
-  "Union broken out of its `:`/`as` position: Prettier retries the whole union flat on the indented next line, we expand to leading-`|` members right away. Core oxc_formatter (plain `.ts` too), not embed-specific";
+  "union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry";
+
+const NOTE_BLOCK_SCALAR_TRAILING_WS =
+  "block scalar trailing whitespace is part of the value. See crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace";
+
+const NOTE_BROKEN_TEMPLATE_COMMENT_INDENT =
+  "broken `${}` holding comments indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent";
+const NOTE_TS_IN_VUE_GENERIC_COMMA =
+  "`<T = any,>` comma removed like plain `.ts`. See apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma";
+const NOTE_STYLED_EXTEND_TAG =
+  "`Xxx.extend` not recognized as tag. See apps/oxfmt/DIVERGENCES.md#styled-extend-tag";
 
 const categories: Category[] = [
   {
@@ -58,8 +69,11 @@ const categories: Category[] = [
     notes: {
       "externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue":
         NOTE_UNION_ANNOTATION_FLAT,
-      "externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
-        "`<T = any,>() => {}` comma removed in ts-in-vue as like plain `.ts`, intentional divergence: Prettier keeps in ts-in-xxx, but not in ts-in-md and also plain `.ts`. It is only required for `.tsx` and `.mts|cts`",
+      "externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue": [
+        NOTE_TS_IN_VUE_GENERIC_COMMA,
+        NOTE_UNION_ANNOTATION_FLAT,
+      ].join("\n"),
+      "edge-cases/js-in-vue/generic-trailing-comma.vue": NOTE_TS_IN_VUE_GENERIC_COMMA,
     },
   },
   {
@@ -74,8 +88,6 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "externals/prettier/js/multiparser-graphql/graphql-tag.js":
-        "Prettier moves `query Test { # c` own-line comment to next line, we keep",
       "edge-cases/gql-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
@@ -96,8 +108,8 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "externals/prettier/js/multiparser-css/styled-components.js":
-        "`Xxx.extend` not recognized as tag",
+      "externals/prettier/js/multiparser-css/styled-components.js": NOTE_STYLED_EXTEND_TAG,
+      "edge-cases/css-in-js/styled-extend-tag.js": NOTE_STYLED_EXTEND_TAG,
       "edge-cases/css-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
@@ -117,9 +129,8 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
     notes: {
-      "externals/webawesome/number-input/number-input.styles.ts": NOTE_CALC_VAR_FILL,
-      "externals/webawesome/page/page.styles.ts":
-        "Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md",
+      "externals/webawesome/number-input/number-input.styles.ts": NOTE_FILL_BREAK_POSITION,
+      "externals/webawesome/page/page.styles.ts": NOTE_FILL_BREAK_POSITION,
       "edge-cases/html-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
       "externals/webawesome/carousel/carousel.ts": NOTE_EMBEDDED_EXPRESSION_INDENT,
       "externals/webawesome/color-picker/color-picker.ts": [
@@ -197,7 +208,9 @@ const categories: Category[] = [
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
       "externals/prettier/js/multiparser-comments/comment-inside.js":
-        "Broken `${}` holding comments: Prettier prints the expression at root indent (drops the embed indent), we indent to the placeholder",
+        NOTE_BROKEN_TEMPLATE_COMMENT_INDENT,
+      "edge-cases/xxx-in-js-comment/broken-template-comment-indent.js":
+        NOTE_BROKEN_TEMPLATE_COMMENT_INDENT,
     },
   },
   {
@@ -240,18 +253,18 @@ const categories: Category[] = [
     sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_FILL_BREAK_POSITION,
       "externals/ng-zorro-antd/components/style/themes/default.less": [
-        NOTE_LESS_MATH_FILL,
+        NOTE_FILL_BREAK_POSITION,
         NOTE_EOL_LINE_COMMENT_WIDTH,
       ].join("\n"),
       "externals/ng-zorro-antd/components/style/themes/variable.less": [
-        NOTE_LESS_MATH_FILL,
+        NOTE_FILL_BREAK_POSITION,
         NOTE_EOL_LINE_COMMENT_WIDTH,
       ].join("\n"),
       "externals/ng-zorro-antd/components/style/themes/dark.less": NOTE_EOL_LINE_COMMENT_WIDTH,
-      "externals/ng-zorro-antd/components/table/style/index.less": NOTE_LESS_MATH_FILL,
-      "externals/ng-zorro-antd/components/table/style/rtl.less": NOTE_LESS_MATH_FILL,
+      "externals/ng-zorro-antd/components/table/style/index.less": NOTE_FILL_BREAK_POSITION,
+      "externals/ng-zorro-antd/components/table/style/rtl.less": NOTE_FILL_BREAK_POSITION,
     },
   },
   {
@@ -278,7 +291,19 @@ const categories: Category[] = [
     ],
     notes: {
       "externals/aws-cloudformation-templates/RainModules/load-balancer.yml":
-        "Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md",
+        "over-indented comment after `key: value` never rewrites the pair. See crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented",
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/RainModules/bucket.yml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
+      "externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml":
+        NOTE_BLOCK_SCALAR_TRAILING_WS,
     },
   },
   {
@@ -289,9 +314,9 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "externals/gitlab/stylesheets/components/content_editor.scss":
-        "Allowed (layout-only): `box-shadow` with `#{}` math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md",
-      "externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss": NOTE_CALC_VAR_FILL,
+      "externals/gitlab/stylesheets/components/content_editor.scss": NOTE_FILL_BREAK_POSITION,
+      "externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss":
+        NOTE_FILL_BREAK_POSITION,
       "externals/gitlab/stylesheets/framework/diffs.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/page_bundles/editor.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/page_bundles/issuable_list.scss": NOTE_MQ_OP_SPACING,
@@ -302,10 +327,10 @@ const categories: Category[] = [
       "externals/gitlab/stylesheets/pages/settings.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/page_bundles/projects.scss": NOTE_MQ_OP_SPACING,
       "externals/gitlab/stylesheets/highlight/conflict_colors.scss":
-        "Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)",
-      "externals/gitlab/stylesheets/framework/sidebar.scss": "long-expr line-break position",
+        "blank lines in maps with paren values are preserved. See crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines",
+      "externals/gitlab/stylesheets/framework/sidebar.scss": NOTE_FILL_BREAK_POSITION,
       "externals/gitlab/stylesheets/framework/variables_overrides.scss":
-        "Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md",
+        "no trailing comma into non-comma-list map-item parens. See crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only",
       "externals/gitlab/stylesheets/pages/profile.scss": NOTE_EOL_LINE_COMMENT_WIDTH,
     },
   },
@@ -330,6 +355,16 @@ for (const category of categories) {
   for (const r of categoryResult.optionSetResults) {
     const pct = ((r.passed / r.total) * 100).toFixed(2);
     console.log(`  ${JSON.stringify(r.options)}: ${r.passed}/${r.total} (${pct}%)`);
+  }
+
+  // A note whose fixture no longer fails is stale (e.g. resolved by a Prettier pin bump) — surface it for cleanup
+  const failedNames = new Set(
+    categoryResult.optionSetResults.flatMap((r) => r.failures.map((f) => f.name)),
+  );
+  for (const name of Object.keys(category.notes ?? {})) {
+    if (!failedNames.has(name)) {
+      console.warn(`  WARNING: note for "${name}" matched no failure, remove it?`);
+    }
   }
 }
 

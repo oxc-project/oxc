@@ -7,7 +7,7 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
-    iter, mem,
+    iter,
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
@@ -367,6 +367,24 @@ impl Linter {
             .file_extension()
             .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
 
+        // Linting is done in 3 passes over the sub hosts.
+        //
+        // 1. Native rules
+        // 2. JS plugin rules
+        // 3. Unused directives
+        //
+        // Each pass must be complete before the next can start:
+        //
+        // `run_external_rules` (JS plugins) destroys the AST of the sub host it runs on - it clears the AST references
+        // from that sub host's `Semantic`, and converts that AST's spans to UTF-16 in place.
+        // Some native rules read the ASTs of *other* sub hosts via `ContextHost::other_file_hosts`
+        // (e.g. `vue/valid-define-emits` checks the `<script>` block for `export default { emits }`
+        // while linting the `<script setup>` block), so no AST can be destroyed or mutated until pass 1 is complete.
+        //
+        // A directive counts as used if it suppressed a diagnostic from either a native rule or a JS plugin rule,
+        // so this has to come after both passes above.
+
+        // Pass 1: Run native rules on every sub host in turn
         loop {
             let semantic = ctx_host.semantic();
             let rules = rules
@@ -445,10 +463,20 @@ impl Linter {
                 });
             }
 
-            // Drop `rules` to release its `Rc` clones of `ctx_host`, ensuring `run_external_rules`
-            // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
-            drop(rules);
+            // If no next `<script>` block found, the complete file is finished linting
+            if !ctx_host.next_sub_host() {
+                break;
+            }
 
+            #[cfg(debug_assertions)]
+            {
+                current_diagnostic_index = ctx_host.diagnostic_count();
+            }
+        }
+
+        // Pass 2: Run JS plugin rules on every sub host in turn
+        ctx_host.rewind_sub_hosts();
+        loop {
             self.run_external_rules(
                 &external_rules,
                 path,
@@ -457,23 +485,25 @@ impl Linter {
                 js_allocator_pool,
             );
 
-            // Report unused directives is now handled differently with type-aware linting
-
-            if let Some(severity) = self.options.report_unused_directive
-                && severity.is_warn_deny()
-                && is_partial_loader_file
-            {
-                ctx_host.report_unused_directives(severity.into());
-            }
-
-            // no next `<script>` block found, the complete file is finished linting
             if !ctx_host.next_sub_host() {
                 break;
             }
+        }
 
-            #[cfg(debug_assertions)]
-            {
-                current_diagnostic_index = ctx_host.diagnostic_count();
+        // Pass 3: Report unused enable/disable directives for every sub host.
+        // Reporting unused directives is handled differently with type-aware linting,
+        // so this only applies to partial loader files (Vue/Astro/Svelte).
+        if let Some(severity) = self.options.report_unused_directive
+            && severity.is_warn_deny()
+            && is_partial_loader_file
+        {
+            ctx_host.rewind_sub_hosts();
+            loop {
+                ctx_host.report_unused_directives(severity.into());
+
+                if !ctx_host.next_sub_host() {
+                    break;
+                }
             }
         }
 
@@ -513,39 +543,43 @@ impl Linter {
             return;
         }
 
-        // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
-        //
-        // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
-        // contains `AstNodes`, which contains `AstKind`s for every AST nodes, each of which contains
-        // an immutable `&` ref to an AST node.
-        // Obtaining a `&mut Program` while `Semantic` exists would be illegal aliasing.
-        //
-        // So instead we get a pointer to `Program`.
-        // The pointer is obtained initially from `&Program` in `Semantic`, but that pointer
-        // has no provenance for mutation, so can't be converted to `&mut Program`.
-        // So create a new pointer to `Program` which inherits `cursor_ptr`'s provenance, which does allow mutation.
-        //
-        // We then drop `Semantic`, after which no references to any AST nodes remain.
-        // We can then safely convert the pointer to `&mut Program`.
-        //
-        // `Program` was created in `allocator`, and `Program` is the last thing to be allocated, so is in current chunk.
-        // So `cursor_ptr` and `Program` are within the same allocation.
-        // All callers of `Linter::run` obtain `allocator` and `Semantic` from `ModuleContent`,
-        // which ensure they are in same allocation.
-        // However, we have no static guarantee of this, so strictly speaking it's unsound.
-        // TODO: It would be better to avoid the need for a `&mut Program` here, and so avoid this
-        // sketchy behavior.
         let ctx_host = Rc::get_mut(ctx_host).unwrap();
-        let semantic = mem::take(ctx_host.semantic_mut());
-        let program_addr = NonNull::from(semantic.nodes().program()).addr();
-        // Check `Program` is in `Allocator`'s current chunk
-        debug_assert!(program_addr >= allocator.cursor_ptr().addr());
-        debug_assert!(program_addr < allocator.data_end_ptr().addr());
-        let mut program_ptr = allocator.cursor_ptr().cast::<Program<'a>>().with_addr(program_addr);
-        drop(semantic);
-        // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
-        // so can get a mutable reference to `Program` without aliasing violations
-        let program = unsafe { program_ptr.as_mut() };
+
+        // We need a `&mut Program` here, but `Semantic` only contains a `&Program`, along with `&` references
+        // to all other nodes in the AST.
+        //
+        // Use a very dodgy hack to achieve this.
+        //
+        // 1. Get an immutable reference to `&Program` from the `AstNodes` contained in `Semantic`.
+        // 2. Call `Semantic::clear_ast_references` to discard all references it holds to AST nodes and comments.
+        // 3. Make a bitwise copy of the `Program`.
+        // 4. Allocate it back into arena, yielding a `&mut Program`.
+        //
+        // Within this function, this is sound.
+        // The dangerous part is copying the `ArenaVec`s (`program.body` etc), but `ArenaVec` only contains a pointer
+        // which has no ownership semantics, and they cannot contain `Drop` types. So as long as we don't hold
+        // references to any of the *contents* of the original `ArenaVec`, and don't use it after its been copied,
+        // we can't violate aliasing rules.
+        //
+        // Here we create the `&Program` in a block from which it doesn't escape, ensuring the reference doesn't live
+        // while the copy lives, and we empty all AST node/comment references from `Semantic`, ensuring there's no way
+        // to access references to AST nodes after this point, which could alias the `&mut Program` we've created.
+        //
+        // What we CAN'T protect against is if some other references to AST nodes have been already stashed somewhere,
+        // and that would be UB. At present, we don't do that, but there is nothing statically preventing that,
+        // so it'd be easy for someone add code which inadvertently causes UB, without any idea they were doing that.
+        //
+        // TODO: We need to fix this. We should avoid the need for a mutable AST here by converting AST node spans
+        // to UTF-16 during deserialization on JS side - but that is not easy to achieve without a heavy perf penalty.
+        // This current hack *is* unsound, but is unlikely to bite in practice, so we can live with it for now.
+        let program = {
+            let semantic = ctx_host.semantic_mut();
+            let program = semantic.nodes().program();
+            semantic.clear_ast_references();
+            // SAFETY: Only somewhat safe! See above.
+            let program = unsafe { NonNull::from(program).read() };
+            allocator.alloc(program)
+        };
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
         if let Some(js_allocator_pool) = js_allocator_pool {
@@ -707,6 +741,10 @@ impl Linter {
             program.source_text = source_text;
         }
 
+        #[expect(clippy::cast_possible_truncation)]
+        let source_text_utf8_end =
+            source_text.len() as u32 + if has_bom { BOM_LEN as u32 } else { trim_leading };
+
         // Create span converter.
         // If source starts with BOM, create converter which ignores the BOM.
         let span_converter = if has_bom {
@@ -717,6 +755,12 @@ impl Linter {
         } else {
             Utf8ToUtf16::new(source_text)
         };
+
+        // Convert the end of the (trimmed) source text to the UTF-16 offsets used by JS plugins.
+        let mut source_text_utf16_len = source_text_utf8_end;
+        if let Some(mut converter) = span_converter.converter() {
+            converter.convert_offset(&mut source_text_utf16_len);
+        }
 
         // Convert token spans to UTF-16 and update token kinds
         #[expect(clippy::if_not_else, clippy::cast_possible_truncation)]
@@ -814,10 +858,15 @@ impl Linter {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8.
-                    // TODO: Validate span offsets are within bounds and `start <= end`.
+                    // External plugins may report locations outside the source text, or which end
+                    // before they start. Clamp them to the end of the source, and represent
+                    // reversed locations as empty spans at their stated start.
+                    //
                     // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
                     // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                    let mut span = Span::new(diagnostic.start, diagnostic.end);
+                    let start = diagnostic.start.min(source_text_utf16_len);
+                    let end = diagnostic.end.min(source_text_utf16_len).max(start);
+                    let mut span = Span::new(start, end);
                     span_converter.convert_span_back(&mut span);
 
                     let (external_rule_id, _options_id, severity) =
@@ -874,7 +923,6 @@ impl Linter {
                                 .map(|fix| fix.with_message(suggestion.message))
                         });
 
-                        #[expect(clippy::from_iter_instead_of_collect)]
                         PossibleFixes::from_iter(iter::chain(fix, suggestions))
                     } else {
                         PossibleFixes::from(fix)

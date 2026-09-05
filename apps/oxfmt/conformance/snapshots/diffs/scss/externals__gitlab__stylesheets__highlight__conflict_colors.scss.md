@@ -1,6 +1,6 @@
 # externals/gitlab/stylesheets/highlight/conflict_colors.scss
 
-> Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)
+> blank lines in maps with paren values are preserved. See crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines
 
 ## Option 1
 

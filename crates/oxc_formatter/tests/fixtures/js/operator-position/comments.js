@@ -6,7 +6,7 @@ cccccccccccccccccccccccccc;
 
 // `start` only: Prettier emits a double space before the flushed trailing line
 // comment here (`bbbb  // same line`, a separator-space artifact); we
-// deliberately emit a single one (see "Known divergences").
+// deliberately emit a single one (see DIVERGENCES.md "operator-position-comment-double-space").
 y = aaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbb && // same line
 // own line comment
 cccccccccccccccccccccccccc;

@@ -1,5 +1,5 @@
 // An end-of-line line comment right after `=`/`:` keeps its position
-// (`= // c` + mandatory break). Known divergence, see AGENTS.md:
+// (`= // c` + mandatory break). Known divergence, see DIVERGENCES.md "eol-comment-after-assign-colon":
 // Prettier own-lines it for type aliases and union-valued property signatures,
 // and flushes it past the member and its `;` for simple-typed ones
 // (`simple: Value; // c`).

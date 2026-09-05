@@ -45,6 +45,10 @@ pub fn format_content_without_comments_after<'a, T>(
 ) where
     T: Format<'a, JsFormatContext<'a>>,
 {
+    // Hiding a trailing suppression comment would silently reformat the suppressed content;
+    // every caller must check (or route through `FormatNodeWithoutTrailingComments`, which does) before hiding.
+    debug_assert!(!f.comments().has_trailing_suppression_comment(end));
+
     // Save the current comment view limit and temporarily restrict it
     // to hide comments that start at or after the end position.
     let previous_limit = f.context_mut().comments_mut().limit_comments_up_to(end);

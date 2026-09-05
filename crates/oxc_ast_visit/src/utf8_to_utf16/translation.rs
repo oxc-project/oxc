@@ -4,13 +4,20 @@ use std::slice;
 #[derive(Clone, Copy)]
 #[repr(align(8))]
 pub struct Translation {
-    /// UTF-8 byte offset.
-    /// This is the UTF-8 offset of start of a Unicode character PLUS 1.
-    /// So this offset sits in the middle of the Unicode character.
-    /// Exception is the dummy first entry in table, where it's 0.
+    /// UTF-8 byte offset of the end of a Unicode character.
+    ///
+    /// Exceptions are the entries pushed before the source text is scanned:
+    /// * Dummy first entry, where it's 0.
+    /// * Entry for a trimmed prefix, where it's the length of the prefix.
+    ///
+    /// `utf8_offset - utf16_difference` is the UTF-16 offset of the same position.
+    /// [`Utf8ToUtf16Converter::convert_offset_back`] relies on that, so this must be the end of the
+    /// character, not a position within it.
+    ///
+    /// [`Utf8ToUtf16Converter::convert_offset_back`]: super::Utf8ToUtf16Converter::convert_offset_back
     pub utf8_offset: u32,
     /// Number to subtract from UTF-8 byte offset to get UTF-16 char offset
-    /// for UTF-8 offsets after `utf8_offset`
+    /// for UTF-8 offsets on or after `utf8_offset`
     pub utf16_difference: u32,
 }
 
@@ -52,7 +59,10 @@ impl AlignedChunk {
 
 /// Build table of translations from UTF-8 offsets to UTF-16 offsets.
 ///
-/// `offset` is the starting offset. Usually 0, unless trimming BOM from start of file.
+/// `offset` is the number of bytes trimmed off the start of the source text.
+/// Those bytes should be trimmed off, *before* passing the source text to this function.
+/// Usually 0, unless trimming a BOM, or the leading newline of a partial source, from start of file.
+/// Offsets recorded in the table are relative to the *untrimmed* source.
 ///
 /// Process bulk of source text in chunks of 32 bytes, using SIMD instructions.
 /// This should be much faster than byte-by-byte processing, assuming non-ASCII chars are rare in source code.
@@ -90,11 +100,13 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
 
                 // Record the index of the end of this Unicode character, because it's only offsets
                 // *after* this Unicode character that need to be shifted.
-                // Addition cannot overflow because length of source text is max `u32::MAX`.
+                // Offsets are relative to the start of the untrimmed source, so `offset` is added
+                // back on. Addition cannot overflow because the untrimmed source text is max
+                // `u32::MAX` bytes long.
                 let bytes_in_char =
                     difference_for_this_byte as usize + usize::from(byte >= 0xF0) + 1;
                 #[expect(clippy::cast_possible_truncation)]
-                let utf8_offset = (start_offset + index + bytes_in_char) as u32;
+                let utf8_offset = (start_offset + index + bytes_in_char) as u32 + offset;
                 translations.push(Translation { utf8_offset, utf16_difference });
             }
         }

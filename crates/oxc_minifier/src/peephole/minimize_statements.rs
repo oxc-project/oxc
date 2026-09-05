@@ -113,160 +113,7 @@ impl<'a> PeepholeOptimizations {
 
         // Merge certain statements in reverse order
         if stmts.len() >= 2 && ctx.options().sequences {
-            if let Some(Statement::ReturnStatement(_)) = stmts.last() {
-                'return_loop: while stmts.len() >= 2 {
-                    let prev_index = stmts.len() - 2;
-                    let prev_stmt = &stmts[prev_index];
-                    match prev_stmt {
-                        Statement::ExpressionStatement(_) => {
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
-                                && last_return.argument.is_none()
-                            {
-                                break 'return_loop;
-                            }
-                            ctx.notice_change();
-                            // "a(); return b;" => "return a(), b;"
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ReturnStatement(mut last_return) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
-                                unreachable!()
-                            };
-                            let b = last_return.argument.as_mut().unwrap();
-                            let argument = Self::join_sequence(&mut expr_stmt.expression, b, ctx);
-                            let right_span = last_return.span;
-                            let last_return_stmt =
-                                Statement::new_return_statement(right_span, Some(argument), ctx);
-                            stmts.push(last_return_stmt);
-                        }
-                        // Merge the last two statements
-                        Statement::IfStatement(if_stmt) => {
-                            // The previous statement must be an if statement with no else clause
-                            if if_stmt.alternate.is_some() {
-                                break 'return_loop;
-                            }
-                            // The then clause must be a return
-                            let Statement::ReturnStatement(_) = &if_stmt.consequent else {
-                                break 'return_loop;
-                            };
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
-                                && let Some(arg) = &last_return.argument
-                                && Self::conditional_expression_count_exceeded(arg)
-                            {
-                                break 'return_loop;
-                            }
-
-                            ctx.notice_change();
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ReturnStatement(last_return) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let prev_if = prev_if.unbox();
-                            let Statement::ReturnStatement(prev_return) = prev_if.consequent else {
-                                unreachable!()
-                            };
-
-                            let left_span = prev_return.span;
-                            let right_span = last_return.span;
-                            // "if (a) return; return b;" => "return a ? void 0 : b;"
-                            let left = prev_return
-                                .unbox()
-                                .argument
-                                .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
-                            // "if (a) return a; return;" => "return a ? b : void 0;"
-                            let right = last_return
-                                .unbox()
-                                .argument
-                                .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
-
-                            let argument = Self::minimize_conditional_after_if(
-                                prev_if.span,
-                                prev_if.test,
-                                left,
-                                right,
-                                ctx,
-                            );
-                            let last_return_stmt =
-                                Statement::new_return_statement(right_span, Some(argument), ctx);
-                            stmts.push(last_return_stmt);
-                        }
-                        _ => break 'return_loop,
-                    }
-                }
-            } else if let Some(Statement::ThrowStatement(_)) = stmts.last() {
-                'throw_loop: while stmts.len() >= 2 {
-                    let prev_index = stmts.len() - 2;
-                    let prev_stmt = &stmts[prev_index];
-                    match prev_stmt {
-                        Statement::ExpressionStatement(_) => {
-                            ctx.notice_change();
-                            // "a(); throw b;" => "throw a(), b;"
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ThrowStatement(mut last_throw) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
-                                unreachable!()
-                            };
-                            let argument = Self::join_sequence(
-                                &mut expr_stmt.expression,
-                                &mut last_throw.argument,
-                                ctx,
-                            );
-                            let right_span = last_throw.span;
-                            let last_throw_stmt =
-                                Statement::new_throw_statement(right_span, argument, ctx);
-                            stmts.push(last_throw_stmt);
-                        }
-                        // Merge the last two statements
-                        Statement::IfStatement(if_stmt) => {
-                            // The previous statement must be an if statement with no else clause
-                            if if_stmt.alternate.is_some() {
-                                break 'throw_loop;
-                            }
-                            // The then clause must be a throw
-                            let Statement::ThrowStatement(_) = &if_stmt.consequent else {
-                                break 'throw_loop;
-                            };
-                            if let Some(Statement::ThrowStatement(last_throw)) = stmts.last()
-                                && Self::conditional_expression_count_exceeded(&last_throw.argument)
-                            {
-                                break 'throw_loop;
-                            }
-
-                            ctx.notice_change();
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ThrowStatement(last_throw) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let prev_if = prev_if.unbox();
-                            let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
-                                unreachable!()
-                            };
-
-                            let right_span = last_throw.span;
-                            let argument = Self::minimize_conditional_after_if(
-                                prev_if.span,
-                                prev_if.test,
-                                prev_throw.unbox().argument,
-                                last_throw.unbox().argument,
-                                ctx,
-                            );
-                            let last_throw_stmt =
-                                Statement::new_throw_statement(right_span, argument, ctx);
-                            stmts.push(last_throw_stmt);
-                        }
-                        _ => break 'throw_loop,
-                    }
-                }
-            } else if matches!(
+            if matches!(
                 stmts.last(),
                 Some(Statement::BreakStatement(_) | Statement::ContinueStatement(_))
             ) {
@@ -431,13 +278,14 @@ impl<'a> PeepholeOptimizations {
     fn handle_variable_declaration(
         mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
             Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx, false);
+            // "var a; var b = (a = 1, c);" => "var a = 1; var b = c;"
+            Self::merge_leading_assignments_to_declaration(first_decl_init, false, result, ctx);
         }
         Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
@@ -534,64 +382,22 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
         // "var a; a = b();" => "var a = b();"
-        match &mut expr_stmt.expression {
-            Expression::AssignmentExpression(assign_expr) => {
-                let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
-                if merged {
-                    let dropped = Statement::ExpressionStatement(expr_stmt);
-                    ctx.drop_statement(&dropped);
-                    return;
-                }
-            }
-            Expression::SequenceExpression(sequence_expr)
-                if result
-                    .last()
-                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_))) =>
-            {
-                let first_non_merged_index =
-                    sequence_expr.expressions.iter_mut().position(|expr| {
-                        if let Expression::AssignmentExpression(assign_expr) = expr {
-                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
-                        } else {
-                            true
-                        }
-                    });
-                let sequence_len = sequence_expr.expressions.len();
-                match first_non_merged_index {
-                    None => {
-                        // all elements are merged
-                        let dropped = Statement::ExpressionStatement(expr_stmt);
-                        ctx.drop_statement(&dropped);
-                        return;
-                    }
-                    Some(val) if val == sequence_len - 1 => {
-                        // all elements are merged except for the last expression
-                        let last_expr = sequence_expr.expressions.pop().unwrap();
-                        result.push(Statement::new_expression_statement(
-                            last_expr.span(),
-                            last_expr,
-                            ctx,
-                        ));
-                        let dropped = Statement::ExpressionStatement(expr_stmt);
-                        ctx.drop_statement(&dropped);
-                        return;
-                    }
-                    Some(0) => {
-                        // no elements are merged
-                    }
-                    Some(val) => {
-                        for dropped in sequence_expr.expressions.drain(0..val) {
-                            ctx.drop_expression(&dropped);
-                        }
-                    }
-                }
-            }
-            _ => {}
+        if Self::merge_leading_assignments_to_declaration(
+            &mut expr_stmt.expression,
+            true,
+            result,
+            ctx,
+        ) {
+            let dropped = Statement::ExpressionStatement(expr_stmt);
+            ctx.drop_statement(&dropped);
+            return;
         }
 
         result.push(Statement::ExpressionStatement(expr_stmt));
     }
 
+    /// Merge a single assignment into a matching uninitialized declarator of the
+    /// variable declaration that immediately precedes it in `result`.
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -645,20 +451,58 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn is_switch_case_removable(stmt: &SwitchCase, allow_break: bool) -> bool {
-        let is_empty = if stmt.consequent.len() == 1 {
-            match stmt.consequent.last() {
-                Some(Statement::EmptyStatement(_)) => true,
-                Some(Statement::BreakStatement(break_stmt)) => {
-                    allow_break && break_stmt.label.is_none()
-                }
-                _ => false,
-            }
-        } else {
-            stmt.consequent.is_empty()
+    /// Fold leading assignments in `expr` into the variable declaration.
+    fn merge_leading_assignments_to_declaration(
+        expr: &mut Expression<'a>,
+        value_is_discarded: bool,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let Some(Statement::VariableDeclaration(_)) = result.last() else {
+            return false;
         };
 
-        is_empty && stmt.test.as_ref().is_none_or(Expression::is_literal)
+        match expr {
+            // "var a; a = b();" => "var a = b();"
+            Expression::AssignmentExpression(assign_expr) if value_is_discarded => {
+                Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+            }
+            // "var a; return a = b(), c;" => "var a = b(); return c;"
+            Expression::SequenceExpression(sequence_expr) => {
+                // The value of the last expression is observed unless discarded.
+                let limit = sequence_expr.expressions.len() - usize::from(!value_is_discarded);
+                let first_non_merged_index =
+                    sequence_expr.expressions.iter_mut().take(limit).position(|expr| match expr {
+                        Expression::AssignmentExpression(assign_expr) => {
+                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                        }
+                        _ => true,
+                    });
+                // `None` means every candidate merged, so the whole prefix is taken.
+                let taken = first_non_merged_index.unwrap_or(limit);
+                if taken == 0 {
+                    return false;
+                }
+                match sequence_expr.expressions.len() - taken {
+                    // all elements are merged
+                    0 => true,
+                    // all elements are merged except for the last expression
+                    1 => {
+                        let only_expr = sequence_expr.expressions.pop().unwrap();
+                        ctx.replace_expression(expr, only_expr);
+                        false
+                    }
+                    // The sequence stays in the AST, so remove the targets here.
+                    _ => {
+                        for dropped in sequence_expr.expressions.drain(0..taken) {
+                            ctx.drop_expression(&dropped);
+                        }
+                        false
+                    }
+                }
+            }
+            _ => false,
+        }
     }
 
     /// Check if a switch case can be inlined by verifying:
@@ -695,70 +539,13 @@ impl<'a> PeepholeOptimizations {
             ctx.drop_statement(&dropped);
         }
 
-        // Remove empty case clauses that don't affect behavior.
-        // Handles fall-through semantics: remove empty cases before default or at end (if no default).
-        // e.g., `switch(x){ case 0: foo(); break; case 1: default: bar() }`
-        // => `switch(x){ case 0: foo(); break; default: bar() }`
-        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        let case_count = switch_stmt.cases.len();
-        if case_count == 1 {
-            // Remove sole case if empty and has no side-effect test
-            if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
-                ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
-            }
-        } else if case_count > 1 {
-            // Determine the range [0, end] to check for removable cases.
-            // 1. default exists and is empty: check the full switch.
-            // 2. default exists and is non-removable and last: check only cases before that default.
-            // 3. default exists, is non-removable, and is not last: skip this optimization (`end = 0`).
-            // 4. no default case: check the full switch and allow a trailing unlabeled `break`.
-            let default_pos = switch_stmt.cases.iter().rposition(SwitchCase::is_default_case);
-            let (end, allow_break) = if let Some(default_pos) = default_pos {
-                if Self::is_switch_case_removable(&switch_stmt.cases[default_pos], true) {
-                    (case_count, true)
-                } else if default_pos == case_count - 1 {
-                    (default_pos, false)
-                } else {
-                    (0, false)
-                }
-            } else {
-                (case_count, true)
-            };
-
-            if end > 0 {
-                // Last non-removable case index in [0, end]. Returns None if all cases are removable.
-                let last_non_removable_case_before_end = switch_stmt.cases[..end]
-                    .iter()
-                    .rposition(|case| !Self::is_switch_case_removable(case, allow_break));
-
-                // Calculate the start of the removable suffix.
-                // 1. next case after last non-removable: remove from pos + 1
-                // 2. no non-removable case: all cases are removable, start from 0
-                let start = match last_non_removable_case_before_end {
-                    Some(pos) => pos + 1,
-                    None => 0,
-                };
-
-                // Remove the removable suffix if any
-                if start < end && default_pos.is_none_or(|pos| pos >= start) {
-                    for removed_case in switch_stmt.cases.drain(start..end) {
-                        ctx.drop_switch_case(&removed_case);
-                    }
-                }
-            }
-        }
-
-        if switch_stmt.cases.is_empty() {
-            let SwitchStatement { span, discriminant, .. } = switch_stmt.unbox();
-            result.push(Statement::new_expression_statement(span, discriminant, ctx));
-            return;
-        } else if let Some(last_case) = switch_stmt.cases.last_mut()
-            && let Some(Statement::BreakStatement(last_break)) = last_case.consequent.last()
-            && last_break.label.is_none()
-        {
-            let dropped = last_case.consequent.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
+        // "var a; switch (a = b(), c) {}" => "var a = b(); switch (c) {}"
+        Self::merge_leading_assignments_to_declaration(
+            &mut switch_stmt.discriminant,
+            false,
+            result,
+            ctx,
+        );
 
         if !ctx.is_tree_shake_only()
             && switch_stmt.cases.len() == 1
@@ -823,6 +610,9 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
+
+        // "var a; if (a = b(), c) d;" => "var a = b(); if (c) d;"
+        Self::merge_leading_assignments_to_declaration(&mut if_stmt.test, false, result, ctx);
 
         // Absorb a previous expression statement
         if ctx.options().sequences {
@@ -917,26 +707,12 @@ impl<'a> PeepholeOptimizations {
 
             if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
                 && if_stmt.consequent.is_terminated()
+                && let Some(stmt) = if_stmt.alternate.take()
             {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
+                ctx.notice_change();
                 result.push(Statement::IfStatement(if_stmt));
-                loop {
-                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
-                        && if_stmt.consequent.is_terminated()
-                        && let Some(stmt) = if_stmt.alternate.take()
-                    {
-                        if let Statement::BlockStatement(block_stmt) = stmt {
-                            Self::handle_block(result, block_stmt, ctx);
-                        } else {
-                            result.push(stmt);
-                            ctx.notice_change();
-                        }
-                        continue;
-                    }
-                    break;
-                }
-                return ControlFlow::Continue(());
+                return Self::minimize_statement(stmt, i, stmts, result, ctx);
             }
         }
 
@@ -952,6 +728,8 @@ impl<'a> PeepholeOptimizations {
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
             Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx, false);
+            // `var a; return a = b(), c;` => `var a = b(); return c;`
+            Self::merge_leading_assignments_to_declaration(ret_argument_expr, false, result, ctx);
         }
 
         if let Some(argument) = &mut ret_stmt.argument
@@ -975,19 +753,98 @@ impl<'a> PeepholeOptimizations {
             if let Some(old) = ret_stmt.argument.take() {
                 ctx.drop_expression(&old);
             }
-            result.push(Statement::ReturnStatement(ret_stmt));
-            return;
-        }
-
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        } else if ctx.options().sequences
             && let Some(argument) = &mut ret_stmt.argument
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
             let a = &mut prev_expr_stmt.expression;
             let new_arg = Self::join_sequence(a, argument, ctx);
             ctx.replace_expression(argument, new_arg);
             result.pop();
         }
+
+        // `if (a) return b; return c;` => `return a ? b : c;`
+        // `if (a) return; return;` => `a; return;`
+        if ctx.options().sequences {
+            'return_loop: while !result.is_empty() {
+                if let Some(Statement::IfStatement(if_stmt)) = result.last()
+                    && if_stmt.alternate.is_none()
+                    && let Statement::ReturnStatement(prev_return) = &if_stmt.consequent
+                {
+                    let prev_has_arg = prev_return.argument.is_some();
+                    let ret_has_arg = ret_stmt.argument.is_some();
+
+                    if !prev_has_arg && !ret_has_arg {
+                        // `if (a) return; return;` => `a; return;`
+                        ctx.notice_change();
+                        let prev_stmt = result.pop().unwrap();
+                        let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                        let prev_if = prev_if.unbox();
+
+                        let test_expr = prev_if.test;
+                        result.push(Statement::new_expression_statement(
+                            test_expr.span(),
+                            test_expr,
+                            ctx,
+                        ));
+                        break 'return_loop;
+                    }
+
+                    // do not collapse if conditional count exceeded
+                    if ret_stmt
+                        .argument
+                        .as_ref()
+                        .is_some_and(Self::conditional_expression_count_exceeded)
+                    {
+                        break 'return_loop;
+                    }
+                    // do not collapse if return could be removed
+                    if !ret_has_arg && ctx.parent().is_function_body() {
+                        break 'return_loop;
+                    }
+                    // do not collapse if parent is async generator and any of arguments is empty
+                    if (!prev_has_arg || !ret_has_arg)
+                        && ctx.is_closest_function_scope_an_async_generator()
+                    {
+                        break 'return_loop;
+                    }
+
+                    // `if (a) return b; return c;` => `return a ? b : c;`
+                    ctx.notice_change();
+                    let prev_stmt = result.pop().unwrap();
+                    let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                    let prev_if = prev_if.unbox();
+                    let Statement::ReturnStatement(mut prev_return) = prev_if.consequent else {
+                        unreachable!()
+                    };
+
+                    let left_span = prev_return.span();
+                    let right_span = ret_stmt.span();
+                    // "if (a) return; return b;" => "return a ? void 0 : b;"
+                    let left = prev_return
+                        .argument
+                        .take()
+                        .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
+                    // "if (a) return a; return;" => "return a ? b : void 0;"
+                    let right = ret_stmt
+                        .argument
+                        .take()
+                        .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
+
+                    let argument = Self::minimize_conditional_after_if(
+                        prev_if.span,
+                        prev_if.test,
+                        left,
+                        right,
+                        ctx,
+                    );
+                    ret_stmt.argument = Some(argument);
+                } else {
+                    break 'return_loop;
+                }
+            }
+        }
+
         result.push(Statement::ReturnStatement(ret_stmt));
     }
 
@@ -1004,6 +861,7 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
+        // `a; throw x` => `throw a, x`
         if ctx.options().sequences
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
@@ -1013,6 +871,46 @@ impl<'a> PeepholeOptimizations {
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
+
+        // `var a; throw a = b(), c;` => `var a = b(); throw c;`
+        Self::merge_leading_assignments_to_declaration(
+            &mut throw_stmt.argument,
+            false,
+            result,
+            ctx,
+        );
+
+        // `if (a) throw b; throw c;` => `throw a ? b : c;`
+        if ctx.options().sequences {
+            'Loop: while !result.is_empty() {
+                if let Some(Statement::IfStatement(if_stmt)) = result.last()
+                    && if_stmt.alternate.is_none()
+                    && matches!(&if_stmt.consequent, Statement::ThrowStatement(_))
+                    && !Self::conditional_expression_count_exceeded(&throw_stmt.argument)
+                {
+                    ctx.notice_change();
+                    let prev_stmt = result.pop().unwrap();
+                    let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                    let prev_if = prev_if.unbox();
+                    let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
+                        unreachable!()
+                    };
+
+                    ctx.replace_expression_with(&mut throw_stmt.argument, |expr, ctx| {
+                        Self::minimize_conditional_after_if(
+                            prev_if.span,
+                            prev_if.test,
+                            prev_throw.unbox().argument,
+                            expr,
+                            ctx,
+                        )
+                    });
+                } else {
+                    break 'Loop;
+                }
+            }
+        }
+
         result.push(Statement::ThrowStatement(throw_stmt));
     }
 
@@ -1046,6 +944,12 @@ impl<'a> PeepholeOptimizations {
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
                     Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    // "var a; for (a = b(), c; ;) d;" => "var a = b(); for (c; ;) d;"
+                    if Self::merge_leading_assignments_to_declaration(init, true, result, ctx)
+                        && let Some(old_init) = for_stmt.init.take()
+                    {
+                        ctx.drop_expression(old_init.to_expression());
+                    }
                 }
             }
         }
@@ -1141,6 +1045,15 @@ impl<'a> PeepholeOptimizations {
                 ctx,
                 is_block_scoped_decl,
             );
+            // "var a; for (b in a = c(), d) e;" => "var a = c(); for (b in d) e;"
+            if !for_in_stmt.left.is_lexical_declaration() {
+                Self::merge_leading_assignments_to_declaration(
+                    &mut for_in_stmt.right,
+                    false,
+                    result,
+                    ctx,
+                );
+            }
         }
 
         if ctx.options().sequences {
@@ -1224,6 +1137,16 @@ impl<'a> PeepholeOptimizations {
             ctx,
             is_block_scoped_decl,
         );
+
+        if !for_of_stmt.left.is_lexical_declaration() {
+            // "var a; for (b of a = c(), d) e;" => "var a = c(); for (b of d) e;"
+            Self::merge_leading_assignments_to_declaration(
+                &mut for_of_stmt.right,
+                false,
+                result,
+                ctx,
+            );
+        }
 
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()

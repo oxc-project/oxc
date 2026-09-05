@@ -10,7 +10,11 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "c": 3,
 
   // intentional blank line before this comment
-  "d": 4
+  "d": 4,
+  "e": 5, // trailing
+
+  // leading after blank
+  "f": 6
 }
 
 ==================== Output ====================
@@ -25,7 +29,11 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "c": 3,
 
   // intentional blank line before this comment
-  "d": 4
+  "d": 4,
+  "e": 5, // trailing
+
+  // leading after blank
+  "f": 6
 }
 
 -------------------
@@ -39,7 +47,11 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "c": 3,
 
   // intentional blank line before this comment
-  "d": 4
+  "d": 4,
+  "e": 5, // trailing
+
+  // leading after blank
+  "f": 6
 }
 
 ===================== End =====================

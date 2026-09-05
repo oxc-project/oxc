@@ -11559,6 +11559,9 @@ impl RuleEnum {
             Self::EslintNoUnderscoreDangle(_) => Ok(Self::EslintNoUnderscoreDangle(
                 EslintNoUnderscoreDangle::from_configuration(value)?,
             )),
+            Self::EslintNoUnmodifiedLoopCondition(_) => Ok(Self::EslintNoUnmodifiedLoopCondition(
+                EslintNoUnmodifiedLoopCondition::from_configuration(value)?,
+            )),
             Self::EslintNoUnneededTernary(_) => Ok(Self::EslintNoUnneededTernary(
                 EslintNoUnneededTernary::from_configuration(value)?,
             )),

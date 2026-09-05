@@ -9,11 +9,10 @@
 
 use std::fmt::{self, Write as _};
 
-use owo_colors::OwoColorize;
 use smallvec::SmallVec;
 
 use super::handler::{GraphicalReportHandler, LinkStyle};
-use crate::{Diagnostic, Severity, source_impls::SpanScanner};
+use crate::{Diagnostic, Severity, handlers::theme::DiagnosticColorize, source_impls::SpanScanner};
 
 struct TitleBuffer(SmallVec<[u8; 128]>);
 

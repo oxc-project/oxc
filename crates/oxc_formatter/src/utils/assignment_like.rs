@@ -10,8 +10,8 @@ use crate::{
         trivia::FormatTrailingComments,
     },
     print::{
-        BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite,
-        alias_union_breaks_after_operator, is_trailing_own_line_jsdoc_comment, type_alias_left_end,
+        BinaryLikeExpression, FormatWrite, alias_union_breaks_after_operator,
+        is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
     },
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
@@ -654,7 +654,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     decl,
                     comments
                         .comments_before_iter(annotation_start)
-                        .any(is_trailing_own_line_jsdoc_comment),
+                        .any(is_line_ending_trailing_jsdoc_comment),
                     comments,
                 ),
                 // For a single-member `TSIntersectionType`,
@@ -966,15 +966,17 @@ pub fn with_assignment_layout<'a, 'b>(
 
 impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        match self.expression.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => arrow.fmt_with_options(
-                FormatJsArrowFunctionExpressionOptions {
-                    assignment_layout: self.layout,
-                    ..FormatJsArrowFunctionExpressionOptions::default()
-                },
-                f,
-            ),
-            _ => self.expression.fmt(f),
+        // An arrow needs the layout inside its `write`,
+        // which is reached through the shared generated `fmt` (suppression, type casts, parentheses, comments);
+        // the span-keyed context slot hands it across that frame.
+        if let (Some(layout), AstNodes::ArrowFunctionExpression(arrow)) =
+            (self.layout, self.expression.as_ast_nodes())
+        {
+            f.context_mut().set_arrow_assignment_layout(arrow.span(), layout);
+            arrow.fmt(f);
+            f.context_mut().clear_arrow_assignment_layout();
+        } else {
+            self.expression.fmt(f);
         }
     }
 }

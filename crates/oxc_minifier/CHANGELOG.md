@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 784e9fa minifier: Invert `!0` and `!1` in place for boolean context to `1` and `0` (#26050) (Armano)
+- 1e902cc minifier: Expand fold leading assignments into the var decl (#26142) (Armano)
+- 3ed4f6a minifier: Expand de morgan's optimization to allow move of `!` (#25930) (Armano)
+
+### 🐛 Bug Fixes
+
+- b874f48 ecmascript: `Math.round` only exact half ties (#26150) (camc314)
+- a625378 minifier: Coerce omitted `indexOf` search argument (#26149) (camc314)
+- dc7398b ecmascript: Trim trailing whitespace in string to number (#26148) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🚀 Features
+
+- b6e9e5e minifier: Fold switch stmt whose parent is not block stmt (#25403) (Armano)
+
+### 🐛 Bug Fixes
+
+- 6f0c7cf minifier: Avoid merging `if` to `for` in sloppy mode when containing function declaration (#25638) (sapphi-red)
+- 58ba651 minifier: Avoid merging `if` to `for` when the body contains a function declaration (#25637) (sapphi-red)
+- af82a07 minifier: Keep unary `+` when the other operand has side effects (#25645) (Kotaro Chikuba)
+
+### ⚡ Performance
+
+- a0aee81 minifier: Do not rebuild expression when substituting void to null (#25964) (Armano)
+- f09c8ab minifier: Avoid creation of unnecessary conditional expressions (#25931) (Armano)
+
 ## [0.146.0] - 2026-08-19
 
 ### 🚀 Features

@@ -1,0 +1,51 @@
+commit: 1eac4481
+
+lexer_babel Summary:
+AST Parsed     : 3976/3976 (100.00%)
+Positive Passed: 3953/3976 (99.42%)
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/01-regex/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/02-regex/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/03-regex/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/06-regex/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/331/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/426/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/450/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/451/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/context-division-after-expression/input.js
+
+Diagnostics: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/valid-non-octal-exponents/input.js
+
+Diagnostics: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/valid-non-octal-fragments/input.js
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends-expression-assertion/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/issue-7742/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/anonymous-function-generator/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-parameters/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/generic/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/call-expression/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/new-expression/input.ts
+
+Tokens: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/reference-generic-nested/input.ts
+

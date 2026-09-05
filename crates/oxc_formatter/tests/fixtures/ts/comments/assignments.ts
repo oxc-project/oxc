@@ -1,6 +1,11 @@
 var longlonglonglonglonglong = /*#__PURE__*/_interopDefaultLegacy(aaaaaaaaaaaaaaa);
 var short = /*#__PURE__*/_interopDefaultLegacy(b);
 
+// Type arguments with speculative formatting should not lose comments
+export const globalRegistry: $ZodRegistry = /*@__PURE__*/ registry();
+const r = /* THIS */ f<Type>()
+const s = /* comment */ foo<A | B | C>()
+
 const jestPackageJson =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require(jestPath);

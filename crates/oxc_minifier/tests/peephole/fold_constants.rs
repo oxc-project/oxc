@@ -1039,11 +1039,13 @@ fn test_fold_numeric_expression_only_if_shorter() {
 #[test]
 fn test_fold_sub() {
     fold("x = 10 - 20", "x = -10");
+    fold("x = '0x10 ' - 0", "x = 16");
 }
 
 #[test]
 fn test_fold_multiply() {
     fold("x = 2.25 * 3", "x = 6.75");
+    fold("x = '1 ' * 2", "x = 2");
     fold_same("z = x * y");
     fold_same("x = f() * 2");
     fold_same("x = y * 5");

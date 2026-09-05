@@ -98,6 +98,11 @@ Result is a **4x slow-down**.
 So `oxc-codegen` has to find a different solution. Every time it pushes a string to output, it also records
 in `state.last` what the output now ends with. `state.output` never needs to be read from.
 
+The rope is flattened once, at the end. Whatever the caller does with the returned code will flatten it anyway
+(and `generateSourceMap` scans it), so `printSync` pre-flattens with the fastest method available.
+A large output is flattened in chunks along the way rather than all at once at the end -
+see `print/flatten.ts` for the two reasons.
+
 ### The answer: A category, not a character
 
 It turns out the functions which decide whether spaces need to be inserted between keywords / identifiers
@@ -224,7 +229,7 @@ for crazy edge cases and a bug sneaks through, it can't produce invalid JavaScri
 
 ### Why category numbering is load bearing
 
-The full table is at the top of [`print/write.ts`] and is the authority.
+The full table is at the top of [`print/categories.ts`] and is the authority.
 
 Three properties are relied on. Adding a code without preserving them will silently space output wrongly.
 
@@ -242,7 +247,7 @@ Three properties are relied on. Adding a code without preserving them will silen
    ```
 
 Each property has an `if (DEBUG)` block which iterates every category and asserts the compare selects
-exactly the intended set and nothing else - in [`print/write.ts`] for the `|` identities, and in [`print/space.ts`]
+exactly the intended set and nothing else - in [`print/categories.ts`] for the `|` identities, and in [`print/space.ts`]
 for the two range checks.
 
 Renumber freely. The assertions will tell you what you broke, and cost release builds nothing.
@@ -255,16 +260,44 @@ No operator merges with a plain `!`, so storing it must not cost `printSpaceBefo
 Not every write needs to update `last`.
 
 When one token is written in pieces - a string's opening quote, its contents, its closing quote -
-only the last piece's category can possibly be read. Hence four write primitives in [`print/write.ts`]:
+only the last piece's category can possibly be read. Hence eleven write primitives in [`print/write.ts`]:
 
-| Function             | Updates `last` | Records a source mapping |
-| :------------------- | :------------- | :----------------------- |
-| `write`              | Yes            | No                       |
-| `writeWithMap`       | Yes            | Yes                      |
-| `writeNoLast`        | No             | No                       |
-| `writeWithMapNoLast` | No             | Yes                      |
+| Function                     | Updates `last` | Records a source mapping       |
+| :--------------------------- | :------------- | :----------------------------- |
+| `write`                      | Yes            | No                             |
+| `writeIdent`                 | Yes            | No                             |
+| `writePrivate`               | Yes            | No                             |
+| `writeWithMap`               | Yes            | At the node's start            |
+| `writeWithMapNamed`          | Yes            | At the node's start, with name |
+| `writeWithMapNamedPrivate`   | Yes            | At the node's start, with name |
+| `writeWithMapEnd`            | Yes            | At the node's last character   |
+| `writeNoLast`                | No             | No                             |
+| `writeWithMapNoLast`         | No             | At the node's start            |
+| `writeWithMapNamedNoLast`    | No             | At the node's start, with name |
+| `writeWithMapNamedJSXNoLast` | No             | At the node's start, with name |
 
-- The `*NoLast` pair is used at 89 sites, against 596 for the other two.
+- Every `writeWithMap*` and `markMap*` function takes the node's `start` and `end` offsets, extracted by the caller.
+  The node itself is still passed, last, but only debug asserts read it - which is what checks the offsets
+  against the node they claim to describe. The point is where the read happens - in a caller the node's type is known,
+  so `node.start` is a monomorphic load, whereas inside the write functions the same read is megamorphic,
+  because the printer reaches them from every node type there is. Release builds have the parameter and every argument
+  removed by the TSDown plugin.
+- The `*Named` functions record the name the node had in the source, and take a `NamedMappableNode`,
+  which covers nodes with a string `name`. What they record is the text they print -
+  debug builds assert the two are the same string.
+- The other `writeWithMap*` functions take an `UnnamedMappableNode` which covers nodes without a string `name`.
+- There is a `*Named` function per way of recovering the original name from the source, because the scan differs -
+  a JSX identifier may hold a `-`, and a private identifier's span covers a `#` which is not part of its name.
+  Which one applies is settled at the call site, where the node's type is known statically, rather than read back
+  off a `node` which is megamorphic by the time it arrives.
+- `writeIdent` is `write` with the category fixed at `CAT_IDENT` - an identifier, a keyword, or the trailing digits
+  of a number. It is the commonest category by far, so every call which passed it was spending an argument
+  on a value which could never be anything else.
+- `writeWithMapNamed` and `writeWithMapNamedPrivate` take no category for the same reason, which is why their
+  plain forms are `writeIdent` and `writePrivate` rather than `write`.
+- The two `Private` forms write the `#` themselves, so the name they are given is what follows it,
+  and `last` is always `CAT_IDENT` - the caller passes neither.
+- The three `markMap*` functions record a mapping without writing anything, so `last` is not theirs to update.
 - The rule is exact: **only sound where the value of `last` is provably dead**.
   Another real write must follow before anything reads it.
 - JSX carries the longest runs. Printing `<a.b x="1">hi</a.b>` updates `last` exactly once, on the final `>`.
@@ -363,13 +396,31 @@ A plugin silently doing nothing is a failure mode worth guarding against.
 
 #### `unmap_writes`
 
-Rewrites `writeWithMap(state, code, cat, node)` into `write(state, code, cat)` in non-sourcemap builds,
-drops the `node` argument, and rewrites the import to match.
+Runs in two modes, one per build flavour (sourcemaps / no sourcemaps), in both cases stripping arguments
+nothing in that build reads.
 
-Without it, the node argument would still be evaluated and held live across a call which ignores it.
+**Without source maps**, rewrites every mapped write into the plain one it becomes with no mapping to record -
+so `writeWithMap(state, code, cat, node.start, node.end, node)` turns into `write(state, code, cat)` -
+and rewrites the import to match.
+`writeWithMapEnd` becomes `write` too, and every `NoLast` form becomes `writeNoLast`.
+`writeWithMapNamed` and `writeWithMapNamedPrivate` become `writeIdent` and `writePrivate`, which fix the category
+instead of taking it. `writePrivate` exists only for the rewrite to land on.
 
-It re-parses its own output and fails the build if anything still reaches a mapped write, or calls a name
-it did not bring into scope.
+`printString` and `printNonNegativeFloat` take the offsets and the node only to hand them on to a mapped write.
+They keep their names, but the arguments come off every call, and the parameters off their declarations -
+which, unlike the mapped writes, survive into the build.
+
+**With source maps**, in release builds only, just the trailing `node` comes off - from every call,
+and from every declaration. The mappings are real in these builds so the offsets stay, but `node` isn't read
+except by debug asserts. Debug builds get neither mode - the `node` parameter stays for the debug asserts to read.
+
+Without it, the offsets would still be read and held live across a call which ignores them.
+
+The three `markMap*` calls write nothing, so they have no plain form to become, and keep their names -
+the arguments come off, and a body which opens `if (!SOURCEMAPS) return` lets the minifier remove what is left.
+
+It fails the build if a mapped write is called with the wrong number of arguments, if a declaration it transforms
+has the wrong number of parameters, or if a call it rewrote had no matching import to rewrite.
 
 #### `const_functions`
 
@@ -508,6 +559,10 @@ During printing, a mapped write records only an output offset and the node's ori
 from `start` / `end`. Nodes without offsets are not mapped, and `sourceText` is required to convert
 source offsets to line/column positions.
 
+The offset pairs go into an `Int32Array` which, like the indent cache, is created once per process
+and reused by every print - each `State` tracks how much of it that print has filled, and the buffer
+doubles when a print fills it, so a steady-state print allocates nothing to record its mappings.
+
 `generateSourceMap` then walks the output once at the end, counting ECMAScript line terminators,
 builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column,
 and encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write
@@ -519,8 +574,8 @@ Producing source maps is exactly the kind of raw number-crunching that native co
 And, unlike the AST, it's just small integers - the kind of data that transfers across the JS-native
 boundary cheaply.
 
-It might be worthwhile assembling all the offsets on JS side in an `Int32Array`, instead of a plain `Array`,
-and making a single JS-Rust-JS round-trip, with the sourcemap generation (VLQ encoding etc) happening on Rust side.
+The offsets are already assembled on the JS side in an `Int32Array`, so it might be worthwhile making
+a single JS-Rust-JS round-trip with it, with the sourcemap generation (VLQ encoding etc) happening on Rust side.
 
 WASM might also be a good option for this.
 
@@ -616,6 +671,7 @@ A checklist, all of it argued for above.
    `debugAssert` calls and does not represent shipped performance.
 
 [`oxc_codegen`]: https://github.com/oxc-project/oxc/tree/main/crates/oxc_codegen
+[`print/categories.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/categories.ts
 [`print/write.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/write.ts
 [`print/space.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/space.ts
 [`print/operators.ts`]: https://github.com/oxc-project/oxc/blob/main/packages/codegen/src-js/print/operators.ts

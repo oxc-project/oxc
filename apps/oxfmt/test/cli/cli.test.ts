@@ -12,7 +12,7 @@ describe("oxfmt CLI", () => {
       for (let i = 0; i < fixture.testCases.length; i++) {
         const testCase = fixture.testCases[i];
 
-        it.sequential(`${fixture.name}/${i}`, async ({ expect }) => {
+        it(`${fixture.name}/${i}`, { concurrent: false }, async ({ expect }) => {
           const snapshotPath = join(fixture.dirPath, `${i}.snap.md`);
           const snapshot = await runFixture(fixture, testCase);
           await expect(snapshot).toMatchFileSnapshot(snapshotPath);

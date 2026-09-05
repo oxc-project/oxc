@@ -112,20 +112,17 @@ fn test_function_return_optimization() {
         "function f(){try{a();return}catch{}}",
     ); // function f(){try{a()}catch{}}
 
-    test_same("function f(){g:return}");
-    test("function f(){g:{return}}", "function f(){g:return}");
+    test_same("function f(){g:return}"); // function f(){}
+    test("function f(){g:{return}}", "function f(){g:return}"); // function f(){}
     test(
         "function f(){g:if(a()){return;}else{return;} return;}",
         "function f(){g:if(a())return;else return}",
-    );
-    test(
-        "function f(){g:{if(a()){return;}else{return;} return;}}",
-        "function f(){g:return a(),void 0}",
-    );
+    ); // function f(){g:a()}
+    test("function f(){g:{if(a()){return;}else{return;} return;}}", "function f(){g:{a();return}}"); // function f(){g:a()}
     test(
         "function f(){g:{a();if(b()){return;}else{return;} return;}}",
-        "function f(){g:return a(),b(),void 0}",
-    );
+        "function f(){g:{a(),b();return}}",
+    ); // function f(){g:a(),b()}
     test(
         "function f(){try{g:if(a()){throw 9;} return;}finally{return}}",
         "function f(){try{g:if(a())throw 9; return}finally{return}}",
@@ -134,6 +131,23 @@ fn test_function_return_optimization() {
         "function g(a,b){if(a){}else if(b){return()=>typeof f}else function f(){}}",
         "function g(a,b){if(!a){if(b)return()=>typeof f;else function f(){}}}",
     );
+
+    test("function g(){if(a)return b;return c;var x}", "function g(){return a?b:c;var x;}");
+    test("function g(){if(a)return;return;var x}", "function g(){if(!a){return;var x;}}");
+    test("function g(){if(a)throw b;throw c;var x}", "function g(){throw a?b:c;var x;}");
+    test(
+        "function g(){if(d){if(a)return b;return;}return c;}",
+        "function g(){return d?a?b:void 0:c;}",
+    );
+}
+
+#[test]
+fn test_async_gen_function_return() {
+    test("async function* foo(){if(a)return b;return c;}", "async function* foo(){return a?b:c;}");
+    test("async function* foo(){if(a)return;return c;}", "async function* foo(){if(!a)return c;}");
+    test("async function* foo(){if(a)return b;return;}", "async function* foo(){if(a)return b;}");
+    test("async function* foo(){if(a)return;return;}", "async function* foo(){a;}");
+    test_same("async function* foo(){if(a){if(b)return;return d;}return e;}");
 }
 
 #[test]
@@ -213,55 +227,52 @@ fn test_while_continue_optimization() {
 
 #[test]
 fn test_do_continue_optimization() {
-    test("do{if(x)continue; x=3; continue; }while(true)", "do x||=3;while(!0);");
-    test("do{a();continue;b()}while(true)", "do a();while(!0)");
-    test("do{if(true){a();continue;}else;b();}while(true)", "do a();while(!0)");
-    test("do{if(false){a();continue;}else;b();continue;}while(true)", "do b();while(!0)");
-    test(
-        "do{if(a()){b();continue;}else;c();}while(true)",
-        "do{if(a()){b();continue}c()}while(!0);",
-    ); // do a()?b():c();while(!0)
+    test("do{if(x)continue; x=3; continue; }while(true)", "do x||=3;while(1);");
+    test("do{a();continue;b()}while(true)", "do a();while(1)");
+    test("do{if(true){a();continue;}else;b();}while(true)", "do a();while(1)");
+    test("do{if(false){a();continue;}else;b();continue;}while(true)", "do b();while(1)");
+    test("do{if(a()){b();continue;}else;c();}while(true)", "do{if(a()){b();continue}c()}while(1);"); // do a()?b():c();while(1)
     test(
         "do{if(a()){b();}else{c();continue;}}while(true)",
-        "do if(a())b();else{c();continue}while(!0);",
-    ); // do a()?b():c();while(!0)
-    test("do{if(a()){b();continue;}else;}while(true)", "do if(a()){b();continue}while(!0);"); // do a()&&b();while(!0)
-    test("do{if(a()){continue;}else{continue;} continue;}while(true)", "do a();while(!0)");
-    test("do{if(a()){continue;}else{continue;} b();}while(true)", "do a();while(!0)");
+        "do if(a())b();else{c();continue}while(1);",
+    ); // do a()?b():c();while(1)
+    test("do{if(a()){b();continue;}else;}while(true)", "do if(a()){b();continue}while(1);"); // do a()&&b();while(1)
+    test("do{if(a()){continue;}else{continue;} continue;}while(true)", "do a();while(1)");
+    test("do{if(a()){continue;}else{continue;} b();}while(true)", "do a();while(1)");
 
-    test("do{while(a())continue;}while(true)", "do for(;a();)continue;while(!0);"); // do for(;a(););while(!0)
-    test("do{for(x in a())continue}while(true)", "do for(x in a())continue;while(!0);"); // do for(x in a());while(!0)
+    test("do{while(a())continue;}while(true)", "do for(;a();)continue;while(1);"); // do for(;a(););while(1)
+    test("do{for(x in a())continue}while(true)", "do for(x in a())continue;while(1);"); // do for(x in a());while(1)
 
-    test("do{while(a())break;}while(true)", "do for(;a();)break;while(!0)");
-    test("do for(x in a())break;while(true)", "do for(x in a())break;while(!0)");
+    test("do{while(a())break;}while(true)", "do for(;a();)break;while(1)");
+    test("do for(x in a())break;while(true)", "do for(x in a())break;while(1)");
 
     test(
         "do{try{continue;}catch(e){continue;}}while(true)",
-        "do try{continue}catch{continue}while(!0);",
-    ); // do;while(!0)
+        "do try{continue}catch{continue}while(1);",
+    ); // do;while(1)
     test(
         "do{try{if(a()){continue;}else{continue;} continue;}catch(e){}}while(true)",
-        "do try{a();continue;}catch{}while(!0);",
-    ); // do try{a()}catch{}while(!0);
+        "do try{a();continue;}catch{}while(1);",
+    ); // do try{a()}catch{}while(1);
 
-    test("do{g:continue}while(true)", "do g:continue;while(!0);"); // do;while(!0);
+    test("do{g:continue}while(true)", "do g:continue;while(1);"); // do;while(1);
     // This case could be improved.
     test(
         "do{g:if(a()){continue;}else{continue;} continue;}while(true)",
-        "do g:if(a())continue;else continue;while(!0);",
-    ); // do g:a();while(!0);
+        "do g:if(a())continue;else continue;while(1);",
+    ); // do g:a();while(1);
 
-    test("do { foo(); continue; } while(false)", "do foo();while(!1)");
-    test("do { foo(); break; } while(false)", "do foo();while(!1)");
+    test("do { foo(); continue; } while(false)", "do foo();while(0)");
+    test("do { foo(); break; } while(false)", "do foo();while(0)");
 
     test("do{break}while(fn());", "do break; while(fn());");
-    test("do{break}while(true);", "do break; while(!0);"); // do while(!1);
-    test("do{if(a){break;}else{break;}break;}while(true)", "do{a;break}while(!0);"); // do a; while(!1);
-    test("do{break}while(!new Date());", "do;while(!1);");
+    test("do{break}while(true);", "do break; while(1);"); // do while(0);
+    test("do{if(a){break;}else{break;}break;}while(true)", "do{a;break}while(1);"); // do a; while(0);
+    test("do{break}while(!new Date());", "do;while(0);");
 
     test(
         "do { foo(); switch (x) { case 1: break; default: f()} } while(false)",
-        "do switch (foo(),x) { case 1: break; default: f() } while(!1);",
+        "do switch (foo(),x) { case 1: break; default: f() } while(0);",
     );
 }
 
@@ -331,16 +342,16 @@ fn test_for_continue_optimization() {
         "for(x=0;x<y;x++)try{a();continue}catch{}",
     ); // for(x=0;x<y;x++)try{a()}catch{}
 
-    test("for(x=0;x<y;x++){g:continue}", "for (x=0;x<y;x++)g:continue;");
-    test("for(x=0;x<y;x++){g:{continue}}", "for(x=0;x<y;x++)g:continue;");
+    test("for(x=0;x<y;x++){g:continue}", "for(x=0;x<y;x++)g:continue;"); // for(x=0;x<y;x++);
+    test("for(x=0;x<y;x++){g:{continue}}", "for(x=0;x<y;x++)g:continue;"); // for(x=0;x<y;x++);
     test(
         "for(x=0;x<y;x++){g:if(a()){continue;}else{continue;} continue;}",
         "for(x=0;x<y;x++)g:if(a())continue;else continue;",
-    );
+    ); // for(x=0;x<y;x++)g:a();
     test(
         "for(x=0;x<y;x++){g:{if(a()){continue;}else{continue;} continue;}}",
-        "for(x=0;x<y;x++)g:{a();continue;}",
-    );
+        "for(x=0;x<y;x++)g:{if(a())continue;continue;}",
+    ); // for(x=0;x<y;x++)g:a();
     test(
         "for(x=0;x<y;x++){g:{a();if(b()){continue;}else{continue;} continue;}}",
         "for(x=0;x<y;x++)g:{a(),b();continue}",

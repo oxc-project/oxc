@@ -1,0 +1,196 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A `//` on a comma's line stays on that line (`a, // c`), the line-boundary invariant;
+// Prettier's CSS moves it below as the next element's leading comment
+// (DIVERGENCES.md "line-comment-after-comma"). Every comma site:
+$map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+$list: a, // c
+  b;
+$paren: (a, // c
+  b);
+$glued: (
+  a: 1, /* c */ // d
+  b: 2,
+);
+a {
+  transition: a 1s, // c
+    b 2s;
+  b: f(a, // c
+    b);
+  @include m($a, // c
+    $b);
+  // A `//` glued to a run inside a space list stays with the run; the run is not pushed down.
+  margin: 1px 2px // c
+    3px 4px;
+}
+@mixin m($a, // c
+  $b) {
+}
+@each $k in a, // c
+  b {
+}
+@each $k, // c
+  $v in $m {
+}
+@use "a" with (
+  $a: 1, // c
+  $b: 2
+);
+@forward "b" show a, // c
+  b;
+@import "c", // c
+  "d";
+@media a, // c
+  b {
+}
+@supports selector(a, /* b */ // c
+  d) {
+}
+@import url(e) screen, // c
+  print;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A `//` on a comma's line stays on that line (`a, // c`), the line-boundary invariant;
+// Prettier's CSS moves it below as the next element's leading comment
+// (DIVERGENCES.md "line-comment-after-comma"). Every comma site:
+$map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+$list:
+  a, // c
+  b;
+$paren: (
+  a, // c
+  b
+);
+$glued: (
+  a: 1, /* c */ // d
+  b: 2,
+);
+a {
+  transition:
+    a 1s, // c
+    b 2s;
+  b: f(
+    a, // c
+    b
+  );
+  @include m(
+    $a, // c
+    $b
+  );
+  // A `//` glued to a run inside a space list stays with the run; the run is not pushed down.
+  margin: 1px 2px // c
+    3px 4px;
+}
+@mixin m(
+  $a, // c
+  $b
+) {
+}
+@each $k in a, // c
+  b
+{
+}
+@each $k, // c
+  $v in $m
+{
+}
+@use "a" with (
+  $a: 1, // c
+  $b: 2
+);
+@forward "b" show a, // c
+  b;
+@import "c", // c
+  "d";
+@media a, // c
+  b {
+}
+@supports selector(
+  a, /* b */ // c
+  d
+) {
+}
+@import url(e) screen, // c
+  print;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A `//` on a comma's line stays on that line (`a, // c`), the line-boundary invariant;
+// Prettier's CSS moves it below as the next element's leading comment
+// (DIVERGENCES.md "line-comment-after-comma"). Every comma site:
+$map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+$list:
+  a, // c
+  b;
+$paren: (
+  a, // c
+  b
+);
+$glued: (
+  a: 1, /* c */ // d
+  b: 2,
+);
+a {
+  transition:
+    a 1s, // c
+    b 2s;
+  b: f(
+    a, // c
+    b
+  );
+  @include m(
+    $a, // c
+    $b
+  );
+  // A `//` glued to a run inside a space list stays with the run; the run is not pushed down.
+  margin: 1px 2px // c
+    3px 4px;
+}
+@mixin m(
+  $a, // c
+  $b
+) {
+}
+@each $k in a, // c
+  b
+{
+}
+@each $k, // c
+  $v in $m
+{
+}
+@use "a" with (
+  $a: 1, // c
+  $b: 2
+);
+@forward "b" show a, // c
+  b;
+@import "c", // c
+  "d";
+@media a, // c
+  b {
+}
+@supports selector(
+  a, /* b */ // c
+  d
+) {
+}
+@import url(e) screen, // c
+  print;
+
+===================== End =====================

@@ -91,6 +91,7 @@ pnpm-lock.yaml
 /crates/oxc_ast @overlookmotel
 /crates/oxc_ast_macros @overlookmotel
 /crates/oxc_ast_visit @overlookmotel
+/crates/oxc_lexer @overlookmotel
 /crates/oxc_macros @overlookmotel
 /crates/oxc_span @overlookmotel
 /crates/oxc_str @overlookmotel
@@ -99,7 +100,16 @@ pnpm-lock.yaml
 /crates/oxc_estree_tokens @overlookmotel
 /npm/oxc-types @overlookmotel
 /tasks/ast_tools @overlookmotel
+
+# Memory allocation tracking (@overlookmotel)
+
 /tasks/track_memory_allocations @overlookmotel
+# The generated allocation snapshots belong to the crate whose code change regenerated them
+/tasks/track_memory_allocations/allocs_parser.yaml @Boshen
+/tasks/track_memory_allocations/allocs_formatter.yaml @leaysgur
+/tasks/track_memory_allocations/allocs_minifier.yaml @dunqing
+/tasks/track_memory_allocations/allocs_semantic.yaml @dunqing
+/tasks/track_memory_allocations/allocs_transformer.yaml @dunqing
 
 # Everything else falls through to the default owner @Boshen, including:
 #   parser (crates/oxc_parser, napi/parser), umbrella crates (crates/oxc,

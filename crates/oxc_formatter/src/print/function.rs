@@ -4,38 +4,22 @@ use oxc_ast::ast::*;
 use oxc_formatter_core::Buffer;
 
 use super::{
-    FormatWrite,
-    arrow_function_expression::{FunctionCacheMode, GroupedCallArgumentLayout},
-    block_statement::is_empty_block,
+    FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,
 };
 use crate::{
-    ast_nodes::AstNode,
-    format_args,
-    formatter::{prelude::*, trivia::FormatLeadingComments},
-    print::semicolon::OptionalSemicolon,
-    write,
+    ast_nodes::AstNode, format_args, formatter::prelude::*, print::semicolon::OptionalSemicolon,
+    utils::statement_body::write_head_body_separator, write,
 };
 
-impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Function<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatFunction::new(self).fmt(f);
     }
-
-    fn write_with_options(&self, options: FormatFunctionOptions, f: &mut JsFormatter<'_, 'a>) {
-        FormatFunction::new_with_options(self, options).fmt(f);
-    }
-}
-
-#[derive(Copy, Clone, Debug, Default)]
-pub struct FormatFunctionOptions {
-    pub call_argument_layout: Option<GroupedCallArgumentLayout>,
-    // Determine whether the signature and body should be cached.
-    pub cache_mode: FunctionCacheMode,
 }
 
 pub struct FormatFunction<'a, 'b> {
     pub function: &'b AstNode<'a, Function<'a>>,
-    pub options: FormatFunctionOptions,
+    pub cache_mode: FunctionCacheMode,
 }
 
 impl<'a> Deref for FormatFunction<'a, '_> {
@@ -48,14 +32,11 @@ impl<'a> Deref for FormatFunction<'a, '_> {
 
 impl<'a, 'b> FormatFunction<'a, 'b> {
     pub fn new(function: &'b AstNode<'a, Function<'a>>) -> Self {
-        Self { function, options: FormatFunctionOptions::default() }
+        Self { function, cache_mode: FunctionCacheMode::NoCache }
     }
 
-    pub fn new_with_options(
-        function: &'b AstNode<'a, Function<'a>>,
-        options: FormatFunctionOptions,
-    ) -> Self {
-        Self { function, options }
+    pub fn new_cached(function: &'b AstNode<'a, Function<'a>>) -> Self {
+        Self { function, cache_mode: FunctionCacheMode::Cache }
     }
 
     #[inline]
@@ -74,14 +55,11 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                 ]
             );
         });
-        FormatContentWithCacheMode::new(self.span, head, self.options.cache_mode).fmt(f);
+        FormatContentWithCacheMode::new(self.span, head, self.cache_mode).fmt(f);
 
-        let format_parameters = FormatContentWithCacheMode::new(
-            self.params.span,
-            self.params(),
-            self.options.cache_mode,
-        )
-        .memoized();
+        let format_parameters =
+            FormatContentWithCacheMode::new(self.params.span, self.params(), self.cache_mode)
+                .memoized();
 
         let format_return_type = self
             .return_type()
@@ -91,7 +69,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                         f.context().comments().has_comment_before(return_type.span.start);
                     write!(f, [maybe_space(needs_space), return_type]);
                 });
-                FormatContentWithCacheMode::new(return_type.span, content, self.options.cache_mode)
+                FormatContentWithCacheMode::new(return_type.span, content, self.cache_mode)
             })
             .memoized();
 
@@ -122,13 +100,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
         );
 
         if let Some(body) = self.body() {
-            write!(
-                f,
-                [
-                    space(),
-                    FormatContentWithCacheMode::new(body.span, body, self.options.cache_mode)
-                ]
-            );
+            write!(f, [space(), FormatContentWithCacheMode::new(body.span, body, self.cache_mode)]);
         }
 
         if self.is_ts_declare_function() {
@@ -145,8 +117,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let comments = f.context().comments().block_comments_before(self.span.start);
-        write!(f, [space(), FormatLeadingComments::Comments(comments)]);
+        write_head_body_separator(self.span.start, f);
 
         let statements = self.statements();
         let directives = self.directives();

@@ -309,6 +309,7 @@ fn evaluate_instruction<'a>(
                             InstructionValue::PropertyLoad {
                                 object,
                                 property: new_property,
+                                computed: true,
                                 property_span,
                                 span,
                             };
@@ -322,6 +323,7 @@ fn evaluate_instruction<'a>(
                             InstructionValue::PropertyLoad {
                                 object,
                                 property: new_property,
+                                computed: true,
                                 property_span,
                                 span,
                             };
@@ -348,6 +350,7 @@ fn evaluate_instruction<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: new_property,
+                                computed: true,
                                 property_span,
                                 value: store_value,
                                 span,
@@ -363,6 +366,7 @@ fn evaluate_instruction<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: new_property,
+                                computed: true,
                                 property_span,
                                 value: store_value,
                                 span,

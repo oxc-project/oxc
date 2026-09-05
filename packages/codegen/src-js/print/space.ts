@@ -16,11 +16,10 @@ import {
   CAT_OP_UPD_INC,
   CAT_OTHER,
   CAT_REGEX_SLASH,
-  debugAssertLastFresh,
-  write,
-} from "./write.ts";
+} from "./categories.ts";
+import { debugAssertLastFresh, write } from "./write.ts";
 
-import type { Category } from "./write.ts";
+import type { Category } from "./categories.ts";
 import type { State } from "../state.ts";
 
 // `printSpaceBeforeIdentifier` selects the categories needing a space by their position in `Category` numbering.
@@ -112,9 +111,9 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
  */
 function printSpaceBeforeOperatorSlow(state: State, prev: Category, next: Category): void {
   if (
-    (prev === CAT_OP_UN_PLUS && (next === CAT_OP_UN_PLUS || next === CAT_OP_UPD_INC)) ||
-    (prev === CAT_OP_UN_NEG && (next === CAT_OP_UN_NEG || next === CAT_OP_UPD_DEC)) ||
-    (prev === CAT_OP_UN_NOT_AFTER_LT && next === CAT_OP_UPD_DEC)
+    (prev === CAT_OP_UN_PLUS && (next === CAT_OP_UN_PLUS || next === CAT_OP_UPD_INC))
+    || (prev === CAT_OP_UN_NEG && (next === CAT_OP_UN_NEG || next === CAT_OP_UPD_DEC))
+    || (prev === CAT_OP_UN_NOT_AFTER_LT && next === CAT_OP_UPD_DEC)
   ) {
     write(state, " ", CAT_OTHER);
   }

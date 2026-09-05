@@ -1,0 +1,15 @@
+// A sign glued to a function-call operand inside a calculation is a folded
+// binary operator (same subtraction as the value-position path, see
+// value-glued-minus.scss), parsed as a `Calc` operation whose printer keeps
+// the source glue verbatim — matching Prettier byte-for-byte here.
+// dart-sass itself rejects the glued form inside calculations
+// ("+" and "-" must be surrounded by whitespace), so no valid input changes.
+// A SPACED `-1` stays a signed value (`x -1` is two list elements, not
+// subtraction), and word-glued runs (`100%-20px`) stay one verbatim word.
+.a {
+  width: max(map-get($m, a)-1, 0);
+  height: min(map-get($m, a) -1, 0);
+  margin: max(100%-20px, 0px);
+  // the split-off dimension keeps its multiplicative tail (`- (1px * 2)`)
+  padding: max(map-get($m, a)-1px * 2, 0px);
+}

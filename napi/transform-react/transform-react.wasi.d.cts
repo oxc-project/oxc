@@ -323,7 +323,7 @@ export interface TransformResult {
   code: string
   /** Source map, populated when `sourcemap` is `true`. */
   map?: SourceMap
-  /** Parse, semantic, React Compiler, and downstream transform diagnostics. */
+  /** Parse, semantic, downstream transform, and fatal React Compiler diagnostics. */
   errors: Array<OxcError>
 }
 

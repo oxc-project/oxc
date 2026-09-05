@@ -53,8 +53,8 @@ pub struct LexerCheckpoint<'a> {
     token: Token,
     errors_snapshot: ErrorSnapshot<'a>,
     tokens_len: usize,
-    pure_comment: Option<usize>,
-    has_no_side_effects_comment: bool,
+    pure_comments: Option<(usize, usize)>,
+    no_side_effects_comments: Option<(usize, usize)>,
 }
 
 #[derive(Debug, Clone)]
@@ -198,8 +198,8 @@ impl<'a, C: Config> Lexer<'a, C> {
             token: self.token,
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            pure_comment: self.trivia_builder.pure_comment,
-            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            pure_comments: self.trivia_builder.previous_token_pure_comments(),
+            no_side_effects_comments: self.trivia_builder.previous_token_no_side_effects_comments(),
         }
     }
 
@@ -216,8 +216,8 @@ impl<'a, C: Config> Lexer<'a, C> {
             token: self.token,
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            pure_comment: self.trivia_builder.pure_comment,
-            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            pure_comments: self.trivia_builder.previous_token_pure_comments(),
+            no_side_effects_comments: self.trivia_builder.previous_token_no_side_effects_comments(),
         }
     }
 
@@ -231,8 +231,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
-        self.trivia_builder.pure_comment = checkpoint.pure_comment;
-        self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
+        self.trivia_builder.set_pure_comments(checkpoint.pure_comments);
+        self.trivia_builder.set_no_side_effects_comments(checkpoint.no_side_effects_comments);
     }
 
     pub fn peek_token(&mut self) -> Token {
@@ -332,8 +332,9 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Overwrite the last token in the collected token stream.
     ///
-    /// Used to restore a token that was popped by `re_lex_as_typescript_l_angle`
-    /// when `try_parse` fails and rewinds.
+    /// Used by `re_lex_as_typescript_l_angle` to replace a compound token (`<<`, `<=` or `<<=`)
+    /// with the single `<` it re-lexed, and to restore the compound token when `try_parse`
+    /// fails and rewinds.
     #[inline]
     pub(crate) fn rewrite_last_collected_token(&mut self, token: Token) {
         // Make this function a no-op when tokens are statically disabled (`NoTokensLexerConfig`)
@@ -370,10 +371,16 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Called at very end of parsing.
     pub(crate) fn finalize_tokens(&mut self) -> ArenaVec<'a, Token> {
         if self.config.tokens() {
-            // Tokens are enabled. Discard last token, which is `Eof`.
+            // Tokens are enabled. Discard the last token, which marks the end of input.
+            // Usually that is `Eof`. Where the lexer cannot lex any further - an unterminated string,
+            // for example - it emits `Undetermined` instead, and no `Eof` ever follows.
+            // The parser treats the two alike, and neither is a real token, so both are discarded.
             let mut tokens = self.take_tokens();
             let last_token = tokens.pop();
-            debug_assert!(last_token.is_some_and(|token| token.kind() == Kind::Eof));
+            debug_assert!(
+                last_token
+                    .is_some_and(|token| matches!(token.kind(), Kind::Eof | Kind::Undetermined))
+            );
             tokens
         } else {
             // Tokens are disabled. Just return an empty vec.
@@ -476,8 +483,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Whitespace and line terminators are skipped
     #[inline] // Make sure is inlined into `next_token`
     fn read_next_token(&mut self) -> Kind {
-        self.trivia_builder.pure_comment = None;
-        self.trivia_builder.has_no_side_effects_comment = false;
+        self.trivia_builder.clear_pure_comments();
+        self.trivia_builder.clear_no_side_effects_comments();
 
         let end_pos = self.source.end();
         loop {
@@ -544,8 +551,8 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[inline]
     fn read_next_jsx_attribute_value(&mut self) -> Kind {
-        self.trivia_builder.pure_comment = None;
-        self.trivia_builder.has_no_side_effects_comment = false;
+        self.trivia_builder.clear_pure_comments();
+        self.trivia_builder.clear_no_side_effects_comments();
 
         let end_pos = self.source.end();
         loop {

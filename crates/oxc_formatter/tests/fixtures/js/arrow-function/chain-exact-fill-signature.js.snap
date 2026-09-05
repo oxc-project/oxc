@@ -1,0 +1,51 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// An arrow chain with a parens-adding conditional body keeps a signature line
+// that exactly fills the print width, body indented on the next line.
+// DIVERGES from Prettier (DIVERGENCES.md "arrow-chain-exact-fill-signature"),
+// which counts the hug layout's literal trailing space when measuring the fit,
+// breaks the assignment, and retries the chain flat on the indented next line
+// (with parens); layout-only, triggers only on an exact width match.
+// The first chain diverges at printWidth 80, the second at 100; at the
+// respectively other width both formatters agree.
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) =>
+  cond ? longlonglong : shortshort;
+const exactlyFillsThePrintWidthOneHundredSignatureLinePaddedOutToTheFullLineLengthOk = (x) => (y) =>
+  cond ? longlonglong : shortshort;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// An arrow chain with a parens-adding conditional body keeps a signature line
+// that exactly fills the print width, body indented on the next line.
+// DIVERGES from Prettier (DIVERGENCES.md "arrow-chain-exact-fill-signature"),
+// which counts the hug layout's literal trailing space when measuring the fit,
+// breaks the assignment, and retries the chain flat on the indented next line
+// (with parens); layout-only, triggers only on an exact width match.
+// The first chain diverges at printWidth 80, the second at 100; at the
+// respectively other width both formatters agree.
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) =>
+  cond ? longlonglong : shortshort;
+const exactlyFillsThePrintWidthOneHundredSignatureLinePaddedOutToTheFullLineLengthOk =
+  (x) => (y) => (cond ? longlonglong : shortshort);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// An arrow chain with a parens-adding conditional body keeps a signature line
+// that exactly fills the print width, body indented on the next line.
+// DIVERGES from Prettier (DIVERGENCES.md "arrow-chain-exact-fill-signature"),
+// which counts the hug layout's literal trailing space when measuring the fit,
+// breaks the assignment, and retries the chain flat on the indented next line
+// (with parens); layout-only, triggers only on an exact width match.
+// The first chain diverges at printWidth 80, the second at 100; at the
+// respectively other width both formatters agree.
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) =>
+  cond ? longlonglong : shortshort;
+const exactlyFillsThePrintWidthOneHundredSignatureLinePaddedOutToTheFullLineLengthOk = (x) => (y) =>
+  cond ? longlonglong : shortshort;
+
+===================== End =====================

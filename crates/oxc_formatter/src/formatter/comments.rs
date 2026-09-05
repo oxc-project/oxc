@@ -183,13 +183,7 @@ impl<'a> Comments<'a> {
         &self.unprinted_comments()[..index]
     }
 
-    /// Returns all block comments that end before or at the given position.
-    pub fn block_comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index = self.comments_before_iter(pos).take_while(|c| c.is_block()).count();
-        &self.unprinted_comments()[..index]
-    }
-
-    /// Returns all block comments that end before or at the given position.
+    /// Returns all line comments that end before or at the given position.
     pub fn line_comments_before(&self, pos: u32) -> &'a [Comment] {
         let index = self.comments_before_iter(pos).take_while(|c| c.is_line()).count();
         &self.unprinted_comments()[..index]
@@ -235,8 +229,9 @@ impl<'a> Comments<'a> {
 
     /// Returns comments that occur before the first instance of a specific character.
     ///
-    /// Lexical byte scan: the range starting at `start` must contain only trivia and punctuation
-    /// (e.g. an expression end up to its enclosing delimiter).
+    /// Lexical byte scan: the range starting at `start` must contain only trivia
+    /// and tokens that cannot contain `character`
+    /// (punctuation, or a keyword scanned for its first byte, e.g. `e` for `else`, `f` for `finally`).
     /// A range covering code would false-match the character inside a string literal or nested syntax.
     pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
         let comments = self.comments_after(start);
@@ -249,6 +244,35 @@ impl<'a> Comments<'a> {
         }
 
         comments
+    }
+
+    /// Position just past the first instance of `character` at or after `start`.
+    /// Unlike the unprinted-comment queries, this skips every comment's interior (printed ones included),
+    /// so `character` inside a comment cannot false-match.
+    ///
+    /// Same lexical contract as [`Self::comments_before_character`],
+    /// and `character` must occur in the scanned range (guaranteed by grammar at the call sites).
+    pub(crate) fn position_after_character(&self, start: u32, character: u8) -> u32 {
+        // An empty sentinel span at end-of-source makes the tail just another gap
+        let source_end = u32::try_from(self.source_text.as_str().len()).unwrap();
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        let mut cursor = start;
+        for span in self.inner[first..]
+            .iter()
+            .map(|comment| comment.span)
+            .chain(std::iter::once(Span::empty(source_end)))
+        {
+            if let Some(offset) = self
+                .source_text
+                .bytes_range(cursor, span.start)
+                .iter()
+                .position(|&byte| byte == character)
+            {
+                return cursor + u32::try_from(offset).unwrap() + 1;
+            }
+            cursor = span.end;
+        }
+        unreachable!("the caller guarantees the character occurs outside a comment")
     }
 
     /// Comments sitting between `pos` and a closing source paren:
@@ -280,26 +304,28 @@ impl<'a> Comments<'a> {
             .then(|| &comments[..count])
     }
 
-    /// Whether the source has a `;` between the given positions,
-    /// ignoring `;` bytes inside comments (e.g. `foo /* ; */`).
-    /// `false` when the source relies on ASI.
+    /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).
+    /// Why a `)` counts as a statement terminator: see `trailing_comments_to_move_behind_semicolon`.
     ///
     /// Lexical byte scan: the range must contain only trivia and punctuation.
     /// (e.g. a content end up to the statement end)
-    /// A range containing a string literal would false-match a `;` inside it.
-    pub(crate) fn has_semicolon_in_range(&self, start: u32, end: u32) -> bool {
+    /// A range containing a string literal would false-match a byte inside it.
+    pub(crate) fn has_semicolon_or_closing_paren_in_range(&self, start: u32, end: u32) -> bool {
+        let has_terminator = |from: u32, to: u32| {
+            self.source_text.bytes_range(from, to).iter().any(|&b| matches!(b, b';' | b')'))
+        };
         let mut pos = start;
         for comment in self.comments_in_range(start, end) {
             // A comment ending exactly at `start` lies before the range
             if comment.span.start < pos {
                 continue;
             }
-            if self.source_text.bytes_contain(pos, comment.span.start, b';') {
+            if has_terminator(pos, comment.span.start) {
                 return true;
             }
             pos = comment.span.end;
         }
-        self.source_text.bytes_contain(pos, end, b';')
+        has_terminator(pos, end)
     }
 
     /// End of the content including its source parentheses:

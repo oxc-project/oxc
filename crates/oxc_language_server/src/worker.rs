@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
@@ -27,8 +27,8 @@ pub struct WorkerToolChangeResult {
     pub new_watchers: Vec<Registration>,
     /// Watchers that need to be unregistered
     pub removed_watchers: Vec<Unregistration>,
-    /// Optional message to be sent to the client, e.g., for misconfiguration
-    pub client_message: Option<ClientMessage>,
+    /// Optional messages to be sent to the client, e.g., for misconfiguration
+    pub client_messages: Vec<ClientMessage>,
 }
 
 /// A worker that manages the individual tool for a specific workspace
@@ -77,14 +77,14 @@ impl WorkspaceWorker {
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     ///
-    /// Returns an optional message to be sent to the client.
-    pub async fn start_worker(&self, options: serde_json::Value) -> Option<ClientMessage> {
+    /// Returns messages to be sent to the client.
+    pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
         let result = self.builder.build(&self.root_uri, options.clone());
         *self.tool.write().await = Some(result.tool);
 
         *self.options.lock().await = Some(options);
 
-        result.client_message
+        result.client_messages
     }
 
     /// Initialize file system watchers for the workspace.
@@ -123,8 +123,6 @@ impl WorkspaceWorker {
     where
         F: Fn(&Box<dyn Tool>, &TextDocument) -> DiagnosticResult,
     {
-        let mut aggregated: FxHashMap<Uri, Vec<Diagnostic>> = FxHashMap::default();
-
         let tool_diagnostics = {
             let tool_guard = self.tool.read().await;
             let Some(tool) = tool_guard.as_ref() else {
@@ -134,28 +132,22 @@ impl WorkspaceWorker {
             run(tool, document)
         };
 
-        match tool_diagnostics {
-            Ok(diags) => {
-                for (entry_uri, mut diags) in diags {
-                    aggregated.entry(entry_uri).or_default().append(&mut diags);
-                }
-            }
+        let diagnostics = match tool_diagnostics {
+            Ok(diags) => diags,
             Err(err) => {
                 return Err(err);
             }
-        }
+        };
 
         // In push mode, keep track of published diagnostics to clear them on shutdown
         if self.diagnostic_mode == DiagnosticMode::Push {
-            let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
-            self.published_diagnostics.lock().await.extend(new_published_uris);
+            self.published_diagnostics
+                .lock()
+                .await
+                .extend(diagnostics.iter().map(|(uri, _)| uri.clone()));
         }
 
-        let mut result = Vec::with_capacity(aggregated.len());
-        for (uri, diags) in aggregated {
-            result.push((uri, diags));
-        }
-        Ok(result)
+        Ok(diagnostics)
     }
 
     /// Run different tools to collect diagnostics.
@@ -332,7 +324,7 @@ impl WorkspaceWorker {
                 diagnostics: None,
                 new_watchers: registrations,
                 removed_watchers: unregistrations,
-                client_message: None, // TODO: Should we return a message to the client if the tool is not initialized?
+                client_messages: Vec::new(), // TODO: Should we return a message to the client if the tool is not initialized?
             };
         };
         let change = change_handler(tool, self.builder.as_ref());
@@ -352,7 +344,7 @@ impl WorkspaceWorker {
                     diagnostics: None,
                     new_watchers: registrations,
                     removed_watchers: unregistrations,
-                    client_message: change.client_message,
+                    client_messages: change.client_messages,
                 };
             };
 
@@ -377,7 +369,7 @@ impl WorkspaceWorker {
             diagnostics,
             new_watchers: registrations,
             removed_watchers: unregistrations,
-            client_message: change.client_message,
+            client_messages: change.client_messages,
         }
     }
 
@@ -724,11 +716,11 @@ mod tests {
         assert_eq!(result.removed_watchers.len(), 0);
         assert!(!needs_diagnostic_refresh);
         assert_eq!(
-            result.client_message,
-            Some(ClientMessage {
+            result.client_messages,
+            vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            })
+            }]
         );
     }
 
@@ -758,11 +750,11 @@ mod tests {
         assert_eq!(result.removed_watchers.len(), 0);
         assert!(!needs_diagnostic_refresh);
         assert_eq!(
-            result.client_message,
-            Some(ClientMessage {
+            result.client_messages,
+            vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            })
+            }]
         );
     }
 

@@ -2,12 +2,13 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-css compatibility: 145/151 (96.03%), 17 files skipped
+css compatibility: 144/151 (95.36%), 15 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| css/comments/declaration.css | 💥 | 98.88% |
 | css/fill-value/fill.css | 💥 | 96.36% |
 | css/parens/parens.css | 💥 | 93.12% |
 | css/postcss-plugins/postcss-nesting.css | 💥 | 97.66% |
@@ -24,11 +25,9 @@ css compatibility: 145/151 (96.03%), 17 files skipped
 - css/combinator/combinator.css
 - css/comments/selectors.css
 - css/custom-properties/emoji.css
-- css/modules/modules.css
 - css/no-semicolon/url.css
 - css/parens/empty-lines.css
 - css/postcss-plugins/postcss-mixins.css
-- css/postcss-plugins/postcss-nested-props.css
 - css/postcss-plugins/postcss-simple-vars.css
 - css/quotes/quotes.css
 - css/selector-list/selectors.css

@@ -23,8 +23,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 
 // ---- Group 2: DELIBERATE DIVERGENCE ----
-// See "SCSS: A nested map value prints at the SAME indent" in AGENTS.md
-// "Known divergences". For every case below Prettier double-indents `$n`
+// See DIVERGENCES.md "nested-map-context-indent".
+// For every case below Prettier double-indents `$n`
 // and floats the closing `),` between levels:
 //   $in-if: (
 //     $k: (
@@ -91,8 +91,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 
 // ---- Group 2: DELIBERATE DIVERGENCE ----
-// See "SCSS: A nested map value prints at the SAME indent" in AGENTS.md
-// "Known divergences". For every case below Prettier double-indents `$n`
+// See DIVERGENCES.md "nested-map-context-indent".
+// For every case below Prettier double-indents `$n`
 // and floats the closing `),` between levels:
 //   $in-if: (
 //     $k: (
@@ -174,8 +174,8 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 
 // ---- Group 2: DELIBERATE DIVERGENCE ----
-// See "SCSS: A nested map value prints at the SAME indent" in AGENTS.md
-// "Known divergences". For every case below Prettier double-indents `$n`
+// See DIVERGENCES.md "nested-map-context-indent".
+// For every case below Prettier double-indents `$n`
 // and floats the closing `),` between levels:
 //   $in-if: (
 //     $k: (

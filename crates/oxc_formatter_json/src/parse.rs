@@ -9,10 +9,11 @@ use oxc_span::SourceType;
 
 use crate::options::JsonVariant;
 
-/// Result of [`parse_json`].
+/// Result of [`parse_json`]: the root expression and comments in wrapped-source coordinates.
+/// `crate::ParsedJson` adds the file envelope on top.
 /// All borrows are arena-lifetime,
 /// so the parser's `Program` does not need to be kept alive by the caller.
-pub struct ParsedJson<'a> {
+pub struct ParsedExpression<'a> {
     /// `None` when `source` contains only comments and whitespace.
     pub expression: Option<&'a Expression<'a>>,
     /// Sorted comments. Spans are in [`Self::wrapped_source`] coordinates.
@@ -40,7 +41,7 @@ pub fn parse_json<'a>(
     allocator: &'a Allocator,
     source: &str,
     variant: JsonVariant,
-) -> Result<ParsedJson<'a>, OxcDiagnostic> {
+) -> Result<ParsedExpression<'a>, OxcDiagnostic> {
     // JSON object literals like `{"a":1}` are syntax errors when parsed as a JS program
     // (the leading `{` starts a `BlockStatement`),
     // so we wrap the source in `(...)` to force expression context.
@@ -102,7 +103,7 @@ pub fn parse_json<'a>(
         return Err(OxcDiagnostic::error("Expected a single expression at the top level"));
     };
 
-    Ok(ParsedJson {
+    Ok(ParsedExpression {
         expression: Some(&expr_stmt.expression),
         comments,
         wrapped_source,
@@ -139,7 +140,7 @@ fn try_parse_comments_only<'a>(
     allocator: &'a Allocator,
     source: &str,
     options: ParseOptions,
-) -> Option<ParsedJson<'a>> {
+) -> Option<ParsedExpression<'a>> {
     // `Parser::new` ties `source_text` to the arena lifetime;
     // Copy `source` into the arena so the resulting comment spans index into a string that outlives `ret`.
     let bare_source: &'a str = allocator.alloc_str(source);
@@ -154,7 +155,12 @@ fn try_parse_comments_only<'a>(
     let comments =
         std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
 
-    Some(ParsedJson { expression: None, comments, wrapped_source: bare_source, source_offset: 0 })
+    Some(ParsedExpression {
+        expression: None,
+        comments,
+        wrapped_source: bare_source,
+        source_offset: 0,
+    })
 }
 
 /// Reject comments according to Prettier's per-variant rules.

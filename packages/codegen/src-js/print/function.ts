@@ -2,17 +2,16 @@
 
 import { typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
+import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, CAT_START_OF_STMT } from "./categories.ts";
 import {
-  CAT_CLOSE_BRACKET,
-  CAT_IDENT,
-  CAT_OTHER,
-  CAT_START_OF_STMT,
   debugAssertLastFresh,
-  markWithMapNoName,
+  markMapStart,
   write,
+  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
+  writeWithMapNamed,
   writeWithMapNoLast,
 } from "./write.ts";
 import { printDecorators } from "./class.ts";
@@ -34,7 +33,7 @@ export function printFunction(node: ESTree.Function, state: State): void {
   let wrap = false;
   if (node.type === "FunctionExpression") {
     debugAssertLastFresh(state);
-    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `write.ts`
+    // `CAT_START_OF_STMT` or `CAT_START_OF_DEFAULT_EXPORT`, which are adjacent - see `categories.ts`
     wrap = (state.last | 1) === CAT_START_OF_STMT;
   }
 
@@ -45,17 +44,25 @@ export function printFunction(node: ESTree.Function, state: State): void {
   // The node's mapping goes on whichever of these is written first
   const declare = TS && node.declare;
   if (declare) {
-    writeWithMap(state, "declare ", CAT_OTHER, node);
-    write(state, node.async ? "async function" : "function", CAT_IDENT);
+    writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
+    writeIdent(state, node.async ? "async function" : "function");
   } else {
-    writeWithMap(state, node.async ? "async function" : "function", CAT_IDENT, node);
+    writeWithMap(
+      state,
+      node.async ? "async function" : "function",
+      CAT_IDENT,
+      node.start,
+      node.end,
+      node,
+    );
   }
 
   if (node.generator) write(state, "* ", CAT_OTHER);
 
-  if (node.id != null) {
+  const { id } = node;
+  if (id != null) {
     printSpaceBeforeIdentifier(state);
-    writeWithMap(state, node.id.name, CAT_IDENT, node.id);
+    writeWithMapNamed(state, id.name, id.start, id.end, id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);
@@ -105,7 +112,7 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     // Oxc stores TypeScript's special `this` parameter separately from formal parameters
     // and prints it without a source mapping.
     if (TS && param.type === "Identifier" && param.name === "this") {
-      write(state, "this", CAT_IDENT);
+      writeIdent(state, "this");
       if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
       continue;
     }
@@ -114,7 +121,7 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     if (decorators != null && decorators.length > 0) {
       printDecorators(decorators, state);
     } else {
-      markWithMapNoName(state, param);
+      markMapStart(state, param.start, param.end, param);
     }
 
     if (TS && param.type === "TSParameterProperty") {
@@ -152,18 +159,18 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   // `body` is a BlockStatement holding directives + statements.
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMapNoLast(state, "{", body);
-    writeWithMapEnd(state, "}", CAT_OTHER, body);
+    writeWithMapNoLast(state, "{", body.start, body.end, body);
+    writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
     return;
   }
 
-  writeWithMap(state, "{\n", CAT_OTHER, body);
+  writeWithMap(state, "{\n", CAT_OTHER, body.start, body.end, body);
   state.indentLevel++;
   printDirectivesAndStatements(statements, state);
   state.indentLevel--;
   printIndent(state);
 
-  writeWithMapEnd(state, "}", CAT_OTHER, body);
+  writeWithMapEnd(state, "}", CAT_OTHER, body.start, body.end, body);
 }
 
 /**

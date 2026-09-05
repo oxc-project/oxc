@@ -17,6 +17,7 @@ import { checkFixture, getEcmaScriptLineTable } from "./utils/common.ts";
 
 import type { Program } from "oxc-parser";
 import type { SourceMap } from "../dist/index.js";
+import type * as ESTree from "../../../npm/oxc-types/types.d.ts";
 
 // Same directory the benchmarks download their fixtures to. Whichever are already cached are used.
 // The inline fixtures below always run.
@@ -166,6 +167,95 @@ describe("Rust conformance", () => {
       sourceText: code,
     });
     expect(map?.names).toEqual(["ab"]);
+  });
+
+  test("stale JSX identifier offsets preserve a name holding a dash", () => {
+    const code = 'const el = <data-foo bar-baz="1" />;';
+    const program = parseProgram("renamed.jsx", code);
+    const statement = program.body[0];
+    if (statement.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+    const element = statement.declarations[0].init;
+    if (element?.type !== "JSXElement") throw new Error("Expected JSX element");
+
+    const { name, attributes } = element.openingElement;
+    if (name.type !== "JSXIdentifier") throw new Error("Expected JSX identifier");
+    const attribute = attributes[0];
+    if (attribute.type !== "JSXAttribute" || attribute.name.type !== "JSXIdentifier") {
+      throw new Error("Expected JSX attribute");
+    }
+
+    name.name = "X";
+    attribute.name.name = "y";
+
+    const { map } = printSync(program, {
+      jsx: true,
+      sourcemap: true,
+      sourceFilename: "renamed.jsx",
+      sourceText: code,
+    });
+    expect(map?.names).toEqual(["data-foo", "bar-baz"]);
+  });
+
+  test("a private identifier is named only when it was renamed", () => {
+    const code = "class C { #ab; m() { return this.#ab; } }";
+    const program = parseProgram("private.js", code);
+
+    // Printed as spelled, so nothing to name
+    expect(
+      printSync(program, { sourcemap: true, sourceFilename: "private.js", sourceText: code }).map
+        ?.names,
+    ).toEqual([]);
+
+    // Rename it, as a mangler would - every occurrence
+    renamePrivateIdentifiers(program, "ab", "a");
+
+    const { code: printed, map } = printSync(program, {
+      sourcemap: true,
+      sourceFilename: "private.js",
+      sourceText: code,
+    });
+    // The token is `#ab`, so that is the name recorded - not `ab`, which would describe a region
+    // of the output which includes the `#`
+    expect(printed).toContain("this.#a;");
+    expect(map?.names).toEqual(["#ab"]);
+  });
+
+  test("a plain identifier printed where the source was private is named with the `#`", () => {
+    const code = "class C { #ab; m() { return this.#ab; } }";
+    const program = parseProgram("unprivate.js", code);
+    const member = memberExpressionInFirstMethod(program);
+
+    // Simulate a transform which replaces `this.#ab` with `this.ab`, keeping the offsets.
+    // The `#` is part of the region the mapping describes, so it is part of the name recorded.
+    const { start, end } = member.property;
+    member.property = { type: "Identifier", name: "ab", start, end };
+
+    const { code: printed, map } = printSync(program, {
+      sourcemap: true,
+      sourceFilename: "unprivate.js",
+      sourceText: code,
+    });
+    expect(printed).toContain("this.ab;");
+    expect(map?.names).toEqual(["#ab"]);
+  });
+
+  test("a private identifier printed where the source was plain is named without a `#`", () => {
+    const code = "class C { m() { return this.ffoo; } }";
+    const program = parseProgram("privatised.js", code);
+    const member = memberExpressionInFirstMethod(program);
+
+    // Simulate a transform which replaces `this.ffoo` with `this.#foo`, keeping the offsets.
+    // The source token had no `#`, so the name recorded is the whole of what was there.
+    const { start, end } = member.property;
+    member.property = { type: "PrivateIdentifier", name: "foo", start, end };
+
+    const { code: printed, map } = printSync(program, {
+      sourcemap: true,
+      sourceFilename: "privatised.js",
+      sourceText: code,
+    });
+    expect(printed).toContain("this.#foo;");
+    expect(map?.names).toEqual(["ffoo"]);
   });
 
   test("handles transformed ASTs whose source locations move backwards", () => {
@@ -540,3 +630,45 @@ describe("indent option", () => {
     expect(insideIndent).toBeNull();
   });
 });
+
+/**
+ * Rename every private identifier called `from` to `to`, as a mangler would.
+ */
+function renamePrivateIdentifiers(node: unknown, from: string, to: string): void {
+  if (node === null || typeof node !== "object") return;
+  if (Array.isArray(node)) {
+    for (const child of node) renamePrivateIdentifiers(child, from, to);
+    return;
+  }
+
+  const record = node as Record<string, unknown>;
+  if (record.type === "PrivateIdentifier" && record.name === from) record.name = to;
+  for (const key of Object.keys(record)) renamePrivateIdentifiers(record[key], from, to);
+}
+
+/**
+ * A static member expression whose property may be rewritten between its two forms.
+ *
+ * The AST types split the two apart, so neither of them alone types an assignment which swaps one
+ * for the other.
+ */
+type RewritableMemberExpression = Omit<ESTree.StaticMemberExpression, "property"> & {
+  property: ESTree.IdentifierName | ESTree.PrivateIdentifier;
+};
+
+/**
+ * The member expression a class's first method returns, for tests which rewrite its property.
+ */
+function memberExpressionInFirstMethod(program: Program): RewritableMemberExpression {
+  const statement = program.body[0];
+  if (statement.type !== "ClassDeclaration") throw new Error("Expected class declaration");
+  const method = statement.body.body.find((element) => element.type === "MethodDefinition");
+  if (method?.type !== "MethodDefinition") throw new Error("Expected method");
+  const returned = method.value.body?.body[0];
+  if (returned?.type !== "ReturnStatement") throw new Error("Expected return statement");
+  const member = returned.argument;
+  if (member?.type !== "MemberExpression" || member.computed) {
+    throw new Error("Expected static member expression");
+  }
+  return member as RewritableMemberExpression;
+}

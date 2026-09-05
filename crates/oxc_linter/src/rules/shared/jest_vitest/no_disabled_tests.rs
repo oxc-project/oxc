@@ -10,6 +10,8 @@ use crate::{
     },
 };
 
+pub const SHORT_DESCRIPTION: &str = "Disallow disabled tests.";
+
 pub const DOCUMENTATION: &str = r"### What it does
 
 This rule raises a warning about disabled tests.

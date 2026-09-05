@@ -132,9 +132,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-        let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -196,54 +195,56 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => self.parse_expression_or_labeled_statement(),
         };
 
-        // `/* #__PURE__ */ function foo() {}` - pure comment before non-expression statements cannot be applied.
-        // Expression statements handle pure comments internally in `parse_assignment_expression_or_higher_impl`.
-        if let Some(index) = pure_comment_index
-            && !matches!(stmt, Statement::ExpressionStatement(_))
+        if let Some(comments) = no_side_effects_comments
+            && Self::set_pure_on_function_stmt(&mut stmt)
         {
-            self.lexer.trivia_builder.mark_pure_comment_not_applied(index);
-        }
-
-        if has_no_side_effects_comment {
-            Self::set_pure_on_function_stmt(&mut stmt);
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
         }
 
         stmt
     }
 
-    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) {
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
+                true
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
+                    true
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
+                    true
                 }
-                _ => {}
+                _ => false,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
+                    true
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
-                        Self::set_pure_on_function_expr(expr);
+                        Self::set_pure_on_function_expr(expr)
+                    } else {
+                        false
                     }
                 }
-                _ => {}
+                _ => false,
             },
             Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
-                    Self::set_pure_on_function_expr(expr);
+                    Self::set_pure_on_function_expr(expr)
+                } else {
+                    false
                 }
             }
-            _ => {}
+            _ => false,
         }
     }
 

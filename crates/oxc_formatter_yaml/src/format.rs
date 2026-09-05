@@ -24,18 +24,21 @@ pub fn format<'a>(
     source_text: &str,
     options: YamlFormatOptions,
 ) -> Result<Formatted<'a, YamlFormatContext<'a>>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (root, source, comments) = parse_root(allocator, source_text)?;
+    let parsed = parse_for_format(allocator, source_text)?;
 
-    let context =
-        YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
+    let context = YamlFormatContext::new(
+        options,
+        parsed.source,
+        parsed.comments,
+        print::last_descendant_end(parsed.root),
+    );
     let mut state = FormatState::new(context, allocator);
     // Pre-allocate: measured on 6,925 real-world files (kubernetes, vscode, saleor, bootstrap),
     // 0.3x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 99.9% of the corpus.
-    let capacity = (source.len() * 3 / 10).max(1024);
+    let capacity = (parsed.source.len() * 3 / 10).max(1024);
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
-    write!(&mut buffer, FormatYamlRoot { root, has_bom });
+    write!(&mut buffer, FormatYamlRoot { root: parsed.root, has_bom: parsed.has_bom });
 
     let elements = buffer.into_vec();
     let context = state.into_context();
@@ -43,6 +46,33 @@ pub fn format<'a>(
     let ir = Document::new(elements, Vec::new());
 
     Ok(Formatted::new(ir, context))
+}
+
+/// [`parse_for_format`] output: the AST, plus the envelope [`format()`] prints around it.
+pub struct ParsedYaml<'a> {
+    pub root: &'a Root<'a>,
+    /// Sorted comments bridged from the parser's trivia.
+    pub comments: &'a [SourceComment],
+    /// Normalized arena source every span indexes into.
+    source: &'a str,
+    has_bom: bool,
+}
+
+/// Parse `source_text` the way the formatter does, for callers that inspect the AST
+/// (e.g. a harness comparing what the source held against the formatted output).
+///
+/// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
+/// Owns the BOM split and `\r` normalization.
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn parse_for_format<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+) -> Result<ParsedYaml<'a>, OxcDiagnostic> {
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
+    let (root, source, comments) = parse_root(allocator, source_text)?;
+    Ok(ParsedYaml { root, comments, source, has_bom })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
