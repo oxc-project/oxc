@@ -102,6 +102,15 @@ If your editor does not support `textDocument/diagnostic`,
 this option handles when diagnostics are sent to the client.
 
 
+## suppressedViolationSeverity
+
+type: `"hint" | "info" | "warn" | "error" | "off"`
+
+
+Severity used to render bulk-suppressed violations. Defaults to `warn`. Set to `off` to
+hide them.
+
+
 ## tsConfigPath
 
 type: `string`

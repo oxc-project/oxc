@@ -16,9 +16,10 @@ use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
 };
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
-    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
-    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
+    DEFAULT_SUPPRESSIONS_FILE_NAME, ExternalLinter, ExternalPluginStore, InvalidFilterKind,
+    LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, OxlintSuppressionFileAction,
+    RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -400,7 +401,7 @@ impl CliRunner {
 
         let mut suppression_manager = SuppressionManager::load(
             options.cwd(),
-            "oxlint-suppressions.json",
+            DEFAULT_SUPPRESSIONS_FILE_NAME,
             suppression_options.suppress_all,
             suppression_options.prune_suppressions || fix_options.is_enabled(),
         );

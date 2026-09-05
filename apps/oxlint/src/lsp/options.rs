@@ -23,6 +23,18 @@ pub enum Run {
     OnType,
 }
 
+/// Controls the severity used to render bulk-suppressed violations in the editor.
+#[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum SuppressedViolationSeverity {
+    Hint,
+    Info,
+    #[default]
+    Warn,
+    Error,
+    Off,
+}
+
 /// LSP Options
 ///
 /// These options can be defined for each workspace folder separately.
@@ -105,6 +117,10 @@ pub struct LintOptions {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rules_customization: Option<RulesCustomization>,
+    /// Severity used to render bulk-suppressed violations. Defaults to `warn`. Set to `off` to
+    /// hide them.
+    #[schemars(with = "Option<SuppressedViolationSeverity>")]
+    pub suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
 #[derive(Debug, Default, Serialize, PartialEq, Eq, JsonSchema)]
@@ -253,6 +269,10 @@ impl TryFrom<Value> for LintOptions {
             rules_customization: object
                 .get("rulesCustomization")
                 .and_then(|key| RulesCustomization::deserialize(key).ok()),
+            suppressed_violation_severity: object
+                .get("suppressedViolationSeverity")
+                .and_then(|key| SuppressedViolationSeverity::deserialize(key).ok())
+                .unwrap_or_default(),
         })
     }
 }
@@ -261,7 +281,10 @@ impl TryFrom<Value> for LintOptions {
 mod test {
     use serde_json::json;
 
-    use super::{LintOptions, RuleCustomizationSeverity, Run, UnusedDisableDirectives};
+    use super::{
+        LintOptions, RuleCustomizationSeverity, Run, SuppressedViolationSeverity,
+        UnusedDisableDirectives,
+    };
 
     #[test]
     fn test_valid_options_json() {
@@ -272,6 +295,7 @@ mod test {
             "typeAware": true,
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
+            "suppressedViolationSeverity": "info",
             "rulesCustomization": {
                 "no-unused-vars": {
                     "severity": "error",
@@ -290,6 +314,10 @@ mod test {
         assert_eq!(options.type_aware, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
+        assert_eq!(
+            options.suppressed_violation_severity,
+            SuppressedViolationSeverity::Info
+        );
 
         assert!(options.rules_customization.is_some());
         let rules_customization = options.rules_customization.unwrap();
@@ -329,6 +357,10 @@ mod test {
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
         assert!(options.rules_customization.is_none());
+        assert_eq!(
+            options.suppressed_violation_severity,
+            SuppressedViolationSeverity::Warn
+        );
     }
 
     #[test]

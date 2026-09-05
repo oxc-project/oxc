@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { lintFixture, lintMultiFileFixture } from "../utils";
+import { DiagnosticSeverity, DiagnosticTag } from "vscode-languageserver-protocol/node";
+import { fixFixture, lintFixture, lintFixtureDiagnostics, lintMultiFileFixture } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
@@ -62,6 +63,119 @@ describe("LSP linting", () => {
           configPath: "./lint.json",
         }),
       ).toMatchSnapshot();
+    });
+  });
+
+  describe("bulk suppressions", () => {
+    it("shows suppressed diagnostics faded by default", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions/default.js",
+        "javascript",
+      );
+      const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+      const surfaced = diagnostics.filter(({ code }) => code === "eslint(no-debugger)");
+
+      expect(suppressed).toHaveLength(2);
+      expect(surfaced).toHaveLength(1);
+      for (const diagnostic of suppressed) {
+        expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Warning);
+      }
+      expect(surfaced[0]?.tags).toBeUndefined();
+    });
+
+    it("hides suppressed diagnostics when configured", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions/hidden.js",
+        "javascript",
+        { suppressedViolationSeverity: "off" },
+      );
+
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0]?.code).toBe("eslint(no-debugger)");
+    });
+
+    it.each([
+      ["hint", DiagnosticSeverity.Hint],
+      ["info", DiagnosticSeverity.Information],
+      ["warn", DiagnosticSeverity.Warning],
+      ["error", DiagnosticSeverity.Error],
+    ] as const)(
+      "renders %s suppressed diagnostics faded",
+      async (severity, expectedSeverity) => {
+        const diagnostics = await lintFixtureDiagnostics(
+          FIXTURES_DIR,
+          "suppressions/severity.js",
+          "javascript",
+          { suppressedViolationSeverity: severity },
+        );
+        const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+
+        expect(suppressed).toHaveLength(2);
+        for (const diagnostic of suppressed) {
+          expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
+          expect(diagnostic.severity).toBe(expectedSeverity);
+        }
+      },
+    );
+
+    it("surfaces a rule when its violation count increases", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions/increased.js",
+        "javascript",
+      );
+      const noConsole = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+
+      expect(noConsole).toHaveLength(3);
+      for (const diagnostic of noConsole) {
+        expect(diagnostic.tags).toBeUndefined();
+      }
+    });
+
+    it("generates inverted diagnostics for suppressed diagnostics", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions/related.js",
+        "javascript",
+      );
+      const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-duplicate-case)");
+      const inverted = diagnostics.filter(({ code, relatedInformation }) => {
+        return (
+          code === undefined &&
+          relatedInformation?.some(({ message }) => message === "original diagnostic")
+        );
+      });
+
+      expect(suppressed).toHaveLength(1);
+      expect(inverted.length).toBeGreaterThan(0);
+    });
+
+    it("surfaces diagnostics when the suppression baseline is malformed", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions-malformed/test.js",
+        "javascript",
+      );
+      const noConsole = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+
+      expect(noConsole).toHaveLength(2);
+      for (const diagnostic of noConsole) {
+        expect(diagnostic.tags).toBeUndefined();
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Error);
+      }
+    });
+
+    it("keeps code actions for suppressed diagnostics", async () => {
+      const codeActions = await fixFixture(
+        FIXTURES_DIR,
+        "suppressions/fix.js",
+        "javascript",
+      );
+
+      expect(codeActions).toContain("Title : Remove the debugger statement");
     });
   });
 });
