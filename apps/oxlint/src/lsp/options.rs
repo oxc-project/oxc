@@ -80,9 +80,12 @@ pub struct LintOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ts_config_path: Option<String>,
     /// How to handle unused disable directives. By default, they are allowed and ignored.
+    /// If unset, the `reportUnusedDisableDirectives` option of the config which governs each file
+    /// is used.
     pub unused_disable_directives: Option<UnusedDisableDirectives>,
     /// Whether to enable/disable type-aware linting.
-    /// It will override the root config's `typeAware` option if set.
+    /// If set, it applies to every file and overrides the `typeAware` option of every config.
+    /// If unset, each file follows the `typeAware` option of the config which governs it.
     pub type_aware: Option<bool>,
     /// Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
     /// It gets automatically enabled when `configPath` is set.

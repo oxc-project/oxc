@@ -45,6 +45,10 @@ pub struct TsGoLintState {
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// If `true`, type-aware linting was requested explicitly (CLI flag or editor setting) and
+    /// applies to every file, regardless of what `options.typeAware` says in the config which
+    /// governs that file.
+    type_aware_forced: bool,
 }
 
 impl TsGoLintState {
@@ -62,6 +66,7 @@ impl TsGoLintState {
             type_check: false,
             timings: false,
             with_ignore_fixes: false,
+            type_aware_forced: false,
         }
     }
 
@@ -86,6 +91,7 @@ impl TsGoLintState {
             type_check: false,
             timings: false,
             with_ignore_fixes: false,
+            type_aware_forced: false,
         })
     }
 
@@ -121,6 +127,22 @@ impl TsGoLintState {
     pub fn with_ignore_fixes(mut self, yes: bool) -> Self {
         self.with_ignore_fixes = yes;
         self
+    }
+
+    /// Set to `true` when type-aware linting was requested explicitly (`--type-aware`,
+    /// `--type-check-only`, or the editor's `typeAware` setting). Every file is then linted with
+    /// type-aware rules, instead of only the files whose config enables `options.typeAware`.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_aware_forced(mut self, yes: bool) -> Self {
+        self.type_aware_forced = yes;
+        self
+    }
+
+    /// Whether the file at `path` should be linted with type-aware rules.
+    fn is_type_aware_for(&self, path: &Path) -> bool {
+        self.type_aware_forced || self.config_store.type_aware_enabled_for(path)
     }
 
     /// # Panics
@@ -434,6 +456,10 @@ impl TsGoLintState {
 
         let json_input =
             self.json_input(paths, Some(source_overrides.clone()), &mut resolved_configs);
+        if json_input.configs.is_empty() {
+            // No file in this batch is governed by a config which enables type-aware linting.
+            return Ok(vec![]);
+        }
 
         //  Get the file name of the first path for internal diagnostic filtering
         let path_file_name =
@@ -565,6 +591,11 @@ impl TsGoLintState {
         for path in paths {
             if SourceType::from_path(Path::new(path)).is_ok() {
                 let path_buf = PathBuf::from(path);
+                // Type-aware linting can be enabled by the root config or by a nested config, so
+                // skip the files governed by a config which does not enable it.
+                if !self.is_type_aware_for(&path_buf) {
+                    continue;
+                }
                 let file_path = path.to_string_lossy().to_string();
 
                 let resolved_config = resolved_configs

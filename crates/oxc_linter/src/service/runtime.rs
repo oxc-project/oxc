@@ -635,7 +635,7 @@ impl Runtime {
                         );
 
                         let respect_eslint_disable_directives =
-                            me.linter.respect_eslint_disable_directives();
+                            me.linter.respect_eslint_disable_directives_for(path);
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
@@ -775,8 +775,11 @@ impl Runtime {
                                 section_contents.len()
                             );
 
-                            let respect_eslint_disable_directives =
-                                me.linter.respect_eslint_disable_directives();
+                            let respect_eslint_disable_directives = me
+                                .linter
+                                .respect_eslint_disable_directives_for(Path::new(
+                                    &module_to_lint.path,
+                                ));
                             let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                                 .section_module_records
                                 .into_iter()
@@ -918,8 +921,9 @@ impl Runtime {
                     }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
-                        let respect_eslint_disable_directives =
-                            me.linter.respect_eslint_disable_directives();
+                        let respect_eslint_disable_directives = me
+                            .linter
+                            .respect_eslint_disable_directives_for(Path::new(&module.path));
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
