@@ -303,11 +303,14 @@ impl Runtime {
             Some(_) => None, // Path provided but file doesn't exist
             None => Some(TsconfigDiscovery::Auto),
         };
+        // Keep TypeScript's extension substitution in sync with the type checker.
         let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
+            let alias = |extensions: &[&str]| extensions.iter().map(ToString::to_string).collect();
             vec![
-                (".js".into(), vec![".js".into(), ".ts".into()]),
-                (".mjs".into(), vec![".mjs".into(), ".mts".into()]),
-                (".cjs".into(), vec![".cjs".into(), ".cts".into()]),
+                (".js".to_string(), alias(&[".ts", ".tsx", ".d.ts", ".js", ".jsx"])),
+                (".jsx".to_string(), alias(&[".tsx", ".ts", ".d.ts", ".jsx", ".js"])),
+                (".mjs".to_string(), alias(&[".mts", ".d.mts", ".mjs"])),
+                (".cjs".to_string(), alias(&[".cts", ".d.cts", ".cjs"])),
             ]
         });
         Resolver::new(ResolveOptions {

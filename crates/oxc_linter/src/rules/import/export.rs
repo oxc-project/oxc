@@ -430,4 +430,19 @@ fn test() {
             .change_rule_path("export-star-4/index.js")
             .test();
     }
+
+    {
+        let pass = vec![
+            r#"export * from "./extension-alias-js-ts.js""#,
+            r#"export * from "./extension-alias-js-tsx.js""#,
+            r#"export * from "./extension-alias-jsx-tsx.jsx""#,
+            r#"export * from "./extension-alias-mjs.mjs""#,
+            r#"export * from "./extension-alias-cjs.cjs""#,
+        ];
+
+        Tester::new(Export::NAME, Export::PLUGIN, pass, vec![])
+            .with_import_plugin(true)
+            .change_rule_path("extension-alias/index.ts")
+            .test();
+    }
 }
