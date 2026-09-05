@@ -234,7 +234,7 @@ impl Tool for ServerFormatter {
         ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
-    fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
+    fn run_format(&self, document: TextDocument) -> Result<Vec<TextEdit>, String> {
         let file_content;
         let (result, source_text) = if document.uri.scheme().as_str() == "file" {
             let Some(path) = document.uri.to_file_path() else {
