@@ -134,21 +134,34 @@ function initTsScopeManager() {
   tsScopeManager = analyze(ast, analyzeOptions);
 
   // Add globals from configuration and resolve references
-  addGlobals();
+  debugAssertIsNonNull(tsScopeManager);
+  // @ts-expect-error - TODO: Our types don't quite align yet
+  addGlobalsToScopeManager(tsScopeManager);
 }
 
 /**
- * Add global variables from configuration and resolve references to them.
+ * Add global variables from configuration to a scope manager, and resolve references to them.
  *
  * With `lib: []`, no lib globals are created during analysis, so all global references
  * end up in `globalScope.through`. This function creates Variables for each configured
  * global and resolves references from `through`.
  *
  * This replicates ESLint's `scopeManager.addGlobals()` behavior.
+ *
+ * Also used by `js_parser_source_code.ts` to add configured globals to the scope manager
+ * for a file parsed by a custom (JS) parser (either provided by the parser, or created
+ * by analyzing the parser's AST). Such scope managers may be `eslint-scope` scope managers,
+ * which differ slightly from TS-ESLint's (`implicit.left` vs `implicit.leftToBeResolved`).
+ *
+ * Note: The parameter is typed with the local `Scope` type (not TS-ESLint's types),
+ * to avoid leaking `@typescript-eslint/scope-manager` types into the public type definitions.
+ *
+ * @param scopeManager - Scope manager to add globals to
  */
-function addGlobals(): void {
-  debugAssertIsNonNull(tsScopeManager);
-  const globalScope = tsScopeManager.scopes[0];
+export function addGlobalsToScopeManager(scopeManager: { scopes: Scope[] }): void {
+  const globalScope = scopeManager.scopes[0] as unknown as TSScope;
+  // A scope manager from a custom parser may have no scopes at all
+  if (globalScope === undefined) return;
 
   // Ensure globals are initialized
   if (globals === null) initGlobals();
@@ -205,8 +218,11 @@ function addGlobals(): void {
   // implicitly by assigning values to undeclared variables in non-strict code).
   // Since we augment the global scope, we need to remove the ones that match declared globals.
   // This matches eslint-scope's `__addVariables` behavior.
+  // A scope manager from a custom parser may not have `implicit` at all.
   // @ts-expect-error - `implicit` is private but accessible at runtime
   const { implicit } = globalScope;
+  if (implicit == null) return;
+
   implicit.variables = implicit.variables.filter((variable: Variable) => {
     const { name } = variable;
     if (globalScope.set.has(name)) {
@@ -216,9 +232,15 @@ function addGlobals(): void {
     return true;
   });
   // typescript-eslint uses `leftToBeResolved`, eslint-scope uses `left`
-  implicit.leftToBeResolved = implicit.leftToBeResolved.filter(
-    (ref: Reference) => !globalScope.set.has(ref.identifier.name),
-  );
+  if (implicit.leftToBeResolved !== undefined) {
+    implicit.leftToBeResolved = implicit.leftToBeResolved.filter(
+      (ref: Reference) => !globalScope.set.has(ref.identifier.name),
+    );
+  } else if (implicit.left !== undefined) {
+    implicit.left = implicit.left.filter(
+      (ref: Reference) => !globalScope.set.has(ref.identifier.name),
+    );
+  }
 }
 
 /**

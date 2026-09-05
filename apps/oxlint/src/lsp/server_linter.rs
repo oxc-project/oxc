@@ -223,6 +223,9 @@ impl ServerLinterBuilder {
 
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
+            // No config fallback, unlike `type_aware`: the permission to run project
+            // code comes from the client, never from a file in the repository.
+            .with_run_external_code(options.run_external_code.unwrap_or(false))
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
             .build()
@@ -461,6 +464,7 @@ impl Tool for ServerLinter {
             if old_option.config_path == new_options.config_path
                 && old_option.use_nested_configs() == new_options.use_nested_configs()
                 && old_option.type_aware == new_options.type_aware
+                && old_option.run_external_code == new_options.run_external_code
             {
                 None
             } else {
@@ -761,7 +765,9 @@ impl ServerLinter {
     }
 
     fn is_ignored(&self, uri_path: &Path) -> bool {
-        if !Self::is_lintable_extension(uri_path) {
+        // Files with an extension which is not natively lintable can still be lintable
+        // if a config override routes them to an external (JS) parser (e.g. `.gjs` files).
+        if !Self::is_lintable_extension(uri_path) && !self.runner.has_external_parser(uri_path) {
             debug!("ignored (unsupported extension): {uri_path:?}");
             return true;
         }

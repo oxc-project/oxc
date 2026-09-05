@@ -13,36 +13,43 @@ use serde::Deserialize;
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
+    ExternalLinterLintFileCb, ExternalLinterLintFileWithJsParserCb, ExternalLinterLoadParserCb,
+    ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb, JsParserLintFileResult,
+    LintFileResult, LoadParserResult, LoadPluginResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
     run::{
-        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb,
-        JsSetupRuleConfigsCb,
+        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLintFileWithJsParserCb,
+        JsLoadParserCb, JsLoadPluginCb, JsSetupRuleConfigsCb,
     },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
+    load_parser: JsLoadParserCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    lint_file_with_js_parser: JsLintFileWithJsParserCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
+    let rust_load_parser = wrap_load_parser(load_parser);
     let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_lint_file_with_js_parser = wrap_lint_file_with_js_parser(lint_file_with_js_parser);
     let rust_create_workspace = wrap_create_workspace(create_workspace);
     let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
     ExternalLinter::new(
         rust_load_plugin,
+        rust_load_parser,
         rust_setup_rule_configs,
         rust_lint_file,
+        rust_lint_file_with_js_parser,
         rust_create_workspace,
         rust_destroy_workspace,
     )
@@ -92,6 +99,45 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
             },
             // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
             Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+        }
+    }))
+}
+
+/// Result returned by `loadParser` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LoadParserReturnValue {
+    Success(LoadParserResult),
+    Failure(String),
+}
+
+/// Wrap `loadParser` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_load_parser(cb: JsLoadParserCb) -> ExternalLinterLoadParserCb {
+    Arc::new(Box::new(move |parser_url| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async move { cb.call_async(parser_url).await?.into_future().await })
+        });
+
+        match res {
+            // `loadParser` returns JSON string if parser loaded successfully, or an error occurred
+            Ok(json) => match serde_json::from_str(&json) {
+                // Parser loaded successfully
+                Ok(LoadParserReturnValue::Success(result)) => Ok(result),
+                // Error occurred on JS side
+                Ok(LoadParserReturnValue::Failure(err)) => Err(err),
+                // Invalid JSON - should be impossible, because we control serialization on JS side
+                Err(err) => {
+                    Err(format!("Failed to deserialize JSON returned by `loadParser`: {err}"))
+                }
+            },
+            // `loadParser` threw an error - should be impossible because `loadParser` is wrapped in try-catch
+            Err(err) => Err(format!("`loadParser` threw an error: {err}")),
         }
     }))
 }
@@ -223,6 +269,90 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 }
             } else {
                 Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
+            }
+        },
+    ))
+}
+
+/// Result returned by `lintFileWithJsParser` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LintFileWithJsParserReturnValue {
+    Success(JsParserLintFileResult),
+    Failure(String),
+}
+
+/// Wrap `lintFileWithJsParser` JS callback as a normal Rust function.
+///
+/// The JS-side `lintFileWithJsParser` function is synchronous, but it's wrapped in
+/// a `ThreadsafeFunction`, so cannot be called synchronously. Use an `mpsc::channel` to wait
+/// for the result from JS side, and block current thread until it completes execution.
+fn wrap_lint_file_with_js_parser(
+    cb: JsLintFileWithJsParserCb,
+) -> ExternalLinterLintFileWithJsParserCb {
+    Arc::new(Box::new(
+        move |file_path: String,
+              source_text: String,
+              has_bom: bool,
+              parser_id: u32,
+              parser_options_json: Option<String>,
+              rule_ids: Vec<u32>,
+              options_ids: Vec<u32>,
+              settings_json: String,
+              globals_json: String,
+              workspace_uri: Option<String>| {
+            let (tx, rx) = channel();
+
+            // Send data to JS
+            let status = cb.call_with_return_value(
+                FnArgs::from((
+                    file_path,
+                    source_text,
+                    has_bom,
+                    parser_id,
+                    parser_options_json,
+                    rule_ids,
+                    options_ids,
+                    settings_json,
+                    globals_json,
+                    workspace_uri,
+                )),
+                ThreadsafeFunctionCallMode::NonBlocking,
+                move |result, _env| {
+                    // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
+                    // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
+                    // Therefore, `rx` cannot be dropped before this call.
+                    let res = tx.send(result);
+                    debug_assert!(res.is_ok(), "Failed to send result of `lintFileWithJsParser`");
+                    Ok(())
+                },
+            );
+
+            if status == Status::Ok {
+                match rx.recv() {
+                    // `lintFileWithJsParser` returns JSON string containing diagnostics
+                    // and comments, or an error message
+                    Ok(Ok(json)) => {
+                        match serde_json::from_str(&json) {
+                            // Lint completed successfully
+                            Ok(LintFileWithJsParserReturnValue::Success(result)) => Ok(result),
+                            // Error occurred on JS side
+                            Ok(LintFileWithJsParserReturnValue::Failure(err)) => Err(err),
+                            // JSON deserialization failure.
+                            // Possible if rule produces fixes/suggestions with out of range offsets.
+                            Err(err) => Err(format!(
+                                "Failed to deserialize JSON returned by `lintFileWithJsParser`: {err}"
+                            )),
+                        }
+                    }
+                    // `lintFileWithJsParser` threw an error - should be impossible because it's wrapped in try-catch
+                    Ok(Err(err)) => Err(format!("`lintFileWithJsParser` threw an error: {err}")),
+                    // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+                    // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+                    // `tx.send()` always happens before `tx` is dropped.
+                    Err(err) => Err(format!("`lintFileWithJsParser` did not respond: {err}")),
+                }
+            } else {
+                Err(format!("Failed to schedule `lintFileWithJsParser` callback: {status:?}"))
             }
         },
     ))

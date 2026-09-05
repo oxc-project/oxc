@@ -76,6 +76,22 @@ export function initSourceText(): void {
 }
 
 /**
+ * Set source text directly, without a buffer.
+ *
+ * Used by `lint_js_parser.ts` for files parsed by a custom (JS) parser, where there is no buffer.
+ * Shared code paths (`report.ts` `loc`-based reporting, `location.ts` line tables) read `sourceText`
+ * from this module, and lazily initialize it from the buffer. Setting `sourceText` here makes those
+ * code paths work without a buffer.
+ *
+ * `resetSourceAndAst` resets `sourceText`, same as for the buffer-based path.
+ *
+ * @param sourceTextInput - Source text of file
+ */
+export function setSourceTextForJsParser(sourceTextInput: string): void {
+  sourceText = sourceTextInput;
+}
+
+/**
  * Deserialize AST from buffer.
  */
 export function initAst(): void {

@@ -11,7 +11,10 @@ use oxc_config::GlobSet;
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
-use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
+use super::{
+    external_plugins::{ExternalPluginEntry, external_plugins_schema},
+    language_options::OxlintLanguageOptions,
+};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -118,6 +121,14 @@ pub struct OxlintOverride {
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
+    /// Language options for files matched by this override, mirroring ESLint's
+    /// `languageOptions`.
+    ///
+    /// Allows routing matched files to an external (JS) parser, for file types which
+    /// oxlint's native parser cannot parse (e.g. Ember's `.gjs`/`.gts` files).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language_options: Option<OxlintLanguageOptions>,
+
     #[serde(default)]
     pub rules: OxlintRules,
 }
@@ -181,6 +192,72 @@ mod test {
         .unwrap();
 
         assert_eq!(*config.globals.unwrap().get("Foo").unwrap(), GlobalValue::Readonly);
+    }
+
+    #[test]
+    fn test_parsing_language_options() {
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+        }))
+        .unwrap();
+        assert!(config.language_options.is_none());
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["**/*.{gjs,gts}"],
+            "languageOptions": {
+                "parser": "ember-eslint-parser",
+            },
+        }))
+        .unwrap();
+        let language_options = config.language_options.unwrap();
+        assert_eq!(language_options.parser.as_ref().unwrap().specifier, "ember-eslint-parser");
+        assert!(language_options.parser_options.is_none());
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["**/*.gjs"],
+            "languageOptions": {
+                "parser": "./my-parser.mjs",
+                "parserOptions": { "ecmaFeatures": { "jsx": true } },
+            },
+        }))
+        .unwrap();
+        let language_options = config.language_options.unwrap();
+        assert_eq!(language_options.parser.as_ref().unwrap().specifier, "./my-parser.mjs");
+        assert_eq!(
+            language_options.parser_options,
+            Some(json!({ "ecmaFeatures": { "jsx": true } }))
+        );
+
+        // `parserOptions` without `parser` is rejected: oxlint's native parser ignores it, so
+        // accepting it silently would be inert config (unlike ESLint, which applies it to its
+        // built-in parser).
+        assert!(
+            from_value::<OxlintOverride>(json!({
+                "files": ["**/*.ts"],
+                "languageOptions": {
+                    "parserOptions": { "project": true },
+                },
+            }))
+            .is_err()
+        );
+
+        // Unsupported ESLint `languageOptions` keys are rejected.
+        assert!(
+            from_value::<OxlintOverride>(json!({
+                "files": ["**/*.gjs"],
+                "languageOptions": { "globals": { "foo": "readonly" } },
+            }))
+            .is_err()
+        );
+
+        // Unknown fields in `languageOptions` are rejected
+        assert!(
+            from_value::<OxlintOverride>(json!({
+                "files": ["**/*.gjs"],
+                "languageOptions": { "unknown": true },
+            }))
+            .is_err()
+        );
     }
 
     #[test]

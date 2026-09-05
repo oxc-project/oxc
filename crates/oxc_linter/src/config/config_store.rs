@@ -7,7 +7,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     AllowWarnDeny,
-    external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
+    external_plugin_store::{
+        ExternalOptionsId, ExternalParserId, ExternalPluginStore, ExternalRuleId,
+    },
     rules::{RULES, RuleEnum},
 };
 
@@ -23,6 +25,20 @@ pub struct ResolvedLinterState {
     pub config: Arc<LintConfig>,
 
     pub external_rules: Arc<[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)]>,
+
+    /// External (JS) parser for the file, from the last matching override with
+    /// `languageOptions.parser`. Files with an external parser are parsed on JS side,
+    /// and only external (JS plugin) rules run on them.
+    pub external_parser: Option<ResolvedExternalParser>,
+}
+
+/// External parser resolved from an override's `languageOptions`.
+#[derive(Debug, Clone)]
+pub struct ResolvedExternalParser {
+    /// ID of the parser. Matches index into the `registeredParsers` array on JS side.
+    pub parser_id: ExternalParserId,
+    /// `parserOptions` from the override, serialized as JSON, to pass to the parser verbatim.
+    pub parser_options_json: Option<Arc<str>>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,6 +65,7 @@ pub struct ResolvedOxlintOverride {
     pub env: Option<OxlintEnv>,
     pub globals: Option<OxlintGlobals>,
     pub plugins: Option<LintPlugins>,
+    pub external_parser: Option<ResolvedExternalParser>,
     pub rules: ResolvedOxlintOverrideRules,
 }
 
@@ -104,6 +121,7 @@ impl Config {
                     external_rules.retain(|(_, _, sev)| sev.is_warn_deny());
                     external_rules.into_boxed_slice()
                 }),
+                external_parser: None,
             },
             base_rules: rules,
             categories,
@@ -123,22 +141,48 @@ impl Config {
         self.base.rules.len()
     }
 
-    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
-        if self.overrides.is_empty() {
-            return self.base.clone();
-        }
-
-        let relative_path = self
-            .base
+    /// Get `path` relative to the directory of the config file, for matching against
+    /// override glob patterns.
+    fn relative_path<'p>(&self, path: &'p Path) -> &'p Path {
+        self.base
             .config
             .path
             .as_ref()
             .and_then(|config_path| {
                 config_path.parent().map(|parent| path.strip_prefix(parent).unwrap_or(path))
             })
-            .unwrap_or(path);
+            .unwrap_or(path)
+    }
 
-        let path = relative_path.to_string_lossy();
+    /// Returns `true` if an override with `languageOptions.parser` matches `path`.
+    ///
+    /// This is cheaper than [`Config::apply_overrides`], as it does not resolve rules.
+    pub(crate) fn has_external_parser(&self, path: &Path) -> bool {
+        if self.overrides.is_empty() {
+            return false;
+        }
+
+        let path = self.relative_path(path).to_string_lossy();
+        let path = path.as_ref();
+
+        self.overrides.iter().any(|config| {
+            config.external_parser.is_some()
+                && config.files.is_match(path)
+                && !config.exclude_files.is_match(path)
+        })
+    }
+
+    /// Returns `true` if any override has `languageOptions.parser`.
+    pub(crate) fn has_external_parser_overrides(&self) -> bool {
+        self.overrides.iter().any(|config| config.external_parser.is_some())
+    }
+
+    pub fn apply_overrides(&self, path: &Path) -> ResolvedLinterState {
+        if self.overrides.is_empty() {
+            return self.base.clone();
+        }
+
+        let path = self.relative_path(path).to_string_lossy();
         let path = path.as_ref();
         let overrides_to_apply = self
             .overrides
@@ -155,6 +199,7 @@ impl Config {
         let mut globals = self.base.config.globals.clone();
         let mut plugins = self.base.config.plugins;
         let settings = self.base.config.settings.clone();
+        let mut external_parser = None;
 
         for override_config in overrides_to_apply.clone() {
             if let Some(override_plugins) = override_config.plugins {
@@ -247,6 +292,11 @@ impl Config {
             if let Some(override_globals) = &override_config.globals {
                 override_globals.override_globals(&mut globals);
             }
+
+            // Same as ESLint: the last matching override with a parser wins
+            if let Some(override_parser) = &override_config.external_parser {
+                external_parser = Some(override_parser.clone());
+            }
         }
 
         let config: Arc<LintConfig> = if plugins == self.base.config.plugins
@@ -278,6 +328,7 @@ impl Config {
             rules: Arc::from(rules.into_boxed_slice()),
             config,
             external_rules: Arc::from(external_rules.into_boxed_slice()),
+            external_parser,
         }
     }
 }
@@ -403,6 +454,20 @@ impl ConfigStore {
         }
     }
 
+    /// Returns `true` if an override with `languageOptions.parser` matches `path`.
+    ///
+    /// Used to include files in the walk which are not lintable by extension
+    /// (e.g. Ember's `.gjs`/`.gts` files).
+    pub fn has_external_parser(&self, path: &Path) -> bool {
+        self.get_related_config(path).has_external_parser(path)
+    }
+
+    /// Returns `true` if any config has an override with `languageOptions.parser`.
+    pub fn has_external_parser_overrides(&self) -> bool {
+        self.base.has_external_parser_overrides()
+            || self.nested_configs.values().any(Config::has_external_parser_overrides)
+    }
+
     // NOTE: This function is not crate visible because it is used in `oxlint` as well to resolve configs
     // for the `tsgolint` linter.
     pub fn resolve(&self, path: &Path) -> ResolvedLinterState {
@@ -451,9 +516,12 @@ mod test {
         config::{
             ConfigStoreBuilder, GlobSet, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
-            config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
+            config_store::{
+                Config, ResolvedExternalParser, ResolvedOxlintOverride, ResolvedOxlintOverrideRules,
+            },
             oxlintrc::{OxlintOptions, Oxlintrc},
         },
+        external_plugin_store::ExternalParserId,
         rule::Rule,
         rules::{
             EslintAccessorPairs, EslintCurly, EslintNoUnusedVars, ReactJsxFilenameExtension,
@@ -482,6 +550,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
         let store = ConfigStore::new(
@@ -520,6 +589,7 @@ mod test {
                     | LintPlugins::JSX_A11Y,
             ),
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
         let store = ConfigStore::new(
@@ -551,6 +621,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
@@ -589,6 +660,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
@@ -625,6 +697,7 @@ mod test {
             files: GlobSet::new(vec!["src/**/*.{ts,tsx}"]),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![
                     (
@@ -668,6 +741,7 @@ mod test {
                 files: GlobSet::new(vec!["*.ts"]),
                 plugins: None,
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![
                         (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Warn),
@@ -685,6 +759,7 @@ mod test {
                 files: GlobSet::new(vec!["*.tsx"]),
                 plugins: None,
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![(
                         RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
@@ -718,6 +793,7 @@ mod test {
             files: GlobSet::new(vec!["*.ts"]),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
@@ -753,6 +829,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
@@ -794,6 +871,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::REACT),
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -805,6 +883,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::TYPESCRIPT),
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -842,6 +921,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -866,6 +946,7 @@ mod test {
             env: Some(from_json!({ "es2024": false })),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -890,6 +971,7 @@ mod test {
             env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "readonly", "Secret": "writable" })),
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -929,6 +1011,7 @@ mod test {
             env: None,
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -951,6 +1034,51 @@ mod test {
     }
 
     #[test]
+    fn test_external_parser_override() {
+        let gjs_override = |files: Vec<&'static str>, parser_id: usize| ResolvedOxlintOverride {
+            files: GlobSet::new(files),
+            exclude_files: GlobSet::default(),
+            env: None,
+            globals: None,
+            plugins: None,
+            external_parser: Some(ResolvedExternalParser {
+                parser_id: ExternalParserId::from_usize(parser_id),
+                parser_options_json: None,
+            }),
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        };
+
+        let overrides = ResolvedOxlintOverrides::new(vec![
+            gjs_override(vec!["**/*.{gjs,gts}"], 0),
+            gjs_override(vec!["**/*.gts"], 1),
+        ]);
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        // Files not matching any override with a parser have no external parser
+        assert!(store.resolve("App.ts".as_ref()).external_parser.is_none());
+
+        let resolved = store.resolve("components/Foo.gjs".as_ref());
+        let parser = resolved.external_parser.unwrap();
+        assert_eq!(parser.parser_id, ExternalParserId::from_usize(0));
+
+        // The last matching override with a parser wins (same as ESLint)
+        let resolved = store.resolve("components/Foo.gts".as_ref());
+        let parser = resolved.external_parser.unwrap();
+        assert_eq!(parser.parser_id, ExternalParserId::from_usize(1));
+    }
+
+    #[test]
     fn test_replace_globals() {
         let base_config = LintConfig {
             plugins: LintPlugins::ESLINT,
@@ -967,6 +1095,7 @@ mod test {
             env: None,
             plugins: None,
             globals: Some(from_json!({ "React": "off", "Secret": "off" })),
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -1012,6 +1141,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::TYPESCRIPT),
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -1024,6 +1154,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::REACT),
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![(
                         RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
@@ -1039,6 +1170,7 @@ mod test {
                 exclude_files: GlobSet::default(),
                 plugins: Some(LintPlugins::UNICORN),
                 globals: None,
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![],
@@ -1101,6 +1233,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: Some(LintPlugins::REACT),
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -1135,6 +1268,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: None,
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(override_rule),
@@ -1215,6 +1349,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: Some(LintPlugins::TYPESCRIPT),
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
@@ -1333,6 +1468,7 @@ mod test {
                 globals: None,
                 plugins: None,
                 // Override redefines the same rule with options B and severity error
+                external_parser: None,
                 rules: ResolvedOxlintOverrideRules {
                     builtin_rules: vec![],
                     external_rules: vec![(
@@ -1583,6 +1719,7 @@ mod test {
             exclude_files: GlobSet::default(),
             plugins: Some(LintPlugins::IMPORT),
             globals: None,
+            external_parser: None,
             rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
         }]);
 
