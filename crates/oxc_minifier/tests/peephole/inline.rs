@@ -1,7 +1,8 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, test_options, test_options_source_type, test_same_options, test_smallest,
+    CompressOptions, test_options, test_options_source_type, test_same_options, test_same_smallest,
+    test_smallest,
 };
 
 // https://github.com/oxc-project/oxc/issues/24531
@@ -403,6 +404,53 @@ fn r#const() {
 
     test_options("let foo = 1; log(foo)", "log(1)", &options);
     test_options("export let foo = 1; log(foo)", "export let foo = 1; log(1)", &options);
+}
+
+// https://github.com/oxc-project/oxc/issues/26174
+// Switch cases share one lexical environment, but jumping to a later case
+// skips a `let`/`const` initializer. Inlining that value into other cases
+// would replace a TDZ ReferenceError with the initialized value.
+#[test]
+fn switch_case_lexical_not_inlined_into_other_cases() {
+    // Exact reproduction: entering at `case 1` must throw, not log `1`.
+    test_same_smallest("switch (a) { case 2: let x = 1; case 1: console.log(x); }");
+    // `const` is normalized to `let`; the value still must not leak across cases.
+    test_smallest(
+        "switch (a) { case 2: const x = 1; case 1: console.log(x); }",
+        "switch (a) { case 2: let x = 1; case 1: console.log(x); }",
+    );
+    // A falsy initializer must not fold `if (x)` on the skipped-init path.
+    test_smallest(
+        "export function f(a) { switch (a) { case 2: let x = false; case 1: return x ? 'T' : 'F'; } }",
+        "export function f(a) { switch (a) { case 2: let x = !1; case 1: return x ? 'T' : 'F'; } }",
+    );
+    // An uninitialized `let` is still TDZ until the declaration executes.
+    test_same_smallest("export function f(a) { switch (a) { case 2: let x; case 1: return x; } }");
+    // A skipped object initializer is not a fresh value; dropping `x.p = 1`
+    // would turn a TDZ throw into a no-op.
+    test_same_smallest(
+        "export function f(a) { switch (a) { case 2: let x = {}; case 1: x.p = 1; } }",
+    );
+}
+
+#[test]
+fn switch_case_block_scoped_lexical_still_inlined() {
+    // A nested block gives the binding its own scope, so inlining inside that
+    // block cannot leak into other cases.
+    test_smallest(
+        "switch (a) { case 2: { let x = 1; console.log(x); } case 1: foo(); }",
+        "switch (a) { case 2: console.log(1); case 1: foo(); }",
+    );
+}
+
+#[test]
+fn switch_single_case_lexical_still_inlined() {
+    // A one-case switch is rewritten to an `if` whose block always runs the
+    // initializer, so same-body inlining remains valid.
+    test_smallest(
+        "switch (a) { case 2: let x = 1; console.log(x); }",
+        "a === 2 && console.log(1);",
+    );
 }
 
 // https://github.com/oxc-project/oxc/issues/20282
