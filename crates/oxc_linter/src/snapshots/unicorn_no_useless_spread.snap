@@ -564,10 +564,17 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
- 1 │ [...foo.slice(1)]
+ 1 │ [...[1, 2, 3].slice(1)]
    ·  ───
    ╰────
-  help: `foo.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+  help: `[1, 2, 3].slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...[1, 2, 3].slice(1).slice(1)]
+   ·  ───
+   ╰────
+  help: `[1, 2, 3].slice(1).slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
