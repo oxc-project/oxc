@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
@@ -698,8 +699,18 @@ impl Extensions {
             return;
         }
 
+        let loaded_module = ctx.module_record().get_loaded_module(module_name);
+        let is_node_modules = loaded_module.as_ref().is_some_and(|m| {
+            m.resolved_absolute_path.components().any(|c| match c {
+                std::path::Component::Normal(p) => p == std::ffi::OsStr::new("node_modules"),
+                _ => false,
+            })
+        });
+        let is_local_file = loaded_module.is_some() && !is_node_modules;
+
         // ignorePackages only affects "always" rule
         if config.ignore_packages
+            && !is_local_file
             && is_package_import(module_name)
             && matches!(
                 config.require_extension,
@@ -710,11 +721,16 @@ impl Extensions {
         }
 
         // Get extensions
-        let resolved_extension = get_resolved_extension(ctx.module_record(), module_name);
+        let resolved_extension = loaded_module
+            .as_ref()
+            .and_then(|m| m.resolved_absolute_path.extension())
+            .and_then(|ext| ext.to_str())
+            .map(|s| s.cow_to_ascii_lowercase().into_owned());
 
         // For ROOT packages, don't extract extensions - dots are part of package names
         // Exception: if pathGroupOverrides explicitly enforces validation
-        let written_extension = if is_root_package_import(module_name)
+        let written_extension = if !is_local_file
+            && is_root_package_import(module_name)
             && !matches!(path_group_action, Some(PathGroupAction::Enforce))
         {
             None
@@ -757,13 +773,38 @@ fn is_root_package_import(module_name: &str) -> bool {
     // @babel/core → root package (one '/')
     // @babel/core/lib/parser.js → subpath (more than one '/')
     if module_name.starts_with('@') {
-        return module_name.matches('/').count() == 1;
+        if module_name.matches('/').count() != 1 {
+            return false;
+        }
+        let Some((_scope, pkg)) = module_name.split_once('/') else {
+            return false;
+        };
+        // Package names in npm cannot contain uppercase letters.
+        // If there are uppercase letters (e.g. @cp/Button.vue), it's an alias/file path, not an npm package.
+        if pkg.chars().any(|c| c.is_ascii_uppercase()) {
+            return false;
+        }
+        // If it ends with a recognized non-JS extension, it's a file path, not an npm package name.
+        if let Some(ext) = get_file_extension_from_module_name(module_name)
+            && !matches!(ext.as_ref(), "js" | "cjs" | "mjs" | "node")
+        {
+            return false;
+        }
+        return true;
     }
 
     // For bare packages, only count as root if there's no '/'
     // lodash → root package (no '/')
     // lodash/fp → subpath (has '/')
-    !module_name.contains('/')
+    if module_name.contains('/') {
+        return false;
+    }
+    if let Some(ext) = get_file_extension_from_module_name(module_name)
+        && !matches!(ext.as_ref(), "js" | "cjs" | "mjs" | "node")
+    {
+        return false;
+    }
+    true
 }
 
 /// Determines if an import specifier is a package import (not relative or path alias).
@@ -842,32 +883,6 @@ fn get_file_extension_from_module_name(module_name: &str) -> Option<Cow<'_, str>
     }
 
     Some(extension.cow_to_ascii_lowercase())
-}
-
-/// Get the actual file extension from the resolved module path.
-///
-/// This uses the module record's resolved absolute path to determine
-/// the actual extension of the file on the filesystem. Returns `None`
-/// if the module is not resolved (e.g., package imports, unresolved modules).
-/// Extensions are normalized to lowercase for case-insensitive matching.
-///
-/// # Examples
-/// - Resolved `./foo.ts` → `Some("ts")`
-/// - Resolved `./foo.TS` → `Some("ts")` (normalized to lowercase)
-/// - Package import `lodash` → `None` (not resolved locally)
-/// - Path alias `@/utils/foo.js` → `Some("js")` (if resolved)
-fn get_resolved_extension(
-    module_record: &crate::module_record::ModuleRecord,
-    module_name: &str,
-) -> Option<String> {
-    use cow_utils::CowUtils;
-    module_record.get_loaded_module(module_name).and_then(|loaded_module| {
-        loaded_module
-            .resolved_absolute_path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(|s| s.cow_to_ascii_lowercase().into_owned())
-    })
 }
 
 #[test]
@@ -1075,6 +1090,41 @@ fn test() {
                 import Component from './Component.vue';
             ",
             Some(json!(["always", { "vue": "always" }])),
+        ),
+        // Issue 23223: Custom alias with explicit extension under `never` + per-extension `always` + `ignorePackages: true`
+        (
+            r#"
+                import Component from "@cp/Component.vue";
+            "#,
+            Some(json!([
+                "never",
+                {
+                    "vue": "always",
+                    "css": "always",
+                    "json": "always",
+                    "ignorePackages": true
+                }
+            ])),
+        ),
+        (
+            r#"
+                import fn from "@my-alias/fn.js";
+            "#,
+            Some(json!(["never", { "js": "always", "ignorePackages": true }])),
+        ),
+        (
+            r#"
+                import main from "./vue/main.vue";
+            "#,
+            Some(json!([
+                "never",
+                {
+                    "vue": "always",
+                    "css": "always",
+                    "json": "always",
+                    "ignorePackages": true
+                }
+            ])),
         ),
         (
             r"
@@ -1826,13 +1876,61 @@ fn test() {
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
         //     r##"import internalZ from "#internal/z";"##,
-        //     Some(json!(["always", { "ignorePackages": true }])),
-        // ),
-        // (
-        //     r##"import internalZ from "#internal/z.js";"##,
-        //     Some(json!(["never"])),
-        // ),
+        (
+            r#"
+                import Component from "@cp/Component.vue";
+            "#,
+            Some(json!(["never", { "vue": "never", "ignorePackages": true }])),
+        ),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_with_module_resolution() {
+    use crate::tester::Tester;
+    use serde_json::json;
+
+    let pass = vec![
+        (
+            r#"
+                import { example } from "./color.js";
+            "#,
+            Some(json!(["never", { "js": "always", "ignorePackages": true }])),
+        ),
+        (
+            r#"
+                import { example } from "./color";
+            "#,
+            Some(json!(["never", { "js": "never", "ignorePackages": true }])),
+        ),
+        (
+            r#"
+                import main from "./vue/main.vue";
+            "#,
+            Some(json!(["never", { "vue": "always", "ignorePackages": true }])),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            r#"
+                import { example } from "./color";
+            "#,
+            Some(json!(["never", { "js": "always", "ignorePackages": true }])),
+        ),
+        (
+            r#"
+                import { example } from "./color.js";
+            "#,
+            Some(json!(["never", { "js": "never", "ignorePackages": true }])),
+        ),
+    ];
+
+    Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail)
+        .change_rule_path("index.js")
+        .with_import_plugin(true)
+        .with_snapshot_suffix("cross_module")
+        .test_and_snapshot();
 }
