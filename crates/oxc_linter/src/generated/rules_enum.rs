@@ -743,6 +743,7 @@ pub use crate::rules::unicorn::prefer_set_size::PreferSetSize as UnicornPreferSe
 pub use crate::rules::unicorn::prefer_single_call::PreferSingleCall as UnicornPreferSingleCall;
 pub use crate::rules::unicorn::prefer_spread::PreferSpread as UnicornPreferSpread;
 pub use crate::rules::unicorn::prefer_string_raw::PreferStringRaw as UnicornPreferStringRaw;
+pub use crate::rules::unicorn::prefer_string_repeat::PreferStringRepeat as UnicornPreferStringRepeat;
 pub use crate::rules::unicorn::prefer_string_replace_all::PreferStringReplaceAll as UnicornPreferStringReplaceAll;
 pub use crate::rules::unicorn::prefer_string_slice::PreferStringSlice as UnicornPreferStringSlice;
 pub use crate::rules::unicorn::prefer_string_starts_ends_with::PreferStringStartsEndsWith as UnicornPreferStringStartsEndsWith;
@@ -1491,6 +1492,7 @@ pub enum RuleEnum {
     UnicornPreferSingleCall(UnicornPreferSingleCall),
     UnicornPreferSpread(UnicornPreferSpread),
     UnicornPreferStringRaw(UnicornPreferStringRaw),
+    UnicornPreferStringRepeat(UnicornPreferStringRepeat),
     UnicornPreferStringReplaceAll(UnicornPreferStringReplaceAll),
     UnicornPreferStringSlice(UnicornPreferStringSlice),
     UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith),
@@ -2442,7 +2444,8 @@ const UNICORN_PREFER_SET_SIZE_ID: usize = UNICORN_PREFER_SET_HAS_ID + 1usize;
 const UNICORN_PREFER_SINGLE_CALL_ID: usize = UNICORN_PREFER_SET_SIZE_ID + 1usize;
 const UNICORN_PREFER_SPREAD_ID: usize = UNICORN_PREFER_SINGLE_CALL_ID + 1usize;
 const UNICORN_PREFER_STRING_RAW_ID: usize = UNICORN_PREFER_SPREAD_ID + 1usize;
-const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = UNICORN_PREFER_STRING_RAW_ID + 1usize;
+const UNICORN_PREFER_STRING_REPEAT_ID: usize = UNICORN_PREFER_STRING_RAW_ID + 1usize;
+const UNICORN_PREFER_STRING_REPLACE_ALL_ID: usize = UNICORN_PREFER_STRING_REPEAT_ID + 1usize;
 const UNICORN_PREFER_STRING_SLICE_ID: usize = UNICORN_PREFER_STRING_REPLACE_ALL_ID + 1usize;
 const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = UNICORN_PREFER_STRING_SLICE_ID + 1usize;
 const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize =
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3348,6 +3351,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornPreferSingleCall::NAME,
     UnicornPreferSpread::NAME,
     UnicornPreferStringRaw::NAME,
+    UnicornPreferStringRepeat::NAME,
     UnicornPreferStringReplaceAll::NAME,
     UnicornPreferStringSlice::NAME,
     UnicornPreferStringStartsEndsWith::NAME,
@@ -4324,6 +4328,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UNICORN_PREFER_SINGLE_CALL_ID,
             Self::UnicornPreferSpread(_) => UNICORN_PREFER_SPREAD_ID,
             Self::UnicornPreferStringRaw(_) => UNICORN_PREFER_STRING_RAW_ID,
+            Self::UnicornPreferStringRepeat(_) => UNICORN_PREFER_STRING_REPEAT_ID,
             Self::UnicornPreferStringReplaceAll(_) => UNICORN_PREFER_STRING_REPLACE_ALL_ID,
             Self::UnicornPreferStringSlice(_) => UNICORN_PREFER_STRING_SLICE_ID,
             Self::UnicornPreferStringStartsEndsWith(_) => UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID,
@@ -5361,6 +5366,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::CATEGORY,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::CATEGORY,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::CATEGORY,
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::CATEGORY,
             Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::CATEGORY,
             Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::CATEGORY,
             Self::UnicornPreferStringStartsEndsWith(_) => {
@@ -6370,6 +6376,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::FIX,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::FIX,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::FIX,
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::FIX,
             Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::FIX,
             Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::FIX,
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::FIX,
@@ -7537,6 +7544,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::documentation(),
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::documentation(),
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::documentation(),
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::documentation(),
             Self::UnicornPreferStringReplaceAll(_) => {
                 UnicornPreferStringReplaceAll::documentation()
             }
@@ -9659,6 +9667,10 @@ impl RuleEnum {
                 .or_else(|| UnicornPreferSpread::schema(generator)),
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::config_schema(generator)
                 .or_else(|| UnicornPreferStringRaw::schema(generator)),
+            Self::UnicornPreferStringRepeat(_) => {
+                UnicornPreferStringRepeat::config_schema(generator)
+                    .or_else(|| UnicornPreferStringRepeat::schema(generator))
+            }
             Self::UnicornPreferStringReplaceAll(_) => {
                 UnicornPreferStringReplaceAll::config_schema(generator)
                     .or_else(|| UnicornPreferStringReplaceAll::schema(generator))
@@ -11028,6 +11040,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => "unicorn",
             Self::UnicornPreferSpread(_) => "unicorn",
             Self::UnicornPreferStringRaw(_) => "unicorn",
+            Self::UnicornPreferStringRepeat(_) => "unicorn",
             Self::UnicornPreferStringReplaceAll(_) => "unicorn",
             Self::UnicornPreferStringSlice(_) => "unicorn",
             Self::UnicornPreferStringStartsEndsWith(_) => "unicorn",
@@ -12108,6 +12121,9 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => Ok(Self::UnicornPreferSingleCall(
                 UnicornPreferSingleCall::from_configuration(value)?,
             )),
+            Self::UnicornPreferStringRepeat(_) => Ok(Self::UnicornPreferStringRepeat(
+                UnicornPreferStringRepeat::from_configuration(value)?,
+            )),
             Self::UnicornPreferStructuredClone(_) => Ok(Self::UnicornPreferStructuredClone(
                 UnicornPreferStructuredClone::from_configuration(value)?,
             )),
@@ -13036,6 +13052,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(rule) => rule.run(node, ctx),
             Self::UnicornPreferSpread(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringRaw(rule) => rule.run(node, ctx),
+            Self::UnicornPreferStringRepeat(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringReplaceAll(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringSlice(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run(node, ctx),
@@ -13923,6 +13940,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(rule) => rule.run_once(ctx),
             Self::UnicornPreferSpread(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringRaw(rule) => rule.run_once(ctx),
+            Self::UnicornPreferStringRepeat(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringReplaceAll(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringSlice(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_once(ctx),
@@ -14905,6 +14923,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringRaw(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferStringRepeat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringReplaceAll(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringSlice(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15815,6 +15834,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(rule) => rule.should_run(ctx),
             Self::UnicornPreferSpread(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringRaw(rule) => rule.should_run(ctx),
+            Self::UnicornPreferStringRepeat(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringReplaceAll(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringSlice(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.should_run(ctx),
@@ -16959,6 +16979,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::IS_TSGOLINT_RULE,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::IS_TSGOLINT_RULE,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::IS_TSGOLINT_RULE,
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::IS_TSGOLINT_RULE,
             Self::UnicornPreferStringReplaceAll(_) => {
                 UnicornPreferStringReplaceAll::IS_TSGOLINT_RULE
             }
@@ -18085,6 +18106,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::VERSION,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::VERSION,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::VERSION,
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::VERSION,
             Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::VERSION,
             Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::VERSION,
             Self::UnicornPreferStringStartsEndsWith(_) => {
@@ -19160,6 +19182,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::HAS_CONFIG,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::HAS_CONFIG,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::HAS_CONFIG,
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::HAS_CONFIG,
             Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::HAS_CONFIG,
             Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::HAS_CONFIG,
             Self::UnicornPreferStringStartsEndsWith(_) => {
@@ -20184,6 +20207,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::INFO,
             Self::UnicornPreferSpread(_) => UnicornPreferSpread::INFO,
             Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::INFO,
+            Self::UnicornPreferStringRepeat(_) => UnicornPreferStringRepeat::INFO,
             Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::INFO,
             Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::INFO,
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::INFO,
@@ -21085,6 +21109,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(rule) => rule.types_info(),
             Self::UnicornPreferSpread(rule) => rule.types_info(),
             Self::UnicornPreferStringRaw(rule) => rule.types_info(),
+            Self::UnicornPreferStringRepeat(rule) => rule.types_info(),
             Self::UnicornPreferStringReplaceAll(rule) => rule.types_info(),
             Self::UnicornPreferStringSlice(rule) => rule.types_info(),
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.types_info(),
@@ -21959,6 +21984,7 @@ impl RuleEnum {
             Self::UnicornPreferSingleCall(rule) => rule.run_info(),
             Self::UnicornPreferSpread(rule) => rule.run_info(),
             Self::UnicornPreferStringRaw(rule) => rule.run_info(),
+            Self::UnicornPreferStringRepeat(rule) => rule.run_info(),
             Self::UnicornPreferStringReplaceAll(rule) => rule.run_info(),
             Self::UnicornPreferStringSlice(rule) => rule.run_info(),
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_info(),
@@ -22947,6 +22973,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferSingleCall(UnicornPreferSingleCall::default()),
         RuleEnum::UnicornPreferSpread(UnicornPreferSpread::default()),
         RuleEnum::UnicornPreferStringRaw(UnicornPreferStringRaw::default()),
+        RuleEnum::UnicornPreferStringRepeat(UnicornPreferStringRepeat::default()),
         RuleEnum::UnicornPreferStringReplaceAll(UnicornPreferStringReplaceAll::default()),
         RuleEnum::UnicornPreferStringSlice(UnicornPreferStringSlice::default()),
         RuleEnum::UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith::default()),

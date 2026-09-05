@@ -9551,6 +9551,26 @@
         "unicorn/prefer-string-raw": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-string-repeat": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferStringRepeat"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/prefer-string-replace-all": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -18068,6 +18088,20 @@
             "type": "string"
           },
           "markdownDescription": "Methods to ignore."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferStringRepeat": {
+      "type": "object",
+      "properties": {
+        "minimumRepetitions": {
+          "description": "The minimum number of repetitions required before reporting a string.",
+          "default": 3,
+          "type": "integer",
+          "format": "uint",
+          "minimum": 2.0,
+          "markdownDescription": "The minimum number of repetitions required before reporting a string."
         }
       },
       "additionalProperties": false
