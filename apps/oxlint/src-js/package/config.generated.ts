@@ -1107,6 +1107,7 @@ export interface DummyRuleMap {
   "nextjs/no-head-import-in-document"?: RuleNoConfig;
   "nextjs/no-html-link-for-pages"?: RuleNoConfig;
   "nextjs/no-img-element"?: RuleNoConfig;
+  "nextjs/no-location-assign-relative-destination"?: RuleNoConfig;
   "nextjs/no-page-custom-font"?: RuleNoConfig;
   "nextjs/no-script-component-in-head"?: RuleNoConfig;
   "nextjs/no-styled-jsx-in-document"?: RuleNoConfig;

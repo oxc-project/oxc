@@ -1,0 +1,307 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = '/foo'
+   · ──────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location['href']` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location['href'] = '/foo'
+   · ─────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = `/users/${id}`
+   · ──────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location.href = '/foo'
+   · ─────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location.href = '/dashboard'
+   · ───────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location['href']` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location['href'] = '/foo'
+   · ────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location['href']` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location['href'] = '/dashboard'
+   · ──────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `globalThis.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ globalThis.location.href = '/foo'
+   · ─────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `globalThis.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ globalThis.location.href = '/dashboard'
+   · ───────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `document.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ document.location.href = '/foo'
+   · ───────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `self.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ self.location.href = '/foo'
+   · ───────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window['location'].href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window['location'].href = '/foo'
+   · ────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.assign('/foo')
+   · ───────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.assign('/dashboard')
+   · ─────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location['assign']()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location['assign']('/foo')
+   · ──────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location['assign']()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location['assign']('/dashboard')
+   · ────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.assign(`/users/${id}/profile`)
+   · ───────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location.assign('/foo')
+   · ──────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location.assign('/dashboard')
+   · ────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location['assign']()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ window.location['assign']('/foo')
+   · ─────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `globalThis.location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ globalThis.location.assign('/foo')
+   · ──────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `globalThis.location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ globalThis.location.assign('/dashboard')
+   · ────────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `document.location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ document.location.assign('/foo')
+   · ────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `self.location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ self.location.assign('/foo')
+   · ────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `globalThis['location']['assign']()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ globalThis['location']['assign']('/foo')
+   · ────────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = './page'
+   · ────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = '../page'
+   · ─────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.assign('?tab=settings')
+   · ────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.assign('#section')
+   · ───────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = true ? '/dashboard' : 'https://example.com'
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = (0, '/dashboard')
+   · ─────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = String('/dashboard')
+   · ────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = String()
+   · ────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:1]
+ 1 │ location.href = (true + false) + ':'
+   · ────────────────────────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:1:91]
+ 1 │ const useInternal = true; const url = useInternal ? '/dashboard' : 'https://example.com'; location.href = url
+   ·                                                                                           ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:23]
+ 2 │                       const url = '/dashboard';
+ 3 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:23]
+ 2 │                       const url = '/dashboard/' + someVariable;
+ 3 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:23]
+ 2 │                       const url = `/dashboard/${someVariable}`;
+ 3 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:4:23]
+ 3 │                       url = '/other-path';
+ 4 │                       location.href = url;
+   ·                       ───────────────────
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:23]
+ 2 │                       let url = '/dashboard';
+ 3 │                       location.href = url;
+   ·                       ───────────────────
+ 4 │                       url = 'https://example.com';
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `window.location.href` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:25]
+ 2 │                       function handleClick() {
+ 3 │                         window.location.href = '/dashboard'
+   ·                         ───────────────────────────────────
+ 4 │                       }
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.
+
+  ⚠ next(no-location-assign-relative-destination): Do not use `location.assign()` to navigate to internal Next.js pages.
+   ╭─[no_location_assign_relative_destination.tsx:3:25]
+ 2 │                       function handleClick() {
+ 3 │                         location.assign('/dashboard')
+   ·                         ─────────────────────────────
+ 4 │                       }
+   ╰────
+  help: Use `redirect()` during rendering, or `useRouter().push()` in a Client Component event handler.

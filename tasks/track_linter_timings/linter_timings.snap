@@ -349,6 +349,7 @@ nextjs/no-duplicate-head                                   |    103
 nextjs/no-head-element                                     |    452
 nextjs/no-html-link-for-pages                              |    452
 nextjs/no-img-element                                      |    452
+nextjs/no-location-assign-relative-destination             |  75611
 nextjs/no-page-custom-font                                 |    452
 nextjs/no-script-component-in-head                         |    103
 nextjs/no-styled-jsx-in-document                           |    452
