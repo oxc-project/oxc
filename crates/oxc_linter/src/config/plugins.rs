@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use bitflags::bitflags;
+use cow_utils::CowUtils;
 use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 
@@ -84,6 +85,28 @@ pub fn is_normal_plugin_name(plugin_name: &str) -> bool {
     match normalized {
         Cow::Owned(_) => false,
         Cow::Borrowed(normalized) => normalized.len() == plugin_name.len(),
+    }
+}
+
+/// Canonicalizes a plugin name to the internal name used by Oxc.
+///
+/// This implementation is intentionally extracted verbatim from the previous
+/// `unalias_plugin_name` implementation so that the same normalization logic
+/// can be shared by other modules. The extraction preserves all existing
+/// behavior and does not change the previous normalization rules.
+pub(crate) fn canonical_plugin_name(plugin_name: &str) -> String {
+    let normalized = normalize_plugin_name(plugin_name);
+
+    match normalized.as_ref() {
+        "@next" | "@next/next" => "nextjs".to_string(),
+        plugin_name => match LintPlugins::try_from(plugin_name) {
+            Ok(LintPlugins::ESLINT) => "eslint".to_string(),
+            Ok(plugin) => {
+                let plugin_name: &str = plugin.into();
+                plugin_name.cow_replace('-', "_").into_owned()
+            }
+            Err(()) => normalized.into_owned(),
+        },
     }
 }
 

@@ -25,6 +25,7 @@ use oxc_diagnostics::{Error, OxcDiagnostic};
 use crate::utils::should_skip_config_schema;
 use crate::{
     AllowWarnDeny, ExternalPluginStore, LintPlugins,
+    config::plugins::canonical_plugin_name,
     external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
     rules::{RULES, RuleEnum},
     utils::is_eslint_rule_adapted_to_typescript,
@@ -670,21 +671,7 @@ pub fn normalize_rule_name(name: &str) -> String {
 }
 
 pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
-    let normalized = super::plugins::normalize_plugin_name(plugin_name);
-    let plugin_name = match normalized.as_ref() {
-        // e.g. "@next/google-font-display", "@next/next/google-font-display"
-        "@next" | "@next/next" => "nextjs".to_string(),
-        plugin_name => match LintPlugins::try_from(plugin_name) {
-            Ok(LintPlugins::ESLINT) => "eslint".to_string(),
-            Ok(plugin) => {
-                let plugin_name: &str = plugin.into();
-                plugin_name.cow_replace('-', "_").into_owned()
-            }
-            Err(()) => normalized.into_owned(),
-        },
-    };
-
-    (plugin_name, rule_name.to_string())
+    (canonical_plugin_name(plugin_name), rule_name.to_string())
 }
 
 fn parse_rule_value(
