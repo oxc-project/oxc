@@ -1,13 +1,79 @@
 use super::PeepholeOptimizations;
 use crate::keep_var::KeepVar;
 use crate::{TraverseCtx, is_terminated::IsTerminated};
-use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::ast::{Expression, Statement};
-use oxc_ast_visit::VisitJs;
+use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
+use oxc_ast::ast::{Expression, Statement, SwitchCase};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
+use oxc_syntax::operator::BinaryOperator;
 
 impl<'a> PeepholeOptimizations {
+    /// Collapses a one-case switch into an if condition when the case can be safely inlined.
+    pub fn try_minimize_switch(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Statement::SwitchStatement(switch_stmt) = stmt else {
+            return;
+        };
+
+        if switch_stmt.cases.len() == 1
+            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
+            && let Some(mut case) = switch_stmt.cases.pop()
+        {
+            let block_stmt = if case.consequent.len() == 1
+                && matches!(case.consequent.last(), Some(Statement::BlockStatement(_)))
+            {
+                case.consequent.pop().unwrap()
+            } else {
+                Statement::new_block_statement_with_scope_id(
+                    case.span,
+                    case.consequent,
+                    switch_stmt.scope_id(),
+                    ctx,
+                )
+            };
+
+            ctx.notice_change();
+            stmt.replace_with(|stmt| {
+                let Statement::SwitchStatement(switch_stmt) = stmt else {
+                    unreachable!();
+                };
+                let switch_stmt = switch_stmt.unbox();
+                let expression = if let Some(test) = case.test {
+                    Expression::new_binary_expression(
+                        SPAN,
+                        switch_stmt.discriminant,
+                        BinaryOperator::StrictEquality,
+                        test,
+                        ctx,
+                    )
+                } else {
+                    let span = switch_stmt.discriminant.span();
+                    Expression::new_sequence_expression(
+                        SPAN,
+                        [
+                            switch_stmt.discriminant,
+                            Expression::new_boolean_literal(span, true, ctx),
+                        ],
+                        ctx,
+                    )
+                };
+
+                Statement::new_if_statement(switch_stmt.span, expression, block_stmt, None, ctx)
+            });
+        }
+    }
+
+    /// Check if a switch case can be inlined by verifying:
+    /// - The test expression has no side effects
+    /// - All statements can be safely inlined (no unlabeled breaks)
+    fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
+        if !case.test.as_ref().is_none_or(Expression::is_literal) {
+            return false;
+        }
+
+        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
+    }
+
     /// Drops cases that cannot run for the chosen discriminant while preserving any
     /// observable case tests and hoisted `var` bindings.
     pub fn drop_unreachable_switch_cases(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -135,6 +201,42 @@ impl<'a> PeepholeOptimizations {
             expressions.pop().unwrap()
         } else {
             Expression::new_sequence_expression(SPAN, expressions, ctx)
+        }
+    }
+}
+
+#[derive(Default)]
+struct FindNestedBreak {
+    found_unlabelled_break: bool,
+}
+
+impl FindNestedBreak {
+    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+        let mut visitor = Self::default();
+        visitor.visit_switch_case(node);
+        visitor.found_unlabelled_break
+    }
+}
+
+impl<'a> VisitJs<'a> for FindNestedBreak {
+    fn visit_expression(&mut self, _it: &Expression<'a>) {
+        // do nothing
+    }
+
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
+            return;
+        }
+        match it {
+            Statement::ThrowStatement(_)
+            | Statement::SwitchStatement(_)
+            | Statement::ContinueStatement(_)
+            | Statement::ReturnStatement(_)
+            | Statement::ExpressionStatement(_) => {}
+            Statement::BreakStatement(it) if it.label.is_none() => {
+                self.found_unlabelled_break = true;
+            }
+            _ => walk_js::walk_statement(self, it),
         }
     }
 }
