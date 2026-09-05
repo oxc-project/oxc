@@ -499,7 +499,10 @@ impl Linter {
         {
             ctx_host.rewind_sub_hosts();
             loop {
-                ctx_host.report_unused_directives(severity.into());
+                ctx_host.report_unused_directives(
+                    severity.into(),
+                    self.config.report_unused_disable_directives_exempt(),
+                );
 
                 if !ctx_host.next_sub_host() {
                     break;
