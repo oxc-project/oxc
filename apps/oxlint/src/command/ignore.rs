@@ -26,6 +26,10 @@ pub struct IgnoreOptions {
 
     #[bpaf(switch, hide_usage, help(NO_IGNORE_HELP))]
     pub no_ignore: bool,
+
+    /// Lint files whose name looks minified, e.g. `*.min.js` (skipped by default)
+    #[bpaf(switch, hide_usage)]
+    pub with_minified: bool,
 }
 
 #[cfg(test)]
@@ -44,6 +48,7 @@ mod ignore_options {
         let options = get_ignore_options(".");
         assert_eq!(options.ignore_path, OsString::from(".eslintignore"));
         assert!(!options.no_ignore);
+        assert!(!options.with_minified);
         assert!(options.ignore_pattern.is_empty());
     }
 
@@ -57,6 +62,12 @@ mod ignore_options {
     fn no_ignore() {
         let options = get_ignore_options("--no-ignore foo.js");
         assert!(options.no_ignore);
+    }
+
+    #[test]
+    fn with_minified() {
+        let options = get_ignore_options("--with-minified foo.js");
+        assert!(options.with_minified);
     }
 
     #[test]
