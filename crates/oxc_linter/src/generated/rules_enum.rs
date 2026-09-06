@@ -363,6 +363,7 @@ pub use crate::rules::nextjs::no_head_element::NoHeadElement as NextjsNoHeadElem
 pub use crate::rules::nextjs::no_head_import_in_document::NoHeadImportInDocument as NextjsNoHeadImportInDocument;
 pub use crate::rules::nextjs::no_html_link_for_pages::NoHtmlLinkForPages as NextjsNoHtmlLinkForPages;
 pub use crate::rules::nextjs::no_img_element::NoImgElement as NextjsNoImgElement;
+pub use crate::rules::nextjs::no_location_assign_relative_destination::NoLocationAssignRelativeDestination as NextjsNoLocationAssignRelativeDestination;
 pub use crate::rules::nextjs::no_page_custom_font::NoPageCustomFont as NextjsNoPageCustomFont;
 pub use crate::rules::nextjs::no_script_component_in_head::NoScriptComponentInHead as NextjsNoScriptComponentInHead;
 pub use crate::rules::nextjs::no_styled_jsx_in_document::NoStyledJsxInDocument as NextjsNoStyledJsxInDocument;
@@ -1590,6 +1591,7 @@ pub enum RuleEnum {
     NextjsNoHeadImportInDocument(NextjsNoHeadImportInDocument),
     NextjsNoHtmlLinkForPages(NextjsNoHtmlLinkForPages),
     NextjsNoImgElement(NextjsNoImgElement),
+    NextjsNoLocationAssignRelativeDestination(NextjsNoLocationAssignRelativeDestination),
     NextjsNoPageCustomFont(NextjsNoPageCustomFont),
     NextjsNoScriptComponentInHead(NextjsNoScriptComponentInHead),
     NextjsNoStyledJsxInDocument(NextjsNoStyledJsxInDocument),
@@ -2556,7 +2558,9 @@ const NEXTJS_NO_HEAD_ELEMENT_ID: usize = NEXTJS_NO_DUPLICATE_HEAD_ID + 1usize;
 const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = NEXTJS_NO_HEAD_ELEMENT_ID + 1usize;
 const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID + 1usize;
 const NEXTJS_NO_IMG_ELEMENT_ID: usize = NEXTJS_NO_HTML_LINK_FOR_PAGES_ID + 1usize;
-const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = NEXTJS_NO_IMG_ELEMENT_ID + 1usize;
+const NEXTJS_NO_LOCATION_ASSIGN_RELATIVE_DESTINATION_ID: usize = NEXTJS_NO_IMG_ELEMENT_ID + 1usize;
+const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize =
+    NEXTJS_NO_LOCATION_ASSIGN_RELATIVE_DESTINATION_ID + 1usize;
 const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = NEXTJS_NO_PAGE_CUSTOM_FONT_ID + 1usize;
 const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID + 1usize;
 const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID + 1usize;
@@ -2748,7 +2752,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3443,6 +3447,7 @@ static RULE_NAMES: [&str; 870usize] = [
     NextjsNoHeadImportInDocument::NAME,
     NextjsNoHtmlLinkForPages::NAME,
     NextjsNoImgElement::NAME,
+    NextjsNoLocationAssignRelativeDestination::NAME,
     NextjsNoPageCustomFont::NAME,
     NextjsNoScriptComponentInHead::NAME,
     NextjsNoStyledJsxInDocument::NAME,
@@ -4435,6 +4440,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID,
             Self::NextjsNoHtmlLinkForPages(_) => NEXTJS_NO_HTML_LINK_FOR_PAGES_ID,
             Self::NextjsNoImgElement(_) => NEXTJS_NO_IMG_ELEMENT_ID,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NEXTJS_NO_LOCATION_ASSIGN_RELATIVE_DESTINATION_ID
+            }
             Self::NextjsNoPageCustomFont(_) => NEXTJS_NO_PAGE_CUSTOM_FONT_ID,
             Self::NextjsNoScriptComponentInHead(_) => NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID,
             Self::NextjsNoStyledJsxInDocument(_) => NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID,
@@ -5476,6 +5484,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::CATEGORY,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::CATEGORY,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::CATEGORY,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::CATEGORY
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::CATEGORY,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::CATEGORY,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::CATEGORY,
@@ -6479,6 +6490,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::FIX,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::FIX,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::FIX,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::FIX
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::FIX,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::FIX,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::FIX,
@@ -7684,6 +7698,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::documentation(),
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::documentation(),
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::documentation(),
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::documentation()
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::documentation(),
             Self::NextjsNoScriptComponentInHead(_) => {
                 NextjsNoScriptComponentInHead::documentation()
@@ -9936,6 +9953,10 @@ impl RuleEnum {
                 .or_else(|| NextjsNoHtmlLinkForPages::schema(generator)),
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::config_schema(generator)
                 .or_else(|| NextjsNoImgElement::schema(generator)),
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::config_schema(generator)
+                    .or_else(|| NextjsNoLocationAssignRelativeDestination::schema(generator))
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::config_schema(generator)
                 .or_else(|| NextjsNoPageCustomFont::schema(generator)),
             Self::NextjsNoScriptComponentInHead(_) => {
@@ -11123,6 +11144,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => "nextjs",
             Self::NextjsNoHtmlLinkForPages(_) => "nextjs",
             Self::NextjsNoImgElement(_) => "nextjs",
+            Self::NextjsNoLocationAssignRelativeDestination(_) => "nextjs",
             Self::NextjsNoPageCustomFont(_) => "nextjs",
             Self::NextjsNoScriptComponentInHead(_) => "nextjs",
             Self::NextjsNoStyledJsxInDocument(_) => "nextjs",
@@ -13131,6 +13153,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run(node, ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run(node, ctx),
             Self::NextjsNoImgElement(rule) => rule.run(node, ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.run(node, ctx),
             Self::NextjsNoPageCustomFont(rule) => rule.run(node, ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run(node, ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run(node, ctx),
@@ -14018,6 +14041,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run_once(ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run_once(ctx),
             Self::NextjsNoImgElement(rule) => rule.run_once(ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.run_once(ctx),
             Self::NextjsNoPageCustomFont(rule) => rule.run_once(ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run_once(ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run_once(ctx),
@@ -15014,6 +15038,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoImgElement(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::NextjsNoPageCustomFont(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15910,6 +15937,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.should_run(ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.should_run(ctx),
             Self::NextjsNoImgElement(rule) => rule.should_run(ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.should_run(ctx),
             Self::NextjsNoPageCustomFont(rule) => rule.should_run(ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.should_run(ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.should_run(ctx),
@@ -17106,6 +17134,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::IS_TSGOLINT_RULE,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::IS_TSGOLINT_RULE,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::IS_TSGOLINT_RULE,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::IS_TSGOLINT_RULE
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::IS_TSGOLINT_RULE,
             Self::NextjsNoScriptComponentInHead(_) => {
                 NextjsNoScriptComponentInHead::IS_TSGOLINT_RULE
@@ -18200,6 +18231,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::VERSION,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::VERSION,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::VERSION,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::VERSION
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::VERSION,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::VERSION,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::VERSION,
@@ -19281,6 +19315,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::HAS_CONFIG,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::HAS_CONFIG,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::HAS_CONFIG,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::HAS_CONFIG
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::HAS_CONFIG,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::HAS_CONFIG,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::HAS_CONFIG,
@@ -20293,6 +20330,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::INFO,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::INFO,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::INFO,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::INFO
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::INFO,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::INFO,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::INFO,
@@ -21180,6 +21220,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.types_info(),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.types_info(),
             Self::NextjsNoImgElement(rule) => rule.types_info(),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.types_info(),
             Self::NextjsNoPageCustomFont(rule) => rule.types_info(),
             Self::NextjsNoScriptComponentInHead(rule) => rule.types_info(),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.types_info(),
@@ -22054,6 +22095,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run_info(),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run_info(),
             Self::NextjsNoImgElement(rule) => rule.run_info(),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.run_info(),
             Self::NextjsNoPageCustomFont(rule) => rule.run_info(),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run_info(),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run_info(),
@@ -23056,6 +23098,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NextjsNoHeadImportInDocument(NextjsNoHeadImportInDocument::default()),
         RuleEnum::NextjsNoHtmlLinkForPages(NextjsNoHtmlLinkForPages::default()),
         RuleEnum::NextjsNoImgElement(NextjsNoImgElement::default()),
+        RuleEnum::NextjsNoLocationAssignRelativeDestination(
+            NextjsNoLocationAssignRelativeDestination::default(),
+        ),
         RuleEnum::NextjsNoPageCustomFont(NextjsNoPageCustomFont::default()),
         RuleEnum::NextjsNoScriptComponentInHead(NextjsNoScriptComponentInHead::default()),
         RuleEnum::NextjsNoStyledJsxInDocument(NextjsNoStyledJsxInDocument::default()),
