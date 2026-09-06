@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 81/81 (100.00%)
-Positive Passed: 81/81 (100.00%)
-Negative Passed: 169/169 (100.00%)
+AST Parsed     : 83/83 (100.00%)
+Positive Passed: 83/83 (100.00%)
+Negative Passed: 170/170 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4291,6 +4291,22 @@ Negative Passed: 169/169 (100.00%)
    ·           ──
    ╰────
   help: Expected an identifier, like `...rest`.
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:1:26]
+ 1 │ async function f(...[x = await 0]) {}
+   ·                          ───┬───
+   ·                             ╰── await expression not allowed in formal parameter
+ 2 │ function* g(...[x = yield 0]) {}
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:2:21]
+ 1 │ async function f(...[x = await 0]) {}
+ 2 │ function* g(...[x = yield 0]) {}
+   ·                     ───┬───
+   ·                        ╰── yield expression not allowed in formal parameter
+   ╰────
 
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]
