@@ -48,6 +48,14 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        Self::minimize_statements_inner(stmts, ctx);
+        Self::conflate_assignments_after_statement_fusion(stmts, ctx);
+    }
+
+    fn minimize_statements_inner(
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let mut old_stmts = stmts.take_in(ctx);
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
@@ -224,6 +232,51 @@ impl<'a> PeepholeOptimizations {
         Expression::new_sequence_expression(span, exprs, ctx)
     }
 
+    fn join_sequence_and_conflate(
+        a: &mut Expression<'a>,
+        b: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // `join_sequence` deliberately nests the right side when both operands are sequences.
+        // Finish each sequence and their shared boundary without extending either arena vector:
+        // flattening here would add reallocations on this statement-fusion hot path.
+        if !ctx.is_tree_shake_only()
+            && matches!(a, Expression::SequenceExpression(_))
+            && matches!(b, Expression::SequenceExpression(_))
+        {
+            let Expression::SequenceExpression(mut previous) = a.take_in(ctx) else {
+                unreachable!()
+            };
+            let Expression::SequenceExpression(mut current) = b.take_in(ctx) else {
+                unreachable!()
+            };
+            let mut changed = Self::conflate_assignments(&mut previous, ctx);
+            changed |= Self::conflate_assignments(&mut current, ctx);
+            changed |=
+                Self::conflate_assignment_sequence_boundary(&mut previous, &mut current, ctx);
+
+            let mut expression = if previous.expressions.is_empty() {
+                Expression::SequenceExpression(current)
+            } else {
+                previous.expressions.push(Expression::SequenceExpression(current));
+                Expression::SequenceExpression(previous)
+            };
+            if changed {
+                Self::remove_sequence_expression(&mut expression, ctx);
+            }
+            return expression;
+        }
+
+        let mut expression = Self::join_sequence(a, b, ctx);
+        if !ctx.is_tree_shake_only()
+            && let Expression::SequenceExpression(sequence) = &mut expression
+            && Self::conflate_assignments(sequence, ctx)
+        {
+            Self::remove_sequence_expression(&mut expression, ctx);
+        }
+        expression
+    }
+
     fn jump_stmts_look_the_same(left: &Statement<'a>, right: &Statement<'a>) -> bool {
         if left.is_jump_statement() && right.is_jump_statement() {
             return left.content_eq(right);
@@ -337,7 +390,7 @@ impl<'a> PeepholeOptimizations {
         {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut expr_stmt.expression;
-            expr_stmt.expression = Self::join_sequence(a, b, ctx);
+            expr_stmt.expression = Self::join_sequence_and_conflate(a, b, ctx);
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
@@ -494,7 +547,7 @@ impl<'a> PeepholeOptimizations {
         {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut switch_stmt.discriminant;
-            switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
+            switch_stmt.discriminant = Self::join_sequence_and_conflate(a, b, ctx);
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
@@ -579,7 +632,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
                 let a = &mut prev_expr_stmt.expression;
                 let b = &mut if_stmt.test;
-                if_stmt.test = Self::join_sequence(a, b, ctx);
+                if_stmt.test = Self::join_sequence_and_conflate(a, b, ctx);
                 let dropped = result.pop().unwrap();
                 ctx.drop_statement(&dropped);
             }
@@ -702,7 +755,7 @@ impl<'a> PeepholeOptimizations {
                     && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
                 {
                     let a = &mut prev_expr_stmt.expression;
-                    prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
+                    prev_expr_stmt.expression = Self::join_sequence_and_conflate(a, argument, ctx);
                 } else {
                     let span = argument.span();
                     let argument = ret_stmt.argument.take().unwrap();
@@ -718,7 +771,7 @@ impl<'a> PeepholeOptimizations {
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
             let a = &mut prev_expr_stmt.expression;
-            let new_arg = Self::join_sequence(a, argument, ctx);
+            let new_arg = Self::join_sequence_and_conflate(a, argument, ctx);
             ctx.replace_expression(argument, new_arg);
             result.pop();
         }
@@ -827,7 +880,7 @@ impl<'a> PeepholeOptimizations {
         {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut throw_stmt.argument;
-            throw_stmt.argument = Self::join_sequence(a, b, ctx);
+            throw_stmt.argument = Self::join_sequence_and_conflate(a, b, ctx);
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
@@ -946,7 +999,7 @@ impl<'a> PeepholeOptimizations {
                     if let Some(init) = &mut for_stmt.init {
                         if let Some(init) = init.as_expression_mut() {
                             let a = &mut prev_expr_stmt.expression;
-                            let new_init = Self::join_sequence(a, init, ctx);
+                            let new_init = Self::join_sequence_and_conflate(a, init, ctx);
                             ctx.replace_expression(init, new_init);
                             let dropped = result.pop().unwrap();
                             ctx.drop_statement(&dropped);
@@ -1047,7 +1100,8 @@ impl<'a> PeepholeOptimizations {
                     };
                     if can_inline {
                         let a = &mut prev_expr_stmt.expression;
-                        for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
+                        for_in_stmt.right =
+                            Self::join_sequence_and_conflate(a, &mut for_in_stmt.right, ctx);
                         let dropped = result.pop().unwrap();
                         ctx.drop_statement(&dropped);
                     }
