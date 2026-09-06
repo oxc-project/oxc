@@ -363,8 +363,17 @@ fn symbol_is_stable(
     let may_be_mapped_parameter = symbol_flags.is_function_scoped_declaration()
         && !symbol_flags.is_catch_variable()
         && !scope_flags.is_strict_mode();
+    // Later declaration initializers are not write references. A setter can
+    // resume a generator and execute one between the original evaluations.
+    let has_multiple_value_declarations = scoping
+        .symbol_redeclarations(symbol_id)
+        .iter()
+        .filter(|declaration| declaration.flags.is_value())
+        .nth(1)
+        .is_some();
     let stable = !(scope_flags.contains(ScopeFlags::DirectEval)
         || may_be_mapped_parameter
+        || has_multiple_value_declarations
         || PeepholeOptimizations::symbol_value_may_change(symbol_id, ctx));
     cache.entries[cache.next] = Some((symbol_id, stable));
     cache.next = (cache.next + 1) % cache.entries.len();
