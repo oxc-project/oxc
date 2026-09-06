@@ -19,8 +19,12 @@ fn bench_codegen(criterion: &mut Criterion) {
         assert!(parser_ret.diagnostics.is_empty());
         let mut program = parser_ret.program;
 
-        let scoping =
-            SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
+        let semantic_ret = SemanticBuilder::new()
+            .with_enum_eval(true)
+            .with_comment_attachments(true)
+            .build(&program);
+        let attachments = semantic_ret.comment_attachments.unwrap();
+        let scoping = semantic_ret.semantic.into_scoping();
 
         let transform_options = TransformOptions::enable_all();
         let transformer_ret =
@@ -37,6 +41,17 @@ fn bench_codegen(criterion: &mut Criterion) {
                         ..CodegenOptions::default()
                     })
                     .build(&program)
+            });
+        });
+        let comments_id = BenchmarkId::new("comments", &file.file_name);
+        group.bench_function(comments_id, |b| {
+            b.iter_with_large_drop(|| {
+                Codegen::new()
+                    .with_options(CodegenOptions {
+                        source_map_path: Some(PathBuf::from(&file.file_name)),
+                        ..CodegenOptions::default()
+                    })
+                    .build_with_comment_attachments(&program, &attachments)
             });
         });
         group.finish();

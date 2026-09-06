@@ -1080,7 +1080,7 @@ fn module_runner_transform_impl(
     let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;
 
-    let SemanticBuilderReturn { semantic, diagnostics } =
+    let SemanticBuilderReturn { semantic, diagnostics, .. } =
         SemanticBuilder::new_compiler().build(&program);
     parser_ret.diagnostics.extend(diagnostics);
 

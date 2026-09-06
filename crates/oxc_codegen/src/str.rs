@@ -29,6 +29,22 @@ impl Quote {
 impl Codegen<'_> {
     /// Print a [`StringLiteral`].
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
+        let boundary = self.begin_node(s.node_id());
+        self.print_string_literal_without_comments(s, allow_backtick);
+        if let Some(boundary) = boundary {
+            self.end_node(boundary);
+        }
+    }
+
+    /// Print a [`StringLiteral`] without entering its comment boundary.
+    ///
+    /// CJS lexer compatibility paths use this only where inserting comments
+    /// would invalidate the output shape they are preserving.
+    pub(crate) fn print_string_literal_without_comments(
+        &mut self,
+        s: &StringLiteral<'_>,
+        allow_backtick: bool,
+    ) {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
         self.print_string_impl(s.value.as_str(), s.lone_surrogates, allow_backtick);
@@ -39,10 +55,14 @@ impl Codegen<'_> {
     /// A template literal is never a directive, which a string literal in the first statement position would be.
     /// See `print_directives_and_statements`.
     pub(crate) fn print_string_literal_as_template(&mut self, s: &StringLiteral<'_>) {
+        let boundary = self.begin_node(s.node_id());
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
         Quote::Backtick.print(self);
         self.print_string_body(s.value.as_str(), s.lone_surrogates, Some(Quote::Backtick), true);
+        if let Some(boundary) = boundary {
+            self.end_node(boundary);
+        }
     }
 
     pub(super) fn print_string_impl(
