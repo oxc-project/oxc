@@ -180,6 +180,12 @@ impl<'a> PeepholeOptimizations {
                     return ControlFlow::Break(());
                 }
             }
+            Statement::ContinueStatement(continue_stmt) => {
+                Self::handle_continue_statement(continue_stmt, result, ctx);
+            }
+            Statement::BreakStatement(break_stmt) => {
+                Self::handle_break_statement(break_stmt, result, ctx);
+            }
             Statement::ReturnStatement(ret_stmt) => {
                 Self::handle_return_statement(ret_stmt, result, ctx);
             }
@@ -872,6 +878,58 @@ impl<'a> PeepholeOptimizations {
         }
 
         result.push(Statement::ThrowStatement(throw_stmt));
+    }
+
+    fn handle_break_statement(
+        break_stmt: ArenaBox<'a, BreakStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.is_tree_shake_only()
+            && let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+        {
+            if if_stmt.alternate.is_some()
+                && matches!(&if_stmt.alternate, Some(Statement::BreakStatement(alt_stmt)) if break_stmt.content_eq(alt_stmt))
+            {
+                ctx.drop_statement(&if_stmt.alternate.take().unwrap());
+            }
+            if if_stmt.alternate.is_none()
+                && matches!(&if_stmt.consequent, Statement::BreakStatement(cons_stmt) if break_stmt.content_eq(cons_stmt))
+            {
+                let last_stmt = result.pop().unwrap();
+                let Statement::IfStatement(prev_if) = last_stmt else { unreachable!() };
+                let prev_if = prev_if.unbox();
+
+                result.push(Statement::new_expression_statement(prev_if.span, prev_if.test, ctx));
+            }
+        }
+        result.push(Statement::BreakStatement(break_stmt));
+    }
+
+    fn handle_continue_statement(
+        continue_stmt: ArenaBox<'a, ContinueStatement<'a>>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.is_tree_shake_only()
+            && let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+        {
+            if if_stmt.alternate.is_some()
+                && matches!(&if_stmt.alternate, Some(Statement::ContinueStatement(alt_stmt)) if continue_stmt.content_eq(alt_stmt))
+            {
+                ctx.drop_statement(&if_stmt.alternate.take().unwrap());
+            }
+            if if_stmt.alternate.is_none()
+                && matches!(&if_stmt.consequent, Statement::ContinueStatement(cons_stmt) if continue_stmt.content_eq(cons_stmt))
+            {
+                let last_stmt = result.pop().unwrap();
+                let Statement::IfStatement(prev_if) = last_stmt else { unreachable!() };
+                let prev_if = prev_if.unbox();
+
+                result.push(Statement::new_expression_statement(prev_if.span, prev_if.test, ctx));
+            }
+        }
+        result.push(Statement::ContinueStatement(continue_stmt));
     }
 
     fn handle_for_statement(
