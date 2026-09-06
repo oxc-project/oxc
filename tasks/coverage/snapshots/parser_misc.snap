@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 83/83 (100.00%)
-Positive Passed: 83/83 (100.00%)
-Negative Passed: 170/170 (100.00%)
+AST Parsed     : 84/84 (100.00%)
+Positive Passed: 84/84 (100.00%)
+Negative Passed: 171/171 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -263,6 +263,34 @@ Negative Passed: 170/170 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:1:24]
+ 1 │ class DuplicateField { #x; x; #x; }
+   ·                        ─┬     ─┬
+   ·                         │      ╰── It can not be redeclared here
+   ·                         ╰── `#x` has already been declared here
+ 2 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:3:29]
+ 2 │ 
+ 3 │ class DuplicateGetter { get #x() {} set #x(value) {} get #x() {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+ 4 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:5:29]
+ 4 │ 
+ 5 │ class DuplicateSetter { set #x(value) {} get #x() {} set #x(value) {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+   ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[misc/fail/escape-00.js:1:25]

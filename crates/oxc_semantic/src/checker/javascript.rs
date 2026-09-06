@@ -7,7 +7,7 @@ use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
-    class::ClassId,
+    class::{ClassId, ElementKind},
     number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
@@ -88,7 +88,20 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
         let mut defined_elements =
             FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
-            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+            // Public and private names belong to separate namespaces.
+            let previous =
+                defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
+            let prev_element_id = if element.is_private {
+                // Keep setters separate so a valid getter/setter pair cannot hide a
+                // repeated accessor.
+                let index = usize::from(element.kind.contains(ElementKind::Setter));
+                let prev_element_id = previous[index].or(previous[1 - index]);
+                previous[index] = Some(element_id);
+                prev_element_id
+            } else {
+                previous[0].replace(element_id)
+            };
+            if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
                 let mut is_duplicate = element.is_private == prev_element.is_private
