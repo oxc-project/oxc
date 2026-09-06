@@ -106,11 +106,11 @@ impl<'a> PeepholeOptimizations {
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
             let cons_expr = consequent.take_in(ctx);
-            ctx.replace_expression_with(&mut expr.test, |test, ctx| {
+            ctx.replace_expression_with(&mut expr.test, |expr_0, ctx| {
                 Self::join_with_left_associative_op(
-                    test.span(),
+                    expr_0.span(),
                     LogicalOperator::And,
-                    test,
+                    expr_0,
                     cons_expr.test,
                     ctx,
                 )
@@ -125,11 +125,11 @@ impl<'a> PeepholeOptimizations {
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
             let alt_expr = alternate.take_in(ctx);
-            ctx.replace_expression_with(&mut expr.test, |test, ctx| {
+            ctx.replace_expression_with(&mut expr.test, |expr_0, ctx| {
                 Self::join_with_left_associative_op(
-                    test.span(),
+                    expr_0.span(),
                     LogicalOperator::Or,
-                    test,
+                    expr_0,
                     alt_expr.test,
                     ctx,
                 )
@@ -144,20 +144,18 @@ impl<'a> PeepholeOptimizations {
             && alternate.expressions.len() == 2
             && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
         {
-            return Some(Expression::new_sequence_expression(
-                expr.span,
-                [
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx),
-                        alternate.expressions[0].take_in(ctx),
-                        ctx,
-                    ),
-                    expr.consequent.take_in(ctx),
-                ],
-                ctx,
-            ));
+            let mut new_seq = alternate.take_in_box(ctx);
+            new_seq.span = expr.span();
+            ctx.replace_expression_with(&mut new_seq.expressions[0], |seq_0, ctx| {
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::Or,
+                    expr.test.take_in(ctx),
+                    seq_0,
+                    ctx,
+                )
+            });
+            return Some(Expression::SequenceExpression(new_seq));
         }
 
         // "a ? (b, c) : c" => "(a && b), c"
@@ -165,20 +163,18 @@ impl<'a> PeepholeOptimizations {
             && consequent.expressions.len() == 2
             && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
         {
-            return Some(Expression::new_sequence_expression(
-                expr.span,
-                [
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx),
-                        consequent.expressions[0].take_in(ctx),
-                        ctx,
-                    ),
-                    expr.alternate.take_in(ctx),
-                ],
-                ctx,
-            ));
+            let mut new_seq = consequent.take_in_box(ctx);
+            new_seq.span = expr.span();
+            ctx.replace_expression_with(&mut new_seq.expressions[0], |seq_0, ctx| {
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::And,
+                    expr.test.take_in(ctx),
+                    seq_0,
+                    ctx,
+                )
+            });
+            return Some(Expression::SequenceExpression(new_seq));
         }
 
         // "a ? b || c : c" => "(a && b) || c"
