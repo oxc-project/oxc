@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 mod categories;
 mod config_builder;
@@ -39,6 +39,25 @@ pub struct LintConfig {
     pub(crate) path: Option<PathBuf>,
     /// Options for the linter.
     pub(crate) options: OxlintOptions,
+}
+
+impl LintConfig {
+    /// Anchor `path` for glob matching, by making it relative to the directory holding this
+    /// config file.
+    ///
+    /// Every user-written glob in a config — `overrides[].files`,
+    /// `settings.{jest,vitest}.additionalTestPatterns` — is matched against the result, so
+    /// they all resolve the same way.
+    ///
+    /// Returns `path` unchanged when this config did not come from a file on disk, when its
+    /// path has no parent, or when `path` lies outside that parent directory. Callers then
+    /// match against the path as given, which is normally absolute.
+    pub(crate) fn relative_path<'p>(&self, path: &'p Path) -> &'p Path {
+        self.path
+            .as_deref()
+            .and_then(Path::parent)
+            .map_or(path, |dir| path.strip_prefix(dir).unwrap_or(path))
+    }
 }
 
 impl From<Oxlintrc> for LintConfig {
