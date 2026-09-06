@@ -1,0 +1,218 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: snapshot
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/for_iteration_target.js
+---
+bb0: {
+
+}
+
+bb1: {
+	statement
+}
+
+bb2: {
+
+}
+
+bb3: {
+	iteration <of>
+}
+
+bb4: {
+
+}
+
+bb5: {
+	condition
+}
+
+bb6: {
+
+}
+
+bb7: {
+	statement
+	statement
+	continue
+}
+
+bb8: {
+	unreachable
+}
+
+bb9: {
+	statement
+	statement
+}
+
+bb10: {
+
+}
+
+bb11: {
+	iteration <in>
+}
+
+bb12: {
+
+}
+
+bb13: {
+	condition
+}
+
+bb14: {
+
+}
+
+bb15: {
+	statement
+	statement
+}
+
+bb16: {
+	statement
+	statement
+	statement
+}
+
+bb17: {
+	condition
+}
+
+bb18: {
+
+}
+
+bb19: {
+
+}
+
+bb20: {
+
+}
+
+bb21: {
+	iteration <in>
+}
+
+bb22: {
+	statement
+	statement
+	break
+}
+
+bb23: {
+	unreachable
+}
+
+bb24: {
+	statement
+}
+
+digraph {
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+ForOfStatement" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+Iteration(CallExpression(getValues) of expr)" shape = box]
+    4 [ label = "bb4" shape = box]
+    5 [ label = "bb5
+Condition(CallExpression(getTarget))" shape = box]
+    6 [ label = "bb6" shape = box]
+    7 [ label = "bb7
+BlockStatement
+ExpressionStatement
+continue" shape = box]
+    8 [ label = "bb8
+unreachable" shape = box]
+    9 [ label = "bb9
+ExpressionStatement
+ForInStatement" shape = box]
+    10 [ label = "bb10" shape = box]
+    11 [ label = "bb11
+Iteration(CallExpression(getObject) in expr)" shape = box]
+    12 [ label = "bb12" shape = box]
+    13 [ label = "bb13
+Condition(CallExpression(getKey))" shape = box]
+    14 [ label = "bb14" shape = box]
+    15 [ label = "bb15
+BlockStatement
+ExpressionStatement" shape = box]
+    16 [ label = "bb16
+ExpressionStatement
+ForInStatement
+VariableDeclaration" shape = box]
+    17 [ label = "bb17
+Condition(CallExpression(initialize))" shape = box]
+    18 [ label = "bb18" shape = box]
+    19 [ label = "bb19" shape = box]
+    20 [ label = "bb20" shape = box]
+    21 [ label = "bb21
+Iteration(CallExpression(getObject) in expr)" shape = box]
+    22 [ label = "bb22
+BlockStatement
+ExpressionStatement
+break" shape = box]
+    23 [ label = "bb23
+unreachable" shape = box]
+    24 [ label = "bb24
+ExpressionStatement" shape = box]
+    1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    2 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    3 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    4 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    5 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    6 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    7 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    4 -> 5 [ label="Normal"]
+    5 -> 6 [ label="Normal"]
+    5 -> 7 [ label="Normal"]
+    6 -> 7 [ label="Normal"]
+    8 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
+    7 -> 8 [ label="Unreachable", style="dotted"]
+    9 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    1 -> 2 [ label="Normal"]
+    2 -> 3 [ label="Normal"]
+    3 -> 4 [ label="Jump", color=green]
+    8 -> 3 [ label="Backedge", style="dotted", color=grey]
+    3 -> 9 [ label="Normal"]
+    7 -> 3 [ label="Jump", color=green]
+    10 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    11 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    12 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    13 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    14 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    15 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    12 -> 13 [ label="Normal"]
+    13 -> 14 [ label="Normal"]
+    13 -> 15 [ label="Normal"]
+    14 -> 15 [ label="Normal"]
+    16 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    9 -> 10 [ label="Normal"]
+    10 -> 11 [ label="Normal"]
+    11 -> 12 [ label="Jump", color=green]
+    15 -> 11 [ label="Backedge", color=grey]
+    11 -> 16 [ label="Normal"]
+    17 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    18 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    19 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    16 -> 17 [ label="Normal"]
+    17 -> 18 [ label="Normal"]
+    17 -> 19 [ label="Normal"]
+    18 -> 19 [ label="Normal"]
+    20 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    21 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    22 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    23 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
+    22 -> 23 [ label="Unreachable", style="dotted"]
+    24 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    19 -> 20 [ label="Normal"]
+    20 -> 21 [ label="Normal"]
+    21 -> 22 [ label="Jump", color=green]
+    23 -> 21 [ label="Backedge", style="dotted", color=grey]
+    21 -> 24 [ label="Normal"]
+    22 -> 24 [ label="Jump", color=green]
+}
