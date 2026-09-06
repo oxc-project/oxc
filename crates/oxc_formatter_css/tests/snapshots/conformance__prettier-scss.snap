@@ -23,7 +23,7 @@ scss compatibility: 74/90 (82.22%), 6 files skipped
 | scss/trailing-comma/issue-6920.scss | 💥💥 | 66.67% |
 | scss/trailing-comma/list.scss | 💥💥 | 95.56% |
 | scss/trailing-comma/variable.scss | 💥💥 | 50.00% |
-| scss/variables/apply-rule.scss | 💥 | 87.88% |
+| scss/variables/postcss-8-improment.scss | 💥 | 88.24% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-css compatibility: 144/151 (95.36%), 15 files skipped
+css compatibility: 142/151 (94.04%), 13 files skipped
 
 # Failed
 
@@ -10,7 +10,9 @@ css compatibility: 144/151 (95.36%), 15 files skipped
 | :-------- | :--------------: | :---------: |
 | css/comments/declaration.css | 💥 | 98.88% |
 | css/fill-value/fill.css | 💥 | 96.36% |
+| css/parens/empty-lines.css | 💥 | 31.58% |
 | css/parens/parens.css | 💥 | 93.12% |
+| css/postcss-8-improment/test.css | 💥 | 88.24% |
 | css/postcss-plugins/postcss-nesting.css | 💥 | 97.66% |
 | css/stylefmt-repo/at-media/at-media.css | 💥 | 95.24% |
 | css/stylefmt-repo/cssnext-example/cssnext-example.css | 💥 | 98.31% |
@@ -26,10 +28,8 @@ css compatibility: 144/151 (95.36%), 15 files skipped
 - css/comments/selectors.css
 - css/custom-properties/emoji.css
 - css/no-semicolon/url.css
-- css/parens/empty-lines.css
 - css/postcss-plugins/postcss-mixins.css
 - css/postcss-plugins/postcss-simple-vars.css
 - css/quotes/quotes.css
 - css/selector-list/selectors.css
 - css/selector-string/string.css
-- css/stylefmt-repo/ie-hacks/ie-hacks.css

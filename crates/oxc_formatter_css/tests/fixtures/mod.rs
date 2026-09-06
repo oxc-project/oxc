@@ -134,7 +134,6 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 
 // ---
 
-/// A leading BOM is preserved (Prettier does the same).
 #[test]
 fn bom_is_preserved() {
     let allocator = Allocator::default();
@@ -147,10 +146,6 @@ fn bom_is_preserved() {
     assert_eq!(formatted, "\u{feff}a {\n  color: red;\n}\n");
 }
 
-/// Any parse error must surface as `Err` from the standalone `format()` entry,
-/// including oxc-css-parser's recoverable ones (top-level declarations are invalid here
-/// too — only the embedded `format_to_ir` entry tolerates them, see
-/// `embedded/scss/top-level-declaration.scss`).
 #[test]
 fn parse_error_is_err() {
     let allocator = Allocator::default();
@@ -158,8 +153,8 @@ fn parse_error_is_err() {
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
     let less = CssFormatOptions { variant: CssVariant::Less, ..css };
     for (source, options) in [
-        // Top-level declaration: valid only as an embedded css-in-js fragment
-        // (`format_to_ir`); standalone files must reject it like Dart Sass does.
+        // Root declaration: `TopLevelDeclaration` outside the css-in-js parse mode
+        // (dart-sass rejects it; Less parses it like less.js).
         ("display: flex;", scss),
         // EOF/newline-unclosed constructs: oxc-css-parser (0.0.6+) recovers to a
         // valid AST but records the spec parse error, so they bail like every
