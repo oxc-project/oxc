@@ -15,9 +15,9 @@ SyntaxError: Unexpected eval or arguments in strict mode
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1273:80)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1273:80)
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1180:73)
+    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1180:73)
 
 ./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
 AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
@@ -46,9 +46,9 @@ SyntaxError: Unexpected token '['
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1273:80)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1273:80)
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1180:73)
+    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1180:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 AssertionError: expected undefined to be 'hello' // Object.is equality
@@ -151,9 +151,9 @@ SyntaxError: Unexpected token 'export'
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1273:80)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1273:80)
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.12/node_modules/vite/dist/node/module-runner.js:1180:73)
+    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.2.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1180:73)
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
