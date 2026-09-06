@@ -41,7 +41,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
-            // "(a, b) ? c : d" => "a, b ? c : d"
+            // `(a, b) ? c : d` => `a, b ? c : d`
             Expression::SequenceExpression(sequence_expr)
                 if sequence_expr.expressions.len() > 1 =>
             {
@@ -101,7 +101,7 @@ impl<'a> PeepholeOptimizations {
             _ => {}
         }
 
-        // "a ? b ? c : d : d" => "a && b ? c : d"
+        // `a ? b ? c : d : d` => `a && b ? c : d`
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
@@ -120,7 +120,7 @@ impl<'a> PeepholeOptimizations {
             return Self::minimize_conditional_expression(expr, ctx);
         }
 
-        // "a ? b : c ? b : d" => "a || c ? b : d"
+        // `a ? b : c ? b : d` => `a || c ? b : d`
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
@@ -139,7 +139,7 @@ impl<'a> PeepholeOptimizations {
             return Self::minimize_conditional_expression(expr, ctx);
         }
 
-        // "a ? c : (b, c)" => "(a || b), c"
+        // `a ? c : (b, c)` => `(a || b), c`
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate
             && alternate.expressions.len() == 2
             && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
@@ -158,7 +158,7 @@ impl<'a> PeepholeOptimizations {
             return Some(Expression::SequenceExpression(new_seq));
         }
 
-        // "a ? (b, c) : c" => "(a && b), c"
+        // `a ? (b, c) : c` => `(a && b), c`
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent
             && consequent.expressions.len() == 2
             && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
@@ -177,44 +177,42 @@ impl<'a> PeepholeOptimizations {
             return Some(Expression::SequenceExpression(new_seq));
         }
 
-        // "a ? b || c : c" => "(a && b) || c"
+        // `a ? b || c : c` => `(a && b) || c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent
             && logical_expr.operator.is_or()
             && ctx.expr_eq(&logical_expr.right, &expr.alternate)
         {
-            return Some(Expression::new_logical_expression(
-                expr.span,
+            let mut new_logical = logical_expr.take_in_box(ctx);
+            new_logical.span = expr.span();
+            ctx.replace_expression_with(&mut new_logical.left, |left, ctx| {
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::And,
                     expr.test.take_in(ctx),
-                    logical_expr.left.take_in(ctx),
+                    left,
                     ctx,
-                ),
-                LogicalOperator::Or,
-                expr.alternate.take_in(ctx),
-                ctx,
-            ));
+                )
+            });
+            return Some(Expression::LogicalExpression(new_logical));
         }
 
-        // "a ? c : b && c" => "(a || b) && c"
+        // `a ? c : b && c` => `(a || b) && c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
             && logical_expr.operator == LogicalOperator::And
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
-            return Some(Expression::new_logical_expression(
-                expr.span,
+            let mut new_logical = logical_expr.take_in_box(ctx);
+            new_logical.span = expr.span();
+            ctx.replace_expression_with(&mut new_logical.left, |left, ctx| {
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::Or,
                     expr.test.take_in(ctx),
-                    logical_expr.left.take_in(ctx),
+                    left,
                     ctx,
-                ),
-                LogicalOperator::And,
-                expr.consequent.take_in(ctx),
-                ctx,
-            ));
+                )
+            });
+            return Some(Expression::LogicalExpression(new_logical));
         }
 
         // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
