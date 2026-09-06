@@ -18,7 +18,7 @@ catalog:
   "@napi-rs/wasm-runtime": 1.2.3
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.8.0
+  degit: 3.9.0
   eslint: 10.9.1
   json-schema-to-typescript: ^16.0.0
   publint: 0.3.24
