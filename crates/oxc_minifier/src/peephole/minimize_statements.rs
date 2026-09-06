@@ -653,7 +653,7 @@ impl<'a> PeepholeOptimizations {
             Self::merge_leading_assignments_to_declaration(ret_argument_expr, false, result, ctx);
         }
 
-        if let Some(argument) = &mut ret_stmt.argument
+        if let Some(argument) = &ret_stmt.argument
             && argument.value_type(ctx) == ValueType::Undefined
             // `return undefined` has a different semantic in async generator function.
             && !ctx.is_closest_function_scope_an_async_generator()
