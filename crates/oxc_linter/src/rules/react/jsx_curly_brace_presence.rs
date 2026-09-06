@@ -623,16 +623,37 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
             _ => unreachable!(),
         };
 
-        let mut fix = fixer.codegen();
+        let Some(quoted) = quote_jsx_attribute_value(str.as_str()) else {
+            return fixer.noop();
+        };
 
-        if !contains_double_quote_characters(str.as_str()) {
-            fix = fix.with_options(CodegenOptions::default());
-        }
-
-        fix.print_string(str.as_str());
-
-        fixer.replace(container.span, fix.into_source_text())
+        fixer.replace(container.span, quoted)
     });
+}
+
+fn quote_jsx_attribute_value(value: &str) -> Option<String> {
+    if value.chars().any(char::is_control) {
+        return None;
+    }
+
+    let quote =
+        if contains_double_quote_characters(value) && !contains_single_quote_characters(value) {
+            '\''
+        } else {
+            '"'
+        };
+    let mut quoted = String::with_capacity(value.len() + 2);
+    quoted.push(quote);
+    for character in value.chars() {
+        match character {
+            '&' => quoted.push_str("&amp;"),
+            '"' if quote == '"' => quoted.push_str("&quot;"),
+            '\'' if quote == '\'' => quoted.push_str("&apos;"),
+            _ => quoted.push(character),
+        }
+    }
+    quoted.push(quote);
+    Some(quoted)
 }
 
 fn report_missing_curly_for_expression(ctx: &LintContext, span: Span) {
@@ -1047,6 +1068,10 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"<Markdown content={`\\* Want to learn more`} />"#, Some(json!([{ "props": "never" }]))),
+        (r#"<Markdown content={"\\* Want to learn more"} />"#, Some(json!([{ "props": "never" }]))),
+        (r#"<Markdown content={"\x26copy;"} />"#, Some(json!([{ "props": "never" }]))),
+        (r#"<Markdown content={"\tWant to learn more"} />"#, Some(json!([{ "props": "never" }]))),
         ("<App prop={`foo`} />", Some(json!([{ "props": "never" }]))),
         ("<App>{<myApp></myApp>}</App>", Some(json!([{ "children": "never" }]))),
         ("<App>{<myApp></myApp>}</App>", None),
@@ -1199,6 +1224,31 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            r#"<Markdown content={`\\* Want to learn more`} />"#,
+            r#"<Markdown content="\* Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<Markdown content={"\\* Want to learn more"} />"#,
+            r#"<Markdown content="\* Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<Markdown content={"\x26copy;"} />"#,
+            r#"<Markdown content="&amp;copy;" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            r#"<Markdown content={"\tWant to learn more"} />"#,
+            r#"<Markdown content={"\tWant to learn more"} />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
+        (
+            "<Markdown content={`Want to learn more`} />",
+            r#"<Markdown content="Want to learn more" />"#,
+            Some(json!([{ "props": "never" }])),
+        ),
         ("<App prop={`foo`} />", r#"<App prop="foo" />"#, Some(json!([{ "props": "never" }]))),
         (
             "<App>{<myApp></myApp>}</App>",
