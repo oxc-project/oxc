@@ -1,3 +1,4 @@
+mod associations;
 mod editorconfig;
 #[cfg(feature = "napi")]
 mod js_config;
@@ -28,6 +29,7 @@ use oxc_formatter::JsFormatOptions;
 use oxc_formatter_core::CoreFormatOptions;
 
 use self::{
+    associations::Associations,
     editorconfig::{
         apply_editorconfig, load_editorconfig, resolve_editorconfig_overrides, root_properties,
     },
@@ -35,13 +37,23 @@ use self::{
 };
 #[cfg(feature = "napi")]
 use super::options::to_oxc_formatter;
+#[cfg(feature = "napi")]
+use super::support::Language;
 use super::{
     FormatStrategy,
     options::{ValidatedOptions, validate},
     oxfmtrc::{FormatConfig, Oxfmtrc},
-    support::FileKind,
+    support::{FileKind, classify_file_kind, is_excluded_file},
     utils,
 };
+
+/// Path string for glob matching: relative to the config directory when the path is under it.
+///
+/// NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
+/// This is OK since `fast_glob::glob_match()` supports both `/` and `\` via `std::path::is_separator`.
+fn relative_to_config_dir<'p>(base_dir: Option<&Path>, path: &'p Path) -> Cow<'p, str> {
+    base_dir.and_then(|dir| path.strip_prefix(dir).ok()).unwrap_or(path).to_string_lossy()
+}
 
 const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: ".oxfmtrc.json",
@@ -144,7 +156,19 @@ fn into_outcome(
     ResolveOutcome::Format(FormatStrategy::from_format_config(config, validated, kind))
 }
 
-/// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
+/// Options accepted by the NAPI `format()` API: the format config plus `language`,
+/// an explicit route for the document that bypasses file-name detection
+/// (the API counterpart of `associations`, like Prettier's `parser` option).
+#[cfg(feature = "napi")]
+#[derive(Deserialize)]
+struct ApiOptions {
+    #[serde(flatten)]
+    config: FormatConfig,
+    #[serde(default)]
+    language: Option<Language>,
+}
+
+/// Classify `filepath`, resolve the caller-supplied options, and build a [`ResolveOutcome`].
 ///
 /// This is the simplified path for the NAPI `format()` API.
 /// It resolves the caller-supplied [`FormatConfig`] directly instead of
@@ -152,21 +176,29 @@ fn into_outcome(
 ///
 /// Relative Tailwind paths are resolved against provided `cwd`.
 ///
-/// Returns `Err` only when the merged config fails validation.
+/// Returns `Ok(None)` when the file is not a formatting target,
+/// and `Err` when the options fail to parse or validate.
 #[cfg(feature = "napi")]
 pub fn resolve_for_api(
     raw_config: Value,
-    kind: FileKind,
+    filepath: Arc<Path>,
     cwd: &Path,
-) -> Result<ResolveOutcome, String> {
-    let mut format_config: FormatConfig =
+) -> Result<Option<ResolveOutcome>, String> {
+    let ApiOptions { config: mut format_config, language } =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
+    let kind = match language {
+        Some(language) => language.into_file_kind(filepath),
+        None => classify_file_kind(filepath),
+    };
+    let Some(kind) = kind else {
+        return Ok(None);
+    };
     format_config.resolve_tailwind_paths(cwd);
     // Validate eagerly, as the single gate for every option (core + js/sortImports):
     // downstream mapping consumes the derived artifacts and cannot re-fail,
     // and `Prettier` kinds have no later chance before values reach Prettier.
     let validated = validate(&format_config)?;
-    Ok(into_outcome(Arc::new(format_config), &validated, kind))
+    Ok(Some(into_outcome(Arc::new(format_config), &validated, kind)))
 }
 
 /// Resolved options ready for the embedded callback to drive `oxc_formatter`.
@@ -231,6 +263,8 @@ pub struct ConfigResolver {
     base: Option<(Arc<FormatConfig>, ValidatedOptions)>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
+    /// Resolved `associations` for file-to-language routing.
+    associations: Option<Associations>,
     /// Ignore glob built from this config's `ignorePatterns`.
     ignore_glob: Option<Gitignore>,
     /// Parsed `.editorconfig`, if any.
@@ -251,6 +285,7 @@ impl ConfigResolver {
             config_dir,
             base: None,
             oxfmtrc_overrides: None,
+            associations: None,
             ignore_glob: None,
             editorconfig,
         }
@@ -416,10 +451,13 @@ impl ConfigResolver {
     pub fn build_and_validate(&mut self) -> Result<(), String> {
         let oxfmtrc = Oxfmtrc::deserialize(&self.raw_config).map_err(|err| err.to_string())?;
 
-        // Resolve `overrides` from `Oxfmtrc` for later per-file matching
-        let base_dir = self.config_dir.clone();
-        self.oxfmtrc_overrides =
-            oxfmtrc.overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
+        // Resolve `overrides` and `associations` from `Oxfmtrc` for later per-file matching
+        self.oxfmtrc_overrides = oxfmtrc
+            .overrides
+            .map(|overrides| OxfmtrcOverrides::new(overrides, self.config_dir.clone()));
+        self.associations = oxfmtrc
+            .associations
+            .map(|associations| Associations::new(associations, self.config_dir.clone()));
 
         let mut format_config = oxfmtrc.format_config;
 
@@ -445,6 +483,23 @@ impl ConfigResolver {
         self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
 
         Ok(())
+    }
+
+    /// Classify `path` into a [`FileKind`], honoring this config's `associations`.
+    ///
+    /// An explicit association wins over built-in extension detection,
+    /// but never over the lock-file exclusion.
+    /// Zero cost beyond [`classify_file_kind`] when no associations are configured.
+    pub fn classify(&self, path: Arc<Path>) -> Option<FileKind> {
+        if let Some(associations) = &self.associations
+            && let Some(language) = associations.language_for(&path)
+        {
+            if is_excluded_file(&path) {
+                return None;
+            }
+            return language.into_file_kind(path);
+        }
+        classify_file_kind(path)
     }
 
     /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
@@ -663,21 +718,65 @@ mod tests_slow_path_validation {
         assert!(resolver.resolve(kind).is_ok());
     }
 
+    /// `language` routes the document explicitly, ignoring the file name's extension.
+    #[test]
+    #[cfg(feature = "napi")]
+    fn resolve_for_api_honors_language_option() {
+        let outcome = resolve_for_api(
+            serde_json::json!({ "language": "angular", "printWidth": 80 }),
+            Arc::from(PathBuf::from("user.html").as_path()),
+            Path::new("."),
+        )
+        .unwrap()
+        .expect("angular is supported");
+        let ResolveOutcome::Format(FormatStrategy::Prettier { parser_name, config, .. }) = outcome
+        else {
+            panic!("expected Prettier strategy");
+        };
+        assert_eq!(parser_name, "angular");
+        // `language` is routing, not a format option: it must not leak into the config
+        assert_eq!(config.print_width, Some(80));
+        assert!(
+            !serde_json::to_value(&*config).unwrap().as_object().unwrap().contains_key("language")
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn resolve_for_api_unsupported_file_is_none() {
+        let outcome = resolve_for_api(
+            serde_json::json!({}),
+            Arc::from(PathBuf::from("a.unknown").as_path()),
+            Path::new("."),
+        )
+        .unwrap();
+        assert!(outcome.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn resolve_for_api_rejects_unknown_language() {
+        let err = resolve_for_api(
+            serde_json::json!({ "language": "xml" }),
+            Arc::from(PathBuf::from("a.svg").as_path()),
+            Path::new("."),
+        )
+        .unwrap_err();
+        assert!(err.contains("xml"), "{err}");
+    }
+
     /// `resolve_for_api` must validate even for `Prettier` kinds.
     /// Without the eager `validate()` call,
     /// `printWidth: 1000` would silently flow through to Prettier via the NAPI `format()` API.
     #[test]
     #[cfg(feature = "napi")]
     fn resolve_for_api_rejects_invalid_value_for_prettier() {
-        let kind = FileKind::Prettier {
-            path: Arc::from(PathBuf::from("page.vue").as_path()),
-            parser_name: "vue",
-            supports_tailwind: true,
-            supports_oxfmt: true,
-            supports_svelte: false,
-        };
-        let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
-            .unwrap_err();
+        let err = resolve_for_api(
+            serde_json::json!({ "printWidth": 1000 }),
+            Arc::from(PathBuf::from("page.vue").as_path()),
+            Path::new("."),
+        )
+        .unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
     }
 }
@@ -706,5 +805,122 @@ mod tests_ignore_patterns_validation {
     #[test]
     fn accepts_patterns_without_parent_directory_components() {
         assert!(build("src/skip.js").is_ok());
+    }
+}
+
+#[cfg(test)]
+mod tests_associations {
+    use std::path::{Path, PathBuf};
+
+    use serde_json::json;
+
+    use super::*;
+
+    fn make_resolver(raw: serde_json::Value, config_dir: Option<&str>) -> ConfigResolver {
+        let mut resolver = ConfigResolver::new(raw, config_dir.map(PathBuf::from), None);
+        resolver.build_and_validate().expect("config must be valid");
+        resolver
+    }
+
+    fn classify(resolver: &ConfigResolver, path: &str) -> Option<FileKind> {
+        resolver.classify(Arc::from(Path::new(path)))
+    }
+
+    #[test]
+    fn no_associations_falls_back_to_builtin_detection() {
+        let resolver = make_resolver(json!({}), None);
+        assert!(matches!(classify(&resolver, "a.json"), Some(FileKind::OxcFormatterJson { .. })));
+        assert!(classify(&resolver, "a.wxml").is_none());
+    }
+
+    #[test]
+    fn association_routes_unknown_extension() {
+        let resolver = make_resolver(json!({ "associations": { "*.custom": "jsonc" } }), None);
+        assert!(matches!(
+            classify(&resolver, "src/a.custom"),
+            Some(FileKind::OxcFormatterJson {
+                variant: oxc_formatter_json::JsonVariant::Jsonc,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn association_overrides_builtin_detection() {
+        let resolver =
+            make_resolver(json!({ "associations": { "tsconfig*.json": "jsonc" } }), None);
+        assert!(matches!(
+            classify(&resolver, "tsconfig.build.json"),
+            Some(FileKind::OxcFormatterJson {
+                variant: oxc_formatter_json::JsonVariant::Jsonc,
+                ..
+            })
+        ));
+        // Non-matching files keep built-in detection
+        assert!(matches!(
+            classify(&resolver, "data.json"),
+            Some(FileKind::OxcFormatterJson { variant: oxc_formatter_json::JsonVariant::Json, .. })
+        ));
+    }
+
+    #[test]
+    fn later_entry_wins() {
+        // Alphabetical order would flip the result; config order is the precedence.
+        let resolver = make_resolver(
+            json!({ "associations": { "src/**/*.txt": "yaml", "**/*.txt": "toml" } }),
+            None,
+        );
+        assert!(matches!(classify(&resolver, "src/a.txt"), Some(FileKind::OxfmtToml { .. })));
+
+        let resolver = make_resolver(
+            json!({ "associations": { "**/*.txt": "toml", "src/**/*.txt": "yaml" } }),
+            None,
+        );
+        assert!(matches!(
+            classify(&resolver, "src/a.txt"),
+            Some(FileKind::OxcFormatterYaml { .. })
+        ));
+        assert!(matches!(classify(&resolver, "lib/a.txt"), Some(FileKind::OxfmtToml { .. })));
+    }
+
+    #[test]
+    fn patterns_are_relative_to_config_dir() {
+        let resolver =
+            make_resolver(json!({ "associations": { "templates/*.txt": "yaml" } }), Some("/repo"));
+        assert!(matches!(
+            classify(&resolver, "/repo/templates/a.txt"),
+            Some(FileKind::OxcFormatterYaml { .. })
+        ));
+        assert!(classify(&resolver, "/repo/other/templates/a.txt").is_none());
+    }
+
+    #[test]
+    fn lock_files_stay_excluded() {
+        let resolver = make_resolver(json!({ "associations": { "*.yaml": "yaml" } }), None);
+        assert!(classify(&resolver, "pnpm-lock.yaml").is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn prettier_language_association() {
+        let resolver = make_resolver(
+            json!({ "associations": { "**/*.html": "angular", "index.html": "html" } }),
+            None,
+        );
+        assert!(matches!(
+            classify(&resolver, "src/app/user.html"),
+            Some(FileKind::Prettier { parser_name: "angular", .. })
+        ));
+        assert!(matches!(
+            classify(&resolver, "src/index.html"),
+            Some(FileKind::Prettier { parser_name: "html", .. })
+        ));
+    }
+
+    #[test]
+    #[cfg(not(feature = "napi"))]
+    fn prettier_language_association_is_skipped_without_napi() {
+        let resolver = make_resolver(json!({ "associations": { "**/*.html": "angular" } }), None);
+        assert!(classify(&resolver, "src/app/user.html").is_none());
     }
 }

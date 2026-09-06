@@ -4,6 +4,34 @@
  */
 
 export type ArrowParensConfig = "always" | "avoid";
+/**
+ * A language Oxfmt can format, addressable by a stable ID in configuration (`associations`).
+ *
+ * IDs name what a file *is*, not which parser handles it,
+ * so they stay valid when a Prettier-delegated language is rewritten in Rust.
+ */
+export type Language =
+  | "js"
+  | "jsx"
+  | "ts"
+  | "tsx"
+  | "json"
+  | "jsonc"
+  | "json5"
+  | "css"
+  | "scss"
+  | "less"
+  | "yaml"
+  | "toml"
+  | "graphql"
+  | "html"
+  | "angular"
+  | "vue"
+  | "svelte"
+  | "markdown"
+  | "mdx"
+  | "handlebars"
+  | "mjml";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type OperatorPositionConfig = "start" | "end";
@@ -61,6 +89,18 @@ export interface Oxfmtrc {
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
+  /**
+   * Route files matching a glob pattern to a language, overriding built-in extension detection.
+   *
+   * Keys are glob patterns relative to the directory containing the configuration file, values are language IDs.
+   * When a file matches multiple patterns, the later entry takes precedence (object order matters).
+   * Use it for custom extensions (`"*.wxml": "html"`) or dialects sharing an extension (`"*.html": "angular"`).
+   *
+   * - Default: `{}`
+   */
+  associations?: {
+    [k: string]: Language;
+  };
   /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
