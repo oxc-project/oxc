@@ -16,7 +16,7 @@ use oxc_data_structures::inline_string::InlineString;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, Stats, SymbolId};
 use oxc_span::SourceType;
-use oxc_str::{CompactStr, Ident, Str};
+use oxc_str::{ArenaIdentHashSet, CompactStr, Ident, IdentBuildHasher};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -488,12 +488,12 @@ struct Constraints<'a, 's> {
     top_level: bool,
     /// User-reserved names — never used as mangled names, and bindings carrying
     /// them keep them (see [`MangleOptions::reserved`]).
-    reserved: &'s FxHashSet<CompactStr>,
+    reserved: ArenaIdentHashSet<'a, 's>,
     /// Names of top-level exports — kept when `top_level` so importers still resolve.
-    exported_names: ArenaHashSet<'a, Str<'a>>,
+    exported_names: ArenaIdentHashSet<'a, 'a>,
     exported_symbols: Option<BitSet<'a>>,
     /// Names preserved by the `keep_names` option (function / class names).
-    keep_name_names: FxHashSet<&'s str>,
+    keep_name_names: ArenaIdentHashSet<'a, 's>,
     keep_name_symbols: Option<BitSet<'a>>,
 }
 
@@ -504,7 +504,7 @@ struct SlotAssignment<'a, 's> {
     slots: ArenaVec<'a, Slot>,
     total_slots: usize,
     /// Names of bindings in direct-`eval` scopes — they keep their names, nothing may shadow them.
-    eval_reserved_names: FxHashSet<&'s str>,
+    eval_reserved_names: ArenaIdentHashSet<'a, 's>,
 }
 
 /// Phase 3 output — slots ranked by reference count, hottest first.
@@ -530,13 +530,19 @@ impl<'a, 's> Constraints<'a, 's> {
         let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
             collect_exported_symbols(program, allocator, scoping.symbols_len())
         } else {
-            (ArenaHashSet::new_in(allocator), None)
+            (ArenaHashSet::with_hasher_in(IdentBuildHasher, allocator), None)
         };
         let (keep_name_names, keep_name_symbols) =
             collect_keep_name_symbols(options.keep_names, allocator, scoping, ast_nodes);
+        let mut reserved = ArenaHashSet::with_capacity_and_hasher_in(
+            options.reserved.len(),
+            IdentBuildHasher,
+            allocator,
+        );
+        reserved.extend(options.reserved.iter().map(|name| Ident::from(name.as_str())));
         Self {
             top_level,
-            reserved: &options.reserved,
+            reserved,
             exported_names,
             exported_symbols,
             keep_name_names,
@@ -551,8 +557,9 @@ impl<'a, 's> Constraints<'a, 's> {
     /// check plus one predictable branch.
     #[expect(clippy::inline_always, reason = "hot path")]
     #[inline(always)]
-    fn is_kept_name(&self, name: &str) -> bool {
-        is_special_name(name) || (!self.reserved.is_empty() && self.reserved.contains(name))
+    fn is_kept_name(&self, name: Ident<'_>) -> bool {
+        is_special_name(name.as_str())
+            || (!self.reserved.is_empty() && self.reserved.contains(&name))
     }
 
     /// Whether `symbol_id` will receive a mangled name.
@@ -567,7 +574,7 @@ impl<'a, 's> Constraints<'a, 's> {
             && (!self.top_level
                 || self.exported_symbols.as_ref().is_some_and(|e| e.has_bit(symbol_id.index())))
             || scoping.scope_flags(scope_id).contains_direct_eval()
-            || self.is_kept_name(scoping.symbol_name(symbol_id))
+            || self.is_kept_name(scoping.symbol_ident(symbol_id))
             || self.keep_name_symbols.as_ref().is_some_and(|keep| keep.has_bit(symbol_id.index())))
     }
 }
@@ -589,7 +596,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
     ) -> Self {
         // Names of bindings in direct-`eval` scopes — collected here, reserved in Phase 4.
         // TODO: eval reservation is conservative — ideally we'd reserve names per-slot.
-        let mut eval_reserved_names: FxHashSet<&'s str> = FxHashSet::default();
+        let mut eval_reserved_names = ArenaHashSet::with_hasher_in(IdentBuildHasher, allocator);
 
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots = ArenaVec::from_iter_in(
@@ -615,7 +622,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
             // accessed by eval at runtime) and skip slot assignment (keep original names).
             if scoping.scope_flags(scope_id).contains_direct_eval() {
                 for (name, _) in bindings {
-                    eval_reserved_names.insert(name.as_str());
+                    eval_reserved_names.insert(*name);
                 }
                 continue;
             }
@@ -786,15 +793,15 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
     ) -> Self {
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
-        let is_reserved = |name: &str| {
-            oxc_syntax::keyword::is_reserved_keyword(name)
+        let is_reserved = |name: Ident<'_>| {
+            oxc_syntax::keyword::is_reserved_keyword(name.as_str())
                 || constraints.is_kept_name(name)
-                || root_unresolved_references.contains_key(name)
-                || (root_bindings.contains_key(name)
-                    && (!constraints.top_level || constraints.exported_names.contains(name)))
+                || root_unresolved_references.contains_key(&name)
+                || (root_bindings.contains_key(&name)
+                    && (!constraints.top_level || constraints.exported_names.contains(&name)))
                 // TODO: only skip the names that are kept in the current scope
-                || constraints.keep_name_names.contains(name)
-                || slots.eval_reserved_names.contains(name)
+                || constraints.keep_name_names.contains(&name)
+                || slots.eval_reserved_names.contains(&name)
         };
 
         let count = ranking.frequencies.len();
@@ -804,7 +811,7 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
             let name = loop {
                 let name = generate_name(candidate);
                 candidate += 1;
-                if !is_reserved(name.as_str()) {
+                if !is_reserved(Ident::from(name.as_str())) {
                     break name;
                 }
             };
@@ -862,9 +869,9 @@ fn collect_exported_symbols<'a>(
     program: &Program<'a>,
     allocator: &'a Allocator,
     symbols_len: usize,
-) -> (ArenaHashSet<'a, Str<'a>>, Option<BitSet<'a>>) {
+) -> (ArenaIdentHashSet<'a, 'a>, Option<BitSet<'a>>) {
     let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
-    let mut exported_names = ArenaHashSet::new_in(allocator);
+    let mut exported_names = ArenaHashSet::with_hasher_in(IdentBuildHasher, allocator);
     for statement in &program.body {
         let Statement::ExportDeclaration(v) = statement else { continue };
         let decl = &v.declaration;
@@ -873,11 +880,11 @@ fn collect_exported_symbols<'a>(
             // pattern (`export const { find } = x`) exports every bound name, and
             // renaming any of them would rename the export.
             decl.bound_names(&mut |id| {
-                exported_names.insert(id.name.as_arena_str());
+                exported_names.insert(id.name);
                 exported_symbols.set_bit(id.symbol_id().index());
             });
         } else if let Some(id) = decl.id() {
-            exported_names.insert(id.name.as_arena_str());
+            exported_names.insert(id.name);
             exported_symbols.set_bit(id.symbol_id().index());
         }
     }
@@ -889,12 +896,14 @@ fn collect_keep_name_symbols<'alloc, 's>(
     allocator: &'alloc Allocator,
     scoping: &'s Scoping,
     nodes: &AstNodes,
-) -> (FxHashSet<&'s str>, Option<BitSet<'alloc>>) {
+) -> (ArenaIdentHashSet<'alloc, 's>, Option<BitSet<'alloc>>) {
     if !keep_names.function && !keep_names.class {
-        return (FxHashSet::default(), None);
+        return (ArenaHashSet::with_hasher_in(IdentBuildHasher, allocator), None);
     }
     let ids = collect_name_symbols(keep_names, allocator, scoping, nodes);
-    (ids.ones().map(|id| scoping.symbol_name(SymbolId::from_usize(id))).collect(), Some(ids))
+    let mut names = ArenaHashSet::with_hasher_in(IdentBuildHasher, allocator);
+    names.extend(ids.ones().map(|id| scoping.symbol_ident(SymbolId::from_usize(id))));
+    (names, Some(ids))
 }
 
 // Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).
