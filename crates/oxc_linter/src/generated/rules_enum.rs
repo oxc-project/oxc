@@ -11922,6 +11922,9 @@ impl RuleEnum {
             Self::ReactButtonHasType(_) => {
                 Ok(Self::ReactButtonHasType(ReactButtonHasType::from_configuration(value)?))
             }
+            Self::ReactCapitalizedCalls(_) => {
+                Ok(Self::ReactCapitalizedCalls(ReactCapitalizedCalls::from_configuration(value)?))
+            }
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 Ok(Self::ReactCheckedRequiresOnchangeOrReadonly(
                     ReactCheckedRequiresOnchangeOrReadonly::from_configuration(value)?,
