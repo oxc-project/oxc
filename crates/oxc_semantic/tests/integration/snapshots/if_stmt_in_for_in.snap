@@ -20,17 +20,17 @@ bb3: {
 }
 
 bb4: {
-
+	statement
+	statement
+	statement
 }
 
 bb5: {
-	iteration <in>
+
 }
 
 bb6: {
-	statement
-	statement
-	statement
+	iteration <in>
 }
 
 bb7: {
@@ -89,13 +89,13 @@ digraph {
     2 [ label = "bb2" shape = box]
     3 [ label = "bb3
 ForInStatement" shape = box]
-    4 [ label = "bb4" shape = box]
-    5 [ label = "bb5
-Iteration(IdentifierReference(array) in expr)" shape = box]
-    6 [ label = "bb6
+    4 [ label = "bb4
 VariableDeclaration
 BlockStatement
 IfStatement" shape = box]
+    5 [ label = "bb5" shape = box]
+    6 [ label = "bb6
+Iteration(IdentifierReference(array) in expr)" shape = box]
     7 [ label = "bb7
 Condition(if cond)" shape = box]
     8 [ label = "bb8
@@ -143,19 +143,19 @@ return" shape = box]
     13 -> 14 [ label="Normal", style="dotted"]
     11 -> 14 [ label="Jump", color=green]
     15 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    6 -> 7 [ label="Normal"]
+    4 -> 7 [ label="Normal"]
     7 -> 8 [ label="Jump", color=green]
     9 -> 15 [ label="Normal", style="dotted"]
     7 -> 10 [ label="Jump", color=green]
     14 -> 15 [ label="Normal"]
     16 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    3 -> 4 [ label="Normal"]
-    4 -> 5 [ label="Normal"]
-    5 -> 6 [ label="Jump", color=green]
-    15 -> 5 [ label="Backedge", color=grey]
-    5 -> 16 [ label="Normal"]
+    3 -> 5 [ label="Normal"]
+    5 -> 6 [ label="Normal"]
+    6 -> 4 [ label="Jump", color=green]
+    15 -> 6 [ label="Backedge", color=grey]
+    6 -> 16 [ label="Normal"]
     8 -> 16 [ label="Jump", color=green]
-    12 -> 5 [ label="Jump", color=green]
+    12 -> 6 [ label="Jump", color=green]
     17 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 17 [ label="Normal"]
 }

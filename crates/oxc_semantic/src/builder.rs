@@ -1423,6 +1423,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         // Annex B permits a var initializer here. It runs once, before the RHS.
+        #[cfg(feature = "cfg")]
         let has_initializer = !self.strict_mode()
             && matches!(
                 &stmt.left,
@@ -1432,14 +1433,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                         && matches!(declaration.declarations[0].id, BindingPattern::BindingIdentifier(_))
                         && declaration.declarations[0].init.is_some()
             );
-        if has_initializer {
-            self.visit_for_statement_left(&stmt.left);
-        }
+        #[cfg(feature = "cfg")]
+        let (before_for_stmt_graph_ix, target_graph_ix) = control_flow!(self, |cfg| {
+            let before_for_stmt_graph_ix = cfg.current_node_ix;
+            let target_graph_ix = (!has_initializer).then(|| cfg.new_basic_block_normal());
+            (before_for_stmt_graph_ix, target_graph_ix)
+        });
+
+        // Preserve source-order node visitation, but defer runtime targets to each iteration.
+        self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        let (before_for_stmt_graph_ix, after_target_graph_ix, start_prepare_cond_graph_ix) =
+            control_flow!(self, |cfg| {
+                let after_target_graph_ix = cfg.current_node_ix;
+                let before_for_stmt_graph_ix =
+                    if has_initializer { after_target_graph_ix } else { before_for_stmt_graph_ix };
+                (before_for_stmt_graph_ix, after_target_graph_ix, cfg.new_basic_block_normal())
+            });
         /* cfg */
 
         #[cfg(feature = "cfg")]
@@ -1455,17 +1467,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
                 let iteration_graph_ix = cfg.new_basic_block_normal();
                 cfg.append_iteration(right_node_id, IterationInstructionKind::In);
-                let body_graph_ix = cfg.new_basic_block_normal();
+                let body_graph_ix = if let Some(target_graph_ix) = target_graph_ix {
+                    cfg.current_node_ix = after_target_graph_ix;
+                    target_graph_ix
+                } else {
+                    cfg.new_basic_block_normal()
+                };
 
                 cfg.ctx(None).default().allow_break().allow_continue();
                 (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix)
             });
         /* cfg */
 
-        // Evaluate assignment targets and destructuring only when an iteration succeeds.
-        if !has_initializer {
-            self.visit_for_statement_left(&stmt.left);
-        }
         self.visit_statement(&stmt.body);
 
         /* cfg */
@@ -1504,9 +1517,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
+        let (before_for_stmt_graph_ix, body_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
+
+        // Preserve source-order node visitation, but defer runtime targets to each iteration.
+        self.visit_for_statement_left(&stmt.left);
+
+        #[cfg(feature = "cfg")]
+        let (after_target_graph_ix, start_prepare_cond_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
 
         #[cfg(feature = "cfg")]
         self.record_ast_nodes();
@@ -1516,19 +1536,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
-            control_flow!(self, |cfg| {
-                let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
-                let iteration_graph_ix = cfg.new_basic_block_normal();
-                cfg.append_iteration(right_node_id, IterationInstructionKind::Of);
-                let body_graph_ix = cfg.new_basic_block_normal();
-                cfg.ctx(None).default().allow_break().allow_continue();
-                (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix)
-            });
+        let (end_of_prepare_cond_graph_ix, iteration_graph_ix) = control_flow!(self, |cfg| {
+            let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
+            let iteration_graph_ix = cfg.new_basic_block_normal();
+            cfg.append_iteration(right_node_id, IterationInstructionKind::Of);
+            cfg.current_node_ix = after_target_graph_ix;
+            cfg.ctx(None).default().allow_break().allow_continue();
+            (end_of_prepare_cond_graph_ix, iteration_graph_ix)
+        });
         /* cfg */
 
-        // Evaluate assignment targets and destructuring only when an iteration succeeds.
-        self.visit_for_statement_left(&stmt.left);
         self.visit_statement(&stmt.body);
 
         /* cfg */
