@@ -142,6 +142,21 @@ fn setter_cannot_change_repeated_rhs() {
 }
 
 #[test]
+fn redeclaration_initializers_are_not_stable() {
+    // A setter can resume the generator and execute a later initializer, which
+    // is not represented as a write reference to the binding.
+    test(
+        "export let iter; export function* gen() { var value = 1; let obj = { set a(x) { console.log(x); iter.next(); }, set b(x) { console.log(x); } }; yield () => { obj.a = value; obj.b = value; }; var value = 2; }",
+        "export let iter; export function* gen() { var value = 1; let obj = { set a(x) { console.log(x), iter.next(); }, set b(x) { console.log(x); } }; yield () => { obj.a = value, obj.b = value; }; var value = 2; }",
+    );
+    // The same restriction applies to the object of a member assignment.
+    test(
+        "export let iter; export function* gen() { var obj = { set a(x) { iter.next(); } }; yield () => { obj.a = 1; obj.b = 1; }; var obj = {}; console.log(obj); }",
+        "export let iter; export function* gen() { var obj = { set a(x) { iter.next(); } }; yield () => { obj.a = 1, obj.b = 1; }; var obj = {}; console.log(obj); }",
+    );
+}
+
+#[test]
 fn property_reads_are_not_repeatable() {
     let options = CompressOptions {
         treeshake: TreeShakeOptions {
