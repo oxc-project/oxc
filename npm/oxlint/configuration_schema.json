@@ -17054,40 +17054,40 @@
       "type": "object",
       "properties": {
         "denyWarnings": {
-          "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.",
+          "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.\nOnly supported in the root configuration file: it decides the exit code of the whole run.\nSetting it in a nested config warns and ignores it.",
           "type": "boolean",
-          "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI."
+          "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.\nOnly supported in the root configuration file: it decides the exit code of the whole run.\nSetting it in a nested config warns and ignores it."
         },
         "maxWarnings": {
-          "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.",
+          "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.\nOnly supported in the root configuration file: it decides the exit code of the whole run.\nSetting it in a nested config warns and ignores it.",
           "type": "integer",
           "format": "uint",
           "minimum": 0.0,
-          "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI."
+          "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.\nOnly supported in the root configuration file: it decides the exit code of the whole run.\nSetting it in a nested config warns and ignores it."
         },
         "reportUnusedDisableDirectives": {
-          "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file.",
+          "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`.",
           "allOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
             }
           ],
-          "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
+          "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`."
         },
         "respectEslintDisableDirectives": {
-          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file.",
+          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`.",
           "type": "boolean",
-          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file."
+          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nResolved from the config which governs each file, and not inherited from the root config:\nshare it with `extends`."
         },
         "typeAware": {
-          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nResolved from the config which governs each file, so a nested config may enable\ntype-aware linting for its own directory. It is *not* inherited from the root config:\nshare it with `extends`, which a child config can still override. The `--type-aware` CLI\nflag and the editor setting apply to every file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": "boolean",
-          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nResolved from the config which governs each file, so a nested config may enable\ntype-aware linting for its own directory. It is *not* inherited from the root config:\nshare it with `extends`, which a child config can still override. The `--type-aware` CLI\nflag and the editor setting apply to every file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         },
         "typeCheck": {
-          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
+          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\n`tsgolint` reports these diagnostics for a whole run rather than per directory, so\nenabling this in a nested config enables it for the whole run, and oxlint warns about it.\nIt belongs in the root configuration file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": "boolean",
-          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
+          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\n`tsgolint` reports these diagnostics for a whole run rather than per directory, so\nenabling this in a nested config enables it for the whole run, and oxlint warns about it.\nIt belongs in the root configuration file.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         }
       },
       "additionalProperties": false,

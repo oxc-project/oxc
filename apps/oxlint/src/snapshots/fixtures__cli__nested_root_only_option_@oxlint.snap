@@ -1,0 +1,31 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/cli/nested_root_only_option
+----------
+
+  ! The `options.denyWarnings` option is only supported in the root config. It was found in nested/.oxlintrc.json and is ignored.
+  help: Move `options.denyWarnings` to the root configuration file.
+
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[nested/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
