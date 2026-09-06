@@ -797,7 +797,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -840,7 +842,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),

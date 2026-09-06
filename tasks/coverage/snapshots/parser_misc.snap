@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 80/80 (100.00%)
-Positive Passed: 80/80 (100.00%)
-Negative Passed: 168/168 (100.00%)
+AST Parsed     : 81/81 (100.00%)
+Positive Passed: 81/81 (100.00%)
+Negative Passed: 169/169 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -135,6 +135,38 @@ Negative Passed: 168/168 (100.00%)
  16 │ }
     ╰────
   note: Classes are always strict mode code
+
+  × Illegal break statement
+   ╭─[misc/fail/arrow-function-jumps.js:1:25]
+ 1 │ while (true) { (() => { break; }); }
+   ·                         ──────
+ 2 │ 
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:3:38]
+ 2 │ 
+ 3 │ outer: while (true) { (() => { break outer; }); }
+   ·                                      ─────
+ 4 │ 
+   ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[misc/fail/arrow-function-jumps.js:5:25]
+ 4 │ 
+ 5 │ while (true) { (() => { continue; }); }
+   ·                         ─────────
+ 6 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:7:41]
+ 6 │ 
+ 7 │ outer: while (true) { (() => { continue outer; }); }
+   ·                                         ─────
+   ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]

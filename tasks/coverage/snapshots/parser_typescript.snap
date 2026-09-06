@@ -3,7 +3,7 @@ commit: b465fdbf
 parser_typescript Summary:
 AST Parsed     : 9783/9783 (100.00%)
 Positive Passed: 9783/9783 (100.00%)
-Negative Passed: 1647/2636 (62.48%)
+Negative Passed: 1649/2636 (62.56%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -173,8 +173,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTy
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfObjectLiterals2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypingWithFixedTypeParameters1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashDeclareGlobalTypeofExport.ts
 
@@ -1743,8 +1741,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement20.ts
 
@@ -5187,6 +5183,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ }
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+   ╭─[typescript/tests/cases/compiler/continueNotInIterationStatement4.ts:4:14]
+ 3 │   var x = () => {
+ 4 │     continue TWO;
+   ·              ───
+ 5 │   }
+   ╰────
 
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[typescript/tests/cases/compiler/continueTarget1.ts:1:1]
@@ -27440,6 +27444,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
+  × Jump target cannot cross function boundary.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts:4:14]
+ 3 │   var x = () => {
+ 4 │     continue TWO;
+   ·              ───
+ 5 │   }
+   ╰────
+
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget1.ts:1:1]
  1 │ target:
@@ -29088,6 +29100,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:14:15]
+ 13 │     var x = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:21:15]
  20 │     var fn = function () {
  21 │         break THREE;
@@ -29127,6 +29147,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForBreakStatements.ts:14:15]
+ 13 │     var x = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForBreakStatements.ts:21:15]
@@ -29170,6 +29198,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForInBreakStatements.ts:14:15]
+ 13 │     var fn = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForInBreakStatements.ts:21:15]
  20 │     var fn = function () {
  21 │         break THREE;
@@ -29209,6 +29245,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                    ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidWhileBreakStatements.ts:14:15]
+ 13 │     var x = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidWhileBreakStatements.ts:21:15]
@@ -29252,6 +29296,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:14:18]
+ 13 │     var x = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:21:18]
  20 │     var fn = function () {
  21 │         continue THREE;
@@ -29293,6 +29345,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForContinueStatements.ts:14:18]
+ 13 │     var x = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForContinueStatements.ts:21:18]
  20 │     var fn = function () {
  21 │         continue THREE;
@@ -29332,6 +29392,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                            ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForInContinueStatements.ts:14:18]
+ 13 │     var fn = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForInContinueStatements.ts:21:18]
@@ -29382,6 +29450,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                       ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidWhileContinueStatements.ts:14:18]
+ 13 │     var x = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidWhileContinueStatements.ts:21:18]
