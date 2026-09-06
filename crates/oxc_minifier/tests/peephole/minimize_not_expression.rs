@@ -27,6 +27,9 @@ fn minimize_nots_with_de_morgan_comparison_chains() {
     test("if (!(a === b || c === d)) throw x;", "if (a !== b && c !== d) throw x;");
     // `&&` dual.
     test("if (!(a == b && c == d)) throw x;", "if (a != b || c != d) throw x;");
+    // typeof
+    test("if (!(typeof a < 'u' && !b)) throw x;", "if (typeof a > 'u' || b) throw x;");
+    test("if (!(typeof a != 'undefined' && !b)) throw x;", "if (typeof a > 'u' || b) throw x;");
     // The fold is involutive, so the `if (!x) return` collapse (which negates
     // the test again) still reaches its old output.
     test(
@@ -53,6 +56,7 @@ fn minimize_nots_with_de_morgan_comparison_chains() {
 fn minimize_nots_with_de_morgan_negative_cases() {
     // Relational comparisons don't invert freely (NaN), so the chain must stay.
     test_same("if (!(a < b || c < d)) throw x;");
+    test_same("if (!(typeof a < 'u' || c < d)) throw x;");
     // A mixed operand would need a bare `!`; that fold is not involutive and can
     // regress shapes whose test is negated again later (e.g. branch swaps), so
     // it's left alone.
@@ -79,6 +83,9 @@ fn minimize_nots_with_de_morgan_negative_cases() {
 
 #[test]
 fn minimize_nots_with_binary_expressions() {
+    test_same("var v = !(x > 'u');");
+    test_same("var v = !(x > 0);");
+    test_same("var v = !(typeof x > typeof y);");
     test("!(x === undefined)", "x");
     test("!(typeof(x) === 'undefined')", "");
     test("!(typeof(x()) === 'undefined')", "x()");
@@ -89,4 +96,10 @@ fn minimize_nots_with_binary_expressions() {
     test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
     test("!(a === 1 ? void 0 : a.b)", "a !== 1 && a.b;");
     test("!(a, b)", "a, b");
+    test("var v = !(typeof x < 'u')", "var v = typeof x > 'u';");
+    test("var v = !('u' > typeof x)", "var v = 'u' < typeof x;");
+    test_same("var v = !(typeof x <= 'u');");
+    test_same("var v = !(typeof x >= 'u');");
+    test_same("var v = !(typeof x < 'string');");
+    test_same("var v = !(typeof x > 'string');");
 }

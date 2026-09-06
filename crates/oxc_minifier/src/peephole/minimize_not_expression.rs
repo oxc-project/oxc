@@ -46,6 +46,14 @@ impl<'a> PeepholeOptimizations {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
                 true
             }
+            // `!(typeof a < "u")` => `typeof a > "u"`
+            // `!(typeof a > "u")` => `typeof a < "u"`
+            Expression::BinaryExpression(binary_expr)
+                if Self::is_typeof_undefined_comparison(binary_expr) =>
+            {
+                binary_expr.operator = binary_expr.operator.compare_inverse_operator().unwrap();
+                true
+            }
             // `!0` => `1`
             // `!1` => `0`
             Expression::NumericLiteral(num) if boolean_context => {
@@ -115,7 +123,8 @@ impl<'a> PeepholeOptimizations {
         let mut delta = 0;
         for side in [&e.left, &e.right] {
             match side {
-                Expression::BinaryExpression(b) if b.operator.is_equality() => {}
+                Expression::BinaryExpression(b)
+                    if b.operator.is_equality() || Self::is_typeof_undefined_comparison(b) => {}
                 Expression::UnaryExpression(u) if u.operator.is_not() => {
                     delta += if boolean_context { -1 } else { 1 }
                 }
@@ -151,6 +160,19 @@ impl<'a> PeepholeOptimizations {
             }
         }
         Some(delta)
+    }
+
+    fn is_typeof_undefined_comparison(e: &BinaryExpression<'_>) -> bool {
+        if !matches!(e.operator, BinaryOperator::LessThan | BinaryOperator::GreaterThan) {
+            return false;
+        }
+        match (&e.left, &e.right) {
+            (Expression::UnaryExpression(unary), literal)
+            | (literal, Expression::UnaryExpression(unary)) => {
+                unary.operator.is_typeof() && literal.is_specific_string_literal("u")
+            }
+            _ => false,
+        }
     }
 
     /// Apply De Morgan's law in place. Only called on chains approved by
