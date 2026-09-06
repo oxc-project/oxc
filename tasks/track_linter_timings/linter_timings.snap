@@ -575,6 +575,7 @@ unicorn/no-array-reverse                                   |  62606
 unicorn/no-array-sort                                      |  62606
 unicorn/no-await-expression-member                         |  95297
 unicorn/no-await-in-promise-methods                        |  62606
+unicorn/no-break-in-nested-loop                            |    836
 unicorn/no-confusing-array-with                            |  62606
 unicorn/no-console-spaces                                  |  62606
 unicorn/no-document-cookie                                 |  13005
