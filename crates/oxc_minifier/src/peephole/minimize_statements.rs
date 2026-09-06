@@ -390,7 +390,7 @@ impl<'a> PeepholeOptimizations {
         {
             let a = &mut prev_expr_stmt.expression;
             let b = &mut expr_stmt.expression;
-            expr_stmt.expression = Self::join_sequence(a, b, ctx);
+            expr_stmt.expression = Self::join_sequence_and_conflate(a, b, ctx);
             let dropped = result.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
