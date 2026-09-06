@@ -175,9 +175,10 @@ thread_local! {
     });
 }
 
-fn execute_rules<'a, const TIMINGS: bool>(
+fn execute_rules<'a, 'c, const TIMINGS: bool>(
     rules: &[(&RuleEnum, LintContext<'a>)],
-    semantic: &Semantic<'a>,
+    semantic: &'c Semantic<'a>,
+    settings: &'c OxlintSettings,
     should_run_on_jest_node: bool,
     with_runtime_optimization: bool,
     mut timing_recorder: Option<&mut RuleTimingRecorder>,
@@ -225,7 +226,7 @@ fn execute_rules<'a, const TIMINGS: bool>(
             }
 
             if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
+                for jest_node in iter_possible_jest_call_node(semantic, settings) {
                     for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
                         if rule.run_info().is_run_on_jest_node_implemented() {
                             let timing_stat =
@@ -249,7 +250,7 @@ fn execute_rules<'a, const TIMINGS: bool>(
             }
 
             if should_run_on_jest_node {
-                for jest_node in iter_possible_jest_call_node(semantic) {
+                for jest_node in iter_possible_jest_call_node(semantic, settings) {
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                     rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
                 }
@@ -414,6 +415,7 @@ impl Linter {
             execute_rules::<TIMINGS>(
                 &rules,
                 semantic,
+                ctx_host.settings(),
                 should_run_on_jest_node,
                 true,
                 timing_recorder.as_mut(),
@@ -422,7 +424,14 @@ impl Linter {
             #[cfg(debug_assertions)]
             {
                 let diagnostics_after_optimized = ctx_host.diagnostic_count();
-                execute_rules::<false>(&rules, semantic, should_run_on_jest_node, false, None);
+                execute_rules::<false>(
+                    &rules,
+                    semantic,
+                    ctx_host.settings(),
+                    should_run_on_jest_node,
+                    false,
+                    None,
+                );
                 let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
                 ctx_host.get_diagnostics(|diagnostics| {
                     let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];
