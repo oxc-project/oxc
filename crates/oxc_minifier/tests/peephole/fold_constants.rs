@@ -1403,6 +1403,8 @@ fn test_fold_useless_string_addition() {
 fn test_fold_same_typeof() {
     fold("typeof foo === typeof bar", "typeof foo == typeof bar");
     fold("typeof foo !== typeof bar", "typeof foo != typeof bar");
+    fold("typeof foo === typeof foo", "!0");
+    fold("typeof foo !== typeof foo", "!1");
     fold("typeof foo.bar === typeof foo.bar", "typeof foo.bar == typeof foo.bar");
     fold("typeof foo.bar !== typeof foo.bar", "typeof foo.bar != typeof foo.bar");
 }
