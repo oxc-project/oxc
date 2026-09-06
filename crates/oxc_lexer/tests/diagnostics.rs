@@ -7,7 +7,7 @@
     reason = "test helpers: lengths fit u32; the fuzz PRNG uses raw constants"
 )]
 
-use oxc_lexer::{Diagnostic, PAD, default_options, diag_code, lex_utf8};
+use oxc_lexer::{Diagnostic, PAD, TokenKind, default_options, diag_code, lex_utf8};
 
 fn diags(code: &str) -> Vec<Diagnostic> {
     let mut buf = code.as_bytes().to_vec();
@@ -677,4 +677,233 @@ fn template_cooked_invalid_marker() {
     assert!(codes(r"t = `\uZZ`;").is_empty());
     // strings are untouched by the marker path
     assert!(codes(r#"s = "\8";"#).is_empty());
+}
+
+#[test]
+fn unterminated_jsx_element() {
+    assert_eq!(codes_tsx("var a = <T>(x: T) => x;"), vec![diag_code::UNTERMINATED_JSX_ELEMENT]);
+    assert_eq!(codes_tsx("f(<T>(x: T) => x);"), vec![diag_code::UNTERMINATED_JSX_ELEMENT]);
+}
+
+#[test]
+fn generic_function_types_never_flagged() {
+    for code in [
+        "let a: <T>(x: T) => T = null!;",
+        "const r = f<{ m: <T>(x: T) => T }>(0);",
+        "let h = <T,>(x: T) => x;",
+        "const e = <T>(x)</T>;",
+    ] {
+        assert!(codes_tsx(code).is_empty(), "{code:?}");
+    }
+}
+
+fn sorted_codes_tsx(code: &str) -> Vec<u16> {
+    let mut v = codes_tsx(code);
+    v.sort_unstable();
+    v
+}
+
+#[test]
+fn unterminated_jsx() {
+    assert_eq!(codes_tsx("const a = <div>"), vec![diag_code::UNTERMINATED_JSX_ELEMENT]);
+    assert_eq!(codes_tsx("const a = <div>hi"), vec![diag_code::UNTERMINATED_JSX_ELEMENT]);
+    assert_eq!(codes_tsx("const a = <div><b>x</b>"), vec![diag_code::UNTERMINATED_JSX_ELEMENT]);
+    assert_eq!(codes_tsx("const a = <div attr"), vec![diag_code::UNTERMINATED_JSX_TAG]);
+    assert_eq!(codes_tsx("const a = <"), Vec::<u16>::new());
+    assert_eq!(codes_tsx("const a = <div>{x"), vec![diag_code::UNTERMINATED_JSX_CONTAINER]);
+    assert_eq!(codes_tsx("const a = <div>{x}</div"), vec![diag_code::UNTERMINATED_JSX_TAG]);
+    let mut want = vec![diag_code::UNTERMINATED_STRING, diag_code::UNTERMINATED_JSX_TAG];
+    want.sort_unstable();
+    assert_eq!(sorted_codes_tsx("const a = <div attr=\"x"), want);
+    assert_eq!(codes_tsx("const a = <div></span>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+    assert_eq!(codes_tsx("const a = <></div>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+    assert_eq!(codes_tsx("const a = <div></>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+    assert_eq!(codes_tsx("const a = <A.B></A.C>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+    assert_eq!(codes_jsx("const a = <div>{x"), vec![diag_code::UNTERMINATED_JSX_CONTAINER]);
+    assert_eq!(codes_jsx("const a = <div>{x}"), vec![diag_code::UNTERMINATED_JSX_ELEMENT]);
+}
+
+#[test]
+fn valid_jsx_never_flagged() {
+    for code in [
+        "const a = <div>hi</div>;",
+        "const a = <a b=\"x\ny\" c='z'/>;",
+        "const a = <></>;",
+        "const a = <A.B></A.B>;",
+        "const a = <a-b></a-b>;",
+        "const a = <a:b></a:b>;",
+        "const a = <div>{x}</div>;",
+        "const a = <div>{/* c */}</div>;",
+        "let u = <T>(a)</ /*b*/ T>;",
+        "let u = <T>(a)</T\n>;",
+        "const a = <div>\n  <span>{1}</span>\n</div>;",
+        "const a = <Foo<Bar> x={1} />;",
+        "const a = <div>{cond ? <b/> : <i>{`t${x}`}</i>}</div>;",
+        "const a = <div>{[1, 2].map(n => <b key={n}>{n}</b>)}</div>;",
+        "const r = f<{ m: <T>(x: `a${T}b`) => Array<T> }>(0);\nconst z = <T>hi</T>;",
+        "const r = f<{ m: <T>(x: \"(\") => Array<T> }>(0);\nconst z = <T>hi</T>;",
+    ] {
+        assert!(codes_tsx(code).is_empty(), "{code:?}: {:?}", codes_tsx(code));
+    }
+    for code in ["const a = <div>hi</div>;", "const a = <></>;", "const a = <a b=\"x\ny\"/>;"] {
+        assert!(codes_jsx(code).is_empty(), "{code:?}: {:?}", codes_jsx(code));
+    }
+}
+
+fn diags_jsx(code: &str) -> Vec<Diagnostic> {
+    let mut buf = code.as_bytes().to_vec();
+    let len = buf.len() as u32;
+    buf.resize(buf.len() + PAD, 0);
+    let mut opts = default_options();
+    opts.jsx = true;
+    let (res, _arena) = lex_utf8(&buf, len, opts);
+    res.diagnostics().to_vec()
+}
+
+#[test]
+fn bare_gt_or_rbrace_in_jsx_text() {
+    let d = diags_jsx("let x = <div>></div>;");
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].code, d[0].off, d[0].len), (diag_code::JSX_TEXT_INVALID_CHARACTER, 13, 1));
+    let d = diags_jsx("let x = <div>}</div>;");
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].code, d[0].off, d[0].len), (diag_code::JSX_TEXT_INVALID_CHARACTER, 13, 1));
+    assert_eq!(codes_tsx("let x = <div>a>b</div>;"), vec![diag_code::JSX_TEXT_INVALID_CHARACTER]);
+    for code in
+        ["let x = <div>{'>'}</div>;", "let x = <div>a &gt; b</div>;", "let x = <div>{x}</div>;"]
+    {
+        assert!(codes_tsx(code).is_empty(), "{code:?}: {:?}", codes_tsx(code));
+    }
+}
+
+#[test]
+fn jsx_closing_names_compare_across_trivia() {
+    for code in [
+        "x = <A.B.C.D>foo</A . B . C.D>;",
+        "x = <A.B>t</A\n.B>;",
+        "x = <A.B>t</A./*c*/B>;",
+        "x = <a:b>t</a : b>;",
+        "x = <a>t< b>u</ b ></a>;",
+        "x = <a--b>t</a--b>;",
+    ] {
+        assert!(codes_tsx(code).is_empty(), "{code:?}: {:?}", codes_tsx(code));
+    }
+    assert_eq!(codes_tsx("x = <A.B>t</A.C>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+    assert_eq!(codes_tsx("x = <a-b>t</a-c>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+    assert_eq!(codes_tsx("x = <A.B>t</A>;"), vec![diag_code::JSX_CLOSING_TAG_MISMATCH]);
+}
+
+#[test]
+fn id_continue_only_character_cannot_start_an_identifier() {
+    let d = diags("\u{203f} = 10;");
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].code, d[0].off, d[0].len), (diag_code::UNEXPECTED_CHARACTER, 0, 3));
+    let d = diags("var \u{200c} = [];");
+    assert_eq!(d.len(), 1, "{d:?}");
+    assert_eq!((d[0].code, d[0].off, d[0].len), (diag_code::UNEXPECTED_CHARACTER, 4, 3));
+    assert_eq!(codes("var \u{200d} = [];"), vec![diag_code::UNEXPECTED_CHARACTER]);
+    assert_eq!(codes("class C { #\u{203f} = 1 }"), vec![diag_code::UNEXPECTED_CHARACTER]);
+    for code in ["a\u{203f} = 10;", "a\u{200c}b = 1;", "var x = \"\u{203f}\";", "x = a.\u{e9};"] {
+        assert!(codes(code).is_empty(), "{code:?}: {:?}", codes(code));
+    }
+}
+
+#[test]
+fn legacy_octal_adjacency_diagnostics() {
+    assert_eq!(codes("x = 010e5;"), vec![diag_code::INVALID_NUMERIC_LITERAL]);
+    assert_eq!(codes("x = 010n;"), vec![diag_code::INVALID_BIGINT]);
+    assert_eq!(codes("x = 08n;"), vec![diag_code::INVALID_BIGINT]);
+    for code in ["x = 010.5;", "x = 010.toString();", "x = 08.5;", "x = 09e1;"] {
+        assert!(codes(code).is_empty(), "{code:?}: {:?}", codes(code));
+    }
+}
+
+#[test]
+fn nested_jsx_shapes_never_flagged() {
+    for code in [
+        "const a = <Foo prop=<Bar><Baz /></Bar> />;",
+        "const a = <Foo key=<T></T>>{x}\n  <b />\n</Foo>;",
+        "const a = <Foo key=<T/> other=\"x\">{x}</Foo>;",
+        "x = <a b=<>t</> />;",
+        "const a = <div>\n  x<br />\n  < br />\n  y\n</div>;",
+        "export const foo = function* <T>() {};",
+        "const h = async function* <T>() {};",
+        "type X = { <T>(x: T): U; }",
+        "interface X { <T>(x: T): U; new <T>(x: T): U; }",
+        "x = [function (): T {}\n< y];",
+    ] {
+        assert!(codes_tsx(code).is_empty(), "{code:?}: {:?}", codes_tsx(code));
+    }
+    for code in ["<App foo=<div>bar</div> />;", "x = <a b=<c>{d}</c>>{e}<f/></a>;", "x = <a--b/>;"]
+    {
+        assert!(codes_jsx(code).is_empty(), "{code:?}: {:?}", codes_jsx(code));
+    }
+}
+
+#[test]
+fn value_lanes_hold_exactly_one_entry_per_value_token() {
+    for (code, ts, numbers, atoms) in [
+        ("0 #a 0 #b 0 #c 0 #d 0 #e 0 #f 0 #g 0 #h 0 #i", false, 9, 0),
+        (
+            "class C { #e: number = 0
+#f: string = 1
+#g = 2
+#h = 3
+#i = 4
+#j = 5
+#k = 6
+#l = 7
+#m = 8 }",
+            true,
+            9,
+            0,
+        ),
+        ("1n 's' 2n 's' 3n 's' 4n 's' 5n 's' 6n 's' 7n 's' 8n 's' 9n 's'", false, 9, 0),
+        (
+            "\\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0 \\u0061b 0",
+            false,
+            9,
+            9,
+        ),
+        (
+            "#\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x #\\u0061b x",
+            false,
+            0,
+            9,
+        ),
+    ] {
+        let mut buf = code.as_bytes().to_vec();
+        let len = buf.len() as u32;
+        buf.resize(buf.len() + PAD, 0);
+        let mut opts = default_options();
+        opts.ts = ts;
+        let (res, _arena) = lex_utf8(&buf, len, opts);
+        assert_eq!(res.numbers_count, numbers, "numbers lane for {code:?}");
+        assert_eq!(res.atoms_count, atoms, "atoms lane for {code:?}");
+        assert_eq!(res.diagnostic_count, 0, "diagnostics for {code:?}: {:?}", res.diagnostics());
+    }
+}
+
+#[test]
+fn block_comment_star_plus_slash_is_not_a_terminator() {
+    for (code, tokens) in [
+        ("x = /* a *+/ b */ 1;", 4),
+        ("/* *+/ */ x", 1),
+        ("x = /**+/**/ 1;", 4),
+        (
+            "/*
+ *+/ still comment
+*/ y",
+            1,
+        ),
+    ] {
+        let mut buf = code.as_bytes().to_vec();
+        let len = buf.len() as u32;
+        buf.resize(buf.len() + PAD, 0);
+        let (res, arena) = lex_utf8(&buf, len, default_options());
+        let kinds = res.tok_kinds(&arena);
+        let non_trivia = kinds.iter().filter(|k| !k.is_trivia() && **k != TokenKind::Eof).count();
+        assert_eq!(non_trivia, tokens, "{code:?}: {kinds:?}");
+        assert_eq!(res.diagnostic_count, 0, "{code:?}: {:?}", res.diagnostics());
+    }
 }
