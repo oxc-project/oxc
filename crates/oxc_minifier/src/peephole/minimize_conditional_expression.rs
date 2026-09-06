@@ -105,17 +105,18 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
-            let consequent = consequent.take_in(ctx);
-            let new_test = Self::join_with_left_associative_op(
-                expr.test.span(),
-                LogicalOperator::And,
-                expr.test.take_in(ctx),
-                consequent.test,
-                ctx,
-            );
-            ctx.replace_expression(&mut expr.test, new_test);
-            ctx.replace_expression(&mut expr.consequent, consequent.consequent);
-            ctx.replace_expression(&mut expr.alternate, consequent.alternate);
+            let cons_expr = consequent.take_in(ctx);
+            ctx.replace_expression_with(&mut expr.test, |test, ctx| {
+                Self::join_with_left_associative_op(
+                    test.span(),
+                    LogicalOperator::And,
+                    test,
+                    cons_expr.test,
+                    ctx,
+                )
+            });
+            ctx.replace_expression(&mut expr.consequent, cons_expr.consequent);
+            ctx.drop_expression(&cons_expr.alternate);
             return Self::minimize_conditional_expression(expr, ctx);
         }
 
@@ -123,16 +124,18 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
-            let new_test = Self::join_with_left_associative_op(
-                expr.test.span(),
-                LogicalOperator::Or,
-                expr.test.take_in(ctx),
-                alternate.test.take_in(ctx),
-                ctx,
-            );
-            let new_alt = alternate.alternate.take_in(ctx);
-            ctx.replace_expression(&mut expr.test, new_test);
-            ctx.replace_expression(&mut expr.alternate, new_alt);
+            let alt_expr = alternate.take_in(ctx);
+            ctx.replace_expression_with(&mut expr.test, |test, ctx| {
+                Self::join_with_left_associative_op(
+                    test.span(),
+                    LogicalOperator::Or,
+                    test,
+                    alt_expr.test,
+                    ctx,
+                )
+            });
+            ctx.replace_expression(&mut expr.alternate, alt_expr.alternate);
+            ctx.drop_expression(&alt_expr.consequent);
             return Self::minimize_conditional_expression(expr, ctx);
         }
 
