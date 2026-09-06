@@ -1128,7 +1128,7 @@ mod test_watchers {
 mod test {
     use std::{fs, path::PathBuf};
 
-    use oxc_language_server::{CodeActionParams, Tool};
+    use oxc_language_server::{CodeActionParams, LanguageId, TextDocument, Tool};
     use oxc_linter::ExternalPluginStore;
     use rustc_hash::FxHashSet;
     use serde_json::json;
@@ -1200,7 +1200,13 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("unused_var.js");
-        let _ = linter.run_file(&uri, Some("let a = 1;")).unwrap();
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                language_id: LanguageId::default(),
+                text: Some("let a = 1;".into()),
+            })
+            .unwrap();
 
         // source.fixAll should only return safe fixes, not dangerous ones
         let safe_actions = linter.get_code_actions_or_commands(code_action_params(
@@ -1235,7 +1241,13 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("quickfix.js");
-        let _ = linter.run_file(&uri, Some("if (foo == NaN) {}")).unwrap();
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                language_id: LanguageId::default(),
+                text: Some("if (foo == NaN) {}".into()),
+            })
+            .unwrap();
         let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
@@ -1313,7 +1325,13 @@ mod test {
             "Default Context: Should return 0 code actions before running the file"
         );
 
-        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                text: Some("debugger;".into()),
+                language_id: LanguageId::default(),
+            })
+            .unwrap();
         let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
