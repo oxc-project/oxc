@@ -17,7 +17,6 @@ bb2: {
 
 bb3: {
 	statement
-	statement
 }
 
 bb4: {
@@ -29,6 +28,7 @@ bb5: {
 }
 
 bb6: {
+	statement
 	statement
 	statement
 }
@@ -88,12 +88,12 @@ digraph {
     1 [ label = "bb1" shape = box]
     2 [ label = "bb2" shape = box]
     3 [ label = "bb3
-ForInStatement
-VariableDeclaration" shape = box]
+ForInStatement" shape = box]
     4 [ label = "bb4" shape = box]
     5 [ label = "bb5
 Iteration(IdentifierReference(array) in expr)" shape = box]
     6 [ label = "bb6
+VariableDeclaration
 BlockStatement
 IfStatement" shape = box]
     7 [ label = "bb7

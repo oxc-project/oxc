@@ -1422,7 +1422,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
-        self.visit_for_statement_left(&stmt.left);
+        // Annex B permits a var initializer here. It runs once, before the RHS.
+        let has_initializer = matches!(
+            &stmt.left,
+            ForStatementLeft::VariableDeclaration(declaration)
+                if declaration.declarations.iter().any(|declarator| declarator.init.is_some())
+        );
+        if has_initializer {
+            self.visit_for_statement_left(&stmt.left);
+        }
 
         /* cfg */
         #[cfg(feature = "cfg")]
@@ -1450,6 +1458,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
+        // Evaluate assignment targets and destructuring only when an iteration succeeds.
+        if !has_initializer {
+            self.visit_for_statement_left(&stmt.left);
+        }
         self.visit_statement(&stmt.body);
 
         /* cfg */
@@ -1486,8 +1498,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         control_flow!(self, |cfg| cfg.enter_statement(self.node_store.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
-        self.visit_for_statement_left(&stmt.left);
-
         /* cfg */
         #[cfg(feature = "cfg")]
         let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
@@ -1513,6 +1523,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
+        // Evaluate assignment targets and destructuring only when an iteration succeeds.
+        self.visit_for_statement_left(&stmt.left);
         self.visit_statement(&stmt.body);
 
         /* cfg */
