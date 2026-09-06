@@ -874,10 +874,7 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
-                    if ctx_host
-                        .disable_directives()
-                        .contains(&format!("{plugin_name}/{rule_name}"), span)
-                    {
+                    if ctx_host.disable_directives().contains(plugin_name, rule_name, span) {
                         continue;
                     }
 
