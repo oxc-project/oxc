@@ -1073,8 +1073,22 @@ fn ox_codegen_terminal<'a>(
                 &cx.ast,
             )))
         }
-        ReactiveTerminal::For { init, test, update, loop_block, loop_block_span, .. } => {
-            let init_val = ox_codegen_for_init(cx, init)?;
+        ReactiveTerminal::For {
+            init,
+            init_is_direct_expression,
+            test,
+            update,
+            loop_block,
+            loop_block_span,
+            ..
+        } => {
+            let init_val = if *init_is_direct_expression {
+                Some(oxc::ForStatementInit::from(ox_codegen_instruction_value_to_expression(
+                    cx, init,
+                )?))
+            } else {
+                ox_codegen_for_init(cx, init)?
+            };
             let test_expr = ox_codegen_instruction_value_to_expression(cx, test)?;
             let update_expr = update
                 .as_ref()
