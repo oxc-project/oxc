@@ -1423,11 +1423,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         // Annex B permits a var initializer here. It runs once, before the RHS.
-        let has_initializer = matches!(
-            &stmt.left,
-            ForStatementLeft::VariableDeclaration(declaration)
-                if declaration.declarations.iter().any(|declarator| declarator.init.is_some())
-        );
+        let has_initializer = !self.strict_mode()
+            && matches!(
+                &stmt.left,
+                ForStatementLeft::VariableDeclaration(declaration)
+                    if declaration.kind.is_var()
+                        && declaration.declarations.len() == 1
+                        && matches!(declaration.declarations[0].id, BindingPattern::BindingIdentifier(_))
+                        && declaration.declarations[0].init.is_some()
+            );
         if has_initializer {
             self.visit_for_statement_left(&stmt.left);
         }
