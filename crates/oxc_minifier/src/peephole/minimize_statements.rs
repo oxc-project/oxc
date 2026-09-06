@@ -570,12 +570,8 @@ impl<'a> PeepholeOptimizations {
             && matches!(a, Expression::SequenceExpression(_))
             && matches!(b, Expression::SequenceExpression(_))
         {
-            let Expression::SequenceExpression(mut previous) = a else {
-                unreachable!()
-            };
-            let Expression::SequenceExpression(mut current) = b else {
-                unreachable!()
-            };
+            let Expression::SequenceExpression(mut previous) = a else { unreachable!() };
+            let Expression::SequenceExpression(mut current) = b else { unreachable!() };
             let mut changed = Self::conflate_assignments(&mut previous, ctx);
             changed |= Self::conflate_assignments(&mut current, ctx);
             changed |=

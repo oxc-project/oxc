@@ -61,6 +61,16 @@ fn statement_fusion_does_not_add_an_iteration() {
 }
 
 #[test]
+fn expression_statement_sequence_boundary_is_idempotent() {
+    test_options_with_iterations(
+        "export let x, y; export function f(value) { before(), x = value; y = value, after(); }",
+        "export let x, y; export function f(value) { before(), y = x = value, after(); }",
+        1,
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
 fn late_statement_fusion_is_idempotent() {
     test(
         "export let a, b, c, d; export function f() { a = 0; b = 0; for (c = 0, d = 1; c < d; c++); }",
