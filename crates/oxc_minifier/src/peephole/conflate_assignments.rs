@@ -363,6 +363,16 @@ fn symbol_is_stable(
     let may_be_mapped_parameter = symbol_flags.is_function_scoped_declaration()
         && !symbol_flags.is_catch_variable()
         && !scope_flags.is_strict_mode();
+    // Even a sole `var` initializer can run after a closure's first read: a
+    // setter may resume the enclosing generator while it is suspended before
+    // that initializer. Write references do not account for initialization.
+    let may_have_delayed_initializer = symbol_flags.is_function_scoped_declaration()
+        && !symbol_flags.is_catch_variable()
+        && PeepholeOptimizations::read_crosses_function_boundary(
+            ctx.current_scope_id(),
+            symbol_scope_id,
+            ctx,
+        );
     // Later declaration initializers are not write references. A setter can
     // resume a generator and execute one between the original evaluations.
     let has_multiple_value_declarations = scoping
@@ -373,6 +383,7 @@ fn symbol_is_stable(
         .is_some();
     let stable = !(scope_flags.contains(ScopeFlags::DirectEval)
         || may_be_mapped_parameter
+        || may_have_delayed_initializer
         || has_multiple_value_declarations
         || PeepholeOptimizations::symbol_value_may_change(symbol_id, ctx));
     cache.entries[cache.next] = Some((symbol_id, stable));

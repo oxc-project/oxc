@@ -157,6 +157,14 @@ fn redeclaration_initializers_are_not_stable() {
 }
 
 #[test]
+fn delayed_var_initializer_is_not_stable() {
+    test(
+        "export let iter; export function* gen() { let obj = { set a(x) { console.log(x); iter.next(); }, set b(x) { console.log(x); } }; yield () => { obj.a = value; obj.b = value; }; var value = 2; }",
+        "export let iter; export function* gen() { let obj = { set a(x) { console.log(x), iter.next(); }, set b(x) { console.log(x); } }; yield () => { obj.a = value, obj.b = value; }; var value = 2; }",
+    );
+}
+
+#[test]
 fn property_reads_are_not_repeatable() {
     let options = CompressOptions {
         treeshake: TreeShakeOptions {
