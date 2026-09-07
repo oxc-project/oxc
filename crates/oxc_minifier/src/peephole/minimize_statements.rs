@@ -15,6 +15,8 @@ use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
+type StatementIter<'a> = <ArenaVec<'a, Statement<'a>> as IntoIterator>::IntoIter;
+
 /// `false` when dropping `stmt` produces a byte-identical AST — a `var`
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
 /// the block. Flagging such an identity drop as a real change would
@@ -48,13 +50,11 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut old_stmts = stmts.take_in(ctx);
-        // Reverse once so we can consume statements in reverse order
-        old_stmts.reverse();
+        let mut old_stmts = stmts.take_in(ctx).into_iter();
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
-        while let Some(stmt) = old_stmts.pop() {
+        while let Some(stmt) = old_stmts.next() {
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -80,7 +80,7 @@ impl<'a> PeepholeOptimizations {
             // every branch jumps — makes the rest of the list unreachable.
             // https://github.com/rolldown/rolldown/issues/10184
             if !is_control_flow_dead
-                && !old_stmts.is_empty()
+                && !old_stmts.as_slice().is_empty()
                 && stmts.last().is_some_and(Statement::is_terminated)
             {
                 is_control_flow_dead = true;
@@ -131,7 +131,7 @@ impl<'a> PeepholeOptimizations {
 
     fn minimize_statement(
         stmt: Statement<'a>,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -530,7 +530,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_if_statement(
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
 
@@ -593,10 +593,10 @@ impl<'a> PeepholeOptimizations {
                     //
                     let can_move_branch_condition_outside_scope =
                         !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
-                            && !stmts.iter().any(Self::statement_cares_about_scope);
+                            && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
 
                     if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.drain(..).rev();
+                        let drained_stmts = stmts.by_ref();
                         let mut body = if let Some(alternate) = if_stmt.alternate.take() {
                             ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
                         } else {
