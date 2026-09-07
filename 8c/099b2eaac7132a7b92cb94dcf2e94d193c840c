@@ -1,0 +1,25 @@
+crates/oxc_minifier/tests/mangler/property_mangler.rs
+  s_d9f2dc2cdb6e73::t_f45a15062b4175 31,34,495,498,517,521-522,543-544,546,550-551
+tasks/benchmark/benches/minifier.rs
+  s_d9f2dc2cdb6e73::t_0d01cf24bb17c4 149,152
+crates/oxc_minifier/src/lib.rs
+  s_d9f2dc2cdb6e73::t_e830008c7ce06a 152,155
+crates/oxc_minifier/src/property_mangler.rs
+  s_d9f2dc2cdb6e73::t_14330f41621b30 17,98-99,103,175-176,178,180-189,198,200,202-209,211,215,218-219,237-243,246-247,251,255,263-264,271,282,285,292,304-307,312,314,317-318,329,332,342,360,366-368,370-371,378,390,398,404,406,408-410,415,418,420,423,427,429-431,440-455,461,468,473-474,478,482-484,492-493,499,508-509,516,528,558,560,570,574,591,598,609,611,620,623,660,671,681-682,775,778,788,790,810-811,813-814,818-819,821,824-825,830-833,840-841,845,849-850,860,869,874,890,896-901,904,906-912,920,925-932,941,946-956
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8c099b2eaac7132a7b92cb94dcf2e94d193c840c",
+  "prompts": {},
+  "sessions": {
+    "s_d9f2dc2cdb6e73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07ba1-ce20-7253-af78-d6c9374868ee",
+        "model": "unknown"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
