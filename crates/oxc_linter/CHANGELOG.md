@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.82.0] - 2026-09-07
+
+### 🚀 Features
+
+- 6a0e19c linter/eslint/no-unmodified-loop-condition: Support `checkConditionalExpressions` option (#26249) (camc314)
+
+### 🐛 Bug Fixes
+
+- 562dd14 jsx-a11y/anchor-has-content: Allow anchors passed as custom component props (#26360) (Mikhail Baev)
+- 253cdb2 linter/eslint/id-length: Exempt TS interface/type-literal members with never (#26310) (Pearce Ropion)
+- 5f9cffc linter/typescript/no-explicit-any: Fix rest parameter to `unknown[]` (#26279) (camc314)
+- 4de9fa3 linter/react/jsx-no-literals: Check nested JSX expression literals (#26253) (camc314)
+- a662c40 linter/eslint/no-useless-assignment: Handle destructuring assignments (#25925) (camc314)
+- 304bd9a linter/eslint/no-array-constructor: Handle ASI hazards in fixer (#26166) (Hamody We)
+- b41bb35 linter: Qualify rules in rules output (#26250) (camc314)
+- 895c685 linter/typescript/no-extraneous-class: Avoid deleting class expressions (#26231) (camc314)
+- 4ba33c8 linter/eslint/no-unused-vars: Handle stored arrow references (#26225) (camc314)
+
 ## [1.81.0] - 2026-08-31
 
 ### 🚀 Features
