@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 84/84 (100.00%)
-Positive Passed: 84/84 (100.00%)
-Negative Passed: 177/177 (100.00%)
+AST Parsed     : 85/85 (100.00%)
+Positive Passed: 85/85 (100.00%)
+Negative Passed: 185/185 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -200,6 +200,62 @@ Negative Passed: 177/177 (100.00%)
    ·                ┬
    ·                ╰── `;` expected
    ╰────
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-left-and.js:1:1]
+ 1 │ a && b ?? (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-left-or.js:1:1]
+ 1 │ a || b ?? (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-right-and.js:1:1]
+ 1 │ a ?? b && (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-right-or.js:1:1]
+ 1 │ a ?? b || (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-left-and.js:1:1]
+ 1 │ (a) && b ?? c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-left-or.js:1:1]
+ 1 │ (a) || b ?? c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-right-and.js:1:1]
+ 1 │ a ?? (b) && c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-right-or.js:1:1]
+ 1 │ a ?? (b) || c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
 
   × Cannot use export statement outside a module
    ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
