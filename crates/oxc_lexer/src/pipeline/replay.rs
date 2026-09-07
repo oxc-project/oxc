@@ -2,7 +2,8 @@ use crate::tables::Tables;
 
 use super::bitmap::bm_next1;
 use super::regex_div::{
-    bm_prev_sig, ident_is, lt_in_range, match_delim_back, operand_position, prop_name, tail_before,
+    AngleMatch, angle_match_back, bm_prev_sig, ident_is, lt_in_range, match_delim_back,
+    operand_position, prop_name, return_type_signature_paren, tail_before,
 };
 use super::{
     BCOM, HASHBANG, IDENT, IDENT_ESC, LCOM, NUM, PRIV_IDENT, PRIV_IDENT_ESC, STR, TMPL_HEAD,
@@ -66,6 +67,16 @@ unsafe fn header_kind(
         return None;
     }
     let mut p = w as usize;
+    if *kind.add(p) >= OP_KIND_BASE && *src.add(p) == b'>' && !(p > 0 && *src.add(p - 1) == b'=') {
+        let AngleMatch::Found(lt) = angle_match_back(src, st, kind, p) else {
+            return None;
+        };
+        let w = bm_prev_sig(st, kind, lt);
+        if w < 0 {
+            return None;
+        }
+        p = w as usize;
+    }
     if *kind.add(p) >= OP_KIND_BASE && *src.add(p) == b'*' {
         let f = bm_prev_sig(st, kind, p);
         if f >= 0 && *kind.add(f as usize) == IDENT && ident_is(src, f as usize, b"function") {
@@ -305,13 +316,20 @@ unsafe fn arrow_is_async(
     let hp = h as usize;
     if *kind.add(hp) == IDENT {
         let a = bm_prev_sig(st, kind, hp);
-        return a >= 0 && async_modifier(src, st, kind, n, a as usize, hp);
-    }
-    if *kind.add(hp) >= OP_KIND_BASE && *src.add(hp) == b')' {
+        if a >= 0 && async_modifier(src, st, kind, n, a as usize, hp) {
+            return true;
+        }
+    } else if *kind.add(hp) >= OP_KIND_BASE && *src.add(hp) == b')' {
         if let Some(lp) = match_delim_back(src, st, kind, hp, b'(', b')') {
             let a = bm_prev_sig(st, kind, lp);
-            return a >= 0 && async_modifier(src, st, kind, n, a as usize, lp);
+            if a >= 0 && async_modifier(src, st, kind, n, a as usize, lp) {
+                return true;
+            }
         }
+    }
+    if let Some(lp) = return_type_signature_paren(src, st, kind, gt.saturating_sub(1)) {
+        let a = bm_prev_sig(st, kind, lp);
+        return a >= 0 && async_modifier(src, st, kind, n, a as usize, lp);
     }
     false
 }
@@ -529,6 +547,18 @@ pub(super) unsafe fn replay_is_keyword(
                                     s.reserved = false;
                                     opened_body = true;
                                 }
+                            }
+                        }
+                    }
+                    if !opened_body && ts {
+                        if let Some(lp) = return_type_signature_paren(src, st, kind, pos) {
+                            if let Some((g, a)) =
+                                header_kind(src, st, kind, n, lp, enc.is_class, enc.is_obj)
+                            {
+                                s.is_gen = g;
+                                s.asyn = a;
+                                s.reserved = false;
+                                opened_body = true;
                             }
                         }
                     }

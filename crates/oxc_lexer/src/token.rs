@@ -224,7 +224,7 @@ define_token_kind! {
 
 /// First keyword kind: every kind `>= KW_BASE` other than [`TokenKind::Invalid`] is a keyword.
 pub const KW_BASE: u8 = TokenKind::KwBreak as u8;
-const KW_MAX: u8 = TokenKind::KwUsing as u8;
+pub(crate) const KW_MAX: u8 = TokenKind::KwUsing as u8;
 
 impl TokenKind {
     #[inline]
@@ -304,7 +304,13 @@ impl TokenKind {
     pub const fn is_numeric(self) -> bool {
         matches!(
             self,
-            Self::Number | Self::Decimal | Self::Float | Self::Binary | Self::Octal | Self::Hex
+            Self::Number
+                | Self::BigInt
+                | Self::Decimal
+                | Self::Float
+                | Self::Binary
+                | Self::Octal
+                | Self::Hex
         )
     }
 }
@@ -503,6 +509,13 @@ mod tests {
         assert!(TokenKind::LBrace as u8 >= 32 && (TokenKind::At as u8) < KW_BASE);
         assert!(!TokenKind::Invalid.is_keyword());
         assert!(TokenKind::Hashbang.is_trivia());
+    }
+
+    #[test]
+    fn numeric_predicate_covers_both_number_families() {
+        assert!(TokenKind::Number.is_numeric());
+        assert!(TokenKind::BigInt.is_numeric());
+        assert!(!TokenKind::String.is_numeric());
     }
 
     /// Backs the safety invariant of [`super::kinds_from_bytes`]: the lexer
