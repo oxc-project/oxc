@@ -143,6 +143,39 @@ fn private_in() {
 }
 
 #[test]
+fn private_in_binary_left() {
+    fn wrap_case_equal_higher_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(o) {{ return (#x in o) {op} 1; }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(o) {{\n\t\treturn (#x in o) {op} 1;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(o){{return(#x in o){op}1}}}}"),
+        )
+    }
+    fn wrap_case_equal_lower_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(o) {{ return (#x in o) {op} 1; }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(o) {{\n\t\treturn #x in o {op} 1;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(o){{return#x in o{op}1}}}}"),
+        )
+    }
+
+    for (source, expected, expected_minified) in
+        ["+", "-", "*", "/", "%", "**", "<<", ">>", ">>>"].map(wrap_case_equal_higher_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (source, expected, expected_minified) in
+        ["<", "<=", ">", ">=", "==", "!=", "===", "!==", "&", "^", "|", "&&", "||", "??"]
+            .map(wrap_case_equal_lower_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+}
+
+#[test]
 fn class() {
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
