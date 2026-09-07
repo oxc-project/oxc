@@ -979,7 +979,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // example of invalid code:
                 // type C<T extends unknown[]> = [...string[], ...T[]];
                 if let TSTupleElement::TSRestType(rest) = &tuple
-                    && match &rest.type_annotation {
+                    && let Some(rest_type) = (match &rest.type_annotation {
+                        TSType::TSNamedTupleMember(named) => named.element_type.as_ts_type(),
+                        ty => Some(ty),
+                    })
+                    && match rest_type {
                         TSType::TSArrayType(_) => true,
                         // Check for `Array<...>` type
                         TSType::TSTypeReference(ts_ref) => match &ts_ref.type_name {
