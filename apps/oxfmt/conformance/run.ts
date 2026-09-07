@@ -31,6 +31,25 @@ type Source = {
 
 // Shared note strings for deliberate Prettier divergences (deduped).
 // A note only IDENTIFIES the known diff; the explanation lives in the linked DIVERGENCES.md entry.
+// Grouped by the owning DIVERGENCES.md.
+
+// oxfmt (embedding)
+const NOTE_EMBEDDED_EXPRESSION_INDENT =
+  "embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent";
+const NOTE_BROKEN_TEMPLATE_COMMENT_INDENT =
+  "broken `${}` holding comments indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent";
+const NOTE_TS_IN_VUE_GENERIC_COMMA =
+  "`<T = any,>` comma removed like plain `.ts`. See apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma";
+const NOTE_STYLED_EXTEND_TAG =
+  "`Xxx.extend` not recognized as tag. See apps/oxfmt/DIVERGENCES.md#styled-extend-tag";
+
+// js
+const NOTE_UNION_ANNOTATION_FLAT =
+  "union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry";
+const NOTE_CAST_COMMENT_INSIDE_ADDED_PARENS =
+  "cast comment prints inside the formatter-added parens. See crates/oxc_formatter/DIVERGENCES.md#cast-comment-inside-added-parens";
+
+// css
 const NOTE_FILL_BREAK_POSITION =
   "fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position";
 const NOTE_MQ_OP_SPACING =
@@ -38,21 +57,15 @@ const NOTE_MQ_OP_SPACING =
 const NOTE_EOL_LINE_COMMENT_WIDTH =
   "trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width";
 
-const NOTE_EMBEDDED_EXPRESSION_INDENT =
-  "embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent";
-
-const NOTE_UNION_ANNOTATION_FLAT =
-  "union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry";
-
+// yaml
 const NOTE_BLOCK_SCALAR_TRAILING_WS =
   "block scalar trailing whitespace is part of the value. See crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace";
 
-const NOTE_BROKEN_TEMPLATE_COMMENT_INDENT =
-  "broken `${}` holding comments indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent";
-const NOTE_TS_IN_VUE_GENERIC_COMMA =
-  "`<T = any,>` comma removed like plain `.ts`. See apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma";
-const NOTE_STYLED_EXTEND_TAG =
-  "`Xxx.extend` not recognized as tag. See apps/oxfmt/DIVERGENCES.md#styled-extend-tag";
+// Open mismatches without a DIVERGENCES entry (to fix, not to admit): the note names the shape and the gap.
+
+// js
+const TODO_NEGATED_LOGICAL_IF_TEST =
+  "TODO: `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (conformance `js/if/condition-break/unary-expression.js`). Unrelated to JSDoc";
 
 const categories: Category[] = [
   {
@@ -88,8 +101,6 @@ const categories: Category[] = [
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
-      "externals/prettier/js/multiparser-graphql/graphql-tag.js":
-        "`{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter",
       "edge-cases/gql-in-js/template-expression-indent.js": NOTE_EMBEDDED_EXPRESSION_INDENT,
     },
   },
@@ -334,6 +345,15 @@ const categories: Category[] = [
       "externals/gitlab/stylesheets/framework/variables_overrides.scss":
         "no trailing comma into non-comma-list map-item parens. See crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only",
       "externals/gitlab/stylesheets/pages/profile.scss": NOTE_EOL_LINE_COMMENT_WIDTH,
+    },
+  },
+  {
+    name: "jsdoc",
+    sources: [{ dir: join(EXTERNALS_DIR, "svelte"), ext: ".js" }],
+    optionSets: [{ printWidth: 100 }],
+    notes: {
+      "externals/svelte/internal/client/dom/css.js": NOTE_CAST_COMMENT_INSIDE_ADDED_PARENS,
+      "externals/svelte/compiler/print/index.js": TODO_NEGATED_LOGICAL_IF_TEST,
     },
   },
 ];

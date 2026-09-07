@@ -155,7 +155,7 @@ rage = abacus
 ```
 ﻿daddy = magic;
 // 😀🤪😆😎🤮
-rage = abacus
+rage = abacus+"£"
 ```
 
 # File altered: files/bom_remove.js

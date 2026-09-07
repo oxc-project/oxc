@@ -1,0 +1,66 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A custom property value the typed grammar cannot read prints verbatim;
+   one it does read (`--typed`) is laid out as usual.
+   DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim"). */
+:root {
+  --z: */;
+  \-\-escaped: */;
+  --x:   1px   !foo;
+  --priority: */ /* keep priority gap */ !ImPoRtAnT;
+  --typed:   1px   !important;
+}
+
+/* A leading escape still denotes a case-sensitive custom property name.
+   DIVERGES from Prettier (DIVERGENCES.md "escaped-custom-property-case"). */
+.escaped-case {
+  \-\-CamelCase: red;
+  color: var(\-\-CamelCase);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A custom property value the typed grammar cannot read prints verbatim;
+   one it does read (`--typed`) is laid out as usual.
+   DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim"). */
+:root {
+  --z: */;
+  \-\-escaped: */;
+  --x: 1px   !foo;
+  --priority: */ /* keep priority gap */ !important;
+  --typed: 1px !important;
+}
+
+/* A leading escape still denotes a case-sensitive custom property name.
+   DIVERGES from Prettier (DIVERGENCES.md "escaped-custom-property-case"). */
+.escaped-case {
+  \-\-CamelCase: red;
+  color: var(\-\-CamelCase);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A custom property value the typed grammar cannot read prints verbatim;
+   one it does read (`--typed`) is laid out as usual.
+   DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim"). */
+:root {
+  --z: */;
+  \-\-escaped: */;
+  --x: 1px   !foo;
+  --priority: */ /* keep priority gap */ !important;
+  --typed: 1px !important;
+}
+
+/* A leading escape still denotes a case-sensitive custom property name.
+   DIVERGES from Prettier (DIVERGENCES.md "escaped-custom-property-case"). */
+.escaped-case {
+  \-\-CamelCase: red;
+  color: var(\-\-CamelCase);
+}
+
+===================== End =====================

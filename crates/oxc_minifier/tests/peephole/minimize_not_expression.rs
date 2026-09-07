@@ -18,6 +18,8 @@ fn minimize_duplicate_nots() {
     test("var v = !(!1);", "var v = !0;");
     test("var v = !(a || !0);", "var v = !(a || 1);");
     test("var v = !(a && !1);", "var v = !(a && 0);");
+    // fold not into sequence
+    test("var v = !(a, b)", "var v = (a, !b)");
 }
 
 #[test]

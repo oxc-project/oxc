@@ -111,7 +111,7 @@ fn codegen_impl(
 
     // Only print fixtures which parse cleanly. Oxc's parser recovers from errors, but a recovered
     // AST is not something the JS side can be expected to reproduce.
-    if ret.panicked || !ret.diagnostics.is_empty() {
+    if ret.fatal_error || !ret.diagnostics.is_empty() {
         return None;
     }
 

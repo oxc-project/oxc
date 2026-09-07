@@ -775,7 +775,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn check_getter(&mut self, function: &Function<'a>) {
         if let Some(type_parameters) = &function.type_parameters {
             self.error(diagnostics::accessor_cannot_have_type_parameters(type_parameters.span));
-        } else if !function.params.items.is_empty() {
+        } else if function.params.parameters_count() != 0 {
             self.error(diagnostics::getter_parameters(function.params.span));
         }
     }

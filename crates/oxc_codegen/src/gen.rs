@@ -988,9 +988,15 @@ impl Gen for ImportDeclaration<'_> {
                             p.print_str("type ");
                         }
 
-                        spec.imported.print(p, ctx);
                         let local_name = p.get_binding_identifier_name(&spec.local);
                         let imported_name = get_module_export_name(&spec.imported, p);
+                        if matches!(spec.imported, ModuleExportName::StringLiteral(_))
+                            && imported_name == local_name
+                        {
+                            spec.local.print(p, ctx);
+                            continue;
+                        }
+                        spec.imported.print(p, ctx);
                         if imported_name != local_name {
                             p.print_soft_space();
                             p.print_space_before_identifier();
@@ -3015,14 +3021,14 @@ impl Gen for AccessorProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_decorators(&self.decorators, ctx);
-        if self.r#type.is_abstract() {
-            p.print_space_before_identifier();
-            p.print_str("abstract");
-            p.print_soft_space();
-        }
         if let Some(accessibility) = self.accessibility {
             p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
+            p.print_soft_space();
+        }
+        if self.r#type.is_abstract() {
+            p.print_space_before_identifier();
+            p.print_str("abstract");
             p.print_soft_space();
         }
         if self.r#static {

@@ -151,7 +151,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
                 f.context_mut().comments_mut().increment_printed_count();
-                write!(f, comment);
+                write!(f, format_comment_text(comment));
 
                 let lines_after = f
                     .source_text()
@@ -307,12 +307,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                                 _ => write!(f, [empty_line()]),
                             }
 
-                            write!(f, [comment]);
+                            write!(f, [format_comment_text(comment)]);
                         }))]
                     );
                 } else {
-                    let content =
-                        format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
+                    let content = format_with(|f| {
+                        write!(f, [maybe_space(!should_nestle), format_comment_text(comment)]);
+                    });
 
                     if comment.is_line() {
                         write!(f, [line_suffix(&content), expand_parent()]);
@@ -454,7 +455,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                         [
                             (previous_comment.is_some() && !should_nestle)
                                 .then_some(hard_line_break()),
-                            comment
+                            format_comment_text(comment)
                         ]
                     );
 
@@ -499,8 +500,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
+struct FormatCommentText<'a>(&'a Comment);
+
+const fn format_comment_text(comment: &Comment) -> FormatCommentText<'_> {
+    FormatCommentText(comment)
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let comment = self.0;
         // Wrap every emitted comment with `JsLabels::Comment` when `sort_imports` is enabled.
         // So the IR transform can identify comments structurally (without textual prefix checks)
         // and suppress any internal line breaks (e.g. multi-line block / JSDoc).
@@ -510,8 +518,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
         }
 
         // JSDoc formatting: if enabled, try to format JSDoc comments
-        let formatted_jsdoc = if self.is_jsdoc()
-            && !self.is_legal()
+        let formatted_jsdoc = if comment.is_jsdoc()
+            && !comment.is_legal()
             && let Some(jsdoc_options) = &f.options().jsdoc
         {
             let source: &str = &f.source_text();
@@ -527,7 +535,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
             // counts the adjacent whitespace, giving more room for the comment content
             // and preventing unnecessary type wrapping.
             let indent_chars = {
-                let start = self.span.start as usize;
+                let start = comment.span.start as usize;
                 let before = &source[..start];
                 let tab_width = f.options().indent_width.value() as usize;
                 before
@@ -538,7 +546,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
                     .sum::<usize>()
             };
             let available_width = line_width.saturating_sub(indent_chars);
-            super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
+            super::jsdoc::format_jsdoc_comment(comment, jsdoc_options, source, available_width, f)
         } else {
             None
         };
@@ -546,8 +554,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
         if let Some(formatted) = formatted_jsdoc {
             write!(f, [formatted]);
         } else {
-            let content = f.source_text().text_for(&self.span);
-            if self.is_multiline_block() {
+            let content = f.source_text().text_for(&comment.span);
+            if comment.is_multiline_block() {
                 let mut lines = LineTerminatorSplitter::new(content);
                 if is_alignable_comment(content) {
                     // `unwrap` is safe because `content` contains at least one line.
@@ -578,6 +586,27 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
 
         if wrap {
             f.write_element(FormatElement::Tag(Tag::EndLabelled));
+        }
+    }
+}
+
+/// A manually claimed comment written in place: marks it printed, and a line comment ends its line.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatCommentBeforeContent<'a>(&'a Comment);
+
+impl<'a> FormatCommentBeforeContent<'a> {
+    pub const fn new(comment: &'a Comment) -> Self {
+        Self(comment)
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentBeforeContent<'_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        f.context_mut().comments_mut().increment_printed_count();
+        write!(f, format_comment_text(self.0));
+        if self.0.is_line() {
+            write!(f, hard_line_break());
         }
     }
 }

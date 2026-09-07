@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 32bdc5b allocator: Construct `ArenaHashSet` with any `Default` hasher (#26372) (Dunqing)
+
 ## [0.142.0] - 2026-07-27
 
 ### 🚀 Features

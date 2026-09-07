@@ -39,6 +39,7 @@ pub use arrow_function_expression::{
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
+pub use semicolon::write_comments_before_closing_paren;
 pub use union_type::{
     alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
 };
@@ -87,7 +88,7 @@ use crate::{
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
-        typecast::classify_type_cast,
+        typecast::is_cast_target,
     },
     write,
 };
@@ -645,7 +646,7 @@ fn expression_statement_needs_semicolon<'a>(
                 // so the line starts with `(` even though `needs_parentheses` is false:
                 // `/** @type {string} */ (this.s).length`
                 // Checked last: this scans source text/comments, unlike the checks above.
-                || classify_type_cast(expr.span(), f).is_target()
+                || is_cast_target(expr.span(), f)
         }
         ExpressionLeftSide::AssignmentTarget(assignment) => {
             matches!(

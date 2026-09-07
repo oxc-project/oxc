@@ -1423,7 +1423,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         match kind {
             TSMethodSignatureKind::Get => {
-                if !params.items.is_empty() {
+                if params.parameters_count() != 0 {
                     self.error(diagnostics::getter_parameters(params.span));
                 }
             }

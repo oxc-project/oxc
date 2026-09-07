@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -30,12 +30,15 @@ pub struct NumericSeparatorsStyleConfig {
     only_if_contains_separator: bool,
     /// Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
     /// Controls how digits are grouped and when separators are applied.
+    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<2, 0>")]
     hexadecimal: NumericBaseConfig,
     /// Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
     /// Controls how digits are grouped and when separators are applied.
+    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<4, 0>")]
     binary: NumericBaseConfig,
     /// Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
     /// Controls how digits are grouped and when separators are applied.
+    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<4, 0>")]
     octal: NumericBaseConfig,
     /// Configuration for decimal numbers (integers, fraction parts, and exponents).
     /// Controls how digits are grouped and when separators are applied.
@@ -92,6 +95,20 @@ struct NumericBaseConfig {
 }
 
 impl NumericBaseConfig {
+    // The shared type's defaults differ from the defaults for each numeric base.
+    fn schema_with_defaults<const GROUP_LENGTH: u32, const MINIMUM_DIGITS: u32>(
+        generator: &mut SchemaGenerator,
+    ) -> Schema {
+        let mut schema = Self::json_schema(generator).into_object();
+        let properties = &mut schema.object.as_mut().unwrap().properties;
+        for (name, value) in [("groupLength", GROUP_LENGTH), ("minimumDigits", MINIMUM_DIGITS)] {
+            if let Schema::Object(property) = properties.get_mut(name).unwrap() {
+                property.metadata().default = Some(value.into());
+            }
+        }
+        schema.into()
+    }
+
     pub(self) fn set_numeric_base_from_config(&mut self, val: &serde_json::Value) {
         if let Some(group_length) = val.get("groupLength").and_then(serde_json::Value::as_u64) {
             self.group_length = u32::try_from(group_length).unwrap();
@@ -110,6 +127,7 @@ impl NumericBaseConfig {
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NumericNumberConfig {
     #[serde(flatten)]
+    #[schemars(schema_with = "NumericBaseConfig::schema_with_defaults::<3, 5>")]
     base: NumericBaseConfig,
     /// The size a group of digits in the fractional part (after the decimal point) should be.
     fraction_group_length: u32,

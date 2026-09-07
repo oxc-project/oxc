@@ -40,6 +40,11 @@ pub fn test_tsx(source_text: &str, expected: &str) {
 }
 
 #[track_caller]
+pub fn test_ts(source_text: &str, expected: &str) {
+    test_options_with_source_type(source_text, expected, SourceType::ts(), default_options());
+}
+
+#[track_caller]
 pub fn test_options_with_source_type(
     source_text: &str,
     expected: &str,

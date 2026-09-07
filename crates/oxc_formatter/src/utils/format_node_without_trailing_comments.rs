@@ -5,7 +5,7 @@ use crate::{
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::format_leading_comments,
     },
-    utils::suppressed::FormatSuppressedNode,
+    utils::{suppressed::FormatSuppressedNode, typecast::cast_target_end},
 };
 
 /// Generic wrapper for formatting a node without its trailing comments.
@@ -20,7 +20,11 @@ where
     T: Format<'a, JsFormatContext<'a>> + GetSpan,
 {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let node_end = self.0.span().end;
+        // A JSDoc cast target's hidden range starts past its cast parens (see `cast_target_end`);
+        // a suppression comment there keeps the plain span for the suppressed path below.
+        let node_end = cast_target_end(self.0.span(), f)
+            .filter(|end| !f.comments().has_trailing_suppression_comment(*end))
+            .unwrap_or(self.0.span().end);
 
         if f.comments().has_trailing_suppression_comment(node_end) {
             format_leading_comments(self.0.span()).fmt(f);

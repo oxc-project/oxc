@@ -7,6 +7,7 @@
 //! - drives one format pass per option-set × per printWidth (80 + 100)
 //! - re-formats each output and pins any mismatch as a `Not idempotent` section
 //!   (idempotency violations are tracked in the snapshot, not asserted)
+//! - asserts the consumer's fingerprint of the input equals that of the output (lossless contract)
 //! - assembles the canonical `==== Input ==== ... ==== Output ==== ...` snapshot
 //! - returns the body for the consumer's `insta::assert_snapshot!`
 //!
@@ -88,12 +89,22 @@ pub trait FixtureFormatter {
     /// The typed format-option struct for this language.
     type Options: Clone;
 
+    /// Source-derived value that formatting must leave unchanged;
+    /// the harness compares the input's against the output's.
+    /// The harness knows nothing about what it captures, the consumer does
+    /// (comment counts, an AST fingerprint, ...).
+    type Fingerprint: PartialEq + std::fmt::Debug;
+
     /// Build typed options from a parsed `options.json` fragment.
     fn parse_options(json: &OptionSet) -> Self::Options;
 
     /// Format `source` (the contents of the fixture file at `path`) using `options`.
     /// `path` is passed for variant detection (e.g. `.json` vs `.jsonc`).
     fn format(source: &str, path: &Path, options: &Self::Options) -> String;
+
+    /// [`Self::Fingerprint`] of `source`.
+    /// Take it from the formatter's own parse (`parse_for_format`), so no test re-implements the parser setup.
+    fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Self::Fingerprint;
 }
 
 /// Resolves format options for `test_file` by walking up the directory tree
@@ -226,6 +237,15 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
         let options = F::parse_options(&option_json);
         let formatted = F::format(source_text, path, &options);
         assert_line_ending_applied(&option_json, &formatted, path);
+        // Lossless contract (`FORMATTER_POLICY.md`, reason (2)): formatting drops nothing the user wrote.
+        // What is measured is the consumer's `Fingerprint`.
+        // Unlike idempotency this is asserted, not pinned: a loss is inadmissible whatever the snapshot says.
+        assert_eq!(
+            F::fingerprint(source_text, path, &options),
+            F::fingerprint(&formatted, path, &options),
+            "fingerprint changed by formatting {} with {options_line}\n  output:\n{formatted}",
+            path.display(),
+        );
 
         snapshot.push_str(&formatted);
         snapshot.push('\n');

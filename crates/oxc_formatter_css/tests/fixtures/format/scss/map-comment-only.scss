@@ -13,11 +13,17 @@ $multi: (
   // b
 );
 // Regression guards: a truly empty map stays `()`, and a map WITH items still
-// renders its leading comment normally. A comment before the FIRST item makes
-// the group `groups[0]` a non-key-value pair in Prettier, so the map stops
-// being an SCSS map item and loses its trailing comma.
+// renders its leading comment normally. A comment before the FIRST item changes
+// nothing: `$with-block` prints like `$no-comment`. Prettier inlines it and drops
+// the trailing comma (DIVERGENCES.md "map-leading-comment-layout").
 $empty: ();
 $with-items: (
   // comment
   a: 1,
+);
+$no-comment: (a: 1);
+$with-block: (/* c */ a: 1);
+$later-item: (
+  a: 1,
+  /* c */ b: 2,
 );

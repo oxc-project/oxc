@@ -149,10 +149,10 @@ impl<'a> Minifier {
         // Run property mangling first because compression can change which strings are property
         // keys.
         let property_mangle_cache = mangle_properties.map(|options| {
-            let mut mangler = PropertyMangler::new(options);
+            let mut mangler = PropertyMangler::new_in(options, allocator);
             mangler.collect(program);
             mangler.assign();
-            mangler.rewrite(program, allocator);
+            mangler.rewrite(program);
             mangler.into_cache()
         });
 

@@ -8,7 +8,7 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
+use oxc_formatter_css::{CssFormatOptions, CssVariant, format, parse_for_format};
 use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
 
 mod options;
@@ -16,8 +16,15 @@ use options::apply_css_options;
 
 struct CssHarness;
 
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+#[derive(Debug, PartialEq)]
+struct Fingerprint {
+    comments: usize,
+}
+
 impl FixtureFormatter for CssHarness {
     type Options = CssFormatOptions;
+    type Fingerprint = Fingerprint;
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = CssFormatOptions::default();
@@ -26,18 +33,9 @@ impl FixtureFormatter for CssHarness {
     }
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
-        // The dialect comes from the fixture extension, like oxfmt's classifier.
-        let variant = match path.extension().and_then(|e| e.to_str()) {
-            Some("scss") => CssVariant::Scss,
-            Some("less") => CssVariant::Less,
-            _ => CssVariant::Css,
-        };
-        let options = CssFormatOptions { variant, ..*options };
+        let options = CssFormatOptions { variant: variant_of(path), ..*options };
 
-        // Fixtures under `embedded/` exercise the dispatcher entry point
-        // (`format_to_ir`, css-in-js), which tolerates
-        // `` `PLACEHOLDER-N` `` markers in value/selector position.
-        if path.components().any(|c| c.as_os_str() == "embedded") {
+        if is_embedded(path) {
             return format_embedded(source, options);
         }
 
@@ -48,6 +46,35 @@ impl FixtureFormatter for CssHarness {
             .expect("print should succeed")
             .into_code()
     }
+
+    fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
+        let options = CssFormatOptions { variant: variant_of(path), ..*options };
+        let allocator = Allocator::default();
+        let parsed = parse_for_format(
+            &allocator,
+            source,
+            options,
+            /* template_placeholders */ is_embedded(path),
+        )
+        .expect("source should parse");
+        Fingerprint { comments: parsed.comments.len() }
+    }
+}
+
+/// The dialect comes from the fixture extension, like oxfmt's classifier.
+fn variant_of(path: &Path) -> CssVariant {
+    match path.extension().and_then(|e| e.to_str()) {
+        Some("scss") => CssVariant::Scss,
+        Some("less") => CssVariant::Less,
+        _ => CssVariant::Css,
+    }
+}
+
+/// Fixtures under `embedded/` exercise the dispatcher entry point
+/// (`format_to_ir`, css-in-js), which tolerates
+/// `` `PLACEHOLDER-N` `` markers in value/selector position.
+fn is_embedded(path: &Path) -> bool {
+    path.components().any(|c| c.as_os_str() == "embedded")
 }
 
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
@@ -107,7 +134,6 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 
 // ---
 
-/// A leading BOM is preserved (Prettier does the same).
 #[test]
 fn bom_is_preserved() {
     let allocator = Allocator::default();
@@ -120,10 +146,6 @@ fn bom_is_preserved() {
     assert_eq!(formatted, "\u{feff}a {\n  color: red;\n}\n");
 }
 
-/// Any parse error must surface as `Err` from the standalone `format()` entry,
-/// including oxc-css-parser's recoverable ones (top-level declarations are invalid here
-/// too — only the embedded `format_to_ir` entry tolerates them, see
-/// `embedded/scss/top-level-declaration.scss`).
 #[test]
 fn parse_error_is_err() {
     let allocator = Allocator::default();
@@ -131,8 +153,8 @@ fn parse_error_is_err() {
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
     let less = CssFormatOptions { variant: CssVariant::Less, ..css };
     for (source, options) in [
-        // Top-level declaration: valid only as an embedded css-in-js fragment
-        // (`format_to_ir`); standalone files must reject it like Dart Sass does.
+        // Root declaration: `TopLevelDeclaration` outside the css-in-js parse mode
+        // (dart-sass rejects it; Less parses it like less.js).
         ("display: flex;", scss),
         // EOF/newline-unclosed constructs: oxc-css-parser (0.0.6+) recovers to a
         // valid AST but records the spec parse error, so they bail like every

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 80/80 (100.00%)
-Positive Passed: 80/80 (100.00%)
-Negative Passed: 168/168 (100.00%)
+AST Parsed     : 89/89 (100.00%)
+Positive Passed: 89/89 (100.00%)
+Negative Passed: 189/189 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -136,6 +136,60 @@ Negative Passed: 168/168 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[misc/fail/arrow-block-body-in-context.js:1:6]
+ 1 │ for (var f = () => {}, value = a in b;;);
+   ·      ───────────────────────────
+   ╰────
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/arrow-block-body-in-context.js:1:38]
+ 1 │ for (var f = () => {}, value = a in b;;);
+   ·     ┬                                ┬
+   ·     │                                ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/arrow-expression-body-in.js:1:26]
+ 1 │ for (var f = () => a in b;;);
+   ·     ┬                    ┬
+   ·     │                    ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
+
+  × Illegal break statement
+   ╭─[misc/fail/arrow-function-jumps.js:1:25]
+ 1 │ while (true) { (() => { break; }); }
+   ·                         ──────
+ 2 │ 
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:3:38]
+ 2 │ 
+ 3 │ outer: while (true) { (() => { break outer; }); }
+   ·                                      ─────
+ 4 │ 
+   ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[misc/fail/arrow-function-jumps.js:5:25]
+ 4 │ 
+ 5 │ while (true) { (() => { continue; }); }
+   ·                         ─────────
+ 6 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:7:41]
+ 6 │ 
+ 7 │ outer: while (true) { (() => { continue outer; }); }
+   ·                                         ─────
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
  2 │   class C {
@@ -168,6 +222,62 @@ Negative Passed: 168/168 (100.00%)
    ·                ┬
    ·                ╰── `;` expected
    ╰────
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-left-and.js:1:1]
+ 1 │ a && b ?? (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-left-or.js:1:1]
+ 1 │ a || b ?? (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-right-and.js:1:1]
+ 1 │ a ?? b && (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-right-or.js:1:1]
+ 1 │ a ?? b || (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-left-and.js:1:1]
+ 1 │ (a) && b ?? c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-left-or.js:1:1]
+ 1 │ (a) || b ?? c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-right-and.js:1:1]
+ 1 │ a ?? (b) && c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-right-or.js:1:1]
+ 1 │ a ?? (b) || c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
 
   × Cannot use export statement outside a module
    ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
@@ -232,12 +342,78 @@ Negative Passed: 168/168 (100.00%)
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
 
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:1:24]
+ 1 │ class DuplicateField { #x; x; #x; }
+   ·                        ─┬     ─┬
+   ·                         │      ╰── It can not be redeclared here
+   ·                         ╰── `#x` has already been declared here
+ 2 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:3:29]
+ 2 │ 
+ 3 │ class DuplicateGetter { get #x() {} set #x(value) {} get #x() {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+ 4 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:5:29]
+ 4 │ 
+ 5 │ class DuplicateSetter { set #x(value) {} get #x() {} set #x(value) {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+   ╰────
+
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[misc/fail/escape-00.js:1:25]
  1 │ export const escape00 = "\00";
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:1:8]
+ 1 │ import t\u0079pe Foo = require("m");
+   ·        ─────────
+ 2 │ import t\u0079pe { x } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:2:8]
+ 1 │ import t\u0079pe Foo = require("m");
+ 2 │ import t\u0079pe { x } from "m";
+   ·        ─────────
+ 3 │ import t\u0079pe * as ns from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:3:8]
+ 2 │ import t\u0079pe { x } from "m";
+ 3 │ import t\u0079pe * as ns from "m";
+   ·        ─────────
+ 4 │ import { t\u0079pe Bar } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:4:10]
+ 3 │ import t\u0079pe * as ns from "m";
+ 4 │ import { t\u0079pe Bar } from "m";
+   ·          ─────────
+ 5 │ import t\u0079pe fr\u006fm "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:5:18]
+ 4 │ import { t\u0079pe Bar } from "m";
+ 5 │ import t\u0079pe fr\u006fm "m";
+   ·                  ─────────
+   ╰────
 
   × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
@@ -280,6 +456,76 @@ Negative Passed: 168/168 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-eof.js:2:1]
+ 1 │ export {} from
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-newline.js:2:1]
+ 1 │ export {} from
+ 2 │ foo();
+   · ───
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-semicolon.js:1:15]
+ 1 │ export {} from;
+   ·               ─
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[misc/fail/export-from-prior-lexer-error.js:1:11]
+ 1 │ export { "\xG" as foo } from
+   ·           ──
+   ╰────
+
+  × Unterminated multiline comment
+   ╭─[misc/fail/export-from-unterminated-comment.js:1:16]
+ 1 │ export {} from /*
+   ·                ───
+   ╰────
+
+  × Unterminated string
+   ╭─[misc/fail/export-from-unterminated-source.js:1:16]
+ 1 │ export {} from "
+   ·                ──
+   ╰────
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:1:16]
+ 1 │ class C { get x(...args) {} }
+   ·                ─────────
+ 2 │ ({ get x(...args) {} });
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:2:9]
+ 1 │ class C { get x(...args) {} }
+ 2 │ ({ get x(...args) {} });
+   ·         ─────────
+ 3 │ interface I { get x(...args: any[]): string }
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:3:20]
+ 2 │ ({ get x(...args) {} });
+ 3 │ interface I { get x(...args: any[]): string }
+   ·                    ────────────────
+ 4 │ type T = { get x(...args: any[]): string };
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:4:17]
+ 3 │ interface I { get x(...args: any[]): string }
+ 4 │ type T = { get x(...args: any[]): string };
+   ·                 ────────────────
+   ╰────
+  help: Remove these parameters here
 
   × HTML comments are not allowed in modules
    ╭─[misc/fail/html-comment-in-module.mjs:1:1]
@@ -4259,6 +4505,22 @@ Negative Passed: 168/168 (100.00%)
    ·           ──
    ╰────
   help: Expected an identifier, like `...rest`.
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:1:26]
+ 1 │ async function f(...[x = await 0]) {}
+   ·                          ───┬───
+   ·                             ╰── await expression not allowed in formal parameter
+ 2 │ function* g(...[x = yield 0]) {}
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:2:21]
+ 1 │ async function f(...[x = await 0]) {}
+ 2 │ function* g(...[x = yield 0]) {}
+   ·                     ───┬───
+   ·                        ╰── yield expression not allowed in formal parameter
+   ╰────
 
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]

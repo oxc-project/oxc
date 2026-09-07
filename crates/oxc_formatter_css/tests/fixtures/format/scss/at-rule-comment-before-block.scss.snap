@@ -1,0 +1,207 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment glued to the end of a prelude stays on that line; a `//` there ends the line,
+// so `{` starts the next one. Own-line comments keep their line before the `{`.
+// Prettier agrees for `@page` / `@keyframes` / `@font-face` / `@if`, but moves the `//`
+// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md "line-comment-before-block").
+@page :first // c
+{
+  margin: 1px;
+}
+@page :first /* b */ // c
+{
+  margin: 1px;
+}
+@page :first /* c */ {
+  margin: 1px;
+}
+@page :first
+// c
+{
+  margin: 1px;
+}
+@font-face // c
+{
+  a: b;
+}
+@media screen // c
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b) // c
+{
+  a {
+    b: c;
+  }
+}
+@mixin m($a) // c
+{
+  b: c;
+}
+.a {
+  @include m // c
+  {
+    b: c;
+  }
+}
+@if $a // c
+{
+  b: c;
+} @else // d
+{
+  d: e;
+}
+@each $i in a, b // c
+{
+  b: c;
+}
+// Inside a query / condition: a glued `//` trails its word, the rest continues one level in.
+@media screen // c
+  and (min-width: 1px) {
+}
+@supports (display: grid) // c
+  and (gap: 1px) {
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment glued to the end of a prelude stays on that line; a `//` there ends the line,
+// so `{` starts the next one. Own-line comments keep their line before the `{`.
+// Prettier agrees for `@page` / `@keyframes` / `@font-face` / `@if`, but moves the `//`
+// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md "line-comment-before-block").
+@page :first // c
+{
+  margin: 1px;
+}
+@page :first /* b */ // c
+{
+  margin: 1px;
+}
+@page :first /* c */ {
+  margin: 1px;
+}
+@page :first
+// c
+{
+  margin: 1px;
+}
+@font-face // c
+{
+  a: b;
+}
+@media screen // c
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b) // c
+{
+  a {
+    b: c;
+  }
+}
+@mixin m($a) // c
+{
+  b: c;
+}
+.a {
+  @include m // c
+  {
+    b: c;
+  }
+}
+@if $a // c
+{
+  b: c;
+} @else // d
+{
+  d: e;
+}
+@each $i in a, b // c
+{
+  b: c;
+}
+// Inside a query / condition: a glued `//` trails its word, the rest continues one level in.
+@media screen // c
+  and (min-width: 1px) {
+}
+@supports (display: grid) // c
+  and (gap: 1px) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment glued to the end of a prelude stays on that line; a `//` there ends the line,
+// so `{` starts the next one. Own-line comments keep their line before the `{`.
+// Prettier agrees for `@page` / `@keyframes` / `@font-face` / `@if`, but moves the `//`
+// past the `{` for `@media` / `@supports` / `@mixin` / `@include` (`{ // c`, DIVERGENCES.md "line-comment-before-block").
+@page :first // c
+{
+  margin: 1px;
+}
+@page :first /* b */ // c
+{
+  margin: 1px;
+}
+@page :first /* c */ {
+  margin: 1px;
+}
+@page :first
+// c
+{
+  margin: 1px;
+}
+@font-face // c
+{
+  a: b;
+}
+@media screen // c
+{
+  a {
+    b: c;
+  }
+}
+@supports (a: b) // c
+{
+  a {
+    b: c;
+  }
+}
+@mixin m($a) // c
+{
+  b: c;
+}
+.a {
+  @include m // c
+  {
+    b: c;
+  }
+}
+@if $a // c
+{
+  b: c;
+} @else // d
+{
+  d: e;
+}
+@each $i in a, b // c
+{
+  b: c;
+}
+// Inside a query / condition: a glued `//` trails its word, the rest continues one level in.
+@media screen // c
+  and (min-width: 1px) {
+}
+@supports (display: grid) // c
+  and (gap: 1px) {
+}
+
+===================== End =====================

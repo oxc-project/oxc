@@ -25,7 +25,7 @@
 
 ## gql-in-js
 
-### Option 1: 10/12 (83.33%)
+### Option 1: 11/12 (91.67%)
 
 ```json
 {"printWidth":80}
@@ -34,9 +34,8 @@
 | File | Note |
 | :--- | :--- |
 | [edge-cases/gql-in-js/template-expression-indent.js](diffs/gql-in-js/edge-cases__gql-in-js__template-expression-indent.js.md) | embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent |
-| [externals/prettier/js/multiparser-graphql/graphql-tag.js](diffs/gql-in-js/externals__prettier__js__multiparser-graphql__graphql-tag.js.md) | `{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter |
 
-### Option 2: 10/12 (83.33%)
+### Option 2: 11/12 (91.67%)
 
 ```json
 {"printWidth":100}
@@ -45,7 +44,6 @@
 | File | Note |
 | :--- | :--- |
 | [edge-cases/gql-in-js/template-expression-indent.js](diffs/gql-in-js/edge-cases__gql-in-js__template-expression-indent.js.md) | embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent |
-| [externals/prettier/js/multiparser-graphql/graphql-tag.js](diffs/gql-in-js/externals__prettier__js__multiparser-graphql__graphql-tag.js.md) | `{ # c` comment after an opening delimiter stays inline. See crates/oxc_formatter_graphql/DIVERGENCES.md#comment-after-opening-delimiter |
 
 ## css-in-js
 
@@ -351,3 +349,16 @@
 | [externals/gitlab/stylesheets/page_bundles/projects.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__projects.scss.md) | media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing |
 | [externals/gitlab/stylesheets/page_bundles/settings.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__settings.scss.md) | media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing |
 | [externals/gitlab/stylesheets/pages/settings.scss](diffs/scss/externals__gitlab__stylesheets__pages__settings.scss.md) | media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing |
+
+## jsdoc
+
+### Option 1: 368/370 (99.46%)
+
+```json
+{"printWidth":100}
+```
+
+| File | Note |
+| :--- | :--- |
+| [externals/svelte/compiler/print/index.js](diffs/jsdoc/externals__svelte__compiler__print__index.js.md) | TODO: `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (conformance `js/if/condition-break/unary-expression.js`). Unrelated to JSDoc |
+| [externals/svelte/internal/client/dom/css.js](diffs/jsdoc/externals__svelte__internal__client__dom__css.js.md) | cast comment prints inside the formatter-added parens. See crates/oxc_formatter/DIVERGENCES.md#cast-comment-inside-added-parens |

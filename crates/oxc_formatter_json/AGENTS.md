@@ -8,9 +8,10 @@ Prettier compatible JSON/JSONC/JSON5/JSON.stringify formatter (`oxfmt`'s Tier 1 
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
-- Two entry points:
+- Entry points:
   - `format()`: standalone files (returns a printable `Formatted`)
   - `format_to_ir()`: embedded use via the dispatcher (e.g. a fenced block in JSDoc)
+  - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 - This crate holds only the JSON-specific layer
 - Parses with `oxc_parser`, not `serde_json`
   - For Prettier, JSON is not spec compliant JSON

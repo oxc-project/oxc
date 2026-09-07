@@ -1,10 +1,8 @@
-use rustc_hash::FxHashSet;
-
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_str::Str;
+use oxc_str::{Ident, IdentHashSet};
 use oxc_syntax::scope::ScopeId;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
@@ -195,12 +193,12 @@ impl<'a> MinifierState<'a> {
 
 /// Private member names used in each currently enclosing class.
 pub struct PrivateMemberUsageStack<'a> {
-    stack: NonEmptyStack<FxHashSet<Str<'a>>>,
+    stack: NonEmptyStack<IdentHashSet<'a>>,
 }
 
 impl<'a> PrivateMemberUsageStack<'a> {
     pub fn new() -> Self {
-        Self { stack: NonEmptyStack::new(FxHashSet::default()) }
+        Self { stack: NonEmptyStack::new(IdentHashSet::default()) }
     }
 
     /// Whether all class scopes have been exited.
@@ -209,11 +207,11 @@ impl<'a> PrivateMemberUsageStack<'a> {
     }
 
     pub fn enter_class(&mut self) {
-        self.stack.push(FxHashSet::default());
+        self.stack.push(IdentHashSet::default());
     }
 
     /// Exit a class and propagate uses of names declared by an outer class.
-    pub fn exit_class(&mut self, declared_private_members: impl Iterator<Item = Str<'a>>) {
+    pub fn exit_class(&mut self, declared_private_members: impl Iterator<Item = Ident<'a>>) {
         let mut used_private_members = self.stack.pop();
         declared_private_members.for_each(|name| {
             used_private_members.remove(&name);
@@ -221,11 +219,11 @@ impl<'a> PrivateMemberUsageStack<'a> {
         self.stack.last_mut().extend(used_private_members);
     }
 
-    pub fn record_use(&mut self, name: Str<'a>) {
+    pub fn record_use(&mut self, name: Ident<'a>) {
         self.stack.last_mut().insert(name);
     }
 
-    pub fn is_used(&self, name: &Str<'a>) -> bool {
+    pub fn is_used(&self, name: &Ident<'a>) -> bool {
         self.stack.last().contains(name)
     }
 }

@@ -103,14 +103,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else if self.is_ts && token_after_import.kind() == Kind::Type {
             // `import type ...`
 
-            if token_after_import.escaped() {
-                self.error(diagnostics::escaped_keyword(token_after_import.span()));
-            }
-
             let kind = self.cur_kind();
             if kind == Kind::LCurly || kind == Kind::Star {
                 // `import type { ...`
                 // `import type * ...`
+                if token_after_import.escaped() {
+                    self.error(diagnostics::escaped_keyword(token_after_import.span()));
+                }
                 import_kind = ImportOrExportKind::Type;
                 has_default_specifier = false;
             } else if kind.is_binding_identifier() {
@@ -119,10 +118,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let identifier_after_type = self.parse_binding_identifier();
                 if token.kind() == Kind::From && self.at(Kind::Str) {
                     // `import type from 'source'`
+                    if token.escaped() {
+                        self.error(diagnostics::escaped_keyword(token.span()));
+                    }
                     has_default_specifier = true;
                     import_kind = ImportOrExportKind::Value;
                     should_parse_specifiers = false;
                 } else {
+                    if token_after_import.escaped() {
+                        self.error(diagnostics::escaped_keyword(token_after_import.span()));
+                    }
                     identifier_after_import = Some(identifier_after_type);
                     import_kind = ImportOrExportKind::Type;
 
@@ -560,7 +565,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             })
         });
         self.expect(Kind::RCurly);
-        let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
+        let (source, with_clause) = if self.eat(Kind::From) {
             let source = self.parse_literal_string();
             (Some(source), self.parse_import_attributes())
         } else {
@@ -677,8 +682,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl_start = self.cur_start();
 
         // export default /* @__NO_SIDE_EFFECTS__ */ ...
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
 
         // export default @decorator ...
         if self.at(Kind::At) {
@@ -729,8 +734,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         /* r#async */ true,
                         FunctionKind::DefaultExport,
                     );
-                    if has_no_side_effects_comment {
+                    if let Some(comments) = no_side_effects_comments {
                         func.pure = true;
+                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
                     }
                     return ExportDefaultDeclarationKind::FunctionDeclaration(func);
                 }
@@ -771,8 +777,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 /* r#async */ false,
                 FunctionKind::DefaultExport,
             );
-            if has_no_side_effects_comment {
+            if let Some(comments) = no_side_effects_comments {
                 func.pure = true;
+                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
             }
             return ExportDefaultDeclarationKind::FunctionDeclaration(func);
         }
