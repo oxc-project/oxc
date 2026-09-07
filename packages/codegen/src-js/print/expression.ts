@@ -56,7 +56,6 @@ import {
   PREC_COMMA,
   PREC_COMPARE,
   PREC_CONDITIONAL,
-  PREC_EQUALS,
   PREC_EXPONENTIATION,
   PREC_LOWEST,
   PREC_NEW,
@@ -382,8 +381,9 @@ function printArguments(
  * `#field in obj`, which arrives as a `BinaryExpression` with a `PrivateIdentifier` on the left
  * rather than as a node type of its own - hence the extra test in `printExpression`.
  *
- * It sits at the `in` operator's own level, so it wraps from `PREC_COMPARE` upwards, and the right
- * operand prints one level tighter with `CTX_FORBID_IN` set.
+ * It sits at the `in` operator's own level, so it wraps from `PREC_COMPARE` upwards. The right
+ * operand also prints at `PREC_COMPARE`, preserving parentheses around relational and
+ * lower-precedence expressions, with `CTX_FORBID_IN` set.
  */
 export function printPrivateInExpression(
   node: ESTree.PrivateInExpression,
@@ -396,7 +396,7 @@ export function printPrivateInExpression(
   markMapStart(state, node.start, node.end, node);
   writeWithMapNamedPrivate(state, node.left.name, node.left.start, node.left.end, node.left);
   write(state, " in ", CAT_OTHER);
-  printExpression(node.right, state, PREC_EQUALS, CTX_FORBID_IN);
+  printExpression(node.right, state, PREC_COMPARE, CTX_FORBID_IN);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
