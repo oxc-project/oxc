@@ -145,6 +145,8 @@ struct SuperMethodInfo<'a> {
 
 pub struct ArrowFunctionConverter<'a> {
     mode: ArrowFunctionConverterMode,
+    async_to_generator_enabled: bool,
+    async_generator_functions_enabled: bool,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
     constructor_super_stack: NonEmptyStack<bool>,
@@ -158,9 +160,11 @@ pub struct ArrowFunctionConverter<'a> {
 
 impl ArrowFunctionConverter<'_> {
     pub fn new(env: &EnvOptions) -> Self {
+        let async_to_generator_enabled = env.es2017.async_to_generator;
+        let async_generator_functions_enabled = env.es2018.async_generator_functions;
         let mode = if env.es2015.arrow_function.is_some() {
             ArrowFunctionConverterMode::Enabled
-        } else if env.es2017.async_to_generator || env.es2018.async_generator_functions {
+        } else if async_to_generator_enabled || async_generator_functions_enabled {
             ArrowFunctionConverterMode::AsyncOnly
         } else {
             ArrowFunctionConverterMode::Disabled
@@ -168,6 +172,8 @@ impl ArrowFunctionConverter<'_> {
         // `SparseStack`s are created with 1 empty entry, for `Program`
         Self {
             mode,
+            async_to_generator_enabled,
+            async_generator_functions_enabled,
             this_var_stack: SparseStack::new(),
             arguments_var_stack: SparseStack::new(),
             constructor_super_stack: NonEmptyStack::new(false),
@@ -630,13 +636,13 @@ impl<'a> ArrowFunctionConverter<'a> {
                 }
                 // Function body (includes class method or object method)
                 Ancestor::FunctionBody(func) => {
-                    // If we're inside a class async method or an object async method, and `is_async_only` is true,
-                    // the `AsyncToGenerator` or `AsyncGeneratorFunctions` plugin will move the body
-                    // of the method into a new generator function. This transformation can cause `this`
-                    // to point to the wrong context.
+                    // If we're inside a class async method or an object async method, and an
+                    // async transform will move the method body into a new generator function,
+                    // `this` will point to the wrong context.
                     // To prevent this issue, we replace `this` with `_this`, treating it similarly
                     // to how we handle arrow functions. Therefore, we return the `ScopeId` of the function.
-                    return if self.is_async_only()
+                    return if (self.async_to_generator_enabled
+                        || (self.async_generator_functions_enabled && *func.generator()))
                     && *func.r#async()
                     && Self::is_class_method_like_ancestor(
                         ancestors.next().unwrap()
