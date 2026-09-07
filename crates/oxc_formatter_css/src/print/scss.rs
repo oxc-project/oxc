@@ -39,15 +39,7 @@ pub(super) fn write_sass_variable_declaration<'a>(
     write!(f, "$");
     let name_span = to_span(decl.name.name.span());
     write!(f, text(source.text_for(&name_span)));
-    // Comments between the name and the colon are kept verbatim
-    let colon_end = to_span(&decl.colon_span).end;
-    let between = source.slice_range(name_span.end, colon_end);
-    if between.trim() == ":" {
-        write!(f, ":");
-    } else {
-        write!(f, text(between.trim_ascii()));
-        let _ = f.context().comments().take_before(colon_end);
-    }
+    statement::write_colon_run(name_span.end, to_span(&decl.colon_span).end, f);
     write!(f, space());
 
     let ctx = ValueContext { decl_prop: Some("$"), map_break: true, ..ValueContext::default() };

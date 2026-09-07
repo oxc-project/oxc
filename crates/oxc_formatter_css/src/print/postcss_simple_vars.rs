@@ -27,21 +27,23 @@ pub(super) fn write_postcss_simple_var_declaration<'a>(
     f: &mut CssFormatter<'_, 'a>,
 ) {
     write_postcss_simple_var(&decl.name, f);
-    write!(f, ":");
-    write!(f, space());
+    statement::write_colon_run(to_span(&decl.name.span).end, to_span(&decl.colon_span).end, f);
 
+    // An empty value prints as `$x:;`, as Prettier does.
     let end = to_span(&decl.span).end;
-    if decl.value_is_raw && !decl.value.is_empty() {
-        // postcss-simple-vars substitutes the value textually,
-        // so re-spacing a raw fallback would change the substituted token stream
-        // (DIVERGENCES.md "postcss-simple-var-raw-verbatim").
-        let value_start = to_span(decl.value[0].span()).start;
-        value::write_verbatim_value(Span::new(value_start, end), f);
-    } else {
-        // The typed value stream (including any trailing `ImportantAnnotation` pushed by the parser)
-        // prints like any declaration value:
-        // gap-driven rules and Prettier's multi-value list break apply here too.
-        value::write_declaration_value(&decl.value, ValueContext::default(), f);
+    if !decl.value.is_empty() {
+        write!(f, space());
+        if decl.value_is_raw {
+            // postcss-simple-vars substitutes the value textually,
+            // so re-spacing a raw fallback would change the substituted token stream
+            // (DIVERGENCES.md "postcss-simple-var-raw-verbatim").
+            let value_start = to_span(decl.value[0].span()).start;
+            value::write_verbatim_value(Span::new(value_start, end), f);
+        } else {
+            // The typed value stream (including any trailing `ImportantAnnotation` pushed by the parser)
+            // prints like any declaration value: gap-driven rules and Prettier's multi-value list break apply here too.
+            value::write_declaration_value(&decl.value, ValueContext::default(), f);
+        }
     }
     statement::write_terminator_tail_comments(end, f);
 }

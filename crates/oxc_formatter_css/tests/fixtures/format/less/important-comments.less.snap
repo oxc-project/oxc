@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment between `!` and `important` stays there, printed once.
+a {
+  .mixin() ! /* mixin call */ important;
+  .mixin(1) /* before */ ! /* inside */ important;
+}
+
+// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"):
+// Prettier DROPS the comment (`@var: red ! important;`).
+@var: red ! /* Less variable */ important;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment between `!` and `important` stays there, printed once.
+a {
+  .mixin() ! /* mixin call */ important;
+  .mixin(1) /* before */ ! /* inside */ important;
+}
+
+// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"):
+// Prettier DROPS the comment (`@var: red ! important;`).
+@var: red ! /* Less variable */ important;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment between `!` and `important` stays there, printed once.
+a {
+  .mixin() ! /* mixin call */ important;
+  .mixin(1) /* before */ ! /* inside */ important;
+}
+
+// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"):
+// Prettier DROPS the comment (`@var: red ! important;`).
+@var: red ! /* Less variable */ important;
+
+===================== End =====================

@@ -143,8 +143,8 @@ pub(super) fn write_less_mixin_call_statement<'a>(
     let raw = source.slice_range(span.start, end).trim_end();
     let _ = f.context().comments().take_before(end);
     value::write_adjusted_verbatim(raw, f);
-    if call.important.is_some() {
-        write!(f, [space(), "!important"]);
+    if let Some(important) = &call.important {
+        value::write_trailing_important(important, f);
     }
 }
 
@@ -183,8 +183,8 @@ fn write_less_mixin_call<'a>(call: &LessMixinCall<'a>, f: &mut CssFormatter<'_, 
         }
         write!(f, ")");
     }
-    if call.important.is_some() {
-        write!(f, [space(), "!important"]);
+    if let Some(important) = &call.important {
+        value::write_trailing_important(important, f);
     }
 }
 

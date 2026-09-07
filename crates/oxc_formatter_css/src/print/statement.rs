@@ -417,16 +417,19 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     }
     if decl.value.is_empty() {
-        // Custom properties with a whitespace-only value keep it verbatim
-        // (`--one-space: ;` stays as-is). Scan up to the `;` in the source.
-        let colon_end = to_span(&decl.colon_span).end;
-        let bytes = source.as_bytes();
-        let mut i = colon_end as usize;
-        while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
-            i += 1;
-        }
-        if i < bytes.len() && bytes[i] == b';' && i > colon_end as usize {
-            write!(f, text(source.slice_range(colon_end, u32::try_from(i).unwrap())));
+        // An empty value prints as `prop:;`, except a custom property's whitespace-only value,
+        // which is its value: `--x: ;` substitutes a space where `--x:;` substitutes nothing, so it is kept verbatim.
+        // Scan up to the `;` in the source.
+        if is_custom_property {
+            let colon_end = to_span(&decl.colon_span).end;
+            let bytes = source.as_bytes();
+            let mut i = colon_end as usize;
+            while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
+                i += 1;
+            }
+            if i < bytes.len() && bytes[i] == b';' && i > colon_end as usize {
+                write!(f, text(source.slice_range(colon_end, u32::try_from(i).unwrap())));
+            }
         }
     } else {
         write!(f, space());
@@ -544,10 +547,22 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     }
     if let Some(important) = &decl.important {
-        value::flush_trailing_value_comments(to_span(important.span()).start, f);
-        write!(f, [space(), "!important"]);
+        value::write_trailing_important(important, f);
     }
     write_terminator_tail_comments(to_span(decl.span()).end, f);
+}
+
+/// The run between a variable name and its `:`: normally just the colon,
+/// but a comment there stays on its side of the `:` (`$x/* c */: 1`, as Prettier prints it).
+pub(super) fn write_colon_run(name_end: u32, colon_end: u32, f: &mut CssFormatter<'_, '_>) {
+    let source = f.context().source_text();
+    let between = source.slice_range(name_end, colon_end).trim_ascii();
+    if between == ":" {
+        write!(f, ":");
+    } else {
+        write!(f, text(between));
+        let _ = f.context().comments().take_before(colon_end);
+    }
 }
 
 /// Comments between a declaration's content and its `;` (`value /* c */;`), kept in place.

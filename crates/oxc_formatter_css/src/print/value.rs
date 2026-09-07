@@ -16,9 +16,9 @@ use cow_utils::CowUtils;
 use oxc_css_parser::{
     ast::{
         BracketBlock, Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension,
-        Function, FunctionName, InterpolableIdent, InterpolableStr, LessBinaryOperation,
-        LessOperationOperatorKind, LessParenthesizedOperation, Number, SassBinaryExpression,
-        SassBinaryOperator, SassBinaryOperatorKind, SassInterpolatedIdent,
+        Function, FunctionName, ImportantAnnotation, InterpolableIdent, InterpolableStr,
+        LessBinaryOperation, LessOperationOperatorKind, LessParenthesizedOperation, Number,
+        SassBinaryExpression, SassBinaryOperator, SassBinaryOperatorKind, SassInterpolatedIdent,
         SassInterpolatedIdentElement, SassUnaryOperatorKind, Str, Url, UrlValue,
     },
     token::Token,
@@ -1015,18 +1015,45 @@ pub(super) fn flush_same_line_comments(
 
 /// Emits pending comments before `upper_bound` as ` /* c */` suffixes
 /// (used after the last value component, before `;` / `!important`).
-/// Returns the end offset of the last emitted comment.
-pub(super) fn flush_trailing_value_comments(
-    upper_bound: u32,
-    f: &mut CssFormatter<'_, '_>,
-) -> Option<u32> {
-    let mut last_end = None;
+pub(super) fn flush_trailing_value_comments(upper_bound: u32, f: &mut CssFormatter<'_, '_>) {
     for &comment in f.context().comments().take_before(upper_bound) {
         write!(f, " ");
         write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
-        last_end = Some(comment.span.end);
     }
-    last_end
+}
+
+/// `!important`, normalized (`!  IMPORTANT` too), with a comment between `!` and the identifier kept there:
+/// `! /* c */ important` (DIVERGENCES.md "important-comment-run").
+/// Comments BEFORE the `!` are the caller's (a trailing flush, or the value list's separator).
+pub(super) fn write_important_annotation(
+    important: &ImportantAnnotation<'_>,
+    f: &mut CssFormatter<'_, '_>,
+) {
+    let span = to_span(&important.span);
+    let ident_start = to_span(&important.ident.span).start;
+    let has_inner_comment = f
+        .context()
+        .comments()
+        .peek()
+        .is_some_and(|c| c.span.start >= span.start && c.span.end <= ident_start);
+    if !has_inner_comment {
+        write!(f, "!important");
+        return;
+    }
+    write!(f, "!");
+    flush_trailing_value_comments(ident_start, f);
+    write!(f, [space(), "important"]);
+}
+
+/// A trailing `!important` (declaration, Less mixin call):
+/// the comments before it, then ` !important`.
+pub(super) fn write_trailing_important(
+    important: &ImportantAnnotation<'_>,
+    f: &mut CssFormatter<'_, '_>,
+) {
+    flush_trailing_value_comments(to_span(&important.span).start, f);
+    write!(f, space());
+    write_important_annotation(important, f);
 }
 
 /// A value that is exactly one sass interpolation (`--p: #{fn(...)};`).
@@ -1802,14 +1829,16 @@ pub(super) fn write_component_value<'a>(
         ComponentValue::PostcssSimpleVar(variable) => {
             super::postcss_simple_vars::write_postcss_simple_var(variable, f);
         }
+        // A mid-value or variable-value `!important` (the trailing one of a declaration is `Declaration::important`)
+        ComponentValue::ImportantAnnotation(important) => write_important_annotation(important, f),
         // Everything else (Sass/Less constructs, interpolations, token fallbacks):
         // print the source verbatim until ported structurally.
         _ => {
             if less::write_less_component_value(value, f) {
                 return;
             }
-            let span = to_span(value.span());
-            write!(f, text(source.text_for(&span)));
+            // The slice holds any comment inside the node; claim it so no later flush repeats it
+            write_verbatim_value(to_span(value.span()), f);
         }
     }
 }

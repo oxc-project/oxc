@@ -767,7 +767,7 @@ so the entry BEFORE the comment (`in a,`) breaks away from `$k` too; the same so
 ## less-variable-value-comments
 
 - Why: invariant
-- Pin: `tests/fixtures/format/less/variable-value-comments.less`
+- Pin: `tests/fixtures/format/less/variable-value-comments.less`, `tests/fixtures/format/less/important-comments.less`
 
 ```less
 /* input */
@@ -1127,3 +1127,33 @@ postcss-simple-vars substitutes a variable's value textually.
 With the plugin, the input produces `--fragment: */`, while Prettier's output produces `--fragment: * /`;
 the added whitespace changes the custom property's preserved token stream.
 A `$var` value the typed grammar cannot read therefore prints verbatim, like a raw custom-property value.
+
+## important-comment-run
+
+- Why: uniform-rule (same construct, same output: `!IMPORTANT`, which Prettier prints `!important`)
+- Pin: `tests/fixtures/format/css/important-comments.css`
+
+```css
+/* input */
+a {
+  y: red ! /* a */ IMPORTANT;
+  v: red !/* glued */important;
+}
+
+/* ours */
+a {
+  y: red ! /* a */ important;
+  v: red ! /* glued */ important;
+}
+
+/* prettier */
+a {
+  y: red ! /* a */ IMPORTANT;
+  v: red !/* glued */important;
+}
+```
+
+`!important` is normalized the same way whether or not a comment sits between `!` and the keyword:
+lowercase keyword, one space around the comment.
+Prettier normalizes only the plain shape (`raws.important` is replaced when it matches `\s*!\s*important`)
+and prints any other run verbatim, so a comment inside freezes the keyword's case and the glue.
