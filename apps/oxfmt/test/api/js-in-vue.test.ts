@@ -276,6 +276,67 @@ const f = () => {
     expect(result2.errors).toStrictEqual([]);
   });
 
+  // https://github.com/oxc-project/oxc/issues/26398
+  it("should keep JSX text filled when the element has multiple attributes", async () => {
+    // A `Fill`'s children are its `parts`, which Prettier requires to be the flat, alternating
+    // content/separator list. Interning them emits a single `_REF` that expands to an array, so
+    // `parts` becomes `[[...]]`; `cleanDoc()` then collapses `parts.length === 1` to `parts[0]`,
+    // dropping the fill and leaving a bare `line` inside a broken group. That always breaks, so
+    // every word landed on its own line. Only elements with 2+ attributes take the path that
+    // builds a fill, hence the two attributes here.
+    const input = `
+<script setup lang="tsx">
+defineRender(
+  <div>
+    <label for="d" class={[c]}>
+      Payment date
+    </label>
+  </div>,
+);
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toContain("Payment date");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/26398
+  it("should reflow long JSX text at printWidth rather than one word per line", async () => {
+    // Guards the fill semantics themselves, not just that the words stay joined:
+    // the text must wrap where it exceeds `printWidth`.
+    const input = `
+<script setup lang="tsx">
+defineRender(
+  <div>
+    <label for="d" class={[c]}>
+      This will create a new survey for this audience. Are you sure you want to continue today?
+    </label>
+  </div>,
+);
+</script>
+`;
+    const result = await format("a.vue", input, { printWidth: 80 });
+
+    // Format again to verify idempotency
+    const result2 = await format("a.vue", result.code, { printWidth: 80 });
+
+    expect(result.code).toBe(`<script setup lang="tsx">
+defineRender(
+  <div>
+    <label for="d" class={[c]}>
+      This will create a new survey for this audience. Are you sure you want to
+      continue today?
+    </label>
+  </div>,
+);
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+    expect(result2.code).toBe(result.code);
+    expect(result2.errors).toStrictEqual([]);
+  });
+
   it("should not indent a comment-only script block", async () => {
     // The comment's leading IR `Space` must be dropped at the line start,
     // like the Rust printer does, or `/**` gains a spurious leading space.

@@ -371,6 +371,23 @@ fn convert_elements(
                     }
                     printer.pending_space = false;
                 }
+                // A `Fill`'s children are its `parts`, and Prettier requires that to be the
+                // flat, alternating content/separator list. Pushing a `_REF` here would make the
+                // whole entry list a *single* part; on the JS side that ref expands to an array,
+                // leaving `parts: [[content, line, content, ...]]`. Prettier's `cleanDoc()` then
+                // collapses `parts.length === 1` to `parts[0]`, discarding the fill entirely and
+                // leaving a bare `line` inside a broken group, which always breaks. So inline the
+                // interned content into the fill instead of sharing it, keeping each entry its
+                // own part.
+                if matches!(
+                    stack.last().and_then(|entry| entry.start_info.as_ref()),
+                    Some(StartTagInfo::Fill)
+                ) {
+                    let converted = convert_shared_elements(interned, state)?;
+                    current_children_mut(&mut stack)?.extend(converted);
+                    printer.line = LineState::Content;
+                    continue;
+                }
                 let key = interned_cache_key(interned);
                 let id = if let Some(&id) = state.interned_to_ref.get(&key) {
                     id
