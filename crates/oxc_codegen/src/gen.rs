@@ -2006,7 +2006,7 @@ impl GenExpr for PrivateInExpression<'_> {
             p.add_source_mapping(self.span);
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
+            self.right.print_expr(p, Precedence::Compare, Context::FORBID_IN);
         });
     }
 }
