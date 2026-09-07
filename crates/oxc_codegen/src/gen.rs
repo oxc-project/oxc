@@ -3021,14 +3021,14 @@ impl Gen for AccessorProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_decorators(&self.decorators, ctx);
-        if self.r#type.is_abstract() {
-            p.print_space_before_identifier();
-            p.print_str("abstract");
-            p.print_soft_space();
-        }
         if let Some(accessibility) = self.accessibility {
             p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
+            p.print_soft_space();
+        }
+        if self.r#type.is_abstract() {
+            p.print_space_before_identifier();
+            p.print_str("abstract");
             p.print_soft_space();
         }
         if self.r#static {
