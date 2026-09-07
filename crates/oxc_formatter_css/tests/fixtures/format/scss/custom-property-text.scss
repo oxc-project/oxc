@@ -1,0 +1,58 @@
+// A Scss custom property value is text to dart-sass: `//` is not a comment
+// inside it, so `// (` balances the `)` below and the whole value prints
+// verbatim (sass-spec css/custom_properties/simple.hrx).
+.simple {
+  --url: url(http://foo.com/bar);
+  --single-line: // (
+    );
+  --typed: 1px  +  2px;
+}
+
+// An unquoted `//` is raw text; occurrences inside a url or string stay inside
+// their typed component and the surrounding value is normalized.
+.typed {
+  --n: url(//cdn/a.png)   red;
+  --s: red   // note
+  ;
+  --z: "a//b"   "c";
+}
+
+// Interpolation after a static `--` prefix does not change the value grammar.
+.interpolated-name {
+  --#{$name}: // note;
+  color: red;
+  --theme-#{$name}: */;
+}
+
+// A block value on an interpolated custom-property name still needs its
+// terminator; dropping it makes the following declaration part of its text.
+.interpolated-block-name {
+  --#{$name}: {
+    color:red;
+  };
+  color: blue;
+}
+
+// The decoded static prefix owns the custom-property classification even when
+// its two hyphens are escaped. Raw fallback values must remain verbatim.
+// DIVERGES from Prettier (DIVERGENCES.md "custom-property-raw-verbatim").
+.escaped-interpolated-name {
+  \-\-#{$name}: */;
+  \-\-theme-#{$name}: 1px   !foo;
+}
+
+// Inside interpolation, `//` is a SassScript comment. Keep it inside `#{}`;
+// moving it past the closing brace changes both the comment and the expression.
+.interpolation-comment {
+  --x: #{1 // }
+  };
+  color: red;
+}
+
+// A quoted interpolation is the same SassScript boundary. The string scanner
+// consumes the `#` before its `{`, but `// }` must remain an inner comment.
+.quoted-interpolation-comment {
+  --x: "#{1 // }
+  }";
+  color: red;
+}

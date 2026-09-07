@@ -15,7 +15,7 @@ use crate::{
     TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
     comments::CssComment,
     context::CssFormatContext,
-    options::{CssFormatOptions, CssVariant},
+    options::CssFormatOptions,
     print::{self, CssFormatter},
 };
 
@@ -235,23 +235,14 @@ fn parse_stylesheet<'a>(
                     .strip_prefix(TEMPLATE_PLACEHOLDER_SUFFIX)
                     .expect("placeholder prefix starts with a backtick"),
             }),
-            try_parsing_value_in_custom_property: true,
-            // `.css` files in real projects routinely flow through `postcss-simple-vars`
-            // (Mantine, Vite/Next templates, etc), so accept its `$var` syntax in `CssVariant::Css`.
-            // Scss/Less already handle `$variable` natively.
-            allow_postcss_simple_vars: matches!(options.variant, CssVariant::Css),
         })
         .comments()
         .build();
 
     let stylesheet = parser.parse::<Stylesheet>().map_err(|error| to_diagnostic(&error))?;
-    // Top-level declarations are valid only as an embedded css-in-js fragment.
-    // A standalone file rejects them like any other recoverable error
-    // (they are not valid CSS/SCSS/Less); only the embedded path tolerates them.
-    if let Some(error) = parser.recoverable_errors().iter().find(|error| {
-        !(tolerate_placeholders
-            && matches!(error.kind, oxc_css_parser::error::ErrorKind::TopLevelDeclaration))
-    }) {
+    // Any recoverable error rejects the file, a root declaration included;
+    // the css-in-js parse mode never emits one (AGENTS.md "Error semantics").
+    if let Some(error) = parser.recoverable_errors().first() {
         return Err(to_diagnostic(error));
     }
 

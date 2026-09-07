@@ -2,11 +2,10 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// A `;`-less custom-property rule block followed by another declaration is two
-// separate declarations: format the inner block, add the missing `;`.
-// DIVERGES from Prettier (DIVERGENCES.md "semiless-custom-property-block"),
-// which keeps the whole run verbatim (postcss swallows everything past the `}`
-// as an opaque prelude string until a source `;`).
+// A custom property value runs to the top-level `;` (css-syntax §5.5.6);
+// dart-sass reads it as text, so a `;`-less `{...}` block followed by more
+// text is ONE declaration and prints verbatim, like Prettier.
+// Splitting it would make `--another-prop` resolvable where the source has none.
 :root {
   --like-a-apply-rule: {
   color:red;} /* no semi here*/
@@ -17,30 +16,26 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-// A `;`-less custom-property rule block followed by another declaration is two
-// separate declarations: format the inner block, add the missing `;`.
-// DIVERGES from Prettier (DIVERGENCES.md "semiless-custom-property-block"),
-// which keeps the whole run verbatim (postcss swallows everything past the `}`
-// as an opaque prelude string until a source `;`).
+// A custom property value runs to the top-level `;` (css-syntax §5.5.6);
+// dart-sass reads it as text, so a `;`-less `{...}` block followed by more
+// text is ONE declaration and prints verbatim, like Prettier.
+// Splitting it would make `--another-prop` resolvable where the source has none.
 :root {
   --like-a-apply-rule: {
-    color: red;
-  }; /* no semi here*/
+  color:red;} /* no semi here*/
   --another-prop: blue;
 }
 
 -------------------
 { printWidth: 100 }
 -------------------
-// A `;`-less custom-property rule block followed by another declaration is two
-// separate declarations: format the inner block, add the missing `;`.
-// DIVERGES from Prettier (DIVERGENCES.md "semiless-custom-property-block"),
-// which keeps the whole run verbatim (postcss swallows everything past the `}`
-// as an opaque prelude string until a source `;`).
+// A custom property value runs to the top-level `;` (css-syntax §5.5.6);
+// dart-sass reads it as text, so a `;`-less `{...}` block followed by more
+// text is ONE declaration and prints verbatim, like Prettier.
+// Splitting it would make `--another-prop` resolvable where the source has none.
 :root {
   --like-a-apply-rule: {
-    color: red;
-  }; /* no semi here*/
+  color:red;} /* no semi here*/
   --another-prop: blue;
 }
 

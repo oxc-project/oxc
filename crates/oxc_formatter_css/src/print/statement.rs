@@ -4,6 +4,8 @@ use oxc_css_parser::ast::{
     UnknownQualifiedRule,
 };
 
+use oxc_span::Span;
+
 use oxc_formatter_core::{
     Buffer, arena_cow_str,
     builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
@@ -174,7 +176,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
                     write!(f, ";");
                 }
             } else if !matches!(decl.value.last(), Some(ComponentValue::SassNestingDeclaration(_)))
-                || matches!(&decl.name, InterpolableIdent::Literal(ident) if ident.name.starts_with("--"))
+                || decl.name.is_custom_property()
             {
                 // No `;` after a nested declaration block (`background: { ... }`),
                 // except a custom-property rule block (`--p: { ... };`).
@@ -338,9 +340,8 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
-    // Legacy IE hack prefix glued to the property name
-    // (`*color: red`; `oxc-css-parser` also accepts `.`/`:`/`#` in Css mode);
-    // postcss keeps it as part of the prop, so Prettier preserves it.
+    let is_custom_property = decl.name.is_custom_property();
+    // postcss keeps the IE `*color` prefix as part of the prop, so Prettier preserves it
     if let Some(prefix) = decl.name_prefix {
         write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
     }
@@ -348,9 +349,13 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
         // the host replaces with `${expr}`; never lowercase it like a real property.
         super::write_placeholder(placeholder, f);
-    } else if f.context().in_less_detached().get() || f.context().in_icss_rule().get() {
-        // Less detached rulesets (`parentNode.variable`) and ICSS rules
-        // (`insideIcssRuleNode`) keep property-name casing.
+    } else if is_custom_property
+        || f.context().in_less_detached().get()
+        || f.context().in_icss_rule().get()
+    {
+        // Custom property names are case-sensitive: decided on the decoded name,
+        // so an escaped `\-\-Foo` keeps its source spelling too (`write_maybe_lowercase` only sees the literal `--`).
+        // Less detached rulesets (`parentNode.variable`) and ICSS rules (`insideIcssRuleNode`) keep property-name casing as well.
         write!(f, text(prop));
     } else {
         write_maybe_lowercase(prop, f);
@@ -425,22 +430,24 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     } else {
         write!(f, space());
-        let prop_lower = prop.cow_to_ascii_lowercase();
-        let prop_lower: &'a str = arena_cow_str(&prop_lower, f);
 
-        // `filter: progid:...` values are printed verbatim.
+        // `filter: progid:...` values are printed verbatim
+        // (the parser accepts the prefix case-insensitively; postcss rejects an uppercase one).
         let value_start = to_span(decl.value[0].span()).start;
         let value_end = to_span(decl.value[decl.value.len() - 1].span()).end;
         let value_text = source.slice_range(value_start, value_end);
-        if value_text.starts_with("progid:") {
-            write!(f, text(value_text));
+        if value_text
+            .as_bytes()
+            .get(..7)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case(b"progid:"))
+        {
+            value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else if (value_text.contains("\\(") || value_text.contains("\\)"))
             && value_text.contains('\n')
         {
             // Escaped parens break postcss's value parser:
             // the whole value is a `value-unknown`, printed verbatim.
-            write!(f, text(value_text));
-            let _ = f.context().comments().take_before(value_end);
+            value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else if (value_text.starts_with('"') || value_text.starts_with('\''))
             && value_text.ends_with(value_text.as_bytes()[0] as char)
             && value_text[1..value_text.len() - 1].contains("#{")
@@ -457,7 +464,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             // except bare quoted numbers, which postcss saw unquoted.
             value::write_requoted_verbatim(value_text, f);
             let _ = f.context().comments().take_before(value_end);
-        } else if prop.starts_with("--") && value_text.starts_with('{') {
+        } else if is_custom_property && value_text.starts_with('{') {
             if value_text.trim_end().ends_with('}')
                 && value_text.bytes().filter(|&b| b == b'{').count() == 1
             {
@@ -472,12 +479,22 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             }
             // The raw text includes any comments; drop them from the cursor.
             let _ = f.context().comments().take_before(value_end);
+        } else if decl.value_is_raw && is_custom_property {
+            // Text the typed grammar could not read (`--z: */;`, `--x: 1px !foo;`, // Scss `--x: // (\n);`):
+            // verbatim in every variant (DIVERGENCES.md "custom-property-raw-verbatim").
+            value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else {
-            // Custom property values (`--*`) are parsed as a normal `<declaration-value>`
-            // via the `try_parsing_value_in_custom_property` parser option, matching Prettier (postcss).
-            // The parser keeps the raw token stream when the value does not parse (e.g. `--p: { decls };` rule blocks),
-            // so anything reaching here is uniformly a structured `ComponentValue` slice handled below.
+            // Typed values, plus a normal property's raw `<any-value>` fallback:
+            // the spec says that value is component values,
+            // so raw there is only a hole in our grammar and the value writer lays it out like typed tokens.
             let values = &*decl.value;
+            // The decoded name: an escaped `\66ont` is still `font` to the value rules
+            let prop_lower = match &decl.name {
+                InterpolableIdent::Literal(ident) => ident.name,
+                _ => prop,
+            }
+            .cow_to_ascii_lowercase();
+            let prop_lower: &'a str = arena_cow_str(&prop_lower, f);
 
             let ctx = ValueContext {
                 decl_prop: Some(prop_lower),

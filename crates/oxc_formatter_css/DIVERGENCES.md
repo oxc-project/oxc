@@ -764,42 +764,6 @@ exactly as when the `//` follows the comma in the source.
 Prettier attaches a `breakParent` to the deferred comment, which its fill measures as never fitting,
 so the entry BEFORE the comment (`in a,`) breaks away from `$k` too; the same source with the `//` after the comma keeps `$k in a,`.
 
-## semiless-custom-property-block
-
-- Why: cost
-- Pin: `tests/fixtures/format/scss/custom-property-semiless-block.scss` (also tracked by conformance `scss/variables/apply-rule.scss`)
-
-```scss
-/* input */
-:root {
-  --like-a-apply-rule: {
-  color:red;} /* no semi here*/
-  --another-prop: blue;
-}
-
-/* ours (SCSS mode) */
-:root {
-  --like-a-apply-rule: {
-    color: red;
-  }; /* no semi here*/
-  --another-prop: blue;
-}
-
-/* prettier */
-:root {
-  --like-a-apply-rule: {
-  color:red;} /* no semi here*/
-  --another-prop: blue;
-}
-```
-
-SCSS only: a `;`-less custom-property rule block followed by another declaration is two separate declarations for us
-(format the inner block, add the missing `;`, format the rest normally);
-Prettier keeps the whole run verbatim (postcss swallows everything past the `}` as an opaque prelude string until a source `;`).
-This falls out of the AST shape: SCSS parses `{...}` declaration values as `SassNestingDeclaration`;
-CSS/Less don't structure them, so their token-soup fallback incidentally matches Prettier.
-The value syntax's only intended consumer was the dropped CSS Apply Rule proposal, so the cross-mode difference is theoretical.
-
 ## less-variable-value-comments
 
 - Why: invariant
@@ -1046,3 +1010,120 @@ $colors: (
 A blank line after a map item is preserved per the blank-line preservation rule regardless of the value's shape,
 as after a map item with a non-paren value (Prettier itself keeps that one);
 Prettier drops it when the item's value is paren-ish (a call / paren group), an artifact of its comma-group splitting.
+
+## paren-group-glued-word
+
+- Why: semantics
+- Pin: `tests/fixtures/format/css/paren-group-glued-word.css`
+  (`css/postcss-plugins/postcss-simple-vars.css` carries the case too, but its root declarations keep it skipped in conformance)
+
+```css
+/* input */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+}
+
+/* ours */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+}
+
+/* prettier */
+a {
+  color: $(style) color;
+  color: @@(style) color123;
+}
+```
+
+`$(style)color` is a postcss-simple-vars interpolation glued to a word, and the glue carries meaning:
+after substitution it is one word (`redcolor`), the way `margin-$(dir)` becomes `margin-top`.
+postcss-values-parser lexes it as a paren node followed by a word and Prettier prints a space between them,
+changing the substituted value (`red color`); Prettier keeps `$$(style)Color` in the same conformance file glued, so it is not even consistent.
+The value is the `<any-value>` raw fallback for us, and the value writer keeps source-glued tokens glued (`Separator::Tight`); it never inserts a space.
+
+## escaped-custom-property-case
+
+- Why: semantics
+- Pin: `tests/fixtures/format/css/custom-property-raw-verbatim.css`
+
+```css
+/* input and ours */
+.a {
+  \-\-CamelCase: red;
+  color: var(\-\-CamelCase);
+}
+
+/* prettier */
+.a {
+  \-\-camelcase: red;
+  color: var(\-\-CamelCase);
+}
+```
+
+The escaped identifier `\-\-CamelCase` decodes to the custom property name `--CamelCase`.
+Custom property names are case-sensitive, so lowercasing the declaration while preserving the reference makes `var(\-\-CamelCase)` unresolved.
+Escaped custom property names therefore preserve their source spelling, like names written with a literal `--` prefix.
+
+## custom-property-raw-verbatim
+
+- Why: uniform-rule (raw is verbatim; AGENTS.md "Printing raw vs typed")
+- Pin: `tests/fixtures/format/css/custom-property-raw-verbatim.css`, `tests/fixtures/format/scss/custom-property-raw-verbatim.scss`, `tests/fixtures/format/scss/custom-property-text.scss`
+  (also tracked by conformance `css/postcss-8-improment/test.css`, `less/postcss-8-improment/test.less`, `scss/variables/postcss-8-improment.scss`)
+
+```css
+/* input */
+:root {
+  --z: */;
+  --x:   1px   !foo;
+  --JSON: [1, "2", {"three": {"a":1}}, [4]];
+  --javascript: function(rule) { console.log(rule) };
+}
+
+/* ours */
+:root {
+  --z: */;
+  --x: 1px   !foo;
+  --JSON: [1, "2", {"three": {"a":1}}, [4]];
+  --javascript: function(rule) { console.log(rule) };
+}
+
+/* prettier */
+:root {
+  --z: * /;
+  --x: 1px !foo;
+  --JSON: [1, "2", {"three": {"a": 1}}, [4]];
+  --javascript: function(rule) {console.log(rule)};
+}
+```
+
+A custom property value is its token stream (css-variables-1) and text to dart-sass.
+We lay it out only when the typed `<declaration-value>` grammar reads all of it;
+when it does not (`Declaration::value_is_raw`), the value prints verbatim, in every variant.
+Prettier hands such values to postcss-values-parser, its regular value grammar: it collapses inner whitespace,
+adds a space after a `:` inside `{}`, strips the spaces inside a JS block, and splits `*/` because `/` is a `div` node to it.
+Consistent for Prettier, and the same token stream for css-syntax (a whitespace run is one token), so admissible.
+We print it verbatim because raw is verbatim everywhere else too (raw names, `UnknownQualifiedRule` and `TokenSeq` preludes, unknown at-rule params);
+re-spacing a value we could not read is not a layout rule of ours.
+
+## postcss-simple-var-raw-verbatim
+
+- Why: semantics
+- Pin: `tests/fixtures/format/css/postcss-simple-vars/vars.css`
+  (also tracked by conformance `css/parens/empty-lines.css`)
+
+```css
+/* input and ours */
+$x: */;
+a { --fragment: $x; }
+
+/* prettier */
+$x: * /;
+a { --fragment: $x; }
+```
+
+postcss-simple-vars substitutes a variable's value textually.
+With the plugin, the input produces `--fragment: */`, while Prettier's output produces `--fragment: * /`;
+the added whitespace changes the custom property's preserved token stream.
+A `$var` value the typed grammar cannot read therefore prints verbatim, like a raw custom-property value.
