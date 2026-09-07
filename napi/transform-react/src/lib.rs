@@ -87,7 +87,7 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let SemanticBuilderReturn { semantic, diagnostics: semantic_diagnostics } =
+    let SemanticBuilderReturn { semantic, diagnostics: semantic_diagnostics, .. } =
         SemanticBuilder::new_compiler()
             .with_excess_capacity(2.0)
             .with_enum_eval(true)

@@ -6,11 +6,12 @@ use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
 use oxc_syntax::{
+    node::NodeId,
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
+use crate::{Codegen, Context, NodePrintBoundary, Operator, cjs_module_lexer, r#gen::GenExpr};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -19,6 +20,13 @@ pub enum Binaryish<'a> {
 }
 
 impl<'a> Binaryish<'a> {
+    fn node_id(self) -> NodeId {
+        match self {
+            Self::Binary(e) => e.node_id(),
+            Self::Logical(e) => e.node_id(),
+        }
+    }
+
     pub fn left(&self) -> &'a Expression<'a> {
         match self {
             Self::Binary(e) => e.left.without_parentheses(),
@@ -105,6 +113,7 @@ pub struct BinaryExpressionVisitor<'a> {
     pub operator: BinaryishOperator,
     pub wrap: bool,
     pub right_precedence: Precedence,
+    pub boundary: Option<NodePrintBoundary>,
 }
 
 impl<'a> BinaryExpressionVisitor<'a> {
@@ -112,7 +121,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
         let mut v = v;
         let stack_bottom = p.binary_expr_stack.len();
         loop {
+            v.boundary = p.begin_node(v.e.node_id());
             if !v.check_and_prepare(p) {
+                v.finish_boundary(p);
                 break;
             }
 
@@ -125,9 +136,10 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
             let Some(left_binary) = left_binary else {
                 if !cjs_module_lexer::try_print_equality_string(p, v.operator, left) {
-                    left.gen_expr(p, v.left_precedence, v.ctx);
+                    left.print_expr(p, v.left_precedence, v.ctx);
                 }
                 v.visit_right_and_finish(p);
+                v.finish_boundary(p);
                 break;
             };
 
@@ -140,6 +152,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 operator: v.operator,
                 wrap: false,
                 right_precedence: Precedence::Lowest,
+                boundary: None,
             };
         }
 
@@ -150,6 +163,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
             }
             let v = p.binary_expr_stack.pop().unwrap();
             v.visit_right_and_finish(p);
+            v.finish_boundary(p);
         }
     }
 
@@ -226,7 +240,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         }
 
         if let Expression::PrivateInExpression(e) = self.e.left() {
-            e.gen_expr(p, Precedence::Lowest, Context::empty());
+            e.print_expr(p, Precedence::Lowest, Context::empty());
             self.visit_right_and_finish(p);
             return false;
         }
@@ -247,10 +261,16 @@ impl<'a> BinaryExpressionVisitor<'a> {
             p.print_annotation_comments_before_expression(&e.right);
         }
         if !cjs_module_lexer::try_print_equality_string(p, self.operator, right) {
-            right.gen_expr(p, self.right_precedence, self.ctx);
+            right.print_expr(p, self.right_precedence, self.ctx);
         }
         if self.wrap {
             p.print_ascii_byte(b')');
+        }
+    }
+
+    fn finish_boundary(&self, p: &mut Codegen) {
+        if let Some(boundary) = self.boundary {
+            p.end_node(boundary);
         }
     }
 }

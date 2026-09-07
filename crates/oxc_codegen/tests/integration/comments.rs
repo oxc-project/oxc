@@ -3,6 +3,299 @@ use crate::{
     tester::{test, test_same},
 };
 
+#[test]
+fn test_node_id_comment_boundaries() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "/*a*/ const x = [/*b*/ 1 /*c*/, /*d*/]; //e\n",
+        "function /*f*/ name(/*g*/) { /*h*/ }\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    for marker in ["/*a*/", "/*b*/", "/*c*/", "/*d*/", "//e", "/*f*/", "/*g*/", "/*h*/"] {
+        assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
+    }
+
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
+#[test]
+fn test_node_id_trailing_line_comment_follows_semicolon() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = "/*before*/ const x = 1; //after";
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new()
+        .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+        .build_with_comment_attachments(&parsed.program, &attachments)
+        .code;
+
+    assert_eq!(code, "/*before*/const x=1;//after\n");
+}
+
+#[test]
+fn test_node_id_pure_comment_remains_annotation_owned() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = "const x = /*ordinary*/ /* #__PURE__ */ foo();";
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code.matches("/*ordinary*/").count(), 1, "{code:?}");
+    assert_eq!(code.matches("#__PURE__").count(), 1, "{code:?}");
+    assert!(!code.contains("@__PURE__"), "{code:?}");
+}
+
+#[test]
+fn test_node_id_no_side_effects_comments_remain_verbatim() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "/* #__NO_SIDE_EFFECTS__ */ function declaration() {}\n",
+        "const expression = /* #__NO_SIDE_EFFECTS__ */ function() {};\n",
+        "const arrow = /* #__NO_SIDE_EFFECTS__ */ () => 0;\n",
+        "/* #__NO_SIDE_EFFECTS__ */ export function exported() {}\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code.matches("#__NO_SIDE_EFFECTS__").count(), 4, "{code:?}");
+    assert!(!code.contains("@__NO_SIDE_EFFECTS__"), "{code:?}");
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
+#[test]
+fn test_node_id_boundaries_on_specialized_codegen_paths() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "import value from /*source*/ 'pkg';\n",
+        "if (a) /*block*/ {} else /*nested*/ if (b) /*empty*/;\n",
+        "/*prologue*/ ('not a directive');\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    for marker in ["/*source*/", "/*block*/", "/*nested*/", "/*empty*/", "/*prologue*/"] {
+        assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
+    }
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
+#[test]
+fn test_node_id_removed_host_comments_are_dropped() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = "/*removed*/ const removed = 1;\nconst live = 2;";
+    let mut parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let mut attachments = CommentAttachmentBuilder::build(&parsed.program);
+    parsed.program.body.remove(0);
+
+    // Minifier-style mutation without a later node-ID rebuild leaves the old
+    // host in the active sidecar, but codegen never visits or claims it.
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+    assert!(!code.contains("/*removed*/"), "{code:?}");
+
+    // A semantic rebuild discards the missing host. A transform must
+    // deliberately rehome its comments before deletion to preserve them.
+    let semantic = SemanticBuilder::new_compiler()
+        .build_and_rehome_comments(&parsed.program, &mut attachments);
+    assert!(semantic.diagnostics.is_empty());
+
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+    assert!(!code.contains("/*removed*/"), "{code:?}");
+}
+
+#[test]
+fn test_node_id_line_comments_inside_function_delimiters() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = "function f(//params\n) { //body\n}";
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code.matches("//params").count(), 1, "{code:?}");
+    assert_eq!(code.matches("//body").count(), 1, "{code:?}");
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
+#[test]
+fn test_node_id_comments_inside_empty_literal_delimiters() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "const array = [/*array*/];\n",
+        "const object = {/*object*/};\n",
+        "const lineArray = [//line-array\n];\n",
+        "const lineObject = {//line-object\n};\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    for marker in ["/*array*/", "/*object*/", "//line-array", "//line-object"] {
+        assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
+    }
+    let reparsed = Parser::new(&allocator, &code, SourceType::mjs()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
+#[test]
+fn test_node_id_comment_only_program() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, "/*program*/", SourceType::mjs()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    assert_eq!(code, "/*program*/");
+}
+
+#[test]
+fn test_node_id_comments_inside_empty_structural_bodies() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "class C {//class\n}\n",
+        "class S { static { /*static*/ } }\n",
+        "type ObjectType = { /*type*/ };\n",
+        "type Tuple = [/*tuple*/];\n",
+        "interface I { /*interface*/ }\n",
+        "namespace N { /*module*/ }\n",
+        "enum E { /*enum*/ }\n",
+        "const jsx = <div>{/*jsx*/}</div>;\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::tsx()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    for marker in [
+        "//class",
+        "/*static*/",
+        "/*type*/",
+        "/*tuple*/",
+        "/*interface*/",
+        "/*module*/",
+        "/*enum*/",
+        "/*jsx*/",
+    ] {
+        assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
+    }
+    let reparsed = Parser::new(&allocator, &code, SourceType::tsx()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
+#[test]
+fn test_node_id_comments_inside_empty_blocks_and_patterns() {
+    use oxc_allocator::Allocator;
+    use oxc_ast_visit::CommentAttachmentBuilder;
+    use oxc_codegen::Codegen;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source = concat!(
+        "if (condition) { /*block*/ }\n",
+        "const {/*object-binding*/} = value;\n",
+        "const [/*array-binding*/] = value;\n",
+        "({/*object-target*/} = value);\n",
+        "([/*array-target*/] = value);\n",
+        "import data from 'pkg' with { /*attributes*/ };\n",
+        "export { /*export*/ };\n",
+    );
+    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    let attachments = CommentAttachmentBuilder::build(&parsed.program);
+    let code = Codegen::new().build_with_comment_attachments(&parsed.program, &attachments).code;
+
+    for marker in [
+        "/*block*/",
+        "/*object-binding*/",
+        "/*array-binding*/",
+        "/*object-target*/",
+        "/*array-target*/",
+        "/*attributes*/",
+        "/*export*/",
+    ] {
+        assert_eq!(code.matches(marker).count(), 1, "{marker} in {code:?}");
+    }
+    let reparsed = Parser::new(&allocator, &code, SourceType::ts()).parse();
+    assert!(reparsed.diagnostics.is_empty(), "{code:?}");
+}
+
 // A leading comment inside a `pife` arrow alternate of a `?:` must stay
 // inside the paren wrap on every codegen pass; otherwise the parser re-
 // anchors the shifted comment and the next pass drops it.
