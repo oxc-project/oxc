@@ -988,9 +988,15 @@ impl Gen for ImportDeclaration<'_> {
                             p.print_str("type ");
                         }
 
-                        spec.imported.print(p, ctx);
                         let local_name = p.get_binding_identifier_name(&spec.local);
                         let imported_name = get_module_export_name(&spec.imported, p);
+                        if matches!(spec.imported, ModuleExportName::StringLiteral(_))
+                            && imported_name == local_name
+                        {
+                            spec.local.print(p, ctx);
+                            continue;
+                        }
+                        spec.imported.print(p, ctx);
                         if imported_name != local_name {
                             p.print_soft_space();
                             p.print_space_before_identifier();

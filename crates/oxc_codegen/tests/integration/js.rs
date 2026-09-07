@@ -64,6 +64,28 @@ fn module_decl() {
 }
 
 #[test]
+fn quoted_import_names() {
+    test(r#"import { "foo" as foo } from "m";"#, "import { foo } from \"m\";\n");
+    test(r#"import { "a\u0062" as ab } from "m";"#, "import { ab } from \"m\";\n");
+    test(r#"import { "π" as π } from "m";"#, "import { π } from \"m\";\n");
+    test(r#"import { "type" as type } from "m";"#, "import { type } from \"m\";\n");
+
+    test_same("import { \"foo-bar\" as foo } from \"m\";\n");
+    test_same("import { \"\" as foo } from \"m\";\n");
+    test_same("import { \"default\" as foo } from \"m\";\n");
+    test_same("import { \"foo\" as bar } from \"m\";\n");
+    test(
+        r#"import { "foo" as foo, "bar" as bar, baz } from "m";"#,
+        "import { foo, bar, baz } from \"m\";\n",
+    );
+    test(r#"import { foo as foo, bar } from "m";"#, "import { foo, bar } from \"m\";\n");
+
+    test_minify(r#"import { "foo" as foo } from "m";"#, r#"import{foo}from"m";"#);
+    test_minify(r#"import { "a\u0062" as ab } from "m";"#, r#"import{ab}from"m";"#);
+    test_minify(r#"import { foo as foo, bar } from "m";"#, r#"import{foo,bar}from"m";"#);
+}
+
+#[test]
 fn export_type() {
     test_same("export type {} from \"mod\";\n");
     test_same("export type { Foo } from \"mod\";\n");

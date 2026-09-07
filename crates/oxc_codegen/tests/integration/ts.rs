@@ -5,8 +5,8 @@ use oxc_span::SourceType;
 use crate::{
     snapshot, snapshot_options,
     tester::{
-        default_options, test_idempotency, test_options_with_source_type, test_same, test_tsx,
-        test_with_parse_options,
+        default_options, test, test_idempotency, test_options_with_source_type, test_same,
+        test_tsx, test_with_parse_options,
     },
 };
 
@@ -53,6 +53,26 @@ fn cases() {
     test_same("import type from = require(\"./a\");\n");
     test_same("try {} catch (e: unknown) {} finally {}\n");
     test_same("const Bar = class<T,> {};\n");
+}
+
+#[test]
+fn quoted_type_import_names() {
+    test(r#"import type { "foo" as foo } from "m";"#, "import type { foo } from \"m\";\n");
+    test(r#"import { type "foo" as foo } from "m";"#, "import { type foo } from \"m\";\n");
+    test(r#"import type { "a\u0062" as ab } from "m";"#, "import type { ab } from \"m\";\n");
+    test(r#"import { type "a\u0062" as ab } from "m";"#, "import { type ab } from \"m\";\n");
+    test(r#"import type { foo as foo } from "m";"#, "import type { foo } from \"m\";\n");
+    test(r#"import { type foo as foo } from "m";"#, "import { type foo } from \"m\";\n");
+
+    let min = |source: &str, expected: &str| {
+        test_options_with_source_type(source, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    min(r#"import type { "foo" as foo } from "m";"#, r#"import type{foo}from"m";"#);
+    min(r#"import { type "foo" as foo } from "m";"#, r#"import{type foo}from"m";"#);
+    min(r#"import type { "a\u0062" as ab } from "m";"#, r#"import type{ab}from"m";"#);
+    min(r#"import { type "a\u0062" as ab } from "m";"#, r#"import{type ab}from"m";"#);
+    min(r#"import type { foo as foo } from "m";"#, r#"import type{foo}from"m";"#);
+    min(r#"import { type foo as foo } from "m";"#, r#"import{type foo}from"m";"#);
 }
 
 #[test]
