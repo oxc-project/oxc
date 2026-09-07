@@ -295,7 +295,7 @@ impl Rule for ExhaustiveDeps {
             return;
         };
 
-        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
+        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name, ctx) else {
             return;
         };
 
@@ -865,18 +865,34 @@ impl GetSpan for CallbackNode<'_> {
 
 impl ExhaustiveDeps {
     // https://github.com/facebook/react/blob/1b0132c05acabae5aebd32c2cadddfb16bda70bc/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1789
-    fn get_reactive_hook_callback_index(&self, hook_name: &str) -> Option<usize> {
+    fn get_reactive_hook_callback_index(
+        &self,
+        hook_name: &str,
+        ctx: &LintContext<'_>,
+    ) -> Option<usize> {
         match hook_name {
             "useEffect" | "useLayoutEffect" | "useCallback" | "useMemo" => Some(0),
             "useImperativeHandle" => Some(1),
-            _ => self
-                .0
-                .additional_hooks
-                .as_ref()
-                .is_some_and(|regex| regex.is_match(hook_name))
-                .then_some(0),
+            _ => self.is_additional_hook(hook_name, ctx).then_some(0),
         }
     }
+
+    fn is_additional_hook(&self, hook_name: &str, ctx: &LintContext<'_>) -> bool {
+        if let Some(regex) = &self.0.additional_hooks {
+            return regex.is_match(hook_name);
+        }
+
+        additional_effect_hooks(ctx).is_some_and(|regex| regex.is_match(hook_name))
+    }
+}
+
+fn additional_effect_hooks(ctx: &LintContext<'_>) -> Option<Regex> {
+    let pattern =
+        ctx.settings().json.as_ref()?.get("react-hooks")?.get("additionalEffectHooks")?.as_str()?;
+    if pattern.is_empty() {
+        return None;
+    }
+    Regex::new(pattern).ok()
 }
 
 fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
@@ -1559,6 +1575,48 @@ fn invalid_configs_error_in_from_configuration() {
 
     let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
     assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
+}
+
+#[test]
+fn additional_effect_hooks_settings() {
+    use crate::tester::Tester;
+
+    let pass = vec![(
+        r"function MyComponent(props) {
+          useMyEffect(() => {
+            console.log(props.foo);
+          }, []);
+        }",
+        Some(serde_json::json!([{ "additionalHooks": "useOtherEffect" }])),
+        Some(serde_json::json!({
+            "settings": {
+                "react-hooks": {
+                    "additionalEffectHooks": "useMyEffect"
+                }
+            }
+        })),
+    )];
+
+    let fail = vec![(
+        r"function MyComponent(props) {
+          useMyEffect(() => {
+            console.log(props.foo);
+          }, []);
+        }",
+        None,
+        Some(serde_json::json!({
+            "settings": {
+                "react-hooks": {
+                    "additionalEffectHooks": "useMyEffect"
+                }
+            }
+        })),
+    )];
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail)
+        .with_snapshot_suffix("additional_effect_hooks")
+        .intentionally_allow_no_fix_tests()
+        .test_and_snapshot();
 }
 
 #[test]
