@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- b156333 codegen: Order accessibility before abstract on accessors (#26392) (camc314)
+- 2da73b7 codegen: Print matching quoted import names as identifiers (#26386) (camc314)
+- 0a81d29 codegen: Preserve private-in left operand precedence (#26383) (camc314)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+- 1d9b9d3 ast: Add `GetNodeId` trait (#26145) (camc314)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🚀 Features
