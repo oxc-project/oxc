@@ -756,3 +756,38 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     </div>
    ╰────
   help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:1:18]
+ 1 │ <div>{ok && <div>Text</div>}</div>
+   ·                  ────
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:1:18]
+ 1 │ <div>{ok ? <span>Text</span> : null}</div>
+   ·                  ────
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:1:13]
+ 1 │ <div>{<span>Text</span>}</div>
+   ·             ────
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:1:50]
+ 1 │ <div data-testid="x">{ok && <div data-testid="y">Text</div>}</div>
+   ·                                                  ────
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:1:16]
+ 1 │ <T>{ok && <div>Text</div>}</T>
+   ·                ────
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.

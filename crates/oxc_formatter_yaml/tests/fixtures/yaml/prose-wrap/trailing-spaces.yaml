@@ -1,6 +1,6 @@
 # `trailing-spaces-kept-when-last` DIVERGES from the pinned Prettier
 # (it drops the spaces, corrupting the value);
-# see AGENTS.md "Known divergences" (prettier#19764).
+# see DIVERGENCES.md "block-scalar-trailing-whitespace" (prettier#19764).
 fold-blocked-by-trailing-spaces: >
   word1 word2  
   word3

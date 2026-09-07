@@ -356,9 +356,8 @@ fn test_minimize_demorgan20a() {
 }
 
 #[test]
-#[ignore = "TODO: De Morgan's law optimization not yet implemented"]
 fn test_minimize_demorgan20b() {
-    test("if (0!==c || 2!==a && 1!==a) g(); else f()", "(0!==c || 2!==a && 1!==a) ? g() : f()");
+    test("if (0!==c || 2!==a && 1!==a) g(); else f()", "c!==0 || a!==2 && a!==1 ? g() : f()");
 }
 
 #[test]
@@ -1447,6 +1446,10 @@ fn test_compress_is_loose_boolean() {
     test("v = x != !1", "v = x != 0");
     test_same("v = ![f()] == x");
     test_same("v = x == ![f()]");
+    test("v = true == y", "v = y == 1");
+    test("v = false == y", "v = y == 0");
+    test("v = true != y", "v = y != 1");
+    test("v = false != y", "v = y != 0");
 }
 
 #[test]

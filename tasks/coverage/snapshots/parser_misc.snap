@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 79/79 (100.00%)
-Positive Passed: 79/79 (100.00%)
-Negative Passed: 167/167 (100.00%)
+AST Parsed     : 84/84 (100.00%)
+Positive Passed: 84/84 (100.00%)
+Negative Passed: 171/171 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -136,6 +136,38 @@ Negative Passed: 167/167 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
+  × Illegal break statement
+   ╭─[misc/fail/arrow-function-jumps.js:1:25]
+ 1 │ while (true) { (() => { break; }); }
+   ·                         ──────
+ 2 │ 
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:3:38]
+ 2 │ 
+ 3 │ outer: while (true) { (() => { break outer; }); }
+   ·                                      ─────
+ 4 │ 
+   ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[misc/fail/arrow-function-jumps.js:5:25]
+ 4 │ 
+ 5 │ while (true) { (() => { continue; }); }
+   ·                         ─────────
+ 6 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:7:41]
+ 6 │ 
+ 7 │ outer: while (true) { (() => { continue outer; }); }
+   ·                                         ─────
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
  2 │   class C {
@@ -199,6 +231,17 @@ Negative Passed: 167/167 (100.00%)
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+   ╭─[misc/fail/continue-label-chain-non-iteration.js:1:1]
+ 1 │ a: b: {
+   · ┬
+   · ╰── This is an non-iteration statement
+ 2 │     continue a;
+   ·              ┬
+   ·              ╰── for this label
+ 3 │ }
+   ╰────
+
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
@@ -220,6 +263,34 @@ Negative Passed: 167/167 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:1:24]
+ 1 │ class DuplicateField { #x; x; #x; }
+   ·                        ─┬     ─┬
+   ·                         │      ╰── It can not be redeclared here
+   ·                         ╰── `#x` has already been declared here
+ 2 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:3:29]
+ 2 │ 
+ 3 │ class DuplicateGetter { get #x() {} set #x(value) {} get #x() {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+ 4 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:5:29]
+ 4 │ 
+ 5 │ class DuplicateSetter { set #x(value) {} get #x() {} set #x(value) {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+   ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[misc/fail/escape-00.js:1:25]
@@ -4248,6 +4319,22 @@ Negative Passed: 167/167 (100.00%)
    ·           ──
    ╰────
   help: Expected an identifier, like `...rest`.
+
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:1:26]
+ 1 │ async function f(...[x = await 0]) {}
+   ·                          ───┬───
+   ·                             ╰── await expression not allowed in formal parameter
+ 2 │ function* g(...[x = yield 0]) {}
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:2:21]
+ 1 │ async function f(...[x = await 0]) {}
+ 2 │ function* g(...[x = yield 0]) {}
+   ·                     ───┬───
+   ·                        ╰── yield expression not allowed in formal parameter
+   ╰────
 
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]

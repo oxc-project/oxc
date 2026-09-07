@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### 💥 BREAKING CHANGES
+
+- a31567a allocator: [**BREAKING**] Make `Allocator::cursor_ptr` and `data_end_ptr` private (#26081) (overlookmotel)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes

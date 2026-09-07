@@ -1,16 +1,19 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
+assertion_line: 178
 expression: report
 ---
-ts compatibility: 624/659 (94.69%), 16 files skipped
+ts compatibility: 621/659 (94.23%), 16 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | typescript/as/as.ts | 💥 | 97.74% |
+| typescript/as/as-const/as-const.ts | 💥 | 66.67% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
+| typescript/as/comments/18160.ts | 💥 | 54.21% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
 | typescript/class-comment/class-implements.ts | 💥 | 93.33% |
@@ -29,6 +32,7 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 88.24% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
+| typescript/satisfies-operators/comments-unstable.ts | 💥💥 | 61.54% |
 | typescript/template-literals/member-expression.ts | 💥 | 65.12% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |
 | typescript/type-parameters-arguments/18604.ts | 💥 | 60.00% |
@@ -68,7 +72,5 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 - jsx/comments/in-attributes.js
 - jsx/spread/child.js
 - typescript/as/comments/17407.ts
-- typescript/as/comments/18160.ts
 - typescript/call/callee-comments.ts
 - typescript/method-chain/object/issue-17239.ts
-- typescript/satisfies-operators/comments-unstable.ts

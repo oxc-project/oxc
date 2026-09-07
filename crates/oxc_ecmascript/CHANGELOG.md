@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- b874f48 ecmascript: `Math.round` only exact half ties (#26150) (camc314)
+- a625378 minifier: Coerce omitted `indexOf` search argument (#26149) (camc314)
+- dc7398b ecmascript: Trim trailing whitespace in string to number (#26148) (camc314)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

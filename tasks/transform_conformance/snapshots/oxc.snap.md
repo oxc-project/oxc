@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 270/398
+Passed: 271/399
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -488,7 +488,7 @@ Bindings mismatch:
 after transform: ScopeId(3): ["Cls2"]
 rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
 Symbol scope ID mismatch for "Cls":
 after transform: SymbolId(4): ScopeId(1)

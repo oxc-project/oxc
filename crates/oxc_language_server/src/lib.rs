@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{num::NonZero, sync::Arc};
 
 use futures::future::BoxFuture;
 use rustc_hash::FxBuildHasher;
@@ -73,5 +73,14 @@ async fn run_server_impl(
     })
     .finish();
 
-    Server::new(stdin, stdout, socket).serve(service).await;
+    // Baseline concurrency level from `available_parallelism()`. On systems with 6+ threads, leave 2
+    // threads for other work to avoid overwhelming the host (the minimum is clamped below).
+    let current_threads = std::thread::available_parallelism().map_or(1, NonZero::get);
+    let capped_threads = if current_threads >= 6 { current_threads - 2 } else { current_threads };
+    // Ensure that the concurrency level is at least 4, defaulting to the old behavior if the system has fewer than 4 threads.
+    // Server-Requests can trigger Client-Requests, which will fill up the thread pool quickly, so we want to ensure that we have enough threads to handle both.
+    // https://github.com/ebkalderon/tower-lsp/blob/49e1ce54549d5efc53b75510517c2f0b86f5c827/src/transport.rs#L78-L80
+    let level = std::cmp::max(4, capped_threads);
+
+    Server::new(stdin, stdout, socket).concurrency_level(level).serve(service).await;
 }

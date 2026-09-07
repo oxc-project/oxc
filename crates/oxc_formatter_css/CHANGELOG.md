@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.66.0] - 2026-08-31
+
+### 🚀 Features
+
+- 1fb37b6 formatter/css: Format declaration-shaped raw-prelude rules (postcss nested config blocks) (#26194) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 57e8e22 formatter_css: Space a folded sign after a call in Less operations (#26134) (leaysgur)
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
 ## [0.64.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

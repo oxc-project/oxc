@@ -285,8 +285,8 @@ fn test_loop_optimization_edge_cases() {
     test("while (true) { infiniteLoop(); }", "for (;;) infiniteLoop();"); // optimized loop form
 
     // Test do-while loops - false becomes !1, braces may be removed, true becomes !0
-    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (!1);");
-    test("do { body(); } while (true);", "do\n\tbody();\nwhile (!0);");
+    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (0);");
+    test("do { body(); } while (true);", "do\n\tbody();\nwhile (1);");
 
     // Test for loops with analyzable bounds
     test(
@@ -303,28 +303,20 @@ fn test_loop_optimization_edge_cases() {
 #[test]
 fn test_switch_statement_edge_cases() {
     // Test switch with constant discriminant - might be optimized in future
-    test_same("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); }");
-    // Could be optimized to just: b();
-
-    test_same("switch ('test') { case 'foo': a(); break; case 'test': b(); break; default: c(); }");
-    // Could be optimized to just: b();
+    test("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); }", "b();");
+    test(
+        "switch ('test') { case 'foo': a(); break; case 'test': b(); break; default: c(); }",
+        "b();",
+    );
 
     // Test switch with no matching case
-    test(
-        "switch (5) { case 1: a(); break; case 2: b(); break; }",
-        "switch (5) { case 1: a(); break; case 2: b(); }",
-    );
-    // Could be optimized to empty
+    test("switch (5) { case 1: a(); break; case 2: b(); break; }", "");
 
     // Test switch with default
-    test(
-        "switch (5) { case 1: a(); break; default: b(); break; }",
-        "switch (5) { case 1: a(); break; default: b(); }",
-    );
-    // Could be optimized to just: b();
+    test("switch (5) { case 1: a(); break; default: b(); break; }", "b();");
 
     // Test switch with fall-through - more complex, keep as same for safety
-    test_same("switch (1) { case 1: a(); case 2: b(); break; case 3: c(); }");
+    test("switch (1) { case 1: a(); case 2: b(); break; case 3: c(); }", "a(), b();");
     // Should preserve fall-through behavior
 }
 

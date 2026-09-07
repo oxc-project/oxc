@@ -36,7 +36,7 @@ use crate::{
     node::{Ancestry, AstNodeStore, AstNodeStoreKind},
     scoping::{Bindings, Scoping},
     stats::Stats,
-    unresolved_stack::UnresolvedReferences,
+    unresolved_stack::{UnresolvedReference, UnresolvedReferences},
 };
 #[cfg(feature = "jsdoc")]
 use oxc_jsdoc::JSDocBuilder;
@@ -97,9 +97,6 @@ pub struct SemanticBuilder<'a> {
     pub(crate) scoping: Scoping,
 
     pub(crate) unresolved_references: UnresolvedReferences<'a>,
-    /// Checkpoint for early resolution of function parameter / catch parameter references.
-    /// Tracks the start index in the flat unresolved references list.
-    unresolved_references_checkpoint: usize,
 
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "jsdoc")]
@@ -159,7 +156,6 @@ impl<'a> SemanticBuilder<'a> {
             hoisting_variables: FxHashMap::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
-            unresolved_references_checkpoint: 0,
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "jsdoc")]
             jsdoc: JSDocBuilder::default(),
@@ -610,8 +606,13 @@ impl<'a> SemanticBuilder<'a> {
         name: Ident<'a>,
         reference: Reference,
     ) -> ReferenceId {
+        let lookup_scope_id = reference.scope_id();
         let reference_id = self.scoping.create_reference(reference);
-        self.unresolved_references.push(name, reference_id);
+        self.unresolved_references.push(UnresolvedReference {
+            name,
+            reference_id,
+            lookup_scope_id,
+        });
         reference_id
     }
 
@@ -640,27 +641,35 @@ impl<'a> SemanticBuilder<'a> {
     /// Walk-up is faster because it only does hashmap lookups (no drain+insert),
     /// and reference creation is a simple Vec push instead of a hashmap insert.
     fn resolve_all_references(&mut self) {
+        let root_scope_id = self.scoping.root_scope_id();
         let refs = self.unresolved_references.take();
-        for (name, reference_id) in refs {
-            if !self.walk_up_resolve_reference(name, reference_id) {
-                self.scoping.add_root_unresolved_reference(name, reference_id);
+        for unresolved in refs {
+            if !self.walk_up_resolve_reference(unresolved, root_scope_id) {
+                self.scoping
+                    .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
             }
         }
     }
 
-    /// Walk up the scope chain trying to resolve a reference.
-    /// Returns `true` if resolved.
+    /// Walk up the scope chain through `last_scope_id`.
     #[expect(clippy::inline_always, reason = "Hot path — called for every reference resolution")]
     #[inline(always)]
-    fn walk_up_resolve_reference(&mut self, name: Ident<'a>, reference_id: ReferenceId) -> bool {
-        let mut scope_id = Some(self.scoping.references[reference_id].scope_id());
-        while let Some(sid) = scope_id {
-            if let Some(symbol_id) = self.scoping.get_binding(sid, name)
-                && self.try_resolve_reference(reference_id, symbol_id)
+    fn walk_up_resolve_reference(
+        &mut self,
+        unresolved: UnresolvedReference<'a>,
+        last_scope_id: ScopeId,
+    ) -> bool {
+        let mut current_scope_id = Some(unresolved.lookup_scope_id);
+        while let Some(scope_id) = current_scope_id {
+            if let Some(symbol_id) = self.scoping.get_binding(scope_id, unresolved.name)
+                && self.try_resolve_reference(unresolved.reference_id, symbol_id)
             {
                 return true;
             }
-            scope_id = self.scoping.scope_parent_id(sid);
+            if scope_id == last_scope_id {
+                return false;
+            }
+            current_scope_id = self.scoping.scope_parent_id(scope_id);
         }
         false
     }
@@ -715,36 +724,53 @@ impl<'a> SemanticBuilder<'a> {
         true
     }
 
-    /// Early-resolve references collected since the checkpoint by walking up the
-    /// full scope chain. Used for function parameters and catch parameters where
-    /// references must be resolved before entering the function body, to avoid
-    /// binding to variables declared inside the body (which share the same scope).
+    /// Early-resolve references collected while visiting the current function or catch parameter
+    /// scope.
+    ///
+    /// Function parameters and bodies currently share one scope. To emulate the separate
+    /// parameter environment, unresolved parameter references resume from the parent scope during
+    /// final resolution. Nested parameter resolution advances this boundary one function at a time,
+    /// so a nested function parameter can still resolve to a later declaration in an enclosing
+    /// function body while skipping declarations in its own body.
+    ///
+    /// This is a workaround until function bodies have separate scopes:
+    /// <https://github.com/oxc-project/backlog/issues/176>.
     ///
     /// Resolved references are removed. Unresolved references stay in the flat
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
-    fn resolve_references_for_current_scope(&mut self) {
-        // Process in-place using a retain-style write-cursor — no temporary
-        // `Vec`. Reads each `(name, reference_id)` by value out of the flat
-        // list (both fields are `Copy`), so calling `walk_up_resolve_reference`
-        // (which takes `&mut self`) doesn't conflict with the index read.
-        let checkpoint = self.unresolved_references_checkpoint;
-        let end = self.unresolved_references.len();
-        if end <= checkpoint {
+    fn resolve_references_for_current_scope(&mut self, unresolved_start: usize) {
+        if self.unresolved_references.len() == unresolved_start {
             return;
         }
-        let mut write_idx = checkpoint;
-        for read_idx in checkpoint..end {
-            let (name, reference_id) = self.unresolved_references.get(read_idx);
-            if !self.walk_up_resolve_reference(name, reference_id) {
-                // Keep in the flat list — may resolve later via forward declarations.
-                if write_idx != read_idx {
-                    self.unresolved_references.set(write_idx, name, reference_id);
-                }
-                write_idx += 1;
+
+        let current_scope_id = self.current_scope_id;
+        let parent_scope_id = self
+            .scoping
+            .scope_parent_id(current_scope_id)
+            .expect("function and catch parameter scopes always have a parent");
+
+        // Take the list out of `self` while resolving, so the closure can call `&mut self`
+        // methods. Resolution never pushes new unresolved references, so nothing is lost.
+        let mut unresolved_references = mem::take(&mut self.unresolved_references);
+        unresolved_references.retain_from(unresolved_start, |unresolved| {
+            // Parameter decorators are visited in an outer class scope. Leave those references
+            // for final resolution because the current function is not on their scope chain.
+            let lookup_scope_id = unresolved.lookup_scope_id;
+            if lookup_scope_id != current_scope_id
+                && !self.scoping.scope_is_descendant_of(lookup_scope_id, current_scope_id)
+            {
+                return true;
             }
-        }
-        self.unresolved_references.truncate(write_idx);
+            if self.walk_up_resolve_reference(*unresolved, current_scope_id) {
+                return false;
+            }
+            // Skip this function body during final resolution. An enclosing parameter resolution
+            // may still resolve the reference before advancing the boundary again.
+            unresolved.lookup_scope_id = parent_scope_id;
+            true
+        });
+        self.unresolved_references = unresolved_references;
     }
 
     pub(crate) fn add_redeclare_variable(
@@ -2057,9 +2083,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         ));
         /* cfg */
 
-        // Save checkpoint before visiting type params/params/return type
-        let saved_checkpoint = self.unresolved_references_checkpoint;
-        self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
+        let unresolved_start = self.unresolved_references.len();
 
         if let Some(type_parameters) = &func.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
@@ -2072,17 +2096,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if func.params.has_parameter() || func.return_type.is_some() {
-            // `function foo({bar: identifier_reference}) {}`
-            //                     ^^^^^^^^^^^^^^^^^^^^
-            // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
-            //                            ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope();
-        }
-        self.unresolved_references_checkpoint = saved_checkpoint;
+        // `function foo({bar: identifier_reference}) {}`
+        //                     ^^^^^^^^^^^^^^^^^^^^
+        // `function foo<SomeType>(v: SomeType): SomeType { return v; }`
+        //                            ^^^^^^^^   ^^^^^^^^
+        // `function foo<T extends SomeType>(this: SomeType) {}`
+        //                         ^^^^^^^^        ^^^^^^^^
+        // Parameter initializers must be resolved after all parameters have been declared.
+        // Param types, return type, type parameter constraints and the `this` type must be
+        // resolved after type parameters have been declared.
+        // In all cases, need to avoid binding to variables/types declared inside the function body.
+        self.resolve_references_for_current_scope(unresolved_start);
 
         if let Some(body) = &func.body {
             self.visit_function_body(body);
@@ -2141,9 +2165,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &expr.scope_id,
         );
 
-        // Save checkpoint before visiting type params/params/return type
-        let saved_checkpoint = self.unresolved_references_checkpoint;
-        self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
+        let unresolved_start = self.unresolved_references.len();
 
         if let Some(parameters) = &expr.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
@@ -2163,17 +2185,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
-        if expr.params.has_parameter() || expr.return_type.is_some() {
-            // `let foo = ({bar: identifier_reference}) => {};`
-            //                   ^^^^^^^^^^^^^^^^^^^^
-            // `let foo = <SomeType>(v: SomeType): SomeType => v;`
-            //                          ^^^^^^^^   ^^^^^^^^
-            // Parameter initializers must be resolved after all parameters have been declared.
-            // Param types and return type must be resolved after type parameters have been declared.
-            // In both cases, need to avoid binding to variables/types declared inside the function body.
-            self.resolve_references_for_current_scope();
-        }
-        self.unresolved_references_checkpoint = saved_checkpoint;
+        // `let foo = ({bar: identifier_reference}) => {};`
+        //                   ^^^^^^^^^^^^^^^^^^^^
+        // `let foo = <SomeType>(v: SomeType): SomeType => v;`
+        //                          ^^^^^^^^   ^^^^^^^^
+        // `let foo = <T extends SomeType>() => {};`
+        //                       ^^^^^^^^
+        // Parameter initializers must be resolved after all parameters have been declared.
+        // Param types, return type and type parameter constraints must be resolved after
+        // type parameters have been declared.
+        // In all cases, need to avoid binding to variables/types declared inside the function body.
+        self.resolve_references_for_current_scope(unresolved_start);
 
         self.visit_arrow_function_body(&expr.body);
 
@@ -2376,16 +2398,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
 
-        let saved_checkpoint = self.unresolved_references_checkpoint;
-        self.unresolved_references_checkpoint = self.unresolved_references.checkpoint();
+        let unresolved_start = self.unresolved_references.len();
 
         self.visit_span(&param.span);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
         }
-        self.resolve_references_for_current_scope();
-        self.unresolved_references_checkpoint = saved_checkpoint;
+        self.resolve_references_for_current_scope(unresolved_start);
         self.leave_node(kind);
     }
 

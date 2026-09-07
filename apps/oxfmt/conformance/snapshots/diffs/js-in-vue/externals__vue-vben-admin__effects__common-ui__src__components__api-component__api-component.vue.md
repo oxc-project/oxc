@@ -1,6 +1,7 @@
 # externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue
 
-> `<T = any,>() => {}` comma removed in ts-in-vue as like plain `.ts`, intentional divergence: Prettier keeps in ts-in-xxx, but not in ts-in-md and also plain `.ts`. It is only required for `.tsx` and `.mts|cts`
+> `<T = any,>` comma removed like plain `.ts`. See apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
+> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
 ## Option 1
 

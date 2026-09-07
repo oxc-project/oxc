@@ -3,7 +3,9 @@ use oxc_ast::ast::*;
 use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
-use crate::print::semicolon::{FormatContentWithSemicolon, keeps_trailing_comment_inside_parens};
+use crate::print::semicolon::{
+    FormatContentWithSemicolon, semicolon_terminated_expression_content_end,
+};
 use crate::utils::assignment_like::AssignmentLike;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -13,20 +15,45 @@ use crate::{
     write,
 };
 
-use super::FormatWrite;
+use crate::utils::suppressed::FormatSuppressedNode;
+
+use super::{
+    FormatWrite, variable_declaration_content_end, write_suppressed_statement_with_semicolon,
+};
+
+/// Whether the declaration is a `for`/`for-in`/`for-of` head,
+/// terminated by the head itself (the head-vs-body test is by span: a declaration can also be the body).
+/// Everywhere else the declaration terminates itself, including `export const ...`,
+/// whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
+fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool {
+    match decl.parent() {
+        AstNodes::ForStatement(stmt) => {
+            stmt.init.as_ref().is_some_and(|init| init.span() == decl.span())
+        }
+        AstNodes::ForInStatement(stmt) => stmt.left.span() == decl.span(),
+        AstNodes::ForOfStatement(stmt) => stmt.left.span() == decl.span(),
+        _ => false,
+    }
+}
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
+    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
+        if is_for_head_declaration(self) {
+            // No terminator of its own to re-add:
+            // Prettier appends one anyway and corrupts the head (DIVERGENCES.md#suppressed-for-head-declaration)
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            // The ignored range ends at the last declarator; the terminator is always the formatter's
+            write_suppressed_statement_with_semicolon(
+                self.span().start,
+                variable_declaration_content_end(self, f),
+                f,
+            );
+        }
+    }
+
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let semicolon = match self.parent() {
-            AstNodes::ForStatement(stmt) => {
-                stmt.init().is_some_and(|init| init.span() != self.span())
-            }
-            AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
-            AstNodes::ForOfStatement(stmt) => stmt.left().span() != self.span(),
-            // Everywhere else the declaration terminates itself, including `export const ...`,
-            // whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
-            _ => true,
-        };
+        let semicolon = !is_for_head_declaration(self);
 
         if self.declare() {
             write!(f, ["declare", space()]);
@@ -37,17 +64,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             if semicolon {
                 let last_declarator = declarations.as_ref().last();
                 let declarations_end = last_declarator.map_or(self.span().end, |d| d.span().end);
-                // A trailing comment right before the closing paren of the last initializer stays inside the parentheses;
-                // extend the content past the closing paren so the comment is not moved behind the semicolon
-                // (the initializer prints it, see `keeps_trailing_comment_inside_parens`).
-                let keeps_comment_inside_parens = last_declarator
+                let content_end = last_declarator
                     .and_then(|declarator| declarator.init.as_ref())
-                    .is_some_and(|init| keeps_trailing_comment_inside_parens(init, true));
-                let content_end = if keeps_comment_inside_parens {
-                    f.comments().end_including_source_parens(declarations_end, self.span().end)
-                } else {
-                    declarations_end
-                };
+                    .map_or(declarations_end, |init| {
+                        semicolon_terminated_expression_content_end(
+                            f,
+                            init,
+                            declarations_end,
+                            self.span().end,
+                            true,
+                        )
+                    });
                 write!(
                     f,
                     FormatContentWithSemicolon::new(declarations, content_end, self.span().end)

@@ -11,7 +11,7 @@ use crate::{
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::FormatSuppressedNode, typecast::format_leading_comments_and_open_paren,
+        suppressed::write_suppressed_expression, typecast::format_leading_comments_and_open_paren,
     },
     write,
 };
@@ -866,13 +866,15 @@ fn format_sequence_with_leading_comment<'a, 'b>(
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        format_leading_comments_and_open_paren(sequence_span, leading_comments_start, true, f);
         if is_suppressed {
-            write!(f, FormatSuppressedNode(sequence_span));
+            // The single owner keeps a cast target's source parens (`() => /** @type {A} */ (a, b)`),
+            // which double as the sequence-body parens this site otherwise forces.
+            write_suppressed_expression(sequence_span, leading_comments_start, true, f);
         } else {
+            format_leading_comments_and_open_paren(sequence_span, leading_comments_start, true, f);
             write!(f, format_body);
+            write!(f, [")"]);
         }
-        write!(f, [")"]);
     });
 
     Some(format_with(move |f| {

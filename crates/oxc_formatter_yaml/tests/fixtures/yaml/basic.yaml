@@ -1,3 +1,4 @@
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
 key: value
 map:
   nested: 1

@@ -4,6 +4,10 @@ pub mod simple_argument;
 
 use std::iter;
 
+use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
+use oxc_span::GetSpan;
+
 use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
@@ -20,11 +24,8 @@ use crate::{
     },
     write,
 };
-use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
-use oxc_span::GetSpan;
 
-use super::typecast::classify_type_cast;
+use super::typecast::is_cast_target;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -436,7 +437,7 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if classify_type_cast(expression.span(), f).is_target() {
+        if is_cast_target(expression.span(), f) {
             return ChainMember::Node(expression).into();
         }
 

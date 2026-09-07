@@ -1,13 +1,17 @@
-HTML#KeepId.KeepClass,
-a[HREF=KeepAttrValue]:HOVER::FIRST-letter,
-svg[viewBox] linearGradient,
-:Not(:NTH-child(2N+1)) {
-    COLOR: #AAbbCC;
-    BACKGROUND-image: URL("KeepString");
-    Margin: 5PX .2E10Em;
-    --Keep-custom-Prop: red;
-    background: Var(--Keep-custom-Prop);
-    important: something !IMPORTANT;
-    font-family: INITIAL;
-    -WEBKIT-USER-SELECT: none;
+// Less-specific case handling (shared selector/value rules live in
+// scss/case-normalize.scss): variable / mixin names, escaped strings, and
+// guard operands keep their case; units and hex still normalize.
+@Keep-Var-Case: RED;
+@KeepUnit: 5PX;
+.KeepMixinName(@Arg: INITIAL) {
+  color: @Arg;
+}
+.user {
+  .KeepMixinName(@Keep-Var-Case);
+  background: ~"URL(KeepEscapedString)";
+  width: @KeepUnit;
+  border-color: #AAbbCC;
+}
+.guarded when (@Keep-Var-Case = RED) {
+  prop: val;
 }

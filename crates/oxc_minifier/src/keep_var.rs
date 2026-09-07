@@ -3,11 +3,11 @@ use oxc_ast::{ast::*, builder::GetAstBuilder};
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
-use oxc_str::Str;
+use oxc_str::Ident;
 use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
-    vars: Vec<(Str<'a>, Span, Option<SymbolId>)>,
+    vars: Vec<(Ident<'a>, Span, Option<SymbolId>)>,
     all_hoisted: bool,
 }
 
@@ -45,7 +45,7 @@ impl<'a> VisitJs<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name.into(), ident.span, ident.symbol_id.get()));
+                self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
             });
             if it.has_init() {
                 self.all_hoisted = false;

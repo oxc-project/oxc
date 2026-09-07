@@ -260,10 +260,11 @@ impl PrintStringState<'_> {
 
     /// Calculate optimum quote character to use, when backtick (`) is an option.
     fn calculate_quote_maybe_backtick(&self) -> Quote {
-        // Max string length is:
-        // * 64-bit platforms: `u32::MAX`.
+        // Strings are assumed to be no longer than `MAX_LEN` (defined in `oxc_parser`),
+        // which holds for all strings produced by the parser:
+        // * 64-bit platforms: `u32::MAX - 256`.
         // * 32-bit platforms: `i32::MAX`.
-        // In either case, `isize` is sufficient to make overflow impossible.
+        // Each byte changes a cost by at most 1, so in either case `isize` cannot overflow.
         let mut single_cost: isize = 0;
         let mut double_cost: isize = 0;
         let mut backtick_cost: isize = 0;
@@ -302,10 +303,11 @@ impl PrintStringState<'_> {
 
     /// Calculate optimum quote character to use, when backtick (`) is not an option.
     fn calculate_quote_no_backtick(&self) -> Quote {
-        // Max string length is:
-        // * 64-bit platforms: `u32::MAX`.
+        // Strings are assumed to be no longer than `MAX_LEN` (defined in `oxc_parser`),
+        // which holds for all strings produced by the parser:
+        // * 64-bit platforms: `u32::MAX - 256`.
         // * 32-bit platforms: `i32::MAX`.
-        // In either case, `isize` is sufficient to make overflow impossible.
+        // Each byte changes a cost by at most 1, so in either case `isize` cannot overflow.
         let mut single_cost: isize = 0;
         for &b in self.bytes.clone() {
             match b {

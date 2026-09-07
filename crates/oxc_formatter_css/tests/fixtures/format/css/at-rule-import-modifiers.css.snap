@@ -7,6 +7,11 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @import "verylongname-aaaaaaaa.css" projection tv braille embossed handheld print screen speech tty;
 @import 'one.css', "two.css",   'three.css';
 @import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
+@import url("./a.css") supports(display: flex);
+@import url("./b.css") layer(base) supports(not (display: inline-grid)) print;
+@import url("./c.css") supports(font-format(woff2));
+@import "d.css" supports((display: grid) and (gap: 1rem));
+@import url("e.css") supports(display: flex) screen and (min-width: 400px);
 
 ==================== Output ====================
 ------------------
@@ -18,6 +23,11 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
   print screen speech tty;
 @import "one.css", "two.css", "three.css";
 @import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
+@import url("./a.css") supports(display: flex);
+@import url("./b.css") layer(base) supports(not (display: inline-grid)) print;
+@import url("./c.css") supports(font-format(woff2));
+@import "d.css" supports((display: grid) and (gap: 1rem));
+@import url("e.css") supports(display: flex) screen and (min-width: 400px);
 
 -------------------
 { printWidth: 100 }
@@ -27,5 +37,10 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @import "verylongname-aaaaaaaa.css" projection tv braille embossed handheld print screen speech tty;
 @import "one.css", "two.css", "three.css";
 @import "tailwindcss/utilities.css" layer(utilities) source(none) prefix(tw);
+@import url("./a.css") supports(display: flex);
+@import url("./b.css") layer(base) supports(not (display: inline-grid)) print;
+@import url("./c.css") supports(font-format(woff2));
+@import "d.css" supports((display: grid) and (gap: 1rem));
+@import url("e.css") supports(display: flex) screen and (min-width: 400px);
 
 ===================== End =====================

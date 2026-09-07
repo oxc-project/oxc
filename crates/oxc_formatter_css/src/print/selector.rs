@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
+
 use oxc_css_parser::ast::{
     AttributeSelector, AttributeSelectorMatcherKind, AttributeSelectorValue, Combinator,
     CombinatorKind, ComplexSelector, ComplexSelectorChild, CompoundSelector, CompoundSelectorList,
@@ -11,7 +12,6 @@ use oxc_css_parser::ast::{
     PseudoClassSelector, PseudoClassSelectorArgKind, PseudoElementSelector,
     PseudoElementSelectorArgKind, SelectorList, SimpleSelector, TypeSelector, WqName,
 };
-
 use oxc_formatter_core::{
     Buffer, FormatElement, arena_cow_str,
     builders::{group, hard_line_break, indent, soft_line_break, soft_line_break_or_space, text},
@@ -19,7 +19,8 @@ use oxc_formatter_core::{
 };
 
 use crate::{
-    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
+    TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
 };
@@ -83,7 +84,9 @@ pub(super) fn write_selector_list<'a>(
         for (i, complex) in list.selectors.iter().enumerate() {
             if i > 0 {
                 write!(f, ",");
-                // A comment trailing the comma stays on the same line
+                // A comment trailing the comma stays on the same line:
+                // a lone block comment (`a, /* b */ c`), or a run ending in a `//` (`a, /* b */ // c`).
+                // A `//` ends the line itself; the separator below then merges into its break.
                 let next_start = to_span(complex.span()).start;
                 if let Some(comment) = f.context().comments().peek()
                     && comment.span.end <= next_start
@@ -93,9 +96,13 @@ pub(super) fn write_selector_list<'a>(
                     if comments::classify_gap(source.bytes_range(prev_end, comment.span.start))
                         == comments::Gap::None
                     {
-                        f.context().comments().take_before(comment.span.end);
-                        write!(f, " ");
-                        comments::write_single_comment(comment, f);
+                        let run_end = value::line_comment_run_end(
+                            comment.span.start,
+                            f.context().comments().iter_remaining(),
+                            source,
+                        );
+                        let upper_bound = run_end.unwrap_or(comment.span.end);
+                        value::flush_same_line_comments(comment.span.start, upper_bound, f);
                     }
                 }
                 match style {
@@ -106,8 +113,7 @@ pub(super) fn write_selector_list<'a>(
             // Comments on their own line between selectors
             let start = to_span(complex.span()).start;
             for &comment in f.context().comments().take_before(start) {
-                comments::write_single_comment(comment, f);
-                write!(f, hard_line_break());
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::HardLine));
             }
             if placeholder_idx == Some(i) {
                 let source = f.context().source_text();

@@ -1,6 +1,6 @@
 {
   "name": "oxc-codegen",
-  "version": "0.147.0",
+  "version": "0.148.0",
   "description": "Fast JavaScript code generator from an ESTree-compliant AST",
   "keywords": [
     "ast",

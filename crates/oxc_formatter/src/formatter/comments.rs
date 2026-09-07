@@ -135,7 +135,7 @@ pub struct Comments<'a> {
     ///
     /// When set, [`Self::unprinted_comments()`] will only return comments up to this index,
     /// effectively hiding comments beyond this point from the formatter.
-    pub view_limit: Option<usize>,
+    view_limit: Option<usize>,
 }
 
 impl<'a> Comments<'a> {
@@ -275,6 +275,42 @@ impl<'a> Comments<'a> {
         unreachable!("the caller guarantees the character occurs outside a comment")
     }
 
+    /// The run of comments after `pos` separated only by whitespace (a prefix of `comments`).
+    fn comment_run_after(&self, comments: &'a [Comment], pos: u32) -> &'a [Comment] {
+        let mut cursor = pos;
+        let mut count = 0;
+        for comment in comments {
+            if comment.span.start < cursor
+                || !self
+                    .source_text
+                    .all_bytes_match(cursor, comment.span.start, |b| b.is_ascii_whitespace())
+            {
+                break;
+            }
+            count += 1;
+            cursor = comment.span.end;
+        }
+        &comments[..count]
+    }
+
+    /// Whether the first non-whitespace byte after `pos` outside comments is `)`.
+    ///
+    /// Skips every comment by span, printed and hidden ones included, so the answer does not depend on the comment view:
+    /// a cast target hidden behind an ancestor's trailing-comment limit must still be recognized, or its parens drop.
+    pub(crate) fn is_followed_by_closing_paren(&self, pos: u32) -> bool {
+        // Only a comment can hide the `)`, so anything but `/` answers without touching the comments;
+        // a `/` that is an operator instead is settled by the comment spans below (no adjacent comment: `false`)
+        match self.source_text.next_non_whitespace_byte(pos) {
+            Some(b')') => return true,
+            Some(b'/') => {}
+            _ => return false,
+        }
+        let first = self.inner.partition_point(|comment| comment.span.end <= pos);
+        let run = self.comment_run_after(&self.inner[first..], pos);
+        let end = run.last().map_or(pos, |comment| comment.span.end);
+        self.source_text.next_non_whitespace_byte_is(end, b')')
+    }
+
     /// Comments sitting between `pos` and a closing source paren:
     /// the run of comments after `pos` separated only by whitespace,
     /// whose next non-whitespace character is `)`.
@@ -284,46 +320,33 @@ impl<'a> Comments<'a> {
     /// (e.g. an expression end up to the statement end)
     /// A range containing a string literal would false-match a `)` inside it.
     pub(crate) fn comments_before_closing_paren(&self, pos: u32) -> Option<&'a [Comment]> {
-        let comments = self.comments_after(pos);
-
-        let mut pos = pos;
-        let mut count = 0;
-        for comment in comments {
-            if comment.span.start < pos
-                || !self
-                    .source_text
-                    .all_bytes_match(pos, comment.span.start, |b| b.is_ascii_whitespace())
-            {
-                break;
-            }
-            count += 1;
-            pos = comment.span.end;
-        }
-
-        (count > 0 && self.source_text.next_non_whitespace_byte_is(pos, b')'))
-            .then(|| &comments[..count])
+        let run = self.comment_run_after(self.comments_after(pos), pos);
+        let end = run.last()?.span.end;
+        self.source_text.next_non_whitespace_byte_is(end, b')').then_some(run)
     }
 
-    /// Whether the source has a `;` between the given positions,
-    /// ignoring `;` bytes inside comments (e.g. `foo /* ; */`).
-    /// `false` when the source relies on ASI.
+    /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).
+    /// Why a `)` counts as a statement terminator: see `trailing_comments_to_move_behind_semicolon`.
     ///
     /// Lexical byte scan: the range must contain only trivia and punctuation.
     /// (e.g. a content end up to the statement end)
-    /// A range containing a string literal would false-match a `;` inside it.
-    pub(crate) fn has_semicolon_in_range(&self, start: u32, end: u32) -> bool {
+    /// A range containing a string literal would false-match a byte inside it.
+    pub(crate) fn has_semicolon_or_closing_paren_in_range(&self, start: u32, end: u32) -> bool {
+        let has_terminator = |from: u32, to: u32| {
+            self.source_text.bytes_range(from, to).iter().any(|&b| matches!(b, b';' | b')'))
+        };
         let mut pos = start;
         for comment in self.comments_in_range(start, end) {
             // A comment ending exactly at `start` lies before the range
             if comment.span.start < pos {
                 continue;
             }
-            if self.source_text.bytes_contain(pos, comment.span.start, b';') {
+            if has_terminator(pos, comment.span.start) {
                 return true;
             }
             pos = comment.span.end;
         }
-        self.source_text.bytes_contain(pos, end, b';')
+        has_terminator(pos, end)
     }
 
     /// End of the content including its source parentheses:
@@ -646,16 +669,6 @@ impl<'a> Comments<'a> {
             .iter()
             .take_while(|c| c.span.end <= span.start)
             .position(|comment| self.is_type_cast_comment_followed_by_paren(comment))
-    }
-
-    /// Checks if there is a type cast comment in the given range,
-    /// searching all comments regardless of print state.
-    pub fn has_type_cast_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.inner
-            .iter()
-            .skip_while(|c| c.span.end < start)
-            .take_while(|c| c.span.end <= end)
-            .any(|comment| self.is_type_cast_comment_followed_by_paren(comment))
     }
 
     /// Marks the given span as a type cast node.

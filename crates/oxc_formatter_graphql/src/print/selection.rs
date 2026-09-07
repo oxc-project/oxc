@@ -7,10 +7,7 @@ use oxc_formatter_core::{
 };
 use oxc_graphql_parser::ast::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet};
 
-use crate::comments::{
-    flush_trailing_comment_before, flush_trailing_comment_before_break,
-    flush_trailing_inside_comments,
-};
+use crate::comments::{flush_trailing_comment_before, flush_trailing_inside_comments};
 
 use super::{
     GraphqlFormatter, SeparatorKind, common,
@@ -35,7 +32,7 @@ pub(super) fn write_selection_set<'a>(
         return;
     }
 
-    flush_trailing_comment_before_break(selections[0].span().start, f);
+    // `{ # c`: the comment leads the first selection on its own line, as after every opener.
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, selections, SeparatorKind::Hard, true, |i, f| {
             write_selection(&selections[i], f);

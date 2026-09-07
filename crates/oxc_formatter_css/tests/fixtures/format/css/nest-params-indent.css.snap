@@ -1,0 +1,86 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/*
+ * `@nest` continuation lines indent at +2, how selector lists indent everywhere else.
+ * DIVERGES from Prettier (DIVERGENCES.md "nest-params-indent"), which lands at
+ * +4 (comma-separated selectors) / +6 (wrapped selector parts),
+ * an artifact of its generic at-rule params indent.
+ */
+a {
+  @nest .some-long-prefix-selector &, .another-long-prefix-selector &, .third & {
+    order: 2;
+  }
+}
+a {
+  @nest .quite-long-descendant-part .another-descendant-part .third-part-more & {
+    order: 2;
+  }
+}
+/* fits -> inline, matching Prettier */
+a {
+  @nest b & {
+    order: 1;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/*
+ * `@nest` continuation lines indent at +2, how selector lists indent everywhere else.
+ * DIVERGES from Prettier (DIVERGENCES.md "nest-params-indent"), which lands at
+ * +4 (comma-separated selectors) / +6 (wrapped selector parts),
+ * an artifact of its generic at-rule params indent.
+ */
+a {
+  @nest .some-long-prefix-selector &,
+  .another-long-prefix-selector &,
+  .third & {
+    order: 2;
+  }
+}
+a {
+  @nest .quite-long-descendant-part
+    .another-descendant-part
+    .third-part-more
+    & {
+    order: 2;
+  }
+}
+/* fits -> inline, matching Prettier */
+a {
+  @nest b & {
+    order: 1;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/*
+ * `@nest` continuation lines indent at +2, how selector lists indent everywhere else.
+ * DIVERGES from Prettier (DIVERGENCES.md "nest-params-indent"), which lands at
+ * +4 (comma-separated selectors) / +6 (wrapped selector parts),
+ * an artifact of its generic at-rule params indent.
+ */
+a {
+  @nest .some-long-prefix-selector &, .another-long-prefix-selector &, .third & {
+    order: 2;
+  }
+}
+a {
+  @nest .quite-long-descendant-part .another-descendant-part .third-part-more & {
+    order: 2;
+  }
+}
+/* fits -> inline, matching Prettier */
+a {
+  @nest b & {
+    order: 1;
+  }
+}
+
+===================== End =====================

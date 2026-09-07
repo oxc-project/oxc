@@ -13,6 +13,24 @@
 //! 3. **Comments are formatted** with appropriate spacing and breaks
 //! 4. **The cursor is advanced** to mark comments as processed
 //!
+//! ## What is trailing, what is leading
+//!
+//! The newline is the semantic boundary, not the node's span:
+//!
+//! Trailing is the same-line run only.
+//! A comment starting on the line of the content it follows annotates THAT line.
+//!
+//! A comment preceded by a newline is never trailing, even when it sits inside the node's span (before its `;`):
+//! an own-line comment annotates what comes BELOW it, so it belongs to the next node's leading pass.
+//! Concretely: an own-line suppression comment must target the NEXT element,
+//! and the blank lines between the comment and that element can only be measured by the pass that prints the element.
+//! Such comments stay unprinted (defer) and the next leading pass claims them;
+//! the already-printed terminator left in the gap is transparent to their break measurement
+//! (`lines_after_skipping_terminators`).
+//!
+//! The per-site rules for WHEN a trailing run moves behind its terminator live in AGENTS.md,
+//! "Comment placement invariants" (the move-behind table).
+//!
 //! ## Comment Formatting Implementation
 //!
 //! ### Leading Comment Formatting ([`FormatLeadingComments`])
@@ -37,7 +55,7 @@
 //!
 //! **Implementation**:
 //! 1. Calls `get_trailing_comments()` with node context to determine ownership
-//! 2. Defers same-line trailing LINE comments via `line_suffix`
+//! 2. Rides same-line trailing LINE comments on `line_suffix`
 //!    (excluded from the printer's fits measurement, so they never count toward the print width);
 //!    same-line trailing BLOCK comments print inline and DO count
 //! 3. Handles complex spacing rules for different comment types
@@ -99,64 +117,82 @@ pub const fn format_leading_comments<'a>(span: Span) -> FormatLeadingComments<'a
 #[derive(Debug, Copy, Clone)]
 pub enum FormatLeadingComments<'a> {
     Node(Span),
+    /// For comment runs that are NOT a node's leading pass
+    /// (no already-printed terminator can sit between them and what follows);
+    /// a node's leading comments go through [`Self::Node`] / [`Self::CommentsOfNode`]
     Comments(&'a [Comment]),
+    /// Like [`Self::Comments`], claimed by the node starting at the given position
+    /// (see `lines_after_skipping_terminators`)
+    CommentsOfNode(&'a [Comment], u32),
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // NOTE: Known FORMATTER_POLICY violation ("own-line comments stay own-line"):
+        // the line break BEFORE the first comment is never reproduced,
+        // so an own-line comment claimed mid-line inlines onto that line
+        // ```js
+        // const
+        //   // c
+        //   a = 1
+        //
+        // // ->
+        //
+        // const // c
+        //   a = 1
+        // ```
+        // Kept for now: Prettier byte-compat outweighs the invariant.
         fn format_leading_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
+            // The claiming node's start (see `lines_after_skipping_terminators`)
+            terminator_limit: Option<u32>,
             f: &mut JsFormatter<'_, 'a>,
         ) {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
                 f.context_mut().comments_mut().increment_printed_count();
-                write!(f, comment);
+                write!(f, format_comment_text(comment));
 
-                match comment.kind {
-                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
-                        match f.source_text().lines_after(comment.span.end) {
-                            0 => {
-                                let should_nestle =
-                                    leading_comments_iter.peek().is_some_and(|next_comment| {
-                                        should_nestle_adjacent_doc_comments(comment, next_comment)
-                                    });
+                let lines_after = f
+                    .source_text()
+                    .lines_after_skipping_terminators(comment.span.end, terminator_limit);
+                let is_block = matches!(
+                    comment.kind,
+                    CommentKind::SingleLineBlock | CommentKind::MultiLineBlock
+                );
+                match lines_after {
+                    0 if is_block => {
+                        let should_nestle =
+                            leading_comments_iter.peek().is_some_and(|next_comment| {
+                                should_nestle_adjacent_doc_comments(comment, next_comment)
+                            });
 
-                                write!(f, [maybe_space(!should_nestle)]);
-                            }
-                            1 => {
-                                if f.lines_before(comment.span) == 0 {
-                                    write!(f, [soft_line_break_or_space()]);
-                                } else {
-                                    write!(f, [hard_line_break()]);
-                                }
-                            }
-                            _ => write!(f, [empty_line()]),
+                        write!(f, [maybe_space(!should_nestle)]);
+                    }
+                    1 if is_block => {
+                        if f.lines_before(comment.span) == 0 {
+                            write!(f, [soft_line_break_or_space()]);
+                        } else {
+                            write!(f, [hard_line_break()]);
                         }
                     }
-                    CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
-                        0 | 1 => write!(f, [hard_line_break()]),
-                        _ => write!(f, [empty_line()]),
-                    },
+                    0 | 1 => write!(f, [hard_line_break()]),
+                    _ => write!(f, [empty_line()]),
                 }
             }
         }
 
-        match self {
+        let (comments, terminator_limit) = match self {
             Self::Node(span) => {
-                let leading_comments = f.context().comments().comments_before(span.start);
-                if leading_comments.is_empty() {
-                    return;
-                }
-                format_leading_comments_impl(leading_comments, f);
+                (f.context().comments().comments_before(span.start), Some(span.start))
             }
-            Self::Comments(comments) => {
-                if comments.is_empty() {
-                    return;
-                }
-                format_leading_comments_impl(*comments, f);
-            }
+            Self::Comments(comments) => (*comments, None),
+            Self::CommentsOfNode(comments, node_start) => (*comments, Some(*node_start)),
+        };
+        if comments.is_empty() {
+            return;
         }
+        format_leading_comments_impl(comments, terminator_limit, f);
     }
 }
 
@@ -235,17 +271,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                     should_nestle_adjacent_doc_comments(previous_comment, comment)
                 });
 
-                // This allows comments at the end of nested structures:
+                // An own-line comment at the end of a nested structure:
                 // {
                 //   x: 1,
                 //   y: 2
-                //   // A comment
+                //   // comment
                 // }
-                // Those kinds of comments are almost always leading comments, but
-                // here it doesn't go "outside" the block and turns it into a
-                // trailing comment for `2`. We can simulate the above by checking
-                // if this a comment on its own line; normal trailing comments are
-                // always at the end of another expression.
+                // has no next sibling inside the block to defer to,
+                // so the last node's trailing pass RENDERS it (own-line style, detected by its lines-before)
+                // instead of letting it escape the block.
                 if total_lines_before > 0
                     || previous_comment.is_some_and(|comment| comment.is_line())
                 {
@@ -273,12 +307,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                                 _ => write!(f, [empty_line()]),
                             }
 
-                            write!(f, [comment]);
+                            write!(f, [format_comment_text(comment)]);
                         }))]
                     );
                 } else {
-                    let content =
-                        format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
+                    let content = format_with(|f| {
+                        write!(f, [maybe_space(!should_nestle), format_comment_text(comment)]);
+                    });
 
                     if comment.is_line() {
                         write!(f, [line_suffix(&content), expand_parent()]);
@@ -420,7 +455,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                         [
                             (previous_comment.is_some() && !should_nestle)
                                 .then_some(hard_line_break()),
-                            comment
+                            format_comment_text(comment)
                         ]
                     );
 
@@ -465,8 +500,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
+struct FormatCommentText<'a>(&'a Comment);
+
+const fn format_comment_text(comment: &Comment) -> FormatCommentText<'_> {
+    FormatCommentText(comment)
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let comment = self.0;
         // Wrap every emitted comment with `JsLabels::Comment` when `sort_imports` is enabled.
         // So the IR transform can identify comments structurally (without textual prefix checks)
         // and suppress any internal line breaks (e.g. multi-line block / JSDoc).
@@ -476,8 +518,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
         }
 
         // JSDoc formatting: if enabled, try to format JSDoc comments
-        let formatted_jsdoc = if self.is_jsdoc()
-            && !self.is_legal()
+        let formatted_jsdoc = if comment.is_jsdoc()
+            && !comment.is_legal()
             && let Some(jsdoc_options) = &f.options().jsdoc
         {
             let source: &str = &f.source_text();
@@ -493,7 +535,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
             // counts the adjacent whitespace, giving more room for the comment content
             // and preventing unnecessary type wrapping.
             let indent_chars = {
-                let start = self.span.start as usize;
+                let start = comment.span.start as usize;
                 let before = &source[..start];
                 let tab_width = f.options().indent_width.value() as usize;
                 before
@@ -504,7 +546,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
                     .sum::<usize>()
             };
             let available_width = line_width.saturating_sub(indent_chars);
-            super::jsdoc::format_jsdoc_comment(self, jsdoc_options, source, available_width, f)
+            super::jsdoc::format_jsdoc_comment(comment, jsdoc_options, source, available_width, f)
         } else {
             None
         };
@@ -512,8 +554,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
         if let Some(formatted) = formatted_jsdoc {
             write!(f, [formatted]);
         } else {
-            let content = f.source_text().text_for(&self.span);
-            if self.is_multiline_block() {
+            let content = f.source_text().text_for(&comment.span);
+            if comment.is_multiline_block() {
                 let mut lines = LineTerminatorSplitter::new(content);
                 if is_alignable_comment(content) {
                     // `unwrap` is safe because `content` contains at least one line.
@@ -544,6 +586,27 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
 
         if wrap {
             f.write_element(FormatElement::Tag(Tag::EndLabelled));
+        }
+    }
+}
+
+/// A manually claimed comment written in place: marks it printed, and a line comment ends its line.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatCommentBeforeContent<'a>(&'a Comment);
+
+impl<'a> FormatCommentBeforeContent<'a> {
+    pub const fn new(comment: &'a Comment) -> Self {
+        Self(comment)
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentBeforeContent<'_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        f.context_mut().comments_mut().increment_printed_count();
+        write!(f, format_comment_text(self.0));
+        if self.0.is_line() {
+            write!(f, hard_line_break());
         }
     }
 }

@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-unmodified-loop-condition): 'bar' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:45]
+ 1 │ let foo = 0, bar = 1, baz = 2; while (foo ? bar : baz) { foo += 1; }
+   ·                                             ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'baz' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:51]
+ 1 │ let foo = 0, bar = 1, baz = 2; while (foo ? bar : baz) { foo += 1; }
+   ·                                                   ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:30]
+ 1 │ let foo = 0, bar = 1; while (foo ? foo : bar) { bar++; }
+   ·                              ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:36]
+ 1 │ let foo = 0, bar = 1; while (foo ? foo : bar) { bar++; }
+   ·                                    ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:41]
+ 1 │ let flag = true, foo = 0; while (flag ? foo < foo : false) { flag = false; }
+   ·                                         ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:47]
+ 1 │ let flag = true, foo = 0; while (flag ? foo < foo : false) { flag = false; }
+   ·                                               ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:41]
+ 1 │ let flag = true, foo = 0; while (flag ? foo < 1 : foo < 2) { flag = false; }
+   ·                                         ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:51]
+ 1 │ let flag = true, foo = 0; while (flag ? foo < 1 : foo < 2) { flag = false; }
+   ·                                                   ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'done' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:49]
+ 1 │ let chunk = true, done = false; while (chunk ? !done : false) { chunk = nextOrNull(); }
+   ·                                                 ────
+   ╰────

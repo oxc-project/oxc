@@ -11,7 +11,7 @@ use oxc_formatter_core::{
 use oxc_yaml_parser::ast::{BlockScalar, Chomping, Content, MappingItem, Node, Root};
 
 use crate::{
-    comments::write_comment_line_suffix,
+    comments::FormatLineCommentSuffix,
     options::ProseWrap,
     print::{
         YamlFormatter, format_with,
@@ -91,7 +91,7 @@ pub fn write_block_scalar<'a>(
         && comment.own_line_column.is_none()
     {
         f.context().comments().take_before(comment.span.end);
-        write_comment_line_suffix(comment.span, f);
+        write!(f, FormatLineCommentSuffix::new(comment.span).with_leading_space());
     }
 
     let line_groups: Vec<Vec<&'a str>> =
@@ -282,7 +282,8 @@ fn remove_unnecessary_trailing_newlines<'s>(
     if block.chomping == Chomping::Keep {
         // NOTE: The fragment after the last break holds no line break, so it is not a kept line:
         // either the empty artifact `split('\n')` yields after a final break,
-        // or a break-less EOF line of at-or-below-indent spaces (a known divergence: Prettier counts it);
+        // or a break-less EOF line of at-or-below-indent spaces
+        // (known divergence: Prettier counts it and prints one newline too many);
         // a more-indented space run stays a content group.
         lines.pop_if(|words| words.is_empty());
         return lines;

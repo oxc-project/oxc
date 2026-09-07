@@ -111,13 +111,24 @@ use crate::{
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
+//
 // Length is constrained by 2 factors:
 // 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
-// https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//    https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//
+// On 64-bit systems, the limit is 256 bytes below `u32::MAX` rather than `u32::MAX` itself:
+//
+// 1. `oxc_lexer` will require source text to be followed by 64 bytes of padding.
+//    This means *padded* length can fit in a `u32`.
+//    256 instead of 64 to leave headroom, in case the padding requirement expands in future.
+// 2. Counts of tokens, comments and errors are all bounded by source length plus a small constant,
+//    so they can be stored as `u32`s without any possibility of overflow.
+// 3. No real `Span` can have `start` or `end` of `u32::MAX`, so such a `Span` can be used as a sentinel.
+//    `oxc_transformer`'s styled-components plugin relies on this.
 pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
-    u32::MAX as usize
+    u32::MAX as usize - 256
 } else {
     // 32-bit or 16-bit systems
     isize::MAX as usize
@@ -1273,5 +1284,49 @@ mod test {
         assert!(!ret.panicked);
         assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
+    }
+
+    // Where the lexer cannot lex any further it emits `Undetermined`, and no `Eof` follows.
+    // That final token ends the input just as `Eof` does, so it is discarded, and discarding it
+    // must not take the real token before it with it.
+    #[test]
+    fn tokens_when_lexing_ends_in_error() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "foo();\n'unterminated", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(!ret.panicked);
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Unterminated string");
+
+        let tokens = ret
+            .tokens
+            .iter()
+            .map(|token| (token.kind(), token.start(), token.end()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            tokens,
+            [
+                (Kind::Ident, 0, 3),
+                (Kind::LParen, 3, 4),
+                (Kind::RParen, 4, 5),
+                (Kind::Semicolon, 5, 6),
+            ]
+        );
+    }
+
+    // A fatal error fast-forwards the lexer to end of file. Re-lexing the `}` of a template
+    // substitution after that would derive a token position from the moved cursor, and so
+    // overwrite an unrelated token in the collected stream.
+    #[test]
+    fn tokens_when_template_substitution_fails() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "`${}`", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(ret.panicked);
+        assert!(ret.tokens.is_empty());
     }
 }

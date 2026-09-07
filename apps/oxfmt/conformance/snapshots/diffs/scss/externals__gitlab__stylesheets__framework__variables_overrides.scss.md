@@ -1,6 +1,6 @@
 # externals/gitlab/stylesheets/framework/variables_overrides.scss
 
-> Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md
+> no trailing comma into non-comma-list map-item parens. See crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only
 
 ## Option 1
 

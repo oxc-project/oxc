@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform-relay",
-  "version": "0.147.0",
+  "version": "0.148.0",
   "description": "Oxc Relay Transform Node API",
   "keywords": [
     "graphql",

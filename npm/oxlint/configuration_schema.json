@@ -5434,7 +5434,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "no-unmodified-loop-condition": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoUnmodifiedLoopCondition"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "no-unneeded-ternary": {
           "anyOf": [
@@ -15871,6 +15888,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Require `data-*` attributes to be lowercase, e.g. `data-foobar` instead of `data-fooBar`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoUnmodifiedLoopCondition": {
+      "type": "object",
+      "properties": {
+        "checkConditionalExpressions": {
+          "description": "Whether references in each branch of a conditional expression should be checked\nindependently instead of checking the result of the entire expression.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether references in each branch of a conditional expression should be checked\nindependently instead of checking the result of the entire expression."
         }
       },
       "additionalProperties": false

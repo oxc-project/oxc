@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.81.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- e412cf2 linter: Clamp invalid JS plugin locations (#26144) (camc314)
+- d86c113 linter: Normalize reversed JS plugin locations (#26138) (camc314)
+- 3910e2b linter/eslint/no-unassigned-vars: Skip Svelte and Vue files (#26042) (Hamody We)
+- 047f7ca linter/plugins: Fix interaction between JS plugins and Vue rules (#26080) (overlookmotel)
+
+### 📚 Documentation
+
+- d5be037 linter/typescript/switch-exhaustiveness-check: Clarify default case comment pattern (#26100) (camc314)
+
 ## [1.80.0] - 2026-08-24
 
 ### 🐛 Bug Fixes
