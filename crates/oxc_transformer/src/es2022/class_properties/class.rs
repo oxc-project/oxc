@@ -73,8 +73,8 @@ impl<'a> ClassProperties<'a> {
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.heritage().is_some();
-        let private_method_helpers_as_expressions =
-            !is_declaration && Self::private_method_helpers_as_expressions(ctx);
+        let private_method_helpers_in_class_sequence =
+            !is_declaration && Self::should_emit_private_method_helpers_in_class_sequence(ctx);
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -130,7 +130,7 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Set => &format!("set_{}", ident.name),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let (scope_id, flags) = if private_method_helpers_as_expressions {
+                        let (scope_id, flags) = if private_method_helpers_in_class_sequence {
                             (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
                         } else {
                             (ctx.current_block_scope_id(), SymbolFlags::Function)
@@ -181,7 +181,7 @@ impl<'a> ClassProperties<'a> {
         {
             self.classes_stack.push(ClassDetails {
                 is_declaration,
-                private_method_helpers_as_expressions,
+                private_method_helpers_in_class_sequence,
                 is_transform_required: false,
                 private_props: if private_props.is_empty() { None } else { Some(private_props) },
                 bindings: ClassBindings::dummy(),
@@ -237,7 +237,7 @@ impl<'a> ClassProperties<'a> {
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
             is_declaration,
-            private_method_helpers_as_expressions,
+            private_method_helpers_in_class_sequence,
             is_transform_required: true,
             private_props: if private_props.is_empty() { None } else { Some(private_props) },
             bindings: class_bindings,
@@ -638,10 +638,10 @@ impl<'a> ClassProperties<'a> {
         // They're probably pretty rare, so it'll be rarely used.
         let class_details = self.classes_stack.last();
 
-        let private_method_helpers_as_expressions =
-            class_details.private_method_helpers_as_expressions;
+        let private_method_helpers_in_class_sequence =
+            class_details.private_method_helpers_in_class_sequence;
         let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
-        if private_method_helpers_as_expressions {
+        if private_method_helpers_in_class_sequence {
             // Private method helpers are emitted into the class-expression sequence (see below).
             expr_count += self.insert_after_stmts.len();
         }
@@ -716,43 +716,37 @@ impl<'a> ClassProperties<'a> {
         }
 
         // Insert private methods.
-        if !self.insert_after_stmts.is_empty() {
-            if private_method_helpers_as_expressions {
-                // A concise arrow has no statement list to inject a function declaration into.
-                // Emit `_m = function () {}` into the class sequence instead. Adding `var _m`
-                // expands the concise arrow to a block, so the binding is fresh for every call.
-                for stmt in self.insert_after_stmts.drain(..) {
-                    let Statement::FunctionDeclaration(mut func) = stmt else {
-                        unreachable!(
-                            "class expression private methods are always function declarations"
-                        );
-                    };
-                    let id = func.id.take().expect("private method binding always has an id");
-                    let binding = BoundIdentifier::from_binding_ident(&id);
-                    ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-                    func.r#type = FunctionType::FunctionExpression;
-                    let assignment = create_assignment(
-                        &binding,
-                        Expression::FunctionExpression(func),
-                        SPAN,
-                        ctx,
+        if private_method_helpers_in_class_sequence {
+            // A concise arrow has no statement list to inject a function declaration into.
+            // Emit `_m = function () {}` into the class sequence instead. Adding `var _m`
+            // expands the concise arrow to a block, so the binding is fresh for every call.
+            for stmt in self.insert_after_stmts.drain(..) {
+                let Statement::FunctionDeclaration(mut func) = stmt else {
+                    unreachable!(
+                        "class expression private methods are always function declarations"
                     );
-                    exprs.push(assignment);
-                }
-            } else {
-                // Find `Address` of statement containing class expression.
-                let mut stmt_address = Address::DUMMY;
-                for ancestor in ctx.ancestors() {
-                    if ancestor.is_parent_of_statement() {
-                        break;
-                    }
-                    stmt_address = ancestor.address();
-                }
-
-                ctx.state
-                    .statement_injector
-                    .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
+                };
+                let id = func.id.take().expect("private method binding always has an id");
+                let binding = BoundIdentifier::from_binding_ident(&id);
+                ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+                func.r#type = FunctionType::FunctionExpression;
+                let assignment =
+                    create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);
+                exprs.push(assignment);
             }
+        } else if !self.insert_after_stmts.is_empty() {
+            // Find `Address` of statement containing class expression.
+            let mut stmt_address = Address::DUMMY;
+            for ancestor in ctx.ancestors() {
+                if ancestor.is_parent_of_statement() {
+                    break;
+                }
+                stmt_address = ancestor.address();
+            }
+
+            ctx.state
+                .statement_injector
+                .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
 
         // Insert computed key initializers

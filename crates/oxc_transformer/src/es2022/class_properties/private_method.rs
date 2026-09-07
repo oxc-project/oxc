@@ -64,8 +64,9 @@ impl<'a> ClassProperties<'a> {
         function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
-        let helper_as_expression = self.current_class().private_method_helpers_as_expressions;
-        if !helper_as_expression {
+        let helper_in_class_sequence =
+            self.current_class().private_method_helpers_in_class_sequence;
+        if !helper_in_class_sequence {
             sync_function_symbol_flags(&function, ctx);
         }
 
@@ -77,13 +78,12 @@ impl<'a> ClassProperties<'a> {
         // after the containing statement. A static property initializer is moved into the hoist
         // scope later.
         let scope_id = function.scope_id();
-        let new_parent_id = if helper_as_expression {
-            ctx.current_scope_id()
-        } else if Self::is_inside_static_property_initializer(ctx) {
-            ctx.current_hoist_scope_id()
-        } else {
-            ctx.current_scope_id()
-        };
+        let new_parent_id =
+            if !helper_in_class_sequence && Self::is_inside_static_property_initializer(ctx) {
+                ctx.current_hoist_scope_id()
+            } else {
+                ctx.current_scope_id()
+            };
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(new_parent_id));
         let make_sloppy_mode = !ctx.scoping().scope_flags(new_parent_id).is_strict_mode();
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
@@ -100,16 +100,12 @@ impl<'a> ClassProperties<'a> {
     /// A concise arrow body has no statement list where a function declaration can be injected.
     /// Stop at the first statement boundary so ordinary class expressions keep block-local
     /// function declarations, which provide a fresh closure when a block runs repeatedly.
-    pub(super) fn private_method_helpers_as_expressions(ctx: &TraverseCtx<'a>) -> bool {
-        for ancestor in ctx.ancestors() {
-            if ancestor.is_parent_of_statement() {
-                return false;
-            }
-            if matches!(ancestor, Ancestor::ArrowFunctionExpressionBody(_)) {
-                return true;
-            }
-        }
-        false
+    pub(super) fn should_emit_private_method_helpers_in_class_sequence(
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        ctx.ancestors()
+            .take_while(|ancestor| !ancestor.is_parent_of_statement())
+            .any(|ancestor| matches!(ancestor, Ancestor::ArrowFunctionExpressionBody(_)))
     }
 
     fn is_inside_static_property_initializer(ctx: &TraverseCtx<'a>) -> bool {
