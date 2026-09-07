@@ -1,6 +1,6 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
@@ -160,10 +160,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        if self.fatal_error.is_some() {
-            return JSXElementName::dummy(self.allocator());
-        }
-
         // Determine if this JSX element name is a reference (component) or an intrinsic element.
         // References (components) are:
         // - ASCII names that start with uppercase letter, `_` or `$`: `<Foo>`, `<_foo>`, `<$foo>`
@@ -171,14 +167,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // - Names without hyphens (hyphenated names like `<my-element>` are custom elements)
         // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
         //
-        // The identifier has already been validated by the parser, so for ASCII characters
-        // we know it can only be `a-z`, `A-Z`, `_` or `$`.
-        // Use a fast path for ASCII to avoid expensive Unicode operations in the common case.
+        // In case of a fatal error in `parse_jsx_identifier`, `name` is an empty string,
+        // so `!contains_dash` check must be first to avoid a panic in `name.as_bytes()[0]`.
+        //
+        // The identifier has already been validated by `parse_jsx_identifier`,
+        // so for ASCII characters we know it can only be `a-z`, `A-Z`, `_` or `$`.
+        // The 3-arm match below compiles down to a single `cmp` instruction.
+        // https://godbolt.org/z/jq3Gd7YrP
         let name = identifier.name.as_str();
         let is_reference = !contains_dash // Exclude hyphenated custom elements
             && match name.as_bytes()[0] {
-                b if b.is_ascii() => !b.is_ascii_lowercase(), // Matches A-Z, _, $
-                _ => true, // Non-ASCII characters are always treated as references
+                // Non-ASCII characters are always treated as references
+                b if !b.is_ascii() => true,
+                // Matches A-Z, _, $
+                b if b < b'a' => true,
+                // Matches a-z
+                _ => false
             };
 
         if is_reference {
@@ -503,12 +507,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
     ) -> (
         JSXIdentifier<'a>, // JSX identifier
-        bool,              // `true` if contains `-`
+        bool,              // `true` if contains `-`, or if parsing failed (see below)
     ) {
         let start = self.cur_start();
         let kind = self.cur_kind();
         if kind != Kind::Ident && !kind.is_any_keyword() {
-            return (self.unexpected(), false);
+            // Return `contains_dash = true`, so that `parse_jsx_element_name` does not read the first byte
+            // of the dummy identifier's empty name. `parse_jsx_member_expression` treats a dash as an error,
+            // but on this path its `fatal_error` call is a no-op, because a fatal error has already been recorded.
+            return (self.unexpected(), true);
         }
         // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
         let contains_dash = self.continue_lex_jsx_identifier();

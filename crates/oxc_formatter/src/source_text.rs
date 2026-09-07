@@ -23,6 +23,17 @@ pub trait SourceTextExt {
     /// Count consecutive line breaks after position, returning `0` if only whitespace follows.
     fn lines_after(&self, end: u32) -> usize;
 
+    /// [`Self::lines_after`] for a deferred leading comment, bounded by the claiming node's start:
+    /// statement terminators in the gap were already printed behind the previous node,
+    /// so they are transparent to the comment's break measurement,
+    /// and a terminator alone on its line takes that line away with it.
+    ///
+    /// The terminator set (`;`, and the `)` of dropped or re-printed parens) is shared with
+    /// `Comments::has_semicolon_or_closing_paren_in_range` (whether the same-line run moves); change them together.
+    /// The bound makes an empty statement's `;` (a node, sitting AT the limit) stop the count as usual.
+    /// `None` is plain [`Self::lines_after`].
+    fn lines_after_skipping_terminators(&self, end: u32, limit: Option<u32>) -> usize;
+
     /// Count line breaks between syntax nodes, considering comments and parentheses.
     ///
     /// Encodes JS/TS leading-trivia rules:
@@ -57,16 +68,34 @@ impl SourceTextExt for SourceText<'_> {
     }
 
     fn lines_after(&self, end: u32) -> usize {
+        self.lines_after_skipping_terminators(end, None)
+    }
+
+    fn lines_after_skipping_terminators(&self, end: u32, limit: Option<u32>) -> usize {
         let text: &str = self;
+        // A skipping scan is bounded by the node start (a node begins with a real character);
+        // an unbounded one may reach end-of-text, where `0` avoids adding extra new lines
+        let slice_end = limit.map_or(text.len(), |limit| limit as usize);
         let mut count = 0;
-        let mut chars = text[end as usize..].chars().peekable();
+        // One newline behind a skipped terminator merges into the one before it
+        // (its line vanishes with it)
+        let mut discount_next_newline = false;
+        let mut chars = text[end as usize..slice_end].chars().peekable();
         while let Some(char) = chars.next() {
+            if matches!(char, ';' | ')') && limit.is_some() {
+                discount_next_newline = count > 0;
+                continue;
+            }
             if is_white_space_single_line(char) {
                 continue;
             }
 
             if is_line_terminator(char) {
-                count += 1;
+                if discount_next_newline {
+                    discount_next_newline = false;
+                } else {
+                    count += 1;
+                }
                 if char == CR && chars.peek() == Some(&LF) {
                     chars.next();
                 }
@@ -76,8 +105,7 @@ impl SourceTextExt for SourceText<'_> {
             return count;
         }
 
-        // No non-whitespace characters found after position, so return `0` to avoid adding extra new lines
-        0
+        if limit.is_some() { count } else { 0 }
     }
 
     fn get_lines_before(&self, span: Span, first_unprinted_comment: Option<Span>) -> usize {

@@ -94,7 +94,8 @@ impl ErrorCategory {
     /// `panicThreshold: critical_errors` (see [`has_critical_errors`]).
     const fn severity(self) -> Severity {
         match self {
-            Self::IncompatibleLibrary | Self::UnsupportedSyntax | Self::Todo => Severity::Warning,
+            Self::IncompatibleLibrary | Self::UnsupportedSyntax => Severity::Warning,
+            Self::Todo => Severity::Advice,
             _ => Severity::Error,
         }
     }
@@ -200,11 +201,8 @@ impl ErrorCategory {
 
 #[cold]
 fn diagnostic(category: ErrorCategory, reason: impl AsRef<str>) -> OxcDiagnostic {
-    let diagnostic = match category.severity() {
-        Severity::Error => OxcDiagnostic::error(reason.as_ref().to_string()),
-        _ => OxcDiagnostic::warn(reason.as_ref().to_string()),
-    };
-    diagnostic
+    OxcDiagnostic::error(reason.as_ref().to_string())
+        .with_severity(category.severity())
         .with_error_code(ErrorCategory::CODE_SCOPE, category.as_str())
         .with_help(category.default_help())
         .with_note(category.default_note())
@@ -353,6 +351,14 @@ pub fn invariant_analyze_functions_expected_apply_effects_replaced_more_precise_
 #[cold]
 pub fn invariant_expected_node_all_scopes() -> OxcDiagnostic {
     diagnostic(ErrorCategory::Invariant, "Expected a node for all scopes")
+}
+
+#[cold]
+pub fn invariant_expected_node_all_identifiers(id: usize) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        format!("Expected a node for all identifiers, none found for `{id}`"),
+    )
 }
 
 #[cold]

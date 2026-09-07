@@ -5,7 +5,7 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
-use std::mem;
+use std::{mem, num::NonZeroU32};
 
 use rustc_hash::FxHashMap;
 
@@ -47,17 +47,16 @@ pub use token::Token;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
-    token: Token,
     errors_snapshot: ErrorSnapshot<'a>,
     tokens_len: usize,
-    pure_comment: Option<usize>,
-    has_no_side_effects_comment: bool,
+    pure_comments: Option<(u32, NonZeroU32)>,
+    no_side_effects_comments: Option<(u32, NonZeroU32)>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum ErrorSnapshot<'a> {
     Empty,
     Count(usize),
@@ -81,6 +80,15 @@ pub struct Lexer<'a, C: Config> {
 
     source_type: SourceType,
 
+    /// The token currently being built.
+    ///
+    /// Between lexer calls, `token` is always `Token::default()`. Every method which produces a token
+    /// ends in `finish_next_inner` or `finish_re_lex`, and both reset it.
+    ///
+    /// The one exception is before the first token is lexed, when it is `Token::new_on_new_line()`.
+    /// `checkpoint` and `rewind` can never see that state, because the parser lexes the first token
+    /// before it does anything else, and they are the only things which depend on `token` being
+    /// `Token::default()`. Both assert it.
     token: Token,
 
     pub(crate) errors: Vec<ParserDiagnostic<'a>>,
@@ -188,51 +196,60 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
+        // `token` is always `Token::default()` here, so it does not need to be saved. See `token` field docs.
+        debug_assert_eq!(self.token, Token::default());
+
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
         } else {
             ErrorSnapshot::Count(self.errors.len())
         };
+
         LexerCheckpoint {
             source_position: self.source.position(),
-            token: self.token,
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            pure_comment: self.trivia_builder.pure_comment,
-            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            pure_comments: self.trivia_builder.previous_token_pure_comments(),
+            no_side_effects_comments: self.trivia_builder.previous_token_no_side_effects_comments(),
         }
     }
 
     /// Create a checkpoint that can handle error popping.
     /// This is more expensive as it clones the errors vector.
     pub(crate) fn checkpoint_with_error_recovery(&self) -> LexerCheckpoint<'a> {
+        // `token` is always `Token::default()` here, so it does not need to be saved. See `token` field docs.
+        debug_assert_eq!(self.token, Token::default());
+
         let errors_snapshot = if self.errors.is_empty() {
             ErrorSnapshot::Empty
         } else {
             ErrorSnapshot::Full(self.errors.clone())
         };
+
         LexerCheckpoint {
             source_position: self.source.position(),
-            token: self.token,
             errors_snapshot,
             tokens_len: self.tokens.len(),
-            pure_comment: self.trivia_builder.pure_comment,
-            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            pure_comments: self.trivia_builder.previous_token_pure_comments(),
+            no_side_effects_comments: self.trivia_builder.previous_token_no_side_effects_comments(),
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
+        // `token` is always `Token::default()` here, so it does not need to be restored. See `token` field docs.
+        debug_assert_eq!(self.token, Token::default());
+
         match checkpoint.errors_snapshot {
             ErrorSnapshot::Empty => self.errors.clear(),
             ErrorSnapshot::Count(len) => self.errors.truncate(len),
             ErrorSnapshot::Full(errors) => self.errors = errors,
         }
+
         self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
-        self.token = checkpoint.token;
-        self.trivia_builder.pure_comment = checkpoint.pure_comment;
-        self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
+        self.trivia_builder.set_pure_comments(checkpoint.pure_comments);
+        self.trivia_builder.set_no_side_effects_comments(checkpoint.no_side_effects_comments);
     }
 
     pub fn peek_token(&mut self) -> Token {
@@ -332,8 +349,9 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Overwrite the last token in the collected token stream.
     ///
-    /// Used to restore a token that was popped by `re_lex_as_typescript_l_angle`
-    /// when `try_parse` fails and rewinds.
+    /// Used by `re_lex_as_typescript_l_angle` to replace a compound token (`<<`, `<=` or `<<=`)
+    /// with the single `<` it re-lexed, and to restore the compound token when `try_parse`
+    /// fails and rewinds.
     #[inline]
     pub(crate) fn rewrite_last_collected_token(&mut self, token: Token) {
         // Make this function a no-op when tokens are statically disabled (`NoTokensLexerConfig`)
@@ -370,10 +388,16 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Called at very end of parsing.
     pub(crate) fn finalize_tokens(&mut self) -> ArenaVec<'a, Token> {
         if self.config.tokens() {
-            // Tokens are enabled. Discard last token, which is `Eof`.
+            // Tokens are enabled. Discard the last token, which marks the end of input.
+            // Usually that is `Eof`. Where the lexer cannot lex any further - an unterminated string,
+            // for example - it emits `Undetermined` instead, and no `Eof` ever follows.
+            // The parser treats the two alike, and neither is a real token, so both are discarded.
             let mut tokens = self.take_tokens();
             let last_token = tokens.pop();
-            debug_assert!(last_token.is_some_and(|token| token.kind() == Kind::Eof));
+            debug_assert!(
+                last_token
+                    .is_some_and(|token| matches!(token.kind(), Kind::Eof | Kind::Undetermined))
+            );
             tokens
         } else {
             // Tokens are disabled. Just return an empty vec.
@@ -476,8 +500,8 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Whitespace and line terminators are skipped
     #[inline] // Make sure is inlined into `next_token`
     fn read_next_token(&mut self) -> Kind {
-        self.trivia_builder.pure_comment = None;
-        self.trivia_builder.has_no_side_effects_comment = false;
+        self.trivia_builder.clear_pure_comments();
+        self.trivia_builder.clear_no_side_effects_comments();
 
         let end_pos = self.source.end();
         loop {
@@ -544,8 +568,8 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[inline]
     fn read_next_jsx_attribute_value(&mut self) -> Kind {
-        self.trivia_builder.pure_comment = None;
-        self.trivia_builder.has_no_side_effects_comment = false;
+        self.trivia_builder.clear_pure_comments();
+        self.trivia_builder.clear_no_side_effects_comments();
 
         let end_pos = self.source.end();
         loop {

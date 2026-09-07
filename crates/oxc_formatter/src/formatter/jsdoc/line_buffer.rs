@@ -68,30 +68,14 @@ impl LineBuffer {
     /// or code block). Used to decide whether a trailing blank line is needed
     /// before the next tag.
     pub(super) fn last_line_is_block_end(&self) -> bool {
-        // Walk backwards from end to find the last non-empty line.
         let last = self.buf.rsplit('\n').find(|l| !l.is_empty()).unwrap_or("");
-        let trimmed = last.trim_start();
-        // List item markers: `- `, `+ `, `* `, or `1. ` etc.
-        if trimmed.starts_with("- ")
-            || trimmed.starts_with("+ ")
-            || trimmed.starts_with("* ")
-            || trimmed.starts_with("```")
-        {
-            return true;
-        }
-        // Ordered list: digit(s) followed by `. `
-        if let Some(rest) = trimmed.strip_prefix(|c: char| c.is_ascii_digit()) {
-            let rest = rest.trim_start_matches(|c: char| c.is_ascii_digit());
-            if rest.starts_with(". ") {
-                return true;
-            }
-        }
-        // Indented code block (4+ spaces) — already handled by checking if last
-        // line content starts with 4 spaces
-        if last.starts_with("    ") {
-            return true;
-        }
-        false
+        // List item marker, code fence, or indented code block (4+ spaces).
+        // NOTE: `list_marker` also matches `1) ` / legacy `1- ` forms
+        // that the serializer normalizes to `1. ` before they reach this buffer.
+        // Included for consistency with the shared alphabet, defensive only
+        super::markers::list_marker(last).is_some()
+            || last.trim_start().starts_with("```")
+            || last.starts_with("    ")
     }
 
     pub(super) fn into_string(self) -> String {

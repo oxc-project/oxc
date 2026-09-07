@@ -52,13 +52,14 @@ impl RuleTable {
                 rule.category() == RuleCategory::Correctness
                     && default_plugin_names.contains(&rule.plugin_name())
             })
-            .map(super::rules::RuleEnum::name)
-            .collect::<FxHashSet<&str>>();
+            .map(|rule| (rule.plugin_name(), rule.name()))
+            .collect::<FxHashSet<(&str, &str)>>();
 
         let mut rows = RULES
             .iter()
             .map(|rule| {
                 let name = rule.name();
+                let plugin = rule.plugin_name();
                 RuleTableRow {
                     name,
                     #[cfg(feature = "ruledocs")]
@@ -67,9 +68,9 @@ impl RuleTable {
                     documentation: rule.documentation(),
                     #[cfg(feature = "ruledocs")]
                     schema: generator.as_mut().and_then(|g| rule.schema(g)),
-                    plugin: rule.plugin_name().to_string(),
+                    plugin: plugin.to_string(),
                     category: rule.category(),
-                    turned_on_by_default: default_rules.contains(name),
+                    turned_on_by_default: default_rules.contains(&(plugin, name)),
                     autofix: rule.fix(),
                     is_tsgolint_rule: rule.is_tsgolint_rule(),
                 }
@@ -123,7 +124,7 @@ impl RuleTableSection {
     /// When `enabled` is [`Some`], an "Enabled?" column is added and the set
     /// is used to determine which rules are enabled. When `enabled` is
     /// [`None`], the column is omitted (used by docs rendering).
-    fn render_markdown_table_inner(&self, enabled: Option<&FxHashSet<&str>>) -> String {
+    fn render_markdown_table_inner(&self, enabled: Option<&FxHashSet<(&str, &str)>>) -> String {
         const FIX_EMOJI_COL_WIDTH: usize = 10;
         const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
         const ENABLED_EMOJI_COL_WIDTH: usize = 10;
@@ -171,7 +172,7 @@ impl RuleTableSection {
             let plugin_name = &row.plugin;
 
             let (enabled_mark, enabled_width) = if include_enabled {
-                if enabled.unwrap().contains(rule_name) {
+                if enabled.unwrap().contains(&(plugin_name.as_str(), rule_name)) {
                     ("✅", ENABLED - 1)
                 } else {
                     ("", ENABLED)
@@ -230,7 +231,7 @@ impl RuleTableSection {
         self.render_markdown_table_inner(None)
     }
 
-    pub fn render_markdown_table_cli(&self, enabled: &FxHashSet<&str>) -> String {
+    pub fn render_markdown_table_cli(&self, enabled: &FxHashSet<(&str, &str)>) -> String {
         self.render_markdown_table_inner(Some(enabled))
     }
 }
@@ -269,7 +270,7 @@ mod test {
             // enable the first rule in the section for the CLI view
             let mut enabled = FxHashSet::default();
             if let Some(first) = section.rows.first() {
-                enabled.insert(first.name);
+                enabled.insert((first.plugin.as_str(), first.name));
             }
 
             let rendered_table = section.render_markdown_table_cli(&enabled);

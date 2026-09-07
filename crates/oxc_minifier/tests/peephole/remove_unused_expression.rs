@@ -740,6 +740,7 @@ fn remove_unused_class_expression() {
 
     // order
     test_options("(class extends A { [B] = C; [D]() {} })", "A, B, D", &options);
+    test_options("(class extends (A(), B) {})", "A(), B", &options);
 
     // decorators
     test_same_options("(class { @dec foo() {} })", &options);

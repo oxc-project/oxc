@@ -322,3 +322,25 @@ subtracts the comment indent and the `*` prefix — the same base every JS/TS sn
 same position uses. Final lines never exceed `printWidth - 4 + prefix`. At top level this is
 3 chars narrower than upstream (content 93 vs 96 at printWidth=100); pinned by
 `apps/oxfmt/test/api/jsdoc.test.ts` ("effective width" case).
+
+## 12. Wrapping moves list-marker-like words to line starts, breaking idempotency
+
+**Severity**: Medium — `--write` then `--check` fails; with `jsdocLineWrappingStyle: "balance"`
+list items can even be duplicated
+
+When prose contains a word that doubles as a markdown block marker (`- 500 per rolling 5 hours -`,
+`+ b`, `1.` ...), upstream's wrapping may place it at the start of a wrapped line. The next
+format pass re-parses the comment as markdown, now sees a list item interrupting the paragraph
+(CommonMark), and reflows the block — so a single pass is not a fixed point.
+
+**Root cause**: `breakDescriptionToLines` wraps purely by width with no awareness of what the
+resulting line starts mean to the next markdown parse. Prettier's own markdown printer guards
+against this (it never breaks before a word that would gain block meaning at a line start).
+
+**oxfmt behavior**: `wrap_paragraph` never breaks before a block-marker word (`-`, `+`, `*`,
+`>`-prefixed, `#`…, `\d+[.)]`/legacy `\d+-`); the word stays glued to the previous line, which
+may exceed printWidth by a few characters. Alphabet and trade-off match Prettier's markdown
+printer (`shouldPreventBreak`, regex `/^>|^(?:[*+-]|#{1,6}|\d+[).])$/`): any digit count is
+guarded (not just `1.`) and `>` matches as a prefix (`>=` at a line start opens a blockquote).
+Pinned by `line-wrapping-balance/007-block-marker-not-moved-to-line-start`.
+

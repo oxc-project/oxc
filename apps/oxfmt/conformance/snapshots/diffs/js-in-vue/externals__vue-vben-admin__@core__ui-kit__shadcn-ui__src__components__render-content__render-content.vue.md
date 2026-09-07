@@ -1,6 +1,6 @@
 # externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue
 
-> Union broken out of its `:`/`as` position: Prettier retries the whole union flat on the indented next line, we expand to leading-`|` members right away. Core oxc_formatter (plain `.ts` too), not embed-specific
+> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
 ## Option 1
 

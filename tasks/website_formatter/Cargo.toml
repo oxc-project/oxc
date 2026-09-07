@@ -16,7 +16,11 @@ doctest = false
 bpaf = { workspace = true, features = ["docgen"] }
 oxfmt = { workspace = true }
 pico-args = { workspace = true }
-schemars = { workspace = true }
+# indexmap2 / preserve_order: emit schema properties in declaration order.
+# Also keeps the standalone `just formatter-schema-json` build consistent with
+# CI's workspace-wide build, where feature unification enables them via `oxc_linter`.
+schemars = { workspace = true, features = ["indexmap2"] }
+serde_json = { workspace = true, features = ["preserve_order"] }
 website_common = { workspace = true }
 
 [dev-dependencies]
@@ -24,4 +28,4 @@ insta = { workspace = true }
 project-root = { workspace = true }
 
 [package.metadata.cargo-shear]
-ignored = ["bpaf"]
+ignored = ["bpaf", "serde_json"]

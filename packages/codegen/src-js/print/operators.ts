@@ -11,10 +11,10 @@ import {
   CAT_OP_UPD_DEC,
   CAT_OP_UPD_INC,
   CAT_OTHER,
-} from "./write.ts";
+} from "./categories.ts";
 import { debugAssert } from "../asserts.ts";
 
-import type { Category } from "./write.ts";
+import type { Category } from "./categories.ts";
 
 // Context flags (`oxc_codegen::Context`).
 

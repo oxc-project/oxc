@@ -7,7 +7,7 @@ type State = { sharedProperty: any } & { discriminant: "FOO"; foo: any } & { dis
 // A leading own-line comment forces the break. With `start` we keep it own-line
 // above the leading `&` (idempotent), like binary-like chains do; Prettier prints
 // it behind `& `, losing own-line-ness and idempotency — a deliberate divergence
-// (see "Known divergences").
+// (see DIVERGENCES.md "operator-position-intersection-own-line-comment").
 type WithComment = SerializedProps &
   // own line comment
   { cause: unknown };

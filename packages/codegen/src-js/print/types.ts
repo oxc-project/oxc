@@ -80,13 +80,13 @@ export interface NamedMappableNode extends MappableNode {
 }
 
 /**
- * A named node which is not a `JSXIdentifier`.
+ * An `Identifier` node.
  *
- * A `JSXIdentifier`'s name is recovered from the source by a different scan,
- * so it goes to a write function of its own.
+ * This does not include `JSXIdentifier` or `PrivateIdentifier`. A `JSXIdentifier`'s or `PrivateIdentifier`'s name
+ * is recovered from the source by a different scan, so it goes to a write function of its own.
  */
 export interface IdentMappableNode extends NamedMappableNode {
-  type: "Identifier" | "PrivateIdentifier";
+  type: "Identifier";
 }
 
 /**

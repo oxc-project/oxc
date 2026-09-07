@@ -272,10 +272,9 @@ impl<'a> UidGenerator<'a> {
             } else {
                 // Identifier `_<base>4294967295` was already used.
                 // Can't increment `postfix` as it would wrap around, so increment `underscore_count` instead.
-                // It shouldn't be possible for `underscore_count` to be `u32::MAX` too, because that
-                // would require an identifier comprising `u32::MAX` x underscores in source text.
-                // That's theoretically possible, but source text is limited to `u32::MAX` bytes,
-                // so it'd be the entirety of the source text. Therefore `postfix` would be 1.
+                // `underscore_count` cannot be `u32::MAX` too, because that would require an identifier
+                // comprising `u32::MAX` underscores. Identifiers are assumed to be no longer than `MAX_LEN`
+                // (defined in `oxc_parser`), which is less than `u32::MAX`. So this addition cannot overflow.
                 uid_name.underscore_count += 1;
                 uid_name.postfix = 2;
             }

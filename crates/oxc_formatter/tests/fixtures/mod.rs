@@ -10,8 +10,15 @@ use options::apply_js_options;
 
 struct JsHarness;
 
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+#[derive(Debug, PartialEq)]
+struct Fingerprint {
+    comments: usize,
+}
+
 impl FixtureFormatter for JsHarness {
     type Options = JsFormatOptions;
+    type Fingerprint = Fingerprint;
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = JsFormatOptions::default();
@@ -27,6 +34,23 @@ impl FixtureFormatter for JsHarness {
             .print()
             .unwrap()
             .into_code()
+    }
+
+    fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> Fingerprint {
+        let source_type = SourceType::from_path(path).unwrap();
+        let allocator = Allocator::default();
+        let ret = oxc_formatter::parse_for_format(&allocator, source, source_type);
+        // The `jsdoc` option owns JSDoc blocks: it rewrites them and drops empty ones,
+        // so only the other comments are under the lossless contract there.
+        let jsdoc_rewritten = options.jsdoc.is_some();
+        Fingerprint {
+            comments: ret
+                .program
+                .comments
+                .iter()
+                .filter(|c| !(jsdoc_rewritten && c.is_jsdoc()))
+                .count(),
+        }
     }
 }
 

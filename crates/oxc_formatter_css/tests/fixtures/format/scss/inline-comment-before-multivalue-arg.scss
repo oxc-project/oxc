@@ -11,7 +11,7 @@
 		transparent 100%
 	);
 }
-// Same-line `//` and block-comment variants keep their layout too
+// A `//` on the comma's line stays there; the block-comment variant keeps its layout too
 .a {
 	background: linear-gradient(
 		90deg, // same-line comment

@@ -6,6 +6,9 @@ import type { Plugin } from "rolldown";
 // Path to file which defines assertion functions
 const ASSERTS_PATH = pathJoin(import.meta.dirname, "../src-js/asserts.ts");
 
+// Prefix naming an assertion function, wherever it is defined
+const DEBUG_ASSERT_PREFIX = "debugAssert";
+
 /**
  * Plugin to remove imports of `typeAssertIs` from `src-js/asserts.ts`, and all its call sites.
  *
@@ -25,6 +28,9 @@ const ASSERTS_PATH = pathJoin(import.meta.dirname, "../src-js/asserts.ts");
  *
  * This plugin removes the calls entirely, expressions included, which makes `typeAssertIs`
  * cost nothing at all. Adapted from `apps/oxlint/tsdown_plugins/replace_asserts.ts`.
+ *
+ * Calls to any function named `debugAssert*` go the same way, wherever it is defined and whether or not
+ * it is imported - the printer defines various `debugAssert*` functions.
  */
 const plugin: Plugin = {
   name: "remove-asserts",
@@ -66,25 +72,44 @@ const plugin: Plugin = {
         magicString.remove(stmt.start, stmt.end);
       }
 
-      if (assertFnNames.size === 0) return;
-
       // Visit AST and remove all calls to assertion functions
       const visitor = new Visitor({
         // Replace `typeAssertIs(...)` calls with `null`. Minifier will remove the `null`.
         CallExpression(node) {
           const { callee } = node;
           if (callee.type !== "Identifier") return;
-          if (assertFnNames.has(callee.name)) {
+
+          const { name } = callee;
+          if (assertFnNames.has(name) || name.startsWith(DEBUG_ASSERT_PREFIX)) {
             idents.add(callee);
             magicString.overwrite(node.start, node.end, "null");
           }
         },
+
+        // A `debugAssert*` function's own declaration is not a use of it
+        FunctionDeclaration(node) {
+          const { id } = node;
+          if (id !== null && id.name.startsWith(DEBUG_ASSERT_PREFIX)) idents.add(id);
+        },
+
+        // Nor is importing one. Every call it was imported for is being removed, so the binding
+        // is left unused for the minifier to drop, along with the function it names.
+        ImportSpecifier(node) {
+          const { local, imported } = node;
+          if (!local.name.startsWith(DEBUG_ASSERT_PREFIX)) return;
+          idents.add(local);
+          if (imported.type === "Identifier") idents.add(imported);
+        },
+
         // Error if assertion functions are used in any other way. We lack logic to deal with that.
         Identifier(node) {
           const { name } = node;
-          if (assertFnNames.has(name) && !idents.has(node)) {
+          if (
+            (assertFnNames.has(name) || name.startsWith(DEBUG_ASSERT_PREFIX))
+            && !idents.has(node)
+          ) {
             throw new Error(
-              `Do not use \`${name}\` imported from \`asserts.ts\` except in function calls: ${path}`,
+              `Do not use assertion function \`${name}\` except in function calls: ${path}`,
             );
           }
         },

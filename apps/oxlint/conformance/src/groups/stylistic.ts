@@ -78,6 +78,22 @@ const group: TestGroup = {
       return true;
     }
 
+    // Invalid code, Oxc's AST does not match TS-ESLint.
+    // Oxc parser does not accept `TSIndexSignature`s with more than 1 param, so the AST the rule receives
+    // in Oxlint is not the same as what it gets in TS-ESLint, so it behaves differently. That's expected.
+    if (
+      ruleName === "comma-style"
+      && compact(code)
+        === "type foo = {\n"
+          + " new (\n a,\n b\n , c\n ): any,\n"
+          + " (\n a,\n b\n , c\n ): any,\n"
+          + " [\n a: string,\n b: string\n , c: string\n ]: string,\n"
+          + " f(\n a: string,\n b: string\n , c: string\n ): number,\n"
+          + "}"
+    ) {
+      return true;
+    }
+
     // Code contains `do` expressions which Oxc parser does not support
     if (
       ruleName === "jsx-indent"

@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXChild, JSXElement},
+    ast::{JSXAttributeItem, JSXChild, JSXElement, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -53,6 +53,9 @@ declare_oxc_lint!(
     ///
     /// Alternatively, you may use the `title` prop or the `aria-label` prop.
     ///
+    /// Anchors passed directly as JSX prop values to custom components are ignored,
+    /// since the receiving component may supply their content.
+    ///
     /// ### Why is this bad?
     ///
     /// Anchor elements without content can be confusing for users relying
@@ -67,6 +70,7 @@ declare_oxc_lint!(
     /// <a dangerouslySetInnerHTML={{ __html: 'foo' }} />
     /// <a title='foo' />
     /// <a aria-label='foo' />
+    /// <Button render={<a href='/home' />}>Home</Button>
     /// ```
     ///
     /// Examples of **incorrect** code for this rule:
@@ -107,6 +111,10 @@ impl Rule for AnchorHasContent {
                     }
                 }
 
+                if is_component_prop(node, ctx) {
+                    return;
+                }
+
                 let diagnostic = missing_content(jsx_el.span);
                 if jsx_el.children.len() == 1 {
                     let child = &jsx_el.children[0];
@@ -122,6 +130,24 @@ impl Rule for AnchorHasContent {
             }
         }
     }
+}
+
+fn is_component_prop(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    let mut ancestors = ctx
+        .nodes()
+        .ancestor_kinds(node.id())
+        .skip_while(|kind| matches!(kind, AstKind::ParenthesizedExpression(_)));
+
+    matches!(ancestors.next(), Some(AstKind::JSXExpressionContainer(_)))
+        && matches!(ancestors.next(), Some(AstKind::JSXAttribute(_)))
+        && matches!(
+            ancestors.next(),
+            Some(AstKind::JSXOpeningElement(opening))
+                if matches!(
+                    opening.name,
+                    JSXElementName::IdentifierReference(_) | JSXElementName::MemberExpression(_)
+                )
+        )
 }
 
 fn remove_hidden_attributes(element: &JSXElement<'_>) -> RuleFix {
@@ -163,6 +189,18 @@ fn test() {
         (r"<a>{foo.bar}</a>", None, None),
         (r#"<a dangerouslySetInnerHTML={{ __html: "foo" }} />"#, None, None),
         (r"<a children={children} />", None, None),
+        (
+            r#"<Button render={<a href="https://www.test.com" target="_blank" rel="noreferrer" />} nativeButton={false}>CTA Text</Button>"#,
+            None,
+            None,
+        ),
+        (r"<Button render={<a></a>}>Home</Button>", None, None),
+        (r"<Button render={((<a />))}>Home</Button>", None, None),
+        (r"<Button wrapper={<a />}>Home</Button>", None, None),
+        (r"<UI.Button render={<a />}>Home</UI.Button>", None, None),
+        (r"<ui.Button render={<a />}>Home</ui.Button>", None, None),
+        (r"<Button render={<a />} />", None, None),
+        (r"<Button render={<Anchor />}>Home</Button>", Some(components()), None),
         (r"<Link />", None, None),
         (r"<Anchor>Anchor Content!</Anchor>", Some(components()), None),
         (r"<Anchor><TextWrapper /></Anchor>", Some(components()), None),
@@ -196,6 +234,14 @@ fn test() {
 
     let fail = vec![
         (r"<a />", None, None),
+        (r"<div render={<a />} />", None, None),
+        (r"<my-button render={<a />} />", None, None),
+        (r"<Button><a /></Button>", None, None),
+        (r"<Button>{(<a />)}</Button>", None, None),
+        (r"<Button render={<div><a /></div>} />", None, None),
+        (r"<Button render={<><a /></>} />", None, None),
+        (r"<Button render={() => <a />} />", None, None),
+        (r"<Button render={condition ? <a /> : null} />", None, None),
         (r"<a><Bar aria-hidden /></a>", None, None),
         (r#"<a><Bar aria-hidden="true" /></a>"#, None, None),
         (r#"<a><input type="hidden" /></a>"#, None, None),

@@ -1,6 +1,7 @@
 // String literal printing (port of `str.rs`, pretty mode: fixed quote).
 
-import { CAT_OTHER, write, writeNoLast, writeWithMapNoLast } from "./write.ts";
+import { CAT_OTHER } from "./categories.ts";
+import { write, writeNoLast, writeWithMapNoLast } from "./write.ts";
 import { debugAssert } from "../asserts.ts";
 
 import type { State } from "../state.ts";
@@ -22,9 +23,15 @@ const STRING_ESCAPE_REGEX =
  * Pretty mode always uses double quotes, matching Oxc's default options, so there is no quote to choose.
  * Almost no string needs escaping, so the scan for characters or sequences which do is all that happens on the common path.
  */
-export function printString(state: State, value: string, node: UnnamedMappableNode): void {
+export function printString(
+  state: State,
+  value: string,
+  start: number,
+  end: number,
+  node: UnnamedMappableNode,
+): void {
   // Quote is fixed - double, matching `oxc_codegen`'s default option
-  writeWithMapNoLast(state, '"', node);
+  writeWithMapNoLast(state, '"', start, end, node);
 
   // Almost no string needs escaping, so the loop which performs escaping sits in its own function
   if (!STRING_ESCAPE_REGEX.test(value)) {

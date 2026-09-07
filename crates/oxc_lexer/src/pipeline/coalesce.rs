@@ -1,7 +1,7 @@
 use crate::error::diag_code;
 use crate::lanes::Lanes;
 use crate::opmap::{KwSet, OP_QDOT};
-use crate::tables::{Tables, is_digit, is_op_char, is_word};
+use crate::tables::{Tables, is_digit, is_op_char, is_word, is_ws};
 
 use super::NUM;
 use super::bitmap::{bm_clear_range, bm_next0, bm_set1};
@@ -128,6 +128,17 @@ unsafe fn glue_number(
             return e2; // token start already set at e2
         }
         if e2 + 1 < n && is_op_char(c) && (*opch.add((e2 + 1) >> 6) >> ((e2 + 1) & 63)) & 1 != 0 {
+            // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
+            // reaches the `>` run before `coalesce` ever raises it as an event.
+            if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
+                let end = bm_next0(opch, e2, n);
+                let g = super::regex_div::gt_run_split(t, src, st, opch, kind, n, e2, end - e2);
+                if g != 0 {
+                    // The split `>`s stay single tokens, but whatever borders on them is still an operator run and has to be
+                    // munched, or a following `&&` / `??` / `**` is emitted a byte at a time.
+                    return munch_walk(t, src, n, st, opch, kind, e2 + g);
+                }
+            }
             let q = munch_walk(t, src, n, st, opch, kind, e2);
             if q < n
                 && *src.add(q) == b'.'
@@ -270,6 +281,26 @@ pub(super) unsafe fn coalesce(
                 let q = core::ptr::read_unaligned(src.add(p) as *const u32);
                 let b0 = q as u8;
                 let b1 = (q >> 8) as u8;
+                // In TS, `>` may close nested type args including `Foo<T>= 1`, so fusing can diverge.
+                // Cheap inline byte checks handle this
+                if b0 == b'>'
+                    && kw.ts_key
+                    && (b1 == b'>' || (b1 == b'=' && p > 0 && !is_ws(*src.add(p - 1))))
+                {
+                    let g = super::regex_div::gt_run_split(t, src, st, opch, kind, n, p, run);
+                    if g != 0 {
+                        // Only `>`s stay split; the rest still munches, or `>>&&` would emit two `&`s.
+                        cursor = munch_walk(t, src, n, st, opch, kind, p + g);
+                        continue;
+                    }
+                }
+                // Mirror case: `Array<<T>(x: T) => T>` opens two lists, not `<<` shift-left.
+                if b0 == b'<' && b1 == b'<' && kw.ts_key {
+                    if super::regex_div::lt_run_split(src, st, opch, kind, n, p) {
+                        cursor = munch_walk(t, src, n, st, opch, kind, p + 2);
+                        continue;
+                    }
+                }
                 if run == 2 {
                     let key = (q & 0xFFFF) | (2u32 << 24);
                     let pack = t.op2_pack[(key.wrapping_mul(t.op.opmap_mul) >> 24) as usize];

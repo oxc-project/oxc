@@ -15,6 +15,7 @@
 //!
 //! - `--minify`: Generate minified output
 //! - `--twice`: Test idempotency by parsing and generating twice
+//! - `--sourcemap`: Print the generated source map (requires the `sourcemap` feature)
 
 use std::path::Path;
 

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.81.0] - 2026-08-31
+
+### 📚 Documentation
+
+- d5be037 linter/typescript/switch-exhaustiveness-check: Clarify default case comment pattern (#26100) (camc314)
+
 ## [1.79.0] - 2026-08-18
 
 ### 💥 BREAKING CHANGES

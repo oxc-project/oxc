@@ -78,37 +78,40 @@ pub enum CommentContent {
     /// `/* #__NO_SIDE_EFFECTS__ */`
     NoSideEffects = 6,
 
+    /// `/* #__NO_SIDE_EFFECTS__ */` that could not be applied to a function
+    NoSideEffectsNotApplied = 7,
+
     /// Webpack magic comment
     /// e.g. `/* webpackChunkName */`
     /// <https://webpack.js.org/api/module-methods/#magic-comments>
-    Webpack = 7,
+    Webpack = 8,
 
     /// Vite comment
     /// e.g. `/* @vite-ignore */`
     /// <https://github.com/search?q=repo%3Avitejs%2Fvite%20vite-ignore&type=code>
-    Vite = 8,
+    Vite = 9,
 
     /// Code Coverage Ignore
     /// `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
     /// <https://github.com/oxc-project/oxc/issues/10091>
-    CoverageIgnore = 9,
+    CoverageIgnore = 10,
 
     /// Turbopack magic comment
     /// e.g. `/* turbopackOptional: true */`
     /// <https://nextjs.org/docs/app/guides/lazy-loading#turbopackoptional-turbopack-only>
-    Turbopack = 10,
+    Turbopack = 11,
 
     /// File-level code coverage ignore.
     ///
     /// `v8 ignore file`, `istanbul ignore file`.
     /// Classified separately because its meaning remains valid if the next AST
     /// node is removed, unlike position-sensitive coverage annotations.
-    CoverageIgnoreFile = 11,
+    CoverageIgnoreFile = 12,
 
     /// Marks the following string or no-substitution template as a property name.
     /// `/* @__KEY__ */` or `/* #__KEY__ */`
     /// <https://esbuild.github.io/api/#mangle-key>
-    PropertyKey = 12,
+    PropertyKey = 13,
 }
 
 bitflags! {
@@ -156,10 +159,19 @@ pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,
 
-    /// Start of token this leading comment is attached to.
-    /// `/* Leading */ token`
-    ///                ^ This start
-    /// NOTE: Trailing comment attachment is not computed yet.
+    /// Source boundary this comment is attached to.
+    ///
+    /// Leading comments use the start of the following token:
+    /// ```text
+    /// /* Leading */ token
+    ///               ^ attached_to
+    /// ```
+    ///
+    /// Trailing comments use the end of the preceding token:
+    /// ```text
+    /// token| /* Trailing */
+    ///      ^ attached_to (the boundary immediately after `token`)
+    /// ```
     #[estree(skip)]
     pub attached_to: u32,
 

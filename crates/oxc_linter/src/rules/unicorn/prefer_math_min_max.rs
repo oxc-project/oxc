@@ -54,7 +54,7 @@ declare_oxc_lint!(
     PreferMathMinMax,
     unicorn,
     pedantic,
-    fix,
+    suggestion,
     version = "0.10.1",
     short_description = "Prefers use of `Math.min()` and `Math.max()` instead of ternary expressions when performing simple comparisons.",
 );
@@ -76,17 +76,22 @@ impl Rule for PreferMathMinMax {
             return;
         }
 
-        ctx.diagnostic_with_fix(prefer_math_min_max_diagnostic(conditional_expr.span), |fixer| {
-            let consequent = ctx.source_range(conditional_expr.consequent.span());
-            let alternate = ctx.source_range(conditional_expr.alternate.span());
-            let method = match condition_type {
-                TypeOptions::Max => "max",
-                TypeOptions::Min => "min",
-                TypeOptions::Unknown => unreachable!(),
-            };
-            fixer
-                .replace(conditional_expr.span, format!("Math.{method}({consequent}, {alternate})"))
-        });
+        ctx.diagnostic_with_suggestion(
+            prefer_math_min_max_diagnostic(conditional_expr.span),
+            |fixer| {
+                let consequent = ctx.source_range(conditional_expr.consequent.span());
+                let alternate = ctx.source_range(conditional_expr.alternate.span());
+                let method = match condition_type {
+                    TypeOptions::Max => "max",
+                    TypeOptions::Min => "min",
+                    TypeOptions::Unknown => unreachable!(),
+                };
+                fixer.replace(
+                    conditional_expr.span,
+                    format!("Math.{method}({consequent}, {alternate})"),
+                )
+            },
+        );
     }
 }
 

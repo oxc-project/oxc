@@ -28,7 +28,7 @@ use crate::{
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument,
+        member_chain::simple_argument::SimpleArgument, typecast::is_cast_target,
     },
     write,
 };
@@ -578,10 +578,8 @@ fn can_group_arrow_function_expression_argument(
         Expression::ArrowFunctionExpression(inner_arrow_function) => {
             can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
         }
-        // In Prettier's Babel AST, a JSDoc type cast like `/** @type {X} */ (expr)` preserves
-        // the `ParenthesizedExpression` wrapper, so `arg.body` is not a CallExpression and
-        // `couldExpandArg` naturally returns false. In oxc's AST the parens are stripped, so we
-        // must explicitly check for type cast comments to prevent incorrect grouping.
+        // A cast-wrapped body is not a call to `couldExpandArg` (see `is_cast_target`);
+        // a cast inside the body (`(cast).has(r)`) still leaves it a call.
         // https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/call-arguments.js#L232-L234
         //
         // A call wrapped in `ChainExpression` / `TSNonNullExpression`
@@ -595,10 +593,7 @@ fn can_group_arrow_function_expression_argument(
         expr if matches!(expr, Expression::ConditionalExpression(_))
             || as_call_expression_without_chain_wrappers(expr).is_some() =>
         {
-            !is_arrow_recursion
-                && !f
-                    .comments()
-                    .has_type_cast_comment_in_range(arrow_function.span.start, expr.span().start)
+            !is_arrow_recursion && !is_cast_target(expr.span(), f)
         }
         _ => false,
     })

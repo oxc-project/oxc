@@ -24,6 +24,11 @@ use core::cell::RefCell;
 
 pub const PAD: usize = 64;
 
+/// `true` if the SIMD core is compiled in, `false` if the scalar fallback is.
+/// Used by CI to ensure it's testing the implementation it thinks it is.
+pub const IS_SIMD: bool =
+    cfg!(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"));
+
 thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
 }
@@ -160,7 +165,17 @@ fn resolve_unicode_leads(
             continue;
         }
         let Some(ch) = lanes::decode_char_at(src, off as usize) else { continue };
-        if oxc_syntax::identifier::is_identifier_part(ch) {
+        let name_start = spans_all[ti].start
+            + u32::from(matches!(
+                kinds_all[ti],
+                TokenKind::PrivateIdent | TokenKind::PrivateIdentEscaped
+            ));
+        let ok = if off == name_start {
+            oxc_syntax::identifier::is_identifier_start(ch)
+        } else {
+            oxc_syntax::identifier::is_identifier_part(ch)
+        };
+        if ok {
             continue;
         }
         let code = if ch == '\u{FFFD}' {

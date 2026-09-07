@@ -472,11 +472,13 @@ fn is_allowed_render_prop(node: &AstNode<'_>, ctx: &LintContext<'_>, pattern: &s
         return true;
     }
 
-    if let Some(prop_name) = nearest_jsx_attribute_name(node, ctx) {
-        return prop_name == "children" || glob_match(pattern, &prop_name);
+    if let Some(prop_name) = direct_object_property_name(node, ctx)
+        && (prop_name == "children" || glob_match(pattern, &prop_name))
+    {
+        return true;
     }
 
-    if let Some(prop_name) = direct_object_property_name(node, ctx) {
+    if let Some(prop_name) = nearest_jsx_attribute_name(node, ctx) {
         return prop_name == "children" || glob_match(pattern, &prop_name);
     }
 
@@ -1197,6 +1199,21 @@ fn test() {
                     }
                   ",
             Some(serde_json::json!([{ "allowAsProps": true, }])),
+        ),
+        (
+            "
+                    function ParentComponent() {
+                      return (
+                        <Table
+                          columns={[{
+                            name: 'A',
+                            render: ({ id }) => <div>{id}</div>,
+                          }]}
+                        />
+                      );
+                    }
+                  ",
+            Some(serde_json::json!([{ "propNamePattern": "render*" }])),
         ),
     ];
 

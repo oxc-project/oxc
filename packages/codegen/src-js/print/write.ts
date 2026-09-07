@@ -1,10 +1,26 @@
-// Writing to the output, and the categories which describe what was written last.
+// Writing to the output.
 //
-// These live together because the categories exist only to be stored by `write` -
-// `state.last` records what was written last by category, not the last character itself.
+// Every write records what it ends with, as a category rather than as the character itself -
+// see `categories.ts` for what the categories are, and why.
 
 import { debugAssert } from "../asserts.ts";
+import {
+  CAT_CLOSE_BRACKET,
+  CAT_IDENT,
+  CAT_INT_DIGIT,
+  CAT_LT,
+  CAT_OP_UN_NEG,
+  CAT_OP_UN_NOT,
+  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_UN_PLUS,
+  CAT_OP_UPD_DEC,
+  CAT_OP_UPD_INC,
+  CAT_OTHER,
+  CAT_QUESTION,
+  CAT_REGEX_SLASH,
+} from "./categories.ts";
 
+import type { Category } from "./categories.ts";
 import type {
   MappableNode,
   NamedMappableNode,
@@ -13,223 +29,6 @@ import type {
 } from "./types.ts";
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
-
-// `state.last` records what was written last, by category, not the last character itself.
-//
-// Reading last character of `state.output` is disastrous for performance. `state.output` is a "cons string",
-// a concatenation of many smaller strings. Reading any character of it causes the string to be flattened,
-// which is costly. Given how often it's required to know what was printed last, this produces a 4x slow-down.
-//
-// No reader needs the character - only its category - so the category is defined statically in `write` calls
-// and stored as a small integer, which costs no write barrier to store and one compare to test.
-//
-// Three properties of the layout are load bearing, so keep them if you add a code:
-//
-// 1. `CAT_IDENT` through `CAT_REGEX_SLASH` are the classes needing a space before a following identifier,
-//    and they are the lowest codes, so `printSpaceBeforeIdentifier` is one compare against `CAT_REGEX_SLASH`.
-//    The unary and update operators are likewise contiguous, and the highest codes, so `printSpaceBeforeOperator`
-//    is one compare too.
-//
-// 2. The `CAT_START_OF_*` codes say where the output has reached, not what was written last, and they sit between
-//    those two ranges. Both space checks therefore read them as "nothing to separate", which is what the `CAT_OTHER`
-//    they displace meant - every position one of them marks follows whitespace or the start of the output.
-//    See `state.ts` for what they are for.
-//
-// 3. `CAT_START_OF_STMT` is odd, with the other two marks either side of it.
-//    Each of the two pairs a reader asks about is then one `|`-and-compare instead of two compares.
-//
-// The whole numbering:
-//
-// Group 0 to 2: A following identifier needs a space (`printSpaceBeforeIdentifier` checks `last <= CAT_REGEX_SLASH`)
-//    0  CAT_IDENT                      Identifier part - letters, digits, `_`, `$`, ID_Continue
-//    1  CAT_INT_DIGIT                  Numeric literal of plain digits (`0 .toExponential()`)
-//    2  CAT_REGEX_SLASH                Regex closed with no flags
-//
-// Group 3 to 10: Checked individually
-//    3  CAT_OTHER                      Anything else not covered by another category - punctuation, whitespace
-//    4  CAT_LT                         `<`
-//    5  CAT_QUESTION                   `?`
-//    6  CAT_START_OF_DEFAULT_EXPORT    `export default` expression is about to be printed
-//    7  CAT_START_OF_STMT              Expression statement's expression is about to be printed
-//    8  CAT_START_OF_ARROW_EXPR        Concise arrow body is about to be printed
-//    9  CAT_CLOSE_BRACKET              `)` or `]`
-//   10  CAT_OP_UN_NOT                  `!`
-//
-// Group 11 to 15: Operators `printSpaceBeforeOperatorSlow` needs to tell apart (`last >= CAT_OP_UN_NOT_AFTER_LT`)
-//   11  CAT_OP_UN_NOT_AFTER_LT         `!` written straight after a `<`
-//   12  CAT_OP_UN_PLUS                 `+`
-//   13  CAT_OP_UPD_INC                 `++`
-//   14  CAT_OP_UN_NEG                  `-`
-//   15  CAT_OP_UPD_DEC                 `--`
-
-/**
- * A category code. One of the `CAT_*` constants below, and nothing else -
- * the range checks which read `state.last` are only sound over exactly this set.
- */
-export type Category =
-  | typeof CAT_IDENT
-  | typeof CAT_INT_DIGIT
-  | typeof CAT_REGEX_SLASH
-  | typeof CAT_OTHER
-  | typeof CAT_LT
-  | typeof CAT_QUESTION
-  | typeof CAT_START_OF_STMT
-  | typeof CAT_START_OF_ARROW_EXPR
-  | typeof CAT_START_OF_DEFAULT_EXPORT
-  | typeof CAT_CLOSE_BRACKET
-  | typeof CAT_OP_UN_NOT
-  | typeof CAT_OP_UN_NOT_AFTER_LT
-  | typeof CAT_OP_UN_PLUS
-  | typeof CAT_OP_UPD_INC
-  | typeof CAT_OP_UN_NEG
-  | typeof CAT_OP_UPD_DEC;
-
-/** Identifier part - letters, digits, `_`, `$`, Unicode `ID_Continue`. */
-export const CAT_IDENT = 0;
-
-/**
- * A numeric literal whose text is plain digits, so a following `.` would be read as part of the number -
- * `0 .toExponential()` needs the space, `1e3.x` and `.5.x` do not.
- */
-export const CAT_INT_DIGIT = 1;
-
-/**
- * A regex's closing `/`, written only where the regex has no flags.
- *
- * In the identifier range because `/a/ in x` needs the space just as much as `x in y` does -
- * without it the `in` would be read as regex flags. With flags, `CAT_IDENT` says the same thing.
- */
-export const CAT_REGEX_SLASH = 2;
-
-/** Anything not covered by another category - punctuation, whitespace, a quote. */
-export const CAT_OTHER = 3;
-
-/** `<`, which a following `!` must not merge with into `<!--`. */
-export const CAT_LT = 4;
-
-/** `?`, which must not merge with a following `?` into `??` - see `TSJSDocNullableType`. */
-export const CAT_QUESTION = 5;
-
-/**
- * An `export default` expression is about to be printed, and nothing has been written since.
- *
- * Read by the function and class printers, which parenthesize themselves here so the declaration forms
- * (`export default function f() {}`) stay distinguishable from the expression ones.
- *
- * Immediately below `CAT_START_OF_STMT`, which is what makes their shared test one `|`.
- */
-export const CAT_START_OF_DEFAULT_EXPORT = 6;
-
-/**
- * An expression statement's expression is about to be printed, and nothing has been written since.
- *
- * A node which finds this in `last` is the leftmost token of the statement, however deeply nested it is,
- * so an object literal or an object destructuring assignment there parenthesizes itself.
- *
- * The only mark both readers ask about, so it is the odd one, with the other two either side.
- */
-export const CAT_START_OF_STMT = 7;
-
-/**
- * A concise arrow body is about to be printed, and nothing has been written since.
- *
- * Read by the same two printers as `CAT_START_OF_STMT` - `x => ({ a: 1 })` needs the parens for
- * the same reason a statement does, because a leading `{` would be read as a block.
- *
- * Immediately above `CAT_START_OF_STMT`, which is what makes their shared test one `|`.
- */
-export const CAT_START_OF_ARROW_EXPR = 8;
-
-/**
- * `)` or `]`, the only two characters a postfix operand can end with.
- *
- * The one reader is the source map hook at the end of `printExpression`, which mirrors Rust's
- * exclusive-end mapping after such an operand. It never asks which of the two was written,
- * so one code serves for both.
- *
- * Neither space check cares about either character, so it sits between the marks and the operator range,
- * where both range compares read it as "nothing to separate".
- */
-export const CAT_CLOSE_BRACKET = 9;
-
-/**
- * `!`, written anywhere other than straight after a `<` - both the unary operator and TS's
- * postfix `!` (non-null assertion, definite assignment), which postfix position keeps off a `<`.
- *
- * An operator code, but deliberately below the range `printSpaceBeforeOperator` gates on -
- * no following operator merges with a plain `!`, so storing this never costs the slow path a call.
- */
-export const CAT_OP_UN_NOT = 10;
-
-/**
- * `!` written immediately after a `<`, which is the `<!--` hazard.
- * Folding the check on the preceding character into the code saves tracking the second-last character.
- *
- * The first of the operators `printSpaceBeforeOperator` gates on - writing one of these
- * is what records it, so no separate field tracks which operator came last.
- */
-export const CAT_OP_UN_NOT_AFTER_LT = 11;
-
-/** `+`, which must not merge with a following `+` or `++`. */
-export const CAT_OP_UN_PLUS = 12;
-
-/** `++`, which must not follow a `+` without a space. */
-export const CAT_OP_UPD_INC = 13;
-
-/** `-`, which must not merge with a following `-` or `--`. */
-export const CAT_OP_UN_NEG = 14;
-
-/** `--`, which must not follow a `-`, nor the `!` of a `<!`. */
-export const CAT_OP_UPD_DEC = 15;
-
-/**
- * Every category, in numbering order.
- *
- * Only the debug checks which prove the range compares still match the sets they mean read this,
- * so release builds drop it entirely.
- */
-export const ALL_CATEGORIES: Category[] = [
-  CAT_IDENT,
-  CAT_INT_DIGIT,
-  CAT_REGEX_SLASH,
-  CAT_OTHER,
-  CAT_LT,
-  CAT_QUESTION,
-  CAT_START_OF_DEFAULT_EXPORT,
-  CAT_START_OF_STMT,
-  CAT_START_OF_ARROW_EXPR,
-  CAT_CLOSE_BRACKET,
-  CAT_OP_UN_NOT,
-  CAT_OP_UN_NOT_AFTER_LT,
-  CAT_OP_UN_PLUS,
-  CAT_OP_UPD_INC,
-  CAT_OP_UN_NEG,
-  CAT_OP_UPD_DEC,
-];
-
-// The five marker readers select a pair of marks by position rather than comparing each in turn.
-// `printFunction`, `printClass` and `printCallExpression` ask "statement or `export default`",
-// `printObjectExpression` and `printAssignmentExpression` ask "statement or concise arrow body":
-//
-//    (last | 1) === CAT_START_OF_STMT          // Statement or `export default`
-//    ((last - 1) | 1) === CAT_START_OF_STMT    // Statement or concise arrow body
-//
-// Both hold only while `CAT_START_OF_STMT` is odd and its two neighbours sit either side of it.
-// Check each against the set it is meant to select, over every category and no others.
-if (DEBUG) {
-  for (const category of ALL_CATEGORIES) {
-    debugAssert(
-      ((category | 1) === CAT_START_OF_STMT)
-        === (category === CAT_START_OF_STMT || category === CAT_START_OF_DEFAULT_EXPORT),
-      `Category ${category} disagrees with \`(last | 1) === CAT_START_OF_STMT\``,
-    );
-    debugAssert(
-      (((category - 1) | 1) === CAT_START_OF_STMT)
-        === (category === CAT_START_OF_STMT || category === CAT_START_OF_ARROW_EXPR),
-      `Category ${category} disagrees with \`((last - 1) | 1) === CAT_START_OF_STMT\``,
-    );
-  }
-}
 
 /**
  * Append `code` to the output, and record what it ends with.
@@ -252,28 +51,80 @@ export function write(state: State, code: string, last: Category): void {
 }
 
 /**
+ * Append `name` to the output, and record what it ends with as `CAT_IDENT` -
+ * an identifier, a keyword, or the trailing digits of a number.
+ *
+ * This is `write` with the category fixed. `CAT_IDENT` one of the most common categories,
+ * so passing it at every call site is an argument spent on a value which is never anything else.
+ *
+ * @param state - Printer state
+ * @param code - Text to append, never empty
+ */
+export function writeIdent(state: State, code: string): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, CAT_IDENT);
+
+  state.last = CAT_IDENT;
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append a private identifier - `#` and `name` - to the output, and record what it ends with.
+ *
+ * The plain form of `writeWithMapNamedPrivate`.
+ * Nothing calls it directly - the TSDown plugin rewrites the mapped calls to it for builds without source map support.
+ *
+ * `last` is always `CAT_IDENT`, since the name is what is written last, so the caller does not pass it.
+ *
+ * @param state - Printer state
+ * @param name - The identifier's name, which is what follows the `#`, so never empty
+ */
+export function writePrivate(state: State, name: string): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
+
+  state.last = CAT_IDENT;
+  state.output += "#";
+  state.output += name;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
+  }
+}
+
+/**
  * Append `code` to the output, record what it ends with, and record an unnamed source mapping for `node`.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `write` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
  * @param code - Text to append, never empty
  * @param last - Category of the last character of `code`
- * @param node - Node this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
 export function writeWithMap(
   state: State,
   code: string,
   last: Category,
+  start: number,
+  end: number,
   node: UnnamedMappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  markMapStart(state, node);
+  markMapStart(state, start, end, node);
 
   state.last = last;
   state.output += code;
@@ -285,35 +136,82 @@ export function writeWithMap(
 }
 
 /**
- * Append `code` to the output, record what it ends with, and record a named source mapping for `node`.
+ * Append `name` to the output, record what it ends with, and record a named source mapping for `node`.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
+ * `last` is always `CAT_IDENT`, since a name ends in an identifier character, so the caller does not pass it.
+ *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeIdent` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
- * @param code - Text to append, never empty
- * @param last - Category of the last character of `code`
- * @param node - Node this text came from
+ * @param name - Name to append, never empty
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
 export function writeWithMapNamed(
   state: State,
-  code: string,
-  last: Category,
+  name: string,
+  start: number,
+  end: number,
   node: IdentMappableNode,
 ): void {
-  debugAssert(code.length > 0, "`code` should not be an empty string");
-  debugAssertCategoryMatches(state, code, last);
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
+  debugAssertNameMatches(node, name);
 
-  markMapNamed(state, false, node);
+  markMapNamed(state, name, false, 0, start, end, node);
 
-  state.last = last;
-  state.output += code;
+  state.last = CAT_IDENT;
+  state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = false;
-    state.lastCharWritten = code[code.length - 1];
+    state.lastCharWritten = name[name.length - 1];
+  }
+}
+
+/**
+ * Append a private identifier - `#` and `name` - to the output, record what it ends with,
+ * and record a named source mapping for `node`.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ *
+ * `last` is always `CAT_IDENT`, since the name is what is written last, so the caller does not pass it.
+ *
+ * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
+ * into `writePrivate` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
+ *
+ * @param state - Printer state
+ * @param name - The identifier's name, which is what follows the `#`, so never empty
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Private identifier this text came from. Read only by debug asserts.
+ */
+export function writeWithMapNamedPrivate(
+  state: State,
+  name: string,
+  start: number,
+  end: number,
+  node: ESTree.PrivateIdentifier,
+): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertCategoryMatches(state, name, CAT_IDENT);
+  debugAssertNameMatches(node, name);
+
+  markMapNamed(state, name, false, 1, start, end, node);
+
+  state.last = CAT_IDENT;
+  state.output += "#";
+  state.output += name;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -349,14 +247,23 @@ export function writeNoLast(state: State, code: string): void {
  * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param code - Text to append, which unlike `writeWithMap` may be empty
- * @param node - Node this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
-export function writeWithMapNoLast(state: State, code: string, node: UnnamedMappableNode): void {
-  markMapStart(state, node);
+export function writeWithMapNoLast(
+  state: State,
+  code: string,
+  start: number,
+  end: number,
+  node: UnnamedMappableNode,
+): void {
+  markMapStart(state, start, end, node);
 
   state.output += code;
 
@@ -367,27 +274,39 @@ export function writeWithMapNoLast(state: State, code: string, node: UnnamedMapp
 }
 
 /**
- * Append `code` and record a named source mapping for `node`, leaving `state.last` alone.
+ * Append `name` and record a named source mapping for `node`, leaving `state.last` alone.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
- * @param code - Text to append, which unlike `writeWithMapNamed` may be empty
- * @param node - Node this text came from
+ * @param name - The identifier's name, so never empty, unlike the plain `NoLast` forms
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node this text came from. Read only by debug asserts.
  */
-export function writeWithMapNamedNoLast(state: State, code: string, node: IdentMappableNode): void {
-  markMapNamed(state, false, node);
+export function writeWithMapNamedNoLast(
+  state: State,
+  name: string,
+  start: number,
+  end: number,
+  node: IdentMappableNode,
+): void {
+  debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertNameMatches(node, name);
 
-  state.output += code;
+  markMapNamed(state, name, false, 0, start, end, node);
+
+  state.output += name;
 
   if (DEBUG) {
     state.lastIsStale = true;
-    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+    if (name.length > 0) state.lastCharWritten = name[name.length - 1];
   }
 }
 
@@ -398,20 +317,26 @@ export function writeWithMapNamedNoLast(state: State, code: string, node: IdentM
  * so recovering its original name takes a different scan of the source.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `writeNoLast` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for
+ * the minifier to remove.
  *
  * @param state - Printer state
  * @param name - The identifier's name, so never empty, unlike the other `NoLast` forms
- * @param node - JSX identifier this text came from
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - JSX identifier this text came from. Read only by debug asserts.
  */
 export function writeWithMapNamedJSXNoLast(
   state: State,
   name: string,
+  start: number,
+  end: number,
   node: ESTree.JSXIdentifier,
 ): void {
   debugAssert(name.length > 0, "`name` should not be an empty string");
+  debugAssertNameMatches(node, name);
 
-  markMapNamed(state, true, node);
+  markMapNamed(state, name, true, 0, start, end, node);
 
   state.output += name;
 
@@ -431,23 +356,27 @@ export function writeWithMapNamedJSXNoLast(
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
- * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ * into `write` and drops the `start`, `end` and `node` arguments, leaving this unreferenced for the minifier to remove.
  *
  * @param state - Printer state
  * @param code - Text to append, never empty
  * @param last - Category of the last character of `code`
- * @param node - Node whose last source character this text maps to
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node whose last source character this text maps to. Read only by debug asserts.
  */
 export function writeWithMapEnd(
   state: State,
   code: string,
   last: Category,
+  start: number,
+  end: number,
   node: MappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  markMapEnd(state, node);
+  markMapEnd(state, start, end, node);
 
   state.last = last;
   state.output += code;
@@ -465,10 +394,16 @@ export function writeWithMapEnd(
  * Builds without source map support have no use for this. In those builds, minifier removes it.
  *
  * @param state - Printer state
- * @param node - Node the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node the mapping points at. Read only by debug asserts.
  */
-export function markMapStart(state: State, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start);
+export function markMapStart(state: State, start: number, end: number, node: MappableNode): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) recordMapping(state, start);
 }
 
 /**
@@ -478,10 +413,16 @@ export function markMapStart(state: State, node: MappableNode): void {
  * Builds without source map support have no use for this. In those builds, minifier removes it.
  *
  * @param state - Printer state
- * @param node - Node whose end offset the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node whose end offset the mapping points at. Read only by debug asserts.
  */
-export function markMapAfter(state: State, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.end);
+export function markMapAfter(state: State, start: number, end: number, node: MappableNode): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) recordMapping(state, end);
 }
 
 /**
@@ -491,11 +432,23 @@ export function markMapAfter(state: State, node: MappableNode): void {
  * Builds without source map support have no use for this. In those builds, minifier removes it.
  *
  * @param state - Printer state
- * @param node - Node the mapping points into
  * @param columnOffset - Number of UTF-16 units to add to `node`'s start offset
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node the mapping points into. Read only by debug asserts.
  */
-export function markMapAtStartOffset(state: State, node: MappableNode, columnOffset: number): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) recordMapping(state, node.start + columnOffset);
+export function markMapAtStartOffset(
+  state: State,
+  columnOffset: number,
+  start: number,
+  end: number,
+  node: MappableNode,
+): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) recordMapping(state, start + columnOffset);
 }
 
 /**
@@ -505,12 +458,18 @@ export function markMapAtStartOffset(state: State, node: MappableNode, columnOff
  * `generateSourceMap` normalizes a landing on a low surrogate back to its code point.
  *
  * @param state - Printer state
- * @param node - Node whose last source character the mapping points at
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node whose last source character the mapping points at. Read only by debug asserts.
  */
-function markMapEnd(state: State, node: MappableNode): void {
-  if (SOURCEMAPS && hasMappableSpan(node)) {
+function markMapEnd(state: State, start: number, end: number, node: MappableNode): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (hasMappableSpan(start, end)) {
     // `hasMappableSpan` ensured span is non-empty, so `end` is at least 1. `end - 1` cannot go negative.
-    recordMapping(state, node.end - 1);
+    recordMapping(state, end - 1);
   }
 }
 
@@ -519,26 +478,52 @@ function markMapEnd(state: State, node: MappableNode): void {
  *
  * The name is only recorded for the mapping where it differs from the text which is printed.
  *
+ * A private identifier's mapping stays on the `#`, where the printed token starts, and the `#` is part
+ * of the name recorded - the token is `#name`, so a name of `name` alone would describe a region of
+ * the output which includes the `#`.
+ *
  * @param state - Printer state
+ * @param printedName - Name written to the output, which is the identifier's `name`
  * @param isJSXIdentifier - `true` if the node is a `JSXIdentifier`
- * @param node - Node the mapping points at
+ * @param hashLength - Length of the `#` the token is printed behind.
+ *   1 if the node is a `PrivateIdentifier`, 0 otherwise.
+ * @param start - `node`'s start offset
+ * @param end - `node`'s end offset
+ * @param node - Node the mapping points at. Read only by debug asserts.
  */
-function markMapNamed(state: State, isJSXIdentifier: boolean, node: NamedMappableNode): void {
-  if (!SOURCEMAPS || !hasMappableSpan(node)) return;
+function markMapNamed(
+  state: State,
+  printedName: string,
+  isJSXIdentifier: boolean,
+  hashLength: 0 | 1,
+  start: number,
+  end: number,
+  node: NamedMappableNode,
+): void {
+  if (!SOURCEMAPS) return;
+
+  debugAssertSpanMatches(node, start, end);
+
+  if (!hasMappableSpan(start, end)) return;
 
   debugAssert(
     state.mapPositions !== null && state.mapNames !== null && state.sourceText !== null,
     "`mapPositions`, `mapNames` and `sourceText` should be defined when source maps are enabled",
   );
+  debugAssert(
+    !(isJSXIdentifier && hashLength > 0),
+    "A node cannot be both a `JSXIdentifier` and a `PrivateIdentifier`",
+  );
 
-  const { start, end } = node;
   const { sourceText } = state;
   if (start > sourceText.length) return;
 
   // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
-  const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === start) return;
+  // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal.
+  let { mapPositions } = state;
+  const { mapPositionsLen } = state;
+  if (mapPositions[mapPositionsLen - 1] === start) return;
 
   // A mapping carries a name only when the identifier printed differs from the one in the source.
   // When possible, the mapping records the name from source, but if the source range is invalid,
@@ -559,8 +544,6 @@ function markMapNamed(state: State, isJSXIdentifier: boolean, node: NamedMappabl
   //
   // A private identifier prints as `#` followed by its name, and its span covers the `#`, so the token is `#name`.
   // That is what the source is compared against, and what gets recorded as the name.
-  const printedName = node.name;
-  const hashLength = node.type === "PrivateIdentifier" ? 1 : 0;
   const nameStart = start + hashLength;
   const nameEnd = nameStart + printedName.length;
   const matchesSource =
@@ -581,29 +564,31 @@ function markMapNamed(state: State, isJSXIdentifier: boolean, node: NamedMappabl
     // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
     if (originalName === undefined || !isSameToken(originalName, printedName, hashLength)) {
       state.mapNames.push(
-        mapPositions.length >> 1,
+        mapPositionsLen >> 1,
         originalName === undefined ? printedName : originalName,
       );
     }
   }
 
-  mapPositions.push(state.output.length, start);
+  if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
+  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+  mapPositions[mapPositionsLen + 1] = start;
+  state.mapPositionsLen = mapPositionsLen + 2;
 }
 
 /**
- * Whether `node` carries a span a mapping can be recorded for.
+ * Whether the offsets given describe a span a mapping can be recorded for.
  *
- * A transformed or hand-authored AST can carry anything at all, so the offsets are checked rather
- * than trusted. Proving `start` and `end` here is what lets each recorder below skip the lower half
- * of its own bounds check - `start` is not negative, and `end` is greater than it.
+ * A transformed or hand-authored AST can carry anything at all - including nodes with no offsets,
+ * which arrive here as `undefined` however the parameters are typed - so they are checked rather than trusted.
+ * Proving them here is what lets each recorder skip the lower half of its own bounds check -
+ * `start` is not negative, and `end` is greater than it.
  *
- * @param node - Node the mapping is for
- * @returns `true` if `node` has a non-empty span of safe integer offsets
+ * @param start - Start offset of the node the mapping is for
+ * @param end - End offset of that node
+ * @returns `true` if the offsets are a non-empty span of safe integers
  */
-function hasMappableSpan(
-  node: MappableNode,
-): node is MappableNode & { start: number; end: number } {
-  const { start, end } = node;
+function hasMappableSpan(start: number, end: number): boolean {
   return (
     typeof start === "number"
     && typeof end === "number"
@@ -628,9 +613,15 @@ function recordMapping(state: State, sourceOffset: number): void {
 
   if (sourceOffset > state.sourceText.length) return;
 
-  const { mapPositions } = state;
-  if (mapPositions[mapPositions.length - 1] === sourceOffset) return;
-  mapPositions.push(state.output.length, sourceOffset);
+  // On the first mapping the read is index -1, which on a typed array is `undefined` - never equal
+  let { mapPositions } = state;
+  const { mapPositionsLen } = state;
+  if (mapPositions[mapPositionsLen - 1] === sourceOffset) return;
+
+  if (mapPositionsLen === mapPositions.length) mapPositions = state.growMapPositions();
+  mapPositions[mapPositionsLen] = state.spilledOutputLength + state.output.length;
+  mapPositions[mapPositionsLen + 1] = sourceOffset;
+  state.mapPositionsLen = mapPositionsLen + 2;
 }
 
 /**
@@ -655,8 +646,8 @@ function isSameToken(originalName: string, printedName: string, hashLength: 0 | 
  * and the `#` is part of what is returned - the token is `#name`.
  *
  * @param sourceText - Original source text
- * @param start - Start offset of `node`, already validated
- * @param end - End offset of `node`, already validated
+ * @param start - Offset the identifier starts at, already validated
+ * @param end - Offset the scan stops at, already validated
  * @returns The identifier as it appears in the source, or `undefined` if the offsets do not span one
  */
 function originalNameFromSource(
@@ -782,6 +773,43 @@ function isDefinitelyIdentifierBoundary(code: number): boolean {
     && code !== 45 // `-` in JSX identifiers
     && code !== 92 // `\` starting a Unicode escape
     && code !== 95 // `_`
+  );
+}
+
+/**
+ * Assert that the offsets a mapping is recorded from are the node's own.
+ *
+ * Callers extract `start` and `end` themselves, where the node's type is known statically and the reads
+ * are monomorphic. This is what holds them to the node they claim to describe.
+ *
+ * Debug builds only. Removed by minifier in release builds.
+ *
+ * @param node - Node the mapping is for
+ * @param start - Start offset passed for it
+ * @param end - End offset passed for it
+ */
+function debugAssertSpanMatches(node: MappableNode, start: number, end: number): void {
+  debugAssert(
+    start === node.start && end === node.end,
+    () => `\`${node.type}\` spans ${node.start}-${node.end}, but ${start}-${end} was passed`,
+  );
+}
+
+/**
+ * Assert that the name a mapping records is the text which was printed.
+ *
+ * The `Named` write functions record what they print, on the premise that an identifier's `name` and
+ * the text printed for it are one and the same string. This is what holds that premise up.
+ *
+ * Debug builds only. Removed by minifier in release builds.
+ *
+ * @param node - Node the mapping is for
+ * @param name - Name the mapping records, which is what was printed
+ */
+function debugAssertNameMatches(node: NamedMappableNode, name: string): void {
+  debugAssert(
+    node.name === name,
+    () => `\`${node.type}\` has name "${node.name}", but "${name}" was printed`,
   );
 }
 

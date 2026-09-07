@@ -21,7 +21,8 @@ mod options;
 mod print;
 
 pub use crate::{
+    comments::SourceComment,
     context::YamlFormatContext,
-    format::{format, format_to_ir},
+    format::{ParsedYaml, format, format_to_ir, parse_for_format},
     options::{BracketSpacing, ProseWrap, SingleQuote, TrailingCommas, YamlFormatOptions},
 };

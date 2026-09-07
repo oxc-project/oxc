@@ -170,7 +170,7 @@ impl Tool for FakeTool {
 
     fn get_code_actions_or_commands(
         &self,
-        params: &crate::CodeActionParams,
+        params: crate::CodeActionParams,
     ) -> Vec<CodeActionOrCommand> {
         if params.uri.as_str().ends_with("code_action.config") {
             return vec![CodeActionOrCommand::CodeAction(CodeAction {
@@ -184,7 +184,7 @@ impl Tool for FakeTool {
         vec![]
     }
 
-    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic(&self, document: TextDocument) -> DiagnosticResult {
         if let Some(cache_uris) = &self.cache_uris {
             cache_uris.lock().unwrap().push(document.uri.clone());
         }
@@ -208,12 +208,12 @@ impl Tool for FakeTool {
         Ok(Vec::new())
     }
 
-    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(document)
     }
 
-    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(document)
     }

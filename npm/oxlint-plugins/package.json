@@ -1,6 +1,6 @@
 {
   "name": "@oxlint/plugins",
-  "version": "1.79.0",
+  "version": "1.81.0",
   "description": "Plugin utilities for Oxlint",
   "keywords": [
     "eslint",
@@ -18,7 +18,7 @@
     "directory": "npm/oxlint-plugins"
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/oxc-project"
   },
   "files": [
     "index.js",

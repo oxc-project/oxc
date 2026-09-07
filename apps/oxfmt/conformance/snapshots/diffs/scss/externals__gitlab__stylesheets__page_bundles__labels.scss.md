@@ -1,6 +1,6 @@
 # externals/gitlab/stylesheets/page_bundles/labels.scss
 
-> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+> media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
 
 ## Option 1
 

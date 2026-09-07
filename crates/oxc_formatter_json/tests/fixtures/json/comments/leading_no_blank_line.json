@@ -6,5 +6,9 @@
   "c": 3,
 
   // intentional blank line before this comment
-  "d": 4
+  "d": 4,
+  "e": 5, // trailing
+
+  // leading after blank
+  "f": 6
 }

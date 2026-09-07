@@ -12,7 +12,8 @@ use oxc_span::{GetSpan, Span};
 /// This is the only hard prerequisite for any consumer:
 /// - `u32` means byte offsets, not UTF-16 code units or `char` indices
 /// - `u32` is the oxc-wide convention
-///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `u32::MAX` bytes
+///   - `oxc_span::Span` is `u32`-based, and `oxc_parser` rejects sources longer than `MAX_LEN` bytes
+///     (which is less than `u32::MAX`)
 ///   - so casting a `usize` offset down to `u32` never truncates for parsed sources)
 #[derive(Debug, Clone, Copy)]
 pub struct SourceText<'a> {
@@ -65,11 +66,14 @@ impl<'a> SourceText<'a> {
     }
 
     // Byte checking
+    /// First non-whitespace byte at or after position
+    pub fn next_non_whitespace_byte(&self, position: u32) -> Option<u8> {
+        self.bytes_from(position).find(|byte| !byte.is_ascii_whitespace())
+    }
+
     /// Check if first non-whitespace byte at position matches expected
     pub fn next_non_whitespace_byte_is(&self, position: u32, expected_byte: u8) -> bool {
-        self.bytes_from(position)
-            .find(|byte| !byte.is_ascii_whitespace())
-            .is_some_and(|b| b == expected_byte)
+        self.next_non_whitespace_byte(position) == Some(expected_byte)
     }
 
     // Byte range operations

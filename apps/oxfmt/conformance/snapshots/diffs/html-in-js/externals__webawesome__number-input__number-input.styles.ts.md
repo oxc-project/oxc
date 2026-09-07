@@ -1,6 +1,6 @@
 # externals/webawesome/number-input/number-input.styles.ts
 
-> Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md
+> fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 
 ## Option 1
 

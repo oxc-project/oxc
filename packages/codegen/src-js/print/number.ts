@@ -9,7 +9,8 @@
 // Each form is written to the output in pieces, so no candidate string is ever built.
 
 import { debugAssert } from "../asserts.ts";
-import { CAT_IDENT, CAT_INT_DIGIT, markMapStart, write, writeNoLast } from "./write.ts";
+import { CAT_INT_DIGIT } from "./categories.ts";
+import { markMapStart, write, writeIdent, writeNoLast } from "./write.ts";
 
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
@@ -24,8 +25,14 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * and every other form ends in, or contains, a `.`, an `e` or an `x` which separates it
  * from a following `.` already.
  */
-export function printNonNegativeFloat(state: State, value: number, node: ESTree.Node): void {
-  markMapStart(state, node);
+export function printNonNegativeFloat(
+  state: State,
+  value: number,
+  start: number,
+  end: number,
+  node: ESTree.Node,
+): void {
+  markMapStart(state, start, end, node);
 
   if (Number.isInteger(value)) {
     if (value < 1000) {
@@ -69,7 +76,7 @@ function printShortestInteger(state: State, value: number): void {
     if (exponent.length + 1 < zeros) {
       writeNoLast(state, formatted.slice(0, length - zeros));
       writeNoLast(state, "e");
-      write(state, exponent, CAT_IDENT);
+      writeIdent(state, exponent);
       return;
     }
   }
@@ -114,18 +121,18 @@ function printShortestFraction(state: State, value: number): void {
       if (exponent.length + 2 < start - 1) {
         writeNoLast(state, formatted.slice(start));
         writeNoLast(state, "e-");
-        write(state, exponent, CAT_IDENT);
+        writeIdent(state, exponent);
         return;
       }
     }
 
-    write(state, formatted.slice(1), CAT_IDENT);
+    writeIdent(state, formatted.slice(1));
     return;
   }
 
   const exponentIndex = formatted.indexOf("e");
   if (exponentIndex === -1) {
-    write(state, formatted, CAT_IDENT);
+    writeIdent(state, formatted);
     return;
   }
 
@@ -160,13 +167,13 @@ function printExponent(state: State, formatted: string, exponentIndex: number): 
       writeNoLast(state, formatted[0]);
       writeNoLast(state, formatted.slice(2, exponentIndex));
       writeNoLast(state, "e");
-      write(state, folded, CAT_IDENT);
+      writeIdent(state, folded);
       return;
     }
   }
 
   writeNoLast(state, formatted.slice(0, exponentIndex + 1));
-  write(state, exponent, CAT_IDENT);
+  writeIdent(state, exponent);
 }
 
 /**
@@ -191,7 +198,7 @@ function printHexIfShorter(state: State, value: number, length: number): boolean
   if (hex.length + 2 >= length) return false;
 
   writeNoLast(state, "0x");
-  write(state, hex, CAT_IDENT);
+  writeIdent(state, hex);
 
   return true;
 }
