@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- a17de58 minifier: Process of return/throw in non last position and fix async * inlining (#26214) (Armano)
+
+### 🐛 Bug Fixes
+
+- 853ffab ecmascript: Avoid `charAt` panic on 32-bit (#26244) (camc314)
+
+### ⚡ Performance
+
+- 5b3e335 minifier: Use `Ident` instead of `Str` in `KeepVar` (#26332) (sapphi-red)
+- 51366fb minifier: Use `IdentHashSet` in `PrivateMemberUsageStack` (#26331) (sapphi-red)
+- d19c42a minifier: Merge nested if stmt in place instead of creating dummies (#26351) (Armano)
+
+### 📚 Documentation
+
+- a8ed2a7 minifier: Fix stale validation instructions (#26251) (camc314)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🚀 Features

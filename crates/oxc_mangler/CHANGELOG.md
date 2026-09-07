@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### ⚡ Performance
+
+- d2354b4 mangler: Use `Ident` for variable names to keep (#26333) (sapphi-red)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🚀 Features

@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 3d95477 transformer: Gate async-only rewrites by owning transform (#26326) (Dunqing)
+- f45a9ee transformer: Limit arguments capture to lowered async functions (#26317) (Dunqing)
+- 789969f transformer: Gate this capture by owning async transform (#26227) (Dunqing)
+
+### 📚 Documentation
+
+- d4b4e61 transformer: Document ES2015 target floor (#26378) (Dunqing)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 8b35abd semantic: Detect duplicate private class elements (#26361) (camc314)
+- 457ed57 semantic: Reject await and yield in rest parameter defaults (#26359) (camc314)
+- 4b89c7b semantic: Reject jumps across arrow functions (#26357) (camc314)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

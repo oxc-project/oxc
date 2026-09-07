@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 32bdc5b allocator: Construct `ArenaHashSet` with any `Default` hasher (#26372) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 00dea7a allocator: Gate `Allocator::data_end_ptr` behind fixed_size feature (#26248) (camc314)
+
 ## [0.148.0] - 2026-08-31
 
 ### 💥 BREAKING CHANGES
