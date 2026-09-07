@@ -82,7 +82,6 @@ jobs:
       # Unsung heroes of the internet, who led me here to speed up Windows' slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         with:
           workspace-copy: true
@@ -91,6 +90,11 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - name: Install dependencies on Dev Drive
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Install Rust
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -350,8 +354,6 @@ jobs:
           paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,napi/transform-relay/,npm/oxc-types/,npm/runtime/,tasks/e2e/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -361,6 +363,13 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - name: Install dependencies on Dev Drive
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -403,8 +412,6 @@ jobs:
           paths: apps/oxlint/,apps/shared/,npm/oxlint/,npm/oxlint-plugin-eslint/,npm/oxlint-plugins/,npm/oxc-types/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -414,6 +421,13 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - name: Install dependencies on Dev Drive
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -443,8 +457,6 @@ jobs:
           paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
-      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-        if: steps.filter.outputs.changed == 'true'
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         if: steps.filter.outputs.changed == 'true'
         with:
@@ -454,6 +466,13 @@ jobs:
           env-mapping: |
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+      # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - name: Install dependencies on Dev Drive
+        if: steps.filter.outputs.changed == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         if: steps.filter.outputs.changed == 'true'
         with:
