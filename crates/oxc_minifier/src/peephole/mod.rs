@@ -459,6 +459,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::SwitchStatement(_) => {
                     Self::drop_unreachable_switch_cases(stmt, ctx);
                     Self::try_fold_switch(stmt, ctx);
+                    Self::try_minimize_switch(stmt, ctx);
                 }
                 Statement::FunctionDeclaration(f) => {
                     Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);

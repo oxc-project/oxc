@@ -214,9 +214,9 @@ fn test_handle_switch_statement() {
     test("switch (a()) {}", "a()");
     test("switch (a) { default: }", "a;");
     test("switch (a) { default: break;}", " a;");
-    test("switch (a) { default: var b; break;}", "a; var b;");
+    test("switch (a) { default: var b; break;}", "if (a, 1) var b;");
     test("switch (a) { default: b()}", "a, b();");
-    test("switch (a) { default: b(); return;}", "a, b(); return;");
+    test("switch (a) { default: b(); return;}", "if (a, 1) { b(); return; }");
 
     test("switch (a) { case 1: break;}", "a;");
     test("switch (a) { case 1: b();}", "a === 1 && b();");
@@ -281,7 +281,7 @@ fn test_handle_switch_statement() {
         "switch (a) { case 1: c(); default: b(); }",
     ); // a === 1 && c(); b();
     test("function f() { switch (a) { case 1: return;} }", "function f() { a; }");
-    test("switch (a()) { default: {let y;} }", "a(); { let y; }");
+    test("switch (a()) { default: {let y;} }", "if (a(), 1) { let y; }");
     test(
         "function f(){switch ('x') { case 'x': var x = 1;break; case 'y': break; }}",
         "function f(){ var x = 1; }",
@@ -290,17 +290,14 @@ fn test_handle_switch_statement() {
     test("switch (a) { case 1: if(a) {b();}c();}", "a === 1 && (a && b(), c());");
     test("switch ('\\v') { case '\\u000B': foo();}", "foo();");
 
-    test("x: switch (a) { case 1: break x;}", "x: switch (a) { case 1: break x; }"); // x: if (a === 1) break x;
+    test("x: switch (a) { case 1: break x;}", "x: if (a === 1) break x;");
     test_same("x: switch (a) { case 2: break x; case 1: break x;}"); // x: { a; break x; }
-    test("x: switch (2) { case 2: f(); break outer; }", "x:switch(2){case 2:f();break outer}"); // x: { f(); break outer; }
+    test("x: switch (2) { case 2: f(); break outer; }", "x: { f(); break outer; }");
     test(
         "x: switch (x) { case 2: f(); for (;;){break outer;}}",
-        "x: switch (x) { case 2: for (f();;)break outer}",
-    ); // x: if (x === 2) for (f();;) break outer;
-    test(
-        "x: switch (a) { case 2: if(b) { break outer; } }",
-        "x: switch (a) { case 2: if(b) break outer; }",
-    ); // x: if (a === 2 && b) break outer;
+        "x: if (x === 2) for (f();;) break outer;",
+    );
+    test("x: switch (a) { case 2: if(b) { break outer; } }", "x: if (a === 2 && b) break outer;");
 
     test(
         "switch ('r') { case 'r': a();break; case 'r': var x=0;break;}",
@@ -356,7 +353,7 @@ fn test_handle_switch_statement() {
     );
     test(
         "if (a) { if (c) switch (b) { case 2: switch (a) { case 2: foo()}}; b() }",
-        "if (a) { if (c) switch (b) { case 2: a===2 && foo() } b() }",
+        "a && (c && b === 2 && a === 2 && foo(), b());",
     );
     test(
         "function f(){ switch (0) { case x: break; } let x = 1; }",
