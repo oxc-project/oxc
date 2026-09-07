@@ -282,7 +282,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
     ) {
         if self.is_async_only() {
             let previous = *self.arguments_needs_transform_stack.last();
-            self.arguments_needs_transform_stack.push(previous || arrow.r#async);
+            self.arguments_needs_transform_stack
+                .push(previous || self.will_transform_async_function(arrow.r#async, false));
 
             if Self::in_class_property_definition_value(ctx) {
                 self.this_var_stack.push(None);
@@ -322,8 +323,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         if self.is_async_only() {
             // Ignore arrow functions
             if let Ancestor::FunctionBody(func) = ctx.parent() {
-                let is_async_method =
-                    *func.r#async() && Self::is_class_method_like_ancestor(ctx.ancestor(1));
+                let is_async_method = self
+                    .will_transform_async_function(*func.r#async(), *func.generator())
+                    && Self::is_class_method_like_ancestor(ctx.ancestor(1));
                 self.arguments_needs_transform_stack.push(is_async_method);
             }
         }
@@ -527,6 +529,16 @@ impl<'a> ArrowFunctionConverter<'a> {
         self.mode == ArrowFunctionConverterMode::AsyncOnly
     }
 
+    #[inline]
+    fn will_transform_async_function(&self, r#async: bool, generator: bool) -> bool {
+        r#async
+            && if generator {
+                self.async_generator_functions_enabled
+            } else {
+                self.async_to_generator_enabled
+            }
+    }
+
     fn get_this_identifier(
         &mut self,
         span: Span,
@@ -641,12 +653,10 @@ impl<'a> ArrowFunctionConverter<'a> {
                     // `this` will point to the wrong context.
                     // To prevent this issue, we replace `this` with `_this`, treating it similarly
                     // to how we handle arrow functions. Therefore, we return the `ScopeId` of the function.
-                    return if (self.async_to_generator_enabled
-                        || (self.async_generator_functions_enabled && *func.generator()))
-                    && *func.r#async()
-                    && Self::is_class_method_like_ancestor(
-                        ancestors.next().unwrap()
-                    ) {
+                    return if self
+                        .will_transform_async_function(*func.r#async(), *func.generator())
+                        && Self::is_class_method_like_ancestor(ancestors.next().unwrap())
+                    {
                         Some(func.scope_id().get().unwrap())
                     } else {
                         None
