@@ -1,4 +1,4 @@
-use std::{iter, ops::ControlFlow};
+use std::iter;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
@@ -14,6 +14,8 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
+
+type StatementIter<'a> = <ArenaVec<'a, Statement<'a>> as IntoIterator>::IntoIter;
 
 /// `false` when dropping `stmt` produces a byte-identical AST — a `var`
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
@@ -48,12 +50,11 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut old_stmts = stmts.take_in(ctx);
+        let mut old_stmts = stmts.take_in(ctx).into_iter();
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
-        for i in 0..old_stmts.len() {
-            let stmt = old_stmts[i].take_in(ctx);
+        while let Some(stmt) = old_stmts.next() {
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -73,14 +74,15 @@ impl<'a> PeepholeOptimizations {
                 }
                 continue; // drop: `stmt` is intentionally not pushed into `stmts`.
             }
-            if Self::minimize_statement(stmt, i, &mut old_stmts, stmts, ctx).is_break() {
-                break;
-            }
+            Self::minimize_statement(stmt, &mut old_stmts, stmts, ctx);
             // A statement that never completes normally — a direct jump, a
             // kept block ending in a jump, an if/else or try/catch where
             // every branch jumps — makes the rest of the list unreachable.
             // https://github.com/rolldown/rolldown/issues/10184
-            if !is_control_flow_dead && stmts.last().is_some_and(Statement::is_terminated) {
+            if !is_control_flow_dead
+                && !old_stmts.as_slice().is_empty()
+                && stmts.last().is_some_and(Statement::is_terminated)
+            {
                 is_control_flow_dead = true;
             }
         }
@@ -129,11 +131,10 @@ impl<'a> PeepholeOptimizations {
 
     fn minimize_statement(
         stmt: Statement<'a>,
-        i: usize,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> ControlFlow<()> {
+    ) {
         match stmt {
             Statement::EmptyStatement(_) => (),
             Statement::VariableDeclaration(var_decl) => {
@@ -146,9 +147,7 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
-                    return ControlFlow::Break(());
-                }
+                Self::handle_if_statement(stmts, if_stmt, result, ctx);
             }
             Statement::ReturnStatement(ret_stmt) => {
                 Self::handle_return_statement(ret_stmt, result, ctx);
@@ -168,7 +167,6 @@ impl<'a> PeepholeOptimizations {
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
         }
-        ControlFlow::Continue(())
     }
 
     fn join_sequence(
@@ -532,13 +530,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn handle_if_statement(
-        i: usize,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
-    ) -> ControlFlow<()> {
+    ) {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
         // "var a; if (a = b(), c) d;" => "var a = b(); if (c) d;"
@@ -596,12 +593,10 @@ impl<'a> PeepholeOptimizations {
                     //
                     let can_move_branch_condition_outside_scope =
                         !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
-                            && !stmts.get(i + 1..).is_some_and(|stmts| {
-                                stmts.iter().any(Self::statement_cares_about_scope)
-                            });
+                            && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
 
                     if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.drain(i + 1..);
+                        let drained_stmts = stmts.by_ref();
                         let mut body = if let Some(alternate) = if_stmt.alternate.take() {
                             ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
                         } else {
@@ -630,7 +625,7 @@ impl<'a> PeepholeOptimizations {
                             });
                         result.push(if_stmt);
                         ctx.notice_change();
-                        return ControlFlow::Break(());
+                        return;
                     }
                 }
             }
@@ -642,12 +637,12 @@ impl<'a> PeepholeOptimizations {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 ctx.notice_change();
                 result.push(Statement::IfStatement(if_stmt));
-                return Self::minimize_statement(stmt, i, stmts, result, ctx);
+                Self::minimize_statement(stmt, stmts, result, ctx);
+                return;
             }
         }
 
         result.push(Statement::IfStatement(if_stmt));
-        ControlFlow::Continue(())
     }
 
     fn handle_return_statement(
