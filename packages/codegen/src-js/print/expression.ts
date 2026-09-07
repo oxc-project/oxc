@@ -232,10 +232,14 @@ export function printExpression(
       printExpression(node.expression, state, PREC_POSTFIX, ctx);
       write(state, "!", CAT_OP_UN_NOT);
       break;
-    case "TSInstantiationExpression":
+    case "TSInstantiationExpression": {
+      const wrap = precedence >= PREC_POSTFIX;
+      if (wrap) write(state, "(", CAT_OTHER);
       printExpression(node.expression, state, PREC_PREFIX, ctx);
       printTypeArguments(node.typeArguments, state);
+      if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       break;
+    }
     case "TSTypeAssertion":
       printTSTypeAssertion(node, state, precedence, ctx);
       break;

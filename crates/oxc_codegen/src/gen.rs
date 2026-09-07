@@ -2498,11 +2498,15 @@ impl GenExpr for TSNonNullExpression<'_> {
 }
 
 impl GenExpr for TSInstantiationExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
-        self.expression.print_expr(p, Precedence::Prefix, ctx);
-        self.type_arguments.print(p, ctx);
-        if p.options.minify {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        // Member access and other postfix operations need grouping around the type arguments.
+        let wrap = precedence >= Precedence::Postfix;
+        p.wrap(wrap, |p| {
+            // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
+            self.expression.print_expr(p, Precedence::Prefix, ctx);
+            self.type_arguments.print(p, ctx);
+        });
+        if p.options.minify && !wrap {
             p.print_hard_space();
         }
     }
