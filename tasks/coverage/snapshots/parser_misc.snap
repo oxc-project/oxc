@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 84/84 (100.00%)
 Positive Passed: 84/84 (100.00%)
-Negative Passed: 171/171 (100.00%)
+Negative Passed: 177/177 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -340,6 +340,42 @@ Negative Passed: 171/171 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-eof.js:2:1]
+ 1 │ export {} from
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-newline.js:2:1]
+ 1 │ export {} from
+ 2 │ foo();
+   · ───
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-semicolon.js:1:15]
+ 1 │ export {} from;
+   ·               ─
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[misc/fail/export-from-prior-lexer-error.js:1:11]
+ 1 │ export { "\xG" as foo } from
+   ·           ──
+   ╰────
+
+  × Unterminated multiline comment
+   ╭─[misc/fail/export-from-unterminated-comment.js:1:16]
+ 1 │ export {} from /*
+   ·                ───
+   ╰────
+
+  × Unterminated string
+   ╭─[misc/fail/export-from-unterminated-source.js:1:16]
+ 1 │ export {} from "
+   ·                ──
+   ╰────
 
   × HTML comments are not allowed in modules
    ╭─[misc/fail/html-comment-in-module.mjs:1:1]

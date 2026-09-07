@@ -560,7 +560,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             })
         });
         self.expect(Kind::RCurly);
-        let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
+        let (source, with_clause) = if self.eat(Kind::From) {
             let source = self.parse_literal_string();
             (Some(source), self.parse_import_attributes())
         } else {
