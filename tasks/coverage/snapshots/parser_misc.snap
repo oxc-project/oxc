@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 86/86 (100.00%)
-Positive Passed: 86/86 (100.00%)
-Negative Passed: 188/188 (100.00%)
+AST Parsed     : 89/89 (100.00%)
+Positive Passed: 89/89 (100.00%)
+Negative Passed: 189/189 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -376,6 +376,44 @@ Negative Passed: 188/188 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:1:8]
+ 1 │ import t\u0079pe Foo = require("m");
+   ·        ─────────
+ 2 │ import t\u0079pe { x } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:2:8]
+ 1 │ import t\u0079pe Foo = require("m");
+ 2 │ import t\u0079pe { x } from "m";
+   ·        ─────────
+ 3 │ import t\u0079pe * as ns from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:3:8]
+ 2 │ import t\u0079pe { x } from "m";
+ 3 │ import t\u0079pe * as ns from "m";
+   ·        ─────────
+ 4 │ import { t\u0079pe Bar } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:4:10]
+ 3 │ import t\u0079pe * as ns from "m";
+ 4 │ import { t\u0079pe Bar } from "m";
+   ·          ─────────
+ 5 │ import t\u0079pe fr\u006fm "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:5:18]
+ 4 │ import { t\u0079pe Bar } from "m";
+ 5 │ import t\u0079pe fr\u006fm "m";
+   ·                  ─────────
+   ╰────
 
   × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
