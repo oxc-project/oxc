@@ -178,7 +178,7 @@ export function printExpression(
       printAwaitExpression(node, state, precedence, ctx);
       break;
     case "YieldExpression":
-      printYieldExpression(node, state, precedence);
+      printYieldExpression(node, state, precedence, ctx);
       break;
     case "ImportExpression":
       printImportExpression(node, state, precedence, ctx);
@@ -922,8 +922,10 @@ function printYieldExpression(
   node: ESTree.YieldExpression,
   state: State,
   precedence: number,
+  ctx: number,
 ): void {
   const wrap = precedence >= PREC_ASSIGN;
+  const argumentCtx = wrap ? CTX_NONE : ctx & CTX_FORBID_IN;
   if (wrap) write(state, "(", CAT_OTHER);
 
   printSpaceBeforeIdentifier(state);
@@ -933,7 +935,7 @@ function printYieldExpression(
 
   if (node.argument != null) {
     write(state, " ", CAT_OTHER);
-    printExpression(node.argument, state, PREC_YIELD, CTX_NONE);
+    printExpression(node.argument, state, PREC_YIELD, argumentCtx);
   }
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
