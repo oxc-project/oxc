@@ -64,18 +64,18 @@ impl<'a> ClassProperties<'a> {
         function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
-        sync_function_symbol_flags(&function, ctx);
+        if self.current_class().is_declaration {
+            sync_function_symbol_flags(&function, ctx);
+        }
 
         // Change parent scope of function to the scope where it will be emitted, and remove
         // strict mode flag if that parent scope is not strict mode.
         //
-        // Class expressions emit the helper into the surrounding hoist scope (as a `var` +
-        // function-expression assignment in the class sequence). Class declarations emit a
-        // function declaration after the class statement, still under the current scope.
+        // Class expressions emit the helper as a function-expression assignment at the class
+        // expression's lexical location. Class declarations emit a function declaration after
+        // the class statement. A static property initializer is moved into the hoist scope later.
         let scope_id = function.scope_id();
-        let new_parent_id = if Self::is_inside_static_property_initializer(ctx)
-            || !self.current_class().is_declaration
-        {
+        let new_parent_id = if Self::is_inside_static_property_initializer(ctx) {
             ctx.current_hoist_scope_id()
         } else {
             ctx.current_scope_id()

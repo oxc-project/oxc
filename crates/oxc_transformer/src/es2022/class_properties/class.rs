@@ -128,11 +128,12 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Set => &format!("set_{}", ident.name),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let binding = ctx.generate_uid(
-                            name,
-                            ctx.current_block_scope_id(),
-                            SymbolFlags::Function,
-                        );
+                        let (scope_id, flags) = if is_declaration {
+                            (ctx.current_block_scope_id(), SymbolFlags::Function)
+                        } else {
+                            (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
+                        };
+                        let binding = ctx.generate_uid(name, scope_id, flags);
 
                         if let Some(prop) = private_props.get_mut(&ident.name) {
                             // If there's already a binding for this private property,
