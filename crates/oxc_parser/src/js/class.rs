@@ -400,7 +400,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_class_static_block(&mut self, start: u32) -> ClassElement<'a> {
         self.bump_any(); // bump `static`
         let block = self.context(
-            Context::Await | Context::NewTarget,
+            Context::In | Context::Await | Context::NewTarget,
             Context::Yield | Context::Return,
             Self::parse_block,
         );
