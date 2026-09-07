@@ -233,7 +233,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
 
         if Self::is_class_method_like_ancestor(ctx.parent()) {
             self.super_methods_stack.push(FxIndexMap::default());
-            self.super_needs_transform_stack.push(func.r#async);
+            self.super_needs_transform_stack
+                .push(self.will_transform_async_function(func.r#async, func.generator));
         }
     }
 
@@ -289,8 +290,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 self.this_var_stack.push(None);
                 self.super_methods_stack.push(FxIndexMap::default());
             }
-            self.super_needs_transform_stack
-                .push(arrow.r#async || *self.super_needs_transform_stack.last());
+            self.super_needs_transform_stack.push(
+                self.will_transform_async_function(arrow.r#async, false)
+                    || *self.super_needs_transform_stack.last(),
+            );
         }
     }
 
@@ -429,7 +432,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             Expression::ArrowFunctionExpression(arrow)
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
-                    && arrow.r#async
+                    && self.will_transform_async_function(arrow.r#async, false)
                     && Self::in_class_property_definition_value(ctx)
                 => {
                     // Inside class property definition value, since async arrow function will be
@@ -631,7 +634,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 | Ancestor::StaticBlockBody(_) => return None,
                 // Arrow function
                 Ancestor::ArrowFunctionExpressionParams(func) => {
-                    return if self.is_async_only() && !*func.r#async() {
+                    return if self.is_async_only()
+                        && !self.will_transform_async_function(*func.r#async(), false)
+                    {
                         // Continue checking the parent to see if it's inside an async function.
                         continue;
                     } else {
@@ -639,7 +644,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                     };
                 }
                 Ancestor::ArrowFunctionExpressionBody(func) => {
-                    return if self.is_async_only() && !*func.r#async() {
+                    return if self.is_async_only()
+                        && !self.will_transform_async_function(*func.r#async(), false)
+                    {
                         // Continue checking the parent to see if it's inside an async function.
                         continue;
                     } else {
