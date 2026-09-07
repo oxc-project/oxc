@@ -687,6 +687,53 @@ fn in_expr_in_sequence_in_for_loop_init() {
 }
 
 #[test]
+fn in_expr_in_yield_expression() {
+    for (keyword, prefix) in [("yield", "yield "), ("yield*", "yield*")] {
+        for (init, expected, minified) in [
+            (
+                format!("{keyword} (1 in o)"),
+                format!("{keyword} (1 in o)"),
+                format!("{keyword}(1 in o)"),
+            ),
+            (
+                format!("x = {keyword} (1 in o)"),
+                format!("x = {keyword} (1 in o)"),
+                format!("x={keyword}(1 in o)"),
+            ),
+            (
+                format!("{keyword} yield (1 in o)"),
+                format!("{keyword} yield (1 in o)"),
+                format!("{prefix}yield(1 in o)"),
+            ),
+            (
+                format!("{keyword} (x = (1 in o))"),
+                format!("{keyword} x = (1 in o)"),
+                format!("{prefix}x=(1 in o)"),
+            ),
+            // Parentheses around the yield expression allow `in` in its argument.
+            (
+                format!("({keyword} (1 in o)) + 1"),
+                format!("({keyword} 1 in o) + 1"),
+                format!("({prefix}1 in o)+1"),
+            ),
+        ] {
+            let source = format!("function *g(o) {{ for ({init}; false;); }}");
+            test(&source, &format!("function* g(o) {{\n\tfor ({expected}; false;);\n}}\n"));
+            test_minify(&source, &format!("function*g(o){{for({minified};false;);}}"));
+            crate::test_idempotency(&source);
+            crate::test_idempotency_options(
+                &source,
+                &CodegenOptions { minify: true, ..CodegenOptions::default() },
+            );
+        }
+
+        let source = format!("function *g(o) {{ {keyword} (1 in o); }}");
+        test(&source, &format!("function* g(o) {{\n\t{keyword} 1 in o;\n}}\n"));
+        test_minify(&source, &format!("function*g(o){{{prefix}1 in o}}"));
+    }
+}
+
+#[test]
 fn in_expr_in_arrow_function_expression() {
     test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
     test("() => 'foo' in bar", "() => \"foo\" in bar;\n");

@@ -1910,8 +1910,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
 }
 
 impl GenExpr for YieldExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign, |p| {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let wrap = precedence >= Precedence::Assign;
+        let argument_ctx = if wrap { Context::empty() } else { ctx & Context::FORBID_IN };
+        p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             p.print_str("yield");
@@ -1920,7 +1922,7 @@ impl GenExpr for YieldExpression<'_> {
             }
             if let Some(argument) = self.argument.as_ref() {
                 p.print_soft_space();
-                argument.print_expr(p, Precedence::Yield, Context::empty());
+                argument.print_expr(p, Precedence::Yield, argument_ctx);
             }
         });
     }
