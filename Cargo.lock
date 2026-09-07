@@ -2462,6 +2462,7 @@ dependencies = [
 name = "oxc_playground_napi"
 version = "0.0.1"
 dependencies = [
+ "lazy-regex",
  "napi",
  "napi-build",
  "napi-derive",

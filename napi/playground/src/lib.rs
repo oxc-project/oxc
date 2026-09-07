@@ -319,7 +319,10 @@ impl Oxc {
         program: &mut Program<'a>,
         options: &OxcOptions,
     ) -> Option<MinifierReturn> {
-        if !options.run.compress && !options.run.mangle {
+        if !options.run.compress
+            && !options.run.mangle
+            && !options.run.mangle_props.unwrap_or_default()
+        {
             return None;
         }
         let compress = if options.run.compress {
@@ -348,8 +351,20 @@ impl Oxc {
         } else {
             None
         };
+        let mangle_properties = if options.run.mangle_props.unwrap_or_default() {
+            options.mangle_props.as_ref().and_then(|options| {
+                options
+                    .try_into()
+                    .map_err(|error| {
+                        self.diagnostics.push(OxcDiagnostic::error(error));
+                    })
+                    .ok()
+            })
+        } else {
+            None
+        };
         Some(
-            Minifier::new(MinifierOptions { mangle, mangle_properties: None, compress })
+            Minifier::new(MinifierOptions { mangle, mangle_properties, compress })
                 .minify(allocator, program),
         )
     }
