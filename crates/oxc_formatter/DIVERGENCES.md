@@ -507,3 +507,23 @@ A cast comment types its parenthesized expression only when directly adjacent:
 with Prettier's placement tsc reports the target as its uncast type again.
 
 Prettier's `printIgnored` prepends the guard to the ignored slice, which starts after the leading comments; we reuse the reprint path's split (`ExpressionStatement::write`), so the guard, the cast comment, and the verbatim content print in that order.
+
+## cast-comment-inside-added-parens
+
+- Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc)
+- Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
+
+```js
+// input
+var target = x ? y : /** @type {Document} */ (root).head ?? fallback;
+
+// ours
+var target = x ? y : (/** @type {Document} */ (root).head ?? fallback);
+
+// prettier
+var target = x ? y : /** @type {Document} */ ((root).head ?? fallback);
+```
+
+A cast comment types the parenthesized expression directly after it.
+When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
+Printed outside, the cast covers the whole expression and tsc types `root` as its uncast type again (`Property 'head' does not exist on type 'Node'`).
