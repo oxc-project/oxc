@@ -64,18 +64,22 @@ impl<'a> ClassProperties<'a> {
         function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
-        if self.current_class().is_declaration {
+        let helper_as_expression = self.current_class().private_method_helpers_as_expressions;
+        if !helper_as_expression {
             sync_function_symbol_flags(&function, ctx);
         }
 
         // Change parent scope of function to the scope where it will be emitted, and remove
         // strict mode flag if that parent scope is not strict mode.
         //
-        // Class expressions emit the helper as a function-expression assignment at the class
-        // expression's lexical location. Class declarations emit a function declaration after
-        // the class statement. A static property initializer is moved into the hoist scope later.
+        // Class expressions in concise arrows emit the helper as a function-expression assignment
+        // at the class expression's lexical location. Other classes emit a function declaration
+        // after the containing statement. A static property initializer is moved into the hoist
+        // scope later.
         let scope_id = function.scope_id();
-        let new_parent_id = if Self::is_inside_static_property_initializer(ctx) {
+        let new_parent_id = if helper_as_expression {
+            ctx.current_scope_id()
+        } else if Self::is_inside_static_property_initializer(ctx) {
             ctx.current_hoist_scope_id()
         } else {
             ctx.current_scope_id()
@@ -89,6 +93,23 @@ impl<'a> ClassProperties<'a> {
             .visit_function(&mut function, ScopeFlags::Function);
 
         Some(Statement::FunctionDeclaration(function))
+    }
+
+    /// Whether private method helpers need to be part of the class expression itself.
+    ///
+    /// A concise arrow body has no statement list where a function declaration can be injected.
+    /// Stop at the first statement boundary so ordinary class expressions keep block-local
+    /// function declarations, which provide a fresh closure when a block runs repeatedly.
+    pub(super) fn private_method_helpers_as_expressions(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            if ancestor.is_parent_of_statement() {
+                return false;
+            }
+            if matches!(ancestor, Ancestor::ArrowFunctionExpressionBody(_)) {
+                return true;
+            }
+        }
+        false
     }
 
     fn is_inside_static_property_initializer(ctx: &TraverseCtx<'a>) -> bool {

@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use oxc_allocator::{ArenaVec, GetAddress, TakeIn, UnstableAddress};
+use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
@@ -73,6 +73,8 @@ impl<'a> ClassProperties<'a> {
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.heritage().is_some();
+        let private_method_helpers_as_expressions =
+            !is_declaration && Self::private_method_helpers_as_expressions(ctx);
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -128,10 +130,10 @@ impl<'a> ClassProperties<'a> {
                             MethodDefinitionKind::Set => &format!("set_{}", ident.name),
                             MethodDefinitionKind::Constructor => unreachable!(),
                         };
-                        let (scope_id, flags) = if is_declaration {
-                            (ctx.current_block_scope_id(), SymbolFlags::Function)
-                        } else {
+                        let (scope_id, flags) = if private_method_helpers_as_expressions {
                             (ctx.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
+                        } else {
+                            (ctx.current_block_scope_id(), SymbolFlags::Function)
                         };
                         let binding = ctx.generate_uid(name, scope_id, flags);
 
@@ -179,6 +181,7 @@ impl<'a> ClassProperties<'a> {
         {
             self.classes_stack.push(ClassDetails {
                 is_declaration,
+                private_method_helpers_as_expressions,
                 is_transform_required: false,
                 private_props: if private_props.is_empty() { None } else { Some(private_props) },
                 bindings: ClassBindings::dummy(),
@@ -234,6 +237,7 @@ impl<'a> ClassProperties<'a> {
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
             is_declaration,
+            private_method_helpers_as_expressions,
             is_transform_required: true,
             private_props: if private_props.is_empty() { None } else { Some(private_props) },
             bindings: class_bindings,
@@ -634,9 +638,13 @@ impl<'a> ClassProperties<'a> {
         // They're probably pretty rare, so it'll be rarely used.
         let class_details = self.classes_stack.last();
 
+        let private_method_helpers_as_expressions =
+            class_details.private_method_helpers_as_expressions;
         let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
-        // Private method helpers are emitted into the class-expression sequence (see below).
-        expr_count += self.insert_after_stmts.len();
+        if private_method_helpers_as_expressions {
+            // Private method helpers are emitted into the class-expression sequence (see below).
+            expr_count += self.insert_after_stmts.len();
+        }
         if let Some(private_props) = &class_details.private_props {
             expr_count += private_props.len();
         }
@@ -707,33 +715,43 @@ impl<'a> ClassProperties<'a> {
             }
         }
 
-        // Insert private methods as expression assignments in the surrounding sequence.
-        //
-        // Class *declarations* insert `function _method() {}` statements after the class.
-        // For class *expressions*, that statement-injection strategy is wrong whenever the
-        // expression is not itself a statement — most importantly after concise arrow bodies
-        // stopped being represented as a synthetic `FunctionBody` + `ExpressionStatement`
-        // (`ArrowFunctionBody` enum). In `() => class { #m() {} }`, walking to the containing
-        // statement finds the outer `const`/`let` and emits `_m` at module scope, while the
-        // WeakMap for private fields stays inside the arrow — causing `ReferenceError`.
-        //
-        // Emit `_m = function () {}` into the same sequence as the class expression instead,
-        // and declare `var _m` in the current hoist scope (concise arrows are expanded to
-        // blocks when they receive such vars).
+        // Insert private methods.
         if !self.insert_after_stmts.is_empty() {
-            for stmt in self.insert_after_stmts.drain(..) {
-                let Statement::FunctionDeclaration(mut func) = stmt else {
-                    unreachable!(
-                        "class expression private methods are always function declarations"
+            if private_method_helpers_as_expressions {
+                // A concise arrow has no statement list to inject a function declaration into.
+                // Emit `_m = function () {}` into the class sequence instead. Adding `var _m`
+                // expands the concise arrow to a block, so the binding is fresh for every call.
+                for stmt in self.insert_after_stmts.drain(..) {
+                    let Statement::FunctionDeclaration(mut func) = stmt else {
+                        unreachable!(
+                            "class expression private methods are always function declarations"
+                        );
+                    };
+                    let id = func.id.take().expect("private method binding always has an id");
+                    let binding = BoundIdentifier::from_binding_ident(&id);
+                    ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
+                    func.r#type = FunctionType::FunctionExpression;
+                    let assignment = create_assignment(
+                        &binding,
+                        Expression::FunctionExpression(func),
+                        SPAN,
+                        ctx,
                     );
-                };
-                let id = func.id.take().expect("private method binding always has an id");
-                let binding = BoundIdentifier::from_binding_ident(&id);
-                ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
-                func.r#type = FunctionType::FunctionExpression;
-                let assignment =
-                    create_assignment(&binding, Expression::FunctionExpression(func), SPAN, ctx);
-                exprs.push(assignment);
+                    exprs.push(assignment);
+                }
+            } else {
+                // Find `Address` of statement containing class expression.
+                let mut stmt_address = Address::DUMMY;
+                for ancestor in ctx.ancestors() {
+                    if ancestor.is_parent_of_statement() {
+                        break;
+                    }
+                    stmt_address = ancestor.address();
+                }
+
+                ctx.state
+                    .statement_injector
+                    .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
             }
         }
 

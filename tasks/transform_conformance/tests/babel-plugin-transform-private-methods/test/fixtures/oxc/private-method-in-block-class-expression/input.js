@@ -1,17 +1,19 @@
-function makeClass(value) {
-  {
-    const captured = value;
-    return class {
+function makeClasses() {
+  const Classes = [];
+  for (let captured = 0; captured < 2; captured++) {
+    Classes.push(class {
       *#read() {
         yield captured;
       }
       run() {
         return this.#read().next().value + 1;
       }
-    };
+    });
   }
+  return Classes;
 }
 
 export function get() {
-  return new (makeClass(41))().run();
+  const Classes = makeClasses();
+  return [new Classes[0]().run(), new Classes[1]().run()];
 }

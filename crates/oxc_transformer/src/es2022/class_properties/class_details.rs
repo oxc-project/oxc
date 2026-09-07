@@ -10,6 +10,8 @@ use super::{ClassBindings, ClassProperties, IdentIndexMap};
 pub(super) struct ClassDetails<'a> {
     /// `true` for class declaration, `false` for class expression
     pub is_declaration: bool,
+    /// `true` if private method helpers must be emitted in the class expression sequence.
+    pub private_method_helpers_as_expressions: bool,
     /// `true` if class requires no transformation
     pub is_transform_required: bool,
     /// Private properties.
@@ -28,6 +30,7 @@ impl ClassDetails<'_> {
     pub fn dummy(is_declaration: bool) -> Self {
         Self {
             is_declaration,
+            private_method_helpers_as_expressions: false,
             is_transform_required: false,
             private_props: None,
             bindings: ClassBindings::dummy(),

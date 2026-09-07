@@ -1,10 +1,10 @@
 const makeClass = () => class {
   #field = 41;
-  #read() {
-    return this.#field;
+  *#read() {
+    yield this.#field;
   }
   run() {
-    return this.#read() + 1;
+    return this.#read().next().value + 1;
   }
 };
 
