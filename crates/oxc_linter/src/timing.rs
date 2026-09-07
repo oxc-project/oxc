@@ -116,6 +116,7 @@ impl RuleTimingRecorder {
 #[derive(Debug, Default)]
 pub struct RuleTimingStore {
     timings: Mutex<FxHashMap<RuleTimingKey, RuleTimingStat>>,
+    js_plugin_runtime: Mutex<Duration>,
 }
 
 impl RuleTimingStore {
@@ -138,6 +139,18 @@ impl RuleTimingStore {
             let (key, stat) = RuleTimingKey::from_record(record);
             timings.entry(key).or_default().add(stat);
         }
+    }
+
+    pub(crate) fn record_js_plugin_runtime(&self, duration: Duration) {
+        *self.js_plugin_runtime.lock().expect("JS plugin runtime mutex poisoned") += duration;
+    }
+
+    /// Returns the cumulative time spent executing JS plugin linting on the JS thread.
+    ///
+    /// # Panics
+    /// Panics if the JS plugin runtime mutex is poisoned.
+    pub fn js_plugin_runtime(&self) -> Duration {
+        *self.js_plugin_runtime.lock().expect("JS plugin runtime mutex poisoned")
     }
 
     /// Collects all rule timings sorted by descending duration.

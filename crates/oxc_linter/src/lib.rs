@@ -12,6 +12,7 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
+    time::Duration,
 };
 
 use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
@@ -77,7 +78,8 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
+        JsFix, LintFileFailure, LintFileOutput, LintFileResult, LintFileTiming, LoadPluginResult,
+        convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
@@ -483,6 +485,7 @@ impl Linter {
                 &mut ctx_host,
                 allocator,
                 js_allocator_pool,
+                rule_timing_store,
             );
 
             if !ctx_host.next_sub_host() {
@@ -538,6 +541,7 @@ impl Linter {
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
         if external_rules.is_empty() {
             return;
@@ -589,6 +593,7 @@ impl Linter {
                 ctx_host,
                 program,
                 js_allocator_pool,
+                rule_timing_store,
             );
             return;
         }
@@ -611,6 +616,7 @@ impl Linter {
             program,
             tokens,
             allocator,
+            rule_timing_store,
         );
     }
 
@@ -622,6 +628,7 @@ impl Linter {
         _ctx_host: &mut Rc<ContextHost<'a>>,
         _allocator: &'a Allocator,
         _js_allocator_pool: Option<&AllocatorPool>,
+        _rule_timing_store: Option<&RuleTimingStore>,
     ) {
         // External rules (JS plugins) are not supported on non-64-bit or big-endian platforms
     }
@@ -639,6 +646,7 @@ impl Linter {
         ctx_host: &ContextHost<'_>,
         original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
         let js_allocator_guard = js_allocator_pool.get();
         let js_allocator = &*js_allocator_guard;
@@ -697,6 +705,7 @@ impl Linter {
             program,
             tokens,
             js_allocator,
+            rule_timing_store,
         );
 
         // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
@@ -716,6 +725,7 @@ impl Linter {
         program: &mut Program<'_>,
         tokens: &mut [Token],
         allocator: &Allocator,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
         // If has BOM, remove it
         const BOM: &str = "\u{feff}";
@@ -851,11 +861,19 @@ impl Linter {
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
             globals_json,
+            rule_timing_store.is_some(),
             self.workspace_uri.as_ref().map(ToString::to_string),
             allocator,
         );
         match result {
-            Ok(diagnostics) => {
+            Ok(LintFileOutput { diagnostics, timings, runtime_ms }) => {
+                self.record_external_timings(
+                    rule_timing_store,
+                    external_rules,
+                    timings,
+                    runtime_ms,
+                );
+
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8.
                     // External plugins may report locations outside the source text, or which end
@@ -937,14 +955,64 @@ impl Linter {
                     ));
                 }
             }
-            Err(err) => {
-                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
+            Err(LintFileFailure { message: error, timings, runtime_ms }) => {
+                self.record_external_timings(
+                    rule_timing_store,
+                    external_rules,
+                    timings,
+                    runtime_ms,
+                );
+
+                let message =
+                    format!("Error running JS plugin.\nFile path: {path_string}\n{error}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
                 ));
             }
         }
+    }
+
+    fn record_external_timings(
+        &self,
+        rule_timing_store: Option<&RuleTimingStore>,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        timings: Vec<LintFileTiming>,
+        runtime_ms: Option<f64>,
+    ) {
+        let Some(rule_timing_store) = rule_timing_store else { return };
+
+        if let Some(duration) = runtime_ms.and_then(Self::duration_from_millis) {
+            rule_timing_store.record_js_plugin_runtime(duration);
+        }
+        rule_timing_store.merge(
+            timings
+                .into_iter()
+                .filter_map(|timing| self.external_rule_timing_record(external_rules, timing)),
+        );
+    }
+
+    fn external_rule_timing_record(
+        &self,
+        external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
+        timing: LintFileTiming,
+    ) -> Option<RuleTimingRecord> {
+        let (external_rule_id, _, _) =
+            external_rules.get(usize::try_from(timing.rule_index).ok()?)?;
+        let duration = Self::duration_from_millis(timing.duration_ms)?;
+        let (plugin_name, rule_name) = self.config.resolve_plugin_rule_names(*external_rule_id);
+
+        Some(RuleTimingRecord {
+            source: RuleTimingSource::JsPlugin,
+            plugin_name: plugin_name.to_string(),
+            rule_name: rule_name.to_string(),
+            duration,
+            calls: timing.calls,
+        })
+    }
+
+    fn duration_from_millis(duration_ms: f64) -> Option<Duration> {
+        Duration::try_from_secs_f64(duration_ms / 1000.0).ok()
     }
 }
 

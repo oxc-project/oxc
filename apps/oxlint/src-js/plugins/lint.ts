@@ -11,6 +11,7 @@ import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
 import { resetWeakMaps } from "./weak_map.ts";
 import { switchWorkspace } from "./workspace.ts";
+import { timeCall, wrapTimedFunction } from "./timing.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -24,6 +25,7 @@ import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { VisitFn, EnterExit } from "./visitor.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
+import type { RuleTiming } from "./timing.ts";
 
 // Buffers cache.
 //
@@ -51,8 +53,9 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param collectTimings - Whether to collect per-rule timing information
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
- * @returns Diagnostics or error serialized to JSON string
+ * @returns Diagnostics and optional timing records, or an error serialized to JSON
  */
 export function lintFile(
   filePath: string,
@@ -62,8 +65,12 @@ export function lintFile(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  collectTimings: boolean,
   workspaceUri: string | null,
 ): string | null {
+  const start = collectTimings ? performance.now() : 0;
+  const timings: RuleTiming[] | null = collectTimings ? [] : null;
+
   try {
     lintFileImpl(
       filePath,
@@ -74,27 +81,36 @@ export function lintFile(
       settingsJSON,
       globalsJSON,
       workspaceUri,
+      timings,
     );
 
     let ret: string | null = null;
 
-    // Avoid JSON serialization in common case that there are no diagnostics to report
-    if (diagnostics.length !== 0) {
+    if (timings !== null) {
+      const runtimeMs = performance.now() - start;
+      ret = JSON.stringify({ Success: { diagnostics, timings, runtimeMs } });
+    } else if (diagnostics.length !== 0) {
+      // Avoid JSON serialization in common case that there are no diagnostics to report
       // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
       // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
       ret = JSON.stringify({ Success: diagnostics });
-
-      // Empty `diagnostics` array, so it starts empty when linting next file
-      diagnostics.length = 0;
     }
 
+    // Empty `diagnostics` array, so it starts empty when linting next file
+    diagnostics.length = 0;
     resetFile();
 
     return ret;
   } catch (err) {
-    resetStateAfterError();
+    runAfterHooks(false);
 
-    return JSON.stringify({ Failure: getErrorMessage(err) });
+    const runtimeMs = timings === null ? 0 : performance.now() - start;
+    const message = getErrorMessage(err);
+    const failure = timings === null ? message : { message, timings, runtimeMs };
+
+    clearStateAfterError();
+
+    return JSON.stringify({ Failure: failure });
   }
 }
 
@@ -109,6 +125,7 @@ export function lintFile(
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
+ * @param timings - Timing accumulators, or `null` if timings are not being collected
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
@@ -121,7 +138,8 @@ export function lintFileImpl(
   settingsJSON: string,
   globalsJSON: string,
   workspaceUri: string | null,
-) {
+  timings: RuleTiming[] | null = null,
+): void {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -198,7 +216,13 @@ export function lintFileImpl(
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     // In debug build, use `ruleIndexes`, because `ruleIds` has been re-ordered.
-    ruleDetails.ruleIndex = DEBUG ? ruleIndexes![i] : i;
+    const ruleIndex = DEBUG ? ruleIndexes![i] : i;
+    ruleDetails.ruleIndex = ruleIndex;
+    let timing: RuleTiming | undefined;
+    if (timings !== null) {
+      timing = { ruleIndex, durationMs: 0, calls: 0 };
+      timings.push(timing);
+    }
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
@@ -215,20 +239,25 @@ export function lintFileImpl(
     if (visitor === null) {
       // Rule defined with `create` method
       debugAssertIsNonNull(ruleDetails.rule.create);
-      visitor = ruleDetails.rule.create(ruleDetails.context);
+      visitor =
+        timing === undefined
+          ? ruleDetails.rule.create(ruleDetails.context)
+          : timeCall(timing, () => ruleDetails.rule.create!(ruleDetails.context));
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;
       if (beforeHook !== null) {
         // If `before` hook returns `false`, skip this rule
-        const shouldRun = beforeHook();
+        const shouldRun = timing === undefined ? beforeHook() : timeCall(timing, beforeHook);
         if (shouldRun === false) continue;
       }
       // Note: If `before` hook returned `false`, `after` hook is not called
-      if (afterHook !== null) afterHooks.push(afterHook);
+      if (afterHook !== null) {
+        afterHooks.push(timing === undefined ? afterHook : wrapTimedFunction(afterHook, timing));
+      }
     }
 
-    addVisitorToCompiled(visitor);
+    addVisitorToCompiled(visitor, timing);
   }
 
   const visitorState = finalizeCompiledVisitor();
@@ -322,6 +351,10 @@ export function resetStateAfterError() {
   // This function must never throw, so call `runAfterHooks` with `false` to swallow any errors
   runAfterHooks(false);
 
+  clearStateAfterError();
+}
+
+function clearStateAfterError() {
   // In case error occurred during visitor compilation, clear internal state of visitor compilation,
   // so no leftovers bleed into next file.
   // We could have a separate function to reset state which could be simpler and faster, but `resetStateAfterError`
