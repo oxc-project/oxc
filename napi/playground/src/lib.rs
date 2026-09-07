@@ -352,14 +352,17 @@ impl Oxc {
             None
         };
         let mangle_properties = if options.run.mangle_props.unwrap_or_default() {
-            options.mangle_props.as_ref().and_then(|options| {
-                options
-                    .try_into()
-                    .map_err(|error| {
-                        self.diagnostics.push(OxcDiagnostic::error(error));
-                    })
-                    .ok()
-            })
+            options
+                .mangle_props
+                .as_ref()
+                .ok_or_else(|| {
+                    "mangleProps options are required when run.mangleProps is enabled".to_string()
+                })
+                .and_then(TryInto::try_into)
+                .map_err(|error| {
+                    self.diagnostics.push(OxcDiagnostic::error(error));
+                })
+                .ok()
         } else {
             None
         };
