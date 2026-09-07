@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 86/86 (100.00%)
 Positive Passed: 86/86 (100.00%)
-Negative Passed: 187/187 (100.00%)
+Negative Passed: 188/188 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -454,6 +454,40 @@ Negative Passed: 187/187 (100.00%)
  1 │ export {} from "
    ·                ──
    ╰────
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:1:16]
+ 1 │ class C { get x(...args) {} }
+   ·                ─────────
+ 2 │ ({ get x(...args) {} });
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:2:9]
+ 1 │ class C { get x(...args) {} }
+ 2 │ ({ get x(...args) {} });
+   ·         ─────────
+ 3 │ interface I { get x(...args: any[]): string }
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:3:20]
+ 2 │ ({ get x(...args) {} });
+ 3 │ interface I { get x(...args: any[]): string }
+   ·                    ────────────────
+ 4 │ type T = { get x(...args: any[]): string };
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:4:17]
+ 3 │ interface I { get x(...args: any[]): string }
+ 4 │ type T = { get x(...args: any[]): string };
+   ·                 ────────────────
+   ╰────
+  help: Remove these parameters here
 
   × HTML comments are not allowed in modules
    ╭─[misc/fail/html-comment-in-module.mjs:1:1]
