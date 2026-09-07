@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 85/85 (100.00%)
-Positive Passed: 85/85 (100.00%)
-Negative Passed: 185/185 (100.00%)
+AST Parsed     : 86/86 (100.00%)
+Positive Passed: 86/86 (100.00%)
+Negative Passed: 187/187 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -135,6 +135,28 @@ Negative Passed: 185/185 (100.00%)
  16 │ }
     ╰────
   note: Classes are always strict mode code
+
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[misc/fail/arrow-block-body-in-context.js:1:6]
+ 1 │ for (var f = () => {}, value = a in b;;);
+   ·      ───────────────────────────
+   ╰────
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/arrow-block-body-in-context.js:1:38]
+ 1 │ for (var f = () => {}, value = a in b;;);
+   ·     ┬                                ┬
+   ·     │                                ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/arrow-expression-body-in.js:1:26]
+ 1 │ for (var f = () => a in b;;);
+   ·     ┬                    ┬
+   ·     │                    ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
 
   × Illegal break statement
    ╭─[misc/fail/arrow-function-jumps.js:1:25]
