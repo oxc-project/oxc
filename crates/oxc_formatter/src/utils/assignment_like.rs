@@ -17,7 +17,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
-        typecast::classify_type_cast,
+        typecast::is_cast_target,
     },
     write,
 };
@@ -767,7 +767,7 @@ fn should_break_after_operator<'a>(
     // Prettier keeps the `ParenthesizedExpression` node when it is a closure type cast target,
     // which makes a fully cast RHS opaque to the shape checks below (`x = /** @type {T} */ (a || b);` stays inline).
     // We have no paren nodes, so reproduce that with the cast classification.
-    if classify_type_cast(right.span(), f).is_target() {
+    if is_cast_target(right.span(), f) {
         return false;
     }
 
@@ -782,7 +782,7 @@ fn should_break_after_operator<'a>(
         }
         Expression::ConditionalExpression(conditional) => match &conditional.test {
             // A cast-parenthesized test is opaque, same as the whole-RHS case above
-            test if classify_type_cast(test.span(), f).is_target() => false,
+            test if is_cast_target(test.span(), f) => false,
             Expression::BinaryExpression(_) => true,
             Expression::LogicalExpression(logical) => {
                 !BinaryLikeExpression::can_inline_logical_expr(logical)
@@ -1005,6 +1005,10 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
     let mut expression = expression.as_ast_nodes();
 
     loop {
+        // A cast target ends the chain without a simple head
+        if is_cast_target(expression.span(), f) {
+            break;
+        }
         expression = match expression {
             AstNodes::TSNonNullExpression(assertion) => assertion.expression().as_ast_nodes(),
             AstNodes::CallExpression(call_expression) => {

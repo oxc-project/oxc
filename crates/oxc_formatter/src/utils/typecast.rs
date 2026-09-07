@@ -105,10 +105,20 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
     TypeCast::None
 }
 
+/// Whether the node at `span` is a cast target (see [`TypeCast::Target`]).
+///
+/// A cast target keeps its parens, so to shape-based layout checks it is a parenthesized expression, not the node inside;
+/// the AST has no paren node, so those checks ask this instead.
+/// Every cast target closes with `)`: the byte peek rejects the common case before any comment lookup.
+pub fn is_cast_target(span: Span, f: &JsFormatter<'_, '_>) -> bool {
+    f.context().comments().is_followed_by_closing_paren(span.end)
+        && classify_type_cast(span, f).is_target()
+}
+
 /// A cast target's pending comments and the span of its cast parentheses
 /// (from the first `(` after the cast comment to after the matching `)`), `None` for any other node.
 fn cast_target_parens<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> Option<(&'a [Comment], Span)> {
-    // Every cast target closes with `)`: the cheapest rejection, before any comment lookup
+    // The same rejection as `is_cast_target`
     if !f.context().comments().is_followed_by_closing_paren(span.end) {
         return None;
     }

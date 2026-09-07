@@ -1,0 +1,16 @@
+// Prettier keeps the cast `ParenthesizedExpression` node, so layout rules that
+// look through a chain (member chain head, call object, arrow body) stop at a cast target.
+
+// Assignment: the member chain on a cast target is not a poorly breakable chain,
+// the layout stays fluid and the member breaks, not the `=`.
+const complex_selectors_list = /** @type {CSS.SelectorList} */ (selector.args).children;
+const [get, set] = /** @type {SequenceExpression} */ (context.visit(attribute.expression)).expressions;
+var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[event.type];
+const events2 = /** @type {Record<string, Function | Function[]>} */ (active_component_context.s.$$events)?.[/** @type {string} */ (type)];
+
+// A plain chain still breaks after the `=`.
+const complex_selectors_bbbbbbbb = selector.args.children_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;
+
+// Last-argument arrow: a cast inside the call body keeps the hug, a cast-wrapped body does not.
+const needs_version_increase = !s.reactions?.every((r) => /** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r));
+const needs_version_increase2 = !s.reactions?.every((r) => /** @type {NonNullable<typeof v_reactions>} */ (v_reactions.has(r)));

@@ -64,10 +64,6 @@ const NOTE_BLOCK_SCALAR_TRAILING_WS =
 // Open mismatches without a DIVERGENCES entry (to fix, not to admit): the note names the shape and the gap.
 
 // js
-const TODO_CAST_MEMBER_ASSIGNMENT_LAYOUT =
-  "TODO: `x = /** @type */ (a.b).c` breaks after `=`; Prettier's kept `ParenthesizedExpression` makes the member chain opaque (fluid layout), ours only treats a fully cast RHS as opaque (`should_break_after_operator`)";
-const TODO_CAST_ARROW_BODY_ARGUMENT_LAYOUT =
-  "TODO: `f((r) => /** @type */ (a).has(r))` breaks all arguments; Prettier only refuses the last-arg hug when the whole body is the cast target, ours on any cast comment before the body (`can_group_arrow_function_expression_argument`)";
 const TODO_NEGATED_LOGICAL_IF_TEST =
   "TODO: `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (conformance `js/if/condition-break/unary-expression.js`). Unrelated to JSDoc";
 
@@ -356,14 +352,6 @@ const categories: Category[] = [
     sources: [{ dir: join(EXTERNALS_DIR, "svelte"), ext: ".js" }],
     optionSets: [{ printWidth: 100 }],
     notes: {
-      "externals/svelte/compiler/phases/2-analyze/css/css-prune.js":
-        TODO_CAST_MEMBER_ASSIGNMENT_LAYOUT,
-      "externals/svelte/compiler/phases/3-transform/server/visitors/shared/component.js":
-        TODO_CAST_MEMBER_ASSIGNMENT_LAYOUT,
-      "externals/svelte/index-client.js": TODO_CAST_MEMBER_ASSIGNMENT_LAYOUT,
-      "externals/svelte/internal/client/dom/legacy/misc.js": TODO_CAST_MEMBER_ASSIGNMENT_LAYOUT,
-      "externals/svelte/legacy/legacy-client.js": TODO_CAST_MEMBER_ASSIGNMENT_LAYOUT,
-      "externals/svelte/reactivity/map.js": TODO_CAST_ARROW_BODY_ARGUMENT_LAYOUT,
       "externals/svelte/internal/client/dom/css.js": NOTE_CAST_COMMENT_INSIDE_ADDED_PARENS,
       "externals/svelte/compiler/print/index.js": TODO_NEGATED_LOGICAL_IF_TEST,
     },

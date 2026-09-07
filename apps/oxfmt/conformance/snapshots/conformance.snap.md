@@ -352,7 +352,7 @@
 
 ## jsdoc
 
-### Option 1: 362/370 (97.84%)
+### Option 1: 368/370 (99.46%)
 
 ```json
 {"printWidth":100}
@@ -360,11 +360,5 @@
 
 | File | Note |
 | :--- | :--- |
-| [externals/svelte/compiler/phases/2-analyze/css/css-prune.js](diffs/jsdoc/externals__svelte__compiler__phases__2-analyze__css__css-prune.js.md) | TODO: `x = /** @type */ (a.b).c` breaks after `=`; Prettier's kept `ParenthesizedExpression` makes the member chain opaque (fluid layout), ours only treats a fully cast RHS as opaque (`should_break_after_operator`) |
-| [externals/svelte/compiler/phases/3-transform/server/visitors/shared/component.js](diffs/jsdoc/externals__svelte__compiler__phases__3-transform__server__visitors__shared__component.js.md) | TODO: `x = /** @type */ (a.b).c` breaks after `=`; Prettier's kept `ParenthesizedExpression` makes the member chain opaque (fluid layout), ours only treats a fully cast RHS as opaque (`should_break_after_operator`) |
 | [externals/svelte/compiler/print/index.js](diffs/jsdoc/externals__svelte__compiler__print__index.js.md) | TODO: `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (conformance `js/if/condition-break/unary-expression.js`). Unrelated to JSDoc |
-| [externals/svelte/index-client.js](diffs/jsdoc/externals__svelte__index-client.js.md) | TODO: `x = /** @type */ (a.b).c` breaks after `=`; Prettier's kept `ParenthesizedExpression` makes the member chain opaque (fluid layout), ours only treats a fully cast RHS as opaque (`should_break_after_operator`) |
 | [externals/svelte/internal/client/dom/css.js](diffs/jsdoc/externals__svelte__internal__client__dom__css.js.md) | cast comment prints inside the formatter-added parens. See crates/oxc_formatter/DIVERGENCES.md#cast-comment-inside-added-parens |
-| [externals/svelte/internal/client/dom/legacy/misc.js](diffs/jsdoc/externals__svelte__internal__client__dom__legacy__misc.js.md) | TODO: `x = /** @type */ (a.b).c` breaks after `=`; Prettier's kept `ParenthesizedExpression` makes the member chain opaque (fluid layout), ours only treats a fully cast RHS as opaque (`should_break_after_operator`) |
-| [externals/svelte/legacy/legacy-client.js](diffs/jsdoc/externals__svelte__legacy__legacy-client.js.md) | TODO: `x = /** @type */ (a.b).c` breaks after `=`; Prettier's kept `ParenthesizedExpression` makes the member chain opaque (fluid layout), ours only treats a fully cast RHS as opaque (`should_break_after_operator`) |
-| [externals/svelte/reactivity/map.js](diffs/jsdoc/externals__svelte__reactivity__map.js.md) | TODO: `f((r) => /** @type */ (a).has(r))` breaks all arguments; Prettier only refuses the last-arg hug when the whole body is the cast target, ours on any cast comment before the body (`can_group_arrow_function_expression_argument`) |

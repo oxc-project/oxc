@@ -510,7 +510,7 @@ Prettier's `printIgnored` prepends the guard to the ignored slice, which starts 
 
 ## cast-comment-inside-added-parens
 
-- Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc)
+- Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
 
 ```js
