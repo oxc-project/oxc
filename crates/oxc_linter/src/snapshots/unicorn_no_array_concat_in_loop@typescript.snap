@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.ts:4:47]
+ 3 │             for (const chunk of chunks) {
+ 4 │                 result = (result as string[]).concat(chunk);
+   ·                                               ──────
+ 5 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.ts:4:34]
+ 3 │             for (const chunk of chunks) {
+ 4 │                 result = result!.concat(chunk);
+   ·                                  ──────
+ 5 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.ts:4:45]
+ 3 │             for (const chunk of chunks) {
+ 4 │                 result = (<string[]>result).concat(chunk);
+   ·                                             ──────
+ 5 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.

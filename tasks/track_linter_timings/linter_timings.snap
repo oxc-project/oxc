@@ -567,6 +567,7 @@ unicorn/no-abusive-eslint-disable                          |      7
 unicorn/no-accessor-recursion                              |  10392
 unicorn/no-anonymous-default-export                        |  13007
 unicorn/no-array-callback-reference                        |  62606
+unicorn/no-array-concat-in-loop                            |  13005
 unicorn/no-array-fill-with-reference-type                  |  62606
 unicorn/no-array-for-each                                  |  62606
 unicorn/no-array-method-this-argument                      |  62606

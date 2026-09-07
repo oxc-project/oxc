@@ -644,6 +644,7 @@ pub use crate::rules::unicorn::no_abusive_eslint_disable::NoAbusiveEslintDisable
 pub use crate::rules::unicorn::no_accessor_recursion::NoAccessorRecursion as UnicornNoAccessorRecursion;
 pub use crate::rules::unicorn::no_anonymous_default_export::NoAnonymousDefaultExport as UnicornNoAnonymousDefaultExport;
 pub use crate::rules::unicorn::no_array_callback_reference::NoArrayCallbackReference as UnicornNoArrayCallbackReference;
+pub use crate::rules::unicorn::no_array_concat_in_loop::NoArrayConcatInLoop as UnicornNoArrayConcatInLoop;
 pub use crate::rules::unicorn::no_array_fill_with_reference_type::NoArrayFillWithReferenceType as UnicornNoArrayFillWithReferenceType;
 pub use crate::rules::unicorn::no_array_for_each::NoArrayForEach as UnicornNoArrayForEach;
 pub use crate::rules::unicorn::no_array_method_this_argument::NoArrayMethodThisArgument as UnicornNoArrayMethodThisArgument;
@@ -1392,6 +1393,7 @@ pub enum RuleEnum {
     UnicornNoAccessorRecursion(UnicornNoAccessorRecursion),
     UnicornNoAnonymousDefaultExport(UnicornNoAnonymousDefaultExport),
     UnicornNoArrayCallbackReference(UnicornNoArrayCallbackReference),
+    UnicornNoArrayConcatInLoop(UnicornNoArrayConcatInLoop),
     UnicornNoArrayFillWithReferenceType(UnicornNoArrayFillWithReferenceType),
     UnicornNoArrayForEach(UnicornNoArrayForEach),
     UnicornNoArrayMethodThisArgument(UnicornNoArrayMethodThisArgument),
@@ -2326,8 +2328,9 @@ const UNICORN_NO_ACCESSOR_RECURSION_ID: usize = UNICORN_NO_ABUSIVE_ESLINT_DISABL
 const UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID: usize = UNICORN_NO_ACCESSOR_RECURSION_ID + 1usize;
 const UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID: usize =
     UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID + 1usize;
+const UNICORN_NO_ARRAY_CONCAT_IN_LOOP_ID: usize = UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID + 1usize;
 const UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID: usize =
-    UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID + 1usize;
+    UNICORN_NO_ARRAY_CONCAT_IN_LOOP_ID + 1usize;
 const UNICORN_NO_ARRAY_FOR_EACH_ID: usize = UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID + 1usize;
 const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = UNICORN_NO_ARRAY_FOR_EACH_ID + 1usize;
 const UNICORN_NO_ARRAY_REDUCE_ID: usize = UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3249,6 +3252,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornNoAccessorRecursion::NAME,
     UnicornNoAnonymousDefaultExport::NAME,
     UnicornNoArrayCallbackReference::NAME,
+    UnicornNoArrayConcatInLoop::NAME,
     UnicornNoArrayFillWithReferenceType::NAME,
     UnicornNoArrayForEach::NAME,
     UnicornNoArrayMethodThisArgument::NAME,
@@ -4203,6 +4207,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => UNICORN_NO_ACCESSOR_RECURSION_ID,
             Self::UnicornNoAnonymousDefaultExport(_) => UNICORN_NO_ANONYMOUS_DEFAULT_EXPORT_ID,
             Self::UnicornNoArrayCallbackReference(_) => UNICORN_NO_ARRAY_CALLBACK_REFERENCE_ID,
+            Self::UnicornNoArrayConcatInLoop(_) => UNICORN_NO_ARRAY_CONCAT_IN_LOOP_ID,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UNICORN_NO_ARRAY_FILL_WITH_REFERENCE_TYPE_ID
             }
@@ -5234,6 +5239,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::CATEGORY,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::CATEGORY,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::CATEGORY,
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::CATEGORY,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::CATEGORY
             }
@@ -6253,6 +6259,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::FIX,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::FIX,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::FIX,
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::FIX,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::FIX
             }
@@ -7378,6 +7385,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(_) => {
                 UnicornNoArrayCallbackReference::documentation()
             }
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::documentation(),
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::documentation()
             }
@@ -9348,6 +9356,10 @@ impl RuleEnum {
                 UnicornNoArrayCallbackReference::config_schema(generator)
                     .or_else(|| UnicornNoArrayCallbackReference::schema(generator))
             }
+            Self::UnicornNoArrayConcatInLoop(_) => {
+                UnicornNoArrayConcatInLoop::config_schema(generator)
+                    .or_else(|| UnicornNoArrayConcatInLoop::schema(generator))
+            }
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::config_schema(generator)
                     .or_else(|| UnicornNoArrayFillWithReferenceType::schema(generator))
@@ -10929,6 +10941,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => "unicorn",
             Self::UnicornNoAnonymousDefaultExport(_) => "unicorn",
             Self::UnicornNoArrayCallbackReference(_) => "unicorn",
+            Self::UnicornNoArrayConcatInLoop(_) => "unicorn",
             Self::UnicornNoArrayFillWithReferenceType(_) => "unicorn",
             Self::UnicornNoArrayForEach(_) => "unicorn",
             Self::UnicornNoArrayMethodThisArgument(_) => "unicorn",
@@ -12937,6 +12950,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(rule) => rule.run(node, ctx),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayCallbackReference(rule) => rule.run(node, ctx),
+            Self::UnicornNoArrayConcatInLoop(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayForEach(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run(node, ctx),
@@ -13824,6 +13838,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(rule) => rule.run_once(ctx),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayCallbackReference(rule) => rule.run_once(ctx),
+            Self::UnicornNoArrayConcatInLoop(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayForEach(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_once(ctx),
@@ -14788,6 +14803,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArrayCallbackReference(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoArrayConcatInLoop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -15716,6 +15732,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(rule) => rule.should_run(ctx),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayCallbackReference(rule) => rule.should_run(ctx),
+            Self::UnicornNoArrayConcatInLoop(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayForEach(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.should_run(ctx),
@@ -16800,6 +16817,7 @@ impl RuleEnum {
             Self::UnicornNoArrayCallbackReference(_) => {
                 UnicornNoArrayCallbackReference::IS_TSGOLINT_RULE
             }
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::IS_TSGOLINT_RULE,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::IS_TSGOLINT_RULE
             }
@@ -17958,6 +17976,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::VERSION,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::VERSION,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::VERSION,
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::VERSION,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::VERSION
             }
@@ -19027,6 +19046,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::HAS_CONFIG,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::HAS_CONFIG,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::HAS_CONFIG,
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::HAS_CONFIG,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::HAS_CONFIG
             }
@@ -20067,6 +20087,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::INFO,
             Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::INFO,
             Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::INFO,
+            Self::UnicornNoArrayConcatInLoop(_) => UnicornNoArrayConcatInLoop::INFO,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
                 UnicornNoArrayFillWithReferenceType::INFO
             }
@@ -20986,6 +21007,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(rule) => rule.types_info(),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.types_info(),
             Self::UnicornNoArrayCallbackReference(rule) => rule.types_info(),
+            Self::UnicornNoArrayConcatInLoop(rule) => rule.types_info(),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.types_info(),
             Self::UnicornNoArrayForEach(rule) => rule.types_info(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.types_info(),
@@ -21860,6 +21882,7 @@ impl RuleEnum {
             Self::UnicornNoAccessorRecursion(rule) => rule.run_info(),
             Self::UnicornNoAnonymousDefaultExport(rule) => rule.run_info(),
             Self::UnicornNoArrayCallbackReference(rule) => rule.run_info(),
+            Self::UnicornNoArrayConcatInLoop(rule) => rule.run_info(),
             Self::UnicornNoArrayFillWithReferenceType(rule) => rule.run_info(),
             Self::UnicornNoArrayForEach(rule) => rule.run_info(),
             Self::UnicornNoArrayMethodThisArgument(rule) => rule.run_info(),
@@ -22830,6 +22853,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoAccessorRecursion(UnicornNoAccessorRecursion::default()),
         RuleEnum::UnicornNoAnonymousDefaultExport(UnicornNoAnonymousDefaultExport::default()),
         RuleEnum::UnicornNoArrayCallbackReference(UnicornNoArrayCallbackReference::default()),
+        RuleEnum::UnicornNoArrayConcatInLoop(UnicornNoArrayConcatInLoop::default()),
         RuleEnum::UnicornNoArrayFillWithReferenceType(
             UnicornNoArrayFillWithReferenceType::default(),
         ),

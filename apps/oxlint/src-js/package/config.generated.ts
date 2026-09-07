@@ -1556,6 +1556,7 @@ export interface DummyRuleMap {
   "unicorn/no-accessor-recursion"?: RuleNoConfig;
   "unicorn/no-anonymous-default-export"?: RuleNoConfig;
   "unicorn/no-array-callback-reference"?: RuleNoConfig;
+  "unicorn/no-array-concat-in-loop"?: RuleNoConfig;
   "unicorn/no-array-fill-with-reference-type"?: RuleNoConfig;
   "unicorn/no-array-for-each"?: RuleNoConfig;
   "unicorn/no-array-method-this-argument"?: RuleNoConfig;
