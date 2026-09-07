@@ -66,11 +66,14 @@ impl<'a> SourceText<'a> {
     }
 
     // Byte checking
+    /// First non-whitespace byte at or after position
+    pub fn next_non_whitespace_byte(&self, position: u32) -> Option<u8> {
+        self.bytes_from(position).find(|byte| !byte.is_ascii_whitespace())
+    }
+
     /// Check if first non-whitespace byte at position matches expected
     pub fn next_non_whitespace_byte_is(&self, position: u32, expected_byte: u8) -> bool {
-        self.bytes_from(position)
-            .find(|byte| !byte.is_ascii_whitespace())
-            .is_some_and(|b| b == expected_byte)
+        self.next_non_whitespace_byte(position) == Some(expected_byte)
     }
 
     // Byte range operations

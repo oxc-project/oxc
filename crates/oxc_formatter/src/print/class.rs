@@ -637,7 +637,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             // the comment still ends up behind the semicolon like Prettier.
             let content_end = value
                 .as_ref()
-                .map(assignment_chain_leaf_end)
+                .map(|value| assignment_chain_leaf_end(value, f))
                 .or_else(|| type_annotation.as_ref().map(|ta| ta.span.end))
                 .unwrap_or_else(|| key.span().end);
             // `node_end` bound: the element may have no source `;` at all

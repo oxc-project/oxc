@@ -39,6 +39,7 @@ pub use arrow_function_expression::{
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
+pub use semicolon::write_comments_before_closing_paren;
 pub use union_type::{
     alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
 };
