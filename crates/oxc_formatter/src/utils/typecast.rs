@@ -31,6 +31,7 @@ use crate::{
     Buffer, Format, format_args,
     formatter::{
         JsFormatter,
+        comments::gap_segments,
         prelude::*,
         trivia::{FormatLeadingComments, format_leading_comments},
     },
@@ -299,29 +300,6 @@ fn cast_parens_span(cast_comment_end: u32, span: Span, f: &JsFormatter<'_, '_>) 
         }
     }
     None
-}
-
-/// Byte segments between `start` and `bound` lying outside the given comment spans:
-/// one `(gap_start, gap_end)` pair per gap, ending with the tail segment up to `bound`.
-fn gap_segments<'c>(
-    comments: impl IntoIterator<Item = &'c Comment> + 'c,
-    start: u32,
-    bound: u32,
-) -> impl Iterator<Item = (u32, u32)> + 'c {
-    let mut pos = start;
-    comments
-        .into_iter()
-        .map(|comment| comment.span)
-        .chain(std::iter::once(Span::empty(bound)))
-        .filter_map(move |span| {
-            // A comment ending exactly at `pos` lies before the range
-            if span.start < pos {
-                return None;
-            }
-            let segment = (pos, span.start);
-            pos = span.end;
-            Some(segment)
-        })
 }
 
 /// Prints a node's leading comments and the formatter-added `(` in the correct order.

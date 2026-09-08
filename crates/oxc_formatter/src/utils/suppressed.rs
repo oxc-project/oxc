@@ -47,11 +47,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatSuppressedNode {
         write!(f, [text(arena_cow_str(&normalized, f))]);
 
         // The suppressed node contains comments that should be marked as printed.
-        mark_comments_as_printed_before(self.0.end, f);
+        f.context_mut().comments_mut().skip_comments_before(self.0.end);
     }
-}
-
-fn mark_comments_as_printed_before(end: u32, f: &mut JsFormatter<'_, '_>) {
-    let count = f.comments().unprinted_comments().iter().take_while(|c| c.span.end <= end).count();
-    f.context_mut().comments_mut().increase_printed_count_by(count);
 }

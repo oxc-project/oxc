@@ -102,6 +102,14 @@
 //! must instead ask the position-based queries (`all_comments_in_range` and friends),
 //! which read ALL comments and depend only on the source.
 //!
+//! ## Lexical Byte Scans
+//! Some queries scan the source bytes between comments for a token (`)`, `;`, a keyword's first byte),
+//! skipping comment interiors by span (see [`gap_segments`]). They are lexical, not syntactic:
+//! the scanned range must hold only trivia and tokens that cannot contain the byte
+//! (punctuation, or a keyword scanned for its first byte, e.g. `e` for `else`),
+//! such as an expression end up to the statement end.
+//! A range covering code would false-match the byte inside a string literal or nested syntax.
+//!
 //! ## References
 //! - [Prettier handles special comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js)
 //! - [Prettier pre-processes comments](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/main/comments/attach.js)
@@ -192,36 +200,23 @@ impl<'a> Comments<'a> {
         self.printed_count += 1;
     }
 
-    /// **Critical method**: Advances the printed cursor by the specified amount.
-    ///
-    /// Used when multiple comments are processed in batch. Each unit of `count`
-    /// represents one comment that has been formatted and should be marked as processed.
-    ///
-    /// Like [`Comments::increment_printed_count`], this is essential for maintaining the
-    /// integrity of the comment tracking system.
-    #[inline]
-    pub fn increase_printed_count_by(&mut self, count: usize) {
-        self.printed_count += count;
+    /// Advances the cursor past all comments ending before `pos`:
+    /// comments a verbatim (suppressed) range already contains, or, before speculative formatting,
+    /// comments outside the span of interest that would otherwise lead the speculatively formatted node.
+    pub fn skip_comments_before(&mut self, pos: u32) {
+        self.printed_count += self.comments_before_iter(pos).count();
     }
 
     /// Temporarily limits the unprinted comments view to only those before the given position.
     /// Returns the previous view limit to allow restoration.
     pub fn limit_comments_up_to(&mut self, end_pos: u32) -> Option<usize> {
-        // Save the original limit for restoration
         let original_limit = self.view_limit;
-
-        // Find the index of the first comment that starts at or after `end_pos`.
-        // Using binary search would be more efficient for large comment arrays.
-        let limit_index = self.inner[self.printed_count..]
-            .iter()
-            .position(|c| c.span.start >= end_pos)
-            .map_or(self.inner.len(), |idx| self.printed_count + idx);
-
+        let limit_index = self.printed_count
+            + self.inner[self.printed_count..].partition_point(|c| c.span.start < end_pos);
         // Only update if we're actually limiting the view
         if limit_index < self.inner.len() {
             self.view_limit = Some(limit_index);
         }
-
         original_limit
     }
 
@@ -238,8 +233,7 @@ impl<'a> Comments<'a> {
     /// without permanently advancing the comment cursor. This prevents comment
     /// deletion bugs when using `Formatter::intern` for `will_break` checks.
     ///
-    /// NOTE: this trio (with [`Comments::restore`] and [`Comments::skip_comments_before`])
-    /// is only used by `speculate_will_break` for `is_complex_type_arguments` (`assignment_like.rs`).
+    /// NOTE: with [`Comments::restore`], only used by `speculate_will_break` for `is_complex_type_arguments` (`assignment_like.rs`).
     pub fn snapshot(&self) -> CommentSnapshot {
         CommentSnapshot {
             printed_count: self.printed_count,
@@ -259,16 +253,6 @@ impl<'a> Comments<'a> {
         self.type_cast_node_span = snapshot.type_cast_node_span;
         self.view_limit = snapshot.view_limit;
     }
-
-    /// Advances the cursor past all comments ending before `pos`.
-    ///
-    /// Used before speculative formatting to skip comments that are outside
-    /// the span of interest, preventing them from being incorrectly included
-    /// as leading comments of the speculatively formatted node.
-    pub fn skip_comments_before(&mut self, pos: u32) {
-        let count = self.comments_before(pos).len();
-        self.printed_count += count;
-    }
 }
 
 // Cursor-based queries: the unprinted view, for PRINTING.
@@ -281,19 +265,26 @@ impl<'a> Comments<'a> {
 
     /// Returns comments that end before or at the given position.
     pub fn comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index = self.comments_before_iter(pos).count();
-        &self.unprinted_comments()[..index]
+        &self.unprinted_comments()[..self.comments_before_iter(pos).count()]
     }
 
     /// Returns the line comments that end before or at the given position.
     pub fn line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index = self.comments_before_iter(pos).take_while(|c| c.is_line()).count();
-        &self.unprinted_comments()[..index]
+        self.comments_before_while(pos, |c| c.is_line())
     }
 
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index = self.comments_before_iter(pos).take_while(|c| c.preceded_by_newline()).count();
+        self.comments_before_while(pos, |c| c.preceded_by_newline())
+    }
+
+    /// The leading run of [`Self::comments_before_iter`] satisfying `predicate`, as a slice.
+    fn comments_before_while(
+        &self,
+        pos: u32,
+        predicate: impl Fn(&Comment) -> bool,
+    ) -> &'a [Comment] {
+        let index = self.comments_before_iter(pos).take_while(|c| predicate(c)).count();
         &self.unprinted_comments()[..index]
     }
 
@@ -330,12 +321,8 @@ impl<'a> Comments<'a> {
         &[]
     }
 
-    /// Returns comments that occur before the first instance of a specific character.
-    ///
-    /// Lexical byte scan: the range starting at `start` must contain only trivia
-    /// and tokens that cannot contain `character`
-    /// (punctuation, or a keyword scanned for its first byte, e.g. `e` for `else`, `f` for `finally`).
-    /// A range covering code would false-match the character inside a string literal or nested syntax.
+    /// Returns comments that occur before the first instance of a specific character (a lexical byte scan, see the module doc).
+    /// Not on [`gap_segments`]: the result is a comment count, and the gap after the last comment is not scanned.
     pub(crate) fn comments_before_character(&self, mut start: u32, character: u8) -> &'a [Comment] {
         let comments = self.comments_after(start);
 
@@ -349,18 +336,10 @@ impl<'a> Comments<'a> {
         comments
     }
 
-    /// Comments sitting between `pos` and a closing source paren:
-    /// the run of comments after `pos` separated only by whitespace,
-    /// whose next non-whitespace character is `)`.
+    /// Comments sitting between `pos` and a closing source paren (a lexical byte scan, see the module doc).
     /// `None` when there is no such comment or another token intervenes.
-    ///
-    /// Lexical byte scan: the range starting at `pos` must contain only trivia and punctuation.
-    /// (e.g. an expression end up to the statement end)
-    /// A range containing a string literal would false-match a `)` inside it.
     pub(crate) fn comments_before_closing_paren(&self, pos: u32) -> Option<&'a [Comment]> {
-        let run = self.comment_run_after(self.comments_after(pos), pos);
-        let end = run.last()?.span.end;
-        self.source_text.next_non_whitespace_byte_is(end, b')').then_some(run)
+        self.comment_run_before_closing_paren(self.comments_after(pos), pos)
     }
 
     /// Gets trailing comments for a node based on its context.
@@ -505,11 +484,7 @@ impl<'a> Comments<'a> {
     /// or `content_end` itself when the content is not parenthesized.
     ///
     /// Comments before this position sit inside the parentheses and belong to the content;
-    /// only comments after it may move behind the semicolon.
-    ///
-    /// Lexical byte scan: the range must contain only trivia and punctuation.
-    /// (e.g. a content end up to the statement end)
-    /// A range containing a string literal would false-match a `)` inside it.
+    /// only comments after it may move behind the semicolon (a lexical byte scan, see the module doc).
     pub(crate) fn end_including_source_parens(&self, content_end: u32, node_end: u32) -> u32 {
         #[expect(clippy::cast_possible_truncation)] // Offsets fit in `u32`, source length does
         let position_after_last_close_paren = |from: u32, to: u32| {
@@ -517,22 +492,10 @@ impl<'a> Comments<'a> {
             Some(from + offset as u32 + 1)
         };
 
-        let mut end = content_end;
-        let mut pos = content_end;
-        for comment in self.comments_in_range(content_end, node_end) {
-            // A comment ending exactly at `content_end` lies within the content
-            if comment.span.start < pos {
-                continue;
-            }
-            if let Some(position) = position_after_last_close_paren(pos, comment.span.start) {
-                end = position;
-            }
-            pos = comment.span.end;
-        }
-        if let Some(position) = position_after_last_close_paren(pos, node_end) {
-            end = position;
-        }
-        end
+        gap_segments(self.comments_in_range(content_end, node_end), content_end, node_end)
+            .filter_map(|(from, to)| position_after_last_close_paren(from, to))
+            .last()
+            .unwrap_or(content_end)
     }
 
     /// Checks if there are any comments between the given positions.
@@ -561,9 +524,7 @@ impl<'a> Comments<'a> {
     /// ([`Self::is_type_cast_comment_followed_by_paren`]) before the given span.
     /// Cursor-based on purpose: printing peels nested casts one per pass (see `utils/typecast.rs`).
     pub fn get_type_cast_comment_index(&self, span: Span) -> Option<usize> {
-        self.unprinted_comments()
-            .iter()
-            .take_while(|c| c.span.end <= span.start)
+        self.comments_before_iter(span.start)
             .position(|comment| self.is_type_cast_comment_followed_by_paren(comment))
     }
 
@@ -573,7 +534,7 @@ impl<'a> Comments<'a> {
 
     /// Checks if the node has a suppression comment.
     pub fn is_suppressed(&self, start: u32) -> bool {
-        self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
+        self.comments_before_iter(start).any(|comment| self.is_suppression_comment(comment))
     }
 
     /// Checks if there is a trailing suppression comment on the same line.
@@ -589,27 +550,12 @@ impl<'a> Comments<'a> {
     }
 
     /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).
-    /// Why a `)` counts as a statement terminator: see `trailing_comments_to_move_behind_semicolon`.
-    ///
-    /// Lexical byte scan: the range must contain only trivia and punctuation.
-    /// (e.g. a content end up to the statement end)
-    /// A range containing a string literal would false-match a byte inside it.
+    /// Why a `)` counts as a statement terminator: see `trailing_comments_to_move_behind_semicolon`
+    /// (a lexical byte scan, see the module doc).
     pub(crate) fn has_semicolon_or_closing_paren_in_range(&self, start: u32, end: u32) -> bool {
-        let has_terminator = |from: u32, to: u32| {
+        gap_segments(self.comments_in_range(start, end), start, end).any(|(from, to)| {
             self.source_text.bytes_range(from, to).iter().any(|&b| matches!(b, b';' | b')'))
-        };
-        let mut pos = start;
-        for comment in self.comments_in_range(start, end) {
-            // A comment ending exactly at `start` lies before the range
-            if comment.span.start < pos {
-                continue;
-            }
-            if has_terminator(pos, comment.span.start) {
-                return true;
-            }
-            pos = comment.span.end;
-        }
-        has_terminator(pos, end)
+        })
     }
 }
 
@@ -650,53 +596,20 @@ impl<'a> Comments<'a> {
             Some(b'/') => {}
             _ => return false,
         }
-        let run = self.comment_run_after(self.all_comments_after(pos), pos);
-        let end = run.last().map_or(pos, |comment| comment.span.end);
-        self.source_text.next_non_whitespace_byte_is(end, b')')
+        self.comment_run_before_closing_paren(self.all_comments_after(pos), pos).is_some()
     }
 
-    /// The run of comments after `pos` separated only by whitespace (a prefix of `comments`, the caller picks the view).
-    fn comment_run_after(&self, comments: &'a [Comment], pos: u32) -> &'a [Comment] {
-        let mut cursor = pos;
-        let mut count = 0;
-        for comment in comments {
-            if comment.span.start < cursor
-                || !self
-                    .source_text
-                    .all_bytes_match(cursor, comment.span.start, |b| b.is_ascii_whitespace())
-            {
-                break;
-            }
-            count += 1;
-            cursor = comment.span.end;
-        }
-        &comments[..count]
-    }
-
-    /// Position just past the first instance of `character` at or after `start`,
-    /// skipping every comment's interior so `character` inside a comment cannot false-match.
-    ///
-    /// Same lexical contract as [`Self::comments_before_character`],
-    /// and `character` must occur in the scanned range (guaranteed by grammar at the call sites).
+    /// Position just past the first instance of `character` at or after `start`
+    /// (a lexical byte scan, see the module doc);
+    /// `character` must occur in the scanned range (guaranteed by grammar at the call sites).
     pub(crate) fn position_after_character(&self, start: u32, character: u8) -> u32 {
-        // An empty sentinel span at end-of-source makes the tail just another gap
         let source_end = u32::try_from(self.source_text.as_str().len()).unwrap();
-        let first = self.inner.partition_point(|comment| comment.span.start < start);
-        let mut cursor = start;
-        for span in self.inner[first..]
-            .iter()
-            .map(|comment| comment.span)
-            .chain(std::iter::once(Span::empty(source_end)))
-        {
-            if let Some(offset) = self
-                .source_text
-                .bytes_range(cursor, span.start)
-                .iter()
-                .position(|&byte| byte == character)
+        for (from, to) in gap_segments(self.all_comments_after(start), start, source_end) {
+            if let Some(offset) =
+                self.source_text.bytes_range(from, to).iter().position(|&byte| byte == character)
             {
-                return cursor + u32::try_from(offset).unwrap() + 1;
+                return from + u32::try_from(offset).unwrap() + 1;
             }
-            cursor = span.end;
         }
         unreachable!("the caller guarantees the character occurs outside a comment")
     }
@@ -770,4 +683,61 @@ impl Comments<'_> {
     pub fn is_marked_as_type_cast_node(&self, node: &impl GetSpan) -> bool {
         self.type_cast_node_span == node.span()
     }
+}
+
+// View-neutral scans over a comment slice the caller picked (cursor-based or position-based)
+impl<'a> Comments<'a> {
+    /// The non-empty run of comments after `pos` ([`Self::comment_run_after`])
+    /// when the next non-whitespace byte after it is `)`.
+    fn comment_run_before_closing_paren(
+        &self,
+        comments: &'a [Comment],
+        pos: u32,
+    ) -> Option<&'a [Comment]> {
+        let run = self.comment_run_after(comments, pos);
+        let end = run.last()?.span.end;
+        self.source_text.next_non_whitespace_byte_is(end, b')').then_some(run)
+    }
+
+    /// The run of comments after `pos` separated only by whitespace (a prefix of `comments`).
+    fn comment_run_after(&self, comments: &'a [Comment], pos: u32) -> &'a [Comment] {
+        let mut cursor = pos;
+        let mut count = 0;
+        for comment in comments {
+            if comment.span.start < cursor
+                || !self
+                    .source_text
+                    .all_bytes_match(cursor, comment.span.start, |b| b.is_ascii_whitespace())
+            {
+                break;
+            }
+            count += 1;
+            cursor = comment.span.end;
+        }
+        &comments[..count]
+    }
+}
+
+/// Byte segments between `start` and `bound` lying outside the given comment spans:
+/// one `(gap_start, gap_end)` pair per gap, ending with the tail segment up to `bound`.
+/// The caller picks the view (cursor-based or position-based).
+pub fn gap_segments<'c>(
+    comments: impl IntoIterator<Item = &'c Comment> + 'c,
+    start: u32,
+    bound: u32,
+) -> impl Iterator<Item = (u32, u32)> + 'c {
+    let mut pos = start;
+    comments
+        .into_iter()
+        .map(|comment| comment.span)
+        .chain(std::iter::once(Span::empty(bound)))
+        .filter_map(move |span| {
+            // A comment ending exactly at `pos` lies before the range
+            if span.start < pos {
+                return None;
+            }
+            let segment = (pos, span.start);
+            pos = span.end;
+            Some(segment)
+        })
 }
