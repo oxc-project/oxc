@@ -559,11 +559,10 @@ impl<'a> AssignmentLike<'a, '_> {
         // The chain goes up two levels, by checking up to the great parent if all the conditions
         // are correctly met.
         let upper_chain_is_eligible =
-            // First, we check if the current node is an assignment expression
-            // and not a cast target (the mark, not `is_cast_target`: the target is mid-format here):
+            // First, we check if the current node is an assignment expression and not a cast target:
             // its parent would be Prettier's `ParenthesizedExpression`, which breaks the chain.
             if let Self::AssignmentExpression(assignment) = self
-                && !f.comments().is_marked_as_type_cast_node(assignment)
+                && !is_cast_target(assignment.span, f)
             {
                 // Then we check if the parent is assignment expression or variable declarator
                 let parent = assignment.parent();

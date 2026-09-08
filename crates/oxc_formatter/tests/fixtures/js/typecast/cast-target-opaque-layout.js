@@ -31,3 +31,9 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = /** @type {T} */ (bbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ ((xxxxxxxxxxxxxxxx) => xxxxxxxxxxxxxxxx.yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy);
 const someLongVariableNameForArrow3 = /** @type {Handler} */ ((a) => (b) => (c) => (d) => someLongFunctionCall(a, b, c, d, eeeeeeeeeee));
 const someLongVariableNameHereForNot = !/** @type {Promise<string>} */ ("some long string literal here ok yes");
+
+// Nested casts: each cast keeps its own parens.
+const outer = /** @type {U} */ (/** @type {T} */ (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).bbbbbbbbbbbbbbbb);
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ (cccccccccccccccc = /** @type {S} */ (dddddddddddddddd = eeeeeeeeeeeeeeee));
+// A chain inside a call-argument cast with doubled source parens.
+foo(/** @type {T} */ ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = cccccccccccccccc)));

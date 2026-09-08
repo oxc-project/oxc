@@ -177,7 +177,8 @@ impl<'a> Comments<'a> {
         self.unprinted_comments().iter().take_while(move |c| c.span.end <= pos)
     }
 
-    /// Returns all comments that end before or at the given position.
+    /// Returns the unprinted comments that end before or at the given position
+    /// (cursor-based, see [`Self::all_comments_in_range`] for the position-based queries).
     pub fn comments_before(&self, pos: u32) -> &'a [Comment] {
         let index = self.comments_before_iter(pos).count();
         &self.unprinted_comments()[..index]
@@ -220,7 +221,32 @@ impl<'a> Comments<'a> {
         &comments[start_index..]
     }
 
-    /// Returns comments that fall between the given start and end positions.
+    /// Position-based variant of [`Self::comments_in_range`]:
+    /// ALL comments contained in `[start, end]`, printed and hidden ones included.
+    ///
+    /// Layout decisions evaluated more than once for the same node must use the position-based queries:
+    /// grouped call arguments re-format the grouped function with its body reused from cache
+    /// after the first pass has already consumed the comments,
+    /// so a cursor-based query would give the two passes different answers.
+    pub fn all_comments_in_range(&self, start: u32, end: u32) -> impl Iterator<Item = &'a Comment> {
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        self.inner[first..].iter().take_while(move |comment| comment.span.end <= end)
+    }
+
+    /// Position-based variant of [`Self::comments_before`]:
+    /// ALL comments ending at or before `pos`, printed and hidden ones included.
+    pub fn all_comments_before(&self, pos: u32) -> &'a [Comment] {
+        &self.inner[..self.inner.partition_point(|comment| comment.span.end <= pos)]
+    }
+
+    /// Position-based variant of [`Self::comments_after`]:
+    /// ALL comments ending after `pos`, printed and hidden ones included.
+    fn all_comments_after(&self, pos: u32) -> &'a [Comment] {
+        &self.inner[self.inner.partition_point(|comment| comment.span.end <= pos)..]
+    }
+
+    /// Returns the unprinted comments between the given positions (cursor-based, see [`Self::all_comments_in_range`]).
+    /// Unlike the position-based variant, a comment ending exactly at `start` is included.
     pub fn comments_in_range(&self, start: u32, end: u32) -> &'a [Comment] {
         let comments = self.comments_after(start);
         let end_index = comments.iter().take_while(|c| c.span.end <= end).count();
@@ -305,8 +331,7 @@ impl<'a> Comments<'a> {
             Some(b'/') => {}
             _ => return false,
         }
-        let first = self.inner.partition_point(|comment| comment.span.end <= pos);
-        let run = self.comment_run_after(&self.inner[first..], pos);
+        let run = self.comment_run_after(self.all_comments_after(pos), pos);
         let end = run.last().map_or(pos, |comment| comment.span.end);
         self.source_text.next_non_whitespace_byte_is(end, b')')
     }
@@ -384,7 +409,8 @@ impl<'a> Comments<'a> {
         end
     }
 
-    /// Checks if there are any comments between the given positions.
+    /// Checks if there are any unprinted comments between the given positions
+    /// (cursor-based, see [`Self::has_any_comment_in_range`]).
     pub fn has_comment_in_range(&self, start: u32, end: u32) -> bool {
         self.comments_before_iter(end).any(|comment| comment.span.end > start)
     }
@@ -406,28 +432,14 @@ impl<'a> Comments<'a> {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
     }
 
-    /// Position-based variant of [`Self::has_leading_own_line_comment`]:
-    /// checks ALL comments within `(start, end)`, including already-printed ones.
-    ///
-    /// Layout decisions evaluated more than once for the same node must use this:
-    /// grouped call arguments re-format the grouped function with its body reused from cache
-    /// after the first pass has already consumed the comments,
-    /// so a cursor-based query would give the two passes different answers.
+    /// Position-based variant of [`Self::has_leading_own_line_comment`] (see [`Self::all_comments_in_range`]).
     pub fn has_own_line_comment_in_range(&self, start: u32, end: u32) -> bool {
-        let first = self.inner.partition_point(|comment| comment.span.start < start);
-        self.inner[first..]
-            .iter()
-            .take_while(|comment| comment.span.end <= end)
-            .any(|comment| comment.followed_by_newline())
+        self.all_comments_in_range(start, end).any(|comment| comment.followed_by_newline())
     }
 
-    /// Position-based variant of [`Self::has_comment_in_range`],
-    /// considering ALL comments, including already-printed ones:
-    /// whether the first comment at or after `start` ends within `end`.
-    /// Same discipline as [`Self::has_own_line_comment_in_range`].
+    /// Position-based variant of [`Self::has_comment_in_range`] (see [`Self::all_comments_in_range`]).
     pub fn has_any_comment_in_range(&self, start: u32, end: u32) -> bool {
-        let first = self.inner.partition_point(|comment| comment.span.start < start);
-        self.inner.get(first).is_some_and(|comment| comment.span.end <= end)
+        self.all_comments_in_range(start, end).next().is_some()
     }
 
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {
