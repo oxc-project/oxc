@@ -1,0 +1,108 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+<!-- Flow liquid tags: two tags on adjacent lines stay on their lines,
+     blank lines and inner whitespace inside a tag are kept -->
+
+{% css userscripts %}
+{% js userscripts %}
+
+{{ foo
+
+bar   baz
+
+qux }}
+
+===================== End =====================
