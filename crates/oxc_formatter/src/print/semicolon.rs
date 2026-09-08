@@ -6,7 +6,10 @@ use crate::{
     ast_nodes::AstNodes,
     formatter::{JsFormatContext, JsFormatter, trivia::FormatTrailingComments},
     options::Semicolons,
-    utils::format_node_without_trailing_comments::format_content_without_comments_after,
+    utils::{
+        format_node_without_trailing_comments::format_content_without_comments_after,
+        typecast::cast_target_end,
+    },
     write,
 };
 
@@ -101,7 +104,11 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
 ///
 /// The chain also passes through arrow expression bodies (prettier#19930 family);
 /// bodies matching [`arrow_body_keeps_trailing_comment_inside_parens`] stop the walk.
-pub fn assignment_chain_leaf_end(expr: &Expression<'_>) -> u32 {
+///
+/// A JSDoc cast target leaf ends past its cast parens (`cast_target_end`), like the keeps above;
+/// not via `end_including_source_parens`: the walk has no `node_end` bound,
+/// and the cast's matching `)` is counted, not the last one in a window.
+pub fn assignment_chain_leaf_end(expr: &Expression<'_>, f: &JsFormatter<'_, '_>) -> u32 {
     let mut leaf = expr;
     loop {
         match leaf {
@@ -115,7 +122,7 @@ pub fn assignment_chain_leaf_end(expr: &Expression<'_>) -> u32 {
             _ => break,
         }
     }
-    leaf.span().end
+    cast_target_end(leaf.span(), f).unwrap_or(leaf.span().end)
 }
 
 /// Content end for a semicolon-terminated expression site, pairing the two functions above:
@@ -133,7 +140,7 @@ pub fn semicolon_terminated_expression_content_end(
     if keeps_trailing_comment_inside_parens(expr, gated) {
         f.context().comments().end_including_source_parens(paren_scan_start, node_end)
     } else {
-        assignment_chain_leaf_end(expr)
+        assignment_chain_leaf_end(expr, f)
     }
 }
 
@@ -178,9 +185,15 @@ pub fn write_trailing_comments_inside_parens<'a>(
         AstNodes::AssignmentExpression(_) => is_sequence,
         _ => false,
     };
-    if parens_survive
-        && let Some(comments) = f.context().comments().comments_before_closing_paren(node_end)
-    {
+    if parens_survive {
+        write_comments_before_closing_paren(f, node_end);
+    }
+}
+
+/// Prints the comments sitting right before the closing source paren after `end`,
+/// inside the parentheses, for a node that re-prints them.
+pub fn write_comments_before_closing_paren(f: &mut JsFormatter<'_, '_>, end: u32) {
+    if let Some(comments) = f.context().comments().comments_before_closing_paren(end) {
         write!(f, FormatTrailingComments::Comments(comments));
     }
 }

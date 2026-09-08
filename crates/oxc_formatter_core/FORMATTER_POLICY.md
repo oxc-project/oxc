@@ -104,6 +104,8 @@ The invariants (placement only; losing a comment is the lossless contract under 
   - Terminator vs separator: a terminator cannot be replaced by another token (`;` after a JS statement); a separator can (`,` / `;` between TS interface members)
     - The replaceability test only separates these two
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
+      - Except a same-line line comment: it rides a `line_suffix` and lands just past the separator (`a // c\n, b` -> `a, // c`), the separator cannot follow it on the line;
+      - an own-line comment leads what follows the separator instead
   - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
   - (JS/TS) Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
     - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
@@ -143,6 +145,7 @@ node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print
 NOTE: Prettier's default `printWidth` is `80`, but Oxfmt is `100`.
 
 Fixture tests and Prettier conformance re-format every output and record idempotency violations in their snapshots/reports.
+Fixture tests also assert the lossless contract through `FixtureFormatter::fingerprint` (`oxc_formatter_tests`): a loss fails the test instead of being pinned.
 
 ### Fixture tests
 

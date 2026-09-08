@@ -122,8 +122,8 @@ impl CoverageResult {
 
     fn parsed(&self) -> bool {
         match &self.result {
-            TestResult::ParseError(_, panicked) | TestResult::CorrectError(_, panicked) => {
-                !panicked
+            TestResult::ParseError(_, is_fatal) | TestResult::CorrectError(_, is_fatal) => {
+                !is_fatal
             }
             _ => true,
         }
@@ -261,8 +261,8 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
     for r in &failed_positives {
         let path = normalize_path(Path::new("tasks/coverage").join(&r.path));
         match &r.result {
-            TestResult::ParseError(error, panicked) => {
-                let label = if *panicked { "Panicked" } else { "Expect to Parse" };
+            TestResult::ParseError(error, is_fatal) => {
+                let label = if *is_fatal { "Fatal error" } else { "Expect to Parse" };
                 writeln!(out, "{label}: {path}").unwrap();
                 out.push_str(error);
                 out.push('\n'); // Blank line after error content

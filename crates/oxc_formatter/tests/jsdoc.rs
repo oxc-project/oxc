@@ -225,7 +225,7 @@ fn run_formatter(
     // This deliberately DIVERGES from production oxfmt,
     // whose fail-loud `format()` would report a diagnostic for these fixtures instead of formatting.
     let ret = parse_for_format(&allocator, source_text, source_type);
-    if ret.panicked {
+    if ret.fatal_error {
         return None;
     }
 

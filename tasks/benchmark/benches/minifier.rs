@@ -146,10 +146,10 @@ fn bench_property_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 let mut program = transform_to_js(&allocator, source_text, source_type, path);
                 runner.run(|| {
-                    let mut mangler = PropertyMangler::new(options.clone());
+                    let mut mangler = PropertyMangler::new_in(options.clone(), &allocator);
                     mangler.collect(&program);
                     mangler.assign();
-                    mangler.rewrite(&mut program, &allocator);
+                    mangler.rewrite(&mut program);
                     std::hint::black_box(mangler.into_cache());
                 });
             });

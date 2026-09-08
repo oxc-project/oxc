@@ -151,7 +151,7 @@ fn parser_stream(
 ) -> Option<(Vec<Span>, Option<OxcDiagnostic>)> {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, source_type).with_config(TokensParserConfig).parse();
-    if ret.panicked {
+    if ret.fatal_error {
         return None;
     }
 

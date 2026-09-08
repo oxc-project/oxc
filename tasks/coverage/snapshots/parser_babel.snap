@@ -9916,12 +9916,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ import { foo, bar }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/invalid-import-module-specifier/input.js:1:18]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/invalid-import-module-specifier/input.js:1:19]
  1 │ export {foo} from bar
-   ·                  ▲
+   ·                   ───
    ╰────
-  help: Try inserting a semicolon here
 
   × Expected `from` but found `,`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/invalid-import-named-after-named/input.js:1:13]

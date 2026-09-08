@@ -17,7 +17,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
-        typecast::classify_type_cast,
+        typecast::is_cast_target,
     },
     write,
 };
@@ -413,28 +413,26 @@ impl<'a> AssignmentLike<'a, '_> {
         left_may_break: bool,
         f: &mut JsFormatter<'_, 'a>,
     ) -> AssignmentLikeLayout {
-        let right_expression = self.get_right_expression();
-        if let Some(expr) = right_expression {
-            if let Some(layout) = self.chain_formatting_layout(expr) {
-                return layout;
-            }
-
-            if let Expression::CallExpression(call_expression) = expr.as_ref()
-                && call_expression
-                    .callee
-                    .get_identifier_reference()
-                    .is_some_and(|ident| ident.name == "require")
-                && !f.comments().has_leading_own_line_comment(call_expression.span.start)
-            {
-                return AssignmentLikeLayout::NeverBreakAfterOperator;
-            }
+        let right_shape = self.right_expression_shape(f);
+        if let Some(layout) = self.chain_formatting_layout(right_shape, f) {
+            return layout;
         }
 
-        if self.should_break_left_hand_side(left_may_break) {
+        if let Some(Expression::CallExpression(call_expression)) = right_shape
+            && call_expression
+                .callee
+                .get_identifier_reference()
+                .is_some_and(|ident| ident.name == "require")
+            && !f.comments().has_leading_own_line_comment(call_expression.span.start)
+        {
+            return AssignmentLikeLayout::NeverBreakAfterOperator;
+        }
+
+        if self.should_break_left_hand_side(right_shape, left_may_break) {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
-        if self.should_break_after_operator(right_expression, is_left_short, f) {
+        if self.should_break_after_operator(self.get_right_expression(), is_left_short, f) {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
@@ -456,7 +454,7 @@ impl<'a> AssignmentLike<'a, '_> {
         if !left_may_break
             && (is_left_short
                 || matches!(
-                    right_expression.map(AsRef::as_ref),
+                    right_shape,
                     Some(
                         Expression::ClassExpression(_)
                             | Expression::TemplateLiteral(_)
@@ -470,6 +468,14 @@ impl<'a> AssignmentLike<'a, '_> {
         }
 
         AssignmentLikeLayout::Fluid
+    }
+
+    /// The right expression as the shape-based layout rules see it.
+    /// `None` for a cast target ([`is_cast_target`]): Prettier's `chooseLayout` sees a `ParenthesizedExpression` there.
+    fn right_expression_shape(&self, f: &JsFormatter<'_, 'a>) -> Option<&Expression<'a>> {
+        self.get_right_expression()
+            .filter(|expr| !is_cast_target(expr.span(), f))
+            .map(AsRef::as_ref)
     }
 
     fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
@@ -545,15 +551,19 @@ impl<'a> AssignmentLike<'a, '_> {
     /// and if so, it return the layout type
     fn chain_formatting_layout(
         &self,
-        right_expression: &Expression,
+        right_shape: Option<&Expression>,
+        f: &JsFormatter<'_, 'a>,
     ) -> Option<AssignmentLikeLayout> {
-        let right_is_tail = !matches!(right_expression, Expression::AssignmentExpression(_));
+        let right_is_tail = !matches!(right_shape, Some(Expression::AssignmentExpression(_)));
 
         // The chain goes up two levels, by checking up to the great parent if all the conditions
         // are correctly met.
         let upper_chain_is_eligible =
-            // First, we check if the current node is an assignment expression
-            if let Self::AssignmentExpression(assignment) = self {
+            // First, we check if the current node is an assignment expression and not a cast target:
+            // its parent would be Prettier's `ParenthesizedExpression`, which breaks the chain.
+            if let Self::AssignmentExpression(assignment) = self
+                && !is_cast_target(assignment.span, f)
+            {
                 // Then we check if the parent is assignment expression or variable declarator
                 let parent = assignment.parent();
                 // Determine if the chain is eligible based on the following checks:
@@ -573,8 +583,8 @@ impl<'a> AssignmentLike<'a, '_> {
 
         if upper_chain_is_eligible {
             if right_is_tail {
-                match right_expression {
-                    Expression::ArrowFunctionExpression(arrow) => {
+                match right_shape {
+                    Some(Expression::ArrowFunctionExpression(arrow)) => {
                         if matches!(
                             arrow.get_expression(),
                             Some(Expression::ArrowFunctionExpression(_))
@@ -595,7 +605,11 @@ impl<'a> AssignmentLike<'a, '_> {
 
     /// Particular function that checks if the left hand side of a [AssignmentLike] should
     /// be broken on multiple lines
-    fn should_break_left_hand_side(&self, left_may_break: bool) -> bool {
+    fn should_break_left_hand_side(
+        &self,
+        right_shape: Option<&Expression>,
+        left_may_break: bool,
+    ) -> bool {
         if self.is_complex_destructuring() {
             return true;
         }
@@ -608,10 +622,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
         type_annotation.is_some_and(|ann| is_complex_type_annotation(ann))
             || (left_may_break
-                && declarator
-                    .init
-                    .as_ref()
-                    .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))))
+                && matches!(right_shape, Some(Expression::ArrowFunctionExpression(_))))
     }
 
     /// Checks if the current assignment is eligible for [AssignmentLikeLayout::BreakAfterOperator]
@@ -764,17 +775,17 @@ fn should_break_after_operator<'a>(
         }
     }
 
-    // Prettier keeps the `ParenthesizedExpression` node when it is a closure type cast target,
-    // which makes a fully cast RHS opaque to the shape checks below (`x = /** @type {T} */ (a || b);` stays inline).
-    // We have no paren nodes, so reproduce that with the cast classification.
-    if classify_type_cast(right.span(), f).is_target() {
+    // A cast-wrapped RHS has no shape (`x = /** @type {T} */ (a || b);` stays inline)
+    if is_cast_target(right.span(), f) {
         return false;
     }
 
     match right.as_ref() {
         // head is a long chain, meaning that right -> right are both assignment expressions
+        // (a cast-wrapped right is opaque, not an assignment)
         Expression::AssignmentExpression(assignment) => {
             matches!(assignment.right, Expression::AssignmentExpression(_))
+                && !is_cast_target(assignment.right.span(), f)
         }
         Expression::BinaryExpression(_) | Expression::SequenceExpression(_) => true,
         Expression::LogicalExpression(logical) => {
@@ -782,7 +793,7 @@ fn should_break_after_operator<'a>(
         }
         Expression::ConditionalExpression(conditional) => match &conditional.test {
             // A cast-parenthesized test is opaque, same as the whole-RHS case above
-            test if classify_type_cast(test.span(), f).is_target() => false,
+            test if is_cast_target(test.span(), f) => false,
             Expression::BinaryExpression(_) => true,
             Expression::LogicalExpression(logical) => {
                 !BinaryLikeExpression::can_inline_logical_expr(logical)
@@ -792,45 +803,41 @@ fn should_break_after_operator<'a>(
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
-        _ => {
-            let inner_expression = get_innermost_expression(right);
-            matches!(inner_expression.as_ref(), Expression::StringLiteral(_))
-                || is_poorly_breakable_member_or_call_chain(inner_expression, f)
-        }
+        _ => get_innermost_expression(right, f).is_some_and(|inner| {
+            matches!(inner.as_ref(), Expression::StringLiteral(_))
+                || is_poorly_breakable_member_or_call_chain(inner, f)
+        }),
     }
 }
 
 /// Traverses nested unary-like expressions to find the innermost one.
 ///
 /// Example: `void !!(await test())` returns the `await test()` expression.
+///
+/// `None` when the walk reaches a cast target (`!/** @type {T} */ ("s")`): a cast target has no shape.
+/// The caller has already checked the entry node.
 fn get_innermost_expression<'a, 'b>(
     mut current: &'b AstNode<'a, Expression<'a>>,
-) -> &'b AstNode<'a, Expression<'a>> {
+    f: &JsFormatter<'_, 'a>,
+) -> Option<&'b AstNode<'a, Expression<'a>>> {
     loop {
-        match current.as_ast_nodes() {
-            AstNodes::UnaryExpression(unary) => {
-                current = unary.argument();
-            }
-            AstNodes::TSNonNullExpression(non_null) => {
-                current = non_null.expression();
-            }
-            AstNodes::AwaitExpression(expr) => {
-                current = expr.argument();
-            }
-            AstNodes::YieldExpression(expr) => {
-                if let Some(argument) = expr.argument() {
-                    current = argument;
-                } else {
-                    break;
-                }
-            }
-            _ => {
-                break;
-            }
+        let argument = match current.as_ast_nodes() {
+            AstNodes::UnaryExpression(unary) => unary.argument(),
+            AstNodes::TSNonNullExpression(non_null) => non_null.expression(),
+            AstNodes::AwaitExpression(expr) => expr.argument(),
+            AstNodes::YieldExpression(expr) => match expr.argument() {
+                Some(argument) => argument,
+                None => break,
+            },
+            _ => break,
+        };
+        if is_cast_target(argument.span(), f) {
+            return None;
         }
+        current = argument;
     }
 
-    current
+    Some(current)
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
@@ -969,8 +976,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
         // An arrow needs the layout inside its `write`,
         // which is reached through the shared generated `fmt` (suppression, type casts, parentheses, comments);
         // the span-keyed context slot hands it across that frame.
+        // A cast target has no shape; the layout never reaches the arrow inside.
         if let (Some(layout), AstNodes::ArrowFunctionExpression(arrow)) =
             (self.layout, self.expression.as_ast_nodes())
+            && !is_cast_target(arrow.span(), f)
         {
             f.context_mut().set_arrow_assignment_layout(arrow.span(), layout);
             arrow.fmt(f);
@@ -1005,6 +1014,10 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
     let mut expression = expression.as_ast_nodes();
 
     loop {
+        // A cast target ends the chain without a simple head
+        if is_cast_target(expression.span(), f) {
+            break;
+        }
         expression = match expression {
             AstNodes::TSNonNullExpression(assertion) => assertion.expression().as_ast_nodes(),
             AstNodes::CallExpression(call_expression) => {

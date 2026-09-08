@@ -1,0 +1,88 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A `//` inside `@supports selector(...)` opens the parens and ends its line,
+// so the next token or comment never rides it (`a, // c b` would swallow `b`).
+// Prettier prints the first three the same way;
+// the last two are DIVERGENCES.md "supports-selector-inline-comment-list".
+@supports selector(a // c
+) {}
+@supports selector(a /* c */ // d
+) {}
+@supports selector(a, /* c */ b // d
+) {}
+// Prettier keeps a comma list with a `//` verbatim: `selector(a, // c\n b)`.
+@supports selector(a, // c
+ b) {}
+// Prettier prints the second `//` with a stray leading space and no indent.
+@supports selector(a // c
+ // d
+) {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A `//` inside `@supports selector(...)` opens the parens and ends its line,
+// so the next token or comment never rides it (`a, // c b` would swallow `b`).
+// Prettier prints the first three the same way;
+// the last two are DIVERGENCES.md "supports-selector-inline-comment-list".
+@supports selector(
+  a // c
+) {
+}
+@supports selector(
+  a /* c */ // d
+) {
+}
+@supports selector(
+  a, /* c */ b // d
+) {
+}
+// Prettier keeps a comma list with a `//` verbatim: `selector(a, // c\n b)`.
+@supports selector(
+  a, // c
+  b
+) {
+}
+// Prettier prints the second `//` with a stray leading space and no indent.
+@supports selector(
+  a // c
+  // d
+) {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A `//` inside `@supports selector(...)` opens the parens and ends its line,
+// so the next token or comment never rides it (`a, // c b` would swallow `b`).
+// Prettier prints the first three the same way;
+// the last two are DIVERGENCES.md "supports-selector-inline-comment-list".
+@supports selector(
+  a // c
+) {
+}
+@supports selector(
+  a /* c */ // d
+) {
+}
+@supports selector(
+  a, /* c */ b // d
+) {
+}
+// Prettier keeps a comma list with a `//` verbatim: `selector(a, // c\n b)`.
+@supports selector(
+  a, // c
+  b
+) {
+}
+// Prettier prints the second `//` with a stray leading space and no indent.
+@supports selector(
+  a // c
+  // d
+) {
+}
+
+===================== End =====================

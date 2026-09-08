@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- f7acdc0 formatter: Treat a JSDoc cast target as opaque in chain layouts (#26375) (leaysgur)
+- 104061b formatter: Keep JSDoc cast parens with a comment inside them (#26374) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
 ## [0.66.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

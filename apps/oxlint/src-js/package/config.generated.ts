@@ -6844,12 +6844,48 @@ export interface NumericSeparatorsStyleConfig {
    * Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
    * Controls how digits are grouped and when separators are applied.
    */
-  binary?: NumericBaseConfig;
+  binary?: {
+    /**
+     * The number of digits per group when inserting numeric separators.
+     * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+     */
+    groupLength?: number;
+    /**
+     * The minimum number of digits required before grouping is applied.
+     * Values with fewer digits than this threshold will not be grouped.
+     */
+    minimumDigits?: number;
+    /**
+     * Only enforce the rule when the numeric literal already contains a separator (`_`).
+     *
+     * When `true`, numbers without separators are left as-is; when `false` (default),
+     * grouping will be enforced for eligible numbers even if they don't include separators yet.
+     */
+    onlyIfContainsSeparator?: boolean;
+  };
   /**
    * Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
    * Controls how digits are grouped and when separators are applied.
    */
-  hexadecimal?: NumericBaseConfig;
+  hexadecimal?: {
+    /**
+     * The number of digits per group when inserting numeric separators.
+     * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+     */
+    groupLength?: number;
+    /**
+     * The minimum number of digits required before grouping is applied.
+     * Values with fewer digits than this threshold will not be grouped.
+     */
+    minimumDigits?: number;
+    /**
+     * Only enforce the rule when the numeric literal already contains a separator (`_`).
+     *
+     * When `true`, numbers without separators are left as-is; when `false` (default),
+     * grouping will be enforced for eligible numbers even if they don't include separators yet.
+     */
+    onlyIfContainsSeparator?: boolean;
+  };
   /**
    * Configuration for decimal numbers (integers, fraction parts, and exponents).
    * Controls how digits are grouped and when separators are applied.
@@ -6859,26 +6895,25 @@ export interface NumericSeparatorsStyleConfig {
    * Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
    * Controls how digits are grouped and when separators are applied.
    */
-  octal?: NumericBaseConfig;
-  /**
-   * Only enforce the rule when the numeric literal already contains a separator (`_`).
-   *
-   * When `true`, numbers without separators are left as-is; when `false` (default),
-   * grouping will be enforced for eligible numbers even if they don't include separators yet.
-   */
-  onlyIfContainsSeparator?: boolean;
-}
-export interface NumericBaseConfig {
-  /**
-   * The number of digits per group when inserting numeric separators.
-   * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
-   */
-  groupLength?: number;
-  /**
-   * The minimum number of digits required before grouping is applied.
-   * Values with fewer digits than this threshold will not be grouped.
-   */
-  minimumDigits?: number;
+  octal?: {
+    /**
+     * The number of digits per group when inserting numeric separators.
+     * For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
+     */
+    groupLength?: number;
+    /**
+     * The minimum number of digits required before grouping is applied.
+     * Values with fewer digits than this threshold will not be grouped.
+     */
+    minimumDigits?: number;
+    /**
+     * Only enforce the rule when the numeric literal already contains a separator (`_`).
+     *
+     * When `true`, numbers without separators are left as-is; when `false` (default),
+     * grouping will be enforced for eligible numbers even if they don't include separators yet.
+     */
+    onlyIfContainsSeparator?: boolean;
+  };
   /**
    * Only enforce the rule when the numeric literal already contains a separator (`_`).
    *

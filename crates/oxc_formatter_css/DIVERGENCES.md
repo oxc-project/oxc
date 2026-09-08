@@ -563,11 +563,16 @@ Its JS printer follows the option (`[1, 2\n // own]`), and so do all our formatt
 );
 ```
 
-An own-line trailing comment before a closing `)` keeps its own line:
-in maps and `@use`/`@forward with (...)` configs (any comment kind),
-in map-item lists (any kind, the body is already one item per line),
-and in paren lists, call/`@include` arguments and `@mixin` parameters
-(`//` only: an own-line block comment in a fill body is a fill item, see AGENTS.md).
+An own-line trailing comment before a closing `)` keeps its own line
+(so does an own-line comment before a list comma: it leads the next element, `a,\n  // c\n  b`, pinned in `line-comment-before-comma.scss`):
+- maps
+- `@use`/`@forward with (...)` configs (any comment kind)
+- map-item lists (any kind, the body is already one item per line)
+- paren lists
+- call/`@include` arguments
+- `@mixin` parameters
+
+`//` only: an own-line block comment in a fill body is a fill item, see AGENTS.md.
 
 Prettier's output changes line, own-line to the last item's line, a `lineSuffix` artifact of its comma-group printing.
 Same-line trailing comments still glue (matching Prettier); moving an own-line comment up would destroy the author's visual grouping.
@@ -624,46 +629,145 @@ Consecutive `//` comments in a comment-only map indent uniformly;
 Prettier misaligns the second with a stray extra leading space, an artifact of its `join(line)` separator printing before the deferred `lineSuffix` flushes.
 A meaningless glitch.
 
-## semiless-custom-property-block
+## supports-selector-inline-comment-list
 
-- Why: cost
-- Pin: `tests/fixtures/format/scss/custom-property-semiless-block.scss` (also tracked by conformance `scss/variables/apply-rule.scss`)
+- Why: uniform-rule (same construct, same output: `selector(a // c\n)`)
+- Pin: `tests/fixtures/format/scss/supports-selector-inline-comments.scss`
 
 ```scss
 /* input */
-:root {
-  --like-a-apply-rule: {
-  color:red;} /* no semi here*/
-  --another-prop: blue;
-}
+@supports selector(a, // c
+ b) {}
+@supports selector(a // c
+ // d
+) {}
 
-/* ours (SCSS mode) */
-:root {
-  --like-a-apply-rule: {
-    color: red;
-  }; /* no semi here*/
-  --another-prop: blue;
+/* ours */
+@supports selector(
+  a, // c
+  b
+) {
+}
+@supports selector(
+  a // c
+  // d
+) {
 }
 
 /* prettier */
-:root {
-  --like-a-apply-rule: {
-  color:red;} /* no semi here*/
-  --another-prop: blue;
+@supports selector(a, // c
+ b) {
+}
+@supports selector(
+  a // c
+ // d
+) {
 }
 ```
 
-SCSS only: a `;`-less custom-property rule block followed by another declaration is two separate declarations for us
-(format the inner block, add the missing `;`, format the rest normally);
-Prettier keeps the whole run verbatim (postcss swallows everything past the `}` as an opaque prelude string until a source `;`).
-This falls out of the AST shape: SCSS parses `{...}` declaration values as `SassNestingDeclaration`;
-CSS/Less don't structure them, so their token-soup fallback incidentally matches Prettier.
-The value syntax's only intended consumer was the dropped CSS Apply Rule proposal, so the cross-mode difference is theoretical.
+A `//` inside `selector()` opens the parens and ends its line, the shape Prettier itself prints for a single selector (`selector(a // c\n)`);
+a comma list holding a `//` it keeps verbatim instead, source whitespace included.
+A second `//` indents like the first; Prettier prints it with a stray leading space and no indent,
+the same `join(line)` + deferred `lineSuffix` artifact as "comment-only-map-indent".
+
+## line-comment-after-comma
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/line-comment-after-comma.scss`, `tests/fixtures/format/less/line-comment-after-comma.less`
+
+```scss
+/* input */
+$my-map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+
+/* ours */
+$my-map: (
+  "foo": 1, // Comment
+  "bar": 2, // Comment
+);
+
+/* prettier */
+$my-map: (
+  "foo": 1,
+  // Comment
+  "bar": 2, // Comment
+);
+```
+
+A `//` on a comma's line stays on that line (the block comments glued before it come along);
+Prettier moves it below as the next element's leading comment, across the line boundary (`a, // stylelint-disable-line` loses its target).
+Prettier keeps the same comment after the LAST comma (`"bar": 2, // Comment`) and its JS printer keeps `1, // c` everywhere:
+the move is where postcss-value-parser hands the comment to the next comma group, not a rule.
+Applies at every comma site: values, function and `@include` arguments, maps, paren lists, `@use ... with`, `@forward` members, `@each`,
+`@import` paths and modifiers, `@layer`, `@custom-selector`, `@media` query lists and `selector()` lists.
+For `@media` Prettier's move also swallows the next query (`@media a, // c b {`), a semantics bug on its side.
+
+## line-comment-before-block
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/at-rule-comment-before-block.scss`
+
+```scss
+/* input */
+@supports (a: b) // c
+{
+  color: red;
+}
+
+/* ours */
+@supports (a: b) // c
+{
+  color: red;
+}
+
+/* prettier */
+@supports (a: b) { // c
+  color: red;
+}
+```
+
+A `//` glued to the end of an at-rule prelude stays on that line and the `{` starts the next;
+Prettier moves it past the `{` as the block's first comment for `@media` / `@supports` / `@mixin` / `@include`
+(and keeps it before the `{` for `@page` / `@keyframes` / `@font-face` / `@if`):
+the comment crosses the `{`, a grammar-fixed delimiter.
+For `@media screen // c {` and `@else // c` Prettier's move also swallows the `{` / the comment text, bugs on its side.
+
+## line-comment-before-comma-fill-head
+
+- Why: uniform-rule (same construct, same output: `@each $k in a, // c` with the `//` after the comma)
+- Pin: `tests/fixtures/format/scss/line-comment-before-comma.scss`
+
+```scss
+/* input */
+@each $k in a // c
+  , b {
+}
+
+/* ours */
+@each $k in a, // c
+  b
+{
+}
+
+/* prettier */
+@each $k
+    in a, // c
+  b
+{
+}
+```
+
+A `//` before a list comma rides past the comma and ends the line there; the fill entries before it stay on their line,
+exactly as when the `//` follows the comma in the source.
+Prettier attaches a `breakParent` to the deferred comment, which its fill measures as never fitting,
+so the entry BEFORE the comment (`in a,`) breaks away from `$k` too; the same source with the `//` after the comma keeps `$k in a,`.
 
 ## less-variable-value-comments
 
 - Why: invariant
-- Pin: `tests/fixtures/format/less/variable-value-comments.less`
+- Pin: `tests/fixtures/format/less/variable-value-comments.less`, `tests/fixtures/format/less/important-comments.less`
 
 ```less
 /* input */
@@ -906,3 +1010,150 @@ $colors: (
 A blank line after a map item is preserved per the blank-line preservation rule regardless of the value's shape,
 as after a map item with a non-paren value (Prettier itself keeps that one);
 Prettier drops it when the item's value is paren-ish (a call / paren group), an artifact of its comma-group splitting.
+
+## paren-group-glued-word
+
+- Why: semantics
+- Pin: `tests/fixtures/format/css/paren-group-glued-word.css`
+  (`css/postcss-plugins/postcss-simple-vars.css` carries the case too, but its root declarations keep it skipped in conformance)
+
+```css
+/* input */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+}
+
+/* ours */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+}
+
+/* prettier */
+a {
+  color: $(style) color;
+  color: @@(style) color123;
+}
+```
+
+`$(style)color` is a postcss-simple-vars interpolation glued to a word, and the glue carries meaning:
+after substitution it is one word (`redcolor`), the way `margin-$(dir)` becomes `margin-top`.
+postcss-values-parser lexes it as a paren node followed by a word and Prettier prints a space between them,
+changing the substituted value (`red color`); Prettier keeps `$$(style)Color` in the same conformance file glued, so it is not even consistent.
+The value is the `<any-value>` raw fallback for us, and the value writer keeps source-glued tokens glued (`Separator::Tight`); it never inserts a space.
+
+## escaped-custom-property-case
+
+- Why: semantics
+- Pin: `tests/fixtures/format/css/custom-property-raw-verbatim.css`
+
+```css
+/* input and ours */
+.a {
+  \-\-CamelCase: red;
+  color: var(\-\-CamelCase);
+}
+
+/* prettier */
+.a {
+  \-\-camelcase: red;
+  color: var(\-\-CamelCase);
+}
+```
+
+The escaped identifier `\-\-CamelCase` decodes to the custom property name `--CamelCase`.
+Custom property names are case-sensitive, so lowercasing the declaration while preserving the reference makes `var(\-\-CamelCase)` unresolved.
+Escaped custom property names therefore preserve their source spelling, like names written with a literal `--` prefix.
+
+## custom-property-raw-verbatim
+
+- Why: uniform-rule (raw is verbatim; AGENTS.md "Printing raw vs typed")
+- Pin: `tests/fixtures/format/css/custom-property-raw-verbatim.css`, `tests/fixtures/format/scss/custom-property-raw-verbatim.scss`, `tests/fixtures/format/scss/custom-property-text.scss`
+  (also tracked by conformance `css/postcss-8-improment/test.css`, `less/postcss-8-improment/test.less`, `scss/variables/postcss-8-improment.scss`)
+
+```css
+/* input */
+:root {
+  --z: */;
+  --x:   1px   !foo;
+  --JSON: [1, "2", {"three": {"a":1}}, [4]];
+  --javascript: function(rule) { console.log(rule) };
+}
+
+/* ours */
+:root {
+  --z: */;
+  --x: 1px   !foo;
+  --JSON: [1, "2", {"three": {"a":1}}, [4]];
+  --javascript: function(rule) { console.log(rule) };
+}
+
+/* prettier */
+:root {
+  --z: * /;
+  --x: 1px !foo;
+  --JSON: [1, "2", {"three": {"a": 1}}, [4]];
+  --javascript: function(rule) {console.log(rule)};
+}
+```
+
+A custom property value is its token stream (css-variables-1) and text to dart-sass.
+We lay it out only when the typed `<declaration-value>` grammar reads all of it;
+when it does not (`Declaration::value_is_raw`), the value prints verbatim, in every variant.
+Prettier hands such values to postcss-values-parser, its regular value grammar: it collapses inner whitespace,
+adds a space after a `:` inside `{}`, strips the spaces inside a JS block, and splits `*/` because `/` is a `div` node to it.
+Consistent for Prettier, and the same token stream for css-syntax (a whitespace run is one token), so admissible.
+We print it verbatim because raw is verbatim everywhere else too (raw names, `UnknownQualifiedRule` and `TokenSeq` preludes, unknown at-rule params);
+re-spacing a value we could not read is not a layout rule of ours.
+
+## postcss-simple-var-raw-verbatim
+
+- Why: semantics
+- Pin: `tests/fixtures/format/css/postcss-simple-vars/vars.css`
+  (also tracked by conformance `css/parens/empty-lines.css`)
+
+```css
+/* input and ours */
+$x: */;
+a { --fragment: $x; }
+
+/* prettier */
+$x: * /;
+a { --fragment: $x; }
+```
+
+postcss-simple-vars substitutes a variable's value textually.
+With the plugin, the input produces `--fragment: */`, while Prettier's output produces `--fragment: * /`;
+the added whitespace changes the custom property's preserved token stream.
+A `$var` value the typed grammar cannot read therefore prints verbatim, like a raw custom-property value.
+
+## important-comment-run
+
+- Why: uniform-rule (same construct, same output: `!IMPORTANT`, which Prettier prints `!important`)
+- Pin: `tests/fixtures/format/css/important-comments.css`
+
+```css
+/* input */
+a {
+  y: red ! /* a */ IMPORTANT;
+  v: red !/* glued */important;
+}
+
+/* ours */
+a {
+  y: red ! /* a */ important;
+  v: red ! /* glued */ important;
+}
+
+/* prettier */
+a {
+  y: red ! /* a */ IMPORTANT;
+  v: red !/* glued */important;
+}
+```
+
+`!important` is normalized the same way whether or not a comment sits between `!` and the keyword:
+lowercase keyword, one space around the comment.
+Prettier normalizes only the plain shape (`raws.important` is replaced when it matches `\s*!\s*important`)
+and prints any other run verbatim, so a comment inside freezes the keyword's case and the glue.

@@ -313,7 +313,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
 
         let body = if self.at(Kind::LCurly) {
-            ArrowFunctionBody::FunctionBody(self.parse_function_body())
+            ArrowFunctionBody::FunctionBody(
+                self.context_add(Context::In, Self::parse_function_body),
+            )
         } else {
             // Remove TopLevel context for arrow function expression body
             let expr = self.context_remove(Context::TopLevel, |p| {

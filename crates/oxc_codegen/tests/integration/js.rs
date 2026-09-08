@@ -64,6 +64,28 @@ fn module_decl() {
 }
 
 #[test]
+fn quoted_import_names() {
+    test(r#"import { "foo" as foo } from "m";"#, "import { foo } from \"m\";\n");
+    test(r#"import { "a\u0062" as ab } from "m";"#, "import { ab } from \"m\";\n");
+    test(r#"import { "π" as π } from "m";"#, "import { π } from \"m\";\n");
+    test(r#"import { "type" as type } from "m";"#, "import { type } from \"m\";\n");
+
+    test_same("import { \"foo-bar\" as foo } from \"m\";\n");
+    test_same("import { \"\" as foo } from \"m\";\n");
+    test_same("import { \"default\" as foo } from \"m\";\n");
+    test_same("import { \"foo\" as bar } from \"m\";\n");
+    test(
+        r#"import { "foo" as foo, "bar" as bar, baz } from "m";"#,
+        "import { foo, bar, baz } from \"m\";\n",
+    );
+    test(r#"import { foo as foo, bar } from "m";"#, "import { foo, bar } from \"m\";\n");
+
+    test_minify(r#"import { "foo" as foo } from "m";"#, r#"import{foo}from"m";"#);
+    test_minify(r#"import { "a\u0062" as ab } from "m";"#, r#"import{ab}from"m";"#);
+    test_minify(r#"import { foo as foo, bar } from "m";"#, r#"import{foo,bar}from"m";"#);
+}
+
+#[test]
 fn export_type() {
     test_same("export type {} from \"mod\";\n");
     test_same("export type { Foo } from \"mod\";\n");
@@ -140,6 +162,100 @@ fn private_in() {
         "class Foo { #test; bar() { #field in {} << 0 } }",
         "class Foo {\n\t#test;\n\tbar() {\n\t\t#field in {} << 0;\n\t}\n}\n",
     );
+}
+
+#[test]
+fn private_in_binary_right() {
+    fn wrap_case_equal_lower_precedence(op: &str) -> (String, String, String) {
+        let minified_op =
+            if matches!(op, "in" | "instanceof") { format!(" {op} ") } else { op.to_string() };
+        (
+            format!("class C {{ #x; test(a, b) {{ return #x in (a {op} b); }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in (a {op} b);\n\t}}\n}}\n"),
+            format!("class C{{#x;test(a,b){{return#x in (a{minified_op}b)}}}}"),
+        )
+    }
+    fn wrap_case_higher_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(a, b) {{ return #x in (a {op} b); }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in a {op} b;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(a,b){{return#x in a{op}b}}}}"),
+        )
+    }
+
+    for (source, expected, expected_minified) in [
+        "instanceof",
+        "in",
+        "<",
+        "<=",
+        ">",
+        ">=",
+        "==",
+        "!=",
+        "===",
+        "!==",
+        "&",
+        "^",
+        "|",
+        "&&",
+        "||",
+        "??",
+        "=",
+    ]
+    .map(wrap_case_equal_lower_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (source, expected, expected_minified) in
+        ["<<", ">>", ">>>", "+", "-", "*", "/", "%", "**"].map(wrap_case_higher_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (rhs, minified_rhs) in [("#x in a", "#x in a"), ("a ? a : b", "a?a:b"), ("a, b", "a,b")] {
+        let source = format!("class C {{ #x; test(a, b) {{ return #x in ({rhs}); }} }}");
+        test(
+            &source,
+            &format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in ({rhs});\n\t}}\n}}\n"),
+        );
+        test_minify(&source, &format!("class C{{#x;test(a,b){{return#x in ({minified_rhs})}}}}"));
+    }
+}
+
+#[test]
+fn private_in_binary_left() {
+    fn wrap_case_equal_higher_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(o) {{ return (#x in o) {op} 1; }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(o) {{\n\t\treturn (#x in o) {op} 1;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(o){{return(#x in o){op}1}}}}"),
+        )
+    }
+    fn wrap_case_equal_lower_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(o) {{ return (#x in o) {op} 1; }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(o) {{\n\t\treturn #x in o {op} 1;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(o){{return#x in o{op}1}}}}"),
+        )
+    }
+
+    for (source, expected, expected_minified) in
+        ["+", "-", "*", "/", "%", "**", "<<", ">>", ">>>"].map(wrap_case_equal_higher_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (source, expected, expected_minified) in
+        ["<", "<=", ">", ">=", "==", "!=", "===", "!==", "&", "^", "|", "&&", "||", "??"]
+            .map(wrap_case_equal_lower_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
 }
 
 #[test]
@@ -568,6 +684,53 @@ fn in_expr_in_sequence_in_for_loop_init() {
         "for (('hidden' in a) && (m = a.hidden), r = 0; s > r; r++) {}",
         "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
     );
+}
+
+#[test]
+fn in_expr_in_yield_expression() {
+    for (keyword, prefix) in [("yield", "yield "), ("yield*", "yield*")] {
+        for (init, expected, minified) in [
+            (
+                format!("{keyword} (1 in o)"),
+                format!("{keyword} (1 in o)"),
+                format!("{keyword}(1 in o)"),
+            ),
+            (
+                format!("x = {keyword} (1 in o)"),
+                format!("x = {keyword} (1 in o)"),
+                format!("x={keyword}(1 in o)"),
+            ),
+            (
+                format!("{keyword} yield (1 in o)"),
+                format!("{keyword} yield (1 in o)"),
+                format!("{prefix}yield(1 in o)"),
+            ),
+            (
+                format!("{keyword} (x = (1 in o))"),
+                format!("{keyword} x = (1 in o)"),
+                format!("{prefix}x=(1 in o)"),
+            ),
+            // Parentheses around the yield expression allow `in` in its argument.
+            (
+                format!("({keyword} (1 in o)) + 1"),
+                format!("({keyword} 1 in o) + 1"),
+                format!("({prefix}1 in o)+1"),
+            ),
+        ] {
+            let source = format!("function *g(o) {{ for ({init}; false;); }}");
+            test(&source, &format!("function* g(o) {{\n\tfor ({expected}; false;);\n}}\n"));
+            test_minify(&source, &format!("function*g(o){{for({minified};false;);}}"));
+            crate::test_idempotency(&source);
+            crate::test_idempotency_options(
+                &source,
+                &CodegenOptions { minify: true, ..CodegenOptions::default() },
+            );
+        }
+
+        let source = format!("function *g(o) {{ {keyword} (1 in o); }}");
+        test(&source, &format!("function* g(o) {{\n\t{keyword} 1 in o;\n}}\n"));
+        test_minify(&source, &format!("function*g(o){{{prefix}1 in o}}"));
+    }
 }
 
 #[test]

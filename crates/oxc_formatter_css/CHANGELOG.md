@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.67.0] - 2026-09-07
+
+### 🚀 Features
+
+- 68e12ab formatter_css: Follow the oxc-css-parser's acceptance line (#26337) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 3d00a76 formatter_css: Keep comment inside important and simple-vars colon (#26370) (leaysgur)
+- 172ddb6 formatter_css: Keep a same-line line comment on its line (#26321) (leaysgur)
+- cafaf32 formatter_css: Never drop comments inside an at-rule prelude (#26320) (leaysgur)
+- 534a0fe formatter_css: Keep a line comment on its comma's line (#26319) (leaysgur)
+- 99cfd75 formatter_css: Hide raw comment printing API, use strcut instead (#26316) (leaysgur)
+- 2028896 formatter_css: Preserve comments around SCSS/Less variable values (#26276) (leaysgur)
+- 6752abc formatter_css: Keep leading comments before (#26272) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+- b3c287a formatter_css: Fix SCSS bracket list printing (#26270) (leaysgur)
+- bac770a formatter_css: Preserve comment in SCSS paren comma list (#26269) (leaysgur)
+- c7b57ef formatter_css: Print SCSS map consisntent with and without comment (#26268) (leaysgur)
+- 063e2b6 formatter_css: Preserve trailing comma in single-item scss lists (#26245) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
 ## [0.66.0] - 2026-08-31
 
 ### 🚀 Features

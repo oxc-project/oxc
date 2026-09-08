@@ -165,7 +165,17 @@ fn resolve_unicode_leads(
             continue;
         }
         let Some(ch) = lanes::decode_char_at(src, off as usize) else { continue };
-        if oxc_syntax::identifier::is_identifier_part(ch) {
+        let name_start = spans_all[ti].start
+            + u32::from(matches!(
+                kinds_all[ti],
+                TokenKind::PrivateIdent | TokenKind::PrivateIdentEscaped
+            ));
+        let ok = if off == name_start {
+            oxc_syntax::identifier::is_identifier_start(ch)
+        } else {
+            oxc_syntax::identifier::is_identifier_part(ch)
+        };
+        if ok {
             continue;
         }
         let code = if ch == '\u{FFFD}' {

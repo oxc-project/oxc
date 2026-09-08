@@ -400,7 +400,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_class_static_block(&mut self, start: u32) -> ClassElement<'a> {
         self.bump_any(); // bump `static`
         let block = self.context(
-            Context::Await | Context::NewTarget,
+            Context::In | Context::Await | Context::NewTarget,
             Context::Yield | Context::Return,
             Self::parse_block,
         );
@@ -775,7 +775,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn check_getter(&mut self, function: &Function<'a>) {
         if let Some(type_parameters) = &function.type_parameters {
             self.error(diagnostics::accessor_cannot_have_type_parameters(type_parameters.span));
-        } else if !function.params.items.is_empty() {
+        } else if function.params.parameters_count() != 0 {
             self.error(diagnostics::getter_parameters(function.params.span));
         }
     }

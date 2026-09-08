@@ -101,8 +101,8 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
                 // Record the index of the end of this Unicode character, because it's only offsets
                 // *after* this Unicode character that need to be shifted.
                 // Offsets are relative to the start of the untrimmed source, so `offset` is added
-                // back on. Addition cannot overflow because the untrimmed source text is max
-                // `u32::MAX` bytes long.
+                // back on. Addition cannot overflow because the untrimmed source text is less than
+                // `u32::MAX` bytes long (bounded by `MAX_LEN`, defined in `oxc_parser`).
                 let bytes_in_char =
                     difference_for_this_byte as usize + usize::from(byte >= 0xF0) + 1;
                 #[expect(clippy::cast_possible_truncation)]

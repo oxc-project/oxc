@@ -12,6 +12,11 @@
   }
 }
 
+/* A semicolon inside a balanced prelude group is content, not a statement
+   boundary. Both numeric- and declaration-shaped raw preludes keep it. */
+10(foo;bar) { color:red; }
+x: fn(a;b) { color:blue; }
+
 /* interior whitespace stays verbatim; the gap before `{` collapses */
 a {
   sans   :   "Sans"  woo  {
@@ -43,4 +48,15 @@ sans:"Sans"{}
    An+B and prints structurally as `2n-1` (see selectors fixtures) */
 a:nth-child(2n-x) {
   color: red;
+}
+
+/* a numeric-led statement is a qualified rule too (CSS Syntax §5.5.5):
+   a keyframes-shaped body inside a raw-prelude rule (oxc-project/oxc#26291) */
+@animate {
+  blink: blink 1100ms linear infinite {
+    50% {
+      opacity: 0;
+    }
+    0%,100%   { opacity: 1; }
+  }
 }

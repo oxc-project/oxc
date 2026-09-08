@@ -1,7 +1,3 @@
 lexer_misc Summary:
-AST Parsed     : 248/248 (100.00%)
-Positive Passed: 246/248 (99.19%)
-Tokens: tasks/coverage/misc/pass/oxc-2674.tsx
-
-Tokens: tasks/coverage/misc/pass/swc-7187.ts
-
+AST Parsed     : 281/281 (100.00%)
+Positive Passed: 281/281 (100.00%)

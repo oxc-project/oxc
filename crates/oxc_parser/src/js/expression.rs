@@ -926,9 +926,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             self,
                         );
                     } else {
-                        // `re_lex_as_typescript_l_angle` may have popped the original token
-                        // (e.g. `<<`) from the collected token stream. Rewind restored the
-                        // parser's current token, so write it back to the stream.
+                        // `re_lex_as_typescript_l_angle` may have overwritten the original `<<`
+                        // in the collected token stream with the single `<` it re-lexed.
+                        // Rewind restored the parser's current token, so write it back over that `<`.
                         // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
                         self.lexer.rewrite_last_collected_token(self.token);
                         return lhs;
@@ -1127,9 +1127,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     if let Some(args) = self.parse_type_arguments_in_expression() {
                         type_arguments = Some(args);
                     } else {
-                        // `re_lex_as_typescript_l_angle` may have popped the original token
-                        // (e.g. `<<`) from the collected token stream. Rewind restored the
-                        // parser's current token, so write it back to the stream.
+                        // `re_lex_as_typescript_l_angle` may have overwritten the original `<<`
+                        // in the collected token stream with the single `<` it re-lexed.
+                        // Rewind restored the parser's current token, so write it back over that `<`.
                         // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
                         self.lexer.rewrite_last_collected_token(self.token);
                     }
@@ -1391,7 +1391,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             self.bump_any(); // bump operator
-            let rhs_parenthesized = self.at(Kind::LParen);
+            let rhs_start = self.cur_start();
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
 
             lhs = if kind.is_logical_operator() {
@@ -1399,18 +1399,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let op = map_logical_operator(kind);
                 // check mixed coalesce
                 if op == LogicalOperator::Coalesce {
-                    let mut maybe_mixed_coalesce_expr = None;
-                    if let Expression::LogicalExpression(rhs) = &rhs {
-                        if !rhs_parenthesized {
-                            maybe_mixed_coalesce_expr = Some(rhs);
-                        }
-                    } else if let Expression::LogicalExpression(lhs) = &lhs
-                        && !lhs_parenthesized
-                    {
-                        maybe_mixed_coalesce_expr = Some(lhs);
-                    }
-                    if let Some(expr) = maybe_mixed_coalesce_expr
-                        && matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                    let is_unparenthesized_logical = |expr: &Expression<'a>, start: u32| {
+                        matches!(expr, Expression::LogicalExpression(expr)
+                            if expr.span.start == start
+                                && matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or))
+                    };
+                    if is_unparenthesized_logical(&lhs, lhs_start)
+                        || is_unparenthesized_logical(&rhs, rhs_start)
                     {
                         self.error(diagnostics::mixed_coalesce(span));
                     }

@@ -5,20 +5,20 @@ use oxc_css_parser::ast::{
     ComponentValue, InterpolableStr, SassEach, SassFor, SassForBoundaryKind, SassForward,
     SassForwardVisibilityModifierKind, SassFunction, SassIfAtRule, SassInclude, SassList, SassMap,
     SassMixin, SassModuleConfig, SassParameters, SassUnaryOperatorKind, SassUse,
-    SassUseNamespaceKind, SassVariableDeclaration,
+    SassUseNamespaceKind, SassVariableDeclaration, SimpleBlock,
 };
 use oxc_formatter_core::{
     Buffer,
     builders::{
-        dedent, empty_line, expand_parent, group, hard_line_break, if_group_breaks, indent,
-        line_suffix, soft_line_break, soft_line_break_or_space, space, text,
+        dedent, empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
+        soft_line_break_or_space, space, text,
     },
     write,
 };
 use oxc_span::Span;
 
 use crate::{
-    comments,
+    comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
     print::{
         CssFormatter, format_with, statement,
@@ -39,15 +39,7 @@ pub(super) fn write_sass_variable_declaration<'a>(
     write!(f, "$");
     let name_span = to_span(decl.name.name.span());
     write!(f, text(source.text_for(&name_span)));
-    // Comments between the name and the colon are kept verbatim
-    let colon_end = to_span(&decl.colon_span).end;
-    let between = source.slice_range(name_span.end, colon_end);
-    if between.trim() == ":" {
-        write!(f, ":");
-    } else {
-        write!(f, text(between.trim_ascii()));
-        let _ = f.context().comments().take_before(colon_end);
-    }
+    statement::write_colon_run(name_span.end, to_span(&decl.colon_span).end, f);
     write!(f, space());
 
     let ctx = ValueContext { decl_prop: Some("$"), map_break: true, ..ValueContext::default() };
@@ -225,19 +217,10 @@ pub(super) fn write_sass_map<'a>(
         let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             write!(f, soft_line_break());
             for (i, &comment) in tail.iter().enumerate() {
-                if i > 0 {
-                    if tail[i - 1].inline {
-                        // Prettier leaves a stray leading space here
-                        // (`   // b`, the `join(line)` separator prints before the deferred `lineSuffix` flushes);
-                        write!(f, hard_line_break());
-                    } else {
-                        write!(f, space());
-                    }
+                if i > 0 && !tail[i - 1].inline {
+                    write!(f, space());
                 }
-                comments::write_single_comment(comment, f);
-                if comment.inline {
-                    write!(f, expand_parent());
-                }
+                write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
             }
         });
         write!(
@@ -350,12 +333,9 @@ pub(super) fn write_sass_map<'a>(
                 let fits = !value_is_block
                     && u32::from(f.options().indent_width.value()) + comment_width + 2 + item_width
                         <= u32::from(f.options().line_width.value());
-                comments::write_single_comment(comment, f);
-                if comment.inline || !fits {
-                    write!(f, hard_line_break());
-                } else {
-                    write!(f, " ");
-                }
+                let block_after =
+                    if fits { BlockCommentAfter::Space } else { BlockCommentAfter::HardLine };
+                write!(f, FormatCommentBeforeContent::new(comment, block_after));
             }
             let key_is_block = is_paren_block(&item.key);
             if key_is_block && !value_is_block {
@@ -429,14 +409,17 @@ pub(super) fn write_sass_map<'a>(
         // Not `write_paren_tail_comments`:
         // a next-slot comment (above) is same-line in source but still starts a line here,
         // and consecutive own-line block comments glue.
-        let mut after_inline = true;
-        for &comment in f.context().comments().take_before(r_paren) {
-            if after_inline || comment.inline {
-                write!(f, hard_line_break());
-            } else {
-                write!(f, " ");
+        let mut after_inline = false;
+        for (i, &comment) in f.context().comments().take_before(r_paren).iter().enumerate() {
+            // A `//` already ended its line
+            if !after_inline {
+                if i == 0 || comment.inline {
+                    write!(f, hard_line_break());
+                } else {
+                    write!(f, " ");
+                }
             }
-            comments::write_single_comment(comment, f);
+            write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
             after_inline = comment.inline;
         }
     });
@@ -690,7 +673,7 @@ pub(super) fn write_sass_include<'a>(include: &SassInclude<'a>, f: &mut CssForma
 pub(super) fn write_sass_if_at_rule<'a>(if_rule: &SassIfAtRule<'a>, f: &mut CssFormatter<'_, 'a>) {
     write!(f, ["@if", space()]);
     write_control_condition(&if_rule.if_clause.condition, f);
-    statement::write_block(&if_rule.if_clause.block, f);
+    write_block_after(to_span(if_rule.if_clause.condition.span()).end, &if_rule.if_clause.block, f);
     for (clause, else_span) in if_rule.else_if_clauses.iter().zip(&if_rule.else_spans) {
         write_else_join(to_span(else_span).start, f);
         // `if` is a value word in postcss, so the condition may break after it
@@ -700,16 +683,21 @@ pub(super) fn write_sass_if_at_rule<'a>(if_rule: &SassIfAtRule<'a>, f: &mut CssF
         } else {
             write_condition_chain(Some("if"), &clause.condition, f);
         }
-        statement::write_block(&clause.block, f);
+        write_block_after(to_span(clause.condition.span()).end, &clause.block, f);
     }
     if let Some(else_block) = &if_rule.else_clause {
-        let else_start = if_rule
-            .else_spans
-            .last()
-            .map_or_else(|| to_span(&else_block.span).start, |sp| to_span(sp).start);
-        write_else_join(else_start, f);
-        statement::write_block(else_block, f);
+        let block_start = to_span(&else_block.span).start;
+        let else_span = if_rule.else_spans.last().map_or(Span::empty(block_start), to_span);
+        write_else_join(else_span.start, f);
+        write_block_after(else_span.end, else_block, f);
     }
+}
+
+/// A clause's block, with the comments between its head (ending at `head_end`)
+/// and `{` placed first (`@if $a // c\n{`), so they do not fall into the block as its first leading comment.
+fn write_block_after<'a>(head_end: u32, block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 'a>) {
+    value::write_comments_before_block(head_end, to_span(&block.span).start, f);
+    statement::write_block(block, f);
 }
 
 /// `} @else`: comments between them break the join; each keeps its line
@@ -725,7 +713,7 @@ fn write_else_join(else_start: u32, f: &mut CssFormatter<'_, '_>) {
         } else {
             write!(f, space());
         }
-        comments::write_single_comment(comment, f);
+        write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
     }
     if between.is_empty() {
         write!(f, [space(), "@else", space()]);
@@ -913,11 +901,10 @@ pub(super) fn write_sass_forward<'a>(forward: &SassForward<'a>, f: &mut CssForma
                 let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                     value::write_text_with_leading_comments(to_span(member.span()), f);
                     if i + 1 < members.len() {
-                        write_same_line_trailing_comments(
-                            to_span(&visibility.comma_spans[i]).start,
+                        value::write_group_comma(
+                            Some(to_span(&visibility.comma_spans[i]).start),
                             f,
                         );
-                        write!(f, ",");
                     }
                 });
                 filler.entry(&soft_line_break_or_space(), &entry);
@@ -1000,10 +987,7 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
                 write!(f, text(source.text_for(&span)));
             }
             if i + 1 < config.items.len() {
-                // An own-line comment before the comma stays pending and
-                // leads the next item instead.
-                write_same_line_trailing_comments(to_span(&config.comma_spans[i]).start, f);
-                write!(f, ",");
+                value::write_group_comma(Some(to_span(&config.comma_spans[i]).start), f);
             } else {
                 // Comments before `)` (past a trailing comma, which is dropped):
                 // same-line ones glue to the last item, own-line ones keep their line.
@@ -1012,7 +996,7 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
                     write_same_line_trailing_comments(bound, f).unwrap_or(item_span.end);
                 for &comment in f.context().comments().take_before(bound) {
                     comments::write_gap(source.bytes_range(prev_end, comment.span.start), f);
-                    comments::write_single_comment(comment, f);
+                    write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
                     prev_end = comment.span.end;
                 }
             }
@@ -1029,9 +1013,9 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
 /// the map/config bodies this serves already hard-break,
 /// so propagating a break out of a still-flat head (`@use "a" /* c */ with (`) would be a behavior change.
 /// Returns the end offset of the last emitted comment.
-fn write_same_line_trailing_comments<'a>(
+fn write_same_line_trailing_comments(
     upper_bound: u32,
-    f: &mut CssFormatter<'_, 'a>,
+    f: &mut CssFormatter<'_, '_>,
 ) -> Option<u32> {
     let mut last_end = None;
     while let Some(comment) = f.context().comments().peek() {
@@ -1042,14 +1026,9 @@ fn write_same_line_trailing_comments<'a>(
         }
         f.context().comments().take_before(comment.span.end);
         if comment.inline {
-            let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write!(f, space());
-                comments::write_single_comment(comment, f);
-            });
-            write!(f, line_suffix(&content));
+            write!(f, FormatLineCommentSuffix::new(comment).with_leading_space());
         } else {
-            write!(f, space());
-            comments::write_single_comment(comment, f);
+            write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
         }
         last_end = Some(comment.span.end);
     }

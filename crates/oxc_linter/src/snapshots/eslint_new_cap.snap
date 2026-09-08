@@ -187,3 +187,19 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── This should be called with `new`
    ╰────
   help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:19]
+ 1 │ services.registry["\u0043reateDocumentForCurrentSession"]();
+   ·                   ───────────────────┬──────────────────
+   ·                                      ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:22]
+ 1 │ (services.registry?.["\u0043reateDocumentForCurrentSession"])();
+   ·                      ───────────────────┬──────────────────
+   ·                                         ╰── This should be called with `new`
+   ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.

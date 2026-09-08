@@ -443,7 +443,7 @@ pub fn call_expr_member_expr_property_span(call_expr: &CallExpression) -> Span {
 pub fn does_expr_match_any_path<'a, P, S>(mut expr: &Expression, paths: P) -> bool
 where
     P: IntoIterator<Item = S>,
-    S: AsRef<[&'a str]>,
+    S: IntoIterator<Item = &'a str>,
 {
     // Member chains are short in practice; keep the segments on the stack.
     let mut path: SmallVec<[&str; 4]> = SmallVec::new();
@@ -459,18 +459,9 @@ where
 
     let Expression::Identifier(ident) = expr else { return false };
     path.push(ident.name.as_str());
-    let path = path.iter().rev();
+    let path = path.iter().rev().copied();
 
-    for e in paths {
-        let expected_path = e.as_ref();
-        if expected_path.len() == path.len()
-            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
-        {
-            return true;
-        }
-    }
-
-    false
+    paths.into_iter().any(|expected_path| expected_path.into_iter().eq(path.clone()))
 }
 
 /// Returns the precedence of an expression if it has one.
