@@ -28,20 +28,7 @@ fn number_literal(value: f64) -> LiteralString {
         best_candidate.push(byte);
     }
 
-    let mut is_hex = false;
-    if value.fract() == 0.0 {
-        let integer = value as u128;
-        let hex_digits = (128 - integer.leading_zeros() as usize).div_ceil(4);
-        let hex_len = 2 + hex_digits;
-        if hex_len < best_candidate.len_usize() {
-            let mut candidate = LiteralString::new();
-            candidate.push(b'0');
-            candidate.push(b'x');
-            push_hex(integer, &mut candidate);
-            best_candidate = candidate;
-            is_hex = true;
-        }
-    } else if best_candidate.starts_with(".0")
+    if best_candidate.starts_with(".0")
         && let Some(index) = best_candidate.bytes().skip(2).position(|byte| byte != b'0')
     {
         let digits_start = index + 2;
@@ -59,8 +46,7 @@ fn number_literal(value: f64) -> LiteralString {
         }
     }
 
-    if !is_hex
-        && best_candidate.ends_with('0')
+    if best_candidate.ends_with('0')
         && let Some(exponent) = best_candidate.bytes().rev().position(|byte| byte != b'0')
     {
         let base_len = best_candidate.len_usize() - exponent;
@@ -105,6 +91,20 @@ fn number_literal(value: f64) -> LiteralString {
         }
     }
 
+    // Compare hex against the shortest decimal form, including exponent notation.
+    if value.fract() == 0.0 {
+        let integer = value as u128;
+        let hex_digits = (128 - integer.leading_zeros() as usize).div_ceil(4);
+        let hex_len = 2 + hex_digits;
+        if hex_len < best_candidate.len_usize() {
+            let mut candidate = LiteralString::new();
+            candidate.push(b'0');
+            candidate.push(b'x');
+            push_hex(integer, &mut candidate);
+            best_candidate = candidate;
+        }
+    }
+
     best_candidate
 }
 
@@ -136,6 +136,11 @@ mod tests {
             (0.05, ".05"),
             (0.000_001, "1e-6"),
             (1000.0, "1e3"),
+            (1e12, "1e12"),
+            (1e18, "1e18"),
+            (1e19, "1e19"),
+            (1e20, "1e20"),
+            (12e18, "12e18"),
             (281_474_976_710_655.0, "0xffffffffffff"),
             (1.2e101, "12e100"),
             (f64::MAX, "17976931348623157e292"),

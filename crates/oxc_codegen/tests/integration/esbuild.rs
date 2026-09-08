@@ -31,6 +31,13 @@ fn test_number() {
     test_minify("x = 1e2", "x=100;");
     test_minify("x = 1e3", "x=1e3;");
     test_minify("x = 1e4", "x=1e4;");
+    test_minify("x = 1e12", "x=1e12;");
+    test_minify("x = 1e18", "x=1e18;");
+    test_minify("x = 1e19", "x=1e19;");
+    test_minify("x = 1e20", "x=1e20;");
+    test_minify("x = 0xde0b6b3a7640000", "x=1e18;");
+    test_minify("x = -1e18", "x=-1e18;");
+    test("x = 1e18", "x = 1e18;\n");
     test_minify("x = 1e100", "x=1e100;");
 
     // Check "12eN"
@@ -59,6 +66,7 @@ fn test_number() {
     test_minify("x = 12e2", "x=1200;");
     test_minify("x = 12e3", "x=12e3;");
     test_minify("x = 12e4", "x=12e4;");
+    test_minify("x = 12e18", "x=12e18;");
     test_minify("x = 12e100", "x=12e100;");
 
     // Check cases for "A.BeX" => "ABeY" simplification
@@ -97,20 +105,20 @@ fn test_number() {
     test_minify("x = -0x1_0000_0001", "x=-4294967297;");
 
     // int64
-    test_minify("x = 0x7fff_ffff_ffff_fdff", "x=0x7ffffffffffffc00;");
-    test_minify("x = 0x8000_0000_0000_0000", "x=0x8000000000000000;");
-    test_minify("x = 0x8000_0000_0000_3000", "x=0x8000000000003000;");
-    test_minify("x = -0x7fff_ffff_ffff_fdff", "x=-0x7ffffffffffffc00;");
-    test_minify("x = -0x8000_0000_0000_0000", "x=-0x8000000000000000;");
-    test_minify("x = -0x8000_0000_0000_3000", "x=-0x8000000000003000;");
+    test_minify("x = 0x7fff_ffff_ffff_fdff", "x=9223372036854775e3;");
+    test_minify("x = 0x8000_0000_0000_0000", "x=9223372036854776e3;");
+    test_minify("x = 0x8000_0000_0000_3000", "x=9223372036854788e3;");
+    test_minify("x = -0x7fff_ffff_ffff_fdff", "x=-9223372036854775e3;");
+    test_minify("x = -0x8000_0000_0000_0000", "x=-9223372036854776e3;");
+    test_minify("x = -0x8000_0000_0000_3000", "x=-9223372036854788e3;");
 
     // uint64
-    test_minify("x = 0xffff_ffff_ffff_fbff", "x=0xfffffffffffff800;");
-    test_minify("x = 0x1_0000_0000_0000_0000", "x=0x10000000000000000;");
-    test_minify("x = 0x1_0000_0000_0000_1000", "x=0x10000000000001000;");
-    test_minify("x = -0xffff_ffff_ffff_fbff", "x=-0xfffffffffffff800;");
-    test_minify("x = -0x1_0000_0000_0000_0000", "x=-0x10000000000000000;");
-    test_minify("x = -0x1_0000_0000_0000_1000", "x=-0x10000000000001000;");
+    test_minify("x = 0xffff_ffff_ffff_fbff", "x=1844674407370955e4;");
+    test_minify("x = 0x1_0000_0000_0000_0000", "x=18446744073709552e3;");
+    test_minify("x = 0x1_0000_0000_0000_1000", "x=18446744073709556e3;");
+    test_minify("x = -0xffff_ffff_ffff_fbff", "x=-1844674407370955e4;");
+    test_minify("x = -0x1_0000_0000_0000_0000", "x=-18446744073709552e3;");
+    test_minify("x = -0x1_0000_0000_0000_1000", "x=-18446744073709556e3;");
 
     // Check the hex vs. decimal decision boundary when minifying
     // TODO FIXME
@@ -124,10 +132,10 @@ fn test_number() {
     test_minify("x = 999999999999", "x=999999999999;");
     test_minify("x = 1000000000001", "x=0xe8d4a51001;");
     test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
-    test_minify("x = 0x1000_0000_0000_0000", "x=0x1000000000000000;");
+    test_minify("x = 0x1000_0000_0000_0000", "x=1152921504606847e3;");
     test_minify("x = 0xFFFF_FFFF_FFFF_F000", "x=0xfffffffffffff000;");
-    test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=0xfffffffffffff800;");
-    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=0x10000000000000000;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=1844674407370955e4;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=18446744073709552e3;");
 
     // Check printing a space in between a number and a subsequent "."
     test_minify("x = 0.0001 .y", "x=1e-4.y;");
@@ -138,6 +146,7 @@ fn test_number() {
     test_minify("x = 10 .y", "x=10 .y;");
     test_minify("x = 100 .y", "x=100 .y;");
     test_minify("x = 1000 .y", "x=1e3.y;");
+    test_minify("x = 1e18 .y", "x=1e18.y;");
     test_minify("x = 12345 .y", "x=12345 .y;");
     test_minify("x = 0xFFFF_0000_FFFF_0000 .y", "x=0xffff0000ffff0000.y;");
 }
