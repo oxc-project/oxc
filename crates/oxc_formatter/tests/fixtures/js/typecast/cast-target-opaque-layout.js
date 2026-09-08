@@ -23,3 +23,11 @@ const cast_bool = /** @type {import("react-hook-form").Path<TFormValues>} */ (tr
 const cast_num = /** @type {import("react-hook-form").Path<TFormValuesXXXXXXX>} */ (123456);
 const cast_tagged = /** @type {import("react-hook-form").Path<TFormValues>} */ (tag`${key}.${locale}`);
 const cast_class = /** @type {import("react-hook-form").Path<TFormValues>} */ (class {});
+
+// The other RHS shape rules stop at the cast too: `require`, assignment chains, arrows, the unary walk.
+const someLongVariableNameForRequire = /** @type {typeof import("some-module")} */ (require("some-module"));
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ (cccccccccccccccc = dddddddddddddddd);
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = /** @type {T} */ (bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = cccccccccccccccc.ddddddddddddddd);
+aaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ ((xxxxxxxxxxxxxxxx) => xxxxxxxxxxxxxxxx.yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy);
+const someLongVariableNameForArrow3 = /** @type {Handler} */ ((a) => (b) => (c) => (d) => someLongFunctionCall(a, b, c, d, eeeeeeeeeee));
+const someLongVariableNameHereForNot = !/** @type {Promise<string>} */ ("some long string literal here ok yes");
