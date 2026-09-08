@@ -2049,6 +2049,23 @@
       },
       "additionalProperties": false
     },
+    "DependencyAllowance": {
+      "anyOf": [
+        {
+          "description": "Allow or forbid this dependency category in every file.",
+          "type": "boolean",
+          "markdownDescription": "Allow or forbid this dependency category in every file."
+        },
+        {
+          "description": "Allow this dependency category only in files matching one of these globs.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Allow this dependency category only in files matching one of these globs."
+        }
+      ]
+    },
     "DescriptionFormatConfig": {
       "type": "object",
       "properties": {
@@ -2912,6 +2929,26 @@
         },
         "import/no-empty-named-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "import/no-extraneous-dependencies": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoExtraneousDependenciesConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "import/no-mutable-exports": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -14350,6 +14387,74 @@
       },
       "additionalProperties": false
     },
+    "NoExtraneousDependenciesConfig": {
+      "type": "object",
+      "properties": {
+        "bundledDependencies": {
+          "description": "Allow bundled dependencies. A glob array allows them only in matching files.",
+          "default": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/DependencyAllowance"
+            }
+          ],
+          "markdownDescription": "Allow bundled dependencies. A glob array allows them only in matching files."
+        },
+        "devDependencies": {
+          "description": "Allow development dependencies. A glob array allows them only in matching files.",
+          "default": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/DependencyAllowance"
+            }
+          ],
+          "markdownDescription": "Allow development dependencies. A glob array allows them only in matching files."
+        },
+        "includeInternal": {
+          "description": "Also check imports resolved to internal modules. Relative imports are still ignored.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also check imports resolved to internal modules. Relative imports are still ignored."
+        },
+        "includeTypes": {
+          "description": "Also check type-only imports and exports.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also check type-only imports and exports."
+        },
+        "optionalDependencies": {
+          "description": "Allow optional dependencies. A glob array allows them only in matching files.",
+          "default": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/DependencyAllowance"
+            }
+          ],
+          "markdownDescription": "Allow optional dependencies. A glob array allows them only in matching files."
+        },
+        "packageDir": {
+          "description": "Directories containing package.json files. Relative paths are resolved from the working directory.\nBy default, use the closest package.json above the linted file.",
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/PackageDirectories"
+            }
+          ],
+          "markdownDescription": "Directories containing package.json files. Relative paths are resolved from the working directory.\nBy default, use the closest package.json above the linted file."
+        },
+        "peerDependencies": {
+          "description": "Allow peer dependencies. A glob array allows them only in matching files.",
+          "default": true,
+          "allOf": [
+            {
+              "$ref": "#/definitions/DependencyAllowance"
+            }
+          ],
+          "markdownDescription": "Allow peer dependencies. A glob array allows them only in matching files."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoFallthroughConfig": {
       "type": "object",
       "properties": {
@@ -17293,6 +17398,23 @@
         }
       },
       "markdownDescription": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```"
+    },
+    "PackageDirectories": {
+      "anyOf": [
+        {
+          "description": "Directory containing the package manifest.",
+          "type": "string",
+          "markdownDescription": "Directory containing the package manifest."
+        },
+        {
+          "description": "Directories whose dependency declarations are combined.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Directories whose dependency declarations are combined."
+        }
+      ]
     },
     "PackageFrom": {
       "type": "string",
