@@ -425,58 +425,57 @@ impl Rule for NewCap {
             AstKind::NewExpression(expression) if self.new_is_cap => {
                 let callee = expression.callee.without_parentheses();
 
-                let Some((short_name, short_name_span)) = &extract_name_from_expression(callee)
+                let Some((short_name, short_name_span)) = extract_name_from_expression(callee)
                 else {
                     return;
                 };
+
+                let capitalization = &get_cap(short_name);
+                if *capitalization != GetCapResult::Lower {
+                    return;
+                }
 
                 let Some(name) = &extract_name_deep_from_expression(callee) else {
                     return;
                 };
 
-                let capitalization = &get_cap(short_name);
-
-                let allowed = *capitalization != GetCapResult::Lower
-                    || is_cap_allowed_expression(
-                        short_name,
-                        name,
-                        self.new_is_cap_exceptions.iter().map(CompactStr::as_str),
-                        self.new_is_cap_exception_pattern.as_ref(),
-                    )
-                    || (!self.properties && short_name != name);
+                let allowed = is_cap_allowed_expression(
+                    short_name,
+                    name,
+                    self.new_is_cap_exceptions.iter().map(CompactStr::as_str),
+                    self.new_is_cap_exception_pattern.as_ref(),
+                ) || (!self.properties && short_name != name.as_str());
 
                 if !allowed {
-                    ctx.diagnostic(new_cap_diagnostic(*short_name_span, capitalization));
+                    ctx.diagnostic(new_cap_diagnostic(short_name_span, capitalization));
                 }
             }
             AstKind::CallExpression(expression) if self.cap_is_new => {
                 let callee = expression.callee.without_parentheses();
 
-                let Some((short_name, short_name_span)) = &extract_name_from_expression(callee)
+                let Some((short_name, short_name_span)) = extract_name_from_expression(callee)
                 else {
                     return;
                 };
+
+                let capitalization = &get_cap(short_name);
+                if *capitalization != GetCapResult::Upper {
+                    return;
+                }
 
                 let Some(name) = &extract_name_deep_from_expression(callee) else {
                     return;
                 };
 
-                let capitalization = &get_cap(short_name);
-
-                let allowed = *capitalization != GetCapResult::Upper
-                    || is_cap_allowed_expression(
-                        short_name,
-                        name,
-                        self.cap_is_new_exceptions
-                            .iter()
-                            .map(CompactStr::as_str)
-                            .chain(CAPS_ALLOWED),
-                        self.cap_is_new_exception_pattern.as_ref(),
-                    )
-                    || (!self.properties && short_name != name);
+                let allowed = is_cap_allowed_expression(
+                    short_name,
+                    name,
+                    self.cap_is_new_exceptions.iter().map(CompactStr::as_str).chain(CAPS_ALLOWED),
+                    self.cap_is_new_exception_pattern.as_ref(),
+                ) || (!self.properties && short_name != name.as_str());
 
                 if !allowed {
-                    ctx.diagnostic(new_cap_diagnostic(*short_name_span, capitalization));
+                    ctx.diagnostic(new_cap_diagnostic(short_name_span, capitalization));
                 }
             }
             _ => (),
@@ -512,7 +511,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
                 return Some(CompactStr::new(&new_name));
             }
 
-            Some(prop_name)
+            Some(prop_name.into())
         }
         Expression::ChainExpression(chain) => match &chain.expression {
             ChainElement::CallExpression(call) => extract_name_deep_from_expression(&call.callee),
@@ -541,7 +540,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
                     return Some(CompactStr::new(&new_name));
                 }
 
-                Some(prop_name)
+                Some(prop_name.into())
             }
             ChainElement::PrivateFieldExpression(_) => None,
         },
@@ -549,37 +548,35 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
     }
 }
 
-fn get_computed_member_name(
-    computed_member: &ComputedMemberExpression,
-) -> Option<(CompactStr, Span)> {
+fn get_computed_member_name<'a>(
+    computed_member: &ComputedMemberExpression<'a>,
+) -> Option<(&'a str, Span)> {
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
         Expression::StringLiteral(lit) if !lit.value.is_empty() => {
-            Some((lit.value.as_ref().into(), lit.span))
+            Some((lit.value.as_str(), lit.span))
         }
         Expression::TemplateLiteral(lit)
             if lit.expressions.is_empty()
                 && lit.quasis.len() == 1
                 && !lit.quasis[0].value.raw.is_empty() =>
         {
-            Some((lit.quasis[0].value.raw.as_ref().into(), lit.span))
+            Some((lit.quasis[0].value.raw.as_str(), lit.span))
         }
-        Expression::RegExpLiteral(lit) => {
-            lit.raw.as_ref().map(|&x| (x.into_compact_str(), lit.span))
-        }
+        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|x| (x.as_str(), lit.span)),
         _ => None,
     }
 }
 
-fn extract_name_from_expression(expression: &Expression) -> Option<(CompactStr, Span)> {
+fn extract_name_from_expression<'a>(expression: &Expression<'a>) -> Option<(&'a str, Span)> {
     if let Some(identifier) = expression.get_identifier_reference() {
-        return Some((identifier.name.into(), identifier.span));
+        return Some((identifier.name.as_str(), identifier.span));
     }
 
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
-            Some((expression.property.name.into_compact_str(), expression.property.span))
+            Some((expression.property.name.as_str(), expression.property.span))
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
         Expression::ChainExpression(chain) => match &chain.expression {
@@ -588,7 +585,7 @@ fn extract_name_from_expression(expression: &Expression) -> Option<(CompactStr, 
                 extract_name_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
-                Some((expression.property.name.into_compact_str(), expression.property.span))
+                Some((expression.property.name.as_str(), expression.property.span))
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 get_computed_member_name(expression)
@@ -600,7 +597,7 @@ fn extract_name_from_expression(expression: &Expression) -> Option<(CompactStr, 
 }
 
 fn is_cap_allowed_expression<'a, I>(
-    short_name: &CompactStr,
+    short_name: &str,
     name: &CompactStr,
     exceptions: I,
     patterns: Option<&Regex>,
@@ -609,7 +606,7 @@ where
     I: Iterator<Item = &'a str>,
 {
     for exception in exceptions {
-        if exception == name.as_str() || exception == short_name.as_str() {
+        if exception == name.as_str() || exception == short_name {
             return true;
         }
     }
@@ -632,7 +629,7 @@ enum GetCapResult {
     NonAlpha,
 }
 
-fn get_cap(string: &CompactStr) -> GetCapResult {
+fn get_cap(string: &str) -> GetCapResult {
     let first_char = string.chars().next().unwrap();
 
     if !first_char.is_alphabetic() {
@@ -730,6 +727,14 @@ fn test() {
             "let tz = Intl.DateTimeFormat().resolvedOptions().timezone()",
             Some(serde_json::json!([{ "capIsNewExceptions": ["Intl.DateTimeFormat"] }])),
         ),
+        (
+            r#"services.registry["\u0043reateDocumentForCurrentSession"]();"#,
+            Some(serde_json::json!([{
+                "capIsNewExceptions": ["services.registry.CreateDocumentForCurrentSession"]
+            }])),
+        ),
+        // Template literal property names use their raw text.
+        (r"services.registry[`\u0043reateDocumentForCurrentSession`]();", None),
     ];
 
     let fail = vec![
@@ -775,6 +780,13 @@ fn test() {
         ("new (foo?.bar)();", None), // { "ecmaVersion": 2020 },
         ("foo?.Bar();", None),       // { "ecmaVersion": 2020 },
         ("(foo?.Bar)();", None),     // { "ecmaVersion": 2020 }
+        (
+            r#"services.registry["\u0043reateDocumentForCurrentSession"]();"#,
+            Some(serde_json::json!([{
+                "capIsNewExceptions": ["other.CreateDocumentForCurrentSession"]
+            }])),
+        ),
+        (r#"(services.registry?.["\u0043reateDocumentForCurrentSession"])();"#, None),
     ];
 
     Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();
