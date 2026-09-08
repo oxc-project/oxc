@@ -173,11 +173,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 // would fail. Skip that parse and its temporary parameter allocation.
                                 let deferred_errors_len = self.lexer.deferred_module_errors.len();
                                 let fourth = self.lexer.peek_token().kind();
+                                // The real parse reads this token again on either path. Lexer
+                                // checkpoints do not restore deferred module errors, so discard
+                                // this extra peek's errors and let normal parsing record them once.
+                                self.lexer.deferred_module_errors.truncate(deferred_errors_len);
                                 if fourth == Kind::Arrow || (self.is_ts && fourth == Kind::Colon) {
-                                    // The head will read this token again. Lexer checkpoints do not
-                                    // restore deferred module errors, so discard this extra peek's
-                                    // errors and let the head record them once.
-                                    self.lexer.deferred_module_errors.truncate(deferred_errors_len);
                                     Tristate::Maybe
                                 } else {
                                     Tristate::False

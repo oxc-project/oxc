@@ -1173,9 +1173,12 @@ mod test {
     #[test]
     fn unambiguous_arrow_lookahead_diagnostics() {
         let allocator = Allocator::default();
-        for (source, source_type, diagnostic_count) in [
-            ("(x)\n<!-- comment\n=> x; export {};", SourceType::unambiguous(), 2),
-            ("(x)\n<!-- comment\n: number => x; export {};", SourceType::ts(), 1),
+        for (source, source_type, diagnostic_count, html_comment_count) in [
+            ("(x)\n<!-- comment\n=> x; export {};", SourceType::unambiguous(), 2, 1),
+            ("(x)\n<!-- comment\n: number => x; export {};", SourceType::ts(), 1, 1),
+            ("(x)\n<!-- comment\n; export {};", SourceType::unambiguous(), 1, 1),
+            ("(x)\n--> comment\n; export {};", SourceType::unambiguous(), 1, 1),
+            ("<!-- first\n(x)\n<!-- second\n; export {};", SourceType::unambiguous(), 2, 2),
         ] {
             for tokens in [false, true] {
                 let ret = Parser::new(&allocator, source, source_type)
@@ -1183,7 +1186,7 @@ mod test {
                     .parse();
                 assert!(!ret.fatal_error);
                 assert!(ret.program.source_type.is_module());
-                assert_eq!(ret.diagnostics.len(), diagnostic_count);
+                assert_eq!(ret.diagnostics.len(), diagnostic_count, "{source:?}, tokens={tokens}");
                 assert_eq!(
                     ret.diagnostics
                         .iter()
@@ -1191,7 +1194,8 @@ mod test {
                             diagnostic.to_string() == "HTML comments are not allowed in modules"
                         })
                         .count(),
-                    1,
+                    html_comment_count,
+                    "{source:?}, tokens={tokens}",
                 );
             }
         }
