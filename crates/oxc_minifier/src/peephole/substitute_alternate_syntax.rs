@@ -245,21 +245,14 @@ impl<'a> PeepholeOptimizations {
         let new_value = if let Expression::Identifier(ident) = &unary_expr.argument
             && ctx.is_global_reference(ident)
         {
-            let left = e.left.take_in(ctx);
-            let right = Expression::new_string_literal(e.right.span(), "u", None, ctx);
-            Expression::new_binary_expression(e.span, left, new_comp_op, right, ctx)
+            e.operator = new_comp_op;
+            Expression::new_string_literal(e.right.span(), "u", None, ctx)
         } else {
-            let span = e.span;
-            let Expression::UnaryExpression(unary_expr) = &mut e.left else { return };
-            Expression::new_binary_expression(
-                span,
-                unary_expr.take_in(ctx).argument,
-                new_eq_op,
-                Expression::new_void_0(e.right.span(), ctx),
-                ctx,
-            )
+            e.operator = new_eq_op;
+            ctx.replace_expression_with(&mut e.left, Self::unwrap_unary);
+            Expression::new_void_0(e.right.span(), ctx)
         };
-        ctx.replace_expression(expr, new_value);
+        ctx.replace_expression(&mut e.right, new_value);
     }
 
     /// Remove unary `+` if `ToNumber` conversion is done by the parent expression
@@ -435,10 +428,8 @@ impl<'a> PeepholeOptimizations {
                 && !right.left.may_have_side_effects(ctx)
                 && !right.right.may_have_side_effects(ctx)
             {
-                let left = e.left.take_in(ctx);
-                let right = e.right.take_in(ctx);
-                e.right = left;
-                e.left = right;
+                let binary_expr = &mut **e;
+                std::mem::swap(&mut binary_expr.left, &mut binary_expr.right);
                 ctx.notice_change();
             }
         }
