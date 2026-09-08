@@ -172,6 +172,7 @@ pub struct ContextHost<'a> {
     pub(crate) fix: FixKind,
     /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
+    pub(super) imports: Option<Arc<super::ImportContext>>,
     /// Extension of the file being linted.
     file_extension: Option<Box<OsStr>>,
     /// Global linter configuration, such as globals to include and the target
@@ -220,6 +221,7 @@ impl<'a> ContextHost<'a> {
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
+            imports: None,
             file_extension,
             config,
             frameworks: options.framework_hints,
@@ -227,6 +229,11 @@ impl<'a> ContextHost<'a> {
             react_compiler_results: OnceCell::new(),
         }
         .sniff_for_frameworks()
+    }
+
+    pub(crate) fn with_imports(mut self, imports: Option<Arc<super::ImportContext>>) -> Self {
+        self.imports = imports;
+        self
     }
 
     /// The current [`ContextSubHost`]

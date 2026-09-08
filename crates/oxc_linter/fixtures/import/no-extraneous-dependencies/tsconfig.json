@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "alias-acorn": [
+        "../node_modules/acorn"
+      ],
+      "alias-missing": [
+        "../node_modules/not-a-dependency"
+      ],
+      "internal/*": [
+        "./*"
+      ],
+      "workspace-alias": [
+        "./other/index.js"
+      ]
+    }
+  }
+}

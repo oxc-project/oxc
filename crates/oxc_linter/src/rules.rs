@@ -25,6 +25,7 @@ pub(crate) mod import {
     pub mod no_duplicates;
     pub mod no_dynamic_require;
     pub mod no_empty_named_blocks;
+    pub mod no_extraneous_dependencies;
     pub mod no_mutable_exports;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;

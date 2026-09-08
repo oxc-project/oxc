@@ -1,0 +1,129 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import 'not-a-dependency';
+   ·        ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:19]
+ 1 │ import value from 'not-a-dependency';
+   ·                   ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:23]
+ 1 │ const value = require('not-a-dependency');
+   ·                       ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:15]
+ 1 │ export * from 'not-a-dependency';
+   ·               ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:23]
+ 1 │ export { value } from 'not-a-dependency';
+   ·                       ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import('not-a-dependency');
+   ·        ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `@org/not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import '@org/not-a-dependency/foo';
+   ·        ───────────────────────────
+   ╰────
+  help: Add `@org/not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `chai` should be listed in dependencies instead of devDependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import 'chai';
+   ·        ──────
+   ╰────
+  help: Add `chai` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `left-pad` should be listed in dependencies instead of optionalDependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import 'left-pad';
+   ·        ──────────
+   ╰────
+  help: Add `left-pad` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `react` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import 'react';
+   ·        ───────
+   ╰────
+  help: Add `react` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `@generated/foo` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import '@generated/foo';
+   ·        ────────────────
+   ╰────
+  help: Add `@generated/foo` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:20]
+ 1 │ import type T from 'not-a-dependency';
+   ·                    ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:24]
+ 1 │ import { type T } from 'not-a-dependency';
+   ·                        ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:31]
+ 1 │ import { type T, value } from 'not-a-dependency';
+   ·                               ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:24]
+ 1 │ export type { T } from 'not-a-dependency';
+   ·                        ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:20]
+ 1 │ export type * from 'not-a-dependency';
+   ·                    ──────────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `not-a-dependency` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import 'alias-missing';
+   ·        ───────────────
+   ╰────
+  help: Add `not-a-dependency` to dependencies in package.json or allow its dependency category in this rule's options.
+
+  ⚠ import(no-extraneous-dependencies): Package `test-project` is not declared in dependencies.
+   ╭─[no-extraneous-dependencies/index.ts:1:8]
+ 1 │ import 'internal/local';
+   ·        ────────────────
+   ╰────
+  help: Add `test-project` to dependencies in package.json or allow its dependency category in this rule's options.
