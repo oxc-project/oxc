@@ -196,6 +196,7 @@ describe("member access on numbers", () => {
     ["int-large", e(member(num(255), id("x"))), "255 .x;\n"],
     ["int-999", e(member(num(999), id("x"))), "999 .x;\n"],
     ["int-1000", e(member(num(1000), id("x"))), "1e3.x;\n"],
+    ["int-1e18", e(member(num(1e18), id("x"))), "1e18.x;\n"],
     ["decimal", e(member(num(0.5), id("x"))), ".5.x;\n"],
     ["decimal-leading", e(member(num(1.5), id("x"))), "1.5.x;\n"],
     ["exponent-large", e(member(num(1e21), id("x"))), "1e21.x;\n"],
@@ -249,15 +250,18 @@ describe("numbers", () => {
     ["int-max-safe", e(num(9007199254740991)), "9007199254740991;\n"],
     ["hex", e(num(281474976710655)), "0xffffffffffff;\n"],
     ["hex-negative", e(num(-281474976710655)), "-0xffffffffffff;\n"],
-    // hexadecimal is tried first and wins, though `1e12` is shorter
-    ["hex-over-exponent", e(num(1e12)), "0xe8d4a51000;\n"],
-    // The two cases above reach the hexadecimal test from plain digits. These reach it from
-    // exponent notation, where the length it is judged against is one less than the text `String`
-    // gave, because the `+` of the exponent always goes. The second is the boundary: hexadecimal is
-    // exactly as long as the exponent form, so it must lose - and would wrongly win, as
-    // `0x21e2073de72ea800000`, if that one character were not taken off.
-    ["hex-from-exponent", e(num(1.0000990573316814e21)), "0x36372999e429e40000;\n"],
-    ["hex-from-exponent-boundary", e(num(1.0000473745167254e22)), "10000473745167254e6;\n"],
+    // Compare hex against the shortened exponent form, with decimal winning ties.
+    ["exponent-over-hex", e(num(1e12)), "1e12;\n"],
+    ["exponent-1e18", e(num(1e18)), "1e18;\n"],
+    ["exponent-1e19", e(num(1e19)), "1e19;\n"],
+    ["exponent-1e20", e(num(1e20)), "1e20;\n"],
+    ["exponent-negative", e(num(-1e18)), "-1e18;\n"],
+    ["exponent-multiple-digits", e(num(12e18)), "12e18;\n"],
+    ["exponent-hex-tie", e(num(0x8000000000000000)), "9223372036854776e3;\n"],
+    ["hex-over-shortened-exponent", e(num(0xfffffffffffff000)), "0xfffffffffffff000;\n"],
+    // Folding the point and removing the `+` both count toward the decimal candidate's length.
+    ["folded-exponent-over-hex", e(num(1.0000990573316814e21)), "10000990573316814e5;\n"],
+    ["folded-exponent-boundary", e(num(1.0000473745167254e22)), "10000473745167254e6;\n"],
     ["exponent-fold", e(num(1.2e101)), "12e100;\n"], // the point folds into the exponent
     ["max-value", e(num(1.7976931348623157e308)), "17976931348623157e292;\n"],
     ["min-value", e(num(5e-324)), "5e-324;\n"],
