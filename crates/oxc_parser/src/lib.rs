@@ -1171,6 +1171,33 @@ mod test {
     }
 
     #[test]
+    fn unambiguous_arrow_lookahead_diagnostics() {
+        let allocator = Allocator::default();
+        for (source, source_type, diagnostic_count) in [
+            ("(x)\n<!-- comment\n=> x; export {};", SourceType::unambiguous(), 2),
+            ("(x)\n<!-- comment\n: number => x; export {};", SourceType::ts(), 1),
+        ] {
+            for tokens in [false, true] {
+                let ret = Parser::new(&allocator, source, source_type)
+                    .with_config(RuntimeParserConfig::new(tokens))
+                    .parse();
+                assert!(!ret.fatal_error);
+                assert!(ret.program.source_type.is_module());
+                assert_eq!(ret.diagnostics.len(), diagnostic_count);
+                assert_eq!(
+                    ret.diagnostics
+                        .iter()
+                        .filter(|diagnostic| {
+                            diagnostic.to_string() == "HTML comments are not allowed in modules"
+                        })
+                        .count(),
+                    1,
+                );
+            }
+        }
+    }
+
+    #[test]
     fn binary_file() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
