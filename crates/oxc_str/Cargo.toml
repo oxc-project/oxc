@@ -19,6 +19,10 @@ workspace = true
 [lib]
 doctest = true
 
+[[bench]]
+name = "js_str"
+harness = false
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_estree = { workspace = true }
@@ -31,6 +35,7 @@ serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 oxc_data_structures = { workspace = true, features = ["types"] }
+criterion2 = { workspace = true }
 
 [features]
 default = []
