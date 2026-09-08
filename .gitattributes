@@ -7,6 +7,7 @@ crates/oxc_formatter_graphql/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_graphql/tests/fixtures/graphql/crlf/** text=auto eol=crlf
 crates/oxc_formatter_yaml/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_yaml/tests/fixtures/yaml/crlf/** text=auto eol=crlf
+crates/oxc_formatter_markdown/tests/fixtures/** text=auto eol=lf
 apps/oxfmt/test/**/fixtures/** text=auto eol=lf
 apps/oxlint/test/fixtures/** text=auto eol=lf
 
