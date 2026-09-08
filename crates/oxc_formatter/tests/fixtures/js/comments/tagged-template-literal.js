@@ -1,5 +1,7 @@
-// Comments between a tagged template's tag and its quasi always attach to the
-// quasi as leading comments, regardless of the surrounding whitespace (prettier#19345).
+// Comments between a tagged template's tag and its quasi: a same-line run trails the tag
+// with a space on each side (Prettier's fixpoint; its first pass glues a block comment ending
+// its source line to the quasi, `foo /* c */`x``, and re-spaces it on the second),
+// an own-line run keeps its lines (prettier#19345).
 foo`` // comment 1
 ;
 foo // comment 2

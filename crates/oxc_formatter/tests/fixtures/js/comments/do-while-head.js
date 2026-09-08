@@ -15,3 +15,9 @@ do x();
 // a
 while (y);
 do {} while (x); // real trailing
+// A same-line block comment ending its line stays inline before an empty body
+// and breaks only when the body does (grouped like the other heads)
+do /* b */
+{} while (x);
+do /* c */
+{ y(); } while (x);

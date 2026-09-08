@@ -250,12 +250,19 @@ pub enum FormatTrailingComments<'a> {
     // (enclosing_span, preceding_span, following_span_start)
     Node((Span, Span, u32)),
     Comments(&'a [Comment]),
+    /// Same-line comments hoisted past a statement body's indent to the statement's end
+    /// (`for (;;) continue // c` + `;` -> `for (;;) continue; // c`, see `FormatStatementBody`):
+    /// a line comment rides a `line_suffix` WITHOUT `expand_parent`, the statement's own line break flushes it,
+    /// so the body's `soft_line_indent_or_space` keeps its fit decision
+    /// (Prettier attaches the comment to the statement, outside its group).
+    StatementEnd(&'a [Comment]),
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         fn format_trailing_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
+            expand: bool,
             f: &mut JsFormatter<'_, 'a>,
         ) {
             let mut total_lines_before = 0;
@@ -316,7 +323,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                     });
 
                     if comment.is_line() {
-                        write!(f, [line_suffix(&content), expand_parent()]);
+                        write!(f, [line_suffix(&content), expand.then_some(expand_parent())]);
                     } else {
                         write!(f, [content]);
                     }
@@ -338,14 +345,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                     return;
                 }
 
-                format_trailing_comments_impl(comments, f);
+                format_trailing_comments_impl(comments, true, f);
             }
             Self::Comments(comments) => {
                 if comments.is_empty() {
                     return;
                 }
 
-                format_trailing_comments_impl(*comments, f);
+                format_trailing_comments_impl(*comments, true, f);
+            }
+            Self::StatementEnd(comments) => {
+                if comments.is_empty() {
+                    return;
+                }
+
+                format_trailing_comments_impl(*comments, false, f);
             }
         }
     }

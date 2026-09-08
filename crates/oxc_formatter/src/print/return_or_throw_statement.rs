@@ -14,14 +14,11 @@ use crate::{
         semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
         semicolon_terminated_content_end, write_suppressed_statement,
     },
-    utils::{
-        format_node_without_trailing_comments::format_content_without_comments_after,
-        typecast::format_leading_comments_and_open_paren,
-    },
+    utils::format_node_without_trailing_comments::format_content_without_comments_after,
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, sequence_expression::sequence_leading_comments_start};
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -153,21 +150,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
         let argument = self.0;
 
         if !argument.is_jsx() && has_argument_leading_comments(argument, f) {
-            // When we have leading comments and a sequence expression, we need inner parentheses
-            // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
-            let inner = format_with(|f| {
-                if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    // The argument's parentheses survive here,
-                    // so even a comment inside the first element's source parens stays inside:
-                    // bound at the span start.
-                    let span = argument.span();
-                    format_leading_comments_and_open_paren(span, span.start, true, f);
-                    write!(f, [argument, token(")")]);
-                } else {
-                    write!(f, argument);
-                }
-            });
-            write!(f, [token("("), &block_indent(&inner), token(")")]);
+            // The parentheses added here are the argument's own (Prettier's `willReturnOrThrowStatementBreak`):
+            // a sequence or assignment prints no pair of its own inside them
+            // (`return ( // c\n a, b )` -> `return (\n  // c\n  a, b\n)`, see `NeedsParentheses`).
+            write!(f, [token("("), &block_indent(&argument), token(")")]);
         } else if argument.is_binaryish() {
             write!(
                 f,
@@ -177,8 +163,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
                     if_group_breaks(&token(")"))
                 ))]
             );
-        } else if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-            write!(f, [group(&format_args!(token("("), soft_block_indent(&argument), token(")")))]);
+        } else if let Expression::SequenceExpression(sequence) = argument.as_ref() {
+            // The sequence's leading comments print outside the re-added pair, like at every other
+            // sequence site (`return (/* c */ a, b)` -> `return /* c */ (a, b)`, Prettier's fixpoint),
+            // the ones inside the first element's dropped parens included (`sequence_leading_comments_start`)
+            let leading_comments_start = sequence_leading_comments_start(sequence);
+            write!(
+                f,
+                [
+                    format_leading_comments(Span::new(leading_comments_start, argument.span().end)),
+                    group(&format_args!(token("("), soft_block_indent(&argument), token(")")))
+                ]
+            );
         } else {
             write!(f, argument);
         }
@@ -191,7 +187,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter<'_, '_>) -> bool {
+pub fn has_argument_leading_comments(
+    argument: &AstNode<Expression>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
     let comments = f.context().comments();
 
     // Comments inside type cast parens (e.g., `/** @type {X} */ (/* here */ expr)`) are handled

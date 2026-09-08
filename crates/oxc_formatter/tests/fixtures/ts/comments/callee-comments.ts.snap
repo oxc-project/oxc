@@ -1,0 +1,196 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments around a call's callee and type arguments attach like Prettier's:
+// a same-line line comment trails the callee / the type arguments and flushes right there
+// (`line_suffix_boundary`, Prettier's `printCallee`), never riding to the statement's end.
+foo // c1
+<string>(1);
+foo<string> // c2
+(1);
+foo // c3
+<string>();
+foo<string> // c4
+();
+// An own-line comment before an empty `()` keeps its own line, trailing the type arguments
+foo<string>
+// c5
+();
+foo<string>
+/* c6 */
+();
+// Block comments keep Prettier's shapes (a same-line one leads the type arguments)
+foo /* c7 */<string>(1);
+foo/* c8 */ <string>(1);
+foo<string> /* c9 */();
+// Without type arguments: a same-line line comment trails the callee,
+// block and own-line comments lead the first argument
+foo // c10
+(1);
+foo /* c11 */(1);
+foo
+// c12
+(1);
+foo // c13
+();
+foo
+// c14
+();
+foo /* c15 */();
+// `new` shares the callee handling
+new A(// c16
+b, c);
+new A /* c17 */(b, c);
+new A // c18
+(b, c);
+new A
+// c19
+(b, c);
+new A // c20
+<T>(b);
+new A // c21
+();
+// A `new` without parentheses has nothing of its own past the callee
+new A // c22
+;
+new A
+// c23
+;
+x = foo // c24
+(1);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments around a call's callee and type arguments attach like Prettier's:
+// a same-line line comment trails the callee / the type arguments and flushes right there
+// (`line_suffix_boundary`, Prettier's `printCallee`), never riding to the statement's end.
+foo // c1
+<string>(1);
+foo<string> // c2
+(1);
+foo // c3
+<string>();
+foo<string> // c4
+();
+// An own-line comment before an empty `()` keeps its own line, trailing the type arguments
+foo<string>
+// c5
+();
+foo<string>
+/* c6 */
+();
+// Block comments keep Prettier's shapes (a same-line one leads the type arguments)
+foo/* c7 */ <string>(1);
+foo/* c8 */ <string>(1);
+foo<string> /* c9 */();
+// Without type arguments: a same-line line comment trails the callee,
+// block and own-line comments lead the first argument
+foo // c10
+(1);
+foo(/* c11 */ 1);
+foo(
+  // c12
+  1,
+);
+foo // c13
+();
+foo
+// c14
+();
+foo /* c15 */();
+// `new` shares the callee handling
+new A(
+  // c16
+  b,
+  c,
+);
+new A(/* c17 */ b, c);
+new A // c18
+(b, c);
+new A(
+  // c19
+  b,
+  c,
+);
+new A // c20
+<T>(b);
+new A // c21
+();
+// A `new` without parentheses has nothing of its own past the callee
+new A(); // c22
+new A();
+// c23
+x =
+  foo // c24
+  (1);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments around a call's callee and type arguments attach like Prettier's:
+// a same-line line comment trails the callee / the type arguments and flushes right there
+// (`line_suffix_boundary`, Prettier's `printCallee`), never riding to the statement's end.
+foo // c1
+<string>(1);
+foo<string> // c2
+(1);
+foo // c3
+<string>();
+foo<string> // c4
+();
+// An own-line comment before an empty `()` keeps its own line, trailing the type arguments
+foo<string>
+// c5
+();
+foo<string>
+/* c6 */
+();
+// Block comments keep Prettier's shapes (a same-line one leads the type arguments)
+foo/* c7 */ <string>(1);
+foo/* c8 */ <string>(1);
+foo<string> /* c9 */();
+// Without type arguments: a same-line line comment trails the callee,
+// block and own-line comments lead the first argument
+foo // c10
+(1);
+foo(/* c11 */ 1);
+foo(
+  // c12
+  1,
+);
+foo // c13
+();
+foo
+// c14
+();
+foo /* c15 */();
+// `new` shares the callee handling
+new A(
+  // c16
+  b,
+  c,
+);
+new A(/* c17 */ b, c);
+new A // c18
+(b, c);
+new A(
+  // c19
+  b,
+  c,
+);
+new A // c20
+<T>(b);
+new A // c21
+();
+// A `new` without parentheses has nothing of its own past the callee
+new A(); // c22
+new A();
+// c23
+x =
+  foo // c24
+  (1);
+
+===================== End =====================

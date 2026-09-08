@@ -9,7 +9,10 @@ use crate::{
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
         trivia::{FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments},
     },
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    print::{suppressed_statement_content_end, trailing_comments_to_move_behind_semicolon},
+    utils::format_node_without_trailing_comments::{
+        FormatNodeWithoutTrailingComments, format_content_without_comments_after,
+    },
     write,
 };
 
@@ -193,29 +196,57 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
         } else if self.force_space {
             write!(f, [space(), self.body]);
         } else {
+            let body_span = self.body.span();
+            // Only live for a suppressed `if` consequent (`stuff() // oxfmt-ignore` before `else`):
+            // print it verbatim, then flush its end-of-line comments.
+            // Otherwise the `IfStatement` wrapper has hidden everything past the consequent already,
+            // and this reduces to the `else` arm.
+            let is_consequent_of_if_statement_parent = matches!(
+                self.body.parent(),
+                AstNodes::IfStatement(if_stmt)
+                if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
+            );
+
+            // The same-line run before the body's distant `;` trails the whole statement
+            // (`for (;;) continue // c` + `;` -> `for (;;) continue; // c`), like Prettier,
+            // whose statement `locEnd` stops at the content: printed past the body's indent, the comment
+            // no longer expands it (see `FormatTrailingComments::StatementEnd`).
+            // Not for a consequent with an `else`, nor for a do-while body:
+            // there the statement continues past the body (`else`, `while (x)`),
+            // so Prettier keeps the comment on the body and its break (the if-else pin in `head-body-blocks.js`).
+            let hoisted = if is_consequent_of_if_statement_parent
+                || matches!(self.body.parent(), AstNodes::DoWhileStatement(_))
+            {
+                None
+            } else {
+                let (content_end, _) = suppressed_statement_content_end(self.body.as_ref(), f);
+                (content_end < body_span.end)
+                    .then(|| {
+                        trailing_comments_to_move_behind_semicolon(f, content_end, body_span.end)
+                    })
+                    .flatten()
+                    .map(|comments| (content_end, comments))
+            };
+
             write!(
                 f,
                 [soft_line_indent_or_space(&format_once(|f| {
-                    // Only live for a suppressed `if` consequent (`stuff() // oxfmt-ignore` before `else`):
-                    // print it verbatim, then flush its end-of-line comments.
-                    // Otherwise the `IfStatement` wrapper has hidden everything past the consequent already,
-                    // and this reduces to the `else` arm.
-                    let body_span = self.body.span();
-                    let is_consequent_of_if_statement_parent = matches!(
-                        self.body.parent(),
-                        AstNodes::IfStatement(if_stmt)
-                        if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
-                    );
                     if is_consequent_of_if_statement_parent {
                         write!(f, FormatNodeWithoutTrailingComments(self.body));
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);
+                    } else if let Some((content_end, _)) = hoisted {
+                        format_content_without_comments_after(self.body, content_end, f);
                     } else {
                         write!(f, self.body);
                     }
                 }))]
             );
+
+            if let Some((_, comments)) = hoisted {
+                FormatTrailingComments::StatementEnd(comments).fmt(f);
+            }
         }
     }
 }

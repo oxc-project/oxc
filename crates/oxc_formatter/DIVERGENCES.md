@@ -527,3 +527,31 @@ var target = x ? y : /** @type {Document} */ ((root).head ?? fallback);
 A cast comment types the parenthesized expression directly after it.
 When the comment binds to an inner expression and the formatter adds parentheses around the whole (a `??` in a conditional branch, a sequence, a return argument), it prints inside the added pair so the cast keeps its target.
 Printed outside, the cast covers the whole expression and tsc types `root` as its uncast type again (`Property 'head' does not exist on type 'Node'`).
+
+## for-x-head-own-line-comment
+
+- Why: invariant (prettier/prettier#12880)
+- Pin: `tests/fixtures/js/comments/for-in-of-head-own-line-comment.js`
+
+An own-line comment between a for-in/for-of head's left side and its right side keeps its own line, above the statement.
+
+```js
+// input
+for (x in
+// c
+y) {}
+
+// ours
+// c
+for (x in y) {
+}
+
+// prettier (first pass; its second pass moves the comment behind the `{`: `for (x in y) { // c`)
+for (x in // c
+y) {
+}
+```
+
+Prettier's output changes line (own-line to the head's line, behind the `in`) and is not a fixpoint:
+its second pass makes the comment trail the head, crossing the `)` and the body's `{`.
+Same family as the in-paren line comment of #head-body-comment-relocation (`head-paren-line-comment.js`).

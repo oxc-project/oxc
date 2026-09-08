@@ -20,7 +20,7 @@ const v = ((/* c */ a), b);
 // Arrow body: the comment leads the sequence and forces the body onto its own line
 ret = () => ((/* c */ a), b);
 
-// return keeps its argument parentheses; the comment stays inside them
+// A return argument re-adds the parentheses too; the comment leads the sequence outside them
 function g() {
   return ((/* c */ a), b);
 }

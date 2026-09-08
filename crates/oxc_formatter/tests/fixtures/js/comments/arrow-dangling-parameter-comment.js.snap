@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A dangling comment in an empty parameter list keeps the last-argument hug
+// (Prettier's expansion bailout never sees a parameter-less list)
+foo((
+  // c1
+) => {});
+foo(a, (
+  // c2
+) => {});
+foo((/* c3 */) => {});
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A dangling comment in an empty parameter list keeps the last-argument hug
+// (Prettier's expansion bailout never sees a parameter-less list)
+foo((
+  // c1
+) => {});
+foo(a, (
+  // c2
+) => {});
+foo((/* c3 */) => {});
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A dangling comment in an empty parameter list keeps the last-argument hug
+// (Prettier's expansion bailout never sees a parameter-less list)
+foo((
+  // c1
+) => {});
+foo(a, (
+  // c2
+) => {});
+foo((/* c3 */) => {});
+
+===================== End =====================

@@ -158,6 +158,19 @@ The `as`/`satisfies` operator gap follows the same policy (see `as_or_satisfies_
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`); their rustdocs cover the trailing-pass suppression mechanics.
 
+A single-statement body's same-line run before its distant `;` (`for (;;) continue // c` + `;`) trails the whole statement:
+Prettier's statement `locEnd` stops at the content, so the comment is the statement's, not the body's.
+`FormatStatementBody` hides it from the body and prints it past the body's indent via `FormatTrailingComments::StatementEnd`
+(a `line_suffix` without `expand_parent`, so the body keeps its fit decision).
+Two bodies keep the comment and its break, like Prettier: an `if` consequent with an `else` and a do-while body (the statement continues past them).
+
+Call-like expressions (`write_callee_and_type_arguments`, `print/call_like_expression/mod.rs`) emit Prettier's `line_suffix_boundary()`
+after the callee and after the type arguments: a same-line line comment trailing either flushes right there (`foo // c` + break + `<T>()`),
+and an own-line comment before an empty `()` keeps its own line, trailing the callee / type arguments.
+Between a callee and its `(`, only a same-line line comment trails the callee; every other comment leads the first argument
+(`foo /* c */(1)` -> `foo(/* c */ 1)`, Prettier's fixpoint); before an empty `()` or `?.` everything trails the callee.
+`new` shares the path, bounded at the node end (a paren-less `new X` owns nothing past its callee).
+
 Prettier's comment attachment is position-heuristic and sometimes asymmetric;
 that is FORMATTER_POLICY's uniform-rule ground (reason 3): one rule over the emulated asymmetry, pinned as a divergence (e.g. DIVERGENCES.md#type-alias-trailing-comment-move).
 

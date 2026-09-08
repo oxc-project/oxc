@@ -39,7 +39,10 @@ pub use arrow_function_expression::{
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
-pub use semicolon::write_comments_before_closing_paren;
+pub use return_or_throw_statement::has_argument_leading_comments;
+pub use semicolon::{
+    trailing_comments_to_move_behind_semicolon, write_comments_before_closing_paren,
+};
 pub use union_type::{
     alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
 };
@@ -820,7 +823,10 @@ fn variable_declaration_content_end(
 /// the trailing `;` (and anything between it and the content) is excluded from the verbatim range,
 /// keyword statements (`debugger`/`break`/`continue`) and variable declarations always re-add `;`,
 /// content-terminated ones only when a source `;` was stripped, and statements ending in a body recurse into the rightmost body.
-fn suppressed_statement_content_end(stmt: &Statement<'_>, f: &JsFormatter<'_, '_>) -> (u32, bool) {
+pub fn suppressed_statement_content_end(
+    stmt: &Statement<'_>,
+    f: &JsFormatter<'_, '_>,
+) -> (u32, bool) {
     match stmt {
         Statement::ExpressionStatement(s) => {
             semicolon_terminated_content_end(s.expression.span().end, s.span, f)
@@ -867,9 +873,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
         if is_block_body {
             // The block's trailing pass would claim a comment past the `while` keyword;
             // the keyword site splits the comments instead.
-            write!(f, "do");
-            write_head_body_separator(body.span().start, f);
-            FormatNodeWithoutTrailingComments(body).fmt(f);
+            // Grouped like the other heads, so a same-line block comment ending its line
+            // stays inline before an empty body (`do /* c */ {} while (1)`, like Prettier)
+            // and breaks only when the body does.
+            write!(
+                f,
+                group(&format_with(|f| {
+                    write!(f, "do");
+                    write_head_body_separator(body.span().start, f);
+                    FormatNodeWithoutTrailingComments(body).fmt(f);
+                }))
+            );
         } else {
             write!(f, group(&format_args!("do", FormatStatementBody::new(body))));
         }

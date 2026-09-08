@@ -721,6 +721,11 @@ fn write_grouped_arguments<'a>(
             // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
             let is_decorated = is_decorated_function(argument);
 
+            // Empty parameters cannot break by themselves: a dangling comment in them
+            // (`foo((\n  // c\n) => {})`) stays hugged, like Prettier (its expansion bailout
+            // never sees a parameter-less list).
+            let has_parameters = !params.items.is_empty() || params.rest.is_some();
+
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
             // However, decorated functions are allowed to break while staying hugged.
@@ -729,15 +734,16 @@ fn write_grouped_arguments<'a>(
             }));
 
             if let Some(interned) = interned {
-                if interned.will_break() && !is_decorated {
+                if interned.will_break() && !is_decorated && has_parameters {
                     return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
                 }
 
                 // No break; it should print the element without soft lines.
                 // It would be used in the `FormatFunction` or `FormatJsArrowFunctionExpression`.
                 // For decorated functions, we keep the original cached element (with soft lines)
-                // so the parameters can break while staying hugged.
-                if !is_decorated {
+                // so the parameters can break while staying hugged;
+                // so do empty parameters, whose dangling comment keeps its own lines.
+                if !is_decorated && has_parameters {
                     f.context_mut().cache_element(params.as_ref(), interned);
                 }
             }

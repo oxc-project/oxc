@@ -7,7 +7,7 @@ use crate::{
     formatter::{
         Comments, JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
-        trivia::FormatTrailingComments,
+        trivia::{FormatTrailingComments, is_alignable_comment},
     },
     print::{
         BinaryLikeExpression, FormatWrite, alias_union_breaks_after_operator,
@@ -766,6 +766,15 @@ fn should_break_after_operator<'a>(
             return true;
         }
 
+        // Prettier's `isIndentableBlockComment` (also applied ahead of the type-cast comment rule):
+        // a star-aligned multiline block comment breaks after the operator even when the value follows it inline
+        // (`x =\n  /**\n   * c\n   */ value`).
+        if comment.is_multiline_block()
+            && is_alignable_comment(f.source_text().text_for(&comment.span))
+        {
+            return true;
+        }
+
         // A tight type-cast comment hugs its parenthesized node,
         // so it doesn't force the break itself,
         // and the comments after it sit inside the cast's parentheses and belong to the inner node, stop scanning;
@@ -1060,19 +1069,22 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         return true;
     }
 
-    if f.comments().has_comment_in_span(call_expressions[0].span) {
-        return false;
-    }
-
     for call_expression in &call_expressions {
         let args = &call_expression.arguments;
 
         let is_breakable_call = match args.len() {
             0 => false,
             1 => match args.iter().next() {
-                Some(first_argument) => first_argument
-                    .as_expression()
-                    .is_none_or(|e| !is_short_argument(e, threshold, f)),
+                // A commented lone argument is never short (Prettier's `isLoneShortArgument`);
+                // a dangling comment in an empty `()` doesn't count
+                Some(first_argument) => {
+                    f.comments().has_comment_in_range(
+                        call_expression.callee.span().end,
+                        call_expression.span.end,
+                    ) || first_argument
+                        .as_expression()
+                        .is_none_or(|e| !is_short_argument(e, threshold, f))
+                }
                 None => false,
             },
             _ => true,

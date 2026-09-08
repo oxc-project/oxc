@@ -74,24 +74,32 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
         let comments = f.context().comments().comments_before(quasi.span.start);
         if !comments.is_empty() {
-            // The separator before the first comment is a plain space when the comment starts on the same line,
-            // and a soft line break otherwise.
+            // The same-line run trails the tag with a space on each side
+            // (`foo /* a */ `x``, Prettier's fixpoint whether or not the comment ended its source line;
+            // a line comment rides a `line_suffix` flushed by the boundary below),
+            // an own-line run keeps its lines after a soft line break:
             // ```js
-            // foo /* a */ `x`; // same line -> space
+            // foo /* a */ `x`;
             //
             // foo
             // /* b */
-            // `x`;             // own line  -> soft line break
+            // `x`;
             // ```
             // No `group` here:
-            // the line elements inside the comments must inherit the enclosing mode,
+            // the line elements inside the own-line comments must inherit the enclosing mode,
             // so a comment followed by a newline in the source keeps its line break.
-            if comments[0].preceded_by_newline() {
-                write!(f, [soft_line_break()]);
-            } else {
-                write!(f, [space()]);
+            let same_line_count =
+                comments.iter().take_while(|comment| !comment.preceded_by_newline()).count();
+            let (same_line, own_line) = comments.split_at(same_line_count);
+            if !same_line.is_empty() {
+                write!(f, FormatTrailingComments::Comments(same_line));
+                if same_line.last().is_some_and(|comment| comment.is_block()) {
+                    write!(f, space());
+                }
             }
-            write!(f, [FormatLeadingComments::Comments(comments)]);
+            if !own_line.is_empty() {
+                write!(f, [soft_line_break(), FormatLeadingComments::Comments(own_line)]);
+            }
         }
 
         write!(f, [line_suffix_boundary()]);

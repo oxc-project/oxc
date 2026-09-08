@@ -6,7 +6,10 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{JsFormatter, JsFormatterExt as _},
-    print::{BinaryLikeExpression, should_flatten, unary_argument_takes_comment_parens},
+    print::{
+        BinaryLikeExpression, has_argument_leading_comments, should_flatten,
+        unary_argument_takes_comment_parens,
+    },
     utils::expression::ExpressionLeftSide,
 };
 
@@ -658,6 +661,13 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             // - `(a = b)[obj]` = parens needed for object
             #[expect(clippy::match_same_arms)]
             AstNodes::ComputedMemberExpression(_) => true,
+            // `return (a = b)`, except when the statement adds the pair itself
+            // for the argument's leading comments (Prettier's `willReturnOrThrowStatementBreak`):
+            // - `return (\n  // c\n  a = b\n)`
+            AstNodes::ReturnStatement(stmt) => {
+                stmt.argument().is_none_or(|argument| !has_argument_leading_comments(argument, f))
+            }
+            AstNodes::ThrowStatement(stmt) => !has_argument_leading_comments(stmt.argument(), f),
             // For statements, no parens needed in initializer or update sections:
             // - `for (a = 1; ...; a = 2) {}` = both assignments don't need parens
             AstNodes::ForStatement(stmt) => {

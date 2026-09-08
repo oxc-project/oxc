@@ -335,14 +335,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, ["require("]);
-
+        // Printed like a `require` call's arguments (Prettier routes it through `printCallExpression`):
+        // a lone string never breaks, whatever its width;
+        // with comments the group breaks only for one ending its line (`require(\n  // c\n  "a"\n)`),
+        // a same-line block comment stays inline (`require(/* c */ "a")`).
         if f.comments().has_comment_in_span(self.span) {
-            write!(f, [block_indent(self.expression())]);
+            write!(
+                f,
+                [group(&format_args!("require(", soft_block_indent(&self.expression()), ")"))]
+            );
         } else {
-            write!(f, [self.expression()]);
+            write!(f, ["require(", self.expression(), ")"]);
         }
-
-        write!(f, [")"]);
     }
 }

@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{Buffer, Format, GroupId};
-use oxc_span::FileExtension;
+use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -200,7 +200,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
             );
         });
 
-        let should_inline = !is_arrow_function_vars && first_arg_can_be_hugged;
+        // Like Prettier's `shouldInline`: a line comment, or any comment ending its line,
+        // around the argument (its own leading/trailing comments, not the ones nested inside it)
+        // needs the group to break (`foo<A // c` + break + `>()`), so the hug is off
+        let has_line_ending_comment =
+            first_arg_can_be_hugged && f.comments().has_comment_in_span(self.span) && {
+                let comments = f.comments();
+                let argument_span = self.params.first().unwrap().span();
+                comments
+                    .comments_in_range(self.span.start, argument_span.start)
+                    .iter()
+                    .chain(comments.comments_in_range(argument_span.end, self.span.end))
+                    .any(|comment| comment.is_line() || comment.followed_by_newline())
+            };
+
+        let should_inline =
+            !is_arrow_function_vars && first_arg_can_be_hugged && !has_line_ending_comment;
 
         if should_inline {
             write!(f, ["<", format_params, ">"]);
