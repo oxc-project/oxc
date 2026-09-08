@@ -1235,6 +1235,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "jolt"
+version = "0.1.0"
+source = "git+https://github.com/camc314/jolt#e9a5b905ee5ee043511d3376ef75c85a0657e307"
+
+[[package]]
 name = "js-sys"
 version = "0.3.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2006,14 +2011,12 @@ name = "oxc_ecmascript"
 version = "0.149.0"
 dependencies = [
  "cow-utils",
- "dragonbox_ecma",
- "itoa",
+ "jolt",
  "num-bigint",
  "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_compat",
- "oxc_data_structures",
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
