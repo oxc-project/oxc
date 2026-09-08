@@ -453,18 +453,20 @@ impl<'a> AssignmentLike<'a, '_> {
             return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
+        // A cast-parenthesized RHS is Prettier's kept `ParenthesizedExpression`,
+        // opaque to the shape check (same as in `should_break_after_operator`)
         if !left_may_break
             && (is_left_short
-                || matches!(
-                    right_expression.map(AsRef::as_ref),
-                    Some(
+                || right_expression.is_some_and(|expr| {
+                    matches!(
+                        expr.as_ref(),
                         Expression::ClassExpression(_)
                             | Expression::TemplateLiteral(_)
                             | Expression::TaggedTemplateExpression(_)
                             | Expression::BooleanLiteral(_)
                             | Expression::NumericLiteral(_)
-                    )
-                ))
+                    ) && !is_cast_target(expr.span(), f)
+                }))
         {
             return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
