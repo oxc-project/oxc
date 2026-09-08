@@ -6,7 +6,7 @@ use crate::{JSChar, JSStr};
 ///
 /// Appends concatenate UTF-16 values. A leading surrogate at the end of one
 /// append pairs with a trailing surrogate at the start of the next, including
-/// across empty appends. [`finish`](Self::finish) returns canonical WTF-8
+/// across empty appends. [`into_js_str`](Self::into_js_str) returns canonical WTF-8
 /// without copying the completed buffer.
 ///
 /// ```
@@ -18,7 +18,7 @@ use crate::{JSChar, JSStr};
 /// builder.push_code_unit(0xD800);
 /// builder.push_str("");
 /// builder.push_code_unit(0xDC00);
-/// assert_eq!(builder.finish().as_str(), Some("𐀀"));
+/// assert_eq!(builder.into_js_str().as_str(), Some("𐀀"));
 /// ```
 pub struct JSStrBuilder<'a> {
     /// Canonical WTF-8, excluding a held final leading surrogate.
@@ -71,7 +71,7 @@ impl<'a> JSStrBuilder<'a> {
 
     /// Append a Unicode scalar value.
     #[inline]
-    pub fn push_char(&mut self, value: char) {
+    pub fn push(&mut self, value: char) {
         self.push_str(value.encode_utf8(&mut [0; 4]));
     }
 
@@ -170,9 +170,9 @@ impl<'a> JSStrBuilder<'a> {
         self.bytes.extend_from_slice_copy(bytes);
     }
 
-    /// Finish the value without copying or rescanning the buffer.
+    /// Consume the builder and return a string without copying or rescanning the buffer.
     #[inline]
-    pub fn finish(mut self) -> JSStr<'a> {
+    pub fn into_js_str(mut self) -> JSStr<'a> {
         // A pending surrogate always has three bytes of capacity reserved for it.
         self.flush_pending();
         let bytes = self.bytes.into_arena_slice();
@@ -208,6 +208,6 @@ impl<'a> JSStrBuilder<'a> {
 impl<'a> From<JSStrBuilder<'a>> for JSStr<'a> {
     #[inline]
     fn from(builder: JSStrBuilder<'a>) -> Self {
-        builder.finish()
+        builder.into_js_str()
     }
 }
