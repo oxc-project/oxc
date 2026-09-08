@@ -656,6 +656,7 @@ pub use crate::rules::unicorn::no_confusing_array_with::NoConfusingArrayWith as 
 pub use crate::rules::unicorn::no_console_spaces::NoConsoleSpaces as UnicornNoConsoleSpaces;
 pub use crate::rules::unicorn::no_document_cookie::NoDocumentCookie as UnicornNoDocumentCookie;
 pub use crate::rules::unicorn::no_empty_file::NoEmptyFile as UnicornNoEmptyFile;
+pub use crate::rules::unicorn::no_exports_in_scripts::NoExportsInScripts as UnicornNoExportsInScripts;
 pub use crate::rules::unicorn::no_hex_escape::NoHexEscape as UnicornNoHexEscape;
 pub use crate::rules::unicorn::no_immediate_mutation::NoImmediateMutation as UnicornNoImmediateMutation;
 pub use crate::rules::unicorn::no_instanceof_array::NoInstanceofArray as UnicornNoInstanceofArray;
@@ -1404,6 +1405,7 @@ pub enum RuleEnum {
     UnicornNoConsoleSpaces(UnicornNoConsoleSpaces),
     UnicornNoDocumentCookie(UnicornNoDocumentCookie),
     UnicornNoEmptyFile(UnicornNoEmptyFile),
+    UnicornNoExportsInScripts(UnicornNoExportsInScripts),
     UnicornNoHexEscape(UnicornNoHexEscape),
     UnicornNoImmediateMutation(UnicornNoImmediateMutation),
     UnicornNoInstanceofArray(UnicornNoInstanceofArray),
@@ -2340,7 +2342,8 @@ const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_ME
 const UNICORN_NO_CONSOLE_SPACES_ID: usize = UNICORN_NO_CONFUSING_ARRAY_WITH_ID + 1usize;
 const UNICORN_NO_DOCUMENT_COOKIE_ID: usize = UNICORN_NO_CONSOLE_SPACES_ID + 1usize;
 const UNICORN_NO_EMPTY_FILE_ID: usize = UNICORN_NO_DOCUMENT_COOKIE_ID + 1usize;
-const UNICORN_NO_HEX_ESCAPE_ID: usize = UNICORN_NO_EMPTY_FILE_ID + 1usize;
+const UNICORN_NO_EXPORTS_IN_SCRIPTS_ID: usize = UNICORN_NO_EMPTY_FILE_ID + 1usize;
+const UNICORN_NO_HEX_ESCAPE_ID: usize = UNICORN_NO_EXPORTS_IN_SCRIPTS_ID + 1usize;
 const UNICORN_NO_IMMEDIATE_MUTATION_ID: usize = UNICORN_NO_HEX_ESCAPE_ID + 1usize;
 const UNICORN_NO_INSTANCEOF_ARRAY_ID: usize = UNICORN_NO_IMMEDIATE_MUTATION_ID + 1usize;
 const UNICORN_NO_INSTANCEOF_BUILTINS_ID: usize = UNICORN_NO_INSTANCEOF_ARRAY_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3261,6 +3264,7 @@ static RULE_NAMES: [&str; 870usize] = [
     UnicornNoConsoleSpaces::NAME,
     UnicornNoDocumentCookie::NAME,
     UnicornNoEmptyFile::NAME,
+    UnicornNoExportsInScripts::NAME,
     UnicornNoHexEscape::NAME,
     UnicornNoImmediateMutation::NAME,
     UnicornNoInstanceofArray::NAME,
@@ -4217,6 +4221,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UNICORN_NO_CONSOLE_SPACES_ID,
             Self::UnicornNoDocumentCookie(_) => UNICORN_NO_DOCUMENT_COOKIE_ID,
             Self::UnicornNoEmptyFile(_) => UNICORN_NO_EMPTY_FILE_ID,
+            Self::UnicornNoExportsInScripts(_) => UNICORN_NO_EXPORTS_IN_SCRIPTS_ID,
             Self::UnicornNoHexEscape(_) => UNICORN_NO_HEX_ESCAPE_ID,
             Self::UnicornNoImmediateMutation(_) => UNICORN_NO_IMMEDIATE_MUTATION_ID,
             Self::UnicornNoInstanceofArray(_) => UNICORN_NO_INSTANCEOF_ARRAY_ID,
@@ -5248,6 +5253,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::CATEGORY,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::CATEGORY,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::CATEGORY,
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::CATEGORY,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::CATEGORY,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::CATEGORY,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::CATEGORY,
@@ -6267,6 +6273,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::FIX,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::FIX,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::FIX,
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::FIX,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::FIX,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::FIX,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::FIX,
@@ -7398,6 +7405,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::documentation(),
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::documentation(),
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::documentation(),
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::documentation(),
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::documentation(),
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::documentation(),
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::documentation(),
@@ -9382,6 +9390,10 @@ impl RuleEnum {
                 .or_else(|| UnicornNoDocumentCookie::schema(generator)),
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::config_schema(generator)
                 .or_else(|| UnicornNoEmptyFile::schema(generator)),
+            Self::UnicornNoExportsInScripts(_) => {
+                UnicornNoExportsInScripts::config_schema(generator)
+                    .or_else(|| UnicornNoExportsInScripts::schema(generator))
+            }
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::config_schema(generator)
                 .or_else(|| UnicornNoHexEscape::schema(generator)),
             Self::UnicornNoImmediateMutation(_) => {
@@ -10941,6 +10953,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => "unicorn",
             Self::UnicornNoDocumentCookie(_) => "unicorn",
             Self::UnicornNoEmptyFile(_) => "unicorn",
+            Self::UnicornNoExportsInScripts(_) => "unicorn",
             Self::UnicornNoHexEscape(_) => "unicorn",
             Self::UnicornNoImmediateMutation(_) => "unicorn",
             Self::UnicornNoInstanceofArray(_) => "unicorn",
@@ -12949,6 +12962,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run(node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run(node, ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run(node, ctx),
+            Self::UnicornNoExportsInScripts(rule) => rule.run(node, ctx),
             Self::UnicornNoHexEscape(rule) => rule.run(node, ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.run(node, ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.run(node, ctx),
@@ -13836,6 +13850,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run_once(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_once(ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run_once(ctx),
+            Self::UnicornNoExportsInScripts(rule) => rule.run_once(ctx),
             Self::UnicornNoHexEscape(rule) => rule.run_once(ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.run_once(ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.run_once(ctx),
@@ -14802,6 +14817,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoEmptyFile(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoExportsInScripts(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoHexEscape(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15728,6 +15744,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.should_run(ctx),
             Self::UnicornNoDocumentCookie(rule) => rule.should_run(ctx),
             Self::UnicornNoEmptyFile(rule) => rule.should_run(ctx),
+            Self::UnicornNoExportsInScripts(rule) => rule.should_run(ctx),
             Self::UnicornNoHexEscape(rule) => rule.should_run(ctx),
             Self::UnicornNoImmediateMutation(rule) => rule.should_run(ctx),
             Self::UnicornNoInstanceofArray(rule) => rule.should_run(ctx),
@@ -16820,6 +16837,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::IS_TSGOLINT_RULE,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::IS_TSGOLINT_RULE,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::IS_TSGOLINT_RULE,
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::IS_TSGOLINT_RULE,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::IS_TSGOLINT_RULE,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::IS_TSGOLINT_RULE,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::IS_TSGOLINT_RULE,
@@ -17972,6 +17990,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::VERSION,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::VERSION,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::VERSION,
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::VERSION,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::VERSION,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::VERSION,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::VERSION,
@@ -19043,6 +19062,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::HAS_CONFIG,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::HAS_CONFIG,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::HAS_CONFIG,
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::HAS_CONFIG,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::HAS_CONFIG,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::HAS_CONFIG,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::HAS_CONFIG,
@@ -20081,6 +20101,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::INFO,
             Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::INFO,
             Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::INFO,
+            Self::UnicornNoExportsInScripts(_) => UnicornNoExportsInScripts::INFO,
             Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::INFO,
             Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::INFO,
             Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::INFO,
@@ -20998,6 +21019,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.types_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.types_info(),
             Self::UnicornNoEmptyFile(rule) => rule.types_info(),
+            Self::UnicornNoExportsInScripts(rule) => rule.types_info(),
             Self::UnicornNoHexEscape(rule) => rule.types_info(),
             Self::UnicornNoImmediateMutation(rule) => rule.types_info(),
             Self::UnicornNoInstanceofArray(rule) => rule.types_info(),
@@ -21872,6 +21894,7 @@ impl RuleEnum {
             Self::UnicornNoConsoleSpaces(rule) => rule.run_info(),
             Self::UnicornNoDocumentCookie(rule) => rule.run_info(),
             Self::UnicornNoEmptyFile(rule) => rule.run_info(),
+            Self::UnicornNoExportsInScripts(rule) => rule.run_info(),
             Self::UnicornNoHexEscape(rule) => rule.run_info(),
             Self::UnicornNoImmediateMutation(rule) => rule.run_info(),
             Self::UnicornNoInstanceofArray(rule) => rule.run_info(),
@@ -22844,6 +22867,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoConsoleSpaces(UnicornNoConsoleSpaces::default()),
         RuleEnum::UnicornNoDocumentCookie(UnicornNoDocumentCookie::default()),
         RuleEnum::UnicornNoEmptyFile(UnicornNoEmptyFile::default()),
+        RuleEnum::UnicornNoExportsInScripts(UnicornNoExportsInScripts::default()),
         RuleEnum::UnicornNoHexEscape(UnicornNoHexEscape::default()),
         RuleEnum::UnicornNoImmediateMutation(UnicornNoImmediateMutation::default()),
         RuleEnum::UnicornNoInstanceofArray(UnicornNoInstanceofArray::default()),

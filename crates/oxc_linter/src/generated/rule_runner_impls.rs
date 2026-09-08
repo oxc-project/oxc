@@ -3309,6 +3309,17 @@ impl RuleRunner for crate::rules::unicorn::no_empty_file::NoEmptyFile {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_exports_in_scripts::NoExportsInScripts {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportDeclaration,
+        AstType::ExportDefaultDeclaration,
+        AstType::ExportFromDeclaration,
+        AstType::ExportNamedDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_hex_escape::NoHexEscape {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::RegExpLiteral,
