@@ -117,7 +117,7 @@ impl<'a> JSStr<'a> {
     pub fn from_utf16_in(units: &[u16], allocator: &impl GetAllocator<'a>) -> Self {
         let mut builder = JSStrBuilder::with_capacity_in(units.len(), allocator.allocator());
         builder.push_utf16(units);
-        builder.finish()
+        builder.into_js_str()
     }
 
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
@@ -136,7 +136,7 @@ impl<'a> JSStr<'a> {
 
     /// Return the byte length of the WTF-8 representation.
     ///
-    /// Use [`utf16_len`](Self::utf16_len) for JavaScript's string length.
+    /// Use [`len_utf16`](Self::len_utf16) for JavaScript's string length.
     #[inline]
     pub const fn len(self) -> usize {
         self.len as usize
@@ -155,7 +155,9 @@ impl<'a> JSStr<'a> {
     }
 
     /// Count UTF-16 code units, including lone surrogates.
-    pub fn utf16_len(self) -> usize {
+    ///
+    /// This scans the bytes in O(n) time.
+    pub fn len_utf16(self) -> usize {
         // Every non-continuation byte starts one code point. Four-byte code
         // points contribute a second code unit. Valid WTF-8 has no other bytes
         // >= 0xF0, so this counts code units without decoding individual points.
