@@ -11,60 +11,6 @@ use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAl
 
 use crate::{JSChar, JSStrBuilder, Str};
 
-/// Packing the metadata gives `JSStr` two machine-word fields on 64-bit targets,
-/// allowing it to pass in registers, like `Ident`. The low 32 bits hold the
-/// byte length; bit 32 records lone surrogates. All other bits are zero.
-#[cfg(target_pointer_width = "64")]
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-struct LenAndFlag(u64);
-
-#[cfg(target_pointer_width = "64")]
-impl LenAndFlag {
-    #[inline]
-    const fn new(len: u32, has_lone_surrogate: bool) -> Self {
-        Self((len as u64) | ((has_lone_surrogate as u64) << 32))
-    }
-
-    #[inline]
-    #[expect(clippy::cast_possible_truncation, reason = "length occupies the low 32 bits")]
-    const fn len(self) -> u32 {
-        self.0 as u32
-    }
-
-    #[inline]
-    const fn has_lone_surrogate(self) -> bool {
-        self.0 >> 32 != 0
-    }
-}
-
-/// Separate u32 fields avoid u64 alignment padding on 32-bit targets.
-#[cfg(target_pointer_width = "32")]
-#[derive(Clone, Copy)]
-#[repr(C)]
-struct LenAndFlag {
-    len: u32,
-    has_lone_surrogate: bool,
-}
-
-#[cfg(target_pointer_width = "32")]
-impl LenAndFlag {
-    #[inline]
-    const fn new(len: u32, has_lone_surrogate: bool) -> Self {
-        Self { len, has_lone_surrogate }
-    }
-
-    #[inline]
-    const fn len(self) -> u32 {
-        self.len
-    }
-
-    #[inline]
-    const fn has_lone_surrogate(self) -> bool {
-        self.has_lone_surrogate
-    }
-}
-
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
 /// JavaScript strings can contain lone surrogates, which Rust's [`prim@str`] cannot
@@ -122,7 +68,8 @@ impl LenAndFlag {
 #[repr(C)]
 pub struct JSStr<'a> {
     ptr: NonNull<u8>,
-    len_and_flag: LenAndFlag,
+    len: u32,
+    has_lone_surrogate: bool,
     _marker: PhantomData<&'a [u8]>,
 }
 
@@ -192,19 +139,19 @@ impl<'a> JSStr<'a> {
     /// Use [`utf16_len`](Self::utf16_len) for JavaScript's string length.
     #[inline]
     pub const fn len(self) -> usize {
-        self.len_and_flag.len() as usize
+        self.len as usize
     }
 
     /// Return whether the string is empty.
     #[inline]
     pub const fn is_empty(self) -> bool {
-        self.len_and_flag.len() == 0
+        self.len == 0
     }
 
     /// Return whether the string contains a lone surrogate, in O(1).
     #[inline]
     pub const fn has_lone_surrogate(self) -> bool {
-        self.len_and_flag.has_lone_surrogate()
+        self.has_lone_surrogate
     }
 
     /// Count UTF-16 code units, including lone surrogates.
@@ -254,7 +201,8 @@ impl<'a> JSStr<'a> {
     ) -> Self {
         Self {
             ptr: NonNull::from_ref(bytes).cast(),
-            len_and_flag: LenAndFlag::new(bytes.len() as u32, has_lone_surrogate),
+            len: bytes.len() as u32,
+            has_lone_surrogate,
             _marker: PhantomData,
         }
     }
