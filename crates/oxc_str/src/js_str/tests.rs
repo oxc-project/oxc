@@ -38,7 +38,7 @@ fn assert_value(value: JSStr<'_>, units: &[u16]) {
     assert_eq!(value.chars().map(JSChar::to_u32).collect::<Vec<_>>(), expected_points);
     assert_eq!(value.as_bytes(), expected_bytes);
     assert_eq!(value.len(), expected_bytes.len());
-    assert_eq!(value.utf16_len(), units.len());
+    assert_eq!(value.len_utf16(), units.len());
     assert_eq!(value.has_lone_surrogate(), has_lone);
     let utf8 = String::from_utf16(units).ok();
     assert_eq!(value.as_str(), utf8.as_deref());
@@ -80,9 +80,9 @@ fn js_char_range_and_encoding() {
         builder.push_js_char(js_char);
         if let Some(c) = char::from_u32(value) {
             assert_eq!(JSChar::from(c), js_char);
-            assert_eq!(builder.finish().as_str(), Some(c.encode_utf8(&mut [0; 4]) as &str));
+            assert_eq!(builder.into_js_str().as_str(), Some(c.encode_utf8(&mut [0; 4]) as &str));
         } else {
-            assert_value(builder.finish(), &[u16::try_from(value).unwrap()]);
+            assert_value(builder.into_js_str(), &[u16::try_from(value).unwrap()]);
         }
     }
 }
@@ -127,24 +127,24 @@ fn clone_survives_original_arena() {
 }
 
 #[test]
-fn empty_builders_and_finish_do_not_allocate() {
+fn empty_builders_and_into_js_str_do_not_allocate() {
     let allocator = Allocator::new();
     let before = allocator.used_bytes();
-    assert_eq!(JSStrBuilder::new_in(&allocator).finish(), JSStr::empty());
-    assert_eq!(JSStrBuilder::with_capacity_in(0, &allocator).finish(), JSStr::empty());
+    assert_eq!(JSStrBuilder::new_in(&allocator).into_js_str(), JSStr::empty());
+    assert_eq!(JSStrBuilder::with_capacity_in(0, &allocator).into_js_str(), JSStr::empty());
     assert_eq!(allocator.used_bytes(), before);
 
     let mut builder = JSStrBuilder::new_in(&allocator);
     builder.push_code_unit(0xD800);
     let before = allocator.used_bytes();
-    assert_value(builder.finish(), &[0xD800]);
+    assert_value(builder.into_js_str(), &[0xD800]);
     assert_eq!(allocator.used_bytes(), before);
 
     let mut builder = JSStrBuilder::with_capacity_in(64, &allocator);
     builder.push_str("hello");
     builder.push_code_unit(0xD800);
     let before = allocator.used_bytes();
-    assert_value(builder.finish(), &[0x68, 0x65, 0x6C, 0x6C, 0x6F, 0xD800]);
+    assert_value(builder.into_js_str(), &[0x68, 0x65, 0x6C, 0x6C, 0x6F, 0xD800]);
     assert_eq!(allocator.used_bytes(), before);
 }
 
@@ -159,7 +159,7 @@ fn boundary_pairing_and_empty_appends() {
     builder.push_utf16(&[]);
     builder.push_js_str(JSStr::empty());
     builder.push_js_str(trail);
-    assert_eq!(builder.finish(), JSStr::from("𐀀"));
+    assert_eq!(builder.into_js_str(), JSStr::from("𐀀"));
 
     for units in [
         vec![0xD800, 0xD800],
@@ -172,7 +172,7 @@ fn boundary_pairing_and_empty_appends() {
         for &unit in &units {
             builder.push_js_str(JSStr::from_utf16_in(&[unit], &&allocator));
         }
-        assert_value(builder.finish(), &units);
+        assert_value(builder.into_js_str(), &units);
     }
 }
 
@@ -198,7 +198,7 @@ fn every_short_partition() {
                         for part in [&units[..first], &units[first..second], &units[second..]] {
                             builder.push_js_str(JSStr::from_utf16_in(part, &&allocator));
                         }
-                        assert_value(builder.finish(), &units);
+                        assert_value(builder.into_js_str(), &units);
                     }
                 }
             }
@@ -210,7 +210,7 @@ fn concat<'a>(allocator: &'a Allocator, a: JSStr<'_>, b: JSStr<'_>) -> JSStr<'a>
     let mut builder = JSStrBuilder::new_in(allocator);
     builder.push_js_str(a);
     builder.push_js_str(b);
-    builder.finish()
+    builder.into_js_str()
 }
 
 #[test]
@@ -243,7 +243,7 @@ fn randomized_appends_and_associativity() {
                 _ => {
                     for decoded in char::decode_utf16(units.iter().copied()) {
                         match decoded {
-                            Ok(c) => builder.push_char(c),
+                            Ok(c) => builder.push(c),
                             Err(error) => builder.push_code_unit(error.unpaired_surrogate()),
                         }
                     }
@@ -251,7 +251,7 @@ fn randomized_appends_and_associativity() {
             }
             expected.extend_from_slice(&units);
         }
-        let value = builder.finish();
+        let value = builder.into_js_str();
         assert_value(value, &expected);
         let n = expected.len();
         let a = JSStr::from_utf16_in(&expected[..n / 3], &&allocator);
@@ -273,7 +273,7 @@ fn growth_with_interleaved_allocations() {
         expected.extend(units);
         allocator.alloc([42u8; 128]);
     }
-    assert_value(builder.finish(), &expected);
+    assert_value(builder.into_js_str(), &expected);
 }
 
 #[test]
