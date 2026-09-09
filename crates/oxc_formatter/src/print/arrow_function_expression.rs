@@ -325,7 +325,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         // This matches Prettier, which allows type annotations when
         // grouping arrow expressions, but disallows them when grouping
         // normal function expressions.
-        if !has_only_simple_parameters(parameters, true) {
+        if !has_only_simple_parameters(parameters, None, true) {
             return true;
         }
 

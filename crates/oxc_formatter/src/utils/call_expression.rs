@@ -71,9 +71,10 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
             }
 
             let (parameter_count, has_block_body) = match second {
-                Argument::FunctionExpression(function) => {
-                    (function.params.parameters_count(), true)
-                }
+                Argument::FunctionExpression(function) => (
+                    function.params.parameters_count() + usize::from(function.this_param.is_some()),
+                    true,
+                ),
                 Argument::ArrowFunctionExpression(arrow) => {
                     (arrow.params.parameters_count(), !arrow.is_expression())
                 }
