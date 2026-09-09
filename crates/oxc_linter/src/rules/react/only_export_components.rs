@@ -1,7 +1,6 @@
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
@@ -244,25 +243,6 @@ impl OnlyExportComponents {
         }
     }
 
-    fn is_exported(ctx: &LintContext, node_id: NodeId) -> bool {
-        let semantic = ctx.semantic();
-        let nodes = semantic.nodes();
-
-        std::iter::successors(Some(node_id), |&id| {
-            let parent = nodes.parent_id(id);
-            if parent == id { None } else { Some(parent) }
-        })
-        .any(|id| {
-            matches!(
-                nodes.get_node(id).kind(),
-                AstKind::ExportDefaultDeclaration(_)
-                    | AstKind::ExportDeclaration(_)
-                    | AstKind::ExportFromDeclaration(_)
-                    | AstKind::ExportNamedDeclaration(_)
-            )
-        })
-    }
-
     fn analyze_exports(&self, ctx: &LintContext) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
         let module_record = ctx.module_record();
@@ -315,13 +295,16 @@ impl OnlyExportComponents {
         ctx.semantic()
             .nodes()
             .iter()
+            // Only top-level declarations can affect Fast Refresh. The reference implementation
+            // (`eslint-plugin-react-refresh`) only scans `program.body`, so nested components
+            // (e.g. a `PascalCase` function returned from a factory) must not be flagged.
+            .filter(|node| matches!(ctx.nodes().parent_kind(node.id()), AstKind::Program(_)))
             .filter_map(|node| match node.kind() {
                 AstKind::VariableDeclaration(var_decl) => {
                     var_decl.declarations.iter().find_map(|declarator| {
                         if let BindingPattern::BindingIdentifier(binding_id) = &declarator.id
                             && is_react_component_name(&binding_id.name)
                             && self.can_be_react_function_component(declarator.init.as_ref())
-                            && !Self::is_exported(ctx, node.id())
                         {
                             return Some(binding_id.span);
                         }
@@ -329,11 +312,7 @@ impl OnlyExportComponents {
                     })
                 }
                 AstKind::Function(func) => func.id.as_ref().and_then(|id| {
-                    if is_react_component_name(&id.name) && !Self::is_exported(ctx, node.id()) {
-                        Some(id.span)
-                    } else {
-                        None
-                    }
+                    if is_react_component_name(&id.name) { Some(id.span) } else { None }
                 }),
                 _ => None,
             })
@@ -899,6 +878,16 @@ export function Button(props: PropsWithChildren): ReactNode {
         ),
         // Named HOC export with anonymous arrow function argument
         ("export const Foo = React.memo(() => <div/>); export const Bar = () => null;", None),
+        // Non-exported nested PascalCase component must not be flagged as a local component,
+        // since only top-level declarations affect Fast Refresh (#24854).
+        (
+            "export const helper = 1; function factory() { return function Inner() { return <span />; }; }",
+            None,
+        ),
+        (
+            "export const helper = 1; function factory() { const Inner = () => <span />; return Inner; }",
+            None,
+        ),
     ];
 
     let fail = vec![
