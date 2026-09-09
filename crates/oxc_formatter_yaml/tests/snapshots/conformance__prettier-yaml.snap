@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/conformance.rs
 expression: report
 ---
-yaml compatibility: 922/1012 (91.11%), 19 files skipped
+yaml compatibility: 922/1012 (91.11%), 0 files skipped
 
 # Failed
 
@@ -98,25 +98,3 @@ yaml compatibility: 922/1012 (91.11%), 19 files skipped
 | yaml/yaml-test-suite/snippet: NJ66.yaml - Multiline plain flow mapping key | 💥 | 50.00% |
 | yaml/yaml-test-suite/snippet: UT92.yaml - Spec Example 9.4. Explicit Documents | 💥 | 66.67% |
 | yaml/yaml-test-suite/snippet: Y79Y-2.yaml - Tabs in various contexts | 💥 | 66.67% |
-
-# Skipped (parse error, TODO: should be ignored or supported)
-
-- yaml/json-test-suite/snippet: i_object_key_lone_2nd_surrogate.json
-- yaml/json-test-suite/snippet: i_string_1st_surrogate_but_2nd_missing.json
-- yaml/json-test-suite/snippet: i_string_1st_valid_surrogate_2nd_invalid.json
-- yaml/json-test-suite/snippet: i_string_incomplete_surrogate_and_escape_valid.json
-- yaml/json-test-suite/snippet: i_string_incomplete_surrogate_pair.json
-- yaml/json-test-suite/snippet: i_string_incomplete_surrogates_escape_valid.json
-- yaml/json-test-suite/snippet: i_string_invalid_lonely_surrogate.json
-- yaml/json-test-suite/snippet: i_string_invalid_surrogate.json
-- yaml/json-test-suite/snippet: i_string_inverted_surrogates_U+1D11E.json
-- yaml/json-test-suite/snippet: i_string_lone_second_surrogate.json
-- yaml/json-test-suite/snippet: string_1_escaped_invalid_codepoint.json
-- yaml/json-test-suite/snippet: string_2_escaped_invalid_codepoints.json
-- yaml/json-test-suite/snippet: string_3_escaped_invalid_codepoints.json
-- yaml/json-test-suite/snippet: y_string_accepted_surrogate_pair.json
-- yaml/json-test-suite/snippet: y_string_accepted_surrogate_pairs.json
-- yaml/json-test-suite/snippet: y_string_last_surrogates_1_and_2.json
-- yaml/json-test-suite/snippet: y_string_surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json
-- yaml/json-test-suite/snippet: y_string_unicode_U+10FFFE_nonchar.json
-- yaml/json-test-suite/snippet: y_string_unicode_U+1FFFE_nonchar.json
