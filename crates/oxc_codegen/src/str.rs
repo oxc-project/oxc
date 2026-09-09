@@ -404,8 +404,9 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
     ])
 };
 
-/// As [`ESCAPES`], but every UTF-8 lead byte (0xC0-0xFF) maps to `Escape::UC`, so that all
-/// non-ASCII characters are printed as `\u` escapes. Used when `ascii_only` is enabled.
+/// As [`ESCAPES`], but bytes 0xC0-0xFF map to `Escape::UC`. This range includes every
+/// non-ASCII UTF-8 lead byte, so all non-ASCII characters are printed as `\u` escapes
+/// when `ascii_only` is enabled.
 static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
     let mut table = ESCAPES.0;
     let mut i = 0xC0;
@@ -752,8 +753,8 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
     unsafe { state.consume_bytes_unchecked(3) };
 }
 
-// Any UTF-8 lead byte (0xC0-0xFF), `ascii_only` mode: print the character as `\uXXXX`
-// (or an escaped surrogate pair above the BMP).
+// Non-ASCII UTF-8 lead byte, `ascii_only` mode: print the character as `\uXXXX`
+// (or a `\u{...}` code point escape above the BMP).
 unsafe fn print_unicode_escaped(codegen: &mut Codegen, state: &mut PrintStringState) {
     debug_assert!(state.peek().is_some_and(|b| b >= 0xC0));
 

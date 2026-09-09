@@ -101,9 +101,9 @@ pub struct Codegen<'a> {
     // states
     prev_op_end: usize,
     prev_reg_exp_end: usize,
-    /// Buffer length right after an identifier was printed ending in a `\u` escape
-    /// (`ascii_only`): its last byte (`}` or a hex digit) does not look like an identifier
-    /// character, but a following keyword still needs a separating space.
+    /// Buffer length immediately after printing an identifier containing Unicode escapes.
+    /// Tracks token boundaries when a code point escape ends in `}`, which is not an
+    /// identifier character, but a following keyword still needs a separating space.
     prev_escaped_ident_end: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
@@ -162,10 +162,10 @@ pub struct Codegen<'a> {
 pub(crate) enum NonAsciiEscape {
     /// An IdentifierName.
     Identifier,
-    /// A regular expression's pattern source (raw text; a preceding backslash is consumed;
-    /// astral characters become a surrogate pair, valid with or without the `u` flag).
+    /// A regular expression's pattern source (raw text; an escaping backslash is consumed;
+    /// astral characters become a surrogate pair, valid with or without the `u`/`v` flags).
     RegExp,
-    /// An untagged template literal quasi (raw text; a preceding backslash is consumed, an
+    /// An untagged template literal quasi (raw text; an escaping backslash is consumed, an
     /// LS/PS line continuation is respelled with LF, `</script` is escaped).
     TemplateRaw,
     /// A directive's raw string text (as `TemplateRaw`, without the `</script` handling).
@@ -418,8 +418,8 @@ impl<'a> Codegen<'a> {
     }
 
     /// Print `ch` as `\uXXXX`, or as an escaped UTF-16 surrogate pair above the BMP. Used in
-    /// regular expression source, where `\u{…}` is only valid with the `u`/`v` flag but a
-    /// surrogate pair matches the same text with or without it.
+    /// regular expression source, where `\u{…}` requires the `u`/`v` flag. Surrogate pair
+    /// escapes preserve the original character's matching behavior under the pattern's flags.
     #[inline]
     fn print_unicode_escape_utf16(&mut self, ch: char) {
         let mut units = [0u16; 2];
@@ -1011,8 +1011,7 @@ impl<'a> Codegen<'a> {
 
     /// A component reference in JSX position (`<Foo/>`, `<Foo.Bar/>`). JSX names have no escape
     /// syntax, so — unlike [`IdentifierReference`] elsewhere — the (possibly renamed) name is
-    /// printed verbatim even under `ascii_only`; JSX-preserving output with non-ASCII component
-    /// names is the one construct that cannot be made 7-bit clean.
+    /// printed verbatim even under `ascii_only`.
     fn print_jsx_identifier_reference(&mut self, ident: &IdentifierReference<'_>) {
         let name = self.get_identifier_reference_name(ident);
         self.add_source_mapping_for_name(ident.span, name);

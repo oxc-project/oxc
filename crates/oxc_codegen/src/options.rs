@@ -15,16 +15,19 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub minify: bool,
 
-    /// Escape every non-ASCII character so the emitted code is 7-bit clean
-    /// (esbuild's `charset: 'ascii'`, terser's `ascii_only`).
+    /// Escape non-ASCII characters in string literals, untagged template literals, regular
+    /// expression literals and identifier names.
     ///
-    /// String literals, untagged template literals, regular expression literals and
-    /// identifier names are escaped (`\uXXXX`; `\u{XXXXX}` above the BMP, or a surrogate
-    /// pair inside a regular expression, which is visible through `RegExp#source`). Tagged
-    /// template quasis (their raw value is observable), JSX and comments are left as written.
+    /// Uses `\uXXXX` for characters up to U+FFFF and `\u{...}` for higher code points.
+    /// Regular expressions use escaped UTF-16 surrogate pairs for higher code points instead;
+    /// escaping changes the observable `RegExp.prototype.source` value.
     ///
     /// Code point escapes (`\u{...}`) require ES2015 or later; this option does not provide
     /// ES5-compatible output.
+    ///
+    /// Non-ASCII characters are left unescaped in tagged template quasis (whose raw text is
+    /// observable), JSX names and text, JSX attribute strings, hashbangs and preserved comments.
+    /// JavaScript expressions inside tagged templates and JSX are escaped normally.
     ///
     /// Default is `false`.
     pub ascii_only: bool,

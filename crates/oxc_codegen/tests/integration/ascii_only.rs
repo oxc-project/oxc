@@ -1,4 +1,4 @@
-//! `CodegenOptions::ascii_only`: every emitted byte is ASCII and the program means the same.
+//! ASCII escaping and exceptions for `CodegenOptions::ascii_only`.
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -37,9 +37,9 @@ fn off_by_default() {
 fn string_literals() {
     test("let x = 'café';", "let x = \"caf\\u00E9\";\n");
     test("let x = '日本語';", "let x = \"\\u65E5\\u672C\\u8A9E\";\n");
-    // Above the BMP: code point escape, as esbuild emits for ES2015+.
+    // Above the BMP: ES2015 code point escape.
     test("let x = '😀';", "let x = \"\\u{1F600}\";\n");
-    // Already-escaped input and LS/PS are unaffected.
+    // Existing escapes and line separators retain their values.
     test("let x = '\\u00E9';", "let x = \"\\u00E9\";\n");
     test("let x = '\u{2028}';", "let x = \"\\u2028\";\n");
     // `</script` handling is preserved inside the same literal.
@@ -156,7 +156,7 @@ fn typescript() {
 #[test]
 fn regular_expressions() {
     test("let r = /café/g;", "let r = /caf\\u00E9/g;\n");
-    // In a regex an astral char is a surrogate pair (no `\u{}` without the `u` flag).
+    // Regex patterns use surrogate pair escapes, which also work without the `u`/`v` flags.
     test("let r = /😀+/u;", "let r = /\\uD83D\\uDE00+/u;\n");
     test("let r = /😀/;", "let r = /\\uD83D\\uDE00/;\n");
     // An identity-escaped non-ASCII char keeps its meaning: the backslash is consumed
@@ -192,8 +192,8 @@ fn tagged_template_is_not_escaped() {
 
 #[test]
 fn jsx_is_not_escaped() {
-    // JSX has no escape syntax: element names, attribute strings and text are printed as
-    // written; only embedded JS expressions are escaped.
+    // JSX names, attribute strings and text are preserved; only embedded JS expressions
+    // receive Unicode escapes.
     test_options(
         "<Кнопка label='é' title={'ü'}>ø</Кнопка>;",
         "<Кнопка label=\"é\" title={\"\\u00FC\"}>ø</Кнопка>;\n",
