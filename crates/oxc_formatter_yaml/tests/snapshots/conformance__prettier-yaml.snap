@@ -2,14 +2,82 @@
 source: crates/oxc_formatter_yaml/tests/conformance.rs
 expression: report
 ---
-yaml compatibility: 345/354 (97.46%), 0 files skipped
+yaml compatibility: 922/1014 (90.93%), 19 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | yaml/block-folded/block-folded-strip.yml | 💥💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >+\n" | 💥💥💥 | 0.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n   \n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >-\n  x\n  \t\n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n   \n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: >\n  x\n  \t\n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |+\n" | 💥💥💥 | 0.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n   \n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |-\n  x\n  \t\n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n   \n\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n\n" | 💥 | 80.00% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n\n..." | 💥 | 85.71% |
+| yaml/block-value/snippet: "foo: |\n  x\n  \t\n\n\n\n\n..." | 💥 | 85.71% |
 | yaml/flow-mapping/comments/key.yml | 💥 | 43.75% |
+| yaml/json-test-suite/snippet: i_string_UTF-16LE_with_BOM.json | 💥 | 0.00% |
+| yaml/json-test-suite/snippet: i_string_utf16BE_no_BOM.json | 💥 | 0.00% |
 | yaml/mapping/duplicated-keys/flow-mapping.yml | 💥 | 85.71% |
 | yaml/spec/anchors-and-tags.yml | 💥💥 | 75.00% |
 | yaml/spec/node-anchor-and-tag-on-seperate-lines.yml | 💥💥 | 50.00% |
@@ -17,3 +85,40 @@ yaml compatibility: 345/354 (97.46%), 0 files skipped
 | yaml/spec/spec-example-7-20-single-pair-explicit-entry.yml | 💥✨ | 12.50% |
 | yaml/spec/spec-example-9-4-explicit-documents.yml | 💥✨ | 33.33% |
 | yaml/spec/various-combinations-of-tags-and-anchors.yml | 💥💥 | 75.00% |
+| yaml/yaml-test-suite/snippet: 2G84-4.yaml - Literal modifers | 💥 | 50.00% |
+| yaml/yaml-test-suite/snippet: 6HB6.yaml - Spec Example 6.1. Indentation Spaces | 💥 | 84.62% |
+| yaml/yaml-test-suite/snippet: 9KAX.yaml - Various combinations of tags and anchors | 💥 | 75.00% |
+| yaml/yaml-test-suite/snippet: 9SA2.yaml - Multiline double quoted flow mapping key | 💥 | 50.00% |
+| yaml/yaml-test-suite/snippet: BU8L.yaml - Node Anchor and Tag on Seperate Lines | 💥 | 50.00% |
+| yaml/yaml-test-suite/snippet: CT4Q.yaml - Spec Example 7.20. Single Pair Explicit Entry | 💥 | 25.00% |
+| yaml/yaml-test-suite/snippet: F2C7.yaml - Anchors and Tags | 💥 | 75.00% |
+| yaml/yaml-test-suite/snippet: HWV9.yaml - Document-end marker | 💥 | 66.67% |
+| yaml/yaml-test-suite/snippet: JEF9-3.yaml - Trailing whitespace in streams | 💥 | 66.67% |
+| yaml/yaml-test-suite/snippet: K3WX.yaml - Colon and adjacent value after comment on next line | 💥 | 25.00% |
+| yaml/yaml-test-suite/snippet: L24T-2.yaml - Trailing line of spaces | 💥 | 80.00% |
+| yaml/yaml-test-suite/snippet: L24T.yaml - Trailing line of spaces | 💥 | 80.00% |
+| yaml/yaml-test-suite/snippet: NJ66.yaml - Multiline plain flow mapping key | 💥 | 50.00% |
+| yaml/yaml-test-suite/snippet: UT92.yaml - Spec Example 9.4. Explicit Documents | 💥 | 66.67% |
+| yaml/yaml-test-suite/snippet: Y79Y-2.yaml - Tabs in various contexts | 💥 | 66.67% |
+
+# Skipped (parse error, TODO: should be ignored or supported)
+
+- yaml/json-test-suite/snippet: i_object_key_lone_2nd_surrogate.json
+- yaml/json-test-suite/snippet: i_string_1st_surrogate_but_2nd_missing.json
+- yaml/json-test-suite/snippet: i_string_1st_valid_surrogate_2nd_invalid.json
+- yaml/json-test-suite/snippet: i_string_incomplete_surrogate_and_escape_valid.json
+- yaml/json-test-suite/snippet: i_string_incomplete_surrogate_pair.json
+- yaml/json-test-suite/snippet: i_string_incomplete_surrogates_escape_valid.json
+- yaml/json-test-suite/snippet: i_string_invalid_lonely_surrogate.json
+- yaml/json-test-suite/snippet: i_string_invalid_surrogate.json
+- yaml/json-test-suite/snippet: i_string_inverted_surrogates_U+1D11E.json
+- yaml/json-test-suite/snippet: i_string_lone_second_surrogate.json
+- yaml/json-test-suite/snippet: string_1_escaped_invalid_codepoint.json
+- yaml/json-test-suite/snippet: string_2_escaped_invalid_codepoints.json
+- yaml/json-test-suite/snippet: string_3_escaped_invalid_codepoints.json
+- yaml/json-test-suite/snippet: y_string_accepted_surrogate_pair.json
+- yaml/json-test-suite/snippet: y_string_accepted_surrogate_pairs.json
+- yaml/json-test-suite/snippet: y_string_last_surrogates_1_and_2.json
+- yaml/json-test-suite/snippet: y_string_surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json
+- yaml/json-test-suite/snippet: y_string_unicode_U+10FFFE_nonchar.json
+- yaml/json-test-suite/snippet: y_string_unicode_U+1FFFE_nonchar.json
