@@ -1,0 +1,21 @@
+crates/oxc_formatter/tests/fixtures/js/jsx/logical-chain-jsx-leading-comment.jsx.snap
+  s_04275f7b55d621::t_283433df049834 52-74,126-150,201-225
+crates/oxc_formatter/tests/fixtures/js/jsx/logical-chain-jsx-leading-comment.jsx
+  s_04275f7b55d621::t_eb7aebd219e679 47-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "91d9dc104c93f2beda88e97b572821e331c01f32",
+  "prompts": {},
+  "sessions": {
+    "s_04275f7b55d621": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a084e5-6fa1-70e1-aa6b-fc51e802b48c",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
