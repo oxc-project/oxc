@@ -1,9 +1,9 @@
 use crate::tables::Tables;
 
-use super::compress;
+use super::compress_blocks;
 
 #[test]
-fn compress_matches_scalar_reference() {
+fn compress_blocks_matches_scalar_reference() {
     let t = Tables::new();
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
@@ -43,7 +43,15 @@ fn compress_matches_scalar_reference() {
         let mut starts = vec![0u32; n + 64];
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
-            compress(&t, st.as_ptr(), kind.as_ptr(), 0, nb, starts.as_mut_ptr(), kinds.as_mut_ptr())
+            compress_blocks(
+                &t,
+                st.as_ptr(),
+                kind.as_ptr(),
+                0,
+                nb,
+                starts.as_mut_ptr(),
+                kinds.as_mut_ptr(),
+            )
         };
         let mut rs: Vec<u32> = Vec::new();
         let mut rk: Vec<u8> = Vec::new();

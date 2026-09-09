@@ -9,7 +9,7 @@ use super::super::{
 
 use super::common::{emit_value, invalid_diags};
 
-pub unsafe fn compress(
+pub(super) unsafe fn compress_blocks(
     _t: &Tables,
     st: *const u64,
     kind: *const u8,
@@ -37,7 +37,7 @@ pub unsafe fn compress(
 }
 
 /// Contents of this function is in common with AVX2 implementation.
-pub unsafe fn build_spans(
+pub(super) unsafe fn build_spans(
     stage_kind: *const u8,
     stage_pos: *const u32,
     m: usize,
@@ -59,7 +59,7 @@ pub unsafe fn build_spans(
     w
 }
 
-pub unsafe fn lanes_post(
+pub(super) unsafe fn lanes_post(
     src: &[u8],
     out_kinds: *const u8,
     out_spans: *const Span,

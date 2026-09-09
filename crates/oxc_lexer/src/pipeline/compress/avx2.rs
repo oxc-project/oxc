@@ -51,7 +51,7 @@ const fn bcompact() -> [[u8; 16]; 256] {
 }
 
 #[inline(never)]
-pub unsafe fn compress(
+pub(super) unsafe fn compress_blocks(
     t: &Tables,
     st: *const u64,
     kind: *const u8,
@@ -106,7 +106,7 @@ pub unsafe fn compress(
     m
 }
 
-pub unsafe fn build_spans(
+pub(super) unsafe fn build_spans(
     stage_kind: *const u8,
     stage_pos: *const u32,
     m: usize,
@@ -169,7 +169,7 @@ pub unsafe fn build_spans(
     w
 }
 
-pub unsafe fn lanes_post(
+pub(super) unsafe fn lanes_post(
     src: &[u8],
     out_kinds: *const u8,
     out_spans: *const Span,

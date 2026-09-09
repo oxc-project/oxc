@@ -31,12 +31,9 @@ use bitmap::bm_any;
 use carve::carve;
 use classify::{classify, misc_post, misc_pre};
 use coalesce::{KWB, coalesce};
-use compress::{build_spans, compress, lanes_post, write_sentinels};
+use compress::{STAGE_CAP, compress, write_sentinels};
 
 use crate::token::TokenKind;
-
-const STAGE_BLOCKS: usize = 32;
-const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
 // Short kind aliases for the pipeline, tied to `token_kind` so they can't drift.
 pub(crate) const WS: u8 = TokenKind::Whitespace as u8;
@@ -225,28 +222,19 @@ impl Lexer {
         if nesc != 0 {
             misc_post(sp, n, st, word, misc, kind);
         }
-        let stage_pos = self.stage_pos.as_mut_ptr();
-        let stage_kind = self.stage_kind.as_mut_ptr();
-        let mut c = 0usize;
-        let mut w = 0usize;
-        let mut b = 0usize;
-        while b < nb {
-            let b1 = (b + STAGE_BLOCKS).min(nb);
-            c += compress(t, st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
-            b = b1;
-            if c > 1 {
-                w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w));
-                *stage_pos = *stage_pos.add(c - 1);
-                *stage_kind = *stage_kind.add(c - 1);
-                c = 1;
-            }
-        }
-        if c == 1 {
-            *stage_pos.add(1) = n as u32;
-            w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w));
-        }
-        write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
-        lanes_post(src, out_kinds, out_spans, w, n as u32, &mut self.lanes);
+        let w = compress(
+            t,
+            src,
+            n,
+            nb,
+            st,
+            kind,
+            self.stage_pos.as_mut_ptr(),
+            self.stage_kind.as_mut_ptr(),
+            out_kinds,
+            out_spans,
+            &mut self.lanes,
+        );
         self.sig_len = w;
         w
     }
