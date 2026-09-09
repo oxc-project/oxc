@@ -23,6 +23,9 @@ pub struct CodegenOptions {
     /// pair inside a regular expression, which is visible through `RegExp#source`). Tagged
     /// template quasis (their raw value is observable), JSX and comments are left as written.
     ///
+    /// Code point escapes (`\u{...}`) require ES2015 or later; this option does not provide
+    /// ES5-compatible output.
+    ///
     /// Default is `false`.
     pub ascii_only: bool,
 
