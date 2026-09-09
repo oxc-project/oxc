@@ -27,12 +27,33 @@ describe("simple", () => {
     expect(ret.code).toBe("function foo() {\n\tvar bar;\n\tbar(undefined);\n}\nfoo();\n");
   });
 
-  it("escapes non-ASCII characters with codegen.asciiOnly", () => {
-    const ret = minifySync("test.js", "export let café = 'naïve ☕';", {
-      codegen: { asciiOnly: true },
-    });
+  it.each([
     // spellchecker:disable-next-line
-    expect(ret.code).toBe("export let caf\\u00E9=`na\\u00EFve \\u2615`;");
+    [true, undefined, "export let caf\\u00E9=`na\\u00EFve \\u2615`;"],
+    // spellchecker:disable-next-line
+    [true, true, "export let caf\\u00E9=`na\\u00EFve \\u2615`;"],
+    // spellchecker:disable-next-line
+    [true, false, 'export let caf\\u00E9 = "na\\u00EFve \\u2615";\n'],
+    [false, true, "export let café=`naïve ☕`;"],
+    [false, false, 'export let café = "naïve ☕";\n'],
+    [undefined, true, "export let café=`naïve ☕`;"],
+    [undefined, false, 'export let café = "naïve ☕";\n'],
+  ] as const)(
+    "codegen.asciiOnly=%s, removeWhitespace=%s",
+    (asciiOnly, removeWhitespace, expected) => {
+      const ret = minifySync("test.js", "export let café = 'naïve ☕';", {
+        codegen: { asciiOnly, removeWhitespace },
+      });
+      expect(ret.code).toBe(expected);
+      expect(ret.errors.length).toBe(0);
+    },
+  );
+
+  it("preserves Unicode legal comments with codegen.asciiOnly", () => {
+    const ret = minifySync("test.js", "/*! café 😀 */\nexport let x = 'é';", {
+      codegen: { asciiOnly: true, legalComments: "inline" },
+    });
+    expect(ret.code).toBe("/*! café 😀 */\nexport let x=`\\u00E9`;");
     expect(ret.errors.length).toBe(0);
   });
 
