@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_json/tests/conformance.rs
 expression: report
 ---
-jsonc compatibility: 10/10 (100.00%), 0 files skipped
+jsonc compatibility: 158/158 (100.00%), 0 files skipped
 
 # Failed
 
