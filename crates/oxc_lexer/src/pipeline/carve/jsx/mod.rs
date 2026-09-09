@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::{
     HASHBANG, JEND, JSX_LT, JTEXT, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
-    bitmap::{bm_clear_range, bm_set1},
+    bitmap::{bm_clear_range, bm_set},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2, scan_block_comment,
@@ -94,7 +94,7 @@ pub(super) unsafe fn carve_jsx(
         *kind = HASHBANG;
         bm_clear_range(st, 1, end - 1);
         if end < n {
-            bm_set1(st, end);
+            bm_set(st, end);
         }
         i = end;
     }
@@ -505,7 +505,7 @@ pub(super) unsafe fn carve_jsx(
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
                     // against coalesce/keywords and clear the interior.
-                    bm_set1(st, text_start);
+                    bm_set(st, text_start);
                     *kind.add(text_start) = JTEXT;
                     let w = text_start >> 6;
                     let bit = 1u64 << (text_start & 63);

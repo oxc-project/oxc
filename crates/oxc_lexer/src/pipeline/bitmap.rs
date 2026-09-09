@@ -112,7 +112,7 @@ pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
 #[inline(always)]
-pub(super) unsafe fn bm_set1(bm: *mut u64, i: usize) {
+pub(super) unsafe fn bm_set(bm: *mut u64, i: usize) {
     *bm.add(i >> 6) |= 1u64 << (i & 63);
 }
 

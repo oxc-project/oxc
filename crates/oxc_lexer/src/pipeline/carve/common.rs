@@ -8,7 +8,7 @@ use crate::{
 
 use super::super::{
     BCOM, LCOM, REGEX, STR,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set1},
+    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set},
     find::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
     regex_div::prev_is_regex,
 };
@@ -131,7 +131,7 @@ pub(super) unsafe fn lex_line_comment(
         bm_clear_range(st, s + 1, end - 1);
     }
     if end < n {
-        bm_set1(st, end);
+        bm_set(st, end);
     }
     let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
     let m = comment_meta::meta_byte_flags(&srcs[..n], s as u32, end as u32, false, false, lic);

@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     NUM,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set1},
+    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set},
     find::scan_number,
     regex_div::{gt_run_split, lt_run_split},
 };
@@ -229,7 +229,7 @@ unsafe fn glue_number(
         if e2 >= n {
             return n;
         }
-        bm_set1(st, e2);
+        bm_set(st, e2);
         let c = *src.add(e2);
         // A word char abutting the number end (`1.5n`, `3in`, `0b12`, `1π`)
         // is a spec-invalid adjacency. Never true on valid input, so the
@@ -304,7 +304,7 @@ unsafe fn munch_walk(
 ) -> usize {
     let end = bm_next0(opch, pos, n);
     while end - pos >= 2 {
-        bm_set1(st, pos);
+        bm_set(st, pos);
         let rem = end - pos;
         let lmax: u32 = if rem < 4 { rem as u32 } else { 4 };
         let b0 = *src.add(pos);
@@ -336,7 +336,7 @@ unsafe fn munch_walk(
         }
     }
     if end - pos == 1 {
-        bm_set1(st, pos);
+        bm_set(st, pos);
     }
     pos
 }

@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::{
     IDENT, IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_prev1, bm_set1},
+    bitmap::{bm_clear_range, bm_get, bm_next0, bm_prev1, bm_set},
     find::scan_ident_esc,
 };
 
@@ -68,10 +68,10 @@ pub unsafe fn misc_pre<const VUTF8: bool>(
                 if len != 0 {
                     *kind.add(p) = WS;
                     bm_clear_range(word, p, p + len - 1);
-                    bm_set1(st, p);
+                    bm_set(st, p);
                     bm_clear_range(st, p + 1, p + len - 1);
                     if p + len < n {
-                        bm_set1(st, p + len);
+                        bm_set(st, p + len);
                     }
                 } else if (0xC2..=0xF4).contains(&c) {
                     // Non-whitespace lead: record the position only. The

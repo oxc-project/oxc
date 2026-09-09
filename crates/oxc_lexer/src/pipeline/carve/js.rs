@@ -2,7 +2,7 @@ use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables};
 
 use super::super::{
     HASHBANG, LCOM, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
-    bitmap::{bm_clear_range, bm_set1},
+    bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
 };
 
@@ -28,7 +28,7 @@ pub(super) unsafe fn carve_js(
         *kind = HASHBANG;
         bm_clear_range(st, 1, end - 1);
         if end < n {
-            bm_set1(st, end);
+            bm_set(st, end);
         }
         i = end;
     }
@@ -102,7 +102,7 @@ pub(super) unsafe fn carve_js(
                         bm_clear_range(st, s + 1, end - 1);
                     }
                     if end < n {
-                        bm_set1(st, end);
+                        bm_set(st, end);
                     }
                     // `<`, `!`, `-` are opchars: clear the span from `opch`
                     // or `coalesce` would re-tokenize `<!--` as operators.
@@ -133,12 +133,12 @@ pub(super) unsafe fn carve_js(
                     let start = s - 2;
                     let end = find_line_terminator(src, n, s + 1);
                     *kind.add(start) = LCOM;
-                    bm_set1(st, start);
+                    bm_set(st, start);
                     if end > start + 1 {
                         bm_clear_range(st, start + 1, end - 1);
                     }
                     if end < n {
-                        bm_set1(st, end);
+                        bm_set(st, end);
                     }
                     // Clear the span from `opch` (see `<!--` above).
                     bm_clear_range(opch, start, end - 1);
