@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 97/97 (100.00%)
-Positive Passed: 97/97 (100.00%)
-Negative Passed: 200/200 (100.00%)
+AST Parsed     : 98/98 (100.00%)
+Positive Passed: 98/98 (100.00%)
+Negative Passed: 201/201 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -227,6 +227,60 @@ Negative Passed: 200/200 (100.00%)
    ·       ─────
  5 │     }
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:2:3]
+ 1 │ function f() {
+ 2 │   await using x = null;
+   ·   ─────
+ 3 │   for (await using y = null; ; ) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:3:8]
+ 2 │   await using x = null;
+ 3 │   for (await using y = null; ; ) {}
+   ·        ─────
+ 4 │   for (await using z of []) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:4:8]
+ 3 │   for (await using y = null; ; ) {}
+ 4 │   for (await using z of []) {}
+   ·        ─────
+ 5 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:8:3]
+ 7 │ function* g() {
+ 8 │   await using x = null;
+   ·   ─────
+ 9 │   for (await using y = null; ; ) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/await-using-context.js:9:8]
+  8 │   await using x = null;
+  9 │   for (await using y = null; ; ) {}
+    ·        ─────
+ 10 │   for (await using z of []) {}
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/await-using-context.js:10:8]
+  9 │   for (await using y = null; ; ) {}
+ 10 │   for (await using z of []) {}
+    ·        ─────
+ 11 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Expected `;` but found `,`
    ╭─[misc/fail/class-field-comma-expression.js:1:16]

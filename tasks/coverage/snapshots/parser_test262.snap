@@ -27711,6 +27711,14 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ await using x = null;
+    · ─────
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × 'using' declarations are not allowed at the top level of a script
     ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
  22 │ $DONOTEVALUATE();
