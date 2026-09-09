@@ -2,15 +2,38 @@ use crate::{error::diag_code, lanes::Lanes, tables::is_id_start};
 
 use super::super::{
     IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set},
+    bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
     classify::unicode_ws_len,
     find::scan_ident_esc,
 };
 
+#[inline]
+pub unsafe fn misc_pre(
+    src: *const u8,
+    n: usize,
+    nb: usize,
+    st: *mut u64,
+    word: *mut u64,
+    misc: *const u64,
+    kind: *mut u8,
+    vutf8: bool,
+    lanes: &mut Lanes,
+) -> usize {
+    if !bm_any(misc, nb) {
+        return 0;
+    }
+
+    if vutf8 {
+        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes)
+    } else {
+        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes)
+    }
+}
+
 /// `VUTF8` (`LexOptions::validate_utf8`) adds UTF-8 well-formedness
 /// validation to the non-ASCII walk. Monomorphized so the default `false`
 /// copy pays nothing for it.
-pub unsafe fn misc_pre<const VUTF8: bool>(
+unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
     n: usize,
     st: *mut u64,

@@ -28,7 +28,6 @@ use crate::options::LexOptions;
 use crate::tables::Tables;
 use crate::token::SPAN_SENTINELS;
 
-use bitmap::bm_any;
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
@@ -211,19 +210,10 @@ impl Lexer {
         *dot.add(nb) = 0;
         *misc.add(nb) = 0;
 
-        let mut nesc = 0usize;
-        if bm_any(misc, nb) {
-            nesc = if vutf8 {
-                misc_pre::<true>(sp, n, st, word, misc, kind, &mut self.lanes)
-            } else {
-                misc_pre::<false>(sp, n, st, word, misc, kind, &mut self.lanes)
-            };
-        }
+        let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
         carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
         coalesce(t, kws, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, &mut self.lanes);
-        if nesc != 0 {
-            misc_post(sp, n, st, word, misc, kind);
-        }
+        misc_post(sp, n, st, word, misc, kind, nesc);
         let w = compress(
             t,
             src,

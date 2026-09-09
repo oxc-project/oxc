@@ -5,7 +5,22 @@ use super::super::{
     bitmap::{bm_clear, bm_get, bm_prev1},
 };
 
+#[inline]
 pub unsafe fn misc_post(
+    src: *const u8,
+    n: usize,
+    st: *mut u64,
+    word: *const u64,
+    misc: *const u64,
+    kind: *mut u8,
+    nesc: usize,
+) {
+    if nesc != 0 {
+        misc_post_impl(src, n, st, word, misc, kind)
+    }
+}
+
+unsafe fn misc_post_impl(
     src: *const u8,
     n: usize,
     st: *mut u64,
