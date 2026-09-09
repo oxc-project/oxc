@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 96/96 (100.00%)
-Positive Passed: 96/96 (100.00%)
-Negative Passed: 198/198 (100.00%)
+AST Parsed     : 97/97 (100.00%)
+Positive Passed: 97/97 (100.00%)
+Negative Passed: 200/200 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -549,6 +549,40 @@ Negative Passed: 198/198 (100.00%)
    ╭─[misc/fail/export-from-unterminated-source.js:1:16]
  1 │ export {} from "
    ·                ──
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an await using declaration.
+   ╭─[misc/fail/for-await-using-in-initializer.js:2:8]
+ 1 │ async function f() {
+ 2 │   for (await using x = a in b;;);
+   ·        ─────────────────
+ 3 │ }
+   ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/for-await-using-in-initializer.js:2:30]
+ 1 │ async function f() {
+ 2 │   for (await using x = a in b;;);
+   ·       ┬                      ┬
+   ·       │                      ╰── `)` expected
+   ·       ╰── Opened here
+ 3 │ }
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration.
+   ╭─[misc/fail/for-using-in-initializer.js:1:6]
+ 1 │ for (using x = a in b;;);
+   ·      ───────────
+   ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/for-using-in-initializer.js:1:22]
+ 1 │ for (using x = a in b;;);
+   ·     ┬                ┬
+   ·     │                ╰── `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × A 'get' accessor must not have any formal parameters.

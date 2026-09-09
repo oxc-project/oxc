@@ -536,7 +536,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         parenthesis_opening_span: Span,
         r#await: bool,
     ) -> Statement<'a> {
-        let using_decl = self.parse_using_declaration(StatementContext::For);
+        let using_decl =
+            self.context_remove(Context::In, |p| p.parse_using_declaration(StatementContext::For));
 
         if matches!(self.cur_kind(), Kind::In) {
             if using_decl.kind.is_await() {
