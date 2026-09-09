@@ -2,13 +2,43 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-less compatibility: 38/40 (95.00%), 7 files skipped
+less compatibility: 206/238 (86.55%), 9 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | less/comments/value-lists.less | 💥 | 76.92% |
+| less/less-test-suite/snippet: tests-config/globalVars/extended.less | 💥 | 78.26% |
+| less/less-test-suite/snippet: tests-config/math-always/no-sm-operations.less | 💥 | 95.00% |
+| less/less-test-suite/snippet: tests-config/math-parens-division/mixins-args.less | 💥 | 99.48% |
+| less/less-test-suite/snippet: tests-config/math-parens-division/new-division.less | 💥 | 82.35% |
+| less/less-test-suite/snippet: tests-config/math-strict/mixins-args.less | 💥 | 99.48% |
+| less/less-test-suite/snippet: tests-config/namespacing/namespacing-3.less | 💥 | 98.04% |
+| less/less-test-suite/snippet: tests-config/namespacing/namespacing-functions.less | 💥 | 97.30% |
+| less/less-test-suite/snippet: tests-config/namespacing/namespacing-media.less | 💥 | 96.15% |
+| less/less-test-suite/snippet: tests-config/static-urls/urls.less | 💥 | 93.33% |
+| less/less-test-suite/snippet: tests-config/units/no-strict/no-strict.less | 💥 | 71.43% |
+| less/less-test-suite/snippet: tests-config/url-args/urls.less | 💥 | 96.64% |
+| less/less-test-suite/snippet: tests-unit/at-rules/at-rules.less | 💥 | 85.00% |
+| less/less-test-suite/snippet: tests-unit/calc/calc.less | 💥 | 90.91% |
+| less/less-test-suite/snippet: tests-unit/color-functions/rgba.less | 💥 | 82.93% |
+| less/less-test-suite/snippet: tests-unit/comments/comments.less | 💥 | 97.82% |
+| less/less-test-suite/snippet: tests-unit/comments/comments2.less | 💥 | 87.50% |
+| less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less | 💥 | 98.25% |
+| less/less-test-suite/snippet: tests-unit/extend-selector/extend-selector.less | 💥 | 98.67% |
+| less/less-test-suite/snippet: tests-unit/import/import-remote.less | 💥 | 52.63% |
+| less/less-test-suite/snippet: tests-unit/import/import.less | 💥 | 87.88% |
+| less/less-test-suite/snippet: tests-unit/javascript/javascript.less | 💥 | 81.01% |
+| less/less-test-suite/snippet: tests-unit/layer/layer.less | 💥 | 96.72% |
+| less/less-test-suite/snippet: tests-unit/media/media.less | 💥 | 99.69% |
+| less/less-test-suite/snippet: tests-unit/mixins-guards-default-func/mixins-guards-default-func.less | 💥 | 98.43% |
+| less/less-test-suite/snippet: tests-unit/mixins-guards/mixins-guards.less | 💥 | 99.69% |
+| less/less-test-suite/snippet: tests-unit/namespace-targeted/namespace-targeted.less | 💥 | 96.88% |
+| less/less-test-suite/snippet: tests-unit/operations/operations.less | 💥 | 98.44% |
+| less/less-test-suite/snippet: tests-unit/parser-slashed-combinator/parser-slashed-combinator.less | 💥 | 94.74% |
+| less/less-test-suite/snippet: tests-unit/urls/urls.less | 💥 | 97.65% |
+| less/less-test-suite/snippet: tests-unit/variables/variables.less | 💥 | 97.89% |
 | less/postcss-8-improment/test.less | 💥 | 88.24% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
@@ -17,6 +47,8 @@ less compatibility: 38/40 (95.00%), 7 files skipped
 - less/comments/in-value.less
 - less/interpolation/interpolation.less
 - less/less/less.less
+- less/less-test-suite/snippet: tests-unit/property-name-interp/property-name-interp.less
+- less/less-test-suite/snippet: tests-unit/strings/strings.less
 - less/lookup/lookup-1.less
 - less/no-semicolon/url.less
 - less/parens/parens.less

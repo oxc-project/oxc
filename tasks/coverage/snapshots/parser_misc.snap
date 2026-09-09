@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 91/91 (100.00%)
-Positive Passed: 91/91 (100.00%)
-Negative Passed: 190/190 (100.00%)
+AST Parsed     : 98/98 (100.00%)
+Positive Passed: 98/98 (100.00%)
+Negative Passed: 201/201 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -190,6 +190,18 @@ Negative Passed: 190/190 (100.00%)
    ·                                         ─────
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[misc/fail/async-field.js:1:11]
+ 1 │ class C { async x; }
+   ·           ─────
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[misc/fail/async-field.ts:1:11]
+ 1 │ class C { async x; }
+   ·           ─────
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
  2 │   class C {
@@ -215,6 +227,60 @@ Negative Passed: 190/190 (100.00%)
    ·       ─────
  5 │     }
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:2:3]
+ 1 │ function f() {
+ 2 │   await using x = null;
+   ·   ─────
+ 3 │   for (await using y = null; ; ) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:3:8]
+ 2 │   await using x = null;
+ 3 │   for (await using y = null; ; ) {}
+   ·        ─────
+ 4 │   for (await using z of []) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:4:8]
+ 3 │   for (await using y = null; ; ) {}
+ 4 │   for (await using z of []) {}
+   ·        ─────
+ 5 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:8:3]
+ 7 │ function* g() {
+ 8 │   await using x = null;
+   ·   ─────
+ 9 │   for (await using y = null; ; ) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/await-using-context.js:9:8]
+  8 │   await using x = null;
+  9 │   for (await using y = null; ; ) {}
+    ·        ─────
+ 10 │   for (await using z of []) {}
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/await-using-context.js:10:8]
+  9 │   for (await using y = null; ; ) {}
+ 10 │   for (await using z of []) {}
+    ·        ─────
+ 11 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Expected `;` but found `,`
    ╭─[misc/fail/class-field-comma-expression.js:1:16]
@@ -415,6 +481,52 @@ Negative Passed: 190/190 (100.00%)
    ·                  ─────────
    ╰────
 
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:1:10]
+ 1 │ import { t\u0079pe as as x } from "m";
+   ·          ─────────
+ 2 │ export { t\u0079pe Foo };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:2:10]
+ 1 │ import { t\u0079pe as as x } from "m";
+ 2 │ export { t\u0079pe Foo };
+   ·          ─────────
+ 3 │ export { t\u0079pe as };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:3:10]
+ 2 │ export { t\u0079pe Foo };
+ 3 │ export { t\u0079pe as };
+   ·          ─────────
+ 4 │ export { t\u0079pe as as x };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:4:10]
+ 3 │ export { t\u0079pe as };
+ 4 │ export { t\u0079pe as as x };
+   ·          ─────────
+ 5 │ export { t\u0079pe Foo } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:5:10]
+ 4 │ export { t\u0079pe as as x };
+ 5 │ export { t\u0079pe Foo } from "m";
+   ·          ─────────
+ 6 │ export { t\u0079pe as as x } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:6:10]
+ 5 │ export { t\u0079pe Foo } from "m";
+ 6 │ export { t\u0079pe as as x } from "m";
+   ·          ─────────
+   ╰────
+
   × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
  1 │ -value ** 2;
@@ -491,6 +603,40 @@ Negative Passed: 190/190 (100.00%)
    ╭─[misc/fail/export-from-unterminated-source.js:1:16]
  1 │ export {} from "
    ·                ──
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an await using declaration.
+   ╭─[misc/fail/for-await-using-in-initializer.js:2:8]
+ 1 │ async function f() {
+ 2 │   for (await using x = a in b;;);
+   ·        ─────────────────
+ 3 │ }
+   ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/for-await-using-in-initializer.js:2:30]
+ 1 │ async function f() {
+ 2 │   for (await using x = a in b;;);
+   ·       ┬                      ┬
+   ·       │                      ╰── `)` expected
+   ·       ╰── Opened here
+ 3 │ }
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration.
+   ╭─[misc/fail/for-using-in-initializer.js:1:6]
+ 1 │ for (using x = a in b;;);
+   ·      ───────────
+   ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/for-using-in-initializer.js:1:22]
+ 1 │ for (using x = a in b;;);
+   ·     ┬                ┬
+   ·     │                ╰── `)` expected
+   ·     ╰── Opened here
    ╰────
 
   × A 'get' accessor must not have any formal parameters.
@@ -4547,6 +4693,41 @@ Negative Passed: 190/190 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-class-untyped.ts:1:18]
+ 1 │ class C { f(this x: T) {} }
+   ·                  ┬
+   ·                  ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-class.ts:1:21]
+ 1 │ class C { f(this: T x: T) {} }
+   ·                     ┬
+   ·                     ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-function-type.ts:1:19]
+ 1 │ type F = (this: T x: T) => void;
+   ·                   ┬
+   ·                   ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-function.ts:1:20]
+ 1 │ function f(this: T x: T) {}
+   ·                    ┬
+   ·                    ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-interface.ts:1:25]
+ 1 │ interface I { f(this: T x: T): void }
+   ·                         ┬
+   ·                         ╰── `,` expected
+   ╰────
 
   × TS(1009): Trailing comma not allowed.
    ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]

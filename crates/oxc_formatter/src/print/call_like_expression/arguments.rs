@@ -630,7 +630,7 @@ fn write_grouped_arguments<'a>(
                         AstNodes::Function(function)
                             if !group_layout.is_grouped_first()
                                 && (!only_one_argument
-                                    || function_has_only_simple_parameters(&function.params)) =>
+                                    || function_has_only_simple_parameters(function)) =>
                         {
                             has_cached = true;
                             return write!(f, [FormatFunction::new_cached(function), comma]);
@@ -874,7 +874,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
         // to remove any soft line breaks.
         match self.argument.as_ast_nodes() {
             AstNodes::Function(function)
-                if !self.is_only || function_has_only_simple_parameters(&function.params) =>
+                if !self.is_only || function_has_only_simple_parameters(function) =>
             {
                 FormatFunction::new_cached(function).fmt(f);
             }
@@ -894,8 +894,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
     }
 }
 
-fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
-    has_only_simple_parameters(params, false)
+fn function_has_only_simple_parameters(function: &Function<'_>) -> bool {
+    has_only_simple_parameters(&function.params, function.this_param.as_deref(), false)
 }
 
 /// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.

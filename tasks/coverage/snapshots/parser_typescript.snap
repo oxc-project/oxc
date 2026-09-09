@@ -28729,13 +28729,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
-  × 'using' declarations are not allowed at the top level of a script
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts:1:1]
- 1 │ await using x = null;
-   · ─────────────────────
- 2 │ 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts:4:5]
+ 3 │ function f() {
+ 4 │     await using x = null;
+   ·     ─────
+ 5 │ }
    ╰────
-  help: Wrap this code in a block or use a module
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Cannot use 'await using' in class static initialization block
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:3:9]
@@ -28753,6 +28754,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │         }
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:5]
+ 1 │ declare namespace N {
+ 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+   ·     ─────
+ 3 │     await using y: null;
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
@@ -28760,6 +28770,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─
  3 │     await using y: null;
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:5]
+ 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+ 3 │     await using y: null;
+   ·     ─────
+ 4 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
@@ -28769,6 +28788,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ }
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:5]
+ 5 │ declare module 'M' {
+ 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+   ·     ─────
+ 7 │     await using y: null;
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
  5 │ declare module 'M' {
@@ -28776,6 +28804,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─
  7 │     await using y: null;
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:5]
+ 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+ 7 │     await using y: null;
+   ·     ─────
+ 8 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
@@ -28881,15 +28918,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                           ╰── `;` expected
  6 │ 
    ╰────
-
-  × `for await` loops are only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
- 4 │ 
- 5 │ for await (await using of x);
-   ·     ─────
- 6 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × The left-hand side of a for...in statement cannot be an await using declaration.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts:2:10]

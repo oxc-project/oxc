@@ -420,16 +420,19 @@ pub fn should_hug_function_parameters<'a>(
     shape_allows_hug && !has_comment_around(only_parameter.span)
 }
 
-/// Tests if all of the parameters of `expression` are simple enough to allow
-/// a function to group.
+/// Tests if all of the parameters of `expression` and also `this_param` are
+/// simple enough to allow a function to group.
 pub fn has_only_simple_parameters(
     parameters: &FormalParameters<'_>,
+    this_param: Option<&TSThisParameter<'_>>,
     allow_type_annotations: bool,
 ) -> bool {
     // NOTE: A rest parameter is never considered simple.
     // Prettier only checks `param.type` is `Identifier` or not.
     // https://github.com/prettier/prettier/blob/7848357af654883e21ed05c0bbbedf89ee88750e/src/language-js/print/function.js#L72-L74
     parameters.rest.is_none()
+        // `allow_type_annotations` is an arrow-only rule, and arrows never have `this`.
+        && this_param.is_none_or(|this_param| this_param.type_annotation.is_none())
         && parameters
             .items
             .iter()

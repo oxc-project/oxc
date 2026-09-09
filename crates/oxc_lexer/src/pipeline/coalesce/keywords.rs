@@ -1,18 +1,28 @@
 use crate::opmap::KwSet;
 
-use super::IDENT;
+use super::super::IDENT;
 
-pub(super) const KWB: usize = 64;
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+pub const KWB: usize = 64;
+
+/// Dispatch to the key-monomorphized verify without duplicating `coalesce`
+/// itself: one predictable branch per flush, not per candidate, keyed off
+/// the set itself so the walk carries no extra mode scalar.
 #[inline(always)]
-fn bzhi(x: u64, n: u32) -> u64 {
-    unsafe { core::arch::x86_64::_bzhi_u64(x, n) }
+pub(super) unsafe fn kw_flush(
+    kw: &KwSet,
+    src: *const u8,
+    word: *const u64,
+    kind: *mut u8,
+    kwpos: *const u32,
+    k: usize,
+) {
+    if kw.ts_key {
+        kw_verify_batch::<true>(kw, src, word, kind, kwpos, k);
+    } else {
+        kw_verify_batch::<false>(kw, src, word, kind, kwpos, k);
+    }
 }
-#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
-#[inline(always)]
-fn bzhi(x: u64, n: u32) -> u64 {
-    x & (u64::MAX >> (64 - n))
-}
+
 /// Resolve a batch of keyword candidates (positions collected by
 /// `coalesce`): exact match against the perfect-hash tables, patching
 /// `kind` from IDENT to the keyword kind on hit. `TS_KEY` selects the
@@ -21,7 +31,7 @@ fn bzhi(x: u64, n: u32) -> u64 {
 /// Kept out of line: inlining would double both variants into each of
 /// coalesce's flush sites, and one call per KWB words is free.
 #[inline(never)]
-pub(super) unsafe fn kw_verify_batch<const TS_KEY: bool>(
+unsafe fn kw_verify_batch<const TS_KEY: bool>(
     kw: &KwSet,
     src: *const u8,
     word: *const u64,
@@ -56,5 +66,18 @@ pub(super) unsafe fn kw_verify_batch<const TS_KEY: bool>(
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
         *kind.add(p) = (IDENT & !hm) | (kw.kwh_kind[h] & hm);
+    }
+}
+
+#[inline(always)]
+fn bzhi(x: u64, n: u32) -> u64 {
+    #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+    unsafe {
+        core::arch::x86_64::_bzhi_u64(x, n)
+    }
+
+    #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+    {
+        x & (u64::MAX >> (64 - n))
     }
 }

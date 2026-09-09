@@ -137,14 +137,12 @@ impl Rule for RequireYields {
 
                 let settings = &ctx.settings().jsdoc;
                 // If JSDoc is found but safely ignored, skip
-                if jsdocs
+                if !jsdocs
                     .iter()
                     .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
                     .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &self.exempted_by))
                     .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-                    .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
-                    .count()
-                    == 0
+                    .any(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
                 {
                     return;
                 }
@@ -230,22 +228,20 @@ impl Rule for RequireYields {
 
                 let settings = &ctx.settings().jsdoc;
                 // If JSDoc is found but safely ignored, skip
-                if jsdocs
+                if !jsdocs
                     .iter()
                     .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
                     .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &self.exempted_by))
                     .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
-                    .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
-                    .count()
-                    == 0
+                    .any(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
                 {
                     return;
                 }
 
-                let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
+                let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags);
                 let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if is_missing_special_tag(jsdoc_tags.iter().copied(), resolved_yields_tag_name) {
+                if is_missing_special_tag(jsdoc_tags, resolved_yields_tag_name) {
                     ctx.diagnostic(missing_yields(generator_func.span));
                 }
             }
