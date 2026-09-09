@@ -96,6 +96,29 @@ A space-only EOF line at-or-below the block's indent holds no line break, so it 
 An explicit `...` after an empty document is printed as-is.
 Prettier prints the empty document body as a blank line before the marker.
 
+## tab-width-zero
+
+- Why: semantics
+- Pin: `tests/fixtures/yaml/tab-width-zero/nested.yaml`
+
+```yaml
+# input (tabWidth: 0)
+a:
+  b: c
+
+# ours: the width is clamped to 1
+a:
+ b: c
+
+# prettier: the nesting is gone, `b` becomes a top-level key
+a:
+b: c
+```
+
+Indentation is the block structure in YAML, so a zero indent width cannot print a nested collection.
+`tabWidth: 0` is a valid option elsewhere (JS, CSS, GraphQL print without indentation and stay valid); YAML alone clamps it to `1`.
+`useTabs` is the other layout option YAML cannot honor (tab indentation is forbidden); it needs no clamp because this printer only aligns with spaces.
+
 ## prettier-ignore-range
 
 - Why: uniform-rule (suppression freezes exactly the next node; prettier/prettier#13008)
