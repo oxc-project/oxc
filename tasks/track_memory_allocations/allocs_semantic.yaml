@@ -40,7 +40,7 @@ pdf.mjs:
   sys peak growth: 832762 # 832.76 kB
   arena allocs: 0
   arena reallocs: 0
-  arena size: 4536712 # 4.54 MB
+  arena size: 4518552 # 4.52 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -51,7 +51,7 @@ antd.js:
   sys peak growth: 5441278 # 5.44 MB
   arena allocs: 0
   arena reallocs: 0
-  arena size: 29421920 # 29.42 MB
+  arena size: 29255480 # 29.26 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB

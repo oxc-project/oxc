@@ -165,8 +165,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                                 }
                                 Tristate::False
                             }
-                            // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
-                            Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
+                            // If we have "(a," or "(a=" this *could* be an arrow function
+                            Kind::Comma | Kind::Eq => Tristate::Maybe,
+                            Kind::RParen => {
+                                // A single parenthesized parameter must be followed by `=>` or
+                                // a TypeScript return annotation. Otherwise the speculative head
+                                // would fail. Skip that parse and its temporary parameter allocation.
+                                let deferred_errors_len = self.lexer.deferred_module_errors.len();
+                                let fourth = self.lexer.peek_token().kind();
+                                // The real parse reads this token again on either path. Lexer
+                                // checkpoints do not restore deferred module errors, so discard
+                                // this extra peek's errors and let normal parsing record them once.
+                                self.lexer.deferred_module_errors.truncate(deferred_errors_len);
+                                if fourth == Kind::Arrow || (self.is_ts && fourth == Kind::Colon) {
+                                    Tristate::Maybe
+                                } else {
+                                    Tristate::False
+                                }
+                            }
                             // It is definitely not an arrow function
                             _ => Tristate::False,
                         }
