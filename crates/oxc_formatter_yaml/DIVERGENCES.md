@@ -5,7 +5,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 ## anchor-tag-props-order
 
 - Why: uniform-rule (source order of user tokens is preserved; prettier/prettier#19524, prettier/prettier#19599)
-- Pin: `tests/fixtures/yaml/anchor-tag-order.yaml`
+- Pin: `tests/fixtures/yaml/anchor-tag-order.yaml` (also tracked by conformance yaml-test-suite `9KAX`, `BU8L`, `F2C7`)
 
 ```yaml
 # input
@@ -24,6 +24,8 @@ Anchor/tag source order is preserved, never reordered, as mapping keys and seque
 
 - Why: semantics (prettier/prettier#19764)
 - Pin: `tests/fixtures/yaml/block-scalar-trailing-spaces.yaml`, `tests/fixtures/yaml/prose-wrap/trailing-spaces.yaml`
+  (also tracked by conformance `yaml/block-folded/block-folded-strip.yml`, the `yaml/block-value` snippets whose scalar ends in a space/tab-only line (64 rows),
+  and yaml-test-suite `L24T`, `L24T-2`, `Y79Y-2`, whose JSON keeps that line as content)
 
 ```yaml
 # input ("␣" marks a real space)
@@ -36,13 +38,13 @@ strip: |-
 
 Trailing whitespace in a block scalar is part of the VALUE:
 the last content line's spaces/tabs, and space-only lines more-indented than the block (content per YAML).
-`block-folded-strip.yml` stays a conformance failure until the pin catches up.
 When converging, keep the blank line after such a scalar: post-prettier/prettier#19764 Prettier eats it; the unified blank-line rule ("blank-lines" below) wins.
 
 ## eof-blank-lines
 
 - Why: uniform-rule (one final newline)
 - Pin: `tests/fixtures/yaml/eof-blank-lines.yaml`
+  (also tracked by conformance `yaml/block-value` `"foo: >+\n"` / `"foo: |+\n"` and yaml-test-suite `2G84-4`, where Prettier prints NO final newline after a contentless keep-chomped scalar)
 
 ```yaml
 # input
@@ -61,17 +63,38 @@ Like every other formatter crate, the file always ends with exactly one newline 
 
 - Why: semantics (prettier/prettier#19256)
 - Pin: `tests/fixtures/yaml/keep-chomped-eos-spaces-only.yaml`, `tests/fixtures/yaml/keep-chomped-eos-trailing-spaces.yaml`
+  (also tracked by conformance yaml-test-suite `JEF9-3`, for which the suite asserts no JSON value, only yaml@2's dump)
 
 ```yaml
 # input (no final newline; the last line is two spaces)
 key: |+
 ␣␣
 
-# ours: value "\n" (the break-less space-only line adds nothing to the kept tail)
-# prettier: prints one newline too many, value "\n" -> "\n\n"
+# ours: value "" (the break-less space-only line adds nothing to the kept tail)
+# prettier: prints one newline too many, value "\n"
 ```
 
 A space-only EOF line at-or-below the block's indent holds no line break, so it adds nothing to the kept tail (psych/PyYAML agree).
+
+## empty-document-end-marker
+
+- Why: uniform-rule (blank lines are never invented; see "blank-lines")
+- Pin: `tests/fixtures/yaml/empty-document-end-marker.yaml` (also tracked by conformance yaml-test-suite `HWV9`)
+
+```yaml
+# input
+...
+
+# ours
+...
+
+# prettier: a blank line stands in for the empty document
+␣
+...
+```
+
+An explicit `...` after an empty document is printed as-is.
+Prettier prints the empty document body as a blank line before the marker.
 
 ## prettier-ignore-range
 
@@ -146,6 +169,7 @@ More-indented lines in a folded scalar are never re-flowed under `proseWrap: alw
 
 - Why: uniform-rule (a group is flat or fully expanded)
 - Pin: `tests/fixtures/yaml/flow-multiline-pair.yaml`, `tests/fixtures/yaml/flow-comments.yaml`
+  (also tracked by conformance yaml-test-suite `CT4Q`, `UT92`, `NJ66`, `9SA2` (multiline pairs) and `K3WX` (key trailing comment))
 
 ```yaml
 # input
@@ -172,7 +196,7 @@ Prettier sometimes emits a newline inside flow brackets while keeping them flat 
 ## flow-comment-position
 
 - Why: invariant
-- Pin: `tests/fixtures/yaml/flow-comments.yaml`
+- Pin: `tests/fixtures/yaml/flow-comments.yaml` (also tracked by conformance `yaml/spec/spec-example-6-1-indentation-spaces.yml` and yaml-test-suite `6HB6`, the same example)
 
 ```yaml
 # input
