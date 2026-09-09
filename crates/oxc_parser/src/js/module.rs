@@ -873,11 +873,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         can_parse_as_keyword = false;
                     } else {
                         // { type as as }
-                        property_name = Some(ModuleExportName::new_identifier_name(
-                            type_or_name_token.span(),
-                            self.ident(self.token_source(&type_or_name_token)),
-                            self,
-                        ));
+                        property_name = Some(name);
                         name = ModuleExportName::new_identifier_name(
                             second_as.span,
                             second_as.name,
@@ -913,7 +909,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             name = self.parse_module_export_name();
         }
 
-        if self.is_ts && type_or_name_token_kind == Kind::Type && type_or_name_token.escaped() {
+        if kind == ImportOrExportKind::Type && type_or_name_token.escaped() {
             self.error(diagnostics::escaped_keyword(type_or_name_token.span()));
         }
 

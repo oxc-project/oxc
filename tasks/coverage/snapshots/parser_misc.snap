@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 93/93 (100.00%)
-Positive Passed: 93/93 (100.00%)
-Negative Passed: 197/197 (100.00%)
+AST Parsed     : 96/96 (100.00%)
+Positive Passed: 96/96 (100.00%)
+Negative Passed: 198/198 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -425,6 +425,52 @@ Negative Passed: 197/197 (100.00%)
  4 │ import { t\u0079pe Bar } from "m";
  5 │ import t\u0079pe fr\u006fm "m";
    ·                  ─────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:1:10]
+ 1 │ import { t\u0079pe as as x } from "m";
+   ·          ─────────
+ 2 │ export { t\u0079pe Foo };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:2:10]
+ 1 │ import { t\u0079pe as as x } from "m";
+ 2 │ export { t\u0079pe Foo };
+   ·          ─────────
+ 3 │ export { t\u0079pe as };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:3:10]
+ 2 │ export { t\u0079pe Foo };
+ 3 │ export { t\u0079pe as };
+   ·          ─────────
+ 4 │ export { t\u0079pe as as x };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:4:10]
+ 3 │ export { t\u0079pe as };
+ 4 │ export { t\u0079pe as as x };
+   ·          ─────────
+ 5 │ export { t\u0079pe Foo } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:5:10]
+ 4 │ export { t\u0079pe as as x };
+ 5 │ export { t\u0079pe Foo } from "m";
+   ·          ─────────
+ 6 │ export { t\u0079pe as as x } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:6:10]
+ 5 │ export { t\u0079pe Foo } from "m";
+ 6 │ export { t\u0079pe as as x } from "m";
+   ·          ─────────
    ╰────
 
   × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
