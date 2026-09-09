@@ -28,6 +28,14 @@ fn test_keep_names(source_text: &str, expected: &str) {
 }
 
 #[test]
+fn test_inline_single_use_variable_preserves_indirect_eval() {
+    test(
+        "function f(script) { const alias = eval; alias(script); }",
+        "function f(script) { let alias = eval; alias(script); }",
+    );
+}
+
+#[test]
 fn test_inline_single_use_variable() {
     test_same("function wrapper(arg0, arg1) {using x = foo; return x}");
     test_same("async function wrapper(arg0, arg1) { await using x = foo; return x}");

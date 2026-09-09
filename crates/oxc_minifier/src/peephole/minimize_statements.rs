@@ -1597,8 +1597,9 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::CallExpression(call_expr)
-                // Don't substitute something into a call target that could change "this"
+                // Preserve the receiver and indirect eval's global scope.
                 if !((replacement.is_member_expression()
+                    || replacement.is_specific_id("eval")
                     || matches!(replacement, Expression::ChainExpression(_)))
                     && call_expr.callee.is_identifier_reference())
                 => {

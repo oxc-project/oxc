@@ -119,6 +119,11 @@ fn test_with_options_source_type(
 }
 
 #[test]
+fn preserves_indirect_eval() {
+    test_same("export function f(script) { const alias = eval; return alias(script); }");
+}
+
+#[test]
 fn dce_if_statement() {
     test("if (true) { foo }", "foo");
     test("if (true) { foo } else { bar }", "foo");
