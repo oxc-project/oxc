@@ -31,6 +31,7 @@ describe("simple", () => {
     const ret = minifySync("test.js", "export let café = 'naïve ☕';", {
       codegen: { asciiOnly: true },
     });
+    // spellchecker:disable-next-line
     expect(ret.code).toBe("export let caf\\u00E9=`na\\u00EFve \\u2615`;");
     expect(ret.errors.length).toBe(0);
   });
