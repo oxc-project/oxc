@@ -2654,20 +2654,10 @@ impl Gen for JSXIdentifier<'_> {
     }
 }
 
-/// A component reference in JSX position (`<Foo/>`, `<Foo.Bar/>`). JSX names have no escape
-/// syntax, so — unlike [`IdentifierReference`] elsewhere — the (possibly renamed) name is
-/// printed verbatim even under `ascii_only`; JSX-preserving output with non-ASCII component
-/// names is the one construct that cannot be made 7-bit clean.
-fn print_jsx_identifier_reference(ident: &IdentifierReference<'_>, p: &mut Codegen) {
-    let name = p.get_identifier_reference_name(ident);
-    p.add_source_mapping_for_name(ident.span, name);
-    p.print_str(name);
-}
-
 impl Gen for JSXMemberExpressionObject<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::IdentifierReference(ident) => print_jsx_identifier_reference(ident, p),
+            Self::IdentifierReference(ident) => p.print_jsx_identifier_reference(ident),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
         }
@@ -2686,7 +2676,7 @@ impl Gen for JSXElementName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.print(p, ctx),
-            Self::IdentifierReference(identifier) => print_jsx_identifier_reference(identifier, p),
+            Self::IdentifierReference(identifier) => p.print_jsx_identifier_reference(identifier),
             Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),

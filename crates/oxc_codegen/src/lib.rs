@@ -1009,6 +1009,16 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    /// A component reference in JSX position (`<Foo/>`, `<Foo.Bar/>`). JSX names have no escape
+    /// syntax, so — unlike [`IdentifierReference`] elsewhere — the (possibly renamed) name is
+    /// printed verbatim even under `ascii_only`; JSX-preserving output with non-ASCII component
+    /// names is the one construct that cannot be made 7-bit clean.
+    fn print_jsx_identifier_reference(&mut self, ident: &IdentifierReference<'_>) {
+        let name = self.get_identifier_reference_name(ident);
+        self.add_source_mapping_for_name(ident.span, name);
+        self.print_str(name);
+    }
+
     #[inline]
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
         if let Some(scoping) = &self.scoping
