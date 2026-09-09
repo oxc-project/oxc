@@ -82,10 +82,3 @@ impl JSChar {
         &buffer[..len]
     }
 }
-
-impl From<char> for JSChar {
-    #[inline]
-    fn from(value: char) -> Self {
-        Self(value as u32)
-    }
-}
