@@ -2750,9 +2750,11 @@ impl<'a, 's, T: 'a + 's + fmt::Debug, A: Alloc> fmt::Debug for Drain<'a, 's, T, 
     }
 }
 
-// TODO: Should these also require `A: Send` / `A: Sync` bounds?
+// SAFETY: Shared access to a `Drain` only provides shared access to its remaining `T`s.
 unsafe impl<T: Sync, A: Alloc> Sync for Drain<'_, '_, T, A> {}
-unsafe impl<T: Send, A: Alloc> Send for Drain<'_, '_, T, A> {}
+// SAFETY: `Drain` holds exclusive access to the source `Vec`. `T: Send` permits moving its
+// remaining items, and `A: Sync` permits accessing the referenced allocator from another thread.
+unsafe impl<T: Send, A: Alloc + Sync> Send for Drain<'_, '_, T, A> {}
 
 impl<T, A: Alloc> Iterator for Drain<'_, '_, T, A> {
     type Item = T;
