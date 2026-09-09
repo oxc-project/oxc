@@ -3730,6 +3730,15 @@ impl RuleRunner for crate::rules::unicorn::prefer_global_this::PreferGlobalThis 
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_https::PreferHttps {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::JSXText,
+        AstType::StringLiteral,
+        AstType::TemplateLiteral,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties
 {
