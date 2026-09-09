@@ -1928,6 +1928,37 @@ a",
         assert_eq!("k: |+\n  hello world\n\n  next\n", result.as_code());
     }
 
+    /// `align(0)` pushes no frame: the content prints at the current indention,
+    /// and in tab mode the next `indent` does not gain a tab for it.
+    #[test]
+    fn zero_width_align_is_identity() {
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [
+                    token("a"),
+                    align(
+                        0,
+                        &format_args!(
+                            hard_line_break(),
+                            token("b"),
+                            indent(&format_args!(hard_line_break(), token("c")))
+                        )
+                    )
+                ]
+            );
+        });
+
+        let result = format_simple(&allocator, &content);
+        assert_eq!("a\nb\n  c", result.as_code());
+
+        let options =
+            PrinterOptions { indent_style: IndentStyle::Tab, ..PrinterOptions::default() };
+        let result = format_simple_with_options(&allocator, &content, options);
+        assert_eq!("a\nb\n\tc", result.as_code());
+    }
+
     /// Known divergence from Prettier: a hard line directly after a column-0 literal line
     /// is absorbed by the "only print a newline if the line isn't already empty" rule
     /// (Prettier prints both newlines). When a consumer needs the extra structural newline

@@ -590,28 +590,30 @@ impl<C> std::fmt::Debug for Dedent<'_, '_, C> {
 
 /// Aligns its content by indenting the content by `count` spaces.
 ///
-/// # Panics
-///
-/// Panics if `count` is `0`.
+/// A `count` of `0` writes the content as-is:
+/// no align frame is pushed, so it neither measures nor turns into a tab when the indent style is tabs.
+/// `count` is often computed (a column difference, the indent width, which may be `0`),
+/// and every such caller would otherwise need the same guard.
 pub fn align<'ast, C, Content>(count: u8, content: &Content) -> Align<'_, 'ast, C>
 where
     Content: Format<'ast, C>,
 {
-    Align {
-        count: NonZeroU8::new(count).expect("Alignment count must be a non-zero number."),
-        content: Argument::new(content),
-    }
+    Align { count: NonZeroU8::new(count), content: Argument::new(content) }
 }
 
 #[derive(Copy, Clone)]
 pub struct Align<'a, 'ast, C> {
-    count: NonZeroU8,
+    /// `None`: zero-width, no frame.
+    count: Option<NonZeroU8>,
     content: Argument<'a, 'ast, C>,
 }
 
 impl<'ast, C> Format<'ast, C> for Align<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        f.write_element(FormatElement::Tag(StartAlign(tag::Align(self.count))));
+        let Some(count) = self.count else {
+            return Arguments::from(&self.content).fmt(f);
+        };
+        f.write_element(FormatElement::Tag(StartAlign(tag::Align(count))));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndAlign));
     }
