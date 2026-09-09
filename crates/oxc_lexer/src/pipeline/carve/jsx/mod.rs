@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::{
     HASHBANG, JEND, JSX_LT, JTEXT, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
-    bitmap::{bm_clear_range, bm_set},
+    bitmap::{bm_clear, bm_clear_range, bm_set},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2, scan_block_comment,
@@ -507,12 +507,10 @@ pub(super) unsafe fn carve_jsx(
                     // against coalesce/keywords and clear the interior.
                     bm_set(st, text_start);
                     *kind.add(text_start) = JTEXT;
-                    let w = text_start >> 6;
-                    let bit = 1u64 << (text_start & 63);
-                    *opch.add(w) &= !bit;
-                    *digit.add(w) &= !bit;
-                    *dot.add(w) &= !bit;
-                    *kwinit.add(w) &= !bit;
+                    bm_clear(opch, text_start);
+                    bm_clear(digit, text_start);
+                    bm_clear(dot, text_start);
+                    bm_clear(kwinit, text_start);
                     if runend > text_start + 1 {
                         bm_clear_range(st, text_start + 1, runend - 1);
                     }
@@ -534,7 +532,7 @@ pub(super) unsafe fn carve_jsx(
                 } else if c == b'>' || c == b'}' {
                     // A stray `>`/`}` ends the run; clear its opch so
                     // coalesce can't fuse adjacent strays into `>>`.
-                    *opch.add(s >> 6) &= !(1u64 << (s & 63));
+                    bm_clear(opch, s);
                     lanes.push_diag(s as u32, 1, diag_code::JSX_TEXT_INVALID_CHARACTER);
                     text_start = s + 1;
                     i = s + 1;
@@ -615,7 +613,7 @@ pub(super) unsafe fn carve_jsx(
                         i = s + 1;
                     } else {
                         // malformed lone `<` in text — clear opch, no `<<` fusion
-                        *opch.add(s >> 6) &= !(1u64 << (s & 63));
+                        bm_clear(opch, s);
                         text_start = s + 1;
                         i = s + 1;
                     }
@@ -645,5 +643,5 @@ pub(super) unsafe fn carve_jsx(
 #[inline(always)]
 unsafe fn jsx_punct(kind: *mut u8, opch: *mut u64, off: usize, k: u8) {
     *kind.add(off) = k;
-    *opch.add(off >> 6) &= !(1u64 << (off & 63));
+    bm_clear(opch, off);
 }

@@ -116,6 +116,17 @@ pub(super) unsafe fn bm_set(bm: *mut u64, i: usize) {
     *bm.add(i >> 6) |= 1u64 << (i & 63);
 }
 
+/// Clear bit `i`.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
+#[inline(always)]
+pub(super) unsafe fn bm_clear(bm: *mut u64, i: usize) {
+    *bm.add(i >> 6) &= !(1u64 << (i & 63));
+}
+
 /// Clear bits `a` to `b` inclusive.
 ///
 /// If `a > b`, this is a no-op - no bits are cleared.

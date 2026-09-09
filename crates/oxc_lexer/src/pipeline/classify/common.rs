@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::{
     IDENT, IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_prev1, bm_set},
+    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_prev1, bm_set},
     find::scan_ident_esc,
 };
 
@@ -146,7 +146,7 @@ pub unsafe fn misc_post(
             let k = *kind.add(tt as usize);
             if k == IDENT || (k >= KW_KIND_BASE && k != PUNCT1_KIND_UNKNOWN) {
                 *kind.add(tt as usize) = IDENT_ESC;
-                *st.add(p >> 6) &= !(1u64 << (p & 63));
+                bm_clear(st, p);
             }
         }
     }

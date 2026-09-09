@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     NUM,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set},
+    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     find::scan_number,
     regex_div::{gt_run_split, lt_run_split},
 };
@@ -327,7 +327,7 @@ unsafe fn munch_walk(
             *kind.add(pos) = opk as u8;
             let mut j = 1usize;
             while j < opl as usize {
-                *st.add((pos + j) >> 6) &= !(1u64 << ((pos + j) & 63));
+                bm_clear(st, pos + j);
                 j += 1;
             }
             pos += opl as usize;

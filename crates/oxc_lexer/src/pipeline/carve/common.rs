@@ -8,7 +8,7 @@ use crate::{
 
 use super::super::{
     BCOM, LCOM, REGEX, STR,
-    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set},
+    bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
     find::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
     regex_div::prev_is_regex,
 };
@@ -106,8 +106,8 @@ pub(super) unsafe fn lex_slash(
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.
         *kind.add(s) = OP_SLASH_EQ;
-        *st.add((s + 1) >> 6) &= !(1u64 << ((s + 1) & 63));
-        *opch.add((s + 1) >> 6) &= !(1u64 << ((s + 1) & 63));
+        bm_clear(st, s + 1);
+        bm_clear(opch, s + 1);
         s + 2
     } else {
         s + 1
