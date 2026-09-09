@@ -342,6 +342,24 @@ impl CliRunner {
         }
         .with_filters(&filters);
 
+        // A build that cannot run JS plugins must say so. Without this the pure-Rust
+        // binary accepts a config naming `jsPlugins`, drops every rule they provide,
+        // and — when the violations come only from those rules — prints nothing and
+        // exits 0, where the npm distribution exits 1. A CI switched to the standalone
+        // binary goes green on code that breaks its own lint rules.
+        let skipped_plugins = external_plugin_store.skipped_plugin_specifiers();
+        if !skipped_plugins.is_empty() {
+            print_and_flush_stdout(
+                stdout,
+                &format!(
+                    "Warning: this build cannot run JS plugins, so rules from the following \
+                     `jsPlugins` entries are skipped:\n  {}\nUse the npm `oxlint` package \
+                     (requires Node.js) to run them.\n\n",
+                    skipped_plugins.join("\n  "),
+                ),
+            );
+        }
+
         if misc_options.print_config {
             return crate::mode::run_print_config(&config_builder, root_config, stdout);
         }
