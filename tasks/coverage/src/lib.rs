@@ -10,9 +10,8 @@ mod typescript;
 
 mod tools;
 
-// Gated by `lexer` Cargo feature, because `oxc_lexer` is still incubating.
-// `oxc_lexer` only supports little endian at present.
-#[cfg(all(feature = "lexer", target_endian = "little"))]
+// `oxc_lexer` only supports little endian at present
+#[cfg(target_endian = "little")]
 mod lexer_diff;
 
 use std::{
@@ -335,6 +334,7 @@ impl AppArgs {
         self.run_minifier(data);
         self.run_estree(data);
         self.run_estree_tokens(data);
+        self.run_lexer(data);
     }
 
     fn run_tool<T>(
@@ -370,15 +370,12 @@ impl AppArgs {
     /// Differential lexer conformance.
     ///
     /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
-    /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
     /// Runs against whichever of the lexer's two implementations the build selects -
     /// the SIMD core on a static AVX2/BMI2 x86_64 build, the scalar fallback otherwise.
-    /// `oxc_lexer` only supports little endian at present.
     ///
-    /// # Panics
-    /// Panics if `lexer` Cargo feature is not enabled, or on a big endian machine.
+    /// `oxc_lexer` only supports little endian at present, so this is a no-op on big endian.
     pub fn run_lexer(&self, data: &TestData) {
-        #[cfg(all(feature = "lexer", target_endian = "little"))]
+        #[cfg(target_endian = "little")]
         {
             // Report which implementation was built.
             // CI checks this line to make sure the build it expected is the build it got.
@@ -401,10 +398,10 @@ impl AppArgs {
             self.run_tool("lexer_misc", MISC_PATH, &data.misc, lexer_diff::run_lexer_misc);
         }
 
-        #[cfg(not(all(feature = "lexer", target_endian = "little")))]
+        #[cfg(not(target_endian = "little"))]
         {
             let _ = (self, data);
-            panic!("`lexer` conformance requires `lexer` Cargo feature and a little-endian system");
+            println!("Lexer conformance skipped: `oxc_lexer` requires a little-endian system");
         }
     }
 
