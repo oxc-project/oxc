@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 91/91 (100.00%)
-Positive Passed: 91/91 (100.00%)
-Negative Passed: 195/195 (100.00%)
+AST Parsed     : 93/93 (100.00%)
+Positive Passed: 93/93 (100.00%)
+Negative Passed: 197/197 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -188,6 +188,18 @@ Negative Passed: 195/195 (100.00%)
  6 │ 
  7 │ outer: while (true) { (() => { continue outer; }); }
    ·                                         ─────
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[misc/fail/async-field.js:1:11]
+ 1 │ class C { async x; }
+   ·           ─────
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[misc/fail/async-field.ts:1:11]
+ 1 │ class C { async x; }
+   ·           ─────
    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
