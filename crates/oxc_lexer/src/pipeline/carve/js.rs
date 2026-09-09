@@ -8,7 +8,7 @@ use super::super::{
 
 use super::common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape};
 
-pub unsafe fn carve(
+pub(super) unsafe fn carve_js(
     t: &Tables,
     srcs: &[u8],
     n: usize,

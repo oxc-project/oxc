@@ -29,7 +29,7 @@ use crate::tables::Tables;
 use crate::token::SPAN_SENTINELS;
 
 use bitmap::bm_any;
-use carve::{carve, carve_jsx};
+use carve::carve;
 use classify::{classify, misc_post, misc_pre};
 use coalesce::coalesce;
 use compress::{build_spans, compress, lanes_post, write_sentinels};
@@ -222,11 +222,7 @@ impl Lexer {
                 misc_pre::<false>(sp, n, st, word, misc, kind, &mut self.lanes)
             };
         }
-        if jsx {
-            carve_jsx(t, src, n, st, kind, opch, word, digit, dot, kwinit, ts, &mut self.lanes);
-        } else {
-            carve(t, src, n, st, kind, opch, word, digit, ts, &mut self.lanes);
-        }
+        carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
         coalesce(t, kws, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, &mut self.lanes);
         if nesc != 0 {
             misc_post(sp, n, st, word, misc, kind);

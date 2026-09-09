@@ -71,7 +71,7 @@ enum JFrameKind {
 /// start byte keeps its `st` bit yet may be a digit/keyword/operator char,
 /// so those bits are cleared there to keep `coalesce` and `keywords` from
 /// re-interpreting it.
-pub unsafe fn carve_jsx(
+pub(super) unsafe fn carve_jsx(
     t: &Tables,
     srcs: &[u8],
     n: usize,
