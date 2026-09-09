@@ -276,14 +276,46 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
-        let (mut expressions, comma_start) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
-                Kind::RParen,
-                Kind::Comma,
-                opening_span,
-                Self::parse_assignment_expression_or_higher,
-            )
-        });
+        let (expression, mut expressions, comma_start) =
+            self.context(Context::In, Context::Decorator, |p| {
+                let mut expressions = ArenaVec::new_in(p);
+                if p.at(Kind::RParen) || p.has_fatal_error() {
+                    return (None, expressions, None);
+                }
+
+                // Most parentheses contain one expression. Keep it outside a vector until a
+                // comma requires a sequence expression, avoiding an otherwise unused allocation.
+                let expression = p.parse_assignment_expression_or_higher();
+                let kind = p.cur_kind();
+                if kind == Kind::RParen || p.has_fatal_error() {
+                    return (Some(expression), expressions, None);
+                }
+                if kind != Kind::Comma {
+                    p.set_fatal_error(diagnostics::expect_closing_or_separator(
+                        Kind::RParen.to_str(),
+                        Kind::Comma.to_str(),
+                        kind.to_str(),
+                        p.cur_token().span(),
+                        opening_span,
+                    ));
+                    return (Some(expression), expressions, None);
+                }
+
+                expressions.push(expression);
+                p.advance(Kind::Comma);
+                let comma_start = if p.at(Kind::RParen) {
+                    Some(p.prev_token_end - 1)
+                } else {
+                    p.parse_delimited_list_into(
+                        &mut expressions,
+                        Kind::RParen,
+                        Kind::Comma,
+                        opening_span,
+                        Self::parse_assignment_expression_or_higher,
+                    )
+                };
+                (None, expressions, comma_start)
+            });
 
         if let Some(comma_start) = comma_start {
             let error = diagnostics::unexpected_trailing_comma(
@@ -293,7 +325,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.fatal_error(error);
         }
 
-        if expressions.is_empty() {
+        if expression.is_none() && expressions.is_empty() {
             self.expect(Kind::RParen);
             let error = diagnostics::empty_parenthesized_expression(self.end_span(start));
             return self.fatal_error(error);
@@ -303,7 +335,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::RParen);
 
         // ParenthesizedExpression is from acorn --preserveParens
-        let mut expression = if expressions.len() == 1 {
+        let mut expression = if let Some(expression) = expression {
+            expression
+        } else if expressions.len() == 1 {
             expressions.remove(0)
         } else {
             Expression::new_sequence_expression(expr_span, expressions, self)
