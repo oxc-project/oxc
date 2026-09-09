@@ -2,6 +2,21 @@
 use core::arch::x86_64::*;
 
 #[inline(always)]
+pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
+    let mut w = i >> 6;
+    let mut inv = !*bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
+    while inv == 0 {
+        w += 1;
+        if (w << 6) >= n {
+            return n;
+        }
+        inv = !*bm.add(w);
+    }
+    let r = (w << 6) + inv.trailing_zeros() as usize;
+    if r < n { r } else { n }
+}
+
+#[inline(always)]
 pub(super) unsafe fn bm_next1(bm: *const u64, i: usize, n: usize) -> usize {
     let mut w = i >> 6;
     let x = *bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
@@ -20,6 +35,7 @@ pub(super) unsafe fn bm_next1(bm: *const u64, i: usize, n: usize) -> usize {
     }
     n
 }
+
 #[inline(always)]
 pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
     if p == 0 {
@@ -43,24 +59,12 @@ pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
     }
     -1
 }
+
 #[inline(always)]
 pub(super) unsafe fn bm_set1(bm: *mut u64, i: usize) {
     *bm.add(i >> 6) |= 1u64 << (i & 63);
 }
-#[inline(always)]
-pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
-    let mut w = i >> 6;
-    let mut inv = !*bm.add(w) & !((1u64 << (i & 63)).wrapping_sub(1));
-    while inv == 0 {
-        w += 1;
-        if (w << 6) >= n {
-            return n;
-        }
-        inv = !*bm.add(w);
-    }
-    let r = (w << 6) + inv.trailing_zeros() as usize;
-    if r < n { r } else { n }
-}
+
 #[inline(always)]
 pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
     if a > b {
@@ -82,6 +86,7 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
     }
     *bm.add(wb) &= !hi;
 }
+
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
@@ -101,6 +106,7 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
     }
     false
 }
+
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
