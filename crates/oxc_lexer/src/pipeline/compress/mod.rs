@@ -1,6 +1,8 @@
 use oxc_span::Span;
 
-use crate::{lanes::Lanes, tables::Tables};
+use crate::{lanes::Lanes, tables::Tables, token::SPAN_SENTINELS};
+
+use super::EOF;
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 mod avx2;
@@ -13,7 +15,6 @@ mod generic;
 use generic::{build_spans, compress_blocks, lanes_post};
 
 mod common;
-pub use common::write_sentinels;
 
 const STAGE_BLOCKS: usize = 32;
 pub const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
@@ -52,6 +53,14 @@ pub unsafe fn compress(
     write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
     lanes_post(src, out_kinds, out_spans, w, n as u32, lanes);
     w
+}
+
+pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
+    let eof = u64::from(n) | (u64::from(n) << 32);
+    for s in 0..SPAN_SENTINELS {
+        *spans.cast::<u64>().add(s) = eof;
+        *sig_kinds.add(s) = EOF;
+    }
 }
 
 #[cfg(test)]
