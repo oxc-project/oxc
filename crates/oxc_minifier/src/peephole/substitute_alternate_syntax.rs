@@ -1959,12 +1959,7 @@ impl<'a> PeepholeOptimizations {
                     {
                         Expression::new_sequence_expression(
                             expr_stmt.span,
-                            {
-                                let mut sequence = ArenaVec::new_in(ctx);
-                                sequence.push(taken);
-                                sequence.push(Expression::new_void_0(call_expr.span, ctx));
-                                sequence
-                            },
+                            [taken, Expression::new_void_0(call_expr.span, ctx)],
                             ctx,
                         )
                     } else {

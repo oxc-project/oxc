@@ -39,7 +39,7 @@ pdf.mjs:
   sys alloc bytes: 5316219 # 5.32 MB
   sys peak growth: 3693363 # 3.69 MB
   arena allocs: 20927
-  arena reallocs: 7699
+  arena reallocs: 7697
   arena size: 5782208 # 5.78 MB
 
 antd.js:
