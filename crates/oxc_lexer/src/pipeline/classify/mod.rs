@@ -9,4 +9,4 @@ mod generic;
 pub use generic::classify;
 
 mod common;
-pub use common::{misc_post, misc_pre, unicode_ws_len};
+pub use common::unicode_ws_len;
