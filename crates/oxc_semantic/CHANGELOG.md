@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 8b35abd semantic: Detect duplicate private class elements (#26361) (camc314)
+- 457ed57 semantic: Reject await and yield in rest parameter defaults (#26359) (camc314)
+- 4b89c7b semantic: Reject jumps across arrow functions (#26357) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- 4adfb4c semantic: Validate chained continue labels (#26157) (camc314)
+- c3dedc9 semantic: Skip function body bindings in parameters (#26099) (Dunqing)
+- 8531b9b linter/plugins: Alter method for obtaining mutable `Program` when sending AST to JS plugins (#26077) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

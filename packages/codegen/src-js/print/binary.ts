@@ -1,7 +1,8 @@
 // Binary/logical expressions (port of `binary_expr_visitor.rs`).
 
 import { typeAssertIs } from "../asserts.ts";
-import { CAT_CLOSE_BRACKET, CAT_OTHER, write } from "./write.ts";
+import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
+import { write } from "./write.ts";
 import { printPrivateInExpression, printExpression } from "./expression.ts";
 import { BIN_PRECEDENCE, CTX_FORBID_IN, PADDED_BIN_OPERATORS } from "./operators.ts";
 import { withoutParens } from "./parens.ts";
@@ -64,7 +65,7 @@ export function printBinaryish(
       if (left.type === "BinaryExpression" && left.left.type === "PrivateIdentifier") {
         // Private-in expression as the left operand
         typeAssertIs<ESTree.PrivateInExpression>(left);
-        printPrivateInExpression(left, state, PREC_LOWEST);
+        printPrivateInExpression(left, state, v.leftPrecedence);
         binVisitRightAndFinish(v, state);
         break;
       }
@@ -150,12 +151,12 @@ function binCheckAndPrepare(v: BinaryVisitor, state: State): void {
     // The base of `**` must be an `UpdateExpression`.
     // Unary/await bases and negative-printing literals must be parenthesized.
     const left = withoutParens(e.left);
-    typeAssertIs<LiteralExtras>(left);
     if (
       left.type === "UnaryExpression"
       || left.type === "AwaitExpression"
       || (TS && left.type === "TSTypeAssertion")
-      || (left.type === "Literal" && (typeof left.value === "number" || left.bigint != null))
+      || (left.type === "Literal"
+        && (typeof left.value === "number" || (left as LiteralExtras).bigint != null))
     ) {
       v.leftPrecedence = PREC_CALL;
     }

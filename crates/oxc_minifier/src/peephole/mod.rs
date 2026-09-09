@@ -9,6 +9,7 @@ mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_statements;
+mod minimize_switch_statements;
 mod normalize;
 mod remove_dead_code;
 mod remove_unused_declaration;
@@ -411,6 +412,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                Statement::SwitchStatement(_) => {
+                    Self::drop_unreachable_switch_cases(stmt, ctx);
+                    Self::try_fold_switch(stmt, ctx);
+                }
                 Statement::FunctionDeclaration(_) => {
                     Self::remove_unused_function_declaration(stmt, ctx);
                 }
@@ -451,6 +456,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 }
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
+                Statement::SwitchStatement(_) => {
+                    Self::drop_unreachable_switch_cases(stmt, ctx);
+                    Self::try_fold_switch(stmt, ctx);
+                }
                 Statement::FunctionDeclaration(f) => {
                     Self::init_function_declaration_symbol_value(f.id.as_ref(), ctx);
                     Self::remove_unused_function_declaration(stmt, ctx);
@@ -783,7 +792,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.private_member_usage.record_use(node.field.name.into());
+        ctx.state.private_member_usage.record_use(node.field.name);
     }
 
     fn exit_private_in_expression(
@@ -794,6 +803,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if ctx.is_tree_shake_only() {
             return;
         }
-        ctx.state.private_member_usage.record_use(node.left.name.into());
+        ctx.state.private_member_usage.record_use(node.left.name);
     }
 }

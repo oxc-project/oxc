@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
@@ -27,8 +27,8 @@ pub struct WorkerToolChangeResult {
     pub new_watchers: Vec<Registration>,
     /// Watchers that need to be unregistered
     pub removed_watchers: Vec<Unregistration>,
-    /// Optional message to be sent to the client, e.g., for misconfiguration
-    pub client_message: Option<ClientMessage>,
+    /// Optional messages to be sent to the client, e.g., for misconfiguration
+    pub client_messages: Vec<ClientMessage>,
 }
 
 /// A worker that manages the individual tool for a specific workspace
@@ -77,14 +77,14 @@ impl WorkspaceWorker {
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     ///
-    /// Returns an optional message to be sent to the client.
-    pub async fn start_worker(&self, options: serde_json::Value) -> Option<ClientMessage> {
+    /// Returns messages to be sent to the client.
+    pub async fn start_worker(&self, options: serde_json::Value) -> Vec<ClientMessage> {
         let result = self.builder.build(&self.root_uri, options.clone());
         *self.tool.write().await = Some(result.tool);
 
         *self.options.lock().await = Some(options);
 
-        result.client_message
+        result.client_messages
     }
 
     /// Initialize file system watchers for the workspace.
@@ -117,14 +117,12 @@ impl WorkspaceWorker {
     /// Common aggregator for tool-provided diagnostics.
     async fn collect_diagnostics_with<F>(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
         run: F,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String>
     where
-        F: Fn(&Box<dyn Tool>, &TextDocument) -> DiagnosticResult,
+        F: Fn(&Box<dyn Tool>, TextDocument) -> DiagnosticResult,
     {
-        let mut aggregated: FxHashMap<Uri, Vec<Diagnostic>> = FxHashMap::default();
-
         let tool_diagnostics = {
             let tool_guard = self.tool.read().await;
             let Some(tool) = tool_guard.as_ref() else {
@@ -134,28 +132,22 @@ impl WorkspaceWorker {
             run(tool, document)
         };
 
-        match tool_diagnostics {
-            Ok(diags) => {
-                for (entry_uri, mut diags) in diags {
-                    aggregated.entry(entry_uri).or_default().append(&mut diags);
-                }
-            }
+        let diagnostics = match tool_diagnostics {
+            Ok(diags) => diags,
             Err(err) => {
                 return Err(err);
             }
-        }
+        };
 
         // In push mode, keep track of published diagnostics to clear them on shutdown
         if self.diagnostic_mode == DiagnosticMode::Push {
-            let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
-            self.published_diagnostics.lock().await.extend(new_published_uris);
+            self.published_diagnostics
+                .lock()
+                .await
+                .extend(diagnostics.iter().map(|(uri, _)| uri.clone()));
         }
 
-        let mut result = Vec::with_capacity(aggregated.len());
-        for (uri, diags) in aggregated {
-            result.push((uri, diags));
-        }
-        Ok(result)
+        Ok(diagnostics)
     }
 
     /// Run different tools to collect diagnostics.
@@ -164,7 +156,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic` results into an error.
     pub async fn run_diagnostic(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| tool.run_diagnostic(document))
             .await
@@ -176,7 +168,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic_on_change` results into an error.
     pub async fn run_diagnostic_on_change(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_change(document)
@@ -190,7 +182,7 @@ impl WorkspaceWorker {
     /// When calling `Tool::run_diagnostic_on_save` results into an error.
     pub async fn run_diagnostic_on_save(
         &self,
-        document: &TextDocument<'_>,
+        document: TextDocument<'_>,
     ) -> Result<Vec<(Uri, Vec<Diagnostic>)>, String> {
         self.collect_diagnostics_with(document, |tool, document| {
             tool.run_diagnostic_on_save(document)
@@ -205,7 +197,7 @@ impl WorkspaceWorker {
     ///
     /// # Errors
     /// When calling `Tool::run_format` results into an error.
-    pub async fn format_file(&self, document: &TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
+    pub async fn format_file(&self, document: TextDocument<'_>) -> Result<Vec<TextEdit>, String> {
         let tool_guard = self.tool.read().await;
         let Some(tool) = tool_guard.as_ref() else {
             return Ok(Vec::new());
@@ -238,7 +230,7 @@ impl WorkspaceWorker {
     /// It calls all tools and collects their code actions or commands.
     pub async fn get_code_actions_or_commands(
         &self,
-        params: &CodeActionParams,
+        params: CodeActionParams,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
         if let Some(tool) = self.tool.read().await.as_ref() {
@@ -332,7 +324,7 @@ impl WorkspaceWorker {
                 diagnostics: None,
                 new_watchers: registrations,
                 removed_watchers: unregistrations,
-                client_message: None, // TODO: Should we return a message to the client if the tool is not initialized?
+                client_messages: Vec::new(), // TODO: Should we return a message to the client if the tool is not initialized?
             };
         };
         let change = change_handler(tool, self.builder.as_ref());
@@ -352,13 +344,13 @@ impl WorkspaceWorker {
                     diagnostics: None,
                     new_watchers: registrations,
                     removed_watchers: unregistrations,
-                    client_message: change.client_message,
+                    client_messages: change.client_messages,
                 };
             };
 
             for uri in file_system.keys() {
                 let document = file_system.get_document(&uri);
-                let Ok(mut reports) = tool.run_diagnostic(&document) else {
+                let Ok(mut reports) = tool.run_diagnostic(document) else {
                     // If diagnostics could not be run, skip this URI, but continue with others
                     // TODO: Should we aggregate errors instead? One by one, or all together?
                     continue;
@@ -377,7 +369,7 @@ impl WorkspaceWorker {
             diagnostics,
             new_watchers: registrations,
             removed_watchers: unregistrations,
-            client_message: change.client_message,
+            client_messages: change.client_messages,
         }
     }
 
@@ -724,11 +716,11 @@ mod tests {
         assert_eq!(result.removed_watchers.len(), 0);
         assert!(!needs_diagnostic_refresh);
         assert_eq!(
-            result.client_message,
-            Some(ClientMessage {
+            result.client_messages,
+            vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            })
+            }]
         );
     }
 
@@ -758,11 +750,11 @@ mod tests {
         assert_eq!(result.removed_watchers.len(), 0);
         assert!(!needs_diagnostic_refresh);
         assert_eq!(
-            result.client_message,
-            Some(ClientMessage {
+            result.client_messages,
+            vec![ClientMessage {
                 message: "Fake misconfiguration message".to_string(),
                 r#type: MessageType::WARNING,
-            })
+            }]
         );
     }
 
@@ -776,7 +768,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let actions = worker
-            .get_code_actions_or_commands(&CodeActionParams {
+            .get_code_actions_or_commands(CodeActionParams {
                 uri: Uri::from_str("file:///root/file.js").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
@@ -787,7 +779,7 @@ mod tests {
         assert_eq!(actions.len(), 0);
 
         let actions = worker
-            .get_code_actions_or_commands(&CodeActionParams {
+            .get_code_actions_or_commands(CodeActionParams {
                 uri: Uri::from_str("file:///root/code_action.config").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
@@ -815,7 +807,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic(TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -828,7 +820,7 @@ mod tests {
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic(&TextDocument::new(
+            .run_diagnostic(TextDocument::new(
                 &uri,
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
@@ -845,7 +837,7 @@ mod tests {
         );
 
         let no_diagnostics = worker
-            .run_diagnostic(&TextDocument::new(
+            .run_diagnostic(TextDocument::new(
                 &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
@@ -856,7 +848,7 @@ mod tests {
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic(&TextDocument::new(
+            .run_diagnostic(TextDocument::new(
                 &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
@@ -879,7 +871,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_change(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic_on_change(TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -892,7 +884,7 @@ mod tests {
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic_on_change(&TextDocument::new(
+            .run_diagnostic_on_change(TextDocument::new(
                 &uri,
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
@@ -909,7 +901,7 @@ mod tests {
         );
 
         let no_diagnostics = worker
-            .run_diagnostic_on_change(&TextDocument::new(
+            .run_diagnostic_on_change(TextDocument::new(
                 &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
@@ -920,7 +912,7 @@ mod tests {
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic_on_change(&TextDocument::new(
+            .run_diagnostic_on_change(TextDocument::new(
                 &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,
@@ -942,7 +934,7 @@ mod tests {
         worker.start_worker(serde_json::Value::Null).await;
 
         let diagnostics_no_content = worker
-            .run_diagnostic_on_save(&TextDocument::new(&uri, LanguageId::default(), None))
+            .run_diagnostic_on_save(TextDocument::new(&uri, LanguageId::default(), None))
             .await
             .unwrap();
 
@@ -955,7 +947,7 @@ mod tests {
         );
 
         let diagnostics_with_content = worker
-            .run_diagnostic_on_save(&TextDocument::new(
+            .run_diagnostic_on_save(TextDocument::new(
                 &uri,
                 LanguageId::default(),
                 Some(Arc::from("helloworld")),
@@ -972,7 +964,7 @@ mod tests {
         );
 
         let no_diagnostics = worker
-            .run_diagnostic_on_save(&TextDocument::new(
+            .run_diagnostic_on_save(TextDocument::new(
                 &Uri::from_str("file:///root/unknown.file").unwrap(),
                 LanguageId::default(),
                 None,
@@ -983,7 +975,7 @@ mod tests {
         assert!(no_diagnostics.is_empty());
 
         let error = worker
-            .run_diagnostic_on_save(&TextDocument::new(
+            .run_diagnostic_on_save(TextDocument::new(
                 &Uri::from_str("file:///root/error.config").unwrap(),
                 LanguageId::default(),
                 None,

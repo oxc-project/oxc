@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -184,10 +184,6 @@ impl Rule for NoUseBeforeDefine {
             identifier.span,
             Some(ctx.scoping().symbol_span(symbol_id)),
         ));
-    }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
     }
 }
 
@@ -3050,4 +3046,16 @@ fn test_typescript_eslint() {
     Tester::new(NoUseBeforeDefine::NAME, NoUseBeforeDefine::PLUGIN, pass, fail)
         .with_snapshot_suffix("typescript-eslint")
         .test_and_snapshot();
+}
+
+#[test]
+fn test_javascript() {
+    use crate::tester::Tester;
+
+    let pass = vec!["const a = 1;"];
+    let fail = vec!["const a = b; const b = 1;"];
+
+    Tester::new(NoUseBeforeDefine::NAME, NoUseBeforeDefine::PLUGIN, pass, fail)
+        .change_rule_path_extension("js")
+        .test();
 }

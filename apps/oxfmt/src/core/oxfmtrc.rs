@@ -582,6 +582,8 @@ pub struct SortImportsConfig {
     /// If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
     /// all conditions must be met for an import to match the custom group (AND logic).
     ///
+    /// NOTE: Predefined group names (e.g. `side_effect`, `external`) and `unknown` are reserved and cannot be used as `groupName`.
+    ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_groups: Option<Vec<CustomGroupItemConfig>>,

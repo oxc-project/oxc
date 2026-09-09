@@ -129,8 +129,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             (None, None)
         };
-        // `const foo /* #__PURE__ */ = bar()` - pure comment before `=` cannot be applied
-        self.lexer.trivia_builder.mark_current_pure_comment_not_applied();
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl = VariableDeclarator::new(
             self.end_span(start),
@@ -191,6 +189,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let is_await = self.eat(Kind::Await);
         let kind = if is_await {
+            if !self.ctx.has_await() {
+                let error = diagnostics::await_expression(Span::sized(start, 5));
+                if self.ctx.has_top_level() {
+                    // Top-level `await using` is module syntax in unambiguous mode.
+                    self.module_record_builder.set_module_syntax();
+                    self.error_on_script(error);
+                } else {
+                    self.error(error);
+                }
+            }
             VariableDeclarationKind::AwaitUsing
         } else {
             VariableDeclarationKind::Using

@@ -639,15 +639,13 @@ impl<'a> PeepholeOptimizations {
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
-            let (left, right) = if ctx.is_expression_undefined(&e.right) {
-                (e.left.take_in(ctx), Expression::new_null_literal(e.right.span(), ctx))
+            if ctx.is_expression_undefined(&e.right) {
+                let new_null = Expression::new_null_literal(e.right.span(), ctx);
+                ctx.replace_expression(&mut e.right, new_null);
             } else if ctx.is_expression_undefined(&e.left) {
-                (e.right.take_in(ctx), Expression::new_null_literal(e.left.span(), ctx))
-            } else {
-                return;
-            };
-            let new_value = Expression::new_binary_expression(e.span, left, e.operator, right, ctx);
-            ctx.replace_expression(expr, new_value);
+                let new_null = Expression::new_null_literal(e.left.span(), ctx);
+                ctx.replace_expression(&mut e.left, new_null);
+            }
         }
     }
 

@@ -258,5 +258,8 @@ mod tests {
         );
         assert_eq!(split_with_single_space("a b").collect::<Vec<_>>(), vec!["a", "b"]);
         assert_eq!(split_with_single_space("").collect::<Vec<_>>(), Vec::<&str>::new());
+        // A space-only line is ONE word: block scalar printing relies on
+        // "non-empty input yields a non-empty group" to tell content from blank lines
+        assert_eq!(split_with_single_space("   ").collect::<Vec<_>>(), vec!["   "]);
     }
 }

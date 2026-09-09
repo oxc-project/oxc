@@ -18,7 +18,16 @@ impl Utf8ToUtf16Converter<'_> {
         // Span of `FormalParameters` itself does not appear in ESTree AST,
         // and its span includes `TSThisParameter` in types like `Function`,
         // which is converted before `FormalParameters`. So skip converting span.
-        walk_mut::walk_formal_parameters(self, params);
+        self.visit_formal_parameter_list(&mut params.items);
+        if let Some(rest) = &mut params.rest {
+            self.convert_offset(&mut rest.span.start);
+            self.visit_decorators(&mut rest.decorators);
+            self.visit_binding_rest_element(&mut rest.rest);
+            if let Some(type_annotation) = &mut rest.type_annotation {
+                self.visit_ts_type_annotation(type_annotation);
+            }
+            self.convert_offset(&mut rest.span.end);
+        }
     }
 
     pub(crate) fn convert_object_property(&mut self, prop: &mut ObjectProperty<'_>) {

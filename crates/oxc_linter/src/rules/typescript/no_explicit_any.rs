@@ -92,8 +92,10 @@ impl Rule for NoExplicitAny {
         }
 
         if self.fix_to_unknown {
+            let replacement =
+                if Self::is_bare_rest_type(node, ctx) { "unknown[]" } else { "unknown" };
             ctx.diagnostic_with_fix(no_explicit_any_diagnostic(any.span), |fixer| {
-                fixer.replace(any.span, "unknown")
+                fixer.replace(any.span, replacement)
             });
         } else {
             ctx.diagnostic(no_explicit_any_diagnostic(any.span));
@@ -106,6 +108,14 @@ impl Rule for NoExplicitAny {
 }
 
 impl NoExplicitAny {
+    fn is_bare_rest_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+        let mut ancestors = ctx.nodes().ancestors(node.id());
+        ancestors.next().is_some_and(|parent| matches!(parent.kind(), AstKind::TSTypeAnnotation(_)))
+            && ancestors
+                .next()
+                .is_some_and(|parent| matches!(parent.kind(), AstKind::FormalParameterRest(_)))
+    }
+
     fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
         ctx.nodes()
@@ -624,6 +634,21 @@ mod tests {
             (
                 "function foo(...args: any[]): void {}",
                 "function foo(...args: unknown[]): void {}",
+                fix_options.clone(),
+            ),
+            (
+                "function declaration(...args: any) {}",
+                "function declaration(...args: unknown[]) {}",
+                fix_options.clone(),
+            ),
+            (
+                "const arrow = (...args: any) => {};",
+                "const arrow = (...args: unknown[]) => {};",
+                fix_options.clone(),
+            ),
+            (
+                "interface Callable { (...args: any): void; method(...args: any): void; }",
+                "interface Callable { (...args: unknown[]): void; method(...args: unknown[]): void; }",
                 fix_options.clone(),
             ),
             (

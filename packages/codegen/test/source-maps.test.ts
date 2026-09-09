@@ -169,6 +169,33 @@ describe("Rust conformance", () => {
     expect(map?.names).toEqual(["ab"]);
   });
 
+  test("stale JSX identifier offsets preserve a name holding a dash", () => {
+    const code = 'const el = <data-foo bar-baz="1" />;';
+    const program = parseProgram("renamed.jsx", code);
+    const statement = program.body[0];
+    if (statement.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+    const element = statement.declarations[0].init;
+    if (element?.type !== "JSXElement") throw new Error("Expected JSX element");
+
+    const { name, attributes } = element.openingElement;
+    if (name.type !== "JSXIdentifier") throw new Error("Expected JSX identifier");
+    const attribute = attributes[0];
+    if (attribute.type !== "JSXAttribute" || attribute.name.type !== "JSXIdentifier") {
+      throw new Error("Expected JSX attribute");
+    }
+
+    name.name = "X";
+    attribute.name.name = "y";
+
+    const { map } = printSync(program, {
+      jsx: true,
+      sourcemap: true,
+      sourceFilename: "renamed.jsx",
+      sourceText: code,
+    });
+    expect(map?.names).toEqual(["data-foo", "bar-baz"]);
+  });
+
   test("a private identifier is named only when it was renamed", () => {
     const code = "class C { #ab; m() { return this.#ab; } }";
     const program = parseProgram("private.js", code);

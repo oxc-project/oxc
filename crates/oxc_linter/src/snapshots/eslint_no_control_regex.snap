@@ -8,7 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──┬─
    ·                ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:16]
@@ -16,7 +16,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──┬─
    ·                  ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:16]
@@ -24,7 +24,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──┬─
    ·                  ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:19]
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──┬─
    ·                     ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:25]
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           │   ╰── 'U+001E' is a control character.
    ·                           ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:25]
@@ -50,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           │      ╰── 'U+0000' is a control character.
    ·                           ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:28]
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              │      ╰── 'U+001F' is a control character.
    ·                              ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:13]
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─┬
    ·              ╰── 'U+0000' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:21]
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──┬─
    ·                       ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:19]
@@ -83,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──┬─
    ·                     ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:29]
@@ -91,7 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──┬─
    ·                               ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:23]
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──┬──
    ·                         ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -107,7 +107,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───┬──
    ·     ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -115,7 +115,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───┬──
    ·     ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:13]
@@ -123,7 +123,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───┬───
    ·                ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:13]
@@ -131,7 +131,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───┬───
    ·                ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:13]
@@ -139,7 +139,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───┬───
    ·                ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:13]
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───┬───
    ·                ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -155,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───┬──
    ·     ╰── 'U+000A' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -163,7 +163,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──┬─
    ·    ╰── 'U+000A' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -171,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───┬──
    ·     ╰── 'U+000D' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -179,7 +179,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──┬─
    ·    ╰── 'U+000D' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -187,7 +187,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───┬──
    ·     ╰── 'U+0009' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -195,7 +195,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──┬─
    ·    ╰── 'U+0009' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:4]
@@ -204,7 +204,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     │ ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
    ·     ╰── '\1' is a control character. It looks like a backreference, but there is no corresponding capture group.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:2]
@@ -213,7 +213,7 @@ source: crates/oxc_linter/src/tester.rs
    ·    │  ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
    ·    ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:2]
@@ -221,7 +221,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──┬─
    ·    ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:2]
@@ -230,7 +230,7 @@ source: crates/oxc_linter/src/tester.rs
    ·    │    ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
    ·    ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control characters
    ╭─[no_control_regex.tsx:1:36]
@@ -239,7 +239,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      │   ╰── 'U+001E' is a control character.
    ·                                      ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:32]
@@ -247,7 +247,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ──┬─
    ·                                  ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:10]
@@ -255,7 +255,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──┬─
    ·            ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:14]
@@ -263,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──┬─
    ·                ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:15]
@@ -271,7 +271,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──┬─
    ·                 ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:13]
@@ -279,4 +279,4 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──┬─
    ·               ╰── 'U+001F' is a control character.
    ╰────
-  help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.

@@ -28,8 +28,9 @@ pub(super) unsafe fn load8(src: *const u8, i: usize) -> u64 {
 #[inline(always)]
 pub(super) fn eqm(x: u64, b: u8) -> u64 {
     let lo = 0x0101_0101_0101_0101u64;
+    let low7 = 0x7F7F_7F7F_7F7F_7F7Fu64;
     let y = x ^ lo.wrapping_mul(b as u64);
-    y.wrapping_sub(lo) & !y & 0x8080_8080_8080_8080
+    !((y & low7).wrapping_add(low7) | y | low7)
 }
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
@@ -110,7 +111,7 @@ pub(super) unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8)
 }
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
-unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
+pub(super) unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
     while i + 32 <= n {
         let v = load256(src, i);
         let m = mm(_mm256_or_si256(_mm256_or_si256(veq(v, a), veq(v, b)), veq(v, c)));
@@ -130,7 +131,7 @@ unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> 
 }
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 #[inline]
-unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
+pub(super) unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
     while i + 8 <= n {
         let x = load8(src, i);
         let m = eqm(x, a) | eqm(x, b) | eqm(x, c);
@@ -290,12 +291,10 @@ finder!(
 );
 finder!(
     /// TAG-mode scan: the bytes that matter inside an opening `<...>` tag.
-    find_jsx_tag: b'"', b'\'', b'{', b'/', b'>'
-);
-finder!(
-    /// [`find_jsx_tag`] widened with `<` (`.tsx` only), so `carve_jsx` can
-    /// spot and skip a type-argument list inside the opening tag.
-    find_jsx_tag_ts: b'"', b'\'', b'{', b'/', b'>', b'<'
+    /// Deliberately not widened with `-` for hyphenated JSXIdentifiers: an
+    /// extra needle costs a broadcast in every call, and TAG mode calls this
+    /// once per attribute.
+    find_jsx_tag: b'"', b'\'', b'{', b'/', b'>', b'<'
 );
 finder!(
     /// TEXT-mode scan (strict): JSX child text ends at any of `< { > }`.
@@ -679,7 +678,8 @@ pub(super) unsafe fn scan_tmpl_text(
 #[inline]
 pub(super) unsafe fn scan_number(src: *const u8, n: usize, pos: usize) -> usize {
     if *src.add(pos) == b'0' && pos + 1 < n {
-        let c = *src.add(pos + 1) | 0x20;
+        let c1 = *src.add(pos + 1);
+        let c = c1 | 0x20;
         if c == b'x' || c == b'o' || c == b'b' {
             let radix = if c == b'x' {
                 16
@@ -706,12 +706,37 @@ pub(super) unsafe fn scan_number(src: *const u8, n: usize, pos: usize) -> usize 
             }
             return i;
         }
+        if is_digit(c1) {
+            let mut i = pos + 1;
+            let mut octal = true;
+            while i < n {
+                let d = *src.add(i);
+                if is_digit(d) {
+                    octal &= d < b'8';
+                } else if d != b'_' {
+                    break;
+                }
+                i += 1;
+            }
+            if octal {
+                return i;
+            }
+            return scan_fraction_exponent(src, n, i).0;
+        }
     }
     let mut i = pos;
-    let mut is_float = false;
     while i < n && (is_digit(*src.add(i)) || *src.add(i) == b'_') {
         i += 1;
     }
+    let (i, is_float) = scan_fraction_exponent(src, n, i);
+    if !is_float && i < n && *src.add(i) == b'n' {
+        return i + 1;
+    }
+    i
+}
+#[inline]
+unsafe fn scan_fraction_exponent(src: *const u8, n: usize, mut i: usize) -> (usize, bool) {
+    let mut is_float = false;
     if i < n && *src.add(i) == b'.' {
         is_float = true;
         i += 1;
@@ -729,10 +754,7 @@ pub(super) unsafe fn scan_number(src: *const u8, n: usize, pos: usize) -> usize 
             i += 1;
         }
     }
-    if !is_float && i < n && *src.add(i) == b'n' {
-        return i + 1;
-    }
-    i
+    (i, is_float)
 }
 #[inline]
 pub(super) unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize) -> usize {
@@ -763,4 +785,26 @@ pub(super) unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize) -> usize
         break;
     }
     i
+}
+
+/// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace /
+/// LineTerminator at `p`, or 0. The non-ASCII set: U+0085, U+00A0, U+1680,
+/// U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
+#[inline]
+pub(super) unsafe fn unicode_ws_len(src: *const u8, p: usize) -> usize {
+    let c1 = *src.add(p + 1);
+    match *src.add(p) {
+        0xC2 => usize::from(c1 == 0xA0 || c1 == 0x85) * 2,
+        0xE1 => usize::from(c1 == 0x9A && *src.add(p + 2) == 0x80) * 3,
+        0xE2 => {
+            let c2 = *src.add(p + 2);
+            let is_ws = (c1 == 0x80
+                && ((0x80..=0x8B).contains(&c2) || c2 == 0xA8 || c2 == 0xA9 || c2 == 0xAF))
+                || (c1 == 0x81 && c2 == 0x9F);
+            usize::from(is_ws) * 3
+        }
+        0xE3 => usize::from(c1 == 0x80 && *src.add(p + 2) == 0x80) * 3,
+        0xEF => usize::from(c1 == 0xBB && *src.add(p + 2) == 0xBF) * 3,
+        _ => 0,
+    }
 }

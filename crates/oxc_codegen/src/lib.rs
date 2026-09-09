@@ -951,14 +951,27 @@ impl<'a> Codegen<'a> {
     /// give every node a trailing end-mapping. Synthesized nodes whose `span.end`
     /// has no source byte are skipped.
     #[cfg(feature = "sourcemap")]
+    #[inline]
     fn add_source_mapping_after_postfix(&mut self, span: Span, precedence: Precedence) {
+        #[inline(never)]
+        fn add_mapping(
+            sourcemap_builder: &mut SourcemapBuilder<'_>,
+            output: &[u8],
+            source_text: Option<&str>,
+            span: Span,
+        ) {
+            if !span.is_empty()
+                && matches!(output.last(), Some(b')' | b']'))
+                && source_text.is_none_or(|src| (span.end as usize) < src.len())
+            {
+                sourcemap_builder.add_source_mapping(output, span.end, None);
+            }
+        }
+
         if precedence == Precedence::Postfix
             && let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
-            && !span.is_empty()
-            && matches!(self.code.as_bytes().last(), Some(b')' | b']'))
-            && self.source_text.is_none_or(|src| (span.end as usize) < src.len())
         {
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            add_mapping(sourcemap_builder, self.code.as_bytes(), self.source_text, span);
         }
     }
 

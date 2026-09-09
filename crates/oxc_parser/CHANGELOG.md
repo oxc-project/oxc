@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 66744f0 parser: [**BREAKING**] Rename `panicked` to `fatal_error` in `ParserReturn` (#26382) (overlookmotel)
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- 1400a0f parser: Require a string source after `export ... from` (#26389) (camc314)
+- 9a02337 parser: Correctly round large nondecimal literals (#26379) (camc314)
+- c966aca parser: Do not omit `<` token opening type argument list (#26328) (overlookmotel)
+- 3ab9bd1 parser: Do not re-lex template substitution tail after fatal error (#26230) (overlookmotel)
+- 07851b9 parser: Fix debug assert failure when lexer error with tokens enabled (#26229) (overlookmotel)
+
+### ⚡ Performance
+
+- 356def6 parser: Shrink annotation comment ranges (#26356) (overlookmotel)
+- a5be474 parser: Shave instruction off `parse_jsx_element_name` (#26355) (overlookmotel)
+- 9780663 parser: Remove fatal error guard from `parse_jsx_element_name` (#26354) (overlookmotel)
+- 766e12f parser: Remove `token` field from `LexerCheckpoint` (#26350) (overlookmotel)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 5672585 parser: Attach all comments to nodes (#25944) (camc314)
+
+### 🐛 Bug Fixes
+
+- dc09a3a parser: Avoid panic on escaped string export names (#26146) (camc314)
+- d5163d0 parser: Correctly classify unapplied pure annotations (#26084) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2dad1e0 parser: Track irregular line terminators in trivia (#25947) (camc314)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🐛 Bug Fixes

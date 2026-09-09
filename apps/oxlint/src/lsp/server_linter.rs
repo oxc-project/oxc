@@ -74,8 +74,8 @@ impl ServerLinterBuilder {
     }
 
     /// Creates a new `ServerLinter` instance based on the provided root URI and options.
-    /// Returns a tuple containing the `ServerLinter` instance and an optional message to be sent to the client.
-    /// This message will be used to inform about misconfiguration.
+    /// Returns a tuple containing the `ServerLinter` instance and optional messages to be sent to the client.
+    /// These messages will be used to inform about misconfiguration.
     ///
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
@@ -83,7 +83,7 @@ impl ServerLinterBuilder {
         &self,
         root_uri: &Uri,
         options: serde_json::Value,
-    ) -> (ServerLinter, Option<ClientMessage>) {
+    ) -> (ServerLinter, Vec<ClientMessage>) {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -254,7 +254,7 @@ impl ServerLinterBuilder {
                 lint_options.report_unused_directive,
                 options.rules_customization,
             ),
-            None,
+            Vec::new(),
         )
     }
 }
@@ -301,8 +301,8 @@ impl ToolBuilder for ServerLinterBuilder {
     }
 
     fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
-        let (tool, client_message) = self.build(root_uri, options);
-        ToolBuildResult { tool: Box::new(tool), client_message }
+        let (tool, client_messages) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_messages }
     }
 
     #[expect(unused)]
@@ -407,7 +407,7 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
-    code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
+    code_actions: Arc<ConcurrentHashMap<Uri, Vec<LinterCodeAction>>>,
     runner: LintRunner,
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
@@ -445,12 +445,16 @@ impl Tool for ServerLinter {
         };
 
         if !Self::needs_restart(&old_option, &new_options) {
-            return ToolRestartChanges { tool: None, watch_patterns: None, client_message: None };
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: Vec::new(),
+            };
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_message } =
+        let ToolBuildResult { tool, client_messages } =
             builder.build(root_uri, new_options_json.clone());
 
         let patterns = {
@@ -464,7 +468,7 @@ impl Tool for ServerLinter {
             }
         };
 
-        ToolRestartChanges { tool: Some(tool), watch_patterns: patterns, client_message }
+        ToolRestartChanges { tool: Some(tool), watch_patterns: patterns, client_messages }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -513,13 +517,13 @@ impl Tool for ServerLinter {
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
         builder.shutdown(root_uri);
-        let ToolBuildResult { tool, client_message } = builder.build(root_uri, options);
+        let ToolBuildResult { tool, client_messages } = builder.build(root_uri, options);
 
         ToolRestartChanges {
             tool: Some(tool),
             // TODO: update watch patterns if config_path changed, or the extended paths changed
             watch_patterns: None,
-            client_message,
+            client_messages,
         }
     }
 
@@ -574,7 +578,7 @@ impl Tool for ServerLinter {
         }))
     }
 
-    fn get_code_actions_or_commands(&self, params: &CodeActionParams) -> Vec<CodeActionOrCommand> {
+    fn get_code_actions_or_commands(&self, params: CodeActionParams) -> Vec<CodeActionOrCommand> {
         let actions = self.get_code_actions_for_uri(
             &params.uri,
             params.context.trigger_kind,
@@ -667,14 +671,14 @@ impl Tool for ServerLinter {
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
-    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic(&self, document: TextDocument) -> DiagnosticResult {
         Ok(vec![(document.uri.clone(), self.run_file(document.uri, document.text.as_deref())?)])
     }
 
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     /// - If the linter is not set to `OnType`, an empty vector is returned
-    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: TextDocument) -> DiagnosticResult {
         if self.run != Run::OnType {
             return Ok(vec![]);
         }
@@ -684,7 +688,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     /// - If the linter is not set to `OnSave`, an empty vector is returned
-    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: TextDocument) -> DiagnosticResult {
         if self.run != Run::OnSave {
             return Ok(vec![]);
         }
@@ -731,7 +735,7 @@ impl ServerLinter {
         is_open: Option<bool>,
     ) -> Option<Vec<LinterCodeAction>> {
         if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
-            cached_code_actions.clone()
+            Some(cached_code_actions.clone())
         }
         // only run linting and generate code actions when the code action is explicitly invoked,
         // otherwise it will be too heavy to run linting on every file open or cursor move, which will cause performance issues and a bad user experience.
@@ -740,7 +744,7 @@ impl ServerLinter {
         else if trigger_kind == Some(CodeActionTriggerKind::INVOKED) && !is_open.unwrap_or(false)
         {
             let _ = self.run_file(uri, None);
-            self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
+            self.code_actions.pin().get(uri).cloned()
         } else {
             None
         }
@@ -795,7 +799,6 @@ impl ServerLinter {
         // - inverted diagnostics (related spans for the diagnostics)
         // - diagnostics with span(0,0) and no fixes
         // - tsgolint internal diagnostics
-        // - unused directives diagnostics
         let mut code_actions = vec![];
         for report in reports {
             diagnostics.push(report.diagnostic);
@@ -805,7 +808,7 @@ impl ServerLinter {
             }
         }
 
-        self.code_actions.pin().insert(uri.clone(), Some(code_actions));
+        self.code_actions.pin().insert(uri.clone(), code_actions);
 
         Ok(diagnostics)
     }
@@ -1125,7 +1128,7 @@ mod test_watchers {
 mod test {
     use std::{fs, path::PathBuf};
 
-    use oxc_language_server::{CodeActionParams, Tool};
+    use oxc_language_server::{CodeActionParams, LanguageId, TextDocument, Tool};
     use oxc_linter::ExternalPluginStore;
     use rustc_hash::FxHashSet;
     use serde_json::json;
@@ -1197,10 +1200,16 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("unused_var.js");
-        let _ = linter.run_file(&uri, Some("let a = 1;")).unwrap();
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                language_id: LanguageId::default(),
+                text: Some("let a = 1;".into()),
+            })
+            .unwrap();
 
         // source.fixAll should only return safe fixes, not dangerous ones
-        let safe_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let safe_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext {
@@ -1211,7 +1220,7 @@ mod test {
         assert!(safe_actions.is_empty(), "source.fixAll should not apply dangerous fixes");
 
         // source.fixAllDangerous.oxc should return dangerous fix actions when fix_kind is dangerous
-        let dangerous_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let dangerous_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext {
@@ -1232,8 +1241,14 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("quickfix.js");
-        let _ = linter.run_file(&uri, Some("if (foo == NaN) {}")).unwrap();
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                language_id: LanguageId::default(),
+                text: Some("if (foo == NaN) {}".into()),
+            })
+            .unwrap();
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext::default(),
@@ -1244,7 +1259,7 @@ mod test {
             "Default Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
         );
 
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext { only: Some(vec![CodeActionKind::QUICKFIX]), ..Default::default() },
@@ -1256,7 +1271,7 @@ mod test {
             "Quickfix Context: Should return 3 code actions: 1 rule fix + 2 ignore actions"
         );
 
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext {
@@ -1271,7 +1286,7 @@ mod test {
             "Quickfix & FixAll Context: Should return 4 code actions: 1 rule fix + 2 ignore actions, and 1 fix all action"
         );
 
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext {
@@ -1299,7 +1314,7 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("quickfix.js");
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext::default(),
@@ -1310,8 +1325,14 @@ mod test {
             "Default Context: Should return 0 code actions before running the file"
         );
 
-        let _ = linter.run_file(&uri, Some("debugger;")).unwrap();
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                text: Some("debugger;".into()),
+                language_id: LanguageId::default(),
+            })
+            .unwrap();
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext::default(),
@@ -1330,7 +1351,7 @@ mod test {
         let linter = tester.create_linter();
         let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
         let uri = tester.get_file_uri("trigger-kind-invoked.js");
-        let code_actions = linter.get_code_actions_or_commands(&code_action_params(
+        let code_actions = linter.get_code_actions_or_commands(code_action_params(
             &uri,
             range,
             CodeActionContext {

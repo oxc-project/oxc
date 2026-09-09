@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 66744f0 parser: [**BREAKING**] Rename `panicked` to `fatal_error` in `ParserReturn` (#26382) (overlookmotel)
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- a17de58 minifier: Process of return/throw in non last position and fix async * inlining (#26214) (Armano)
+
+### 🐛 Bug Fixes
+
+- 853ffab ecmascript: Avoid `charAt` panic on 32-bit (#26244) (camc314)
+
+### ⚡ Performance
+
+- 34a242e minifier: Use `Ident` for property mangler (#26334) (sapphi-red)
+- 5303f5c minifier: Unify merging of last expression into target sequence (#26264) (Armano)
+- 2ca7d29 minifier: Consume nodes in minimize_statements in reverse order (#26258) (Armano)
+- 5b3e335 minifier: Use `Ident` instead of `Str` in `KeepVar` (#26332) (sapphi-red)
+- 51366fb minifier: Use `IdentHashSet` in `PrivateMemberUsageStack` (#26331) (sapphi-red)
+- d19c42a minifier: Merge nested if stmt in place instead of creating dummies (#26351) (Armano)
+
+### 📚 Documentation
+
+- a8ed2a7 minifier: Fix stale validation instructions (#26251) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 784e9fa minifier: Invert `!0` and `!1` in place for boolean context to `1` and `0` (#26050) (Armano)
+- 1e902cc minifier: Expand fold leading assignments into the var decl (#26142) (Armano)
+- 3ed4f6a minifier: Expand de morgan's optimization to allow move of `!` (#25930) (Armano)
+
+### 🐛 Bug Fixes
+
+- b874f48 ecmascript: `Math.round` only exact half ties (#26150) (camc314)
+- a625378 minifier: Coerce omitted `indexOf` search argument (#26149) (camc314)
+- dc7398b ecmascript: Trim trailing whitespace in string to number (#26148) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🚀 Features
+
+- b6e9e5e minifier: Fold switch stmt whose parent is not block stmt (#25403) (Armano)
+
+### 🐛 Bug Fixes
+
+- 6f0c7cf minifier: Avoid merging `if` to `for` in sloppy mode when containing function declaration (#25638) (sapphi-red)
+- 58ba651 minifier: Avoid merging `if` to `for` when the body contains a function declaration (#25637) (sapphi-red)
+- af82a07 minifier: Keep unary `+` when the other operand has side effects (#25645) (Kotaro Chikuba)
+
+### ⚡ Performance
+
+- a0aee81 minifier: Do not rebuild expression when substituting void to null (#25964) (Armano)
+- f09c8ab minifier: Avoid creation of unnecessary conditional expressions (#25931) (Armano)
+
 ## [0.146.0] - 2026-08-19
 
 ### 🚀 Features

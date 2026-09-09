@@ -9,14 +9,8 @@
 // Each form is written to the output in pieces, so no candidate string is ever built.
 
 import { debugAssert } from "../asserts.ts";
-import {
-  CAT_IDENT,
-  CAT_INT_DIGIT,
-  write,
-  writeNoLast,
-  writeWithMap,
-  writeWithMapNoLast,
-} from "./write.ts";
+import { CAT_INT_DIGIT } from "./categories.ts";
+import { markMapStart, write, writeIdent, writeNoLast } from "./write.ts";
 
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
@@ -31,15 +25,23 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * and every other form ends in, or contains, a `.`, an `e` or an `x` which separates it
  * from a following `.` already.
  */
-export function printNonNegativeFloat(state: State, value: number, node: ESTree.Node): void {
+export function printNonNegativeFloat(
+  state: State,
+  value: number,
+  start: number,
+  end: number,
+  node: ESTree.Node,
+): void {
+  markMapStart(state, start, end, node);
+
   if (Number.isInteger(value)) {
     if (value < 1000) {
-      writeWithMap(state, String(value), CAT_INT_DIGIT, node);
+      write(state, String(value), CAT_INT_DIGIT);
     } else {
-      printShortestInteger(state, value, node);
+      printShortestInteger(state, value);
     }
   } else {
-    printShortestFraction(state, value, node);
+    printShortestFraction(state, value);
   }
 }
 
@@ -49,19 +51,19 @@ export function printNonNegativeFloat(state: State, value: number, node: ESTree.
  * `String` gives plain digits below 1e21 and exponent notation from there up, which have different forms
  * available to them, so they are separate cases. Both can go hexadecimal.
  */
-function printShortestInteger(state: State, value: number, node: ESTree.Node): void {
+function printShortestInteger(state: State, value: number): void {
   const formatted = String(value);
 
   if (value >= 1e21) {
     debugAssert(formatted.includes("e+"), "`String` gives `e+` notation from 1e21 up");
     // The `+` always goes, so the text is one shorter than `formatted`
-    if (printHexIfShorter(state, value, formatted.length - 1, node)) return;
-    printExponent(state, formatted, formatted.indexOf("e"), node);
+    if (printHexIfShorter(state, value, formatted.length - 1)) return;
+    printExponent(state, formatted, formatted.indexOf("e"));
     return;
   }
 
   const { length } = formatted;
-  if (printHexIfShorter(state, value, length, node)) return;
+  if (printHexIfShorter(state, value, length)) return;
 
   // A run of trailing zeros as an exponent: `1000` -> `1e3`
   if (formatted.charCodeAt(length - 1) === 48 /* 0 */) {
@@ -72,14 +74,14 @@ function printShortestInteger(state: State, value: number, node: ESTree.Node): v
     // Worth it when the `e` and the exponent cost less than the zeros they replace
     const exponent = String(zeros);
     if (exponent.length + 1 < zeros) {
-      writeWithMapNoLast(state, formatted.slice(0, length - zeros), node);
+      writeNoLast(state, formatted.slice(0, length - zeros));
       writeNoLast(state, "e");
-      write(state, exponent, CAT_IDENT);
+      writeIdent(state, exponent);
       return;
     }
   }
 
-  writeWithMap(state, formatted, CAT_INT_DIGIT, node);
+  write(state, formatted, CAT_INT_DIGIT);
 }
 
 /**
@@ -89,7 +91,7 @@ function printShortestInteger(state: State, value: number, node: ESTree.Node): v
  * below 1e-7. The first always loses its leading zero, and may trade a run of zeros after the point
  * for a negative exponent. The second is already as short as it gets.
  */
-function printShortestFraction(state: State, value: number, node: ESTree.Node): void {
+function printShortestFraction(state: State, value: number): void {
   const formatted = String(value);
 
   // The trailing-zero form `printShortestInteger` uses can never win here, so it is not tried.
@@ -117,24 +119,24 @@ function printShortestFraction(state: State, value: number, node: ESTree.Node): 
       // Both forms keep the digits, so it comes down to the `e-` and the exponent against the `.`
       // and the zeros they replace
       if (exponent.length + 2 < start - 1) {
-        writeWithMapNoLast(state, formatted.slice(start), node);
+        writeNoLast(state, formatted.slice(start));
         writeNoLast(state, "e-");
-        write(state, exponent, CAT_IDENT);
+        writeIdent(state, exponent);
         return;
       }
     }
 
-    writeWithMap(state, formatted.slice(1), CAT_IDENT, node);
+    writeIdent(state, formatted.slice(1));
     return;
   }
 
   const exponentIndex = formatted.indexOf("e");
   if (exponentIndex === -1) {
-    writeWithMap(state, formatted, CAT_IDENT, node);
+    writeIdent(state, formatted);
     return;
   }
 
-  printExponent(state, formatted, exponentIndex, node);
+  printExponent(state, formatted, exponentIndex);
 }
 
 /**
@@ -144,15 +146,11 @@ function printShortestFraction(state: State, value: number, node: ESTree.Node): 
  * `1.5e+21` -> `15e20`. That drops the `.`, so it wins whenever the exponent it leaves is no longer to write
  * than the one it replaces. The `+` of a positive exponent always goes.
  *
+ * @param state - Printer state
  * @param formatted - `String(value)`, which is in exponent notation
  * @param exponentIndex - Index of the `e` in `formatted`
  */
-function printExponent(
-  state: State,
-  formatted: string,
-  exponentIndex: number,
-  node: ESTree.Node,
-): void {
+function printExponent(state: State, formatted: string, exponentIndex: number): void {
   const exponent =
     formatted.charCodeAt(exponentIndex + 1) === "+".charCodeAt(0)
       ? formatted.slice(exponentIndex + 2)
@@ -166,16 +164,16 @@ function printExponent(
 
     const folded = String(Number(exponent) - (exponentIndex - 2));
     if (folded.length <= exponent.length) {
-      writeWithMapNoLast(state, formatted[0], node);
+      writeNoLast(state, formatted[0]);
       writeNoLast(state, formatted.slice(2, exponentIndex));
       writeNoLast(state, "e");
-      write(state, folded, CAT_IDENT);
+      writeIdent(state, folded);
       return;
     }
   }
 
-  writeWithMapNoLast(state, formatted.slice(0, exponentIndex + 1), node);
-  write(state, exponent, CAT_IDENT);
+  writeNoLast(state, formatted.slice(0, exponentIndex + 1));
+  writeIdent(state, exponent);
 }
 
 /**
@@ -193,19 +191,14 @@ function printExponent(
  *
  * @param length - Length of the shortest text found for `value` so far
  */
-function printHexIfShorter(
-  state: State,
-  value: number,
-  length: number,
-  node: ESTree.Node,
-): boolean {
+function printHexIfShorter(state: State, value: number, length: number): boolean {
   if (length < 13) return false;
 
   const hex = BigInt(value).toString(16);
   if (hex.length + 2 >= length) return false;
 
-  writeWithMapNoLast(state, "0x", node);
-  write(state, hex, CAT_IDENT);
+  writeNoLast(state, "0x");
+  writeIdent(state, hex);
 
   return true;
 }

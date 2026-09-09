@@ -9,7 +9,7 @@
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
 use oxc_allocator::GetAllocator;
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_diagnostics::Diagnostics;
 
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
@@ -93,7 +93,7 @@ use crate::options::CompilerOutputMode;
 ///
 /// On failure, returns the diagnostics of the failed compilation attempt.
 #[allow(clippy::too_many_arguments)]
-pub fn compile_fn<'a>(
+pub fn compile_fn<'a, const EMIT: bool>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     func: &FunctionNode<'_, 'a>,
     scope: &ScopeResolver<'_, 'a>,
@@ -102,28 +102,6 @@ pub fn compile_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
-    match run_pipeline(ast, func, scope, fn_type, mode, env_config, context) {
-        Ok(result) => result,
-        Err(diagnostic) => Err(Diagnostics::from(diagnostic)),
-    }
-}
-
-/// The pass pipeline: creates an Environment, runs BuildHIR (lowering), the
-/// HIR/reactive-scope passes, and codegen.
-///
-/// `Err(OxcDiagnostic)` is a diagnostic that immediately bails out of a pass.
-/// Invariant and end-of-pipeline accumulated errors return as
-/// `Ok(Err(diagnostics))`.
-#[allow(clippy::too_many_arguments)]
-fn run_pipeline<'a>(
-    ast: &oxc_ast::builder::AstBuilder<'a>,
-    func: &FunctionNode<'_, 'a>,
-    scope: &ScopeResolver<'_, 'a>,
-    fn_type: ReactFunctionType,
-    mode: CompilerOutputMode,
-    env_config: &EnvironmentConfig,
-    context: &mut ProgramContext<'a>,
-) -> Result<Result<Option<CodegenFunction<'a>>, Diagnostics>, OxcDiagnostic> {
     let mut env = Environment::with_config(ast.allocator(), env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
@@ -144,14 +122,14 @@ fn run_pipeline<'a>(
     // the HIR entry is logged. The thrown error contains ONLY the Invariant error,
     // not other recorded (non-Invariant) errors.
     if env.has_invariant_errors() {
-        return Ok(Err(env.take_invariant_errors()));
+        return Err(env.take_invariant_errors());
     }
 
     // Lowering flags this when the function uses `using`/`await using`, whose disposal
     // semantics aren't preserved yet. Skip compiling it silently — no diagnostic — so
     // other functions in the file still compile.
     if env.skip_compilation {
-        return Ok(Ok(None));
+        return Ok(None);
     }
 
     prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
@@ -195,7 +173,7 @@ fn run_pipeline<'a>(
     analyse_functions(&mut hir, &mut env, &mut |_inner_func, _inner_env| {})?;
 
     if env.has_invariant_errors() {
-        return Ok(Err(env.take_invariant_errors()));
+        return Err(env.take_invariant_errors());
     }
 
     infer_mutation_aliasing_effects(&mut hir, &mut env, false)?;
@@ -347,9 +325,6 @@ fn run_pipeline<'a>(
         validate_preserved_manual_memoization(&reactive_fn, &mut env);
     }
 
-    let codegen_result =
-        codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?;
-
     // NOTE: we intentionally do NOT register the memo cache import here.
     // The local name is reserved up front by `ProgramContext::reserve_memo_cache_name`,
     // and the import itself is registered in `ox_transform_program` only when an applied
@@ -362,13 +337,19 @@ fn run_pipeline<'a>(
     // codegen result and is disabled while the oxc emission is stubbed. It will be
     // reinstated (or dropped) once the oxc back-end emits real function bodies.
 
-    // Simulate unexpected exception for testing (matches TS Pipeline.ts)
+    let output = if EMIT {
+        Some(
+            codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)
+                .map_err(Diagnostics::from)?,
+        )
+    } else {
+        None
+    };
+
     if env.config.throw_unknown_exception_testonly {
-        return Err(diagnostics::invariant_unexpected_error());
+        return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
     }
 
-    // Check for accumulated errors at the end of the pipeline
-    // (matches TS Pipeline.ts: env.hasErrors() → Err at the end)
     if env.has_errors() {
         // Merge UIDs even on error: in TS, Babel's scope.generateUid() permanently
         // registers names in the scope's `uids` map regardless of whether the function
@@ -378,28 +359,14 @@ fn run_pipeline<'a>(
         if let Some(uid_names) = env.take_uid_known_names() {
             context.merge_uid_known_names(&uid_names);
         }
-        return Ok(Err(env.take_errors()));
+        return Err(env.take_errors());
     }
 
     if let Some(uid_names) = env.take_uid_known_names() {
         context.merge_uid_known_names(&uid_names);
     }
 
-    Ok(Ok(Some(CodegenFunction {
-        span: codegen_result.span,
-        id: codegen_result.id,
-        name_hint: codegen_result.name_hint,
-        params: codegen_result.params,
-        body: codegen_result.body,
-        generator: codegen_result.generator,
-        is_async: codegen_result.is_async,
-        memo_slots_used: codegen_result.memo_slots_used,
-        memo_blocks: codegen_result.memo_blocks,
-        memo_values: codegen_result.memo_values,
-        pruned_memo_blocks: codegen_result.pruned_memo_blocks,
-        pruned_memo_values: codegen_result.pruned_memo_values,
-        outlined: codegen_result.outlined,
-    })))
+    Ok(output)
 }
 
 /// Push a pass's diagnostics (validation / lint / telemetry path),

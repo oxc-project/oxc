@@ -779,6 +779,329 @@ import { foo } from "@scope/foo";
 }
 
 #[test]
+fn custom_side_effect_group_regroups_side_effect_imports() {
+    // A catch-all `selector: "side_effect"` custom group is an explicit opt-in:
+    // side-effect imports move between groups even with the default `sortSideEffects: false`.
+    // The side-effect custom group is defined first,
+    // so it wins over the path-based `warp-drive` group that would also match the side-effect import.
+    let config = r#"
+{
+    "sortImports": {
+        "groups": [
+            "side-effect",
+            "ember-glimmer",
+            ["builtin", "external"],
+            "warp-drive",
+            ["parent", "sibling", "index"]
+        ],
+        "customGroups": [
+            { "groupName": "side-effect", "selector": "side_effect" },
+            { "groupName": "ember-glimmer", "elementNamePattern": ["@ember/**"] },
+            { "groupName": "warp-drive", "elementNamePattern": ["@warp-drive/**"] }
+        ]
+    }
+}
+"#;
+
+    // Side-effect import at the head of the input
+    assert_format(
+        r#"
+import "@warp-drive/ember/install";
+import { bar } from "@warp-drive/core";
+"#,
+        config,
+        r#"
+import "@warp-drive/ember/install";
+
+import { bar } from "@warp-drive/core";
+"#,
+    );
+
+    // Side-effect import in the middle of the input
+    assert_format(
+        r#"
+import { css } from "@ember/css";
+import "@warp-drive/ember/install";
+import { bar } from "@warp-drive/core";
+"#,
+        config,
+        r#"
+import "@warp-drive/ember/install";
+
+import { css } from "@ember/css";
+
+import { bar } from "@warp-drive/core";
+"#,
+    );
+}
+
+#[test]
+fn custom_side_effect_style_group_regroups_style_side_effects() {
+    // Symmetric opt-in for `selector: "side_effect_style"`
+    assert_format(
+        r#"
+import { a } from "a";
+import "./styles.css";
+"#,
+        r#"
+{
+    "sortImports": {
+        "groups": ["side-effect-style", "external", "unknown"],
+        "customGroups": [
+            { "groupName": "side-effect-style", "selector": "side_effect_style" }
+        ]
+    }
+}
+"#,
+        r#"
+import "./styles.css";
+
+import { a } from "a";
+"#,
+    );
+}
+
+#[test]
+fn non_catch_all_custom_group_does_not_regroup_side_effects() {
+    // A pattern-based custom group that happens to match a side-effect import is NOT an opt-in:
+    // with `sortSideEffects: false` the import stays in place.
+    assert_format(
+        r#"
+import { a } from "a";
+import "pkg/setup";
+"#,
+        r#"
+{
+    "sortImports": {
+        "groups": ["pkg", "unknown"],
+        "customGroups": [
+            { "groupName": "pkg", "elementNamePattern": ["pkg/**"] }
+        ]
+    }
+}
+"#,
+        r#"
+import { a } from "a";
+import "pkg/setup";
+"#,
+    );
+
+    // Even with `selector: "side_effect"`, a group narrowed by a pattern is not catch-all
+    assert_format(
+        r#"
+import { a } from "a";
+import "pkg/setup";
+"#,
+        r#"
+{
+    "sortImports": {
+        "groups": ["pkg", "unknown"],
+        "customGroups": [
+            { "groupName": "pkg", "selector": "side_effect", "elementNamePattern": ["pkg/**"] }
+        ]
+    }
+}
+"#,
+        r#"
+import { a } from "a";
+import "pkg/setup";
+"#,
+    );
+}
+
+#[test]
+fn side_effect_import_does_not_match_specifier_modifiers() {
+    // A genuine side-effect import has no specifiers at all:
+    // it must not inherit `named`/`default`/`wildcard` from the following import,
+    // nor mistake its own module source for a default binding.
+    // `sortSideEffects: true` so the (miss)computed group placement becomes observable.
+    let named_only_config = r#"
+{
+    "sortImports": {
+        "sortSideEffects": true,
+        "groups": ["named-only", "unknown"],
+        "customGroups": [
+            { "groupName": "named-only", "modifiers": ["named"] }
+        ]
+    }
+}
+"#;
+    let defaults_config = r#"
+{
+    "sortImports": {
+        "sortSideEffects": true,
+        "groups": ["defaults", "unknown"],
+        "customGroups": [
+            { "groupName": "defaults", "modifiers": ["default"] }
+        ]
+    }
+}
+"#;
+
+    // Followed by a named import
+    assert_format(
+        r#"
+import "@warp-drive/ember/install";
+import { bar } from "@warp-drive/core";
+"#,
+        named_only_config,
+        r#"
+import { bar } from "@warp-drive/core";
+
+import "@warp-drive/ember/install";
+"#,
+    );
+
+    // Followed by a default import; also covers the own-source-as-default artifact
+    assert_format(
+        r#"
+import "./setup";
+import a from "a";
+"#,
+        defaults_config,
+        r#"
+import a from "a";
+
+import "./setup";
+"#,
+    );
+
+    // At the end of the import chunk (no following import to leak from)
+    assert_format(
+        r#"
+import a from "a";
+import "./setup";
+"#,
+        defaults_config,
+        r#"
+import a from "a";
+
+import "./setup";
+"#,
+    );
+
+    // Followed by a wildcard import
+    assert_format(
+        r#"
+import "./setup";
+import * as ns from "n";
+"#,
+        r#"
+{
+    "sortImports": {
+        "sortSideEffects": true,
+        "groups": ["wildcards", "unknown"],
+        "customGroups": [
+            { "groupName": "wildcards", "modifiers": ["wildcard"] }
+        ]
+    }
+}
+"#,
+        r#"
+import * as ns from "n";
+
+import "./setup";
+"#,
+    );
+
+    // A blank line and a comment between imports do not stop the leak either
+    assert_format(
+        r#"
+import "./setup";
+
+// comment
+import { bar } from "b";
+"#,
+        named_only_config,
+        r#"
+// comment
+import { bar } from "b";
+
+import "./setup";
+"#,
+    );
+}
+
+#[test]
+fn default_modifier_requires_actual_default_binding() {
+    // Named specifier names and a namespace alias are `Text` elements in the head,
+    // but they are not default bindings and must not produce the `default` modifier.
+    assert_format(
+        r#"
+import { b } from "b";
+import * as ns from "n";
+import d from "d";
+"#,
+        r#"
+{
+    "sortImports": {
+        "groups": ["defaults", "unknown"],
+        "customGroups": [
+            { "groupName": "defaults", "modifiers": ["default"] }
+        ]
+    }
+}
+"#,
+        r#"
+import d from "d";
+
+import { b } from "b";
+import * as ns from "n";
+"#,
+    );
+}
+
+#[test]
+fn side_effect_import_keeps_value_and_side_effect_modifiers() {
+    // `value` and `side_effect` modifiers keep their meaning for side-effect imports,
+    // so `modifiers: ["side_effect"]` / `["value"]` custom groups still match them.
+    assert_format(
+        r#"
+import a from "a";
+import "./setup";
+"#,
+        r#"
+{
+    "sortImports": {
+        "sortSideEffects": true,
+        "groups": ["se", "unknown"],
+        "customGroups": [
+            { "groupName": "se", "modifiers": ["side_effect"] }
+        ]
+    }
+}
+"#,
+        r#"
+import "./setup";
+
+import a from "a";
+"#,
+    );
+
+    assert_format(
+        r#"
+import a from "a";
+import "./setup";
+"#,
+        r#"
+{
+    "sortImports": {
+        "sortSideEffects": true,
+        "groups": ["values", "unknown"],
+        "customGroups": [
+            { "groupName": "values", "modifiers": ["value"] }
+        ]
+    }
+}
+"#,
+        r#"
+import "./setup";
+import a from "a";
+"#,
+    );
+}
+
+#[test]
 fn selector_sibling_with_type_modifier() {
     // selector "sibling" + modifiers ["type"] matches only type sibling imports
     assert_format(

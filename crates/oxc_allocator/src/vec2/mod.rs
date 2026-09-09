@@ -82,7 +82,6 @@
     clippy::needless_for_each,
     clippy::cloned_instead_of_copied,
     clippy::checked_conversions,
-    clippy::legacy_numeric_constants,
     clippy::cast_sign_loss,
     clippy::cast_possible_wrap,
     clippy::swap_ptr_to_ref,
@@ -220,7 +219,7 @@ where
     T: Sized,
 {
     let pointee_size = size_of::<T>();
-    assert!(0 < pointee_size && pointee_size <= isize::max_value() as usize);
+    assert!(0 < pointee_size && pointee_size <= isize::MAX as usize);
 
     // This is the same sequence that Clang emits for pointer subtraction.
     // It can be neither `nsw` nor `nuw` because the input is treated as

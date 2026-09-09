@@ -1,7 +1,10 @@
 use cow_utils::CowUtils;
 use oxc_css_parser::ast::{
     ComponentValue, Declaration, InterpolableIdent, QualifiedRule, SimpleBlock, Statement,
+    UnknownQualifiedRule,
 };
+
+use oxc_span::Span;
 
 use oxc_formatter_core::{
     Buffer, arena_cow_str,
@@ -162,6 +165,7 @@ pub(super) fn write_statement_sequence_bounded<'a>(
 pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_, 'a>) {
     match stmt {
         Statement::QualifiedRule(rule) => write_qualified_rule(rule, f),
+        Statement::UnknownQualifiedRule(rule) => write_unknown_qualified_rule(rule, f),
         Statement::Declaration(decl) => {
             write_declaration(decl, f);
             if matches!(decl.name, InterpolableIdent::Placeholder(_)) {
@@ -172,11 +176,11 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
                     write!(f, ";");
                 }
             } else if !matches!(decl.value.last(), Some(ComponentValue::SassNestingDeclaration(_)))
-                || matches!(&decl.name, InterpolableIdent::Literal(ident) if ident.name.starts_with("--"))
+                || decl.name.is_custom_property()
             {
                 // No `;` after a nested declaration block (`background: { ... }`),
                 // except a custom-property rule block (`--p: { ... };`).
-                // See AGENTS.md "Known divergences" for the `--*` exception.
+                // The `--*` exception is a known divergence (Prettier leaves the block `;`-less).
                 write!(f, ";");
             }
         }
@@ -274,7 +278,6 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
 
 /// Mirrors Prettier's `css-rule`.
 fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let source = f.context().source_text();
     let sel_span = to_span(rule.selector.span());
     let block_start = to_span(rule.block.span()).start;
     // Comments inside the selector (both `//` and `/* */`) make Prettier print the raw selector verbatim (`selector-unknown`).
@@ -283,15 +286,7 @@ fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, '
     let has_inline_comment =
         f.context().comments().iter_before(block_start).any(|c| c.span.start >= sel_span.start);
     if has_inline_comment {
-        let raw = source.slice_range(sel_span.start, block_start).trim_end();
-        let _ = f.context().comments().take_before(block_start);
-        write!(f, text(raw));
-        if last_line_has_inline_comment(raw) {
-            write!(f, hard_line_break());
-        } else {
-            write!(f, space());
-        }
-        write_block(&rule.block, f);
+        write_verbatim_prelude_rule(sel_span.start, &rule.block, false, f);
         return;
     }
     selector::write_selector_list(&rule.selector, selector::SelectorListStyle::Hard, f);
@@ -302,15 +297,51 @@ fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, '
     f.context().in_icss_rule().set(was);
 }
 
+/// A declaration-shaped rule with a raw prelude
+/// (`sans: "Sans" { ... }`; see `UnknownQualifiedRule` in `oxc-css-parser`).
+/// Prettier prints the prelude verbatim, interior whitespace and newlines included,
+/// unlike selector garbage mode's collapsing.
+fn write_unknown_qualified_rule<'a>(rule: &UnknownQualifiedRule<'a>, f: &mut CssFormatter<'_, 'a>) {
+    write_verbatim_prelude_rule(to_span(&rule.span).start, &rule.block, false, f);
+}
+
+/// Prelude printed verbatim from `start` to the block,
+/// then the block (Prettier's `selector-unknown` path).
+/// Comments inside the prelude ride the verbatim slice;
+/// a trailing `//` comment pushes `{` to the next line (`lastLineHasInlineComment`).
+/// `adjust` = Less preludes run number/string adjustment;
+/// CSS raw preludes and commented selectors stay byte-verbatim.
+pub(super) fn write_verbatim_prelude_rule<'a>(
+    start: u32,
+    block: &SimpleBlock<'a>,
+    adjust: bool,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    let source = f.context().source_text();
+    let block_start = to_span(&block.span).start;
+    let raw = source.slice_range(start, block_start).trim_end();
+    let _ = f.context().comments().take_before(block_start);
+    if adjust {
+        value::write_adjusted_verbatim(raw, f);
+    } else {
+        write!(f, text(raw));
+    }
+    if last_line_has_inline_comment(raw) {
+        write!(f, hard_line_break());
+    } else {
+        write!(f, space());
+    }
+    write_block(block, f);
+}
+
 /// Mirrors Prettier's `css-decl`.
 /// Used without a trailing semicolon for `@supports (...)` features (the caller skips the `;`).
 pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter<'_, 'a>) {
     let source = f.context().source_text();
     let name_span = to_span(decl.name.span());
     let prop = source.text_for(&name_span);
-    // Legacy IE hack prefix glued to the property name
-    // (`*color: red`; `oxc-css-parser` also accepts `.`/`:`/`#` in Css mode);
-    // postcss keeps it as part of the prop, so Prettier preserves it.
+    let is_custom_property = decl.name.is_custom_property();
+    // postcss keeps the IE `*color` prefix as part of the prop, so Prettier preserves it
     if let Some(prefix) = decl.name_prefix {
         write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
     }
@@ -318,9 +349,13 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
         // the host replaces with `${expr}`; never lowercase it like a real property.
         super::write_placeholder(placeholder, f);
-    } else if f.context().in_less_detached().get() || f.context().in_icss_rule().get() {
-        // Less detached rulesets (`parentNode.variable`) and ICSS rules
-        // (`insideIcssRuleNode`) keep property-name casing.
+    } else if is_custom_property
+        || f.context().in_less_detached().get()
+        || f.context().in_icss_rule().get()
+    {
+        // Custom property names are case-sensitive: decided on the decoded name,
+        // so an escaped `\-\-Foo` keeps its source spelling too (`write_maybe_lowercase` only sees the literal `--`).
+        // Less detached rulesets (`parentNode.variable`) and ICSS rules (`insideIcssRuleNode`) keep property-name casing as well.
         write!(f, text(prop));
     } else {
         write_maybe_lowercase(prop, f);
@@ -382,35 +417,40 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     }
     if decl.value.is_empty() {
-        // Custom properties with a whitespace-only value keep it verbatim
-        // (`--one-space: ;` stays as-is). Scan up to the `;` in the source.
-        let colon_end = to_span(&decl.colon_span).end;
-        let bytes = source.as_bytes();
-        let mut i = colon_end as usize;
-        while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
-            i += 1;
-        }
-        if i < bytes.len() && bytes[i] == b';' && i > colon_end as usize {
-            write!(f, text(source.slice_range(colon_end, u32::try_from(i).unwrap())));
+        // An empty value prints as `prop:;`, except a custom property's whitespace-only value,
+        // which is its value: `--x: ;` substitutes a space where `--x:;` substitutes nothing, so it is kept verbatim.
+        // Scan up to the `;` in the source.
+        if is_custom_property {
+            let colon_end = to_span(&decl.colon_span).end;
+            let bytes = source.as_bytes();
+            let mut i = colon_end as usize;
+            while i < bytes.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
+                i += 1;
+            }
+            if i < bytes.len() && bytes[i] == b';' && i > colon_end as usize {
+                write!(f, text(source.slice_range(colon_end, u32::try_from(i).unwrap())));
+            }
         }
     } else {
         write!(f, space());
-        let prop_lower = prop.cow_to_ascii_lowercase();
-        let prop_lower: &'a str = arena_cow_str(&prop_lower, f);
 
-        // `filter: progid:...` values are printed verbatim.
+        // `filter: progid:...` values are printed verbatim
+        // (the parser accepts the prefix case-insensitively; postcss rejects an uppercase one).
         let value_start = to_span(decl.value[0].span()).start;
         let value_end = to_span(decl.value[decl.value.len() - 1].span()).end;
         let value_text = source.slice_range(value_start, value_end);
-        if value_text.starts_with("progid:") {
-            write!(f, text(value_text));
+        if value_text
+            .as_bytes()
+            .get(..7)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case(b"progid:"))
+        {
+            value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else if (value_text.contains("\\(") || value_text.contains("\\)"))
             && value_text.contains('\n')
         {
             // Escaped parens break postcss's value parser:
             // the whole value is a `value-unknown`, printed verbatim.
-            write!(f, text(value_text));
-            let _ = f.context().comments().take_before(value_end);
+            value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else if (value_text.starts_with('"') || value_text.starts_with('\''))
             && value_text.ends_with(value_text.as_bytes()[0] as char)
             && value_text[1..value_text.len() - 1].contains("#{")
@@ -427,7 +467,7 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             // except bare quoted numbers, which postcss saw unquoted.
             value::write_requoted_verbatim(value_text, f);
             let _ = f.context().comments().take_before(value_end);
-        } else if prop.starts_with("--") && value_text.starts_with('{') {
+        } else if is_custom_property && value_text.starts_with('{') {
             if value_text.trim_end().ends_with('}')
                 && value_text.bytes().filter(|&b| b == b'{').count() == 1
             {
@@ -442,12 +482,22 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
             }
             // The raw text includes any comments; drop them from the cursor.
             let _ = f.context().comments().take_before(value_end);
+        } else if decl.value_is_raw && is_custom_property {
+            // Text the typed grammar could not read (`--z: */;`, `--x: 1px !foo;`, // Scss `--x: // (\n);`):
+            // verbatim in every variant (DIVERGENCES.md "custom-property-raw-verbatim").
+            value::write_verbatim_value(Span::new(value_start, value_end), f);
         } else {
-            // Custom property values (`--*`) are parsed as a normal `<declaration-value>`
-            // via the `try_parsing_value_in_custom_property` parser option, matching Prettier (postcss).
-            // The parser keeps the raw token stream when the value does not parse (e.g. `--p: { decls };` rule blocks),
-            // so anything reaching here is uniformly a structured `ComponentValue` slice handled below.
+            // Typed values, plus a normal property's raw `<any-value>` fallback:
+            // the spec says that value is component values,
+            // so raw there is only a hole in our grammar and the value writer lays it out like typed tokens.
             let values = &*decl.value;
+            // The decoded name: an escaped `\66ont` is still `font` to the value rules
+            let prop_lower = match &decl.name {
+                InterpolableIdent::Literal(ident) => ident.name,
+                _ => prop,
+            }
+            .cow_to_ascii_lowercase();
+            let prop_lower: &'a str = arena_cow_str(&prop_lower, f);
 
             let ctx = ValueContext {
                 decl_prop: Some(prop_lower),
@@ -497,20 +547,31 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
         }
     }
     if let Some(important) = &decl.important {
-        value::flush_trailing_value_comments(to_span(important.span()).start, f);
-        write!(f, [space(), "!important"]);
+        value::write_trailing_important(important, f);
     }
-    // Comments between the value and the `;`.
-    // NOTE: the `;` position is the flush bound, so a comment after `;` stays for the trailing-comment pass.
-    let decl_end = to_span(decl.span()).end;
-    let end = end_with_semicolon(decl_end, f);
-    let bound = if end > decl_end { end - 1 } else { decl_end };
-    if let Some(comment_end) = value::flush_trailing_value_comments(bound, f) {
-        // Preserve a source gap between the last comment and the `;`
-        if end > decl_end && comment_end < end - 1 {
-            write!(f, space());
-        }
+    write_terminator_tail_comments(to_span(decl.span()).end, f);
+}
+
+/// The run between a variable name and its `:`: normally just the colon,
+/// but a comment there stays on its side of the `:` (`$x/* c */: 1`, as Prettier prints it).
+pub(super) fn write_colon_run(name_end: u32, colon_end: u32, f: &mut CssFormatter<'_, '_>) {
+    let source = f.context().source_text();
+    let between = source.slice_range(name_end, colon_end).trim_ascii();
+    if between == ":" {
+        write!(f, ":");
+    } else {
+        write!(f, text(between));
+        let _ = f.context().comments().take_before(colon_end);
     }
+}
+
+/// Comments between a declaration's content and its `;` (`value /* c */;`), kept in place.
+/// The `;` position bounds the flush, so a comment after `;` stays for the trailing-comment pass;
+/// the trivia up to the `;` is the formatter's, so a source gap before it (`/* c */ ;`) is not kept.
+pub(super) fn write_terminator_tail_comments(content_end: u32, f: &mut CssFormatter<'_, '_>) {
+    let end = end_with_semicolon(content_end, f);
+    let bound = if end > content_end { end - 1 } else { content_end };
+    value::flush_trailing_value_comments(bound, f);
 }
 
 /// Prints a `--prop: { a: b; c: d }` rule-block value by re-flowing the raw text:

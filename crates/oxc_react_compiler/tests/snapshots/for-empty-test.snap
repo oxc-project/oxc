@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/for-empty-test.js
+---
+function Component(props) {
+	let index = 0;
+	let total = 0;
+	for (; true;) {
+		index++;
+		if (index < props.start) {
+			continue;
+		}
+		total = total + index;
+		if (index >= props.end) {
+			break;
+		}
+	}
+	return total;
+}

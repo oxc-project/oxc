@@ -2125,12 +2125,12 @@ function deserializeFormalParameters(pos) {
       };
     rest.argument = deserializeBindingPattern(pos + 56);
     rest.decorators = deserializeVecDecorator(pos + 16);
+    rest.decorators.length !== 0 && (start = rest.decorators[0].start);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
-    if (rest.typeAnnotation !== null) {
-      end = rest.typeAnnotation.end;
-      rest.end = end;
-      rest.range[1] = end;
-    }
+    rest.typeAnnotation !== null && (end = rest.typeAnnotation.end);
+    rest.start = start;
+    rest.end = end;
+    rest.range = [start, end];
     params.push(rest);
   }
   return params;

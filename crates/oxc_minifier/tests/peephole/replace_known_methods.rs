@@ -18,6 +18,8 @@ fn test_string_index_of() {
     test("x = 'abcdefbe'.indexOf('b', 2)", "x = 6");
     test("x = 'abcdef'.indexOf('bcd')", "x = 1");
     test("x = 'abcdefsdfasdfbcdassd'.indexOf('bcd', 4)", "x = 13");
+    test("x = 'undefined'.indexOf()", "x = 0");
+    test("x = 'abcdef'.indexOf()", "x = -1");
     test_same("x = 'abcdef'.indexOf(...a, 1)");
     test_same("x = 'abcdef'.indexOf('b', ...a)");
     test_same("x = 'abcdef'.indexOf(a, 1)");
@@ -26,6 +28,8 @@ fn test_string_index_of() {
     test("x = 'abcdef'.lastIndexOf('b')", "x = 1");
     test("x = 'abcdefbe'.lastIndexOf('b')", "x = 6");
     test("x = 'abcdefbe'.lastIndexOf('b', 5)", "x = 1");
+    test("x = 'undefined'.lastIndexOf()", "x = 0");
+    test("x = 'abcdef'.lastIndexOf()", "x = -1");
 
     test("x = 'abc1def'.indexOf(1)", "x = 3");
     test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
@@ -238,6 +242,8 @@ fn test_fold_string_char_at() {
     test("x = 'abcde'.charAt(3)", "x = 'd'");
     test("x = 'abcde'.charAt(4)", "x = 'e'");
     test("x = 'abcde'.charAt(5)", "x = ''");
+    test("x = 'abcde'.charAt(4294967295)", "x = ''");
+    test("x = 'abcde'.charAt(4294967296)", "x = ''");
     test("x = 'abcde'.charAt(-1)", "x = ''");
     test("x = 'abcde'.charAt()", "x = 'a'");
     test_same("x = 'abcde'.charAt(...foo)");
@@ -519,6 +525,9 @@ fn test_fold_math_functions_round() {
     test_same_value("Math.round(Math.random())");
     test_value("Math.round(NaN)", "NaN");
     test_value("Math.round(3)", "3");
+    test_value("Math.round(0.49999999999999994)", "0");
+    test_value("Math.round(0.5)", "1");
+    test_value("Math.round(-0.5)", "-0");
     test_value("Math.round(3.5)", "4");
     test_value("Math.round(-3.5)", "-3");
 }
@@ -912,6 +921,7 @@ fn test_array_of_no_change() {
     test_same("x = Array.of.apply(window, ['a', 'b', 'c'])");
     test_same("x = ['a', 'b', 'c']");
     test_same("x = [Array.of, 'a', 'b', 'c']");
+    test_same("function f(Array) { return Array.of(1, 2) }");
 }
 
 #[test]
@@ -1066,12 +1076,17 @@ fn test_fold_integer_index_access() {
     test_same("v = [1][1]");
     test("v = [,][0]", "v = void 0");
     // test("v = [...'a'][0]", "v = 'a'");
-    // test_same("v = [...'a'][1]");
+    test_same("v = [...'a'][1]");
     // test("v = [...'😀'][0]", "v = '😀'");
     // test_same("v = [...'😀'][1]");
     test_same("v = [...a, 1][1]");
     test_same("v = [1, ...a][0]");
     test("v = [1, ...[1,2]][0]", "v = 1");
+
+    test_value("'abc'[1n]", "'b'");
+    test_value("['a', 'b'][1n]", "'b'");
+    test_same_value("'abc'[-1n]");
+    test_same_value("'abc'[9007199254740992n]");
 
     // property access should be kept to keep `this` value
     test_same(

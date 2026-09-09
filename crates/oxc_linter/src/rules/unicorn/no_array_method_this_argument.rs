@@ -89,7 +89,10 @@ fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) 
             .first()
             .is_some_and(|arg| arg.as_expression().is_none_or(|expr| is_node_not_function(expr)))
         || call_expr.arguments.get(1).is_some_and(|arg| matches!(arg, Argument::SpreadElement(_)))
-        || does_expr_match_any_path(&call_expr.callee, IGNORED)
+        || does_expr_match_any_path(
+            &call_expr.callee,
+            IGNORED.iter().map(|path| path.iter().copied()),
+        )
     {
         return;
     }

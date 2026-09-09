@@ -142,13 +142,13 @@ Representative time per `printSync` call:
 | Fixture                      |     Bytes |       Time |
 | :--------------------------- | --------: | ---------: |
 | `tiny.js`                    |        26 |  0.0001 ms |
-| `RadixUIAdoptionSection.jsx` |     2,518 |  0.0033 ms |
-| `react.development.js`       |    72,141 |  0.1138 ms |
-| `binder.ts`                  |   193,077 |  0.2472 ms |
-| `App.tsx`                    |   415,340 |  0.7490 ms |
-| `lodash.js`                  |   544,096 |  0.4995 ms |
-| `kitchen-sink.tsx`           |   732,222 |  2.5682 ms |
-| `antd.js`                    | 6,683,633 | 11.3914 ms |
+| `RadixUIAdoptionSection.jsx` |     2,518 |  0.0070 ms |
+| `react.development.js`       |    72,141 |  0.1518 ms |
+| `binder.ts`                  |   193,077 |  0.3364 ms |
+| `App.tsx`                    |   415,340 |  1.2912 ms |
+| `lodash.js`                  |   544,096 |  0.7977 ms |
+| `kitchen-sink.tsx`           |   732,222 |  4.2924 ms |
+| `antd.js`                    | 6,683,633 | 16.9652 ms |
 
-These figures come from one machine and are illustrative, not a regression baseline. Results—most
-noticeably for large fixtures such as `antd.js`—vary between runs.
+These figures come from one machine and are illustrative, not a regression baseline.
+Results vary between runs, most noticeably for large fixtures such as `antd.js`.

@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- f7acdc0 formatter: Treat a JSDoc cast target as opaque in chain layouts (#26375) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+- 5f9580d oxfmt: Bump prettier-plugin-tailwindcss (#26273) (leaysgur)
+
+### ⚡ Performance
+
+- 1cad286 oxfmt: Match editorconfig once per file (#26239) (Yuji Sugiura)
+- 260c5eb oxfmt: Match `overrides` once per file (#26238) (leaysgur)
+- 61565bc oxfmt: Share resolved `FormatConfig` via `Arc` instead of cloning per file (#26237) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- faf11d9 formatter_yaml: Keep trailing whitespace in block scalars (#26072) (leaysgur)
+
+### ⚡ Performance
+
+- ac4785a diagnostics: Use fixed ANSI styles (#26130) (Boshen)
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
 ## [0.64.0] - 2026-08-18
 
 ### 🚀 Features

@@ -21,7 +21,7 @@ use crate::diagnostics;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
-use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
+use crate::react_compiler_hir::dominator::compute_post_dominator_frontiers;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread,
@@ -230,15 +230,14 @@ fn create_ref_controlled_block_checker(
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     types: &IndexSlice<TypeId, [Type]>,
 ) -> Result<FxHashMap<BlockId, bool>, OxcDiagnostic> {
-    let post_dominators = compute_post_dominator_tree(func, next_block_id_counter, false)?;
+    let frontiers = compute_post_dominator_frontiers(func, next_block_id_counter, false)?;
     let mut cache: FxHashMap<BlockId, bool> = FxHashMap::default();
 
     for (block_id, _block) in &func.body.blocks {
-        let frontier = post_dominator_frontier(func, &post_dominators, *block_id);
         let mut is_controlled = false;
 
-        for frontier_block_id in &frontier {
-            let control_block = &func.body.blocks[frontier_block_id];
+        for frontier_block_id in frontiers.iter(*block_id) {
+            let control_block = &func.body.blocks[&frontier_block_id];
             match &control_block.terminal {
                 Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
                     if is_derived_from_ref(test.identifier, ref_derived_values, identifiers, types)

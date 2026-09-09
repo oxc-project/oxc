@@ -223,16 +223,16 @@ impl WalkRunner {
             // Color support is detected the same way as `GraphicalReportHandler` used by `DefaultReporter`,
             // and when colors are disabled, every style is empty and renders nothing.
             // `ListDifferent` mode output is meant for piping, keep it style-free.
-            let warning_style = matches!(format_mode, OutputMode::Check)
-                .then(|| GraphicalTheme::default().warning_style());
+            let warning_theme =
+                matches!(format_mode, OutputMode::Check).then(GraphicalTheme::default);
             let mut output = String::new();
             for (idx, (path, elapsed)) in changed_paths.into_iter().enumerate() {
                 if idx != 0 {
                     output.push('\n');
                 }
-                match warning_style {
+                match &warning_theme {
                     // Style per line, some log viewers reset ANSI state on line breaks
-                    Some(style) => write!(output, "{}", style.style(&path)).unwrap(),
+                    Some(theme) => theme.write_warning(&mut output, &path).unwrap(),
                     None => output.push_str(&path),
                 }
                 if let Some(elapsed) = elapsed {

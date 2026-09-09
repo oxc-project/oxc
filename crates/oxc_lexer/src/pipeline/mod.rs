@@ -16,7 +16,7 @@ mod classify;
 mod coalesce;
 mod compress;
 mod find;
-mod keywords;
+mod misc;
 mod regex_div;
 mod replay;
 
@@ -28,17 +28,13 @@ use crate::options::LexOptions;
 use crate::tables::Tables;
 use crate::token::SPAN_SENTINELS;
 
-use bitmap::bm_any;
-use carve::{carve, carve_jsx};
-use classify::{classify, misc_post, misc_pre};
-use coalesce::coalesce;
-use compress::{build_spans, compress, lanes_post, write_sentinels};
-use keywords::KWB;
+use carve::carve;
+use classify::classify;
+use coalesce::{KWB, coalesce};
+use compress::{STAGE_CAP, compress, write_sentinels};
+use misc::{misc_post, misc_pre};
 
 use crate::token::TokenKind;
-
-const STAGE_BLOCKS: usize = 32;
-const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
 // Short kind aliases for the pipeline, tied to `token_kind` so they can't drift.
 pub(crate) const WS: u8 = TokenKind::Whitespace as u8;
@@ -182,6 +178,7 @@ impl Lexer {
         self.ensure(n);
         self.lanes.clear();
         self.lanes.module = module;
+        regex_div::memo_new_lex();
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds);
             self.sig_len = 0;
@@ -203,7 +200,6 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        let kws = if ts { &t.kwts } else { &t.kwjs };
         classify(t, ts, sp, n, word, st, kwinit, opch, digit, dot, misc, kind);
         *word.add(nb) = 0;
         *st.add(nb) = 0;
@@ -213,45 +209,23 @@ impl Lexer {
         *dot.add(nb) = 0;
         *misc.add(nb) = 0;
 
-        let mut nesc = 0usize;
-        if bm_any(misc, nb) {
-            nesc = if vutf8 {
-                misc_pre::<true>(sp, n, st, word, misc, kind, &mut self.lanes)
-            } else {
-                misc_pre::<false>(sp, n, st, word, misc, kind, &mut self.lanes)
-            };
-        }
-        if jsx {
-            carve_jsx(t, src, n, st, kind, opch, word, digit, dot, kwinit, ts, &mut self.lanes);
-        } else {
-            carve(t, src, n, st, kind, opch, word, digit, ts, &mut self.lanes);
-        }
-        coalesce(t, kws, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, &mut self.lanes);
-        if nesc != 0 {
-            misc_post(sp, n, st, word, misc, kind);
-        }
-        let stage_pos = self.stage_pos.as_mut_ptr();
-        let stage_kind = self.stage_kind.as_mut_ptr();
-        let mut c = 0usize;
-        let mut w = 0usize;
-        let mut b = 0usize;
-        while b < nb {
-            let b1 = (b + STAGE_BLOCKS).min(nb);
-            c += compress(t, st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
-            b = b1;
-            if c > 1 {
-                w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w));
-                *stage_pos = *stage_pos.add(c - 1);
-                *stage_kind = *stage_kind.add(c - 1);
-                c = 1;
-            }
-        }
-        if c == 1 {
-            *stage_pos.add(1) = n as u32;
-            w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w));
-        }
-        write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
-        lanes_post(src, out_kinds, out_spans, w, n as u32, &mut self.lanes);
+        let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
+        carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
+        coalesce(t, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
+        misc_post(sp, n, st, word, misc, kind, nesc);
+        let w = compress(
+            t,
+            src,
+            n,
+            nb,
+            st,
+            kind,
+            self.stage_pos.as_mut_ptr(),
+            self.stage_kind.as_mut_ptr(),
+            out_kinds,
+            out_spans,
+            &mut self.lanes,
+        );
         self.sig_len = w;
         w
     }

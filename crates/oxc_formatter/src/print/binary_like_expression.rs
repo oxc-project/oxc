@@ -269,11 +269,25 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
 
         let group_id = f.group_id("logicalChain");
 
-        // A leading line comment on the final JSX operand forces a newline in Prettier,
-        // which breaks the surrounding chain. Mirror that by expanding the chain group;
-        // block comments don't force a newline and stay length-driven.
+        // `( // comment` attaches to the preceding condition and breaks its group:
+        // ```jsx
+        //   {a &&
+        //     b && ( // why this breaks?
+        //       <div />
+        //     )}
+        // ```
+        // Own-line comments only break the JSX group:
+        // ```jsx
+        //   {a && b && (
+        //     // this does not break
+        //     <div />
+        //   )}
+        // ```
+        // This is a Prettier's comment-attachment artifact, keep it for compatibility now.
         let should_expand_chain = jsx_element.is_some_and(|jsx| {
-            f.comments().comments_before_iter(jsx.span().start).any(|comment| comment.is_line())
+            f.comments()
+                .comments_before_iter(jsx.span().start)
+                .any(|comment| comment.is_line() && !comment.preceded_by_newline())
         });
 
         let format_non_jsx_parts = format_with(|f| {

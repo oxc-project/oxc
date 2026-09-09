@@ -1,0 +1,26 @@
+// Block and own-line comments in a classic for-head keep their slot, never
+// crossing the head's `;`s or its `)`, with or without a node in the slot
+// (a same-line line comment moves just behind its `;` instead: `a; // c`).
+// Known divergence (js/explicit-resource-management/valid-await-using-comments.js):
+// Prettier moves empty-slot comments backward across the `;`s onto the init
+// (`for (a /*8*/ /*9*/;;)`), or forward out of the parens entirely when every
+// slot is empty (`for (;;) /*s0*/ ;`) -- attachment artifacts of the kind
+// prettier is currently fixing elsewhere (prettier#19894 family).
+for (a; /*8*/; /*9*/) ;
+for (a;; /* c */) ;
+for (a;; /* c */) {}
+for (a /* c */;;) ;
+for (a; b /* c */;) {}
+for (; /*t*/ b;) ;
+for (/*s0*/;;) ;
+for (;/*s1*/;) {}
+for (;;/*s2*/) ;
+for (/*s0*/; /*s1*/; /*s2*/) ;
+for (;;) /* after */ ;
+
+// A line comment around a `;` trails its slot's line and stays there
+// (`a; // c` is its own re-parse's fixpoint; control, converges with Prettier)
+for (a // c1
+; b; c) {}
+for (a; // t
+b; c) {}

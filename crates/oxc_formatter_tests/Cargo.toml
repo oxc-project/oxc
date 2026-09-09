@@ -50,4 +50,3 @@ conformance = [
 
 [lib]
 doctest = false
-test = false

@@ -4,7 +4,10 @@ use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarationKind},
+    ast::{
+        AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
+        VariableDeclarationKind,
+    },
 };
 use oxc_cfg::{
     BasicBlockId, BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph,
@@ -126,8 +129,21 @@ struct TrackedSymbol {
     symbol_id: SymbolId,
     scope_id: ScopeId,
     is_used: bool,
-    is_exported: bool,
     has_captured_read: bool,
+}
+
+struct DestructuringAssignmentUsage {
+    node_id: NodeId,
+    span: Span,
+    left_span: Span,
+    right_span: Span,
+    has_lhs_reference: bool,
+    has_rhs_reference: bool,
+    has_nested_destructuring_assignment: bool,
+    direct_target: Option<NodeId>,
+    can_defer_target: bool,
+    rhs_cfg_id: Option<BlockNodeId>,
+    rhs_crosses_cfg_blocks: bool,
 }
 
 impl Rule for NoUselessAssignment {
@@ -157,13 +173,16 @@ impl Rule for NoUselessAssignment {
                 continue;
             }
 
+            if Self::is_exported(ctx, symbol_id, decl_node) {
+                continue;
+            }
+
             #[expect(clippy::cast_possible_truncation)]
             let compact_idx = tracked_symbols.len() as u32;
             tracked_symbols.push(TrackedSymbol {
                 symbol_id,
                 scope_id: ctx.scoping().symbol_scope_id(symbol_id),
                 is_used: false,
-                is_exported: Self::is_exported(ctx, symbol_id, decl_node),
                 has_captured_read: false,
             });
 
@@ -180,10 +199,14 @@ impl Rule for NoUselessAssignment {
             }
 
             // Process references inline with reordering for assignment expressions like a = a + 1
-            let references = ctx.symbol_references(symbol_id);
+            let ambiguous_destructuring_assignments =
+                Self::ambiguous_destructuring_assignments(ctx, symbol_id);
             let mut pending_assignment_lhs: Option<(&Reference, bool)> = None;
+            let mut last_conservative_assignment = None;
+            let mut ambiguous_assignment_index = 0;
 
-            for reference in references {
+            for reference in ctx.symbol_references(symbol_id) {
+                let mut is_within_pending_assignment = false;
                 if let Some((lhs, previous_value_read)) = pending_assignment_lhs
                     && let Some(assign_node_id) = Self::get_assignment_node(ctx, lhs)
                 {
@@ -195,31 +218,82 @@ impl Rule for NoUselessAssignment {
                         if reference.is_read() && !reference.is_write() {
                             pending_assignment_lhs = Some((lhs, true));
                         }
+                        is_within_pending_assignment = true;
+                    } else {
                         Self::process_reference_deferred(
                             ctx,
                             graph,
                             &mut cfg_ops,
-                            reference,
+                            lhs,
                             compact_idx,
                             var_decl,
                             decl_node,
                             &mut tracked_symbols[compact_idx as usize],
-                            false,
+                            previous_value_read,
                         );
+                        pending_assignment_lhs = None;
+                    }
+                }
+
+                let reference_span = ctx.nodes().get_node(reference.node_id()).span();
+                let mut conservative_assignment = None;
+                while let Some(&assignment_node_id) =
+                    ambiguous_destructuring_assignments.get(ambiguous_assignment_index)
+                {
+                    let assignment_span = ctx.nodes().get_node(assignment_node_id).span();
+                    if assignment_span.end < reference_span.start {
+                        ambiguous_assignment_index += 1;
                         continue;
                     }
+                    if assignment_span.contains_inclusive(reference_span) {
+                        conservative_assignment = Some(assignment_node_id);
+                    }
+                    break;
+                }
+                if let Some(assignment_node_id) = conservative_assignment {
+                    // The exact execution order is unknown, so keep the previous value live and
+                    // do not report any writes to this symbol within the assignment.
+                    if last_conservative_assignment != Some(assignment_node_id) {
+                        Self::push_op(
+                            ctx,
+                            graph,
+                            &mut cfg_ops,
+                            assignment_node_id,
+                            Operation::Read,
+                            compact_idx,
+                        );
+                        let tracked_symbol = &mut tracked_symbols[compact_idx as usize];
+                        tracked_symbol.is_used = true;
+                        last_conservative_assignment = Some(assignment_node_id);
+                    }
+                    if is_within_pending_assignment && let Some((lhs, _)) = pending_assignment_lhs {
+                        pending_assignment_lhs = Some((lhs, true));
+                    }
+                    if reference.is_read()
+                        && !Self::has_same_parent_variable_scope(
+                            ctx,
+                            tracked_symbols[compact_idx as usize].scope_id,
+                            ctx.nodes().get_node(reference.node_id()).scope_id(),
+                        )
+                    {
+                        tracked_symbols[compact_idx as usize].has_captured_read = true;
+                    }
+                    continue;
+                }
+
+                if is_within_pending_assignment {
                     Self::process_reference_deferred(
                         ctx,
                         graph,
                         &mut cfg_ops,
-                        lhs,
+                        reference,
                         compact_idx,
                         var_decl,
                         decl_node,
                         &mut tracked_symbols[compact_idx as usize],
-                        previous_value_read,
+                        false,
                     );
-                    pending_assignment_lhs = None;
+                    continue;
                 }
 
                 if reference.is_write() && Self::get_assignment_node(ctx, reference).is_some() {
@@ -378,7 +452,7 @@ impl Rule for NoUselessAssignment {
                         let compact_idx = op.compact_idx as usize;
                         let tracked_symbol = &tracked_symbols[compact_idx];
 
-                        if !tracked_symbol.is_used && !tracked_symbol.is_exported {
+                        if !tracked_symbol.is_used {
                             continue;
                         }
 
@@ -386,7 +460,6 @@ impl Rule for NoUselessAssignment {
                             Operation::Write => {
                                 if !scratch_live.has_bit(compact_idx)
                                     && !scratch_catch.has_bit(compact_idx)
-                                    && !tracked_symbol.is_exported
                                     && !tracked_symbol.has_captured_read
                                     && !*is_in_try_block.get_or_insert_with(|| {
                                         Self::is_in_try_block(graph, block_node_id)
@@ -539,14 +612,157 @@ impl NoUselessAssignment {
 
     fn get_assignment_node(ctx: &LintContext, reference: &Reference) -> Option<NodeId> {
         let node = ctx.nodes().get_node(reference.node_id());
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if matches!(node.kind(), AstKind::IdentifierReference(_))
-            && matches!(parent_node.kind(), AstKind::AssignmentExpression(_))
-        {
-            Some(parent_node.id())
-        } else {
-            None
+        if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
+            return None;
         }
+
+        for ancestor in ctx.nodes().ancestors(node.id()) {
+            match ancestor.kind() {
+                AstKind::AssignmentExpression(_) => return Some(ancestor.id()),
+                AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_)
+                | AstKind::AssignmentTargetWithDefault(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_) => {}
+                _ => return None,
+            }
+        }
+
+        None
+    }
+
+    fn get_enclosing_destructuring_assignment(
+        ctx: &LintContext,
+        reference: &Reference,
+    ) -> Option<NodeId> {
+        let node = ctx.nodes().get_node(reference.node_id());
+        if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
+            return None;
+        }
+
+        let mut enclosing = None;
+        for ancestor in ctx.nodes().ancestors(node.id()) {
+            let AstKind::AssignmentExpression(assignment) = ancestor.kind() else { continue };
+            if matches!(
+                &assignment.left,
+                AstAssignmentTarget::ArrayAssignmentTarget(_)
+                    | AstAssignmentTarget::ObjectAssignmentTarget(_)
+            ) {
+                enclosing = Some(ancestor.id());
+            }
+        }
+        enclosing
+    }
+
+    fn ambiguous_destructuring_assignments(
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+    ) -> SmallVec<[NodeId; 1]> {
+        let mut usages = SmallVec::<[DestructuringAssignmentUsage; 1]>::new();
+        for reference in ctx.symbol_references(symbol_id).filter(|reference| reference.is_write()) {
+            if let Some(assignment_node_id) =
+                Self::get_enclosing_destructuring_assignment(ctx, reference)
+                && usages.last().is_none_or(|usage| usage.node_id != assignment_node_id)
+            {
+                let AstKind::AssignmentExpression(assignment) =
+                    ctx.nodes().get_node(assignment_node_id).kind()
+                else {
+                    unreachable!("destructuring assignment should be an assignment expression");
+                };
+                usages.push(DestructuringAssignmentUsage {
+                    node_id: assignment_node_id,
+                    span: assignment.span,
+                    left_span: assignment.left.span(),
+                    right_span: assignment.right.span(),
+                    has_lhs_reference: false,
+                    has_rhs_reference: false,
+                    has_nested_destructuring_assignment: false,
+                    direct_target: None,
+                    can_defer_target: true,
+                    rhs_cfg_id: None,
+                    rhs_crosses_cfg_blocks: false,
+                });
+            }
+        }
+
+        let mut usage_index = 0;
+        for reference in ctx.symbol_references(symbol_id) {
+            let reference_node = ctx.nodes().get_node(reference.node_id());
+            let reference_span = reference_node.span();
+            while let Some(usage) = usages.get_mut(usage_index) {
+                if usage.span.end < reference_span.start {
+                    usage_index += 1;
+                    continue;
+                }
+                if !usage.span.contains_inclusive(reference_span) {
+                    break;
+                }
+
+                usage.has_lhs_reference |= usage.left_span.contains_inclusive(reference_span);
+                usage.has_rhs_reference |= usage.right_span.contains_inclusive(reference_span);
+                if !usage.has_nested_destructuring_assignment {
+                    usage.has_nested_destructuring_assignment = ctx
+                        .nodes()
+                        .ancestors(reference.node_id())
+                        .take_while(|ancestor| ancestor.id() != usage.node_id)
+                        .any(|ancestor| {
+                            matches!(
+                                ancestor.kind(),
+                                AstKind::AssignmentExpression(assignment)
+                                    if matches!(
+                                        &assignment.left,
+                                        AstAssignmentTarget::ArrayAssignmentTarget(_)
+                                            | AstAssignmentTarget::ObjectAssignmentTarget(_)
+                                    )
+                            )
+                        });
+                }
+
+                if reference.is_write()
+                    && Self::get_assignment_node(ctx, reference) == Some(usage.node_id)
+                {
+                    if usage.direct_target.replace(reference.node_id()).is_some() {
+                        usage.can_defer_target = false;
+                    }
+                } else if !reference.is_read()
+                    || reference.is_write()
+                    || !usage.right_span.contains_inclusive(reference_span)
+                {
+                    usage.can_defer_target = false;
+                }
+
+                if usage.right_span.contains_inclusive(reference_span) {
+                    let cfg_id = ctx.nodes().cfg_id(reference.node_id());
+                    if usage.rhs_cfg_id.is_some_and(|rhs_cfg_id| rhs_cfg_id != cfg_id) {
+                        usage.rhs_crosses_cfg_blocks = true;
+                    } else {
+                        usage.rhs_cfg_id = Some(cfg_id);
+                    }
+                }
+                break;
+            }
+        }
+
+        usages
+            .into_iter()
+            .filter_map(|usage| {
+                let Some(target_node_id) = usage.direct_target else {
+                    let is_rhs_only = !usage.has_lhs_reference && usage.has_rhs_reference;
+                    return (!is_rhs_only || usage.has_nested_destructuring_assignment)
+                        .then_some(usage.node_id);
+                };
+                let target_cfg_id = ctx.nodes().cfg_id(target_node_id);
+                (!usage.can_defer_target
+                    || usage.rhs_crosses_cfg_blocks
+                    || usage.rhs_cfg_id.is_some_and(|rhs_cfg_id| rhs_cfg_id != target_cfg_id))
+                .then_some(usage.node_id)
+            })
+            .collect()
     }
 
     fn is_in_try_block(graph: &Graph, block_node_id: BlockNodeId) -> bool {
@@ -1248,6 +1464,61 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
 
   return collected;
 }",
+        "let x = 'used';
+                    [x = x] = [];",
+        "let x = 0;
+                    [x, x] = [1, 2];
+                    console.log(x);",
+        "let x = 0, y;
+                    [x, y = x] = [1];
+                    console.log(y);",
+        "let x = 0;
+                    [x = x] = (x = 1, []);
+                    console.log(x);",
+        "let x = 0;
+                    ({ [x]: x } = (x = 1, {}));
+                    console.log(x);",
+        "let x = 0, y;
+                    ({ [key(x)]: y } = (x = 1, {}));
+                    console.log(y);",
+        "let x = 0, y;
+                    [x, y = (x = x + 1)] = [1];
+                    console.log(x);",
+        "let x = 0;
+                    [x] = (x = x + 1, [2]);
+                    console.log(x);",
+        "let x = 0, y, z;
+                    [y = (z = x)] = (x = 1, []);
+                    console.log(y);",
+        "let x = 0, y;
+                    [x, y = ([x] = [x + 1])] = [1];
+                    console.log(x);",
+        "let x = 0, y;
+                    [y = ([x] = [x])] = (x = 1, []);
+                    console.log(x);",
+        "let x = 0, y, z;
+                    ({ [({ [x]: z } = (x = 1, {}), 0)]: y } = {});
+                    console.log(y);",
+        "let x = 0, y;
+                    [y = (obj[x] = (x = 1))] = [];
+                    console.log(x, y);",
+        "let x = 'used';
+                    [x] = condition ? x : x;",
+        // Keep local references within exported declarations and assignments.
+        "let local = 1;
+                    export let exported = local;
+                    local = 2;
+                    use(local);",
+        "let local = 0;
+                    export let published = { read: () => local };
+                    local = 1;",
+        "export let published;
+                    let local = 0;
+                    while (condition) {
+                        published = local;
+                        published = (local = 1);
+                        continue;
+                    }",
     ];
 
     let fail = vec![
@@ -1574,6 +1845,24 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                         x = 2;
                         return <A prop={x} />;
                         }", // { "parserOptions": { "ecmaFeatures": { "jsx": true }, }, },
+        "let x = 'a/b/c';
+                    [x] = x.split('/');",
+        "let x = { value: 'used' };
+                    ({ value: x } = x);",
+        "let x = 0;
+                    obj[x++] = (x = 2);
+                    console.log(x);",
+        "let x = 0;
+                    console.log(x);
+                    [y] = (x = 1, [0]);
+                    x = 2;
+                    console.log(x);",
+        "let local = 0;
+                    export let published = local;
+                    published = (local = 1);",
+        "let local = 0;
+                    export let exported = (local = 1);
+                    use(local);",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)

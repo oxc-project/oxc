@@ -225,7 +225,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper() { var i, x = 1; for (i = x; i < 10; i++) console.log(i) }",
-        "function wrapper() { var i; for (i = 1; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (var i = 1; i < 10; i++) console.log(i) }",
     );
     test(
         "function wrapper() { var x = i; for (var i = x; i < 10; i++) console.log(i) }",
@@ -276,12 +276,12 @@ fn test_inline_single_use_variable() {
     // cannot be compressed to `function wrapper() { var foo; globalThis[console.log(foo)] = (() => { foo = 1 })() }`
     test(
         "function wrapper() { var foo; var bar = (() => { foo = 1 })(); globalThis[console.log(foo)] = bar }",
-        "function wrapper() { var foo, bar = (foo = 1, void 0); globalThis[console.log(foo)] = bar }",
+        "function wrapper() { var foo = 1, bar = void 0; globalThis[console.log(foo)] = bar }",
     );
     // cannot be compressed to `function wrapper() { let foo; return foo.bar = (() => { foo = {} })(), foo }`
     test(
         "function wrapper() { let foo; const bar = (() => { foo = {} })(); foo.bar = bar; return foo }",
-        "function wrapper() { let foo, bar = (foo = {}, void 0); return foo.bar = void 0, foo }",
+        "function wrapper() { let foo = {}, bar; return foo.bar = void 0, foo }",
     );
     test(
         "function wrapper() { let foo = {}; const bar = (() => { console.log() })(); foo.bar = bar; return foo }",

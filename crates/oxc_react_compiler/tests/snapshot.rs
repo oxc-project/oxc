@@ -124,11 +124,16 @@ fn run_fixture(source: &str) -> String {
         .map(|diagnostic| diagnostic.diagnostic.clone())
         .collect::<Vec<_>>();
     let lint_body = diagnostics_body(&lint_diagnostics);
-    if lint_body != transform_body {
+    // A fatal compile may originate from codegen, which lint intentionally does not
+    // run, and may replace diagnostics accumulated by earlier passes. Successful
+    // compilation still has to agree with lint on diagnostics and fatality.
+    if !fatal && lint_body != transform_body {
         out.push_str("\n\nLint-mode diagnostics (differ from transform):\n\n");
         out.push_str(if lint_body.is_empty() { "(none)\n" } else { &lint_body });
     }
-    assert_eq!(lint_result.fatal, fatal, "lint and compile fatality diverged");
+    if !fatal {
+        assert_eq!(lint_result.fatal, fatal, "lint and compile fatality diverged");
+    }
     out
 }
 

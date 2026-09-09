@@ -15,6 +15,7 @@ mod minimize_expression_in_boolean_context;
 mod minimize_if_statement;
 mod minimize_not_expression;
 mod minimize_statements;
+mod minimize_switch_statements;
 mod normalize;
 mod obscure_edge_cases;
 mod oxc;

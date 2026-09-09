@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- affeb14 minifier: Mangle class private members in Node API (#26118) (碳苯 Carbon)
+
 ## [0.145.0] - 2026-08-18
 
 ### 🚀 Features

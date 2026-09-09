@@ -109,8 +109,6 @@ eslint/no-redeclare                                        |      7
 eslint/no-regex-spaces                                     |  64236
 eslint/no-restricted-exports                               |     70
 eslint/no-restricted-globals                               |      7
-eslint/no-restricted-imports                               |     26
-eslint/no-restricted-properties                            |  94494
 eslint/no-return-assign                                    |  13005
 eslint/no-script-url                                       |  63073
 eslint/no-self-assign                                      |  13005
@@ -140,7 +138,7 @@ eslint/no-unused-expressions                               |  24802
 eslint/no-unused-labels                                    |      7
 eslint/no-unused-private-class-members                     |      4
 eslint/no-unused-vars                                      |      7
-eslint/no-use-before-define                                | 104670
+eslint/no-use-before-define                                | 209565
 eslint/no-useless-assignment                               |      7
 eslint/no-useless-backreference                            |  64236
 eslint/no-useless-call                                     |  62606

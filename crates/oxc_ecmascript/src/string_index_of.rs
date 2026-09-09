@@ -10,9 +10,7 @@ impl StringIndexOf for &str {
     #[expect(clippy::cast_possible_wrap, clippy::cast_sign_loss)]
     fn index_of(&self, search_value: Option<&str>, from_index: Option<f64>) -> isize {
         let from_index = from_index.map_or(0, |x| x.to_int_32().max(0)) as usize;
-        let Some(search_value) = search_value else {
-            return -1;
-        };
+        let search_value = search_value.unwrap_or("undefined");
         let result = self.chars().skip(from_index).collect::<String>().find(search_value);
         result.map(|index| index + from_index).map_or(-1, |index| index as isize)
     }
@@ -45,6 +43,7 @@ mod test {
         assert_eq!("test test test".index_of(Some("test"), Some(-1_073_741_825.0)), 0);
         assert_eq!("test test test".index_of(Some("test"), Some(0.0)), 0);
         assert_eq!("test test test".index_of(Some("notpresent"), Some(0.0)), -1);
+        assert_eq!("undefined".index_of(None, Some(0.0)), 0);
         assert_eq!("test test test".index_of(None, Some(0.0)), -1);
     }
 }

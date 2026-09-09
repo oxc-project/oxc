@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.67.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 104061b formatter: Keep JSDoc cast parens with a comment inside them (#26374) (leaysgur)
+- 172ddb6 formatter_css: Keep a same-line line comment on its line (#26321) (leaysgur)
+- 534a0fe formatter_css: Keep a line comment on its comma's line (#26319) (leaysgur)
+- 2028896 formatter_css: Preserve comments around SCSS/Less variable values (#26276) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+
+### 📚 Documentation
+
+- 32084d4 formatter_core: Clarify printer hard_line compression (#26312) (leaysgur)
+- 26a1fa4 formatter_core: Refine FORMATTER_POLICY (#26266) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+- a67cb9d formatter,formatter_core: Document comment moving policy (#26075) (leaysgur)
+- fc175b0 formatter_core: Clarify idempotency test infra (#26069) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 🚀 Features

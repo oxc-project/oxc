@@ -111,13 +111,24 @@ use crate::{
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
+//
 // Length is constrained by 2 factors:
 // 1. `Span`'s `start` and `end` are `u32`s, which limits length to `u32::MAX` bytes.
 // 2. Rust's allocator APIs limit allocations to `isize::MAX`.
-// https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//    https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.from_size_align
+//
+// On 64-bit systems, the limit is 256 bytes below `u32::MAX` rather than `u32::MAX` itself:
+//
+// 1. `oxc_lexer` will require source text to be followed by 64 bytes of padding.
+//    This means *padded* length can fit in a `u32`.
+//    256 instead of 64 to leave headroom, in case the padding requirement expands in future.
+// 2. Counts of tokens, comments and errors are all bounded by source length plus a small constant,
+//    so they can be stored as `u32`s without any possibility of overflow.
+// 3. No real `Span` can have `start` or `end` of `u32::MAX`, so such a `Span` can be used as a sentinel.
+//    `oxc_transformer`'s styled-components plugin relies on this.
 pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
     // 64-bit systems
-    u32::MAX as usize
+    u32::MAX as usize - 256
 } else {
     // 32-bit or 16-bit systems
     isize::MAX as usize
@@ -134,23 +145,25 @@ pub(crate) const MAX_LEN: usize = if size_of::<usize>() >= 8 {
 ///    enabled](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error)
 ///
 /// ## Errors
-/// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing. When this
-/// happens,
+///
+/// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing.
+/// When this happens:
+///
 /// 1. [`diagnostics`] will be non-empty
 /// 2. [`program`] will contain a full AST
-/// 3. [`panicked`] will be false
+/// 3. [`fatal_error`] will be false
 ///
-/// When the parser cannot recover, it will abort and terminate parsing early. [`program`] will
-/// be empty and [`panicked`] will be `true`.
+/// When the parser cannot recover, it will abort and terminate parsing early.
+/// [`program`] will be empty and [`fatal_error`] will be `true`.
 ///
 /// [`program`]: ParserReturn::program
 /// [`diagnostics`]: ParserReturn::diagnostics
-/// [`panicked`]: ParserReturn::panicked
+/// [`fatal_error`]: ParserReturn::fatal_error
 #[non_exhaustive]
 pub struct ParserReturn<'a> {
     /// The parsed AST.
     ///
-    /// Will be empty (e.g. no statements, directives, etc) if the parser panicked.
+    /// Will be empty (e.g. no statements, directives, etc) if the parser encountered a fatal error.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -179,15 +192,18 @@ pub struct ParserReturn<'a> {
     /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
     pub tokens: ArenaVec<'a, Token>,
 
-    /// Whether the parser panicked and terminated early.
+    /// Whether the parser encountered a fatal error and terminated early.
     ///
-    /// This will be `false` if parsing was successful, or if parsing was able to recover from a
-    /// syntax error. When `true`, [`program`] will be empty and [`diagnostics`] will contain at least
-    /// one error.
+    /// If `false`, either parsing was successful, or parsing was able to recover from a syntax error.
+    /// [`diagnostics`] may still contain errors, indicating that the program is not syntactically valid,
+    /// but parser was able to recover enough to produce an AST.
+    ///
+    /// If `true`, parser was unable to parse the source.
+    /// [`program`] will be empty and [`diagnostics`] will contain at least one error.
     ///
     /// [`program`]: ParserReturn::program
     /// [`diagnostics`]: ParserReturn::diagnostics
-    pub panicked: bool,
+    pub fatal_error: bool,
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
@@ -687,10 +703,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let mut program = self.parse_program();
-        let mut panicked = false;
+        let mut has_fatal_error = false;
 
         if let Some(fatal_error) = self.fatal_error.take() {
-            panicked = true;
+            has_fatal_error = true;
             self.errors.truncate(fatal_error.errors_len);
             if !self.lexer.errors.is_empty() && self.cur_kind().is_eof() {
                 // Noop
@@ -706,7 +722,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         self.check_unfinished_errors();
 
         if let Some(overlong_error) = self.overlong_error() {
-            panicked = true;
+            has_fatal_error = true;
             self.lexer.errors.clear();
             self.errors.clear();
             self.error(overlong_error);
@@ -754,8 +770,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        let tokens =
-            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
+        let tokens = if has_fatal_error {
+            ArenaVec::new_in(&self.ast)
+        } else {
+            self.lexer.finalize_tokens()
+        };
 
         program.comments = self.lexer.trivia_builder.comments;
 
@@ -765,7 +784,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             diagnostics: errors,
             irregular_whitespaces,
             tokens,
-            panicked,
+            fatal_error: has_fatal_error,
             is_flow_language,
         }
     }
@@ -1244,7 +1263,7 @@ mod test {
 
         // Parsing should fail
         assert!(ret.program.is_empty());
-        assert!(ret.panicked);
+        assert!(ret.fatal_error);
         assert_eq!(ret.diagnostics.len(), 1);
         assert_eq!(
             ret.diagnostics.first().unwrap().to_string(),
@@ -1270,8 +1289,52 @@ mod test {
 
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, &source, SourceType::default()).parse();
-        assert!(!ret.panicked);
+        assert!(!ret.fatal_error);
         assert!(ret.diagnostics.is_empty());
         assert_eq!(ret.program.body.len(), 2);
+    }
+
+    // Where the lexer cannot lex any further it emits `Undetermined`, and no `Eof` follows.
+    // That final token ends the input just as `Eof` does, so it is discarded, and discarding it
+    // must not take the real token before it with it.
+    #[test]
+    fn tokens_when_lexing_ends_in_error() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "foo();\n'unterminated", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(!ret.fatal_error);
+        assert_eq!(ret.diagnostics.len(), 1);
+        assert_eq!(ret.diagnostics.first().unwrap().to_string(), "Unterminated string");
+
+        let tokens = ret
+            .tokens
+            .iter()
+            .map(|token| (token.kind(), token.start(), token.end()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            tokens,
+            [
+                (Kind::Ident, 0, 3),
+                (Kind::LParen, 3, 4),
+                (Kind::RParen, 4, 5),
+                (Kind::Semicolon, 5, 6),
+            ]
+        );
+    }
+
+    // A fatal error fast-forwards the lexer to end of file. Re-lexing the `}` of a template
+    // substitution after that would derive a token position from the moved cursor, and so
+    // overwrite an unrelated token in the collected stream.
+    #[test]
+    fn tokens_when_template_substitution_fails() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "`${}`", SourceType::default())
+            .with_config(config::TokensParserConfig)
+            .parse();
+
+        assert!(ret.fatal_error);
+        assert!(ret.tokens.is_empty());
     }
 }

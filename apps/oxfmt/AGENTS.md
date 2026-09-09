@@ -78,6 +78,17 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
+### Divergence vs Prettier
+
+Known divergences live in DIVERGENCES.md (embedding / dispatch layer only; single-language ones live in the owning crate's DIVERGENCES.md).
+
+- Pin convention: a minimal repro lives in `conformance/fixtures/edge-cases/`
+  any external fixture containing the same diff carries the same NOTE in `conformance/run.ts`;
+  the duplication is deliberate, not a consolidation target
+- All current entries are embedding-layer decisions that outlive the Prettier delegation;
+  if an entry about the Prettier-fallback boundary itself is ever added, group it under a
+  separate heading in DIVERGENCES.md so the removal scope stays obvious when the fallback goes away
+
 ### Embedded language formatting
 
 Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
