@@ -200,7 +200,6 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        let kws = if ts { &t.kwts } else { &t.kwjs };
         classify(t, ts, sp, n, word, st, kwinit, opch, digit, dot, misc, kind);
         *word.add(nb) = 0;
         *st.add(nb) = 0;
@@ -212,7 +211,7 @@ impl Lexer {
 
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
         carve(t, src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
-        coalesce(t, kws, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, &mut self.lanes);
+        coalesce(t, sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
         misc_post(sp, n, st, word, misc, kind, nesc);
         let w = compress(
             t,
