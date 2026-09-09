@@ -62,36 +62,37 @@ impl<'a> PeepholeOptimizations {
         // Consequent is non-empty from here on.
 
         if let Some(alternate) = &if_stmt.alternate {
-            if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_)) {
-                if matches!(alternate, Statement::ExpressionStatement(_)) {
-                    // `if (a) b(); else c();` => `a ? b() : c();`
-                    ctx.replace_statement_with(stmt, |stmt, ctx| {
-                        let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
-                        let IfStatement { test, consequent, alternate, span, .. } = if_stmt.unbox();
-                        let Statement::ExpressionStatement(a) = consequent else { unreachable!() };
-                        let Statement::ExpressionStatement(b) = alternate.unwrap() else {
-                            unreachable!()
-                        };
-                        let a = a.unbox().expression;
-                        let b = b.unbox().expression;
-                        let expr = Self::minimize_conditional(span, test, a, b, ctx);
-                        Statement::new_expression_statement(span, expr, ctx)
-                    });
-                    return;
-                }
-            } else {
-                // Normalize: move the `!` out of the test by swapping branches.
-                // Avoid swapping when alternate is an `if` — that risks a worse chain.
-                // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
-                if !matches!(alternate, Statement::IfStatement(_))
-                    && let Expression::UnaryExpression(unary_expr) = &if_stmt.test
-                    && unary_expr.operator.is_not()
-                {
-                    ctx.replace_expression_with(&mut if_stmt.test, Self::unwrap_unary);
-                    let if_mut = if_stmt.as_mut();
-                    let Some(alternate) = &mut if_mut.alternate else { unreachable!() };
-                    std::mem::swap(&mut if_mut.consequent, alternate);
-                }
+            if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_))
+                && matches!(alternate, Statement::ExpressionStatement(_))
+            {
+                // `if (a) b(); else c();` => `a ? b() : c();`
+                ctx.replace_statement_with(stmt, |stmt, ctx| {
+                    let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
+                    let IfStatement { test, consequent, alternate, span, .. } = if_stmt.unbox();
+                    let Statement::ExpressionStatement(a) = consequent else { unreachable!() };
+                    let Statement::ExpressionStatement(b) = alternate.unwrap() else {
+                        unreachable!()
+                    };
+                    let a = a.unbox().expression;
+                    let b = b.unbox().expression;
+                    let expr = Self::minimize_conditional(span, test, a, b, ctx);
+                    Statement::new_expression_statement(span, expr, ctx)
+                });
+                return;
+            }
+
+            // Normalize: move the `!` out of the test by swapping branches.
+            // Avoid swapping when alternate is an `if` — that risks a worse chain.
+            // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
+            if !matches!(alternate, Statement::IfStatement(_))
+                && let Expression::UnaryExpression(unary_expr) = &if_stmt.test
+                && unary_expr.operator.is_not()
+                && (!if_stmt.consequent.is_jump_statement() || alternate.is_jump_statement())
+            {
+                ctx.replace_expression_with(&mut if_stmt.test, Self::unwrap_unary);
+                let if_mut = if_stmt.as_mut();
+                let Some(alternate) = &mut if_mut.alternate else { unreachable!() };
+                std::mem::swap(&mut if_mut.consequent, alternate);
             }
         } else if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_)) {
             ctx.replace_statement_with(stmt, |stmt, ctx| {
