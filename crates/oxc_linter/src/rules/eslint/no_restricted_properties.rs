@@ -17,7 +17,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn no_restricted_properties_diagnostic(property: &PropertyDetails, span: Span) -> OxcDiagnostic {
     let mut warn_text = match (&property.object, &property.property) {
@@ -256,6 +260,10 @@ impl Rule for NoRestrictedProperties {
             }
         }
         Ok(Self { restricted_properties: Box::new(PropertyDetailsList(properties)) })
+    }
+
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        !self.restricted_properties.0.is_empty()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

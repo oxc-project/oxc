@@ -109,7 +109,6 @@ eslint/no-redeclare                                        |      7
 eslint/no-regex-spaces                                     |  64236
 eslint/no-restricted-exports                               |     70
 eslint/no-restricted-globals                               |      7
-eslint/no-restricted-properties                            |  94494
 eslint/no-return-assign                                    |  13005
 eslint/no-script-url                                       |  63073
 eslint/no-self-assign                                      |  13005
