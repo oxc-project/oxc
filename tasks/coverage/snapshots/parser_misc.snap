@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 91/91 (100.00%)
 Positive Passed: 91/91 (100.00%)
-Negative Passed: 190/190 (100.00%)
+Negative Passed: 195/195 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4547,6 +4547,41 @@ Negative Passed: 190/190 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-class-untyped.ts:1:18]
+ 1 │ class C { f(this x: T) {} }
+   ·                  ┬
+   ·                  ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-class.ts:1:21]
+ 1 │ class C { f(this: T x: T) {} }
+   ·                     ┬
+   ·                     ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-function-type.ts:1:19]
+ 1 │ type F = (this: T x: T) => void;
+   ·                   ┬
+   ·                   ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-function.ts:1:20]
+ 1 │ function f(this: T x: T) {}
+   ·                    ┬
+   ·                    ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-interface.ts:1:25]
+ 1 │ interface I { f(this: T x: T): void }
+   ·                         ┬
+   ·                         ╰── `,` expected
+   ╰────
 
   × TS(1009): Trailing comma not allowed.
    ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]
