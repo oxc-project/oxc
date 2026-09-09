@@ -428,7 +428,7 @@ impl<'a> PeepholeOptimizations {
                 && !right.left.may_have_side_effects(ctx)
                 && !right.right.may_have_side_effects(ctx)
             {
-                let binary_expr = &mut **e;
+                let binary_expr = e.as_mut();
                 std::mem::swap(&mut binary_expr.left, &mut binary_expr.right);
                 ctx.notice_change();
             }
