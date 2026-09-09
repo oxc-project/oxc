@@ -1,6 +1,16 @@
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
+/// Get index of the first clear bit at or after `i`.
+///
+/// If every bit in `i..n` is set, returns `n`.
+///
+/// # SAFETY
+///
+/// - `i` must be `<= n`.
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads of `n.div_ceil(64) + 1` words.
+///   The last word is read only when `i` is `n` and `n` is a multiple of 64.
 #[inline(always)]
 pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
     let mut w = i >> 6;
@@ -16,6 +26,16 @@ pub(super) unsafe fn bm_next0(bm: *const u64, i: usize, n: usize) -> usize {
     if r < n { r } else { n }
 }
 
+/// Get index of the first set bit at or after `i`.
+///
+/// If every bit in `i..n` is clear, returns `n`.
+///
+/// # SAFETY
+///
+/// - `i` must be `<= n`.
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads of `n.div_ceil(64) + 1` words.
+///   The last word is read only when `i` is `n` and `n` is a multiple of 64.
 #[inline(always)]
 pub(super) unsafe fn bm_next1(bm: *const u64, i: usize, n: usize) -> usize {
     let mut w = i >> 6;
@@ -36,6 +56,18 @@ pub(super) unsafe fn bm_next1(bm: *const u64, i: usize, n: usize) -> usize {
     n
 }
 
+/// Get index of the last set bit before `p`.
+///
+/// If bits `0..p` are all clear, returns `-1`.
+///
+/// The scan always runs down to bit 0, so there is no lower bound parameter.
+/// Reporting absence as `-1` is why the return type is `i64`, not `usize`.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads of `p.div_ceil(64)` words.
+///   Nothing is read when `p` is 0.
 #[inline(always)]
 pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
     if p == 0 {
@@ -60,11 +92,26 @@ pub(super) unsafe fn bm_prev1(bm: *const u64, p: usize) -> i64 {
     -1
 }
 
+/// Set bit `i`.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads and writes of `(i / 64) + 1` words.
 #[inline(always)]
 pub(super) unsafe fn bm_set1(bm: *mut u64, i: usize) {
     *bm.add(i >> 6) |= 1u64 << (i & 63);
 }
 
+/// Clear bits `a` to `b` inclusive.
+///
+/// If `a > b`, this is a no-op - no bits are cleared.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads and writes of `(b / 64) + 1` words.
+///   Nothing is accessed when `a > b`.
 #[inline(always)]
 pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
     if a > b {
@@ -87,6 +134,16 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
     *bm.add(wb) &= !hi;
 }
 
+/// Check if any bit is set in the first `nw` words.
+///
+/// Returns `true` if any bit is set, `false` if no bits are set.
+///
+/// The unit is words, not the bit indices all other functions in this file take.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads of `nw` words.
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
@@ -107,6 +164,16 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
     false
 }
 
+/// Check if any bit is set in the first `nw` words.
+///
+/// Returns `true` if any bit is set, `false` if no bits are set.
+///
+/// The unit is words, not the bit indices all other functions in this file take.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads of `nw` words.
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
