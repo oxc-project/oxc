@@ -14,3 +14,26 @@ const complex_selectors_bbbbbbbb = selector.args.children_xxxxxxxxxxxxxxxxxxxxxx
 // Last-argument arrow: a cast inside the call body keeps the hug, a cast-wrapped body does not.
 const needs_version_increase = !s.reactions?.every((r) => /** @type {NonNullable<typeof v_reactions>} */ (v_reactions).has(r));
 const needs_version_increase2 = !s.reactions?.every((r) => /** @type {NonNullable<typeof v_reactions>} */ (v_reactions.has(r)));
+
+// Assignment: a cast-wrapped RHS is opaque to the never-break shapes too (template literal, literals, class).
+// The line breaks after the `=` when the cast comment does not fit; a short one stays inline.
+const fieldPath = /** @type {import("react-hook-form").Path<TFormValues>} */ (`${key}.${locale}`);
+const short_cast = /** @type {T} */ (`short`);
+const cast_bool = /** @type {import("react-hook-form").Path<TFormValues>} */ (true);
+const cast_num = /** @type {import("react-hook-form").Path<TFormValuesXXXXXXX>} */ (123456);
+const cast_tagged = /** @type {import("react-hook-form").Path<TFormValues>} */ (tag`${key}.${locale}`);
+const cast_class = /** @type {import("react-hook-form").Path<TFormValues>} */ (class {});
+
+// The other RHS shape rules stop at the cast too: `require`, assignment chains, arrows, the unary walk.
+const someLongVariableNameForRequire = /** @type {typeof import("some-module")} */ (require("some-module"));
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ (cccccccccccccccc = dddddddddddddddd);
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = /** @type {T} */ (bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = cccccccccccccccc.ddddddddddddddd);
+aaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ ((xxxxxxxxxxxxxxxx) => xxxxxxxxxxxxxxxx.yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy);
+const someLongVariableNameForArrow3 = /** @type {Handler} */ ((a) => (b) => (c) => (d) => someLongFunctionCall(a, b, c, d, eeeeeeeeeee));
+const someLongVariableNameHereForNot = !/** @type {Promise<string>} */ ("some long string literal here ok yes");
+
+// Nested casts: each cast keeps its own parens.
+const outer = /** @type {U} */ (/** @type {T} */ (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).bbbbbbbbbbbbbbbb);
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = /** @type {T} */ (cccccccccccccccc = /** @type {S} */ (dddddddddddddddd = eeeeeeeeeeeeeeee));
+// A chain inside a call-argument cast with doubled source parens.
+foo(/** @type {T} */ ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb = cccccccccccccccc)));

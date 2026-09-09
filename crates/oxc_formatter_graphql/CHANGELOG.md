@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
 ## [0.66.0] - 2026-08-31
 
 ### 📚 Documentation

@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.82.0] - 2026-09-07
+
+### 🚀 Features
+
+- 6a0e19c linter/eslint/no-unmodified-loop-condition: Support `checkConditionalExpressions` option (#26249) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8c7ea76 ast_visit: Account for trimmed source offsets (#26223) (Cameron)
+- 07851b9 parser: Fix debug assert failure when lexer error with tokens enabled (#26229) (overlookmotel)
+- 9cee146 oxlint/lsp: Don't try to parse fix message, always fallback (#26204) (Sysix)
+- b41bb35 linter: Qualify rules in rules output (#26250) (camc314)
+
+### 🛡️ Security
+
+- 9a612d5 deps: Update npm packages (#26178) (renovate[bot])
+
 ## [1.81.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

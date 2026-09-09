@@ -516,3 +516,19 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     x = 2;
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:3:34]
+ 2 │                     export let published = local;
+ 3 │                     published = (local = 1);
+   ·                                  ─────
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let local = 0;
+   ·     ─────
+ 2 │                     export let exported = (local = 1);
+   ╰────
+  help: Consider removing or reusing the assigned value.

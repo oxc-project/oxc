@@ -371,21 +371,32 @@ fn convert_elements(
                     }
                     printer.pending_space = false;
                 }
-                let key = interned_cache_key(interned);
-                let id = if let Some(&id) = state.interned_to_ref.get(&key) {
-                    id
-                } else {
-                    // Reserve the slot index now:
-                    // the recursive `convert_elements` call below may push more refs,
-                    // so `state.refs.len()` would no longer equal this Interned's slot when we go to fill it.
-                    let id = state.refs.len();
-                    state.refs.push(Value::Null);
-                    state.interned_to_ref.insert(key, id);
+                // `fill` parts must stay a flat `[item, separator, ...]` list,
+                // but the formatter may wrap all entries in one `Interned` (e.g. JSX children).
+                // Splice them like the printer does, instead of emitting one opaque `_REF` part.
+                if matches!(
+                    stack.last().and_then(|entry| entry.start_info.as_ref()),
+                    Some(StartTagInfo::Fill)
+                ) {
                     let converted = convert_shared_elements(interned, state)?;
-                    state.refs[id] = normalize_array(converted);
-                    id
-                };
-                current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
+                    current_children_mut(&mut stack)?.extend(converted);
+                } else {
+                    let key = interned_cache_key(interned);
+                    let id = if let Some(&id) = state.interned_to_ref.get(&key) {
+                        id
+                    } else {
+                        // Reserve the slot index now:
+                        // the recursive `convert_elements` call below may push more refs,
+                        // so `state.refs.len()` would no longer equal this Interned's slot when we go to fill it.
+                        let id = state.refs.len();
+                        state.refs.push(Value::Null);
+                        state.interned_to_ref.insert(key, id);
+                        let converted = convert_shared_elements(interned, state)?;
+                        state.refs[id] = normalize_array(converted);
+                        id
+                    };
+                    current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
+                }
                 printer.line = LineState::Content;
             }
             FormatElement::BestFitting(best_fitting) => {

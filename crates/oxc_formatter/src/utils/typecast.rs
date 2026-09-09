@@ -1,3 +1,29 @@
+//! JSDoc type casts: `/** @type {T} */ (expr)`.
+//!
+//! The cast comment types the parenthesized expression right after it,
+//! so the parens must survive formatting and the comment must stay in front of them.
+//! The AST has no paren node (`preserve_parens: false`); the cast is recovered from the source (see `CastCommentGap`):
+//! a cast comment, then only `(`s and trivia, then the node, then `)` makes the node a [`TypeCast::Target`].
+//!
+//! # Printing protocol
+//!
+//! The generated `fmt` of every node with `NeedsParentheses` first offers the node to [`format_type_cast_comment_node`]:
+//! 1. [`classify_type_cast`] finds the node's binding cast comment among its UNPRINTED leading comments
+//!    (the first one: nested casts `/** U */ (/** T */ (x))` are peeled from the outside, one per pass);
+//! 2. [`format_type_cast_comment_node`] prints them, marks the node, and re-enters its `fmt` inside `(`...`)`;
+//! 3. the re-entered `fmt` offers the node again;
+//!    the cast comment just printed counts as handled (`Comments::is_handled_type_cast_comment`),
+//!    so only a further unprinted cast can bind now (the inner one of a nest, which repeats step 2);
+//!    with none, the offer is declined and the node prints itself.
+//!
+//! A cast whose paren closes inside the node ([`TypeCast::BindsInner`]) is kept adjacent to its target
+//! by [`format_leading_comments_and_open_paren`].
+//!
+//! # Layout decisions
+//!
+//! Shape-based layout rules see a cast target as Prettier's kept `ParenthesizedExpression` and ask [`is_cast_target`].
+//! `classify_type_cast` and the mark are for printing only.
+
 use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
 
@@ -5,6 +31,7 @@ use crate::{
     Buffer, Format, format_args,
     formatter::{
         JsFormatter,
+        comments::gap_segments,
         prelude::*,
         trivia::{FormatLeadingComments, format_leading_comments},
     },
@@ -14,9 +41,6 @@ use crate::{
 };
 
 /// How a JSDoc type cast comment relates to a node.
-///
-/// A cast is a `/** @type */`-like comment immediately followed by a
-/// parenthesized expression; where that parenthesis closes decides the binding.
 pub enum TypeCast<'a> {
     /// The node itself is the cast target
     /// (the parenthesis right after the comment closes right after the node):
@@ -51,15 +75,10 @@ pub enum TypeCast<'a> {
     None,
 }
 
-impl TypeCast<'_> {
-    pub fn is_target(&self) -> bool {
-        matches!(self, TypeCast::Target { .. })
-    }
-}
-
-/// Classifies how a type cast comment relates to the node at `span`.
-/// This is the single source of truth for cast binding;
-/// both [`format_type_cast_comment_node`] and [`format_leading_comments_and_open_paren`] consume it.
+/// Classifies how a type cast comment relates to the node at `span`, for printing:
+/// which comments are still pending is a cursor question,
+/// so this reads the printed state (the first unprinted cast comment, or the last printed one).
+/// Both [`format_type_cast_comment_node`] and [`format_leading_comments_and_open_paren`] consume it.
 pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'a> {
     let comments = f.context().comments();
 
@@ -105,20 +124,48 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
     TypeCast::None
 }
 
-/// Whether the node at `span` is a cast target (see [`TypeCast::Target`]).
-///
-/// A cast target keeps its parens, so to shape-based layout checks it is a parenthesized expression, not the node inside;
-/// the AST has no paren node, so those checks ask this instead.
+/// Whether the node at `span` is a cast target (see [`TypeCast::Target`]), for layout decisions.
+/// Position-based (source only, no printed state), so every frame agrees, the target mid-format included.
 /// Every cast target closes with `)`: the byte peek rejects the common case before any comment lookup.
 pub fn is_cast_target(span: Span, f: &JsFormatter<'_, '_>) -> bool {
-    f.context().comments().is_followed_by_closing_paren(span.end)
-        && classify_type_cast(span, f).is_target()
+    let source = f.source_text();
+    // A target is preceded by its `(` or by the `/` closing a comment:
+    // one byte peek rejects most nodes before the `)` peek (true for every last argument and parenthesized test)
+    // and the comment lookup.
+    if !matches!(
+        source.bytes_to(span.start).find(|byte| !byte.is_ascii_whitespace()),
+        Some(b'(' | b'/')
+    ) {
+        return false;
+    }
+    let comments = f.context().comments();
+    if !comments.is_followed_by_closing_paren(span.end) {
+        return false;
+    }
+    // Walk back over the comments before the node, one gap segment at a time, stopping at the first code byte.
+    // A cast comment with no `(` between it and the node binds to an inner node, and the walk continues:
+    // an earlier cast may still wrap this one (`/** @type {U} */ (/** @type {T} */ (a).b)`).
+    let mut cursor = span.start;
+    let mut has_paren = false;
+    for comment in comments.all_comments_before(span.start).iter().rev() {
+        let Some(segment_has_paren) =
+            classify_gap_segment(source.bytes_range(comment.span.end, cursor))
+        else {
+            return false;
+        };
+        has_paren |= segment_has_paren;
+        if has_paren && comments.is_type_cast_comment_followed_by_paren(comment) {
+            return true;
+        }
+        cursor = comment.span.start;
+    }
+    false
 }
 
 /// A cast target's pending comments and the span of its cast parentheses
 /// (from the first `(` after the cast comment to after the matching `)`), `None` for any other node.
 fn cast_target_parens<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> Option<(&'a [Comment], Span)> {
-    // The same rejection as `is_cast_target`
+    // Fast path: every target closes with `)`
     if !f.context().comments().is_followed_by_closing_paren(span.end) {
         return None;
     }
@@ -146,6 +193,7 @@ pub fn cast_target_end(span: Span, f: &JsFormatter<'_, '_>) -> Option<u32> {
 /// prints the pending cast comments, marks the node
 /// (so `NeedsParentheses` rules skip their own parentheses), and wraps it in parentheses,
 /// like `/** @type {string} */ (value)` or `/** @type {number} */ ((expression))`.
+/// Step 2 of the module's printing protocol: the node's `fmt` is re-entered inside the parens and declines the second offer.
 ///
 /// Returns `true` if the node was formatted as a cast target, `false` otherwise;
 /// callers apply their own formatting on `false`.
@@ -252,29 +300,6 @@ fn cast_parens_span(cast_comment_end: u32, span: Span, f: &JsFormatter<'_, '_>) 
         }
     }
     None
-}
-
-/// Byte segments between `start` and `bound` lying outside the given comment spans:
-/// one `(gap_start, gap_end)` pair per gap, ending with the tail segment up to `bound`.
-fn gap_segments(
-    comment_spans: &[Comment],
-    start: u32,
-    bound: u32,
-) -> impl Iterator<Item = (u32, u32)> + '_ {
-    let mut pos = start;
-    comment_spans
-        .iter()
-        .map(|comment| comment.span)
-        .chain(std::iter::once(Span::empty(bound)))
-        .filter_map(move |span| {
-            // A comment ending exactly at `pos` lies before the range
-            if span.start < pos {
-                return None;
-            }
-            let segment = (pos, span.start);
-            pos = span.end;
-            Some(segment)
-        })
 }
 
 /// Prints a node's leading comments and the formatter-added `(` in the correct order.
@@ -407,32 +432,33 @@ enum CastCommentGap {
 }
 
 /// Classifies the source between a cast comment end (`start`) and the node start (`end`).
-/// Comments in the gap are skipped via their known spans
-/// (they are unprinted at both call sites: they come after the cast comment,
-/// which is the newest printed comment in the printed branch);
-/// between them only whitespace and `(` are grammatically possible,
-/// so anything else is conservatively [`CastCommentGap::Code`].
+/// Comments in the gap are skipped via their known spans (printed or not, the bytes are the same).
 fn classify_cast_comment_gap(start: u32, end: u32, f: &JsFormatter<'_, '_>) -> CastCommentGap {
     let source = f.source_text();
-    let is_gap_byte = |b: u8| b.is_ascii_whitespace() || b == b'(';
+    let comments = f.context().comments().all_comments_in_range(start, end);
 
     let mut has_paren = false;
-    let mut pos = start;
-    for comment in f.context().comments().comments_in_range(start, end) {
-        // A comment ending exactly at `start` lies before the range
-        if comment.span.start < pos {
-            continue;
-        }
-        if !source.all_bytes_match(pos, comment.span.start, is_gap_byte) {
+    for (from, to) in gap_segments(comments, start, end) {
+        let Some(segment_has_paren) = classify_gap_segment(source.bytes_range(from, to)) else {
             return CastCommentGap::Code;
-        }
-        has_paren = has_paren || source.bytes_contain(pos, comment.span.start, b'(');
-        pos = comment.span.end;
+        };
+        has_paren |= segment_has_paren;
     }
-    if !source.all_bytes_match(pos, end, is_gap_byte) {
-        return CastCommentGap::Code;
-    }
-    has_paren = has_paren || source.bytes_contain(pos, end, b'(');
 
     if has_paren { CastCommentGap::ParensAndTrivia } else { CastCommentGap::Trivia }
+}
+
+/// One comment-free segment of a cast gap: `Some(has_paren)` when it holds only whitespace and `(`s
+/// (the only bytes grammatically possible between a cast comment and its target),
+/// `None` on anything else, which conservatively ends the cast ([`CastCommentGap::Code`]).
+fn classify_gap_segment(bytes: &[u8]) -> Option<bool> {
+    let mut has_paren = false;
+    for &byte in bytes {
+        match byte {
+            b'(' => has_paren = true,
+            _ if byte.is_ascii_whitespace() => {}
+            _ => return None,
+        }
+    }
+    Some(has_paren)
 }

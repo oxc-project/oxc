@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
@@ -356,9 +356,13 @@ pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &JsFormatte
                 && param.initializer.is_none()
                 && param.pattern.is_binding_identifier()
         }
-        && !f.comments().has_comment_in_span(arrow.params.span)
+        // Position-based: queried again inside `FormalParameter::write`, after its leading comments are printed
+        && !f.comments().has_any_comment_in_range(arrow.params.span.start, arrow.params.span.end)
 }
 
+/// Queried from three print phases for the same list
+/// (`FormalParameters` before printing, `FormalParameter` after its leading comments, the type literal while printing),
+/// so every comment check here must be position-based to give all of them the same answer.
 pub fn should_hug_function_parameters<'a>(
     parameters: &AstNode<'a, FormalParameters<'a>>,
     this_param: Option<&AstNode<'a, TSThisParameter<'a>>>,
@@ -371,21 +375,19 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
+    // `(/* comment before */ only_parameter /* comment after */)`
+    let has_comment_around = |span: Span| {
+        f.comments().has_any_comment_in_range(parameters.span.start, span.start)
+            || f.comments().has_any_comment_in_range(span.end, parameters.span.end)
+    };
+
     if let Some(this_param) = this_param {
-        // `(/* comment before */ this /* comment after */)`
-        // Checker whether there are comments around the only parameter.
-
-        if f.comments().has_comment_in_range(parameters.span.start, this_param.span.start)
-            || f.comments().has_comment_in_range(this_param.span.end, parameters.span.end)
-        {
-            return false;
-        }
-
         return list.is_empty()
             && this_param
                 .type_annotation
                 .as_ref()
-                .is_none_or(|ty| matches!(ty.type_annotation, TSType::TSTypeLiteral(_)));
+                .is_none_or(|ty| matches!(ty.type_annotation, TSType::TSTypeLiteral(_)))
+            && !has_comment_around(this_param.span);
     }
 
     // Safe because of the length check above
@@ -395,15 +397,7 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
-    // `(/* comment before */ only_parameter /* comment after */)`
-    // Checker whether there are comments around the only parameter.
-    if f.comments().has_comment_in_range(parameters.span.start, only_parameter.span.start)
-        || f.comments().has_comment_in_range(only_parameter.span.end, parameters.span.end)
-    {
-        return false;
-    }
-
-    match &only_parameter.pattern {
+    let shape_allows_hug = match &only_parameter.pattern {
         BindingPattern::AssignmentPattern(assignment) => {
             // AssignmentPattern in catch clauses or other contexts
             assignment.left.is_destructuring_pattern() && is_huggable_expression(&assignment.right)
@@ -421,7 +415,9 @@ pub fn should_hug_function_parameters<'a>(
                         )
                     }))
         }
-    }
+    };
+
+    shape_allows_hug && !has_comment_around(only_parameter.span)
 }
 
 /// Tests if all of the parameters of `expression` are simple enough to allow

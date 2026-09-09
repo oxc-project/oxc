@@ -1910,8 +1910,10 @@ impl GenExpr for ArrowFunctionExpression<'_> {
 }
 
 impl GenExpr for YieldExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.wrap(precedence >= Precedence::Assign, |p| {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        let wrap = precedence >= Precedence::Assign;
+        let argument_ctx = if wrap { Context::empty() } else { ctx & Context::FORBID_IN };
+        p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             p.print_str("yield");
@@ -1920,7 +1922,7 @@ impl GenExpr for YieldExpression<'_> {
             }
             if let Some(argument) = self.argument.as_ref() {
                 p.print_soft_space();
-                argument.print_expr(p, Precedence::Yield, Context::empty());
+                argument.print_expr(p, Precedence::Yield, argument_ctx);
             }
         });
     }
@@ -2006,7 +2008,7 @@ impl GenExpr for PrivateInExpression<'_> {
             p.add_source_mapping(self.span);
             self.left.print(p, ctx);
             p.print_str(" in ");
-            self.right.print_expr(p, Precedence::Equals, Context::FORBID_IN);
+            self.right.print_expr(p, Precedence::Compare, Context::FORBID_IN);
         });
     }
 }
@@ -2496,11 +2498,15 @@ impl GenExpr for TSNonNullExpression<'_> {
 }
 
 impl GenExpr for TSInstantiationExpression<'_> {
-    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
-        self.expression.print_expr(p, Precedence::Prefix, ctx);
-        self.type_arguments.print(p, ctx);
-        if p.options.minify {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        // Member access and other postfix operations need grouping around the type arguments.
+        let wrap = precedence >= Precedence::Postfix;
+        p.wrap(wrap, |p| {
+            // Wrap a lower-precedence operand so `(a ?? b)<T>` isn't emitted as `a ?? b<T>`.
+            self.expression.print_expr(p, Precedence::Prefix, ctx);
+            self.type_arguments.print(p, ctx);
+        });
+        if p.options.minify && !wrap {
             p.print_hard_space();
         }
     }

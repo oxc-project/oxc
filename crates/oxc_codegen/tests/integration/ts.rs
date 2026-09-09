@@ -487,6 +487,25 @@ fn ts_instantiation_expression() {
 }
 
 #[test]
+fn ts_instantiation_expression_precedence() {
+    for source in
+        ["(f<T>).x", "(f<T>)[x]", "(f<T>)()", "new (f<T>)()", "(f<T>)`text`", "((a ?? b)<T>).x"]
+    {
+        test_ts(source, &format!("{source};\n"));
+        test_idempotency(source);
+        test_idempotency_options(source, &CodegenOptions::minify());
+    }
+    for source in ["(f<T>).x", "(f<T>)[x]"] {
+        test_options_with_source_type(
+            source,
+            &format!("{source};"),
+            SourceType::ts(),
+            CodegenOptions::minify(),
+        );
+    }
+}
+
+#[test]
 fn ts_satisfies_expression() {
     test_same("(foo satisfies null) | ~\"\";\n");
     test_same("(foo satisfies null) & ~\"\";\n");

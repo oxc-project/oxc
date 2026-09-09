@@ -165,6 +165,67 @@ fn private_in() {
 }
 
 #[test]
+fn private_in_binary_right() {
+    fn wrap_case_equal_lower_precedence(op: &str) -> (String, String, String) {
+        let minified_op =
+            if matches!(op, "in" | "instanceof") { format!(" {op} ") } else { op.to_string() };
+        (
+            format!("class C {{ #x; test(a, b) {{ return #x in (a {op} b); }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in (a {op} b);\n\t}}\n}}\n"),
+            format!("class C{{#x;test(a,b){{return#x in (a{minified_op}b)}}}}"),
+        )
+    }
+    fn wrap_case_higher_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(a, b) {{ return #x in (a {op} b); }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in a {op} b;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(a,b){{return#x in a{op}b}}}}"),
+        )
+    }
+
+    for (source, expected, expected_minified) in [
+        "instanceof",
+        "in",
+        "<",
+        "<=",
+        ">",
+        ">=",
+        "==",
+        "!=",
+        "===",
+        "!==",
+        "&",
+        "^",
+        "|",
+        "&&",
+        "||",
+        "??",
+        "=",
+    ]
+    .map(wrap_case_equal_lower_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (source, expected, expected_minified) in
+        ["<<", ">>", ">>>", "+", "-", "*", "/", "%", "**"].map(wrap_case_higher_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (rhs, minified_rhs) in [("#x in a", "#x in a"), ("a ? a : b", "a?a:b"), ("a, b", "a,b")] {
+        let source = format!("class C {{ #x; test(a, b) {{ return #x in ({rhs}); }} }}");
+        test(
+            &source,
+            &format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in ({rhs});\n\t}}\n}}\n"),
+        );
+        test_minify(&source, &format!("class C{{#x;test(a,b){{return#x in ({minified_rhs})}}}}"));
+    }
+}
+
+#[test]
 fn private_in_binary_left() {
     fn wrap_case_equal_higher_precedence(op: &str) -> (String, String, String) {
         (
@@ -623,6 +684,53 @@ fn in_expr_in_sequence_in_for_loop_init() {
         "for (('hidden' in a) && (m = a.hidden), r = 0; s > r; r++) {}",
         "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
     );
+}
+
+#[test]
+fn in_expr_in_yield_expression() {
+    for (keyword, prefix) in [("yield", "yield "), ("yield*", "yield*")] {
+        for (init, expected, minified) in [
+            (
+                format!("{keyword} (1 in o)"),
+                format!("{keyword} (1 in o)"),
+                format!("{keyword}(1 in o)"),
+            ),
+            (
+                format!("x = {keyword} (1 in o)"),
+                format!("x = {keyword} (1 in o)"),
+                format!("x={keyword}(1 in o)"),
+            ),
+            (
+                format!("{keyword} yield (1 in o)"),
+                format!("{keyword} yield (1 in o)"),
+                format!("{prefix}yield(1 in o)"),
+            ),
+            (
+                format!("{keyword} (x = (1 in o))"),
+                format!("{keyword} x = (1 in o)"),
+                format!("{prefix}x=(1 in o)"),
+            ),
+            // Parentheses around the yield expression allow `in` in its argument.
+            (
+                format!("({keyword} (1 in o)) + 1"),
+                format!("({keyword} 1 in o) + 1"),
+                format!("({prefix}1 in o)+1"),
+            ),
+        ] {
+            let source = format!("function *g(o) {{ for ({init}; false;); }}");
+            test(&source, &format!("function* g(o) {{\n\tfor ({expected}; false;);\n}}\n"));
+            test_minify(&source, &format!("function*g(o){{for({minified};false;);}}"));
+            crate::test_idempotency(&source);
+            crate::test_idempotency_options(
+                &source,
+                &CodegenOptions { minify: true, ..CodegenOptions::default() },
+            );
+        }
+
+        let source = format!("function *g(o) {{ {keyword} (1 in o); }}");
+        test(&source, &format!("function* g(o) {{\n\t{keyword} 1 in o;\n}}\n"));
+        test_minify(&source, &format!("function*g(o){{{prefix}1 in o}}"));
+    }
 }
 
 #[test]
