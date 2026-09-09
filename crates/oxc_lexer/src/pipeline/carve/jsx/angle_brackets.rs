@@ -6,8 +6,7 @@ use crate::{
 
 use super::super::super::{
     bitmap::bm_get,
-    classify::unicode_ws_len,
-    find::{find_line_terminator, scan_block_comment},
+    find::{find_line_terminator, scan_block_comment, unicode_ws_len},
     regex_div::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
 };
 

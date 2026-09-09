@@ -5,7 +5,7 @@ use crate::tables::{Tables, is_digit, is_glue_join, is_id_start, is_word, is_ws}
 use crate::token::{KW_BASE, KW_MAX, TokenKind};
 
 use super::bitmap::{bm_get, bm_next0, bm_next1, bm_prev1};
-use super::find::{find_line_terminator, scan_block_comment, scan_number};
+use super::find::{find_line_terminator, scan_block_comment, scan_number, unicode_ws_len};
 use super::{
     BCOM, BIGINT, HASHBANG, IDENT, IDENT_ESC, JEND, JSX_LT, JTEXT, LCOM, NUM, PRIV_IDENT,
     PRIV_IDENT_ESC, REGEX, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS,
@@ -2670,7 +2670,7 @@ unsafe fn gt_follower(src: *const u8, n: usize, mut i: usize) -> Follow {
                 i += 3;
                 continue;
             }
-            let wl = super::classify::unicode_ws_len(src, i);
+            let wl = unicode_ws_len(src, i);
             if wl != 0 {
                 i += wl;
                 continue;

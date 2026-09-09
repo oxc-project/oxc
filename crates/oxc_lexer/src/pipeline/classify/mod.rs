@@ -7,6 +7,3 @@ pub use avx2::classify;
 mod generic;
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 pub use generic::classify;
-
-mod common;
-pub use common::unicode_ws_len;
