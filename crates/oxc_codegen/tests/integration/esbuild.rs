@@ -909,10 +909,12 @@ fn test_ascii_only() {
         "var \\u{1000A} = { \\u{1000A}: \"\\u{1000A}\" };\n",
     );
 
-    // These characters should always be escaped
-    // test( "let x = '\u2028'", "let x = \"\\u2028\";\n");
-    // test( "let x = '\u2029'", "let x = \"\\u2029\";\n");
-    // test( "let x = '\uFEFF'", "let x = \"\\uFEFF\";\n");
+    // Line and paragraph separators are always escaped.
+    test("let x = '\u{2028}'", "let x = \"\\u2028\";\n");
+    test("let x = '\u{2029}'", "let x = \"\\u2029\";\n");
+    // The byte order mark is escaped only in ASCII-only mode.
+    test("let x = '\u{FEFF}'", "let x = \"\u{FEFF}\";\n");
+    test_ascii("let x = '\u{FEFF}'", "let x = \"\\uFEFF\";\n");
 
     // There should still be a space before "extends"
     test_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {}\n");
@@ -970,13 +972,13 @@ fn test_jsx() {
     test("<a b={<>{c}</>}/>", "<a b={<>{c}</>} />;\n");
 
     // These can't be escaped because JSX lacks a syntax for escapes
-    // testJSXASCII(t, "<π/>", "<π />;\n");
-    // testJSXASCII(t, "<π.𐀀/>", "<π.𐀀 />;\n");
-    // testJSXASCII(t, "<𐀀.π/>", "<𐀀.π />;\n");
-    // testJSXASCII(t, "<π>x</π>", "<π>x</π>;\n");
-    // testJSXASCII(t, "<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
-    // testJSXASCII(t, "<a π/>", "<a π />;\n");
-    // testJSXASCII(t, "<a 𐀀/>", "<a 𐀀 />;\n");
+    test_ascii("<π/>", "<π />;\n");
+    test_ascii("<π.𐀀/>", "<π.𐀀 />;\n");
+    test_ascii("<𐀀.π/>", "<𐀀.π />;\n");
+    test_ascii("<π>x</π>", "<π>x</π>;\n");
+    test_ascii("<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
+    test_ascii("<a π/>", "<a π />;\n");
+    test_ascii("<a 𐀀/>", "<a 𐀀 />;\n");
 
     // JSX text is deliberately not printed as ASCII when JSX preservation is
     // enabled. This is because:
@@ -986,10 +988,10 @@ fn test_jsx() {
     // c) People do very weird/custom things with JSX that "preserve" shouldn't break
     //
     // See also: https://github.com/evanw/esbuild/issues/3605
-    // testJSXASCII(t, "<a b='π'/>", "<a b='π' />;\n");
-    // testJSXASCII(t, "<a b='𐀀'/>", "<a b='𐀀' />;\n");
-    // testJSXASCII(t, "<a>π</a>", "<a>π</a>;\n");
-    // testJSXASCII(t, "<a>𐀀</a>", "<a>𐀀</a>;\n");
+    test_ascii("<a b='π'/>", "<a b=\"π\" />;\n");
+    test_ascii("<a b='𐀀'/>", "<a b=\"𐀀\" />;\n");
+    test_ascii("<a>π</a>", "<a>π</a>;\n");
+    test_ascii("<a>𐀀</a>", "<a>𐀀</a>;\n");
 
     // testJSXMinify(t, "<a b c={x,y} d='true'/>", "<a b c={(x,y)}d='true'/>;");
     // testJSXMinify(t, "<a><b/><c/></a>", "<a><b/><c/></a>;");
