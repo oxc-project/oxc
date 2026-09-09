@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::{
     IDENT, IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
-    bitmap::{bm_clear_range, bm_next0, bm_prev1, bm_set1},
+    bitmap::{bm_clear_range, bm_get, bm_next0, bm_prev1, bm_set1},
     find::scan_ident_esc,
 };
 
@@ -81,7 +81,7 @@ pub unsafe fn misc_pre<const VUTF8: bool>(
                 }
                 continue;
             }
-            if (*st.add(p >> 6) >> (p & 63)) & 1 == 0 {
+            if !bm_get(st, p) {
                 continue;
             }
             if c == b'#' {
@@ -136,10 +136,10 @@ pub unsafe fn misc_post(
             if *src.add(p) != b'\\' || *src.add(p + 1) != b'u' {
                 continue;
             }
-            if (*st.add(p >> 6) >> (p & 63)) & 1 == 0 {
+            if !bm_get(st, p) {
                 continue;
             }
-            if p == 0 || (*word.add((p - 1) >> 6) >> ((p - 1) & 63)) & 1 == 0 {
+            if p == 0 || !bm_get(word, p - 1) {
                 continue;
             }
             let tt = bm_prev1(st, p);

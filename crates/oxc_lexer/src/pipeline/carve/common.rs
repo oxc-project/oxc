@@ -8,7 +8,7 @@ use crate::{
 
 use super::super::{
     BCOM, LCOM, REGEX, STR,
-    bitmap::{bm_clear_range, bm_next0, bm_set1},
+    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set1},
     find::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
     regex_div::prev_is_regex,
 };
@@ -207,7 +207,7 @@ unsafe fn lex_regex(
         lanes.push_diag(s as u32, (n - s) as u32, diag_code::UNTERMINATED_REGEXP);
     }
     let mut end = fs;
-    if end < n && (*word.add(end >> 6) >> (end & 63)) & 1 != 0 {
+    if end < n && bm_get(word, end) {
         end = bm_next0(word, end, n);
     }
     *kind.add(s) = REGEX;

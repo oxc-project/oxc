@@ -21,7 +21,6 @@ use super::common::{
 };
 
 mod angle_brackets;
-mod common;
 mod hyphens;
 mod names;
 use angle_brackets::jsx_over_type_params;

@@ -1,7 +1,7 @@
+use super::super::super::bitmap::bm_get;
+
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use super::super::super::find::{load256, mm, veq};
-
-use super::common::wordbit;
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -69,12 +69,12 @@ unsafe fn glue_hyphen_at(
     h: usize,
     last: &mut usize,
 ) {
-    if h == 0 || !(wordbit(word, h - 1) || *last == h - 1) {
+    if h == 0 || !(bm_get(word, h - 1) || *last == h - 1) {
         return;
     }
     *st.add(h >> 6) &= !(1u64 << (h & 63));
     *opch.add(h >> 6) &= !(1u64 << (h & 63));
-    if h + 1 < n && wordbit(word, h + 1) {
+    if h + 1 < n && bm_get(word, h + 1) {
         *st.add((h + 1) >> 6) &= !(1u64 << ((h + 1) & 63));
     }
     *last = h;

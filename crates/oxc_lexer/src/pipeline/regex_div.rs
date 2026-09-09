@@ -4,7 +4,7 @@ use crate::opmap::{OP_KIND_BASE, OP_QDOT};
 use crate::tables::{Tables, is_digit, is_glue_join, is_id_start, is_word, is_ws};
 use crate::token::{KW_BASE, KW_MAX, TokenKind};
 
-use super::bitmap::{bm_next0, bm_next1, bm_prev1};
+use super::bitmap::{bm_get, bm_next0, bm_next1, bm_prev1};
 use super::find::{find_line_terminator, scan_block_comment, scan_number};
 use super::{
     BCOM, BIGINT, HASHBANG, IDENT, IDENT_ESC, JEND, JSX_LT, JTEXT, LCOM, NUM, PRIV_IDENT,
@@ -41,10 +41,7 @@ unsafe fn kind_at(kind: *const u8, w: usize) -> u8 {
     }
     k
 }
-#[inline(always)]
-unsafe fn bit_at(bm: *const u64, i: usize) -> bool {
-    (*bm.add(i >> 6) >> (i & 63)) & 1 != 0
-}
+
 enum RunEnd {
     Seg(usize, usize, bool),
     Blank(bool),
@@ -2244,29 +2241,29 @@ unsafe fn gt_run_closes_type_args(
         if !GT_SCAN_DELIM[c as usize] {
             continue;
         }
-        if !bit_at(st, i) {
+        if !bm_get(st, i) {
             continue;
         }
         match c {
             b'>' => {
-                if !bit_at(opch, i) {
+                if !bm_get(opch, i) {
                     continue;
                 }
                 if i > 0 && *src.add(i - 1) == b'=' {
                     continue;
                 }
                 let nx = *src.add(i + 1);
-                if (nx == b'>' || nx == b'=') && !bit_at(st, i + 1) {
+                if (nx == b'>' || nx == b'=') && !bm_get(st, i + 1) {
                     return None;
                 }
                 depth += 1;
             }
             b'<' => {
-                if !bit_at(opch, i) {
+                if !bm_get(opch, i) {
                     continue;
                 }
                 let nx = *src.add(i + 1);
-                if nx == b'=' || (nx == b'<' && !bit_at(st, i + 1)) {
+                if nx == b'=' || (nx == b'<' && !bm_get(st, i + 1)) {
                     return None;
                 }
                 depth -= 1;
@@ -2528,7 +2525,7 @@ unsafe fn type_list_legal(
                 }
                 b'<' => {
                     let nx = *src.add(w + 1);
-                    if was_this || nx == b'=' || (nx == b'<' && !bit_at(st, w + 1)) {
+                    if was_this || nx == b'=' || (nx == b'<' && !bm_get(st, w + 1)) {
                         return false;
                     }
                     angle_bits = (angle_bits << 1) | u64::from(start);
@@ -2537,7 +2534,7 @@ unsafe fn type_list_legal(
                 }
                 b'>' => {
                     let nx = *src.add(w + 1);
-                    if (nx == b'=' || nx == b'>') && !bit_at(st, w + 1) {
+                    if (nx == b'=' || nx == b'>') && !bm_get(st, w + 1) {
                         return false;
                     }
                     if angle_depth > 0 {
@@ -2551,7 +2548,7 @@ unsafe fn type_list_legal(
                     if *src.add(w + 1) != b'>' {
                         return false;
                     }
-                    if bit_at(st, w + 1) {
+                    if bm_get(st, w + 1) {
                         skip = w + 1;
                     }
                     start = true;
@@ -2911,24 +2908,24 @@ unsafe fn enclosing_opener(
     while i > lo {
         i -= 1;
         let c = *src.add(i);
-        if !GT_SCAN_DELIM[c as usize] || !bit_at(st, i) {
+        if !GT_SCAN_DELIM[c as usize] || !bm_get(st, i) {
             continue;
         }
         match c {
             b'>' => {
-                if bit_at(opch, i) && !(i > 0 && *src.add(i - 1) == b'=') {
+                if bm_get(opch, i) && !(i > 0 && *src.add(i - 1) == b'=') {
                     ang += 1;
                 }
             }
             b'<' => {
-                if !bit_at(opch, i) {
+                if !bm_get(opch, i) {
                     continue;
                 }
                 let nx = *src.add(i + 1);
-                if nx == b'=' || (nx == b'<' && !bit_at(st, i + 1)) {
+                if nx == b'=' || (nx == b'<' && !bm_get(st, i + 1)) {
                     continue;
                 }
-                if nx == b'<' || (i > 0 && *src.add(i - 1) == b'<' && bit_at(st, i - 1)) {
+                if nx == b'<' || (i > 0 && *src.add(i - 1) == b'<' && bm_get(st, i - 1)) {
                     let first = if nx == b'<' { i } else { i - 1 };
                     if !lt_run_opens_type_args(src, st, opch, kind, n, first) {
                         continue;
@@ -3906,7 +3903,7 @@ unsafe fn ctx_after_token(
             b',' => enclosing_context(t, src, st, opch, kind, n, w, true, hops),
             b'<' => {
                 let nx = *src.add(w + 1);
-                if nx == b'=' || (nx == b'<' && !bit_at(st, w + 1)) {
+                if nx == b'=' || (nx == b'<' && !bm_get(st, w + 1)) {
                     Ctx::Expr
                 } else {
                     enclosing_list_context(t, src, st, opch, kind, n, w, hops)
@@ -3914,7 +3911,7 @@ unsafe fn ctx_after_token(
             }
             b'>' => {
                 let nx = *src.add(w + 1);
-                if ((nx == b'>' || nx == b'=') && !bit_at(st, w + 1)) || mode == After::Paren {
+                if ((nx == b'>' || nx == b'=') && !bm_get(st, w + 1)) || mode == After::Paren {
                     Ctx::Expr
                 } else {
                     Ctx::Type
@@ -4227,7 +4224,7 @@ unsafe fn arrow_after_paren_group(src: *const u8, st: *const u64, lp: usize, n: 
     let mut depth: i32 = 0;
     i += 1;
     while i < lim {
-        if bit_at(st, i) {
+        if bm_get(st, i) {
             match *src.add(i) {
                 b'(' | b'[' | b'{' | b'<' => depth += 1,
                 b')' | b']' | b'}' | b'>' => {
@@ -4631,8 +4628,8 @@ unsafe fn angle_close_fwd_capped(
     let mut brc: i32 = 0;
     while i < lim {
         let c = *src.add(i);
-        if GT_SCAN_DELIM[c as usize] && bit_at(st, i) {
-            let op = bit_at(opch, i);
+        if GT_SCAN_DELIM[c as usize] && bm_get(st, i) {
+            let op = bm_get(opch, i);
             match c {
                 b'<' => {
                     if op && *src.add(i + 1) != b'=' {
@@ -4692,7 +4689,7 @@ unsafe fn paren_close_fwd(
 ) -> Option<usize> {
     let mut d: i32 = 0;
     while i < lim {
-        if bit_at(st, i) {
+        if bm_get(st, i) {
             match *src.add(i) {
                 b'(' => d += 1,
                 b')' => {

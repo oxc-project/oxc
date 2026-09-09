@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     NUM,
-    bitmap::{bm_clear_range, bm_next0, bm_set1},
+    bitmap::{bm_clear_range, bm_get, bm_next0, bm_set1},
     find::scan_number,
     regex_div::{gt_run_split, lt_run_split},
 };
@@ -270,7 +270,7 @@ unsafe fn glue_number(
             }
             return e2; // token start already set at e2
         }
-        if e2 + 1 < n && is_op_char(c) && (*opch.add((e2 + 1) >> 6) >> ((e2 + 1) & 63)) & 1 != 0 {
+        if e2 + 1 < n && is_op_char(c) && bm_get(opch, e2 + 1) {
             // A numeric literal type ends its type argument list here (`Map<A, 1.5>>`); without this the number's own munch
             // reaches the `>` run before `coalesce` ever raises it as an event.
             if c == b'>' && kw.ts_key && matches!(*src.add(e2 + 1), b'>' | b'=') {
@@ -283,11 +283,7 @@ unsafe fn glue_number(
                 }
             }
             let q = munch_walk(t, src, n, st, opch, kind, e2);
-            if q < n
-                && *src.add(q) == b'.'
-                && is_digit(*src.add(q + 1))
-                && (*st.add(q >> 6) >> (q & 63)) & 1 != 0
-            {
+            if q < n && *src.add(q) == b'.' && is_digit(*src.add(q + 1)) && bm_get(st, q) {
                 p = q;
                 continue;
             }

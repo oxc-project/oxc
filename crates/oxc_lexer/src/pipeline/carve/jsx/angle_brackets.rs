@@ -5,12 +5,11 @@ use crate::{
 };
 
 use super::super::super::{
+    bitmap::bm_get,
     classify::unicode_ws_len,
     find::{find_line_terminator, scan_block_comment},
     regex_div::{jsx_site_is_expression, ts_type_region_open, type_parameter_list_head},
 };
-
-use super::common::wordbit;
 
 const FN_TYPE_SCAN_CAP: usize = 1 << 16;
 const FN_TYPE_TMPL_DEPTH: u32 = 8;
@@ -74,7 +73,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
             p = qq; // `const` was a modifier; advance to the real param
         }
     }
-    while p < n && wordbit(word, p) {
+    while p < n && bm_get(word, p) {
         p += 1; // first type-parameter identifier
     }
     while p < n {
@@ -110,7 +109,7 @@ unsafe fn ts_angle_verdict(src: &[u8], n: usize, t: usize, word: *const u64) -> 
     }
     // `extends` is also a legal JSX attribute name; it signals a generic only
     // as a full word not followed by `=` (attr value) or `>` (boolean attr).
-    if n - p >= 7 && &src[p..p + 7] == b"extends" && !wordbit(word, p + 7) {
+    if n - p >= 7 && &src[p..p + 7] == b"extends" && !bm_get(word, p + 7) {
         let mut qq = p + 7;
         while qq < n && is_ws(src[qq]) {
             qq += 1;

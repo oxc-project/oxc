@@ -1,6 +1,19 @@
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
+/// Get bit `i`.
+///
+/// Returns `true` if the bit is set, `false` if it is clear.
+///
+/// # SAFETY
+///
+/// - `bm` must be aligned for `u64`.
+/// - `bm` must be valid for reads of `(i / 64) + 1` words.
+#[inline(always)]
+pub(super) unsafe fn bm_get(bm: *const u64, i: usize) -> bool {
+    (*bm.add(i >> 6) >> (i & 63)) & 1 != 0
+}
+
 /// Get index of the first clear bit at or after `i`.
 ///
 /// If every bit in `i..n` is set, returns `n`.
