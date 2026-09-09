@@ -7,9 +7,9 @@ use std::{
     slice, str,
 };
 
-use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
 
-use crate::{JSChar, JSStrBuilder, Str};
+use crate::{JSChar, Str};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -36,10 +36,13 @@ use crate::{JSChar, JSStrBuilder, Str};
 ///
 /// ```
 /// use oxc_allocator::Allocator;
-/// use oxc_str::JSStr;
+/// use oxc_str::JSStrBuilder;
 ///
 /// let allocator = Allocator::new();
-/// let value = JSStr::from_utf16_in(&[0xD800, 0x61], &&allocator);
+/// let mut builder = JSStrBuilder::new_in(&allocator);
+/// builder.push_code_unit(0xD800);
+/// builder.push('a');
+/// let value = builder.into_js_str();
 /// assert_eq!(value.as_str(), None);
 /// assert_eq!(value.encode_utf16().collect::<Vec<_>>(), [0xD800, 0x61]);
 /// ```
@@ -58,9 +61,11 @@ use crate::{JSChar, JSStrBuilder, Str};
 /// Arena-backed strings prevent resetting the arena while still in use:
 /// ```compile_fail
 /// use oxc_allocator::Allocator;
-/// use oxc_str::JSStr;
+/// use oxc_str::JSStrBuilder;
 /// let mut allocator = Allocator::new();
-/// let value = JSStr::from_utf16_in(&[0xD800], &&allocator);
+/// let mut builder = JSStrBuilder::new_in(&allocator);
+/// builder.push_code_unit(0xD800);
+/// let value = builder.into_js_str();
 /// allocator.reset();
 /// println!("{value:?}");
 /// ```
@@ -74,19 +79,10 @@ pub struct JSStr<'a> {
 }
 
 impl JSStr<'static> {
-    /// Borrow a static UTF-8 string without allocating or scanning its bytes.
-    ///
-    /// # Panics
-    /// Panics if the byte length exceeds `u32::MAX`.
-    #[inline]
-    pub const fn new_const(value: &'static str) -> Self {
-        Self::from_str(value)
-    }
-
     /// Return the empty string without allocating.
     #[inline]
     pub const fn empty() -> Self {
-        Self::new_const("")
+        Self::from_str("")
     }
 }
 
@@ -108,16 +104,6 @@ impl<'a> JSStr<'a> {
     pub fn from_str_in(value: &str, allocator: &impl GetAllocator<'a>) -> Self {
         // Check the length before allocating or copying.
         JSStr::from(value).clone_in(allocator.allocator())
-    }
-
-    /// Encode potentially ill-formed UTF-16 into an arena.
-    ///
-    /// # Panics
-    /// Panics if the required capacity exceeds the arena's string size limit.
-    pub fn from_utf16_in(units: &[u16], allocator: &impl GetAllocator<'a>) -> Self {
-        let mut builder = JSStrBuilder::with_capacity_in(units.len(), allocator.allocator());
-        builder.push_utf16(units);
-        builder.into_js_str()
     }
 
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
@@ -216,13 +202,6 @@ unsafe impl Send for JSStr<'_> {}
 // SAFETY: Sharing `JSStr` only shares immutable bytes, as with `&[u8]`.
 unsafe impl Sync for JSStr<'_> {}
 
-impl Default for JSStr<'_> {
-    #[inline]
-    fn default() -> Self {
-        JSStr::empty()
-    }
-}
-
 impl<'a> From<&'a str> for JSStr<'a> {
     /// Borrow UTF-8 without allocating. Panics if its byte length exceeds `u32::MAX`.
     #[inline]
@@ -275,20 +254,6 @@ impl PartialEq<JSStr<'_>> for &str {
     }
 }
 
-impl PartialEq<Str<'_>> for JSStr<'_> {
-    #[inline]
-    fn eq(&self, other: &Str<'_>) -> bool {
-        self == other.as_str()
-    }
-}
-
-impl PartialEq<JSStr<'_>> for Str<'_> {
-    #[inline]
-    fn eq(&self, other: &JSStr<'_>) -> bool {
-        other == self.as_str()
-    }
-}
-
 impl Hash for JSStr<'_> {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -332,20 +297,6 @@ impl<'a> Dummy<'a> for JSStr<'a> {
     #[inline]
     fn dummy(_allocator: &'a Allocator) -> Self {
         JSStr::empty()
-    }
-}
-
-impl<'a> FromIn<'a, &str> for JSStr<'a> {
-    #[inline]
-    fn from_in(value: &str, allocator: &'a Allocator) -> Self {
-        Self::from_str_in(value, &allocator)
-    }
-}
-
-impl<'a> FromIn<'a, &JSStr<'a>> for JSStr<'a> {
-    #[inline]
-    fn from_in(value: &JSStr<'a>, _allocator: &'a Allocator) -> Self {
-        *value
     }
 }
 

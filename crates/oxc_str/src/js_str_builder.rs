@@ -204,10 +204,3 @@ impl<'a> JSStrBuilder<'a> {
         self.bytes.extend_from_slice_copy(c.encode_utf8(&mut [0; 4]).as_bytes());
     }
 }
-
-impl<'a> From<JSStrBuilder<'a>> for JSStr<'a> {
-    #[inline]
-    fn from(builder: JSStrBuilder<'a>) -> Self {
-        builder.into_js_str()
-    }
-}

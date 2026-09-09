@@ -3,10 +3,16 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn};
+use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_data_structures::types::implements;
 
 use crate::{JSChar, JSStr, JSStrBuilder, Str};
+
+fn from_utf16_in<'a>(units: &[u16], allocator: &'a Allocator) -> JSStr<'a> {
+    let mut builder = JSStrBuilder::with_capacity_in(units.len(), allocator);
+    builder.push_utf16(units);
+    builder.into_js_str()
+}
 
 /// Decode the input independently with Rust's UTF-16 decoder. Valid scalar
 /// values use std's UTF-8 encoder; errors supply the exact unpaired code unit.
@@ -79,7 +85,6 @@ fn js_char_range_and_encoding() {
         let mut builder = JSStrBuilder::new_in(&allocator);
         builder.push_js_char(js_char);
         if let Some(c) = char::from_u32(value) {
-            assert_eq!(JSChar::from(c), js_char);
             assert_eq!(builder.into_js_str().as_str(), Some(c.encode_utf8(&mut [0; 4]) as &str));
         } else {
             assert_value(builder.into_js_str(), &[u16::try_from(value).unwrap()]);
@@ -89,8 +94,9 @@ fn js_char_range_and_encoding() {
 
 #[test]
 fn borrowing_and_arena_conversions() {
-    const STATIC: JSStr<'_> = JSStr::new_const("a𐀀�");
-    assert_value(STATIC, &[0x61, 0xD800, 0xDC00, 0xFFFD]);
+    const EMPTY: JSStr<'_> = JSStr::empty();
+    assert_value(EMPTY, &[]);
+    assert_value(JSStr::from("a𐀀�"), &[0x61, 0xD800, 0xDC00, 0xFFFD]);
     let source = String::from("hello\0é😀");
     let value = JSStr::from(source.as_str());
     assert_eq!(value.as_str().unwrap().as_ptr(), source.as_ptr());
@@ -99,16 +105,11 @@ fn borrowing_and_arena_conversions() {
     assert_eq!(source.as_str(), value);
     assert_eq!(value, *source.as_str());
     assert_eq!(*source.as_str(), value);
-    assert_eq!(value, Str::from(source.as_str()));
-    assert_eq!(Str::from(source.as_str()), value);
     let allocator = Allocator::new();
     let copied = JSStr::from_str_in(&source, &&allocator);
     assert_eq!(copied, value);
     assert_ne!(copied.as_bytes().as_ptr(), source.as_ptr());
-    assert_eq!(JSStr::from_in(source.as_str(), &allocator), value);
-    assert_eq!(JSStr::from_in(&copied, &allocator).as_bytes().as_ptr(), copied.as_bytes().as_ptr());
     assert_eq!(JSStr::dummy(&allocator), JSStr::empty());
-    assert_eq!(JSStr::default(), JSStr::empty());
     assert!(JSStr::empty().is_empty());
 }
 
@@ -118,7 +119,7 @@ fn clone_survives_original_arena() {
     let units = [0xD800, 0x61, 0xDC00, 0xD83D, 0xDE00];
     let cloned = {
         let source = Allocator::new();
-        let value = JSStr::from_utf16_in(&units, &&source);
+        let value = from_utf16_in(&units, &source);
         let cloned = value.clone_in(&destination);
         assert_ne!(value.as_bytes().as_ptr(), cloned.as_bytes().as_ptr());
         cloned
@@ -151,8 +152,8 @@ fn empty_builders_and_into_js_str_do_not_allocate() {
 #[test]
 fn boundary_pairing_and_empty_appends() {
     let allocator = Allocator::new();
-    let lead = JSStr::from_utf16_in(&[0xD800], &&allocator);
-    let trail = JSStr::from_utf16_in(&[0xDC00], &&allocator);
+    let lead = from_utf16_in(&[0xD800], &allocator);
+    let trail = from_utf16_in(&[0xDC00], &allocator);
     let mut builder = JSStrBuilder::new_in(&allocator);
     builder.push_js_str(lead);
     builder.push_str("");
@@ -170,7 +171,7 @@ fn boundary_pairing_and_empty_appends() {
     ] {
         let mut builder = JSStrBuilder::new_in(&allocator);
         for &unit in &units {
-            builder.push_js_str(JSStr::from_utf16_in(&[unit], &&allocator));
+            builder.push_js_str(from_utf16_in(&[unit], &allocator));
         }
         assert_value(builder.into_js_str(), &units);
     }
@@ -196,7 +197,7 @@ fn every_short_partition() {
                     for second in first..=3 {
                         let mut builder = JSStrBuilder::new_in(&allocator);
                         for part in [&units[..first], &units[first..second], &units[second..]] {
-                            builder.push_js_str(JSStr::from_utf16_in(part, &&allocator));
+                            builder.push_js_str(from_utf16_in(part, &allocator));
                         }
                         assert_value(builder.into_js_str(), &units);
                     }
@@ -239,7 +240,7 @@ fn randomized_appends_and_associativity() {
             .collect::<Vec<_>>();
             match next() % 3 {
                 0 => builder.push_utf16(&units),
-                1 => builder.push_js_str(JSStr::from_utf16_in(&units, &&allocator)),
+                1 => builder.push_js_str(from_utf16_in(&units, &allocator)),
                 _ => {
                     for decoded in char::decode_utf16(units.iter().copied()) {
                         match decoded {
@@ -254,9 +255,9 @@ fn randomized_appends_and_associativity() {
         let value = builder.into_js_str();
         assert_value(value, &expected);
         let n = expected.len();
-        let a = JSStr::from_utf16_in(&expected[..n / 3], &&allocator);
-        let b = JSStr::from_utf16_in(&expected[n / 3..2 * n / 3], &&allocator);
-        let c = JSStr::from_utf16_in(&expected[2 * n / 3..], &&allocator);
+        let a = from_utf16_in(&expected[..n / 3], &allocator);
+        let b = from_utf16_in(&expected[n / 3..2 * n / 3], &allocator);
+        let c = from_utf16_in(&expected[2 * n / 3..], &allocator);
         assert_eq!(concat(&allocator, concat(&allocator, a, b), c), value);
         assert_eq!(concat(&allocator, a, concat(&allocator, b, c)), value);
     }
@@ -280,11 +281,11 @@ fn growth_with_interleaved_allocations() {
 fn equality_hash_and_debug() {
     let allocator = Allocator::new();
     let units = [0xD800, 0xDC00, 0xD800, 0x61, 0xFFFD];
-    let a = JSStr::from_utf16_in(&units, &&allocator);
+    let a = from_utf16_in(&units, &allocator);
     let b = concat(
         &allocator,
-        JSStr::from_utf16_in(&units[..1], &&allocator),
-        JSStr::from_utf16_in(&units[1..], &&allocator),
+        from_utf16_in(&units[..1], &allocator),
+        from_utf16_in(&units[1..], &allocator),
     );
     let hash = |value: JSStr<'_>| {
         let mut hasher = DefaultHasher::new();
@@ -302,7 +303,7 @@ fn equality_hash_and_debug() {
 #[test]
 fn cloned_iterators_and_fused_end() {
     let allocator = Allocator::new();
-    let value = JSStr::from_utf16_in(&[0xD800, 0xDC00, 0xDFFF], &&allocator);
+    let value = from_utf16_in(&[0xD800, 0xDC00, 0xDFFF], &allocator);
     let mut chars = value.chars();
     assert_eq!(chars.size_hint(), (2, Some(7)));
     assert_eq!(chars.next().unwrap().to_u32(), 0x10000);
