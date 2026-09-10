@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 105/105 (100.00%)
-Positive Passed: 101/105 (96.19%)
+AST Parsed     : 106/106 (100.00%)
+Positive Passed: 102/106 (96.23%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
