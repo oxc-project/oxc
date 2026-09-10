@@ -431,12 +431,8 @@ impl WorkspaceSuppressions {
 
         let tracking =
             SuppressionTracking::from_file(&suppression_file_path, workspace_root.as_path())?;
-        let manager = Some(Arc::new(DiffManager::new(
-            tracking.suppressions().clone(),
-            true,
-            false,
-            false,
-        )));
+        let manager =
+            Some(Arc::new(DiffManager::new(tracking.suppressions().clone(), true, false, false)));
 
         Ok(Self { workspace_root, manager })
     }
@@ -1251,10 +1247,7 @@ mod test_watchers {
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/oxlint.config.mts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
-            assert_eq!(
-                watch_patterns.as_ref().unwrap()[5],
-                "oxlint-suppressions.json".to_string()
-            );
+            assert_eq!(watch_patterns.as_ref().unwrap()[5], "oxlint-suppressions.json".to_string());
         }
     }
 }
