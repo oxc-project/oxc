@@ -160,8 +160,8 @@ describe("LSP linting", () => {
       const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-duplicate-case)");
       const inverted = diagnostics.filter(({ code, relatedInformation }) => {
         return (
-          code === undefined &&
-          relatedInformation?.some(({ message }) => message === "original diagnostic")
+          code === undefined
+          && relatedInformation?.some(({ message }) => message === "original diagnostic")
         );
       });
 
@@ -185,11 +185,7 @@ describe("LSP linting", () => {
     });
 
     it("keeps code actions for suppressed diagnostics", async () => {
-      const codeActions = await fixFixture(
-        FIXTURES_DIR,
-        "suppressions/fix.js",
-        "javascript",
-      );
+      const codeActions = await fixFixture(FIXTURES_DIR, "suppressions/fix.js", "javascript");
 
       expect(codeActions).toContain("Title : Remove the debugger statement");
     });
