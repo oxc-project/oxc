@@ -121,6 +121,7 @@ impl StdinRunner {
                 NestedConfigCtx::new(
                     editorconfig_path.as_deref().map(Arc::from),
                     Some(Arc::clone(&self.js_config_loader)),
+                    config_resolver.config_dir().map(Arc::from),
                 )
             });
         let config_resolver = match resolve_file_scope_config(

@@ -8,7 +8,10 @@
 //! build compiles this but never routes through it.
 #![cfg_attr(not(feature = "napi"), expect(dead_code))]
 
-use std::sync::{Mutex, OnceLock};
+use std::{
+    cmp::Reverse,
+    sync::{Mutex, OnceLock},
+};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
@@ -81,7 +84,7 @@ impl PluginLanguages {
                 this.filenames.entry(file_name).or_insert(parser);
             }
         }
-        this.compound_extensions.sort_by(|(a, _), (b, _)| b.len().cmp(&a.len()));
+        this.compound_extensions.sort_by_key(|(suffix, _)| Reverse(suffix.len()));
         this
     }
 

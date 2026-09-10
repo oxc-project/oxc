@@ -15,7 +15,7 @@ use oxc_language_server::{
 use crate::core::{
     ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
     ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
-    resolve_editorconfig_path, resolve_file_scope_config, utils,
+    plugins::PluginLanguages, resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -75,9 +75,9 @@ impl ServerFormatterBuilder {
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
         //
-        // No plugins are requested here. Init runs before any config is loaded,
-        // because LSP defers config resolution to format time, and the plugins to
-        // load come from that config.
+        // No plugins yet: this call exists to size the worker pool, and the root
+        // config is not loaded until `ServerFormatter::new` builds its state.
+        // `build_state` calls init again with the plugins that config declares.
         if let Err(err) =
             tokio::task::block_in_place(|| self.external_services.init(num_of_threads, None))
         {
@@ -94,6 +94,7 @@ impl ServerFormatterBuilder {
                 prettierignore_glob,
                 explicit_config_path,
                 use_nested_config,
+                self.external_services.clone(),
             ),
             Vec::new(),
         )
@@ -141,6 +142,9 @@ struct FormatterState {
     /// Workspace-root resolver.
     /// Used as the fallback when no nested config matches.
     root_resolver: Arc<ConfigResolver>,
+    /// File types contributed by the root config's Prettier plugins.
+    /// Nested configs cannot declare plugins, so the root's set covers the workspace.
+    plugin_languages: Arc<PluginLanguages>,
     /// Lazy nested-config probe cache.
     /// Each ancestor directory is loaded at most once for the lifetime of this state.
     nested_ctx: NestedConfigCtx,
@@ -158,6 +162,9 @@ pub struct ServerFormatter {
     /// Whether nested config discovery is active.
     /// Disabled by an explicit `fmt.configPath` or `fmt.disableNestedConfig` in LSP settings.
     use_nested_config: bool,
+    /// Kept alongside `source_formatter`, which owns its own copy privately,
+    /// so a state rebuild can re-run plugin discovery.
+    external_services: ExternalServices,
     /// Current config snapshot. Swapped wholesale on watched-file changes.
     state: RwLock<Arc<FormatterState>>,
 }
@@ -232,6 +239,7 @@ impl Tool for ServerFormatter {
             &self.root_path,
             self.explicit_config_path.as_deref(),
             &self.js_config_loader,
+            &self.external_services,
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
@@ -305,9 +313,14 @@ impl ServerFormatter {
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
         use_nested_config: bool,
+        external_services: ExternalServices,
     ) -> Self {
-        let state =
-            Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
+        let state = Self::build_state(
+            &root_path,
+            explicit_config_path.as_deref(),
+            &js_config_loader,
+            &external_services,
+        );
         Self {
             root_path,
             source_formatter,
@@ -315,6 +328,7 @@ impl ServerFormatter {
             prettierignore_glob,
             explicit_config_path,
             use_nested_config,
+            external_services,
             state: RwLock::new(Arc::new(state)),
         }
     }
@@ -328,6 +342,7 @@ impl ServerFormatter {
         root_path: &Path,
         explicit_config_path: Option<&Path>,
         js_config_loader: &JsConfigLoaderCb,
+        external_services: &ExternalServices,
     ) -> FormatterState {
         let editorconfig_path = resolve_editorconfig_path(root_path);
         let root_resolver = Self::load_root_resolver(
@@ -339,8 +354,44 @@ impl ServerFormatter {
         let nested_ctx = NestedConfigCtx::new(
             editorconfig_path.as_deref().map(Arc::from),
             Some(JsConfigLoaderCb::clone(js_config_loader)),
+            root_resolver.config_dir().map(Arc::from),
         );
-        FormatterState { root_resolver: Arc::new(root_resolver), nested_ctx }
+        let plugin_languages = Self::discover_plugins(&root_resolver, external_services);
+
+        FormatterState {
+            root_resolver: Arc::new(root_resolver),
+            nested_ctx,
+            plugin_languages: Arc::new(plugin_languages),
+        }
+    }
+
+    /// Load the root config's plugins and collect the file types they declare.
+    ///
+    /// Unlike the CLI, a failure here is not fatal: the editor stays usable and
+    /// formats every file type that does not depend on the missing plugin.
+    fn discover_plugins(
+        root_resolver: &ConfigResolver,
+        external_services: &ExternalServices,
+    ) -> PluginLanguages {
+        let request = root_resolver.plugin_request().cloned();
+        if request.is_none() {
+            return PluginLanguages::default();
+        }
+        // Single threaded for LSP, matching the pool this init already configured.
+        // `block_in_place` for the same reason as the init in the builder: this runs
+        // inside the async runtime, and the callback blocks on a JS promise.
+        match tokio::task::block_in_place(|| external_services.init(1, request)) {
+            Ok(resolved) => {
+                for failure in &resolved.failures {
+                    warn!("Failed to load plugin `{}`: {}", failure.specifier, failure.message);
+                }
+                PluginLanguages::new(resolved.languages)
+            }
+            Err(err) => {
+                warn!("Failed to load configured plugins: {err}");
+                PluginLanguages::default()
+            }
+        }
     }
 
     /// Load the workspace-root resolver,
@@ -404,8 +455,7 @@ impl ServerFormatter {
             return None;
         }
 
-        // See the note at init: plugin-contributed file types are not routed here yet.
-        let Some(kind) = classify_file_kind(Arc::from(path), None) else {
+        let Some(kind) = classify_file_kind(Arc::from(path), Some(&state.plugin_languages)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };

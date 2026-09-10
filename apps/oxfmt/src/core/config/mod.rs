@@ -456,7 +456,6 @@ impl ConfigResolver {
     }
 
     /// Prettier plugins this config declares, if any.
-    #[cfg_attr(not(feature = "napi"), expect(dead_code))]
     pub fn plugin_request(&self) -> Option<&PluginRequest> {
         self.plugin_request.as_ref()
     }

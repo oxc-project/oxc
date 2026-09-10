@@ -179,6 +179,7 @@ impl ScopedWalker {
             editorconfig_path.map(Arc::from),
             #[cfg(feature = "napi")]
             js_config_loader.cloned(),
+            root_config_resolver.config_dir().map(Arc::from),
         );
         let mut directly_processed: FxHashSet<PathBuf> = FxHashSet::default();
 
@@ -750,6 +751,7 @@ mod tests_scope_resolution {
             None,
             #[cfg(feature = "napi")]
             None,
+            None,
         )
     }
 
@@ -948,7 +950,7 @@ mod tests_scope_resolution {
             Ok(serde_json::json!({}))
         });
 
-        let ctx = NestedConfigCtx::new(None, Some(cb));
+        let ctx = NestedConfigCtx::new(None, Some(cb), None);
 
         std::thread::scope(|s| {
             for _ in 0..8 {
@@ -986,7 +988,7 @@ mod tests_scope_resolution {
             Err("simulated load failure".to_string())
         });
 
-        let ctx = NestedConfigCtx::new(None, Some(cb));
+        let ctx = NestedConfigCtx::new(None, Some(cb), None);
 
         let err1 = ctx.probe_dir(&dir).expect_err("first probe should error");
         let err2 = ctx.probe_dir(&dir).expect_err("second probe should hit cached Err");

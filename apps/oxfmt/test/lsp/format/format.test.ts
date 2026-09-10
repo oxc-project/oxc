@@ -33,6 +33,7 @@ describe("LSP formatting", () => {
       ["config-sort-both/test.jsx", "javascriptreact"],
       ["editorconfig/test.ts", "typescript"],
       ["config-js-stdout-pollution/test.ts", "typescript"],
+      ["config-plugins/test.tiny", "plaintext"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });

@@ -227,8 +227,12 @@ impl ExternalServices {
 
     /// Initialize the JS-side services (worker pool) using the JS callback.
     ///
-    /// The request is retained so later delegations carry the same plugins.
-    /// LSP re-initializes per workspace folder, and the last one wins.
+    /// A request is retained so later delegations carry the same plugins.
+    ///
+    /// Passing `None` leaves any existing registration alone rather than clearing
+    /// it. LSP shares one transport across workspace folders and initializes each
+    /// of them, so a folder without plugins must not disable another folder's.
+    /// Two folders declaring different plugins is not supported; the last wins.
     pub fn init(
         &self,
         num_threads: usize,
@@ -236,10 +240,10 @@ impl ExternalServices {
     ) -> Result<ResolvedPlugins, String> {
         let resolved = debug_span!("oxfmt::external::init", num_threads = num_threads)
             .in_scope(|| (self.init)(num_threads, plugins.as_ref()))?;
-        *self.plugins.write().unwrap() = match plugins {
-            Some(plugins) => Some(serde_json::to_value(plugins).map_err(|err| err.to_string())?),
-            None => None,
-        };
+        if let Some(plugins) = plugins {
+            *self.plugins.write().unwrap() =
+                Some(serde_json::to_value(plugins).map_err(|err| err.to_string())?);
+        }
         Ok(resolved)
     }
 
