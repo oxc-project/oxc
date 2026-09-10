@@ -1,7 +1,7 @@
 use super::super::super::bitmap::{bm_clear, bm_get};
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-use super::super::super::find::{load256, mm, veq};
+use super::super::super::chunk::{load256, mm, veq};
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run

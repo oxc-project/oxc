@@ -4,7 +4,7 @@ use crate::{lanes::Lanes, tables::Tables, token::is_trivia_byte};
 
 use super::super::{
     BIGINT, HASHBANG, IDENT_ESC, NUM, PRIV_IDENT_ESC,
-    find::{eqm, load8},
+    chunk::{eqm, load8},
 };
 
 use super::common::{emit_value, invalid_diags};

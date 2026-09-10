@@ -12,6 +12,7 @@
 
 mod bitmap;
 mod carve;
+mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
@@ -19,6 +20,7 @@ mod find;
 mod misc;
 mod regex_div;
 mod replay;
+mod scan;
 
 use oxc_span::Span;
 

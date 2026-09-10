@@ -2,7 +2,8 @@ use crate::tables::{is_word, is_ws};
 
 use super::super::super::{
     bitmap::bm_next0,
-    find::{find_line_terminator, scan_block_comment, unicode_ws_len},
+    find::{find_line_terminator, unicode_ws_len},
+    scan::scan_block_comment,
 };
 
 #[inline]
