@@ -1,14 +1,14 @@
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 mod avx2;
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
-use avx2::finder;
+use avx2::define_find_function;
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) use avx2::{find1, find2, find3, find4};
 
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 mod generic;
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
-use generic::finder;
+use generic::define_find_function;
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 pub(super) use generic::{find1, find2, find3, find4};
 

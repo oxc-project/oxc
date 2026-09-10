@@ -83,7 +83,7 @@ pub unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8,
     n
 }
 
-macro_rules! finder {
+macro_rules! define_find_function {
     ($(#[$attr:meta])* $name:ident: $($needle:expr),+ $(,)?) => {
         $(#[$attr])*
         #[inline]
@@ -111,7 +111,7 @@ macro_rules! finder {
         }
     };
 }
-pub(super) use finder;
+pub(super) use define_find_function;
 
 /// OR-fold of `vpcmpeqb` results, associated as a tree.
 macro_rules! vor {

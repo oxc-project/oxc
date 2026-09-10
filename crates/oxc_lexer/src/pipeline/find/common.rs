@@ -1,30 +1,30 @@
-use super::{find3, finder};
+use super::{define_find_function, find3};
 
-finder!(
+define_find_function!(
     /// JS-mode top-level scan: string/template/regex-or-comment openers plus
     /// the Annex B `<!--` / `-->` trigger bytes.
     find_opener: b'"', b'\'', b'`', b'/', b'<', b'>'
 );
 
-finder!(
+define_find_function!(
     /// [`find_opener`] widened with `{` / `}` — used inside template
     /// substitutions, where braces drive the nesting depth.
     find_opener6: b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'
 );
 
-finder!(
+define_find_function!(
     /// [`find_opener`] shape for `carve_jsx` JS mode at top level: `<` (the
     /// JSX-start byte) instead of the Annex B `<` / `>` pair.
     find_opener_jsx5: b'"', b'\'', b'`', b'/', b'<'
 );
 
-finder!(
+define_find_function!(
     /// [`find_opener_jsx5`] widened with `{` / `}`. Used by `carve_jsx` JS
     /// mode inside a template substitution or JSX expression container.
     find_opener_jsx7: b'"', b'\'', b'`', b'/', b'{', b'}', b'<'
 );
 
-finder!(
+define_find_function!(
     /// TAG-mode scan: the bytes that matter inside an opening `<...>` tag.
     /// Deliberately not widened with `-` for hyphenated JSXIdentifiers: an
     /// extra needle costs a broadcast in every call, and TAG mode calls this
@@ -32,18 +32,18 @@ finder!(
     find_jsx_tag: b'"', b'\'', b'{', b'/', b'>', b'<'
 );
 
-finder!(
+define_find_function!(
     /// TEXT-mode scan (strict): JSX child text ends at any of `< { > }`.
     find_jsx_text: b'<', b'{', b'>', b'}'
 );
 
-finder!(
+define_find_function!(
     /// Template-body scan: terminator, escape lead, or `$` (`${` starts a
     /// substitution).
     find_tmpl: b'`', b'\\', b'$'
 );
 
-finder!(
+define_find_function!(
     /// Regex-body scan. LF/CR and the 0xE2 lead (LS/PS) are watched so
     /// line terminators in the body can be diagnosed.
     find_regex: b'/', b'\\', b'[', b']', b'\n', b'\r', 0xE2
