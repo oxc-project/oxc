@@ -1502,11 +1502,8 @@ impl<'a> PeepholeOptimizations {
             }
         };
 
-        if matches!(object.without_parentheses(), Expression::ChainExpression(_)) {
-            ctx.replace_expression_with(object, |mut e, _ctx| {
-                while let Expression::ParenthesizedExpression(paren_expr) = e {
-                    e = paren_expr.unbox().expression;
-                }
+        if matches!(object, Expression::ChainExpression(_)) {
+            ctx.replace_expression_with(object, |e, _ctx| {
                 let Expression::ChainExpression(expr) = e else { unreachable!() };
                 Expression::from(expr.unbox().expression)
             });
