@@ -7560,20 +7560,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  15 │ }
     ╰────
 
-  × Expected `,` or `)` but found `var`
-   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:2:11]
+  × Expected `=>` but found `)`
+   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:2:17]
  1 │ // Error (no '=>')
  2 │ function f(x: ()) {
-   ·           ┬
-   ·           ╰── Opened here
+   ·                 ┬
+   ·                 ╰── `=>` expected
  3 │ }
-   ╰────
-   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:6:1]
- 5 │ // Error (no '=>')
- 6 │ var g: (param);
-   · ─┬─
-   ·  ╰── `,` or `)` expected
- 7 │ 
    ╰────
 
   × Identifier `total` has already been declared

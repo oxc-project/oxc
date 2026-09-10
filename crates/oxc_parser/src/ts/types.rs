@@ -53,7 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         let return_type = {
             let return_type_start = self.cur_start();
-            let return_type = self.parse_return_type();
+            let return_type = self.parse_return_type(Kind::Arrow);
             TSTypeAnnotation::boxed(self.end_span(return_type_start), return_type, self)
         };
 
@@ -1322,12 +1322,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let start = self.cur_start();
-        let return_type = self.parse_return_type();
+        let return_type = self.parse_return_type(Kind::Colon);
         Some(TSTypeAnnotation::boxed(self.end_span(start), return_type, self))
     }
 
-    fn parse_return_type(&mut self) -> TSType<'a> {
-        self.bump_any();
+    fn parse_return_type(&mut self, separator: Kind) -> TSType<'a> {
+        self.expect(separator);
         self.context_remove(Context::DisallowConditionalTypes, Self::parse_type_or_type_predicate)
     }
 

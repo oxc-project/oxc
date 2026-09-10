@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 103/103 (100.00%)
-Positive Passed: 103/103 (100.00%)
-Negative Passed: 202/202 (100.00%)
+AST Parsed     : 104/104 (100.00%)
+Positive Passed: 104/104 (100.00%)
+Negative Passed: 210/210 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4760,6 +4760,62 @@ Negative Passed: 202/202 (100.00%)
  1 │ interface I { f(this: T x: T): void }
    ·                         ┬
    ·                         ╰── `,` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-abstract-constructor-type-colon-separator.ts:1:26]
+ 1 │ type F = abstract new () : number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-abstract-constructor-type-missing-separator.ts:1:27]
+ 1 │ type F = abstract new ()  number;
+   ·                           ───┬──
+   ·                              ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-abstract-constructor-type-plus-separator.ts:1:26]
+ 1 │ type F = abstract new () + number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-constructor-type-colon-separator.ts:1:17]
+ 1 │ type F = new () : number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-constructor-type-missing-separator.ts:1:18]
+ 1 │ type F = new ()  number;
+   ·                  ───┬──
+   ·                     ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-constructor-type-plus-separator.ts:1:17]
+ 1 │ type F = new () + number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-function-type-colon-separator.ts:1:13]
+ 1 │ type F = () : number;
+   ·             ┬
+   ·             ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-function-type-plus-separator.ts:1:13]
+ 1 │ type F = () + number;
+   ·             ┬
+   ·             ╰── `=>` expected
    ╰────
 
   × TS(1009): Trailing comma not allowed.
