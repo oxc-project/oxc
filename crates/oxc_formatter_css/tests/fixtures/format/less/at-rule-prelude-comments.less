@@ -3,3 +3,9 @@
   "a";
 @import (reference) "a" // c
 ;
+// A vendor-prefixed keyframes prelude keeps its comments in place like `@keyframes`
+@-webkit-keyframes /* Safari */ hover /* and Chrome */ {
+  from {
+    a: b;
+  }
+}

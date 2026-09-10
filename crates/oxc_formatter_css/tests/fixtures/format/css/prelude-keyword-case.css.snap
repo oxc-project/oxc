@@ -1,0 +1,68 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+@MEDIA ONLY SCREEN AND (MAX-WIDTH: 1PX), PRINT {
+  a {
+    b: c;
+  }
+}
+@media (MIN-WIDTH: 700PX) AND (ORIENTATION: LANDSCAPE) {
+  a {
+    b: c;
+  }
+}
+@import url("a.css") layer(FOO) supports(DISPLAY: FLEX) SCREEN AND (MAX-WIDTH: 1px), PRINT;
+@supports (DISPLAY: FLEX) AND (NOT (DISPLAY: GRID)) {
+  a {
+    b: c;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+@media only screen and (max-width: 1px), print {
+  a {
+    b: c;
+  }
+}
+@media (min-width: 700px) and (orientation: LANDSCAPE) {
+  a {
+    b: c;
+  }
+}
+@import url("a.css") layer(FOO) supports(display: FLEX) screen and
+    (max-width: 1px),
+  print;
+@supports (display: FLEX) and (not (display: GRID)) {
+  a {
+    b: c;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+@media only screen and (max-width: 1px), print {
+  a {
+    b: c;
+  }
+}
+@media (min-width: 700px) and (orientation: LANDSCAPE) {
+  a {
+    b: c;
+  }
+}
+@import url("a.css") layer(FOO) supports(display: FLEX) screen and (max-width: 1px), print;
+@supports (display: FLEX) and (not (display: GRID)) {
+  a {
+    b: c;
+  }
+}
+
+===================== End =====================

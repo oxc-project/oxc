@@ -210,9 +210,12 @@ fn write_combinator(
                 CombinatorKind::NextSibling => write!(f, "+"),
                 CombinatorKind::LaterSibling => write!(f, "~"),
                 CombinatorKind::Column => write!(f, "||"),
-                // Deprecated shadow-DOM combinators;
-                // Prettier's `selector-combinator` fallback keeps them spaced like any other combinator.
-                CombinatorKind::Deep => write!(f, "/deep/"),
+                // Deprecated shadow-DOM combinators (`/deep/` and less.js's `/name/` (`/shadow/`));
+                // print as written: the tools give a meaning match it case-sensitively
+                CombinatorKind::Deep | CombinatorKind::Slashed => {
+                    let span = to_span(&combinator.span);
+                    write!(f, text(f.context().source_text().text_for(&span)));
+                }
                 CombinatorKind::ShadowChild => write!(f, "^"),
                 CombinatorKind::ShadowDescendant => write!(f, "^^"),
                 CombinatorKind::Descendant => unreachable!(),
