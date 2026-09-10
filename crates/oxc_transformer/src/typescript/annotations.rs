@@ -265,9 +265,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             .retain(|elem| !matches!(elem, ClassElement::PropertyDefinition(prop) if prop.declare));
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if expr.is_typescript_syntax() {
             expr.replace_with(Expression::into_inner_expression);
+        }
+        if let Expression::ChainExpression(chain) = expr {
+            // Other transforms inspect the chain before traversal reaches `enter_chain_element`.
+            self.enter_chain_element(&mut chain.expression, ctx);
         }
     }
 

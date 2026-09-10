@@ -1219,8 +1219,9 @@ impl<'a> ClassProperties<'a> {
         if matches!(element, ChainElement::PrivateFieldExpression(_)) {
             // The PrivateFieldExpression must be transformed, so we can convert it to a normal expression here.
             let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
+            let bind_context = matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_));
             let result = self
-                .transform_private_field_expression_of_chain_expression(&mut chain_expr, ctx)
+                .transform_private_field_expression_of_chain_expression(&mut chain_expr, bind_context, ctx)
                 .expect("The ChainExpression must contain at least one optional expression, so it can never be `None` here.");
             Some((result, chain_expr))
         } else if let Some(result) = self.transform_chain_expression_element(element, ctx) {
@@ -1264,7 +1265,7 @@ impl<'a> ClassProperties<'a> {
     ) -> Option<Expression<'a>> {
         match expr {
             Expression::PrivateFieldExpression(_) => {
-                self.transform_private_field_expression_of_chain_expression(expr, ctx)
+                self.transform_private_field_expression_of_chain_expression(expr, false, ctx)
             }
             match_member_expression!(Expression) => self
                 .transform_member_expression_of_chain_expression(
@@ -1356,6 +1357,7 @@ impl<'a> ClassProperties<'a> {
     fn transform_private_field_expression_of_chain_expression(
         &mut self,
         expr: &mut Expression<'a>,
+        bind_context: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
@@ -1369,9 +1371,9 @@ impl<'a> ClassProperties<'a> {
             self.transform_first_optional_expression(object, ctx)
         };
 
-        if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
+        if bind_context {
             // `(Foo?.#m)();` -> `(Foo === null || Foo === void 0 ? void 0 : _m._.bind(Foo))();`
-            // ^^^^^^^^^^^^ is a call expression, we need to bind the proper context
+            // Only bind when the private field is the chain's result, not an intermediate object.
             *expr = self.transform_bindable_private_field(field_expr, ctx);
         } else {
             self.transform_private_field_expression(expr, ctx);
