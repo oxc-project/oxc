@@ -29,7 +29,7 @@ pub use crate::embed_context::{CssInJsTemplate, HtmlEmbedMeta};
 // `JsFormatContext` is public solely as the type parameter of the `Formatted`
 // returned by `format` / `format_fragment`.
 // Its methods are not part of the public contract.
-pub use crate::formatter::JsFormatContext;
+pub use crate::formatter::{JsFormatContext, OpaqueRegion};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 #[cfg(feature = "detect_code_removal")]
@@ -158,6 +158,7 @@ pub fn format_fragment<'a>(
                 program.source_text,
                 source_type,
                 &program.comments,
+                &[],
             )
         }
         FragmentContext::TypeParameters => {
@@ -178,6 +179,7 @@ pub fn format_fragment<'a>(
                 program.source_text,
                 source_type,
                 &program.comments,
+                &[],
             )
         }
     };
@@ -220,6 +222,32 @@ fn format_program_with_session<'a>(
         program.source_text,
         program.source_type,
         &program.comments,
+        &[],
+    )
+}
+
+/// Format a `Program` that was parsed from placeholder-substituted text, against the
+/// ORIGINAL `source_text` and the [`OpaqueRegion`]s the placeholders stand for.
+///
+/// Every span outside a region is byte-identical in both texts, so the AST indexes the
+/// original correctly; see [`OpaqueRegion`] for the caller's obligations. The session
+/// carries the services a region needs, so it must be the host's, not a fresh one.
+pub fn format_program_with_opaque_regions<'a>(
+    session: &FormatSession<'a>,
+    program: &'a Program<'a>,
+    source_text: &'a str,
+    opaque_regions: &'a [OpaqueRegion<'a>],
+    options: JsFormatOptions,
+) -> Formatted<'a, JsFormatContext<'a>> {
+    let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
+    format_node(
+        session,
+        options,
+        &node,
+        source_text,
+        program.source_type,
+        &program.comments,
+        opaque_regions,
     )
 }
 
@@ -282,8 +310,9 @@ fn format_node<'a, F: Format<'a, JsFormatContext<'a>>>(
     source_text: &'a str,
     source_type: SourceType,
     comments: &'a [Comment],
+    opaque_regions: &'a [OpaqueRegion<'a>],
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let context = JsFormatContext::new(source_text, source_type, comments, options);
+    let context = JsFormatContext::new(source_text, source_type, comments, opaque_regions, options);
     formatter::format(
         context,
         session,

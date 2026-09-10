@@ -92,6 +92,28 @@ const x = 1;
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-ember/test.gjs 1`] = `
+"--- URI -----------
+file://<fixture>/config-ember/test.gjs
+--- BEFORE ---------
+import Component from '@glimmer/component';
+export default class Foo extends Component {
+<template>
+      <button {{on "click" this.onClick}}>{{yield}}</button>
+</template>
+}
+
+--- AFTER ----------
+import Component from "@glimmer/component";
+export default class Foo extends Component {
+  <template>
+    <button {{on "click" this.onClick}}>{{yield}}</button>
+  </template>
+}
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-js-semi/test.ts 1`] = `
 "--- URI -----------
 file://<fixture>/config-js-semi/test.ts

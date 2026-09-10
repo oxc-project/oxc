@@ -36,6 +36,13 @@ const sources = [
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
     version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
   },
+  // gjs/gts. The plugin is a dev-only conformance oracle, not a runtime dependency:
+  // Oxfmt formats these files itself.
+  {
+    name: "plugin-ember-template-tag",
+    repo: "ember-tooling/prettier-plugin-ember-template-tag/tests/cases",
+    version: `v${pkg.devDependencies["prettier-plugin-ember-template-tag"]}-prettier-plugin-ember-template-tag`,
+  },
   // graphql
   {
     name: "gitlab",

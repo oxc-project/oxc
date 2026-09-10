@@ -196,6 +196,38 @@
 {"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
 ```
 
+## ember
+
+### Option 1: 49/55 (89.09%)
+
+```json
+{"printWidth":80,"ember":true}
+```
+
+| File | Note |
+| :--- | :--- |
+| [externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__multiple-declarations.gjs.md) |  |
+| [externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__one-line.gjs.md) |  |
+| [externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts](diffs/ember/externals__plugin-ember-template-tag__gts__implied-export-default-satisfies.gts.md) |  |
+| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations-with-as.gts.md) |  |
+| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations.gts.md) |  |
+| [externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__one-line.gts.md) |  |
+
+### Option 2: 49/55 (89.09%)
+
+```json
+{"printWidth":120,"singleQuote":true,"ember":true}
+```
+
+| File | Note |
+| :--- | :--- |
+| [externals/plugin-ember-template-tag/gjs/prettier-ignore/multiple-declarations.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__multiple-declarations.gjs.md) |  |
+| [externals/plugin-ember-template-tag/gjs/prettier-ignore/one-line.gjs](diffs/ember/externals__plugin-ember-template-tag__gjs__prettier-ignore__one-line.gjs.md) |  |
+| [externals/plugin-ember-template-tag/gts/implied-export-default-satisfies.gts](diffs/ember/externals__plugin-ember-template-tag__gts__implied-export-default-satisfies.gts.md) |  |
+| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations-with-as.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations-with-as.gts.md) |  |
+| [externals/plugin-ember-template-tag/gts/prettier-ignore/multiple-declarations.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__multiple-declarations.gts.md) |  |
+| [externals/plugin-ember-template-tag/gts/prettier-ignore/one-line.gts](diffs/ember/externals__plugin-ember-template-tag__gts__prettier-ignore__one-line.gts.md) |  |
+
 ## graphql
 
 ### Option 1: 712/712 (100.00%)

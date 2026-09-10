@@ -131,3 +131,30 @@ const TomatoButton = Button.extend`
 
 `Xxx.extend` / `Xxx.extend.attr(...)` (styled-components v3, removed in v4) is not recognized as a css-in-js tag,
 so its template stays verbatim; Prettier still formats it. Deprecated API, not worth extending the tag heuristic.
+
+## template-tag-statement-terminator
+
+- Why: uniform-rule (same construct, same output: as-expression)
+- Pin: `conformance/fixtures/edge-cases/ember/statement-terminator.gts`
+
+A template tag in statement position is the module's default export, so it is a declaration and
+takes neither a terminator nor an `export default` spelling. Prettier core cannot parse these files,
+so the comparison here is against `prettier-plugin-ember-template-tag`, which agrees for the bare and
+`as` forms and emits a terminator for `satisfies`, printing one construct two ways.
+
+```ts
+/* input */
+export default <template>x</template>;
+<template>x</template> as Foo;
+<template>x</template> satisfies Foo;
+
+/* ours */
+<template>x</template>
+<template>x</template> as Foo
+<template>x</template> satisfies Foo
+
+/* plugin */
+<template>x</template>
+<template>x</template> as Foo
+<template>x</template> satisfies Foo;
+```

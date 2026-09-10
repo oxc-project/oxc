@@ -84,6 +84,18 @@ export interface Oxfmtrc {
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
   /**
+   * Format Ember `.gjs`/`.gts` files.
+   *
+   * Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
+   * The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+   * `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
+   * formatted as Handlebars.
+   *
+   * - Languages: Ember Template Tag
+   * - Default: Disabled
+   */
+  ember?: boolean;
+  /**
    * Which end of line characters to apply.
    *
    * NOTE: `"auto"` is not supported.
@@ -420,6 +432,18 @@ export interface FormatConfig {
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
+  /**
+   * Format Ember `.gjs`/`.gts` files.
+   *
+   * Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
+   * The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+   * `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
+   * formatted as Handlebars.
+   *
+   * - Languages: Ember Template Tag
+   * - Default: Disabled
+   */
+  ember?: boolean;
   /**
    * Which end of line characters to apply.
    *

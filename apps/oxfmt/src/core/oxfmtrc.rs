@@ -287,6 +287,18 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub svelte: Option<SvelteUserConfig>,
+
+    /// Format Ember `.gjs`/`.gts` files.
+    ///
+    /// Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
+    /// The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+    /// `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
+    /// formatted as Handlebars.
+    ///
+    /// - Languages: Ember Template Tag
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ember: Option<bool>,
 }
 
 impl FormatConfig {
@@ -304,6 +316,22 @@ impl FormatConfig {
     /// disabled when unset or `false`.
     pub fn is_svelte_enabled(&self) -> bool {
         matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
+    }
+
+    /// Whether `ember` is enabled by this config.
+    pub fn is_ember_enabled(&self) -> bool {
+        self.ember == Some(true)
+    }
+
+    /// Whether the opt-in named by a `core::hosted` registry row is enabled.
+    ///
+    /// Every hosted format gates on its own key, so the registry stays the only place that
+    /// knows which key belongs to which extension.
+    pub fn is_hosted_format_enabled(&self, config_key: &str) -> bool {
+        match config_key {
+            "ember" => self.is_ember_enabled(),
+            _ => false,
+        }
     }
 
     /// Whether Tailwind class sorting is enabled by this config.
@@ -943,6 +971,8 @@ pub struct SvelteConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub indent_script_and_style: Option<bool>,
 }
+
+// ---
 
 // ---
 

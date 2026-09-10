@@ -33,6 +33,8 @@ fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'sta
         "less" => Some("less"),
         "vue" => Some("vue"),
         "svelte" => Some("svelte"),
+        "glimmer-js" => Some("gjs"),
+        "glimmer-ts" => Some("gts"),
         "yaml" => Some("yaml"),
         "angular" => Some("component.html"),
         _ => None,

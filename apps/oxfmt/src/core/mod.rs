@@ -1,6 +1,7 @@
 mod config;
 pub mod embed;
 mod format;
+mod hosted;
 pub mod options;
 pub mod oxfmtrc;
 mod support;

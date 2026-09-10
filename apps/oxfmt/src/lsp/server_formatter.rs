@@ -408,7 +408,7 @@ impl ServerFormatter {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
                 warn!(
-                    "Skipping `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {}",
+                    "Skipping `{}`: `{plugin}` plugin is not enabled in resolved config",
                     path.display()
                 );
                 return None;

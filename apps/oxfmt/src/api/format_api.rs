@@ -59,7 +59,7 @@ pub fn run(
             return ApiFormatResult {
                 code: source_text,
                 errors: vec![OxcError::new(format!(
-                    "Cannot format `.{plugin}`: `{plugin}` plugin is not enabled in resolved config: {filename}"
+                    "Cannot format `{filename}`: `{plugin}` plugin is not enabled in resolved config"
                 ))],
             };
         }
