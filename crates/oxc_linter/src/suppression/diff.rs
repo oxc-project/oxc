@@ -11,6 +11,12 @@ use crate::{
     },
 };
 
+#[derive(Clone, Copy)]
+enum SuppressionMatch {
+    AtOrBelowBaseline,
+    ExactBaseline,
+}
+
 pub struct DiffManager {
     tracking_map: StaticSuppressionMap,
     runtime_map: RuntimeSuppressionMap,
@@ -56,8 +62,11 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let (surfaced, _suppressed, runtime_counts) =
-            Self::partition_lint_diagnostics(&suppression_file, messages);
+        let (surfaced, _suppressed, runtime_counts) = Self::partition_lint_diagnostics(
+            &suppression_file,
+            messages,
+            SuppressionMatch::AtOrBelowBaseline,
+        );
 
         if let Some(counts) = runtime_counts {
             self.runtime_map.merge_file(filename, counts);
@@ -69,9 +78,9 @@ impl DiffManager {
     /// Partition a file's messages into `(surfaced, suppressed)` using the recorded baseline,
     /// without mutating runtime state.
     ///
-    /// This mirrors [`Self::collect_file`]'s per-rule count semantics, but instead of dropping
-    /// suppressed diagnostics it returns them alongside the surfaced ones. The language server
-    /// uses this to render suppressed violations as faded diagnostics rather than hiding them.
+    /// Only rules whose runtime count exactly matches the baseline are suppressed. Rules whose
+    /// count increased or decreased are surfaced in full so the language server can prompt users
+    /// to fix new violations or prune stale suppressions.
     pub fn partition_file(
         &self,
         file_path: &Path,
@@ -91,8 +100,11 @@ impl DiffManager {
         let suppression_file =
             SuppressionFile::new(self.file_exists, self.suppress_all, suppression_data);
 
-        let (surfaced, suppressed, _runtime_counts) =
-            Self::partition_lint_diagnostics(&suppression_file, messages);
+        let (surfaced, suppressed, _runtime_counts) = Self::partition_lint_diagnostics(
+            &suppression_file,
+            messages,
+            SuppressionMatch::ExactBaseline,
+        );
 
         (surfaced, suppressed)
     }
@@ -123,13 +135,15 @@ impl DiffManager {
 
     /// Partition messages into `(surfaced, suppressed, runtime_counts)` for a file.
     ///
-    /// `surfaced` are the diagnostics that should be reported (new/increased violations plus all
-    /// warnings); `suppressed` are the error-severity diagnostics covered by the baseline. Callers
-    /// that only care about surfaced diagnostics (e.g. the CLI) discard `suppressed`; callers that
-    /// want to render suppressed diagnostics differently (e.g. the language server) keep them.
+    /// `surfaced` are the diagnostics that should be reported according to `suppression_match`,
+    /// plus all warnings. `suppressed` are the error-severity diagnostics covered by the baseline.
+    /// Callers that only care about surfaced diagnostics (e.g. the CLI) discard `suppressed`;
+    /// callers that want to render suppressed diagnostics differently (e.g. the language server)
+    /// keep them.
     fn partition_lint_diagnostics(
         suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
+        suppression_match: SuppressionMatch,
     ) -> (Vec<Message>, Vec<Message>, Option<FxHashMap<String, DiagnosticCounts>>) {
         let build_suppression_map = |diagnostics: &Vec<Message>| {
             let mut suppression_tracking: FxHashMap<String, DiagnosticCounts> =
@@ -154,6 +168,10 @@ impl DiffManager {
             SuppressionFileState::Ignored => (lint_diagnostics, Vec::new(), None),
             SuppressionFileState::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
+
+                if matches!(suppression_match, SuppressionMatch::ExactBaseline) {
+                    return (lint_diagnostics, Vec::new(), Some(runtime_suppression_tracking));
+                }
 
                 // Error-severity diagnostics are being written to the new suppressions file, so
                 // they are suppressed. Only warnings surface.
@@ -188,7 +206,12 @@ impl DiffManager {
                         return false;
                     };
 
-                    count_file.count < count_runtime.count
+                    match suppression_match {
+                        SuppressionMatch::AtOrBelowBaseline => {
+                            count_file.count < count_runtime.count
+                        }
+                        SuppressionMatch::ExactBaseline => count_file.count != count_runtime.count,
+                    }
                 };
 
                 let (surfaced, suppressed): (Vec<Message>, Vec<Message>) =
