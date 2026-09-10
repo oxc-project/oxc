@@ -32,6 +32,15 @@
       ],
       "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
     },
+    "ember": {
+      "description": "Options for `prettier-plugin-ember-template-tag`.\n\nPass `true` or an object to enable `.gjs`/`.gts` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Ember Template Tag\n- Default: Disabled",
+      "allOf": [
+        {
+          "$ref": "#/definitions/EmberUserConfig"
+        }
+      ],
+      "markdownDescription": "Options for `prettier-plugin-ember-template-tag`.\n\nPass `true` or an object to enable `.gjs`/`.gts` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Ember Template Tag\n- Default: Disabled"
+    },
     "endOfLine": {
       "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
       "allOf": [
@@ -268,6 +277,31 @@
         "off"
       ]
     },
+    "EmberConfig": {
+      "type": "object",
+      "properties": {
+        "templateExportDefault": {
+          "description": "Whether a top-level template tag is written with an explicit `export default`.\n\nA top-level template tag is the module's default export either way,\nso this only selects which of the two equivalent spellings is printed:\n`true` adds `export default`, `false` removes it where present.\n\n- Default: `false`",
+          "type": "boolean",
+          "markdownDescription": "Whether a top-level template tag is written with an explicit `export default`.\n\nA top-level template tag is the module's default export either way,\nso this only selects which of the two equivalent spellings is printed:\n`true` adds `export default`, `false` removes it where present.\n\n- Default: `false`"
+        },
+        "templateSingleQuote": {
+          "description": "Whether to use single quotes instead of double quotes within template tags.\n\n- Default: Follows `singleQuote`",
+          "type": "boolean",
+          "markdownDescription": "Whether to use single quotes instead of double quotes within template tags.\n\n- Default: Follows `singleQuote`"
+        }
+      }
+    },
+    "EmberUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/EmberConfig"
+        }
+      ]
+    },
     "EndOfLineConfig": {
       "type": "string",
       "enum": [
@@ -306,6 +340,15 @@
             }
           ],
           "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
+        },
+        "ember": {
+          "description": "Options for `prettier-plugin-ember-template-tag`.\n\nPass `true` or an object to enable `.gjs`/`.gts` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Ember Template Tag\n- Default: Disabled",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EmberUserConfig"
+            }
+          ],
+          "markdownDescription": "Options for `prettier-plugin-ember-template-tag`.\n\nPass `true` or an object to enable `.gjs`/`.gts` file formatting,\nor `false` (handy in overrides) / omit to disable.\nSetting `true` resets to defaults — any options inherited from a parent scope are dropped.\n\nNOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,\nbut Oxfmt does NOT bundle or auto-install it.\nYou must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.\n\n- Languages: Ember Template Tag\n- Default: Disabled"
         },
         "endOfLine": {
           "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",

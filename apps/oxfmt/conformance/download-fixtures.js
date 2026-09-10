@@ -36,6 +36,12 @@ const sources = [
     repo: "sveltejs/prettier-plugin-svelte/test/formatting/samples",
     version: `prettier-plugin-svelte@${pkg.dependencies["prettier-plugin-svelte"]}`,
   },
+  // gjs/gts
+  {
+    name: "plugin-ember-template-tag",
+    repo: "ember-tooling/prettier-plugin-ember-template-tag/tests/cases",
+    version: `v${pkg.dependencies["prettier-plugin-ember-template-tag"]}-prettier-plugin-ember-template-tag`,
+  },
   // graphql
   {
     name: "gitlab",

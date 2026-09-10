@@ -7,10 +7,10 @@ use serde_json::Value;
 use oxc_formatter_core::LineWidth;
 
 use super::super::oxfmtrc::{
-    ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
-    HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, OperatorPositionConfig, ProseWrapConfig,
-    QuotePropsConfig, SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig,
-    TrailingCommaConfig,
+    ArrowParensConfig, EmbeddedLanguageFormattingConfig, EmberConfig, EmberUserConfig,
+    EndOfLineConfig, FormatConfig, HtmlWhitespaceSensitivityConfig, ObjectWrapConfig,
+    OperatorPositionConfig, ProseWrapConfig, QuotePropsConfig, SortTailwindcssUserConfig,
+    SvelteConfig, SvelteUserConfig, TrailingCommaConfig,
 };
 
 /// Build base Prettier-compatible options from a typed `FormatConfig`.
@@ -252,6 +252,30 @@ pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
         map.insert("svelteIndentScriptAndStyle".to_string(), Value::from(v));
     }
     map.insert("_useSveltePlugin".to_string(), Value::Number(1.into()));
+}
+
+/// Inject Ember plugin keys derived from `config.ember`.
+///
+/// No-ops when `ember` is disabled (unset or `false`) — `Bool(true)` falls back to defaults.
+/// The caller gates this on capability (`supports_ember`):
+/// `.gjs`/`.gts` are the primary target, plus `markdown`/`mdx` for code blocks.
+///
+/// See: <https://github.com/ember-tooling/prettier-plugin-ember-template-tag#options>
+pub fn inject_ember_plugin_payload(opts: &mut Value, config: &FormatConfig) {
+    let Some(EmberConfig { template_export_default, template_single_quote }) =
+        config.ember.clone().and_then(EmberUserConfig::into_config)
+    else {
+        return;
+    };
+    let map = as_object_mut(opts);
+
+    if let Some(v) = template_export_default {
+        map.insert("templateExportDefault".to_string(), Value::from(v));
+    }
+    if let Some(v) = template_single_quote {
+        map.insert("templateSingleQuote".to_string(), Value::from(v));
+    }
+    map.insert("_useEmberPlugin".to_string(), Value::Number(1.into()));
 }
 
 /// Inject `_oxfmtPluginOptionsJson` carrying the typed [`FormatConfig`] plus

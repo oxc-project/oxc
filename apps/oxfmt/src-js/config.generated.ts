@@ -5,6 +5,7 @@
 
 export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
+export type EmberUserConfig = boolean | EmberConfig;
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type OperatorPositionConfig = "start" | "end";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
@@ -83,6 +84,21 @@ export interface Oxfmtrc {
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
+  /**
+   * Options for `prettier-plugin-ember-template-tag`.
+   *
+   * Pass `true` or an object to enable `.gjs`/`.gts` file formatting,
+   * or `false` (handy in overrides) / omit to disable.
+   * Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+   *
+   * NOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,
+   * but Oxfmt does NOT bundle or auto-install it.
+   * You must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.
+   *
+   * - Languages: Ember Template Tag
+   * - Default: Disabled
+   */
+  ember?: EmberUserConfig;
   /**
    * Which end of line characters to apply.
    *
@@ -298,6 +314,25 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
+export interface EmberConfig {
+  /**
+   * Whether a top-level template tag is written with an explicit `export default`.
+   *
+   * A top-level template tag is the module's default export either way,
+   * so this only selects which of the two equivalent spellings is printed:
+   * `true` adds `export default`, `false` removes it where present.
+   *
+   * - Default: `false`
+   */
+  templateExportDefault?: boolean;
+  /**
+   * Whether to use single quotes instead of double quotes within template tags.
+   *
+   * - Default: Follows `singleQuote`
+   */
+  templateSingleQuote?: boolean;
+  [k: string]: unknown;
+}
 export interface JsdocConfig {
   /**
    * Append default values to `@param` descriptions (e.g. "Default is `value`").
@@ -420,6 +455,21 @@ export interface FormatConfig {
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
+  /**
+   * Options for `prettier-plugin-ember-template-tag`.
+   *
+   * Pass `true` or an object to enable `.gjs`/`.gts` file formatting,
+   * or `false` (handy in overrides) / omit to disable.
+   * Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+   *
+   * NOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,
+   * but Oxfmt does NOT bundle or auto-install it.
+   * You must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.
+   *
+   * - Languages: Ember Template Tag
+   * - Default: Disabled
+   */
+  ember?: EmberUserConfig;
   /**
    * Which end of line characters to apply.
    *

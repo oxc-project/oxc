@@ -17,6 +17,7 @@ import type { Options, Plugin } from "prettier";
 const CACHES = {
   prettier: null as typeof import("prettier") | null,
   sveltePlugin: null as Plugin | null,
+  emberPlugin: null as Plugin | null,
   tailwindPlugin: null as typeof import("prettier-plugin-tailwindcss") | null,
   tailwindSorter: null as typeof import("prettier-plugin-tailwindcss/sorter") | null,
   oxfmtPlugin: null as Plugin | null,
@@ -87,6 +88,8 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   // NOTE: Plugins order matters here!
   // This plugin add `svelte` parser to support for `.svelte` files, and is also needed for `svelte-in-md` to work
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
+  // This plugin adds the `ember-template-tag` parser to support `.gjs`/`.gts` files
+  if ("_useEmberPlugin" in options) await setupEmberPlugin(options);
   // Enable Tailwind CSS plugin, this plugin transforms `parsers` already installed by prior plugins
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
   // This plugin overrides `babel(-ts)` and `typescript` parsers to use `oxc_formatter` instead of built-in parsers
@@ -285,6 +288,22 @@ async function setupSveltePlugin(options: Options): Promise<void> {
   );
   options.plugins ??= [];
   options.plugins.push(CACHES.sveltePlugin);
+}
+
+// ---
+// Ember plugin support
+// ---
+
+/**
+ * Load prettier-plugin-ember-template-tag to provide the `ember-template-tag` parser.
+ */
+async function setupEmberPlugin(options: Options): Promise<void> {
+  CACHES.emberPlugin ??= await loadCached(
+    "emberPlugin",
+    async () => (await import("prettier-plugin-ember-template-tag")) as Plugin,
+  );
+  options.plugins ??= [];
+  options.plugins.push(CACHES.emberPlugin);
 }
 
 // ---

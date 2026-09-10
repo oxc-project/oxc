@@ -57,6 +57,49 @@ Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, 
 - Default: `"auto"`
 
 
+## ember
+
+type: `object | boolean`
+
+
+Options for `prettier-plugin-ember-template-tag`.
+
+Pass `true` or an object to enable `.gjs`/`.gts` file formatting,
+or `false` (handy in overrides) / omit to disable.
+Setting `true` resets to defaults — any options inherited from a parent scope are dropped.
+
+NOTE: `prettier-plugin-ember-template-tag` requires the `content-tag` package at runtime,
+but Oxfmt does NOT bundle or auto-install it.
+You must install `content-tag` yourself in your project, formatting will fail at runtime otherwise.
+
+- Languages: Ember Template Tag
+- Default: Disabled
+
+
+### ember.templateExportDefault
+
+type: `boolean`
+
+
+Whether a top-level template tag is written with an explicit `export default`.
+
+A top-level template tag is the module's default export either way,
+so this only selects which of the two equivalent spellings is printed:
+`true` adds `export default`, `false` removes it where present.
+
+- Default: `false`
+
+
+### ember.templateSingleQuote
+
+type: `boolean`
+
+
+Whether to use single quotes instead of double quotes within template tags.
+
+- Default: Follows `singleQuote`
+
+
 ## endOfLine
 
 type: `"lf" | "crlf" | "cr"`

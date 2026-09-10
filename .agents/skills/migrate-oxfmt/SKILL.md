@@ -32,6 +32,7 @@ This will:
 - Migrate `.prettierignore` patterns to `ignorePatterns`
 - Migrate `prettier-plugin-tailwindcss` options to `sortTailwindcss`
 - Migrate `prettier-plugin-svelte` options to `svelte` (`svelteSortOrder` → `sortOrder`, `svelteAllowShorthand` → `allowShorthand`, `svelteIndentScriptAndStyle` → `indentScriptAndStyle`)
+- Migrate `prettier-plugin-ember-template-tag` options to `ember` (`templateExportDefault` and `templateSingleQuote` keep their names)
 - Detect `prettier-plugin-packagejson` and enable `sortPackageJson`
 
 ### From Biome
@@ -169,12 +170,13 @@ Replaces `prettier-plugin-tailwindcss`. Auto-migrated with renamed options:
 
 ### Other Extensions
 
-| Option               | Default  | Description                                                                     |
-| -------------------- | -------- | ------------------------------------------------------------------------------- |
-| `insertFinalNewline` | `true`   | Whether to add a final newline at end of file                                   |
-| `sortPackageJson`    | `true`   | Sort `package.json` keys. Set `{ "sortScripts": true }` to also sort scripts    |
-| `jsdoc`              | disabled | Format JSDoc comments. Set `true` or an options object for fine-grained control |
-| `svelte`             | disabled | Svelte formatting options, replacing `prettier-plugin-svelte` (auto-migrated)   |
+| Option               | Default  | Description                                                                                      |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `insertFinalNewline` | `true`   | Whether to add a final newline at end of file                                                    |
+| `sortPackageJson`    | `true`   | Sort `package.json` keys. Set `{ "sortScripts": true }` to also sort scripts                     |
+| `jsdoc`              | disabled | Format JSDoc comments. Set `true` or an options object for fine-grained control                  |
+| `svelte`             | disabled | Svelte formatting options, replacing `prettier-plugin-svelte` (auto-migrated)                    |
+| `ember`              | disabled | `.gjs`/`.gts` formatting options, replacing `prettier-plugin-ember-template-tag` (auto-migrated) |
 
 ## Step 4: Update CI and Scripts
 
@@ -209,7 +211,7 @@ npx oxfmt@latest --check
 
 - JS/TS, JSON/JSONC/JSON5, CSS/SCSS/Less, GraphQL: Formatted natively by oxfmt
 - TOML: Formatted natively (via taplo)
-- HTML, YAML, Markdown, Vue, Svelte, etc.: Delegated to Prettier internally (when using `npx oxfmt`)
+- HTML, YAML, Markdown, Vue, Svelte, Ember `.gjs`/`.gts`, etc.: Delegated to Prettier internally (when using `npx oxfmt`)
 
 ## Tips
 

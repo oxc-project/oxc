@@ -13,5 +13,6 @@
   { "cwd": "unsupported_opts", "args": ["--migrate", "prettier"] },
   { "cwd": "overrides_json", "args": ["--migrate", "prettier"] },
   { "cwd": "overrides_jsonc", "args": ["--migrate", "prettier"] },
-  { "cwd": "overrides_yaml", "args": ["--migrate", "prettier"] }
+  { "cwd": "overrides_yaml", "args": ["--migrate", "prettier"] },
+  { "cwd": "ember_plugin", "args": ["--migrate", "prettier"] }
 ]

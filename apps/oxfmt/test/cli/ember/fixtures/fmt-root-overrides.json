@@ -1,0 +1,15 @@
+{
+  "ember": {
+    "templateSingleQuote": false
+  },
+  "overrides": [
+    {
+      "files": ["legacy/**"],
+      "options": {
+        "ember": {
+          "templateExportDefault": true
+        }
+      }
+    }
+  ]
+}

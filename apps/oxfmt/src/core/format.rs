@@ -15,8 +15,8 @@ use oxc_toml::Options as TomlFormatterOptions;
 
 #[cfg(feature = "napi")]
 use super::options::{
-    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
-    inject_tailwind_plugin_payload, to_prettier,
+    inject_ember_plugin_payload, inject_filepath, inject_oxfmt_plugin_payload, inject_parser,
+    inject_svelte_plugin_payload, inject_tailwind_plugin_payload, to_prettier,
 };
 use super::{
     embed::dispatcher::ResolvedDispatchConfig,
@@ -115,6 +115,7 @@ pub enum FormatStrategy {
         supports_tailwind: bool,
         supports_oxfmt: bool,
         supports_svelte: bool,
+        supports_ember: bool,
         insert_final_newline: bool,
     },
 }
@@ -221,6 +222,7 @@ impl FormatStrategy {
                 supports_tailwind,
                 supports_oxfmt,
                 supports_svelte,
+                supports_ember,
             } => Self::Prettier {
                 path,
                 parser_name,
@@ -228,6 +230,7 @@ impl FormatStrategy {
                 supports_tailwind,
                 supports_oxfmt,
                 supports_svelte,
+                supports_ember,
                 insert_final_newline,
             },
         }
@@ -370,6 +373,7 @@ impl SourceFormatter {
                 supports_tailwind,
                 supports_oxfmt,
                 supports_svelte,
+                supports_ember,
                 insert_final_newline,
             } => (
                 self.format_by_prettier(
@@ -380,6 +384,7 @@ impl SourceFormatter {
                     supports_tailwind,
                     supports_oxfmt,
                     supports_svelte,
+                    supports_ember,
                 ),
                 insert_final_newline,
             ),
@@ -636,6 +641,7 @@ impl SourceFormatter {
         supports_tailwind: bool,
         supports_oxfmt: bool,
         supports_svelte: bool,
+        supports_ember: bool,
     ) -> Result<String, OxcDiagnostic> {
         let mut prettier_options = to_prettier(config);
         inject_parser(&mut prettier_options, parser_name);
@@ -649,6 +655,9 @@ impl SourceFormatter {
         }
         if supports_svelte {
             inject_svelte_plugin_payload(&mut prettier_options, config);
+        }
+        if supports_ember {
+            inject_ember_plugin_payload(&mut prettier_options, config);
         }
 
         self.external_services().format_file(prettier_options, source_text).map_err(|err| {

@@ -71,7 +71,7 @@ input { color: red; }
       const result = await format("App.svelte", input);
       expect(result.code).toBe(input); // unchanged
       expect(result.errors.length).toBe(1);
-      expect(result.errors[0].message).toMatch(/Cannot format `\.svelte`/);
+      expect(result.errors[0].message).toMatch(/Cannot format `.+\.svelte`/);
     });
 
     it("should error on `.svelte` with `svelte: false` (explicitly disabled)", async () => {
@@ -81,7 +81,7 @@ input { color: red; }
       const result = await format("App.svelte", input, { svelte: false });
       expect(result.code).toBe(input); // unchanged
       expect(result.errors.length).toBe(1);
-      expect(result.errors[0].message).toMatch(/Cannot format `\.svelte`/);
+      expect(result.errors[0].message).toMatch(/Cannot format `.+\.svelte`/);
     });
   });
 

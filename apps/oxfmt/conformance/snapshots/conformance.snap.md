@@ -196,6 +196,20 @@
 {"printWidth":120,"singleQuote":true,"htmlWhitespaceSensitivity":"ignore","bracketSameLine":true,"svelteIndentScriptAndStyle":true,"svelteSortOrder":"options-scripts-styles-markup","svelte":{"indentScriptAndStyle":true,"sortOrder":"options-scripts-styles-markup"}}
 ```
 
+## ember
+
+### Option 1: 55/55 (100.00%)
+
+```json
+{"printWidth":80,"ember":{}}
+```
+
+### Option 2: 55/55 (100.00%)
+
+```json
+{"printWidth":120,"singleQuote":true,"templateSingleQuote":true,"ember":{"templateSingleQuote":true}}
+```
+
 ## graphql
 
 ### Option 1: 712/712 (100.00%)

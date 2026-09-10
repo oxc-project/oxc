@@ -60,6 +60,7 @@ export async function runMigratePrettier() {
   let hasTailwindcssPlugin = false;
   let hasSortPackageJsonPlugin = false;
   let hasSveltePlugin = false;
+  let hasEmberPlugin = false;
   for (const [key, value] of Object.entries(prettierConfig ?? {})) {
     // Handle plugins - check for known plugins and warn about others
     if (key === "plugins" && Array.isArray(value)) {
@@ -70,6 +71,8 @@ export async function runMigratePrettier() {
           hasSortPackageJsonPlugin = true;
         } else if (plugin === "prettier-plugin-svelte") {
           hasSveltePlugin = true;
+        } else if (plugin === "prettier-plugin-ember-template-tag") {
+          hasEmberPlugin = true;
         } else if (typeof plugin === "string") {
           console.error(`  - plugins: "${plugin}" is not supported, skipping...`);
         } else {
@@ -99,7 +102,7 @@ export async function runMigratePrettier() {
     }
 
     // Skip plugin-specific options - handled separately
-    if (key.startsWith("tailwind") || key.startsWith("svelte")) {
+    if (key.startsWith("tailwind") || key.startsWith("svelte") || key.startsWith("template")) {
       continue;
     }
 
@@ -125,7 +128,7 @@ export async function runMigratePrettier() {
     oxfmtrc.sortPackageJson = false;
   }
   // Plugin options: only enable when the corresponding Prettier plugin is used.
-  // Empty object means "enabled with defaults"; both Tailwind and Svelte are disabled by default.
+  // Empty object means "enabled with defaults"; all of them are disabled by default.
   if (hasTailwindcssPlugin) {
     oxfmtrc.sortTailwindcss = migrateMappedOptions(
       prettierConfig!,
@@ -137,6 +140,10 @@ export async function runMigratePrettier() {
   if (hasSveltePlugin) {
     oxfmtrc.svelte = migrateMappedOptions(prettierConfig!, SVELTE_OPTION_MAPPING);
     console.log("Migrated prettier-plugin-svelte options to svelte");
+  }
+  if (hasEmberPlugin) {
+    oxfmtrc.ember = migrateMappedOptions(prettierConfig!, EMBER_OPTION_MAPPING);
+    console.log("Migrated prettier-plugin-ember-template-tag options to ember");
   }
 
   // Migrate `ignorePatterns` from `.prettierignore`
@@ -211,7 +218,7 @@ async function rawConfigHasOverrides(configPath: string): Promise<boolean> {
 
 // Map Oxfmt's namespaced option keys (left) to Prettier's flat option keys (right).
 // Used by `migrateMappedOptions` to copy values from Prettier's flat config
-// into a single Oxfmt namespace (e.g. `sortTailwindcss`, `svelte`).
+// into a single Oxfmt namespace (e.g. `sortTailwindcss`, `svelte`, `ember`).
 const TAILWIND_OPTION_MAPPING: Record<string, string> = {
   config: "tailwindConfig",
   stylesheet: "tailwindStylesheet",
@@ -225,6 +232,11 @@ const SVELTE_OPTION_MAPPING: Record<string, string> = {
   allowShorthand: "svelteAllowShorthand",
   indentScriptAndStyle: "svelteIndentScriptAndStyle",
   sortOrder: "svelteSortOrder",
+};
+
+const EMBER_OPTION_MAPPING: Record<string, string> = {
+  templateExportDefault: "templateExportDefault",
+  templateSingleQuote: "templateSingleQuote",
 };
 
 function migrateMappedOptions(

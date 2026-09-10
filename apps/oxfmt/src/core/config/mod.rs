@@ -123,7 +123,7 @@ pub enum ResolveOutcome {
     /// Ready to format with this strategy.
     Format(FormatStrategy),
     /// The file's parser requires a plugin that the resolved config did NOT enable.
-    /// The payload carries the missing config key (e.g. `"svelte"`)
+    /// The payload carries the missing config key (e.g. `"svelte"`, `"ember"`)
     /// so callers can construct a friendly error or log message.
     #[cfg_attr(not(feature = "napi"), expect(dead_code))]
     MissingPlugin(&'static str),
@@ -632,6 +632,7 @@ mod tests_slow_path_validation {
             supports_tailwind: false,
             supports_oxfmt: false,
             supports_svelte: false,
+            supports_ember: false,
         };
         let err = resolver.resolve(kind).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
@@ -675,6 +676,7 @@ mod tests_slow_path_validation {
             supports_tailwind: true,
             supports_oxfmt: true,
             supports_svelte: false,
+            supports_ember: false,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
             .unwrap_err();

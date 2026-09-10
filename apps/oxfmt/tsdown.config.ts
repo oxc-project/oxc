@@ -33,6 +33,9 @@ export default defineConfig({
       "prettier-plugin-marko",
       // prettier-plugin-svelte's peer dependency; must be installed by the user
       "svelte/compiler",
+      // prettier-plugin-ember-template-tag's dependency; must be installed by the user.
+      // It loads a `.wasm` sibling via `__dirname`, so it cannot be bundled.
+      "content-tag",
     ],
     alwaysBundle: [
       // Bundle it to control version
@@ -46,6 +49,7 @@ export default defineConfig({
       "prettier-plugin-tailwindcss",
       "prettier-plugin-tailwindcss/sorter",
       "prettier-plugin-svelte",
+      "prettier-plugin-ember-template-tag",
 
       // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
       // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
@@ -64,6 +68,9 @@ export default defineConfig({
         prettier: require.resolve("prettier").replace("index.cjs", "index.mjs"),
         "prettier/doc": require.resolve("prettier/doc").replace(".js", ".mjs"),
         "prettier/plugins/babel": require.resolve("prettier/plugins/babel").replace(".js", ".mjs"),
+        "prettier/plugins/estree": require
+          .resolve("prettier/plugins/estree")
+          .replace(".js", ".mjs"),
       },
     },
   },

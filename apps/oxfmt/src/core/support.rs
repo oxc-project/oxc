@@ -78,12 +78,14 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
             let supports_svelte = SVELTE_PARSERS.contains(parser_name);
+            let supports_ember = EMBER_PARSERS.contains(parser_name);
             return Some(FileKind::Prettier {
                 path,
                 parser_name,
                 supports_tailwind,
                 supports_oxfmt,
                 supports_svelte,
+                supports_ember,
             });
         }
     }
@@ -117,8 +119,8 @@ pub enum FileKind {
     OxfmtToml { path: Arc<Path> },
     /// Files formatted by delegating to Prettier (Tier 3/4).
     ///
-    /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability
-    /// flags that say "this file kind CAN use the corresponding plugin".
+    /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` / `supports_ember` are
+    /// capability flags that say "this file kind CAN use the corresponding plugin".
     /// Whether the plugin is actually activated is decided at the format step by resolved config.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
@@ -128,6 +130,7 @@ pub enum FileKind {
         supports_tailwind: bool,
         supports_oxfmt: bool,
         supports_svelte: bool,
+        supports_ember: bool,
     },
 }
 
@@ -150,18 +153,20 @@ impl FileKind {
     /// Returns the config key (e.g. `"svelte"`) of an opt-in Prettier plugin
     /// that this file's parser requires but the resolved config did NOT enable.
     ///
-    /// `.svelte` files cannot be formatted without `prettier-plugin-svelte`,
-    /// which is gated behind the `svelte` config key. The plugin is considered
-    /// disabled when the field is unset or `false`; the resolver bails out with
+    /// `.svelte` and `.gjs`/`.gts` files cannot be formatted without their plugin,
+    /// each gated behind its own config key. A plugin is considered disabled when
+    /// the field is unset or `false`; the resolver bails out with
     /// [`super::ResolveOutcome::MissingPlugin`] in that case.
     #[cfg(feature = "napi")]
     pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
-        if let Self::Prettier { parser_name: "svelte", .. } = self
-            && !config.is_svelte_enabled()
-        {
-            return Some("svelte");
+        let Self::Prettier { parser_name, .. } = self else {
+            return None;
+        };
+        match *parser_name {
+            "svelte" if !config.is_svelte_enabled() => Some("svelte"),
+            "ember-template-tag" if !config.is_ember_enabled() => Some("ember"),
+            _ => None,
         }
-        None
     }
 }
 
@@ -177,11 +182,17 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
     "angular",
     "glimmer",
     "svelte",
+    "ember-template-tag",
 };
 
 /// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
 /// For now, expressions are not supported.
 /// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
+///
+/// NOTE: `ember-template-tag` is absent on purpose. That plugin reaches into Prettier's
+/// own `babel-ts` parser by direct import rather than through the plugin chain,
+/// so the oxfmt plugin cannot intercept it. The JS around a `<template>` prints
+/// through Prettier's `estree` printer.
 #[cfg(feature = "napi")]
 static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
     // "html",
@@ -196,6 +207,15 @@ static OXFMT_PARSERS: phf::Set<&'static str> = phf_set! {
 #[cfg(feature = "napi")]
 static SVELTE_PARSERS: phf::Set<&'static str> = phf_set! {
     "svelte",
+    "markdown",
+    "mdx",
+};
+
+/// Parsers(files) that benefit from `prettier-plugin-ember-template-tag`.
+/// `.gjs`/`.gts` are the primary target; `markdown`/`mdx` allow ` ```gjs ` code blocks.
+#[cfg(feature = "napi")]
+static EMBER_PARSERS: phf::Set<&'static str> = phf_set! {
+    "ember-template-tag",
     "markdown",
     "mdx",
 };
@@ -450,6 +470,10 @@ fn get_prettier_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     if extension == Some("svelte") {
         return Some("svelte");
     }
+    // NOTE: Same gating as `.svelte` above, behind the `ember` config key.
+    if matches!(extension, Some("gjs" | "gts")) {
+        return Some("ember-template-tag");
+    }
     if extension == Some("mjml") {
         return Some("mjml");
     }
@@ -648,6 +672,10 @@ mod tests {
             ("email.mjml", Some("mjml")),
             // Vue
             ("App.vue", Some("vue")),
+            // Svelte and Ember Template Tag: classified here, gated at resolve time
+            ("App.svelte", Some("svelte")),
+            ("Foo.gjs", Some("ember-template-tag")),
+            ("Bar.gts", Some("ember-template-tag")),
             // CSS files are routed to `oxc_formatter_css` in `classify_file_kind`
             // and excluded from this map.
             ("styles.css", None),

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "prettier": "3.9.6",
+    "prettier-plugin-ember-template-tag": "2.1.8",
     "prettier-plugin-svelte": "4.1.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.19faf8b",
     "tinypool": "2.1.2"
@@ -30,6 +31,7 @@
     "@napi-rs/cli": "catalog:",
     "@oxapps/shared": "workspace:*",
     "@types/node": "catalog:",
+    "content-tag": "^4.2.0",
     "degit": "catalog:",
     "diff": "^9.0.0",
     "execa": "^10.0.0",

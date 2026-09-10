@@ -4,6 +4,7 @@ import { createTwoFilesPatch } from "diff";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
+import * as emberPlugin from "prettier-plugin-ember-template-tag";
 import * as sveltePlugin from "prettier-plugin-svelte";
 import { format } from "../dist/index.js";
 
@@ -258,6 +259,33 @@ const categories: Category[] = [
     notes: {},
   },
   {
+    name: "ember",
+    sources: [
+      {
+        dir: join(EXTERNALS_DIR, "plugin-ember-template-tag"),
+        ext: ".gjs",
+        excludes: ["invalid-template"],
+      },
+      {
+        dir: join(EXTERNALS_DIR, "plugin-ember-template-tag"),
+        ext: ".gts",
+        excludes: ["invalid-template"],
+      },
+    ],
+    optionSets: [
+      { printWidth: 80, ember: {} },
+      {
+        printWidth: 120,
+        singleQuote: true,
+        // For prettier
+        templateSingleQuote: true,
+        // For oxfmt
+        ember: { templateSingleQuote: true },
+      },
+    ],
+    notes: {},
+  },
+  {
     name: "graphql",
     sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
@@ -491,7 +519,7 @@ async function compareWithPrettier(
     prettierResult = await prettier.format(content, {
       ...options,
       filepath: fileName,
-      plugins: [sveltePlugin],
+      plugins: [sveltePlugin, emberPlugin],
     });
   } catch {
     prettierResult = "ERROR";
