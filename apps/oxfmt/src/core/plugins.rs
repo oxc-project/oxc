@@ -102,7 +102,7 @@ impl PluginLanguages {
     }
 }
 
-/// Parser names arrive as owned strings but [`super::FileKind`] carries
+/// Parser names arrive as owned strings but `FileKind` carries
 /// `&'static str`, so they are interned once and kept for the process.
 ///
 /// The set is bounded by the user's config, and LSP re-initialization reuses
