@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DiagnosticSeverity, DiagnosticTag } from "vscode-languageserver-protocol/node";
+import { DiagnosticSeverity } from "vscode-languageserver-protocol/node";
 import { fixFixture, lintFixture, lintFixtureDiagnostics, lintMultiFileFixture } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
@@ -67,7 +67,7 @@ describe("LSP linting", () => {
   });
 
   describe("bulk suppressions", () => {
-    it("shows suppressed diagnostics faded by default", async () => {
+    it("shows suppressed diagnostics at warning severity by default", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
         "suppressions/default.js",
@@ -79,7 +79,7 @@ describe("LSP linting", () => {
       expect(suppressed).toHaveLength(2);
       expect(surfaced).toHaveLength(1);
       for (const diagnostic of suppressed) {
-        expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
+        expect(diagnostic.tags).toBeUndefined();
         expect(diagnostic.severity).toBe(DiagnosticSeverity.Warning);
       }
       expect(surfaced[0]?.tags).toBeUndefined();
@@ -103,7 +103,7 @@ describe("LSP linting", () => {
       ["warn", DiagnosticSeverity.Warning],
       ["error", DiagnosticSeverity.Error],
     ] as const)(
-      "renders %s suppressed diagnostics faded",
+      "renders suppressed diagnostics at %s severity",
       async (severity, expectedSeverity) => {
         const diagnostics = await lintFixtureDiagnostics(
           FIXTURES_DIR,
@@ -115,7 +115,7 @@ describe("LSP linting", () => {
 
         expect(suppressed).toHaveLength(2);
         for (const diagnostic of suppressed) {
-          expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
+          expect(diagnostic.tags).toBeUndefined();
           expect(diagnostic.severity).toBe(expectedSeverity);
         }
       },

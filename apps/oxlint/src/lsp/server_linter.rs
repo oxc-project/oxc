@@ -914,7 +914,7 @@ impl ServerLinter {
         };
 
         // Split off diagnostics covered by the bulk-suppression baseline. `surfaced` are reported
-        // normally; `suppressed` are either hidden or rendered faded, depending on the option.
+        // normally; `suppressed` are either hidden or rendered at the configured severity.
         let (surfaced, suppressed) = self.suppressions.partition_file(path, raw_messages);
 
         let mut messages: Vec<DiagnosticReport> = surfaced
