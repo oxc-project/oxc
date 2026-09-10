@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 99/99 (100.00%)
-Positive Passed: 99/99 (100.00%)
-Negative Passed: 203/203 (100.00%)
+AST Parsed     : 103/103 (100.00%)
+Positive Passed: 103/103 (100.00%)
+Negative Passed: 202/202 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -1070,15 +1070,6 @@ Negative Passed: 203/203 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-10503.ts:4:6]
- 3 │ 
- 4 │ await using
-   ·      ▲
- 5 │ foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]

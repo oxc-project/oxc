@@ -422,17 +422,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => {}
         }
 
-        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here]
-        if self.at(Kind::Await)
-            && self.lookahead(|p| {
-                p.bump_any();
-                if !p.at(Kind::Using) || p.cur_token().is_on_new_line() {
-                    return false;
-                }
-                p.bump_any();
-                !p.cur_token().is_on_new_line()
-            })
-        {
+        // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
+        if self.at(Kind::Await) && self.is_using_statement() {
             return self.parse_using_declaration_for_statement(
                 for_start,
                 parenthesis_opening_span,

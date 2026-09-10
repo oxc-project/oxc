@@ -1664,7 +1664,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Returns `true` when await is definitely an await expression (not ambiguous).
     ///
     /// Unambiguous cases (returns `true`):
-    /// - Next token is identifier, keyword (except `of`), or literal on same line
+    /// - Next token is identifier, keyword, or literal on same line, except the cases below
     ///
     /// Ambiguous cases (returns `false`):
     /// - Line break after `await` (could be ASI)
@@ -1672,6 +1672,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// - Next token is `(` `[` (could be call/member or grouping/array)
     /// - Next token is template literal
     /// - Next token is `of` (for-await-of ambiguity: `for (await of [])`)
+    /// - Next tokens form an `await using` declaration
     /// - Next token is `/` (division or regex literal)
     /// - Next token cannot start an expression (`)`, `}`, `;`, etc.)
     fn is_unambiguous_await(&mut self) -> bool {
@@ -1685,8 +1686,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = token.kind();
 
         // Special case: `await of` is ambiguous (for-await-of loop)
-        // Special case: `await using` should be handled as a declaration, not `await (using)`
-        if matches!(kind, Kind::Of | Kind::Using) {
+        if kind == Kind::Of {
+            return false;
+        }
+
+        // Only reserve `await using` for a declaration when a binding identifier follows.
+        if kind == Kind::Using && self.is_using_statement() {
             return false;
         }
 

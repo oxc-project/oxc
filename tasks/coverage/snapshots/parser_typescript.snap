@@ -28867,14 +28867,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:10]
+  × Cannot assign to this expression
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
  1 │ {
  2 │     await using [a] = null;
-   ·          ▲
+   ·     ───────────────
  3 │ }
    ╰────
-  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts:3:17]
@@ -28885,10 +28884,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:10]
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:16]
  1 │ {
  2 │     await using {a} = null;
-   ·          ▲
+   ·                ▲
  3 │ }
    ╰────
   help: Try inserting a semicolon here
@@ -28928,11 +28927,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Did you mean to use a for...of statement?
 
-  × Using declarations may not have binding patterns.
+  × Expected `;` but found `{`
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
  1 │ async function main() {
  2 │     for (await using {} of []) {
-   ·                      ──
+   ·                      ┬
+   ·                      ╰── `;` expected
  3 │     }
    ╰────
 
