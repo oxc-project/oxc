@@ -15,8 +15,6 @@ pub use tracking::{
 
 pub use diff::DiffManager;
 
-pub const DEFAULT_SUPPRESSIONS_FILE_NAME: &str = "oxlint-suppressions.json";
-
 type StaticSuppressionMap = Arc<FxHashMap<Filename, FxHashMap<String, DiagnosticCounts>>>;
 
 type FileSuppressionsMap = FxHashMap<String, DiagnosticCounts>;
