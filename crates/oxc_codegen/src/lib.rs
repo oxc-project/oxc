@@ -100,11 +100,9 @@ pub struct Codegen<'a> {
 
     // states
     prev_op_end: usize,
-    prev_reg_exp_end: usize,
-    /// Buffer length immediately after printing an identifier containing Unicode escapes.
-    /// Tracks token boundaries when a code point escape ends in `}`, which is not an
-    /// identifier character, but a following keyword still needs a separating space.
-    prev_escaped_ident_end: usize,
+    /// Output position after a regex or escaped identifier that requires a separating space
+    /// before a following identifier, even if its last byte is not an identifier character.
+    need_space_before_identifier: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
@@ -207,8 +205,7 @@ impl<'a> Codegen<'a> {
             class_stack: Stack::with_capacity(4),
             next_class_id: ClassId::from_usize(0),
             prev_op_end: 0,
-            prev_reg_exp_end: 0,
-            prev_escaped_ident_end: 0,
+            need_space_before_identifier: 0,
             prev_op: None,
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
@@ -335,7 +332,7 @@ impl<'a> Codegen<'a> {
             self.code.print_str(s);
         } else {
             self.print_non_ascii_escaped(s, NonAsciiEscape::Identifier);
-            self.prev_escaped_ident_end = self.code.len();
+            self.need_space_before_identifier = self.code.len();
         }
     }
 
@@ -658,9 +655,7 @@ impl<'a> Codegen<'a> {
     fn print_space_before_identifier(&mut self) {
         let Some(byte) = self.last_byte() else { return };
 
-        if self.prev_reg_exp_end != self.code.len()
-            && self.prev_escaped_ident_end != self.code.len()
-        {
+        if self.need_space_before_identifier != self.code.len() {
             let is_identifier = if byte.is_ascii() {
                 // Fast path for ASCII (very common case)
                 is_identifier_part_ascii(byte as char)
