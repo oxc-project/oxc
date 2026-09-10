@@ -971,6 +971,62 @@ impl<'a> PeepholeOptimizations {
         e: &ObjectExpression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
+        // NOTE: Inlining copies methods onto a different object, which changes
+        // `[[HomeObject]]` for `super`. Nested methods/fields/static blocks
+        // introduce their own home object and are skipped; computed keys,
+        // data-property values, and class heritage still bind `super` to the
+        // method being moved. `walk_object_expression` scans the spread object's
+        // own methods; nested literals hit `visit_object_expression`.
+        struct HasOuterBoundSuper {
+            has_super: bool,
+        }
+
+        impl<'a> oxc_ast_visit::Visit<'a> for HasOuterBoundSuper {
+            fn visit_super(&mut self, _it: &Super) {
+                self.has_super = true;
+            }
+
+            fn visit_object_expression(&mut self, it: &ObjectExpression<'a>) {
+                for property in &it.properties {
+                    match property {
+                        ObjectPropertyKind::SpreadProperty(spread) => {
+                            self.visit_spread_element(spread);
+                        }
+                        ObjectPropertyKind::ObjectProperty(prop) => {
+                            self.visit_property_key(&prop.key);
+                            if prop.method || !matches!(prop.kind, PropertyKind::Init) {
+                                continue;
+                            }
+                            self.visit_expression(&prop.value);
+                        }
+                    }
+                }
+            }
+
+            fn visit_method_definition(&mut self, it: &MethodDefinition<'a>) {
+                self.visit_decorators(&it.decorators);
+                self.visit_property_key(&it.key);
+            }
+
+            fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
+                self.visit_decorators(&it.decorators);
+                self.visit_property_key(&it.key);
+            }
+
+            fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
+                self.visit_decorators(&it.decorators);
+                self.visit_property_key(&it.key);
+            }
+
+            fn visit_static_block(&mut self, _it: &StaticBlock<'a>) {}
+        }
+
+        let mut visitor = HasOuterBoundSuper { has_super: false };
+        oxc_ast_visit::walk::walk_object_expression(&mut visitor, e);
+        if visitor.has_super {
+            return false;
+        }
+
         e.properties.iter().all(|p| match p {
             ObjectPropertyKind::SpreadProperty(_) => true,
             ObjectPropertyKind::ObjectProperty(p) => {
