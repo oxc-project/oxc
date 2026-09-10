@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 98/98 (100.00%)
 Positive Passed: 98/98 (100.00%)
-Negative Passed: 201/201 (100.00%)
+Negative Passed: 202/202 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -374,6 +374,14 @@ Negative Passed: 201/201 (100.00%)
    · ─────
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × TS(1093): Type annotation cannot appear on a constructor declaration.
+   ╭─[misc/fail/constructor-overload-return-type.ts:2:18]
+ 1 │ class C {
+ 2 │   constructor(): C;
+   ·                  ─
+ 3 │   constructor() {}
+   ╰────
 
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[misc/fail/continue-label-chain-non-iteration.js:1:1]
