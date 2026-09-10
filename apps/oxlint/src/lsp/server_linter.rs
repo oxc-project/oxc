@@ -943,9 +943,6 @@ impl ServerLinter {
                     source_text,
                     self.rules_customization.as_ref(),
                 ) {
-                    // Mark the diagnostic as unnecessary so supporting editors can render it with
-                    // reduced prominence while preserving its remediation code actions.
-                    report.diagnostic.tags = Some(vec![DiagnosticTag::UNNECESSARY]);
                     report.diagnostic.severity = Some(severity);
                     messages.push(report);
                 }
