@@ -28,21 +28,29 @@ fn bench_codegen(criterion: &mut Criterion) {
         assert!(transformer_ret.diagnostics.is_empty());
 
         for ascii_only in [false, true] {
-            let name = format!("codegen{}", if ascii_only { "_ascii_only" } else { "" });
-            let id = BenchmarkId::from_parameter(&file.file_name);
-            let mut group = criterion.benchmark_group(name);
-            group.bench_function(id, |b| {
-                b.iter_with_large_drop(|| {
-                    Codegen::new()
-                        .with_options(CodegenOptions {
-                            ascii_only,
-                            source_map_path: Some(PathBuf::from(&file.file_name)),
-                            ..CodegenOptions::default()
-                        })
-                        .build(&program)
+            for sourcemap_enabled in [false, true] {
+                let name = format!(
+                    "codegen{}{}",
+                    if ascii_only { "_ascii_only" } else { "" },
+                    if sourcemap_enabled { "_sourcemap" } else { "" }
+                );
+
+                let id = BenchmarkId::from_parameter(&file.file_name);
+                let mut group = criterion.benchmark_group(name);
+                group.bench_function(id, |b| {
+                    b.iter_with_large_drop(|| {
+                        Codegen::new()
+                            .with_options(CodegenOptions {
+                                ascii_only,
+                                source_map_path: sourcemap_enabled
+                                    .then(|| PathBuf::from(&file.file_name)),
+                                ..CodegenOptions::default()
+                            })
+                            .build(&program)
+                    });
                 });
-            });
-            group.finish();
+                group.finish();
+            }
         }
     }
 }
