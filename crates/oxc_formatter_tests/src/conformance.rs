@@ -42,7 +42,7 @@ use oxc_ast::ast::{
     Argument, ArrayExpressionElement, CallExpression, Expression, ObjectPropertyKind,
     VariableDeclarator,
 };
-use oxc_ast_visit::VisitMut;
+use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
 
@@ -212,33 +212,17 @@ fn is_selected(report_path: &str, ignore: &[&str], filter: Option<&str>) -> bool
 /// └── tuple-and-record.js
 /// ```
 fn collect_test_dirs(fixture_roots: &[PathBuf]) -> Vec<PathBuf> {
-    let mut test_dirs = FxHashSet::default();
-
-    for fixture_root in fixture_roots {
-        let dirs = WalkDir::new(fixture_root)
-            .min_depth(1)
-            .into_iter()
-            .filter_map(Result::ok)
-            .map(|e| {
-                let mut path = e.into_path();
-                if path.is_file()
-                    && let Some(parent_path) = path.parent()
-                {
-                    path = parent_path.into();
-                }
-                path
-            })
-            .filter(|path| {
-                path.join(SNAPSHOT_DIR_NAME).exists() && path.join(FORMAT_TEST_SPEC_NAME).exists()
-            })
-            .collect::<Vec<_>>();
-
-        test_dirs.extend(dirs);
-    }
-
-    let mut test_dirs = test_dirs.into_iter().collect::<Vec<_>>();
+    // A fixture root may itself be a spec dir (e.g. `json/json-test-suite`), hence depth 0.
+    let mut test_dirs = fixture_roots
+        .iter()
+        .flat_map(|root| WalkDir::new(root).into_iter().filter_map(Result::ok))
+        .filter(|e| e.file_type().is_dir())
+        .map(walkdir::DirEntry::into_path)
+        .filter(|path| {
+            path.join(SNAPSHOT_DIR_NAME).exists() && path.join(FORMAT_TEST_SPEC_NAME).exists()
+        })
+        .collect::<Vec<_>>();
     test_dirs.sort_unstable();
-
     test_dirs
 }
 
@@ -332,11 +316,8 @@ where
     }
 
     // `snippets` cases live only in the snapshot (see `collect_snippets`) and are matched by parser name.
-    // A dir-level ignore entry covers every snippet in the dir.
     let dir_report_path = report_path(dir, format_root);
-    if let Some(exact) = config.exact_parser
-        && is_selected(&format!("{dir_report_path}/"), config.ignore, None)
-    {
+    if let Some(exact) = config.exact_parser {
         let mut cases = collect_snippets(&snapshots, exact);
         if let Some(skip_spec) = config.skip_spec {
             cases.retain(|case| !skip_spec(&case.call.options));
@@ -514,7 +495,7 @@ impl CaseTally {
 }
 
 /// Prints a line diff with `-`/`+`/` ` gutters (debug output for conformance-style tests).
-pub fn print_text_diff(diff: &TextDiff<'_, '_, str>) {
+fn print_text_diff(diff: &TextDiff<'_, '_, str>) {
     for change in diff.iter_all_changes() {
         let sign = match change.tag() {
             ChangeTag::Delete => "-",
@@ -595,28 +576,12 @@ fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
         .into_owned();
 
     if need_eol_visualized {
-        let mut chars = input.chars();
-        let mut result = String::new();
-
-        while let Some(char) = chars.next() {
-            match char {
-                '\u{a}' => result.push_str("<LF>\n"),
-                '\u{d}' => {
-                    let next = chars.clone().next();
-                    if next == Some('\u{a}') {
-                        result.push_str("<CRLF>\n");
-                        chars.next();
-                    } else {
-                        result.push_str("<CR>\n");
-                    }
-                }
-                _ => {
-                    result.push(char);
-                }
-            }
-        }
-
-        return result;
+        // `\n` first so the later `\r` passes cannot re-match the `\n` they insert
+        return input
+            .cow_replace('\n', "<LF>\n")
+            .cow_replace("\r<LF>\n", "<CRLF>\n")
+            .cow_replace('\r', "<CR>\n")
+            .into_owned();
     }
 
     input
@@ -789,39 +754,32 @@ fn string_elements(arr: &oxc_ast::ast::ArrayExpression) -> Vec<String> {
 /// Returns the matching calls plus whether ANY `runFormatTest()` call was seen
 /// (even for other parsers) — an all-absent spec signals a suite layout change.
 fn parse_spec(spec: &Path, exact_parser: Option<&str>) -> (Vec<SpecCall>, bool) {
-    let mut parser = SpecParser { exact_parser, ..SpecParser::default() };
-    parser.parse(spec);
+    let source_text = fs::read_to_string(spec).unwrap_or_default();
+    let allocator = Allocator::default();
+    let source_type = SourceType::from_path(spec).unwrap_or_default().with_jsx(true);
+    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    assert!(ret.diagnostics.is_empty());
+
+    let mut parser = SpecParser {
+        source_text: &source_text,
+        exact_parser,
+        parsers: vec![],
+        calls: vec![],
+        saw_run_format_test: false,
+    };
+    parser.visit_program(&ret.program);
     (parser.calls, parser.saw_run_format_test)
 }
 
-#[derive(Default)]
 struct SpecParser<'a> {
-    source_text: String,
+    source_text: &'a str,
     parsers: Vec<String>,
     calls: Vec<SpecCall>,
     exact_parser: Option<&'a str>,
     saw_run_format_test: bool,
 }
 
-impl SpecParser<'_> {
-    fn parse(&mut self, spec: &Path) {
-        let spec_content = fs::read_to_string(spec).unwrap_or_default();
-
-        self.source_text.clone_from(&spec_content);
-
-        let allocator = Allocator::default();
-        let mut source_type = SourceType::from_path(spec).unwrap_or_default();
-        if source_type.is_javascript() {
-            source_type = source_type.with_jsx(true);
-        }
-
-        let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        assert!(ret.diagnostics.is_empty());
-        self.visit_program(&mut ret.program);
-    }
-}
-
-impl VisitMut<'_> for SpecParser<'_> {
+impl Visit<'_> for SpecParser<'_> {
     // Some test cases use a variable to store the parsers.
     //
     // ```js
@@ -830,7 +788,7 @@ impl VisitMut<'_> for SpecParser<'_> {
     // runFormatTest(import.meta, parser, {});
     // runFormatTest(import.meta, parser, { semi: false });
     // ```
-    fn visit_variable_declarator(&mut self, decl: &mut VariableDeclarator<'_>) {
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'_>) {
         let Some(name) = decl.id.get_identifier_name() else { return };
         if !matches!(name.as_str(), "parser" | "parsers") {
             return;
@@ -844,7 +802,7 @@ impl VisitMut<'_> for SpecParser<'_> {
 
     // The `runFormatTest()` function is used on prettier's test cases.
     // We need to collect all calls and get the options and parsers.
-    fn visit_call_expression(&mut self, expr: &mut CallExpression<'_>) {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'_>) {
         let Some(ident) = expr.callee.get_identifier_reference() else { return };
         if ident.name != "runFormatTest" {
             return;
@@ -919,7 +877,7 @@ impl VisitMut<'_> for SpecParser<'_> {
                     if name != "errors" {
                         snapshot_options.push((
                             name.to_string(),
-                            obj_prop.value.span().source_text(&self.source_text).to_string(),
+                            obj_prop.value.span().source_text(self.source_text).to_string(),
                         ));
                     }
                 }
