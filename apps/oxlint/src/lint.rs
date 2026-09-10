@@ -16,15 +16,15 @@ use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
 };
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-    DEFAULT_SUPPRESSIONS_FILE_NAME, ExternalLinter, ExternalPluginStore, InvalidFilterKind,
-    LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, OxlintSuppressionFileAction,
-    RuleTimingStore, SuppressionManager,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter, OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
+    DEFAULT_SUPPRESSIONS_FILE_NAME,
     cli::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },

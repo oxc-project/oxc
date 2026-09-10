@@ -19,10 +19,9 @@ use tower_lsp_server::{
 use tracing::{debug, error, warn};
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DEFAULT_SUPPRESSIONS_FILE_NAME,
-    DiffManager, ExternalLinter, ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS,
-    LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder, LintServiceOptions, Linter,
-    Oxlintrc, SuppressionTracking, read_to_string,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DiffManager, ExternalLinter,
+    ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
+    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SuppressionTracking, read_to_string,
 };
 
 use oxc_language_server::{
@@ -32,6 +31,7 @@ use oxc_language_server::{
 };
 
 use crate::{
+    DEFAULT_SUPPRESSIONS_FILE_NAME,
     config_loader::{
         ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
         materialize_default_plugins,
@@ -985,20 +985,21 @@ impl ServerLinter {
 mod tests_builder {
     use std::fs;
 
-    use serde_json::json;
     use tower_lsp_server::ls_types::{
-        CodeActionKind, CodeActionProviderCapability, MessageType, ServerCapabilities, Uri,
+        CodeActionKind, CodeActionProviderCapability, ServerCapabilities,
     };
 
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
-    use oxc_linter::DEFAULT_SUPPRESSIONS_FILE_NAME;
 
-    use crate::lsp::{
-        code_actions::{
-            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+    use crate::{
+        DEFAULT_SUPPRESSIONS_FILE_NAME,
+        lsp::{
+            code_actions::{
+                CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+            },
+            commands::FIX_ALL_COMMAND_ID,
+            server_linter::{ServerLinterBuilder, WorkspaceSuppressions},
         },
-        commands::FIX_ALL_COMMAND_ID,
-        server_linter::{ServerLinterBuilder, WorkspaceSuppressions},
     };
 
     #[test]
