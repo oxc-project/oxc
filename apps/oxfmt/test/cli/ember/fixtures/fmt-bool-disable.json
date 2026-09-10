@@ -1,5 +1,5 @@
 {
-  "ember": {},
+  "ember": true,
   "overrides": [
     {
       "files": ["legacy/**"],

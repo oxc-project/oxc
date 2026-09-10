@@ -59,13 +59,13 @@ Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, 
 
 ## ember
 
-type: `object | boolean`
+type: `boolean`
 
 
 Format Ember `.gjs`/`.gts` files.
 
-Pass `true` or an object to enable them, or `false` (handy in overrides) / omit to
-disable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
+The JavaScript is formatted by Oxfmt itself, so `sortImports`,
 `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
 formatted as Handlebars.
 

@@ -1,7 +1,7 @@
-//! Printing for [`OpaqueRegion`]s: source ranges that are not JavaScript.
+//! Printing for [`crate::OpaqueRegion`]s: source ranges that are not JavaScript.
 //!
-//! The parsed AST holds a placeholder node at each region's span (see [`OpaqueRegion`] for
-//! how the caller arranges that). Every format site that can host one asks [`write_opaque`]
+//! The parsed AST holds a placeholder node at each region's span (see [`crate::OpaqueRegion`]
+//! for how the caller arranges that). Every format site that can host one asks [`write_opaque`]
 //! first, so the region prints as its own language instead of as the placeholder.
 
 use oxc_formatter_core::{

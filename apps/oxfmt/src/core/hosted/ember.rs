@@ -15,7 +15,7 @@
 //!
 //! The regular-expression heuristic below is the usual one and is not exact. It does not
 //! need to be, because the caller must verify every island against the parsed AST and skip
-//! formatting the file when one does not line up. Both directions of a mis-scan then
+//! formatting the file when one does not line up. Both directions of a wrong scan then
 //! degrade to "file left alone" rather than to corrupted output:
 //!
 //! - a region found where there is none fails that check, because the span lands inside a
@@ -42,8 +42,14 @@ pub fn locate(source: &str) -> Vec<OpaqueRegion<'static>> {
 
 /// The spans of every template tag, each covering `<template>` through `</template>`.
 fn scan(source: &str) -> Vec<Span> {
-    Scanner { bytes: source.as_bytes(), pos: 0, expression_allowed: true, template_depths: vec![] }
-        .run()
+    Scanner {
+        bytes: source.as_bytes(),
+        pos: 0,
+        expression_allowed: true,
+        brace_depth: 0,
+        template_depths: vec![],
+    }
+    .run()
 }
 
 struct Scanner<'s> {
@@ -55,6 +61,8 @@ struct Scanner<'s> {
     /// otherwise, and `<` opens a template tag here and is a comparison otherwise
     /// (`a <template> b` is two comparisons on a variable named `template`).
     expression_allowed: bool,
+    /// Depth of `{` nesting within the current context.
+    brace_depth: u32,
     /// Brace depth saved on entering each `${`, innermost last. Empty means "not inside a
     /// template literal substitution".
     template_depths: Vec<u32>,
@@ -63,13 +71,12 @@ struct Scanner<'s> {
 impl Scanner<'_> {
     fn run(mut self) -> Vec<Span> {
         let mut regions = Vec::new();
-        let mut brace_depth: u32 = 0;
 
         while self.pos < self.bytes.len() {
             let byte = self.bytes[self.pos];
             match byte {
                 b'"' | b'\'' => self.skip_quoted(byte),
-                b'`' => self.skip_template_literal(&mut brace_depth),
+                b'`' => self.skip_template_literal(),
                 b'/' => match self.peek(1) {
                     Some(b'/') => self.skip_line_comment(),
                     Some(b'*') => self.skip_block_comment(),
@@ -83,22 +90,21 @@ impl Scanner<'_> {
                     }
                 },
                 b'{' => {
-                    brace_depth += 1;
+                    self.brace_depth += 1;
                     self.pos += 1;
                     self.expression_allowed = true;
                 }
                 b'}' => {
-                    // A `}` closing a `${` returns to the enclosing template literal.
-                    if brace_depth == 0
+                    self.pos += 1;
+                    self.expression_allowed = true;
+                    // A `}` at depth zero closes a `${` and returns to its template literal.
+                    if self.brace_depth == 0
                         && let Some(saved) = self.template_depths.pop()
                     {
-                        brace_depth = saved;
-                        self.pos += 1;
-                        self.resume_template_literal(&mut brace_depth);
+                        self.brace_depth = saved;
+                        self.resume_template_literal();
                     } else {
-                        brace_depth = brace_depth.saturating_sub(1);
-                        self.pos += 1;
-                        self.expression_allowed = true;
+                        self.brace_depth = self.brace_depth.saturating_sub(1);
                     }
                 }
                 b'<' if self.expression_allowed && self.starts_with(OPEN) => {
@@ -177,14 +183,14 @@ impl Scanner<'_> {
         self.expression_allowed = false;
     }
 
-    fn skip_template_literal(&mut self, brace_depth: &mut u32) {
+    fn skip_template_literal(&mut self) {
         self.pos += 1;
-        self.resume_template_literal(brace_depth);
+        self.resume_template_literal();
     }
 
     /// Scan template-literal text from [`Self::pos`], stopping at the closing backtick or
     /// at a `${`, which hands control back to the code loop.
-    fn resume_template_literal(&mut self, brace_depth: &mut u32) {
+    fn resume_template_literal(&mut self) {
         while self.pos < self.bytes.len() {
             match self.bytes[self.pos] {
                 b'\\' => self.pos += 2,
@@ -194,8 +200,8 @@ impl Scanner<'_> {
                     return;
                 }
                 b'$' if self.peek(1) == Some(b'{') => {
-                    self.template_depths.push(*brace_depth);
-                    *brace_depth = 0;
+                    self.template_depths.push(self.brace_depth);
+                    self.brace_depth = 0;
                     self.pos += 2;
                     self.expression_allowed = true;
                     return;
@@ -445,7 +451,7 @@ mod tests {
             "/* unterminated",
             "`unterminated ${",
             "/unterminated",
-            "<templat",
+            "<template",
         ] {
             let _ = scan(source);
         }

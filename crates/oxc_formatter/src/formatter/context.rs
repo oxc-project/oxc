@@ -327,7 +327,7 @@ impl<'ast> JsFormatContext<'ast> {
 /// splices the returned IR in, so line breaks are measured against the real contents.
 ///
 /// The caller must confirm that each `span` corresponds to a placeholder node in the parsed
-/// AST and decline to format otherwise; a span that does not is a mis-located region, and
+/// AST and decline to format otherwise; a span that does not is a wrongly located region, and
 /// formatting it would emit the placeholder instead of the source.
 ///
 /// `language` is opaque here. Which formatter serves it is the embedding application's
