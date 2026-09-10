@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 98/98 (100.00%)
-Positive Passed: 98/98 (100.00%)
-Negative Passed: 202/202 (100.00%)
+AST Parsed     : 99/99 (100.00%)
+Positive Passed: 99/99 (100.00%)
+Negative Passed: 203/203 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -938,6 +938,40 @@ Negative Passed: 202/202 (100.00%)
    ·                    ─
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:1:5]
+ 1 │ <A>{a, b}</A>;
+   ·     ────
+ 2 │ <A x={a, b} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:2:7]
+ 1 │ <A>{a, b}</A>;
+ 2 │ <A x={a, b} />;
+   ·       ────
+ 3 │ <A>{(a, b), c}</A>;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:3:5]
+ 2 │ <A x={a, b} />;
+ 3 │ <A>{(a, b), c}</A>;
+   ·     ─────────
+ 4 │ <A x={(a, b), c} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:4:7]
+ 3 │ <A>{(a, b), c}</A>;
+ 4 │ <A x={(a, b), c} />;
+   ·       ─────────
+   ╰────
+  help: Did you mean to write an array?
 
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:4:1]

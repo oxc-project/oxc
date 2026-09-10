@@ -382,9 +382,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             //                                            ^^^^^^^^^^^^^ span
             JSXExpression::new_empty_expression(Span::new(span.start + 1, span.end - 1), self)
         } else {
+            let expr_start = self.cur_start();
             let expr = JSXExpression::from(self.parse_expr());
-            // JSX expressions may not use the comma operator.
-            if matches!(expr, JSXExpression::SequenceExpression(_)) {
+            // JSX expressions may not use an unparenthesized comma operator.
+            if matches!(&expr, JSXExpression::SequenceExpression(sequence) if sequence.span.start == expr_start)
+            {
                 self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
                     expr.span(),
                 ));
