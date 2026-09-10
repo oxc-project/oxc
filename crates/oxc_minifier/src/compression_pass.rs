@@ -150,12 +150,9 @@ pub fn debug_assert_no_under_prune(
 /// flags are merely conservative and not checked; only the missing direction
 /// is unsafe.
 ///
-/// Locally-bound `eval` callees are exempt: `remove_sequence_expression`
-/// deliberately forms them (`var eval; (0, eval)()` -> `var eval; eval()` —
-/// `should_keep_indirect_access` only protects the *global* `eval`), banking on
-/// a local binding named `eval` not holding the real `eval`. Under that same
-/// assumption the missing flag is inert; a later refresh may still set it (the
-/// name-based collector), which is the allowed conservative direction.
+/// This guard checks global `eval` calls only. Local bindings named `eval` can
+/// also hold the built-in function, so transformations must preserve their
+/// indirect calls too.
 ///
 /// Allocation-free by design: asserts inline per call during the walk so the
 /// allocation-tracking task (debug assertions on) sees no sys-allocs. The walk

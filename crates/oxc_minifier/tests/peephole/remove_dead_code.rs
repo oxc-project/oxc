@@ -221,7 +221,7 @@ fn remove_unused_expressions_in_sequence() {
     test_same("(0, eval)();"); // this can be compressed to `eval?.()`
     test_same("(0, eval)``;"); // this can be compressed to `eval?.()`
     test_same("(0, eval)?.();"); // this can be compressed to `eval?.()`
-    test("var eval; (0, eval)();", "var eval; eval();");
+    test_same("var eval; (0, eval)();");
     test_same("(0, foo.bar)();");
     test_same("(0, foo.bar)``;");
     test_same("(0, foo.bar)?.();");

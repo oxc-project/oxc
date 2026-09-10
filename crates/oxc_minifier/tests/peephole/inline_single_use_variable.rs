@@ -31,7 +31,15 @@ fn test_keep_names(source_text: &str, expected: &str) {
 fn test_inline_single_use_variable_preserves_indirect_eval() {
     test(
         "function f(script) { const alias = eval; alias(script); }",
-        "function f(script) { let alias = eval; alias(script); }",
+        "function f(script) { (0, eval)(script); }",
+    );
+}
+
+#[test]
+fn test_inline_single_use_variable_preserves_local_indirect_eval() {
+    test_script(
+        "function f(eval, script, x) { const alias = eval; return [x, alias(script)]; }",
+        "function f(eval, script, x) { return [x, (0, eval)(script)]; }",
     );
 }
 
