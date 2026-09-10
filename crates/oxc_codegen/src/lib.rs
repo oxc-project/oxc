@@ -129,10 +129,6 @@ pub struct Codegen<'a> {
     /// Fast path for [CodegenOptions::single_quote]
     quote: Quote,
 
-    /// Set while printing the quasi of a `TaggedTemplateExpression`: its raw value is
-    /// observable by the tag, so [CodegenOptions::ascii_only] must not rewrite it.
-    pub(crate) in_tagged_template: bool,
-
     // Builders
     comments: CommentsMap,
     has_property_key_annotations: bool,
@@ -220,7 +216,6 @@ impl<'a> Codegen<'a> {
             is_jsx: false,
             indent: 0,
             quote: Quote::Double,
-            in_tagged_template: false,
             comments: CommentsMap::default(),
             has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
@@ -462,8 +457,8 @@ impl<'a> Codegen<'a> {
     /// [CodegenOptions::ascii_only]: a tag function (e.g. `String.raw`) can observe the raw
     /// text, which escaping would change.
     #[inline]
-    pub(crate) fn print_template_quasi_raw(&mut self, raw: &str) {
-        if !self.options.ascii_only || self.in_tagged_template || raw.is_ascii() {
+    pub(crate) fn print_template_quasi_raw(&mut self, raw: &str, tagged: bool) {
+        if !self.options.ascii_only || tagged || raw.is_ascii() {
             self.print_str_escaping_script_close_tag(raw);
         } else {
             self.print_non_ascii_escaped(raw, NonAsciiEscape::TemplateRaw);

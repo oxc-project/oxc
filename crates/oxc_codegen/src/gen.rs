@@ -2351,7 +2351,7 @@ impl GenExpr for ImportExpression<'_> {
 }
 
 impl Gen for TemplateLiteral<'_> {
-    fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.is_no_substitution_template() {
             p.print_property_key_annotation(self.span.start);
         }
@@ -2359,21 +2359,16 @@ impl Gen for TemplateLiteral<'_> {
         p.print_ascii_byte(b'`');
         debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
         let (first_quasi, remaining_quasis) = self.quasis.split_first().unwrap();
-        // The tag observes raw text; only the outermost quasis belong to it, nested
-        // templates inside `${}` are ordinary again.
-        let tagged = std::mem::take(&mut p.in_tagged_template);
-        p.in_tagged_template = tagged;
-        p.print_template_quasi_raw(first_quasi.value.raw.as_str());
-        p.in_tagged_template = false;
+        let tagged = ctx.contains(Context::TAGGED_TEMPLATE);
+        p.print_template_quasi_raw(first_quasi.value.raw.as_str(), tagged);
         for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
             p.print_leading_comments_before_expression(expr);
+            // Nested expressions start with an empty context, so they do not inherit the tag.
             p.print_expression(expr);
             p.print_ascii_byte(b'}');
             p.add_source_mapping(quasi.span);
-            p.in_tagged_template = tagged;
-            p.print_template_quasi_raw(quasi.value.raw.as_str());
-            p.in_tagged_template = false;
+            p.print_template_quasi_raw(quasi.value.raw.as_str(), tagged);
         }
         p.print_ascii_byte(b'`');
     }
@@ -2387,9 +2382,7 @@ impl GenExpr for TaggedTemplateExpression<'_> {
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }
-        p.in_tagged_template = true;
-        self.quasi.print(p, ctx);
-        p.in_tagged_template = false;
+        self.quasi.print(p, ctx | Context::TAGGED_TEMPLATE);
     }
 }
 
@@ -3656,7 +3649,7 @@ impl Gen for TSTemplateLiteralType<'_> {
                 types.print(p, ctx);
                 p.print_ascii_byte(b'}');
             }
-            p.print_template_quasi_raw(item.value.raw.as_str());
+            p.print_template_quasi_raw(item.value.raw.as_str(), false);
         }
         p.print_ascii_byte(b'`');
     }
@@ -4229,7 +4222,7 @@ impl Gen for TSEnumMember<'_> {
                 p.add_source_mapping(quasi.span);
 
                 p.print_str("[`");
-                p.print_template_quasi_raw(quasi.value.raw.as_str());
+                p.print_template_quasi_raw(quasi.value.raw.as_str(), false);
                 p.print_str("`]");
             }
         }
