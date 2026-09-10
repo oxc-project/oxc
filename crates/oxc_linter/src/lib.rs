@@ -106,8 +106,7 @@ pub use crate::{
     },
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{
-        DEFAULT_SUPPRESSIONS_FILE_NAME, DiffManager, OxlintSuppressionFileAction,
-        SuppressionManager, SuppressionTracking,
+        DiffManager, OxlintSuppressionFileAction, SuppressionManager, SuppressionTracking,
     },
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::{TsGoLintRun, TsGoLintState},

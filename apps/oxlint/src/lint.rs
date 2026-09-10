@@ -16,8 +16,7 @@ use oxc_diagnostics::{
     DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
 };
 use oxc_linter::{
-    AllowWarnDeny, ConfigBuilderError, ConfigStore, DEFAULT_SUPPRESSIONS_FILE_NAME, ExternalLinter,
-    ExternalPluginStore,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
     OxlintSuppressionFileAction, RuleTimingStore, SuppressionManager,
 };
@@ -25,6 +24,7 @@ use oxc_linter::{
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
+    DEFAULT_SUPPRESSIONS_FILE_NAME,
     cli::{CliRunResult, DebugOption, LintCommand, MiscOptions, WarningOptions},
     config_loader::{
         CliConfigLoadError, ConfigLoadError, ConfigLoader, LoadedConfigs, config_discovery,
