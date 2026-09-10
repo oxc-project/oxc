@@ -350,6 +350,14 @@ export type ResolvePluginsResult = {
 // packages under different config files.
 const USER_PLUGINS = new Map<string, Promise<Plugin>>();
 
+/**
+ * Callers must await these one at a time.
+ *
+ * A CommonJS plugin reaches Prettier through `require()` of an ES module, which
+ * fails outright while that module is still being instantiated by a concurrent
+ * `import()` from another plugin. Loading in parallel makes a mixed set of
+ * plugins fail depending on which won the race.
+ */
 function loadUserPlugin(base: string, specifier: string): Promise<Plugin> {
   const key = `${base}\u0000${specifier}`;
   let cached = USER_PLUGINS.get(key);
@@ -383,17 +391,19 @@ async function importUserPlugin(base: string, specifier: string): Promise<Plugin
 
 async function setupUserPlugins(options: Options): Promise<void> {
   const { base, specifiers } = options._userPlugins as UserPluginsParam;
-  const settled = await Promise.allSettled(specifiers.map((s) => loadUserPlugin(base, s)));
-
-  // One unloadable plugin must not stop the others. `resolvePlugins()` already
-  // reported the failure during init, and a file that needed the missing plugin
-  // has no parser and fails on its own terms.
-  const loaded = settled
-    .filter((result) => result.status === "fulfilled")
-    .map((result) => result.value);
 
   options.plugins ??= [];
-  options.plugins.push(...loaded);
+  for (const specifier of specifiers) {
+    try {
+      // Sequential on purpose, see `loadUserPlugin`.
+      // oxlint-disable-next-line no-await-in-loop
+      options.plugins.push(await loadUserPlugin(base, specifier));
+    } catch {
+      // One unloadable plugin must not stop the others. `resolvePlugins()` already
+      // reported the failure during init, and a file that needed the missing plugin
+      // has no parser and fails on its own terms.
+    }
+  }
 }
 
 /**
@@ -407,22 +417,25 @@ export async function resolvePlugins({
   base,
   specifiers,
 }: UserPluginsParam): Promise<ResolvePluginsResult> {
-  const settled = await Promise.allSettled(specifiers.map((s) => loadUserPlugin(base, s)));
-
   const languages: PluginLanguage[] = [];
   const failures: ResolvePluginsResult["failures"] = [];
   const withoutLanguages: string[] = [];
 
-  for (const [index, result] of settled.entries()) {
-    if (result.status === "rejected") {
+  for (const specifier of specifiers) {
+    let plugin;
+    try {
+      // Sequential on purpose, see `loadUserPlugin`.
+      // oxlint-disable-next-line no-await-in-loop
+      plugin = await loadUserPlugin(base, specifier);
+    } catch (error) {
       failures.push({
-        specifier: specifiers[index]!,
-        message: result.reason instanceof Error ? result.reason.message : String(result.reason),
+        specifier,
+        message: error instanceof Error ? error.message : String(error),
       });
       continue;
     }
     const before = languages.length;
-    for (const language of result.value.languages ?? []) {
+    for (const language of plugin.languages ?? []) {
       const parsers = language.parsers ?? [];
       if (parsers.length === 0) continue;
       languages.push({
@@ -435,7 +448,7 @@ export async function resolvePlugins({
       });
     }
     if (languages.length === before) {
-      withoutLanguages.push(specifiers[index]!);
+      withoutLanguages.push(specifier);
     }
   }
 

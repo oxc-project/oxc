@@ -1,1 +1,1 @@
-{ "plugins": ["./tiny-plugin.js"] }
+{ "plugins": ["./tiny-plugin.js", "./tiny-plugin.cjs"] }

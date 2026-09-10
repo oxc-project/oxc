@@ -135,11 +135,9 @@ mod test {
 
     #[test]
     fn routes_extensions_and_filenames() {
-        let languages =
-            PluginLanguages::new(vec![language("ember-template-tag", &["gjs", "gts"], &[])]);
+        let languages = PluginLanguages::new(vec![language("gherkin", &["feature"], &[])]);
 
-        assert_eq!(languages.parser_for("a.gjs", Some("gjs")), Some("ember-template-tag"));
-        assert_eq!(languages.parser_for("a.gts", Some("gts")), Some("ember-template-tag"));
+        assert_eq!(languages.parser_for("a.feature", Some("feature")), Some("gherkin"));
         assert_eq!(languages.parser_for("a.ts", Some("ts")), None);
         assert_eq!(languages.parser_for("a", None), None);
     }
