@@ -7,7 +7,6 @@ use oxc_language_server::{ClientMessage, ToolBuildResult};
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
     CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities, DiagnosticSeverity,
-    DiagnosticTag, MessageType,
 };
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
@@ -100,15 +99,10 @@ impl ServerLinterBuilder {
         let root_path = root_uri.to_file_path().unwrap();
         // Read the suppression-display option up front, before `options` is partially moved below.
         let suppressed_violation_severity = options.suppressed_violation_severity;
-        let mut client_messages = Vec::new();
         let suppressions = match WorkspaceSuppressions::new(root_path.to_path_buf()) {
             Ok(suppressions) => suppressions,
             Err(diagnostic) => {
                 warn!("{diagnostic}");
-                client_messages.push(ClientMessage {
-                    message: diagnostic.to_string(),
-                    r#type: MessageType::ERROR,
-                });
                 WorkspaceSuppressions::without_baseline(root_path.to_path_buf())
             }
         };
@@ -274,7 +268,7 @@ impl ServerLinterBuilder {
                 suppressions,
                 suppressed_violation_severity,
             ),
-            client_messages,
+            Vec::new(),
         )
     }
 }
@@ -1071,20 +1065,6 @@ mod tests_builder {
         let mut server_capabilities = ServerCapabilities::default();
         builder.server_capabilities(&mut server_capabilities, &mut capabilities);
         assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Push);
-    }
-
-    #[test]
-    fn test_malformed_suppression_file_returns_client_message() {
-        let root_dir = tempfile::tempdir().unwrap();
-        fs::write(root_dir.path().join(DEFAULT_SUPPRESSIONS_FILE_NAME), "{]").unwrap();
-        let root_uri = Uri::from_file_path(root_dir.path()).unwrap();
-
-        let (_linter, client_messages) =
-            ServerLinterBuilder::default().build(&root_uri, json!({}));
-
-        assert_eq!(client_messages.len(), 1);
-        assert_eq!(client_messages[0].r#type, MessageType::ERROR);
-        assert!(client_messages[0].message.contains("Failed to parse oxlint config"));
     }
 
     #[test]
