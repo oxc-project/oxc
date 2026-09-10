@@ -382,6 +382,34 @@ mod tests {
     }
 
     #[test]
+    fn finds_a_tag_inside_a_substitution() {
+        // A substitution is code, and content-tag accepts a tag there, so the scan has to
+        // see inside one. That is what the brace depth is for: without it the substitution
+        // cannot be delimited.
+        assert_eq!(
+            scan_text("const x = `${<template>y</template>}`;"),
+            [("<template>y</template>", "y")]
+        );
+    }
+
+    #[test]
+    fn ends_a_substitution_at_the_right_brace() {
+        // Braces belonging to the substitution's own code must not end it early, or the
+        // scan resumes literal mode mid-expression and loses its place.
+        for source in [
+            "const s = `${ {a:1} }`;\n<template>y</template>",
+            "const s = `${ `inner` }`;\n<template>y</template>",
+            "const s = `${ f({a:{b:1}}) }`;\n<template>y</template>",
+        ] {
+            assert_eq!(
+                scan_text(source),
+                [("<template>y</template>", "y")],
+                "should find exactly the trailing tag in: {source}"
+            );
+        }
+    }
+
+    #[test]
     fn finds_tags_after_template_literals() {
         // The substitution must hand control back so a later real tag is still found.
         let source = "const s = `${ a }`;\n<template>x</template>";
