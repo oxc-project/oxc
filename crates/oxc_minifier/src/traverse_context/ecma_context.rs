@@ -476,6 +476,17 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.record_ast_change();
     }
 
+    #[inline]
+    pub fn replace_statement_with(
+        &mut self,
+        slot: &mut Statement<'a>,
+        replacer: impl FnOnce(Statement<'a>, &mut Self) -> Statement<'a>,
+    ) {
+        let ctx = &mut *self;
+        slot.replace_with(|old| replacer(old, ctx));
+        self.state.record_ast_change();
+    }
+
     /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_assignment_target_property(
