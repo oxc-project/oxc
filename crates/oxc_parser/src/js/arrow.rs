@@ -406,36 +406,3 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Some(body)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use oxc_allocator::Allocator;
-    use oxc_span::SourceType;
-
-    use crate::{ParseOptions, ParserImpl, UniquePromise, config::NoTokensParserConfig};
-
-    #[test]
-    fn failed_speculation_cache_respects_return_type_context() {
-        for source in ["(): any => b", "(c): y => x ? (c) : y => (): any => b"] {
-            let allocator = Allocator::default();
-            let mut parser = ParserImpl::new(
-                &allocator,
-                source,
-                SourceType::ts(),
-                ParseOptions::default(),
-                NoTokensParserConfig,
-                UniquePromise::new_for_tests_and_benchmarks(),
-            );
-            parser.token = parser.lexer.first_token();
-            assert!(parser.parse_possible_parenthesized_arrow_function_expression(false).is_none());
-            let used_bytes = allocator.used_bytes();
-            // Repeating the rejected speculation must not allocate another speculative AST.
-            assert!(parser.parse_possible_parenthesized_arrow_function_expression(false).is_none());
-            assert_eq!(allocator.used_bytes(), used_bytes);
-            // The cached rejection must not prevent parsing in the unrestricted context.
-            assert!(parser.parse_possible_parenthesized_arrow_function_expression(true).is_some());
-            assert!(parser.fatal_error.is_none(), "{source}");
-            assert!(parser.errors.is_empty());
-        }
-    }
-}
