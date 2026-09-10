@@ -425,9 +425,9 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 /// Indexed by `escape as usize - 1` (where `escape` is not `Escape::__`).
 /// Must be in same order as discriminants in `Escape`.
 ///
-/// Function pointers are 8 bytes each, so `BYTE_HANDLERS` is 136 bytes in total.
-/// Aligned on 128, so first 16 occupy a pair of L1 cache lines.
-/// The last will be in separate cache line, but it should be vanishingly rare that it's accessed.
+/// On 64-bit targets, the 18 function pointer entries occupy 144 bytes before alignment padding.
+/// Aligned on 128, so the first 16 entries occupy a pair of 64-byte cache lines.
+/// The remaining two handlers process lossy replacement markers and Unicode escapes.
 static BYTE_HANDLERS: Aligned128<[ByteHandler; 18]> = Aligned128([
     print_null,
     print_bell,
