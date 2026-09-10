@@ -430,8 +430,12 @@ impl WorkspaceSuppressions {
 
         let tracking =
             SuppressionTracking::from_file(&suppression_file_path, workspace_root.as_path())?;
-        let manager =
-            Some(Arc::new(DiffManager::new(tracking.suppressions().clone(), true, false, false)));
+        let manager = Some(Arc::new(DiffManager::new(
+            Arc::clone(tracking.suppressions()),
+            true,
+            false,
+            false,
+        )));
 
         Ok(Self { workspace_root, manager })
     }
