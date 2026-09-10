@@ -314,10 +314,7 @@ mod test {
         assert_eq!(options.type_aware, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
-        assert_eq!(
-            options.suppressed_violation_severity,
-            SuppressedViolationSeverity::Info
-        );
+        assert_eq!(options.suppressed_violation_severity, SuppressedViolationSeverity::Info);
 
         assert!(options.rules_customization.is_some());
         let rules_customization = options.rules_customization.unwrap();
@@ -357,10 +354,7 @@ mod test {
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
         assert!(options.rules_customization.is_none());
-        assert_eq!(
-            options.suppressed_violation_severity,
-            SuppressedViolationSeverity::Warn
-        );
+        assert_eq!(options.suppressed_violation_severity, SuppressedViolationSeverity::Warn);
     }
 
     #[test]
