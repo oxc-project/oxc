@@ -15,6 +15,23 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub minify: bool,
 
+    /// Escape non-ASCII characters in string literals, untagged template literals, regular
+    /// expression literals and identifier names.
+    ///
+    /// Uses `\uXXXX` for characters up to U+FFFF and `\u{...}` for higher code points.
+    /// Regular expressions use escaped UTF-16 surrogate pairs for higher code points instead;
+    /// escaping changes the observable `RegExp.prototype.source` value.
+    ///
+    /// Code point escapes (`\u{...}`) require ES2015 or later; this option does not provide
+    /// ES5-compatible output.
+    ///
+    /// Non-ASCII characters are left unescaped in tagged template quasis (whose raw text is
+    /// observable), JSX names and text, JSX attribute strings, hashbangs and preserved comments.
+    /// JavaScript expressions inside tagged templates and JSX are escaped normally.
+    ///
+    /// Default is `false`.
+    pub ascii_only: bool,
+
     /// Print comments?
     ///
     /// At present, only some leading comments are preserved.
@@ -50,6 +67,7 @@ impl Default for CodegenOptions {
         Self {
             single_quote: false,
             minify: false,
+            ascii_only: false,
             comments: CommentOptions::default(),
             source_map_path: None,
             indent_char: IndentChar::default(),
@@ -65,6 +83,7 @@ impl CodegenOptions {
         Self {
             single_quote: false,
             minify: true,
+            ascii_only: false,
             comments: CommentOptions::disabled(),
             source_map_path: None,
             indent_char: IndentChar::default(),
