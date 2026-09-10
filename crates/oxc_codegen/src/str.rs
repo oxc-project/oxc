@@ -404,9 +404,9 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
     ])
 };
 
-/// As [`ESCAPES`], but bytes 0xC0-0xFF map to `Escape::UC`. This range includes every
-/// non-ASCII UTF-8 lead byte, so all non-ASCII characters are printed as `\u` escapes
-/// when `ascii_only` is enabled.
+/// As [`ESCAPES`], but all non-ASCII UTF-8 lead bytes trigger Unicode escaping.
+/// Keep `Escape::LO` for 0xEF so surrogate markers are decoded by the same handler
+/// in both modes.
 static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
     let mut table = ESCAPES.0;
     let mut i = 0xC0;
@@ -414,6 +414,7 @@ static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
         table[i] = Escape::UC;
         i += 1;
     }
+    table[0xEF] = Escape::LO;
     Aligned128(table)
 };
 
@@ -708,21 +709,25 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
         if next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
             // Get the 4 hex bytes
             let bytes = &mut state.bytes;
-            let hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
+            let mut hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
 
             if hex == *b"fffd" {
                 // Actual lossy replacement character.
-                // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                unsafe { state.consume_bytes_unchecked(3) };
-                state.flush(codegen);
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
-                // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
-                // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                unsafe { state.consume_bytes_unchecked(4) };
-                // Start next chunk after the 4 hex bytes
-                state.start_chunk();
-                return;
+                if !codegen.options.ascii_only {
+                    // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
+                    // SAFETY: 0xEF is always the start of a 3-byte Unicode character
+                    unsafe { state.consume_bytes_unchecked(3) };
+                    state.flush(codegen);
+                    // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
+                    // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
+                    // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
+                    unsafe { state.consume_bytes_unchecked(4) };
+                    // Start next chunk after the 4 hex bytes
+                    state.start_chunk();
+                    return;
+                }
+                // Match the uppercase hex digits used by `print_unicode_escape`.
+                hex = *b"FFFD";
             }
 
             // Flush text before the lossy replacement character
@@ -748,6 +753,12 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
     }
 
     // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
+    if codegen.options.ascii_only {
+        // SAFETY: 0xEF is a UTF-8 lead byte, as required by the Unicode escape handler.
+        unsafe { print_unicode_escaped(codegen, state) };
+        return;
+    }
+
     // Advance past the character.
     // SAFETY: 0xEF is always the start of a 3-byte Unicode character
     unsafe { state.consume_bytes_unchecked(3) };
@@ -757,30 +768,6 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
 // (or a `\u{...}` code point escape above the BMP).
 unsafe fn print_unicode_escaped(codegen: &mut Codegen, state: &mut PrintStringState) {
     debug_assert!(state.peek().is_some_and(|b| b >= 0xC0));
-
-    // Lone surrogates are encoded in `value` as `\u{FFFD}XXXX`; that handler already prints
-    // them as `\uXXXX`. Only a *real* U+FFFD (encoded `\u{FFFD}fffd`) needs escaping here.
-    if state.lone_surrogates && state.peek() == Some(0xEF) {
-        let rest = state.bytes.as_slice();
-        if rest.len() >= 7
-            && rest[1..3] == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES
-            && rest[3..7] != *b"fffd"
-        {
-            // SAFETY: next byte is 0xEF and `state.lone_surrogates` is set - exactly the
-            // preconditions of `print_lossy_replacement`.
-            unsafe { print_lossy_replacement(codegen, state) };
-            return;
-        }
-        if rest.len() >= 7 && rest[1..3] == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
-            // Real U+FFFD: flush, skip the 3-byte char plus its 4 hex marker bytes, escape.
-            state.flush(codegen);
-            // SAFETY: 3 bytes of U+FFFD followed by 4 ASCII hex bytes (checked by slice above).
-            unsafe { state.consume_bytes_unchecked(7) };
-            state.start_chunk();
-            codegen.print_unicode_escape('\u{FFFD}');
-            return;
-        }
-    }
 
     // Decode the character at the current position.
     // SAFETY: `bytes` is always positioned on a UTF-8 character boundary within a valid `&str`,
