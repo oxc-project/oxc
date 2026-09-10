@@ -6,7 +6,8 @@ use oxc_span::Span;
 use crate::cursor::ParserCheckpoint;
 
 pub struct ParserState<'a> {
-    pub not_parenthesized_arrow: FxHashSet<u32>,
+    /// Failed arrow speculations keyed by position and whether a return type is allowed.
+    pub not_parenthesized_arrow: FxHashSet<(u32, bool)>,
 
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.

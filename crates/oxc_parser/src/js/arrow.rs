@@ -352,8 +352,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
-        let pos = self.cur_token().start();
-        if self.state.not_parenthesized_arrow.contains(&pos) {
+        let key = (self.cur_token().start(), allow_return_type_in_arrow_function);
+        if self.state.not_parenthesized_arrow.contains(&key) {
             return None;
         }
 
@@ -361,7 +361,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let head = self.parse_parenthesized_arrow_function_head();
         if self.has_fatal_error() {
-            self.state.not_parenthesized_arrow.insert(pos);
+            self.state.not_parenthesized_arrow.insert(key);
             self.rewind(checkpoint);
             return None;
         }
@@ -395,14 +395,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             // A colon reached after a fatal body error does not validate the speculation.
             if self.has_fatal_error() || !self.at(Kind::Colon) {
-                // This rejection depends on the enclosing conditional, not the arrow head.
-                // An outer speculation can rewind and revisit this position where a return
-                // type is allowed, so do not cache it as a non-arrow.
+                // Cache this rejection only for the current return-type context. An outer
+                // speculation can rewind and revisit this position where a return type is allowed.
+                self.state.not_parenthesized_arrow.insert(key);
                 self.rewind(checkpoint);
                 return None;
             }
         }
 
         Some(body)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_span::SourceType;
+
+    use crate::{ParseOptions, ParserImpl, UniquePromise, config::NoTokensParserConfig};
+
+    #[test]
+    fn failed_speculation_cache_respects_return_type_context() {
+        for source in ["(): any => b", "(c): y => x ? (c) : y => (): any => b"] {
+            let allocator = Allocator::default();
+            let mut parser = ParserImpl::new(
+                &allocator,
+                source,
+                SourceType::ts(),
+                ParseOptions::default(),
+                NoTokensParserConfig,
+                UniquePromise::new_for_tests_and_benchmarks(),
+            );
+            parser.token = parser.lexer.first_token();
+            assert!(parser.parse_possible_parenthesized_arrow_function_expression(false).is_none());
+            let used_bytes = allocator.used_bytes();
+            // Repeating the rejected speculation must not allocate another speculative AST.
+            assert!(parser.parse_possible_parenthesized_arrow_function_expression(false).is_none());
+            assert_eq!(allocator.used_bytes(), used_bytes);
+            // The cached rejection must not prevent parsing in the unrestricted context.
+            assert!(parser.parse_possible_parenthesized_arrow_function_expression(true).is_some());
+            assert!(parser.fatal_error.is_none(), "{source}");
+            assert!(parser.errors.is_empty());
+        }
     }
 }
