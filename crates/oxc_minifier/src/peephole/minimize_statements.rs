@@ -631,8 +631,8 @@ impl<'a> PeepholeOptimizations {
                             Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
                         };
                         ctx.replace_statement(&mut if_stmt.consequent, consequent);
-                        let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
-                            .unwrap_or(Statement::IfStatement(if_stmt));
+                        let mut if_stmt = Statement::IfStatement(if_stmt);
+                        Self::try_minimize_if(&mut if_stmt, ctx);
                         ctx.notice_change();
                         Self::minimize_statement(if_stmt, stmts, result, ctx);
                         return;
