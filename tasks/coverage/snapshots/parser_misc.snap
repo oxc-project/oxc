@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 104/104 (100.00%)
-Positive Passed: 104/104 (100.00%)
-Negative Passed: 210/210 (100.00%)
+AST Parsed     : 105/105 (100.00%)
+Positive Passed: 105/105 (100.00%)
+Negative Passed: 214/214 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -381,6 +381,49 @@ Negative Passed: 210/210 (100.00%)
  2 │   constructor(): C;
    ·                  ─
  3 │   constructor() {}
+   ╰────
+
+  × Expected `)` but found `:`
+   ╭─[misc/fail/contextual-binding-lookahead-function-reserved.ts:1:15]
+ 1 │ let fn: (break: number) => void;
+   ·               ┬
+   ·               ╰── `)` expected
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:2:18]
+ 1 │ function* generatorInterface() {
+ 2 │   interface I { [yield: string]: unknown }
+   ·                  ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:5:14]
+ 4 │ function* generatorClass() {
+ 5 │   class C { [yield: string]: unknown }
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:8:14]
+ 7 │ async function asyncClass() {
+ 8 │   class C { [await: string]: unknown }
+   ·              ─────
+ 9 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-modifier.ts:1:23]
+ 1 │ interface I { [public await: string]: unknown }
+   ·                       ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-reserved.ts:1:16]
+ 1 │ interface I { [break: string]: unknown }
+   ·                ─────
    ╰────
 
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.

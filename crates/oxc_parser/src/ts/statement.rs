@@ -410,10 +410,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         if self.cur_kind().is_modifier_kind() {
             self.bump_any();
-            if self.cur_kind().is_identifier() {
+            if self.cur_kind().is_binding_identifier() {
                 return true;
             }
-        } else if !self.cur_kind().is_identifier() {
+        } else if !self.cur_kind().is_binding_identifier() {
             return false;
         } else {
             self.bump_any();

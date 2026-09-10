@@ -128,7 +128,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_modifiers(false, false);
         }
         let kind = self.cur_kind();
-        if kind.is_identifier() || kind == Kind::This {
+        if kind.is_binding_identifier() || kind == Kind::This {
             self.bump_any();
             return true;
         }
@@ -1603,6 +1603,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {
         let start = self.cur_start();
+        self.check_identifier(self.cur_kind(), self.ctx);
         let name = self.parse_identifier_name().name;
         if self.at(Kind::Question) {
             self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));
