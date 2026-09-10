@@ -97,9 +97,17 @@ struct StackEntry {
 enum StartTagInfo {
     Indent,
     Align(u8),
+    /// Prettier's string `align`
+    Prefix(&'static str),
     Dedent(DedentMode),
-    Group { id: Option<GroupId>, should_break: bool },
-    ConditionalContent { mode: PrintMode, group_id: Option<GroupId> },
+    Group {
+        id: Option<GroupId>,
+        should_break: bool,
+    },
+    ConditionalContent {
+        mode: PrintMode,
+        group_id: Option<GroupId>,
+    },
     IndentIfGroupBreaks(GroupId),
     Fill,
     Entry,
@@ -551,6 +559,7 @@ fn extract_start_tag_info(tag: &Tag) -> StartTagInfo {
     match tag {
         Tag::StartIndent => StartTagInfo::Indent,
         Tag::StartAlign(align) => StartTagInfo::Align(align.count().get()),
+        Tag::StartPrefix(prefix) => StartTagInfo::Prefix(prefix.text()),
         Tag::StartDedent(mode) => StartTagInfo::Dedent(*mode),
         Tag::StartGroup(group) => {
             StartTagInfo::Group { id: group.id(), should_break: !group.mode().is_flat() }
@@ -587,6 +596,9 @@ fn build_doc(start_info: Option<&StartTagInfo>, children: Vec<Value>) -> Value {
         }
         StartTagInfo::Align(count) => {
             json!({"type": "align", "n": *count, "contents": normalize_array(children)})
+        }
+        StartTagInfo::Prefix(prefix) => {
+            json!({"type": "align", "n": *prefix, "contents": normalize_array(children)})
         }
         StartTagInfo::MarkAsRoot => {
             // Prettier's `markAsRoot()` = `align({type: "root"}, ...)`
@@ -816,7 +828,7 @@ mod tests {
 
     use serde_json::{Value, json};
 
-    use oxc_formatter_core::{DedentMode, FormatElement, LineMode, Tag};
+    use oxc_formatter_core::{DedentMode, FormatElement, LineMode, Prefix, Tag};
 
     use super::{format_elements_to_prettier_doc, is_hard_line};
 
@@ -923,6 +935,16 @@ mod tests {
         // replacing it with a soft line could let the enclosing group flatten and lose the break.
         let doc = to_doc(&[A, HARD_NO_EXPAND, SOFT, A]);
         assert_eq!(count_hardlines(&doc), 1);
+    }
+
+    #[test]
+    fn prefix_align_is_a_string_align() {
+        let doc = to_doc(&[
+            FormatElement::Tag(Tag::StartPrefix(Prefix::new(&"> "))),
+            A,
+            FormatElement::Tag(Tag::EndPrefix),
+        ]);
+        assert_eq!(doc["doc"], json!({"type": "align", "n": "> ", "contents": "a"}));
     }
 
     #[test]

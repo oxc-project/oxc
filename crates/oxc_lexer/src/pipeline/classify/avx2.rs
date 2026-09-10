@@ -7,7 +7,7 @@ use crate::{
 
 use super::super::{
     IDENT, NUM, WS,
-    find::{load256, mm, veq},
+    chunk::{load256, mm, veq},
 };
 
 pub unsafe fn classify(

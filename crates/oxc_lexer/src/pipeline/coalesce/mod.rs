@@ -8,8 +8,8 @@ use crate::{
 use super::{
     NUM,
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    find::scan_number,
     regex_div::{gt_run_split, lt_run_split},
+    scan::scan_number,
 };
 
 mod keywords;
@@ -18,7 +18,6 @@ use keywords::kw_flush;
 
 pub unsafe fn coalesce(
     t: &Tables,
-    kw: &KwSet,
     src: *const u8,
     n: usize,
     st: *mut u64,
@@ -29,8 +28,10 @@ pub unsafe fn coalesce(
     kwinit: *const u64,
     kind: *mut u8,
     kwpos: *mut u32,
+    ts: bool,
     lanes: &mut Lanes,
 ) {
+    let kw = if ts { &t.kwts } else { &t.kwjs };
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;

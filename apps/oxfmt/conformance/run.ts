@@ -54,6 +54,8 @@ const NOTE_FILL_BREAK_POSITION =
   "fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position";
 const NOTE_MQ_OP_SPACING =
   "media-query operator spacing. See crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing";
+const NOTE_LESS_GUARD_WRAP =
+  "an over-width `when` guard breaks before `when` and after `,` as one unit (Prettier puts `when`, `and` and each condition on its own line). See crates/oxc_formatter_css/DIVERGENCES.md#less-guard-list-inline";
 const NOTE_EOL_LINE_COMMENT_WIDTH =
   "trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width";
 
@@ -266,6 +268,7 @@ const categories: Category[] = [
     sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {
+      "externals/ng-zorro-antd/components/style/mixins/customize.less": NOTE_LESS_GUARD_WRAP,
       "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_FILL_BREAK_POSITION,
       "externals/ng-zorro-antd/components/style/themes/default.less": [
         NOTE_FILL_BREAK_POSITION,

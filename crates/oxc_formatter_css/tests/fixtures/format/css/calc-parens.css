@@ -10,3 +10,8 @@
   height: calc((100% - (var(--slides-per-page) - 1) * var(--slide-gap)) / var(--slides-per-page));
   padding: calc(var(--wa-form-control-padding-block) - ((1lh - 1em) / 2)) var(--wa-form-control-padding-inline);
 }
+/* nested redundant pairs (the parser keeps every pair) */
+.b {
+  height: calc(50% + ((100% - 20px)));
+  min-height: calc(((10vh)) + calc((5vh)));
+}

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 98/98 (100.00%)
-Positive Passed: 98/98 (100.00%)
-Negative Passed: 201/201 (100.00%)
+AST Parsed     : 107/107 (100.00%)
+Positive Passed: 107/107 (100.00%)
+Negative Passed: 215/215 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -375,6 +375,57 @@ Negative Passed: 201/201 (100.00%)
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × TS(1093): Type annotation cannot appear on a constructor declaration.
+   ╭─[misc/fail/constructor-overload-return-type.ts:2:18]
+ 1 │ class C {
+ 2 │   constructor(): C;
+   ·                  ─
+ 3 │   constructor() {}
+   ╰────
+
+  × Expected `)` but found `:`
+   ╭─[misc/fail/contextual-binding-lookahead-function-reserved.ts:1:15]
+ 1 │ let fn: (break: number) => void;
+   ·               ┬
+   ·               ╰── `)` expected
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:2:18]
+ 1 │ function* generatorInterface() {
+ 2 │   interface I { [yield: string]: unknown }
+   ·                  ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:5:14]
+ 4 │ function* generatorClass() {
+ 5 │   class C { [yield: string]: unknown }
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:8:14]
+ 7 │ async function asyncClass() {
+ 8 │   class C { [await: string]: unknown }
+   ·              ─────
+ 9 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-modifier.ts:1:23]
+ 1 │ interface I { [public await: string]: unknown }
+   ·                       ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-reserved.ts:1:16]
+ 1 │ interface I { [break: string]: unknown }
+   ·                ─────
+   ╰────
+
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[misc/fail/continue-label-chain-non-iteration.js:1:1]
  1 │ a: b: {
@@ -442,6 +493,36 @@ Negative Passed: 201/201 (100.00%)
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:1:8]
+ 1 │ import s\u006furce wasm from "m";
+   ·        ───────────
+ 2 │ import d\u0065fer * as ns from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:2:8]
+ 1 │ import s\u006furce wasm from "m";
+ 2 │ import d\u0065fer * as ns from "m";
+   ·        ──────────
+ 3 │ import source fr\u006fm "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:3:15]
+ 2 │ import d\u0065fer * as ns from "m";
+ 3 │ import source fr\u006fm "m";
+   ·               ─────────
+ 4 │ import s\u006furce from from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:4:8]
+ 3 │ import source fr\u006fm "m";
+ 4 │ import s\u006furce from from "m";
+   ·        ───────────
+   ╰────
 
   × Keywords cannot contain escape characters
    ╭─[misc/fail/escaped-type-import.ts:1:8]
@@ -931,6 +1012,40 @@ Negative Passed: 201/201 (100.00%)
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:1:5]
+ 1 │ <A>{a, b}</A>;
+   ·     ────
+ 2 │ <A x={a, b} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:2:7]
+ 1 │ <A>{a, b}</A>;
+ 2 │ <A x={a, b} />;
+   ·       ────
+ 3 │ <A>{(a, b), c}</A>;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:3:5]
+ 2 │ <A x={a, b} />;
+ 3 │ <A>{(a, b), c}</A>;
+   ·     ─────────
+ 4 │ <A x={(a, b), c} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:4:7]
+ 3 │ <A>{(a, b), c}</A>;
+ 4 │ <A x={(a, b), c} />;
+   ·       ─────────
+   ╰────
+  help: Did you mean to write an array?
+
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:4:1]
  3 │ 
@@ -1028,15 +1143,6 @@ Negative Passed: 201/201 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-10503.ts:4:6]
- 3 │ 
- 4 │ await using
-   ·      ▲
- 5 │ foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]
@@ -4727,6 +4833,62 @@ Negative Passed: 201/201 (100.00%)
  1 │ interface I { f(this: T x: T): void }
    ·                         ┬
    ·                         ╰── `,` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-abstract-constructor-type-colon-separator.ts:1:26]
+ 1 │ type F = abstract new () : number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-abstract-constructor-type-missing-separator.ts:1:27]
+ 1 │ type F = abstract new ()  number;
+   ·                           ───┬──
+   ·                              ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-abstract-constructor-type-plus-separator.ts:1:26]
+ 1 │ type F = abstract new () + number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-constructor-type-colon-separator.ts:1:17]
+ 1 │ type F = new () : number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-constructor-type-missing-separator.ts:1:18]
+ 1 │ type F = new ()  number;
+   ·                  ───┬──
+   ·                     ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-constructor-type-plus-separator.ts:1:17]
+ 1 │ type F = new () + number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-function-type-colon-separator.ts:1:13]
+ 1 │ type F = () : number;
+   ·             ┬
+   ·             ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-function-type-plus-separator.ts:1:13]
+ 1 │ type F = () + number;
+   ·             ┬
+   ·             ╰── `=>` expected
    ╰────
 
   × TS(1009): Trailing comma not allowed.

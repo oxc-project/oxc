@@ -1,9 +1,10 @@
 //! Less-specific printing: variable declarations, mixins, lookups, guards.
 
 use oxc_css_parser::ast::{
-    ComponentValue, LessCondition, LessConditionalQualifiedRule, LessDetachedRuleset, LessExtend,
-    LessExtendList, LessExtendRule, LessMixinArgument, LessMixinCall, LessMixinDefinition,
-    LessMixinName, LessNamespaceValue, LessNamespaceValueCallee, LessVariableDeclaration,
+    ComponentValue, LessCondition, LessConditionalQualifiedRule, LessConditions,
+    LessDetachedRuleset, LessExtend, LessExtendList, LessExtendRule, LessMixinArgument,
+    LessMixinCall, LessMixinDefinition, LessMixinName, LessNamespaceValue,
+    LessNamespaceValueCallee, LessVariableDeclaration,
 };
 use oxc_formatter_core::{
     Buffer,
@@ -18,7 +19,7 @@ use crate::{
     comments::{BlockCommentAfter, FormatCommentBeforeContent},
     format::to_span,
     print::{
-        CssFormatter, format_with,
+        CssFormatter, format_with, has_comments_between, is_glued,
         scss::write_top_level_list_element,
         selector,
         statement::{write_block, write_terminator_tail_comments, write_verbatim_prelude_rule},
@@ -100,30 +101,73 @@ fn write_mixin_name<'a>(name: &LessMixinName<'a>, f: &mut CssFormatter<'_, 'a>) 
     write!(f, text(source.text_for(&span)));
 }
 
-/// `.mixin(@params...) when (guard) { ... }`:
-/// Prettier hands the whole prelude to postcss-selector-parser (`css-rule` selector)
-/// and prints it raw apart from number/string adjustments,
-/// so parameter spacing, a space before `(`, trailing `;` separators and multi-line layouts all survive.
-///
-/// NOTE: `oxc-css-parser` gives us a structured `LessMixinDefinition` (name + params + guard),
-/// so we COULD print this structurally and break long parameter lists on width.
+/// `.mixin(@params...) when (guard) { ... }`.
+/// Prettier reads the prelude with postcss-selector-parser: the name and `when` are words joined by one space,
+/// the parameter list is a token printed raw apart from number/string adjustments
+/// (its spacing, `;` separators and line breaks survive), and any comment makes it verbatim.
+/// `LessMixinParameters` is structured, so the parameters COULD break on width instead.
 pub(super) fn write_less_mixin_definition<'a>(
     def: &LessMixinDefinition<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    write_verbatim_prelude_rule(to_span(def.name.span()).start, &def.block, true, f);
+    let start = to_span(def.name.span()).start;
+    if has_comments_between(start, to_span(&def.block.span).start, f) {
+        write_verbatim_prelude_rule(start, &def.block, true, f);
+        return;
+    }
+
+    // The prelude breaks like a selector: at its word gaps, all at once, one indent in
+    let prelude = format_with(|f: &mut CssFormatter<'_, 'a>| {
+        write_mixin_name(&def.name, f);
+        if !is_glued(def.name.span(), &def.params.span) {
+            write!(f, soft_line_break_or_space());
+        }
+        let source = f.context().source_text();
+        value::write_adjusted_verbatim(source.text_for(&to_span(&def.params.span)), f);
+        if let Some(guard) = &def.guard {
+            write_less_guard(guard, f);
+        }
+    });
+    write!(f, [group(&indent(&prelude)), space()]);
+    write_block(&def.block, f);
 }
 
-/// `selector when (guard) { ... }` — a `css-rule` in Prettier: raw selector
-/// text (guard included), block, and NO trailing `;`.
-///
-/// NOTE: `oxc-css-parser` structures the selector and the `when` guard,
-/// but we keep the raw source for Prettier alignment.
+/// `selector when (guard) { ... }` — a `css-rule` in Prettier: the selector list,
+/// the guard, the block, and NO trailing `;`.
+/// Same verbatim bail-out on comments as a mixin definition.
 pub(super) fn write_less_conditional_qualified_rule<'a>(
     rule: &LessConditionalQualifiedRule<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    write_verbatim_prelude_rule(to_span(&rule.span).start, &rule.block, true, f);
+    let start = to_span(&rule.span).start;
+    if has_comments_between(start, to_span(&rule.block.span).start, f) {
+        write_verbatim_prelude_rule(start, &rule.block, true, f);
+        return;
+    }
+
+    let prelude = format_with(|f: &mut CssFormatter<'_, 'a>| {
+        selector::write_selector_list(&rule.selector, selector::SelectorListStyle::Hard, f);
+        write_less_guard(&rule.guard, f);
+    });
+    write!(f, [group(&indent(&prelude)), space()]);
+    write_block(&rule.block, f);
+}
+
+/// ` when <cond>, <cond>`: each condition raw apart from number/string adjustments (Prettier's paren token),
+/// the alternatives inline. Over the width the enclosing group breaks before `when` and after each `,`,
+/// never inside `when <cond>` (see DIVERGENCES.md "less-guard-list-inline").
+/// A `when(` glued to its condition stays glued (one selector word to Prettier).
+fn write_less_guard<'a>(guard: &LessConditions<'a>, f: &mut CssFormatter<'_, 'a>) {
+    let source = f.context().source_text();
+    write!(f, [soft_line_break_or_space(), "when"]);
+    for (i, condition) in guard.conditions.iter().enumerate() {
+        if i > 0 {
+            write!(f, [",", soft_line_break_or_space()]);
+        } else if !is_glued(&guard.when_span, condition.span()) {
+            write!(f, space());
+        }
+        value::write_adjusted_verbatim(source.text_for(&to_span(condition.span())), f);
+    }
 }
 
 /// Statement-position `.mixin(args);` — a `mixin` at-rule in Prettier, whose

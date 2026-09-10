@@ -894,10 +894,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // class Foo { constructor(this: number) {} }
             self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
-        if method.value.body.is_some()
-            && let Some(return_type) = &method.value.return_type
-        {
-            self.error(diagnostics::constructor_return_type(return_type.span));
+        if let Some(return_type) = &method.value.return_type {
+            self.error(diagnostics::constructor_return_type(return_type.type_annotation.span()));
         }
     }
 }

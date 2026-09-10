@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A lookup glues to what it reads from (see DIVERGENCES.md "less-lookup-glue")
+@prop-name: my-prop;
+.a {
+  value: #namespace[$@prop-name];
+  width: .add(10px, 10px)[];
+}
+@media #ns.breakpoint(.valToGet[])[@max] {
+  a {
+    b: c;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A lookup glues to what it reads from (see DIVERGENCES.md "less-lookup-glue")
+@prop-name: my-prop;
+.a {
+  value: #namespace[$@prop-name];
+  width: .add(10px, 10px)[];
+}
+@media #ns.breakpoint(.valToGet[])[@max] {
+  a {
+    b: c;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A lookup glues to what it reads from (see DIVERGENCES.md "less-lookup-glue")
+@prop-name: my-prop;
+.a {
+  value: #namespace[$@prop-name];
+  width: .add(10px, 10px)[];
+}
+@media #ns.breakpoint(.valToGet[])[@max] {
+  a {
+    b: c;
+  }
+}
+
+===================== End =====================

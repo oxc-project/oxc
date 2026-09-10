@@ -23,8 +23,8 @@ use oxc_formatter::{
     format_program, parse_for_format,
 };
 use oxc_formatter_core::LineWidth;
-use oxc_formatter_tests::conformance::print_text_diff;
 use oxc_span::SourceType;
+use oxc_tasks_common::print_text_diff;
 
 fn fixtures_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests").join("jsdoc").join("fixtures")

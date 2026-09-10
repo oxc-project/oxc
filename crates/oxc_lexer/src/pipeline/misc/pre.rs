@@ -3,7 +3,8 @@ use crate::{error::diag_code, lanes::Lanes, tables::is_id_start};
 use super::super::{
     IDENT_ESC, PRIV_IDENT, PRIV_IDENT_ESC, WS,
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
-    find::{scan_ident_esc, unicode_ws_len},
+    find::unicode_ws_len,
+    scan::scan_ident_esc,
 };
 
 #[inline]

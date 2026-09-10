@@ -187,8 +187,8 @@ pub enum TSEnumMemberName<'a> {
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetNodeId, GetSpan, GetSpanMut, UnstableAddress)]
 pub struct TSTypeAnnotation<'a> {
-    /// starts at the `:` token and ends at the end of the type annotation
     pub node_id: Cell<NodeId>,
+    /// Starts at the `:` token and ends at the end of the type annotation.
     pub span: Span,
     /// The actual type in the annotation
     pub type_annotation: TSType<'a>,

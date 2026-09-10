@@ -19,9 +19,9 @@ use crate::{
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-    EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign, StartConditionalContent,
-    StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
-    StartLabelled, StartLineSuffix,
+    EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndPrefix, StartAlign,
+    StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
+    StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartPrefix,
 };
 
 // ---------------------------------------------------------------------------
@@ -471,6 +471,13 @@ impl<C> std::fmt::Debug for FormatLabelled<'_, '_, C> {
 // ---------------------------------------------------------------------------
 
 /// Adds a level of indentation to the given content.
+///
+/// Indention is a property of the LINE BREAK, not of the content:
+/// every line break taken inside `content` starts its line one level deeper, whatever is printed on that line.
+/// So `[indent([a, hard_line_break()]), b]` indents `b`, and `[hard_line_break(), indent([b])]` does not indent `b`'s first line.
+/// Place the break in the scope whose indention the next line should take (the same holds for `align` and `prefix_align`).
+/// This is what lets `group(indent(line))` followed by an opaque `rhs` indent only the first line of `rhs`;
+/// a content-scoped rule (Biome re-syncs the pending indention at `EndAlign`) cannot express that, so it is not adopted.
 #[inline]
 pub fn indent<'a, 'ast, C, Content>(content: &'a Content) -> Indent<'a, 'ast, C>
 where
@@ -590,6 +597,8 @@ impl<C> std::fmt::Debug for Dedent<'_, '_, C> {
 
 /// Aligns its content by indenting the content by `count` spaces.
 ///
+/// Like [indent], this applies to the line breaks taken inside `content`, not to the content itself.
+///
 /// A `count` of `0` writes the content as-is:
 /// no align frame is pushed, so it neither measures nor turns into a tab when the indent style is tabs.
 /// `count` is often computed (a column difference, the indent width, which may be `0`),
@@ -623,6 +632,62 @@ impl<C> std::fmt::Debug for Align<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Align")
             .field("count", &self.count)
+            .field("content", &"{{content}}")
+            .finish()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PrefixAlign
+// ---------------------------------------------------------------------------
+
+/// Prints `prefix` after the indention on every line break inside `content`.
+///
+/// Prettier's `align("> ", doc)`: a markdown blockquote, a JSDoc `* `.
+/// `prefix_align(&"> ", &body)`: see [tag::Prefix] for the double reference.
+///
+/// Like [indent], this applies to the line breaks taken inside `content`:
+/// a break as the last element puts the prefix before whatever follows the tag,
+/// and a blank line meant to END the prefixed block has to sit outside the tag
+/// (`[prefix_align(&"> ", ..), empty_line(), b]`, not inside it).
+/// Inside the prefix, `indent` / `align` add to the right of it,
+/// so `prefix_align(&"> ", indent(..))` prints `>   x`
+/// while `align(2, prefix_align(&"> ", ..))` prints `  > x`.
+/// A blank line inside prints the prefixes up to the last one with its trailing whitespace trimmed (`>`),
+/// as Prettier's end-of-line trimming leaves them.
+#[inline]
+pub fn prefix_align<'a, 'ast, C, Content>(
+    prefix: &'static &'static str,
+    content: &'a Content,
+) -> PrefixAlign<'a, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    debug_assert!(
+        !prefix.trim().is_empty() && !prefix.contains(['\n', '\t']),
+        "a prefix is a visible token on its line (spaces alone are `align`)"
+    );
+    PrefixAlign { prefix, content: Argument::new(content) }
+}
+
+#[derive(Copy, Clone)]
+pub struct PrefixAlign<'a, 'ast, C> {
+    prefix: &'static &'static str,
+    content: Argument<'a, 'ast, C>,
+}
+
+impl<'ast, C> Format<'ast, C> for PrefixAlign<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
+        f.write_element(FormatElement::Tag(StartPrefix(tag::Prefix(self.prefix))));
+        Arguments::from(&self.content).fmt(f);
+        f.write_element(FormatElement::Tag(EndPrefix));
+    }
+}
+
+impl<C> std::fmt::Debug for PrefixAlign<'_, '_, C> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PrefixAlign")
+            .field("prefix", &self.prefix)
             .field("content", &"{{content}}")
             .finish()
     }

@@ -174,9 +174,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else if token_after_import.kind() == Kind::Source {
             if self.cur_kind().is_binding_identifier() {
                 // `import source something ...`
-                let kind = self.cur_kind();
+                let token = self.cur_token();
                 let identifier_after_source = self.parse_binding_identifier();
-                if kind == Kind::From {
+                if token.kind() == Kind::From {
                     // `import source from ...`
                     if self.at(Kind::From) {
                         // `import source from from ...`
@@ -185,6 +185,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         has_default_specifier = true;
                     } else if self.at(Kind::Str) {
                         // `import source from 'source'`
+                        if token.escaped() {
+                            self.error(diagnostics::escaped_keyword(token.span()));
+                        }
                         has_default_specifier = true;
                         should_parse_specifiers = false;
                     }
@@ -211,6 +214,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 has_default_specifier = false;
             }
             // else: `import source from 'source'` - source is the binding name, no phase
+        }
+
+        // The first identifier is a keyword only after resolving the import phase.
+        if phase.is_some() && token_after_import.escaped() {
+            self.error(diagnostics::escaped_keyword(token_after_import.span()));
         }
 
         let specifiers = if self.at(Kind::Str) {

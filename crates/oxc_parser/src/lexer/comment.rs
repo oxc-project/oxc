@@ -82,9 +82,8 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
-        // If `is_on_new_line` is already set, go directly to faster search which only looks for `*/`
         // We need to identify if comment contains line breaks or not
-        // (`CommentKind::Block` or `CommentKind::MultilineBlock`).
+        // (`CommentKind::SingleLineBlock` or `CommentKind::MultiLineBlock`).
         // So we have to use the loop below for the first line of the comment even if
         // `Token`'s `is_on_new_line` flag is already set.
         // If the loop finds a line break before end of the comment, we then switch to
@@ -126,10 +125,11 @@ impl<'a, C: Config> Lexer<'a, C> {
                     if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                         // Irregular line break
                         self.token.set_is_on_new_line(true);
-                        // Ideally we'd go on to `skip_multi_line_comment_after_line_break` here,
-                        // but irregular line breaks are rare anyway.
+                        // SAFETY: Consuming this 3-byte UTF-8 char leaves a UTF-8 char boundary.
+                        let after_line_break = unsafe { pos.add(3) };
+                        return self.skip_multi_line_comment_after_line_break(after_line_break);
                     }
-                    // Either way, continue searching.
+                    // Some other Unicode char beginning with `0xE2`.
                     // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
                     // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                     // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.

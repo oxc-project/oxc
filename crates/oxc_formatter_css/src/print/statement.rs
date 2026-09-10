@@ -20,7 +20,8 @@ use crate::{
     },
     format::to_span,
     print::{
-        CssFormatter, at_rule, format_with, less, postcss_simple_vars, scss, selector,
+        CssFormatter, at_rule, format_with, has_comments_between, less, postcss_simple_vars, scss,
+        selector,
         value::{self, ValueContext},
         write_maybe_lowercase,
     },
@@ -283,9 +284,7 @@ fn write_qualified_rule<'a>(rule: &QualifiedRule<'a>, f: &mut CssFormatter<'_, '
     // Comments inside the selector (both `//` and `/* */`) make Prettier print the raw selector verbatim (`selector-unknown`).
     // Reordering them would change which compound they annotate.
     // A trailing `//` comment pushes `{` to the next line.
-    let has_inline_comment =
-        f.context().comments().iter_before(block_start).any(|c| c.span.start >= sel_span.start);
-    if has_inline_comment {
+    if has_comments_between(sel_span.start, block_start, f) {
         write_verbatim_prelude_rule(sel_span.start, &rule.block, false, f);
         return;
     }

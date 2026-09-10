@@ -269,7 +269,7 @@ fn test() {
                 }
             }",
         "class MyError extends Error {
-                constructor(): void;
+                constructor();
                 static {
                     Error.captureStackTrace(this, MyError)
                     function foo() {

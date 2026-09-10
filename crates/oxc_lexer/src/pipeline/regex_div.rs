@@ -5,7 +5,8 @@ use crate::tables::{Tables, is_digit, is_glue_join, is_id_start, is_word, is_ws}
 use crate::token::{KW_BASE, KW_MAX, TokenKind};
 
 use super::bitmap::{bm_get, bm_next0, bm_next1, bm_prev1};
-use super::find::{find_line_terminator, scan_block_comment, scan_number, unicode_ws_len};
+use super::find::{find_line_terminator, unicode_ws_len};
+use super::scan::{scan_block_comment, scan_number};
 use super::{
     BCOM, BIGINT, HASHBANG, IDENT, IDENT_ESC, JEND, JSX_LT, JTEXT, LCOM, NUM, PRIV_IDENT,
     PRIV_IDENT_ESC, REGEX, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS,
