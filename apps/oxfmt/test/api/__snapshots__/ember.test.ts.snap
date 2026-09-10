@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Ember Template Tag support > Basic > should format \`.gjs\` with \`ember: {}\` (defaults) 1`] = `
+exports[`Ember Template Tag support > Basic > should format \`.gjs\` with \`ember: true\` 1`] = `
 "import Component from "@glimmer/component";
 export default class Foo extends Component {
   <template>

@@ -3,7 +3,7 @@
     {
       "files": ["**/*.md"],
       "options": {
-        "ember": {}
+        "ember": true
       }
     }
   ]

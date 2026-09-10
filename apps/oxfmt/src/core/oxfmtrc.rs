@@ -290,15 +290,15 @@ pub struct FormatConfig {
 
     /// Format Ember `.gjs`/`.gts` files.
     ///
-    /// Pass `true` or an object to enable them, or `false` (handy in overrides) / omit to
-    /// disable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+    /// Pass `true` to enable them, or `false` (handy in overrides) / omit to disable.
+    /// The JavaScript is formatted by Oxfmt itself, so `sortImports`,
     /// `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
     /// formatted as Handlebars.
     ///
     /// - Languages: Ember Template Tag
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub ember: Option<EmberUserConfig>,
+    pub ember: Option<bool>,
 }
 
 impl FormatConfig {
@@ -319,13 +319,11 @@ impl FormatConfig {
     }
 
     /// Whether `ember` is enabled by this config.
-    ///
-    /// Enabled when set to `true` or an object; disabled when unset or `false`.
     pub fn is_ember_enabled(&self) -> bool {
-        matches!(self.ember, Some(EmberUserConfig::Bool(true) | EmberUserConfig::Object(_)))
+        self.ember == Some(true)
     }
 
-    /// Whether the opt-in named by a [`crate::core::hosted`] registry row is enabled.
+    /// Whether the opt-in named by a `core::hosted` registry row is enabled.
     ///
     /// Every hosted format gates on its own key, so the registry stays the only place that
     /// knows which key belongs to which extension.
@@ -975,32 +973,6 @@ pub struct SvelteConfig {
 }
 
 // ---
-
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(untagged)]
-pub enum EmberUserConfig {
-    Bool(bool),
-    Object(EmberConfig),
-}
-
-impl EmberUserConfig {
-    pub fn into_config(self) -> Option<EmberConfig> {
-        match self {
-            Self::Bool(true) => Some(EmberConfig::default()),
-            Self::Bool(false) => None,
-            Self::Object(config) => Some(config),
-        }
-    }
-}
-
-/// Reserved for per-format options; none are supported yet, so `ember: {}` and
-/// `ember: true` mean the same thing.
-// Kept as a struct, not dropped to a bare bool, so a later option is an addition rather
-// than a config break. The braces are what let serde accept `{}`.
-#[expect(clippy::empty_structs_with_brackets, reason = "serde needs the object form")]
-#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct EmberConfig {}
 
 // ---
 

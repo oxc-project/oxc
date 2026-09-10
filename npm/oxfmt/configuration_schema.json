@@ -33,13 +33,9 @@
       "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
     },
     "ember": {
-      "description": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` or an object to enable them, or `false` (handy in overrides) / omit to\ndisable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled",
-      "allOf": [
-        {
-          "$ref": "#/definitions/EmberUserConfig"
-        }
-      ],
-      "markdownDescription": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` or an object to enable them, or `false` (handy in overrides) / omit to\ndisable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled"
+      "description": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` to enable them, or `false` (handy in overrides) / omit to disable.\nThe JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled",
+      "type": "boolean",
+      "markdownDescription": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` to enable them, or `false` (handy in overrides) / omit to disable.\nThe JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled"
     },
     "endOfLine": {
       "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -277,21 +273,6 @@
         "off"
       ]
     },
-    "EmberConfig": {
-      "description": "Reserved for per-format options; none are supported yet, so `ember: {}` and\n`ember: true` mean the same thing.",
-      "type": "object",
-      "markdownDescription": "Reserved for per-format options; none are supported yet, so `ember: {}` and\n`ember: true` mean the same thing."
-    },
-    "EmberUserConfig": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "$ref": "#/definitions/EmberConfig"
-        }
-      ]
-    },
     "EndOfLineConfig": {
       "type": "string",
       "enum": [
@@ -332,13 +313,9 @@
           "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\n- Languages: JS, JSX, TS, TSX, HTML, Vue, Angular, Svelte, Markdown, MDX (languages with embedded code)\n- Default: `\"auto\"`"
         },
         "ember": {
-          "description": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` or an object to enable them, or `false` (handy in overrides) / omit to\ndisable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled",
-          "allOf": [
-            {
-              "$ref": "#/definitions/EmberUserConfig"
-            }
-          ],
-          "markdownDescription": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` or an object to enable them, or `false` (handy in overrides) / omit to\ndisable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled"
+          "description": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` to enable them, or `false` (handy in overrides) / omit to disable.\nThe JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled",
+          "type": "boolean",
+          "markdownDescription": "Format Ember `.gjs`/`.gts` files.\n\nPass `true` to enable them, or `false` (handy in overrides) / omit to disable.\nThe JavaScript is formatted by Oxfmt itself, so `sortImports`,\n`oxfmt-ignore` and the rest apply inside these files; each `<template>` body is\nformatted as Handlebars.\n\n- Languages: Ember Template Tag\n- Default: Disabled"
         },
         "endOfLine": {
           "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",

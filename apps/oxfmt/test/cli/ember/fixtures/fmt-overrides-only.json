@@ -3,7 +3,7 @@
     {
       "files": ["**/*.gjs", "**/*.gts"],
       "options": {
-        "ember": {}
+        "ember": true
       }
     }
   ]

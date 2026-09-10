@@ -3,7 +3,7 @@ import { format } from "../../dist/index.js";
 
 describe("Ember Template Tag support", () => {
   describe("Basic", () => {
-    it("should format `.gjs` with `ember: {}` (defaults)", async () => {
+    it("should format `.gjs` with `ember: true`", async () => {
       const input = `import Component from '@glimmer/component';
 export default class Foo extends Component {
 <template>
@@ -11,12 +11,12 @@ export default class Foo extends Component {
 </template>
 }
 `;
-      const result = await format("Foo.gjs", input, { ember: {} });
+      const result = await format("Foo.gjs", input, { ember: true });
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toMatchSnapshot();
     });
 
-    it("should format `.gjs` with `ember: true`, equivalently to `ember: {}`", async () => {
+    it("should be idempotent", async () => {
       const input = `import Component from '@glimmer/component';
 export default class Foo extends Component {
 <template>
@@ -24,12 +24,11 @@ export default class Foo extends Component {
 </template>
 }
 `;
-      const trueResult = await format("Foo.gjs", input, { ember: true });
-      const objectResult = await format("Foo.gjs", input, { ember: {} });
-      expect(trueResult.errors).toStrictEqual([]);
-      expect(objectResult.errors).toStrictEqual([]);
-      // `ember: true` should produce the same output as `ember: {}`
-      expect(trueResult.code).toBe(objectResult.code);
+      const once = await format("Foo.gjs", input, { ember: true });
+      const twice = await format("Foo.gjs", once.code, { ember: true });
+      expect(once.errors).toStrictEqual([]);
+      expect(twice.errors).toStrictEqual([]);
+      expect(twice.code).toBe(once.code);
     });
 
     it("should format `.gts` including TypeScript syntax", async () => {
@@ -41,7 +40,7 @@ export default class Bar extends Component<Signature> {
 </template>
 }
 `;
-      const result = await format("Bar.gts", input, { ember: {} });
+      const result = await format("Bar.gts", input, { ember: true });
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toMatchSnapshot();
     });
@@ -102,7 +101,7 @@ export default class Bar extends Component<Signature> {
 </template>
 `;
       const result = await format("Foo.gjs", input, {
-        ember: {},
+        ember: true,
         sortTailwindcss: {},
       });
       expect(result.errors).toStrictEqual([]);
@@ -118,7 +117,7 @@ export default class Bar extends Component<Signature> {
       <div    >keep</div>
 </template>
 `;
-      const result = await format("Foo.gjs", input, { ember: {} });
+      const result = await format("Foo.gjs", input, { ember: true });
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toMatchSnapshot();
     });
@@ -129,7 +128,7 @@ export default class Bar extends Component<Signature> {
       const input = `const y={c:3,d:4};
 <template>x</template>
 `;
-      const result = await format("Foo.gjs", input, { ember: {} });
+      const result = await format("Foo.gjs", input, { ember: true });
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toContain("const y = { c: 3, d: 4 };");
       expect(result.code).toMatchSnapshot();
@@ -141,7 +140,7 @@ import { a } from "ant";
 <template>x</template>
 `;
       const result = await format("Foo.gjs", input, {
-        ember: {},
+        ember: true,
         sortImports: { order: "asc" },
       });
       expect(result.errors).toStrictEqual([]);
@@ -156,7 +155,7 @@ import { a } from "ant";
   <template>x</template>
 }
 `;
-      const result = await format("Foo.gjs", input, { ember: {} });
+      const result = await format("Foo.gjs", input, { ember: true });
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toContain("x   =   { a:1,b:2 };");
       expect(result.code).toContain("y = { c: 3, d: 4 };");
@@ -165,7 +164,7 @@ import { a } from "ant";
     it("should leave a tag inside a string alone", async () => {
       const input = `const s   =   "<template>x</template>";
 `;
-      const result = await format("Foo.gjs", input, { ember: {} });
+      const result = await format("Foo.gjs", input, { ember: true });
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toBe(`const s = "<template>x</template>";
 `);
