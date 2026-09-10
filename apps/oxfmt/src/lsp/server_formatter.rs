@@ -385,6 +385,9 @@ impl ServerFormatter {
                 for failure in &resolved.failures {
                     warn!("Failed to load plugin `{}`: {}", failure.specifier, failure.message);
                 }
+                for specifier in &resolved.without_languages {
+                    warn!("Plugin `{specifier}` declares no file types, so it has no effect");
+                }
                 PluginLanguages::new(resolved.languages)
             }
             Err(err) => {

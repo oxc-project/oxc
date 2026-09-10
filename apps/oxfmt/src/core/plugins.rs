@@ -39,6 +39,8 @@ pub struct PluginFailure {
 pub struct ResolvedPlugins {
     pub languages: Vec<PluginLanguage>,
     pub failures: Vec<PluginFailure>,
+    /// Plugins that loaded but declared no file type, so nothing routes to them.
+    pub without_languages: Vec<String>,
 }
 
 /// The plugins named by a config, ready to be sent to the JS side.

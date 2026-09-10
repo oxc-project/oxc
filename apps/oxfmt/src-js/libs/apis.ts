@@ -337,6 +337,13 @@ export type ResolvePluginsResult = {
   languages: PluginLanguage[];
   /** Specifiers that could not be loaded, so the caller can report them once. */
   failures: { specifier: string; message: string }[];
+  /**
+   * Specifiers that loaded but declared no file type.
+   *
+   * Such a plugin only overrides parsers oxfmt already owns, so nothing routes
+   * to it. Reported so the caller can say it will have no effect.
+   */
+  withoutLanguages: string[];
 };
 
 // Keyed by base and specifier together: the same name can resolve to different
@@ -404,6 +411,7 @@ export async function resolvePlugins({
 
   const languages: PluginLanguage[] = [];
   const failures: ResolvePluginsResult["failures"] = [];
+  const withoutLanguages: string[] = [];
 
   for (const [index, result] of settled.entries()) {
     if (result.status === "rejected") {
@@ -413,6 +421,7 @@ export async function resolvePlugins({
       });
       continue;
     }
+    const before = languages.length;
     for (const language of result.value.languages ?? []) {
       const parsers = language.parsers ?? [];
       if (parsers.length === 0) continue;
@@ -425,7 +434,10 @@ export async function resolvePlugins({
         filenames: language.filenames ?? [],
       });
     }
+    if (languages.length === before) {
+      withoutLanguages.push(specifiers[index]!);
+    }
   }
 
-  return { languages, failures };
+  return { languages, failures, withoutLanguages };
 }

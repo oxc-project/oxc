@@ -31,7 +31,7 @@ export async function initExternalServices(
   // declare decide which files the walk collects, which is settled before any
   // formatting happens. Each worker loads its own copy later, on first use.
   if (plugins === null || plugins.specifiers.length === 0) {
-    return { languages: [], failures: [] };
+    return { languages: [], failures: [], withoutLanguages: [] };
   }
   return resolvePlugins(plugins);
 }

@@ -101,6 +101,14 @@ impl StdinRunner {
                     }
                     return CliRunResult::InvalidOptionConfig;
                 }
+                for specifier in &resolved.without_languages {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!(
+                            "Plugin `{specifier}` declares no file types, so it has no effect.\nPlugins that only override built-in parsers, such as import sorters, cannot apply: JS/TS is formatted by `oxc_formatter`, not Prettier.\n"
+                        ),
+                    );
+                }
                 PluginLanguages::new(resolved.languages)
             }
             Err(err) => {
