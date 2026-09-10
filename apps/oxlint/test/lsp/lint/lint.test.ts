@@ -132,6 +132,22 @@ describe("LSP linting", () => {
       expect(noConsole).toHaveLength(3);
       for (const diagnostic of noConsole) {
         expect(diagnostic.tags).toBeUndefined();
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Error);
+      }
+    });
+
+    it("surfaces a rule when its violation count decreases", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions/decreased.js",
+        "javascript",
+      );
+      const noConsole = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+
+      expect(noConsole).toHaveLength(1);
+      for (const diagnostic of noConsole) {
+        expect(diagnostic.tags).toBeUndefined();
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Error);
       }
     });
 
