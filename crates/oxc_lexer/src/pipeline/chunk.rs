@@ -8,13 +8,17 @@ mod primitives {
     }
 
     #[inline(always)]
-    pub unsafe fn veq(v: __m256i, c: u8) -> __m256i {
-        _mm256_cmpeq_epi8(v, _mm256_set1_epi8(c as i8))
+    pub fn veq(v: __m256i, c: u8) -> __m256i {
+        // SAFETY: These intrinsics touch no memory and require only the `avx2` target feature,
+        // which this module's `#[cfg]` guarantees
+        unsafe { _mm256_cmpeq_epi8(v, _mm256_set1_epi8(c as i8)) }
     }
 
     #[inline(always)]
-    pub unsafe fn mm(v: __m256i) -> u32 {
-        _mm256_movemask_epi8(v) as u32
+    pub fn mm(v: __m256i) -> u32 {
+        // SAFETY: This intrinsic touches no memory and requires only the `avx2` target feature,
+        // which this module's `#[cfg]` guarantees
+        unsafe { _mm256_movemask_epi8(v) as u32 }
     }
 }
 
