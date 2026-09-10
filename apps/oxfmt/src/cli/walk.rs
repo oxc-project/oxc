@@ -19,7 +19,7 @@ use super::resolve::{build_global_ignore_matchers, is_ignored};
 use crate::core::JsConfigLoaderCb;
 use crate::core::{
     ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, classify_file_kind,
-    resolve_file_scope_config,
+    plugins::PluginLanguages, resolve_file_scope_config,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.
@@ -110,6 +110,7 @@ impl ScopedWalker {
     pub fn run(
         &self,
         root_config_resolver: ConfigResolver,
+        plugin_languages: Arc<PluginLanguages>,
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
         detect_nested: bool,
@@ -209,6 +210,7 @@ impl ScopedWalker {
                 let Some(strategy) = resolve_format_strategy(
                     Arc::from(file.as_path()),
                     &config_resolver,
+                    &plugin_languages,
                     tx_error,
                     &self.cwd,
                 ) else {
@@ -251,6 +253,7 @@ impl ScopedWalker {
                 directly_processed,
             },
             WalkConfigState {
+                plugin_languages: Arc::clone(&plugin_languages),
                 root_config_resolver: Arc::clone(&root_config_resolver),
                 nested_config_ctx: nested_config_ctx.clone(),
                 detect_nested,
@@ -354,6 +357,8 @@ struct WalkSinks {
 #[derive(Clone)]
 struct WalkConfigState {
     root_config_resolver: Arc<ConfigResolver>,
+    /// File types contributed by user-configured Prettier plugins.
+    plugin_languages: Arc<PluginLanguages>,
     nested_config_ctx: NestedConfigCtx,
     detect_nested: bool,
     walk_target_roots: Arc<[PathBuf]>,
@@ -600,9 +605,13 @@ impl WalkVisitor {
         {
             return ignore::WalkState::Continue;
         }
-        let Some(strategy) =
-            resolve_format_strategy(Arc::from(path), resolver, &self.sinks.tx_error, &self.cwd)
-        else {
+        let Some(strategy) = resolve_format_strategy(
+            Arc::from(path),
+            resolver,
+            &self.config_state.plugin_languages,
+            &self.sinks.tx_error,
+            &self.cwd,
+        ) else {
             return ignore::WalkState::Continue;
         };
 
@@ -678,10 +687,11 @@ impl ignore::ParallelVisitor for WalkVisitor {
 fn resolve_format_strategy(
     path: Arc<Path>,
     resolver: &ConfigResolver,
+    plugin_languages: &PluginLanguages,
     tx_error: &DiagnosticSender,
     cwd: &Path,
 ) -> Option<FormatStrategy> {
-    let kind = classify_file_kind(Arc::clone(&path))?;
+    let kind = classify_file_kind(Arc::clone(&path), Some(plugin_languages))?;
     match resolver.resolve(kind) {
         Ok(ResolveOutcome::Format(strategy)) => Some(strategy),
         Ok(ResolveOutcome::MissingPlugin(_)) => None,
@@ -761,6 +771,7 @@ mod tests_scope_resolution {
                 directly_processed: Arc::new(FxHashSet::default()),
             },
             config_state: WalkConfigState {
+                plugin_languages: Arc::new(PluginLanguages::default()),
                 root_config_resolver: Arc::new(root_resolver),
                 nested_config_ctx: ctx,
                 detect_nested: true,

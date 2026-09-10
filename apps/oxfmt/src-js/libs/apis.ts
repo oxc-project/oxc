@@ -358,9 +358,17 @@ async function importUserPlugin(base: string, specifier: string): Promise<Plugin
   installPluginResolution();
 
   // Resolve from the config's directory rather than from oxfmt's own location,
-  // so a plugin in the user's `node_modules` is found.
-  const requireFromBase = createRequire(join(base, "__oxfmt__.js"));
-  const resolved = requireFromBase.resolve(specifier);
+  // so a plugin in the user's `node_modules` is found. The anchor names a file
+  // that need not exist; only its directory matters.
+  const requireFromBase = createRequire(join(base, "__oxfmt_config__"));
+  let resolved;
+  try {
+    resolved = requireFromBase.resolve(specifier);
+  } catch {
+    // Node's own message names the anchor, which would expose a path the user
+    // never wrote. Report the directory they configured instead.
+    throw new Error(`Cannot find module "${specifier}" from "${base}"`);
+  }
   const mod = (await import(pathToFileURL(resolved).href)) as { default?: Plugin } & Plugin;
   // A CJS plugin's exports land on `default` once interop has run.
   return mod.default ?? mod;
@@ -368,9 +376,17 @@ async function importUserPlugin(base: string, specifier: string): Promise<Plugin
 
 async function setupUserPlugins(options: Options): Promise<void> {
   const { base, specifiers } = options._userPlugins as UserPluginsParam;
-  const plugins = await Promise.all(specifiers.map((s) => loadUserPlugin(base, s)));
+  const settled = await Promise.allSettled(specifiers.map((s) => loadUserPlugin(base, s)));
+
+  // One unloadable plugin must not stop the others. `resolvePlugins()` already
+  // reported the failure during init, and a file that needed the missing plugin
+  // has no parser and fails on its own terms.
+  const loaded = settled
+    .filter((result) => result.status === "fulfilled")
+    .map((result) => result.value);
+
   options.plugins ??= [];
-  options.plugins.push(...plugins);
+  options.plugins.push(...loaded);
 }
 
 /**

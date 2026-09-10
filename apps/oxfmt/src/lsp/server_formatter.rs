@@ -74,8 +74,12 @@ impl ServerFormatterBuilder {
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
+        //
+        // No plugins are requested here. Init runs before any config is loaded,
+        // because LSP defers config resolution to format time, and the plugins to
+        // load come from that config.
         if let Err(err) =
-            tokio::task::block_in_place(|| self.external_services.init(num_of_threads))
+            tokio::task::block_in_place(|| self.external_services.init(num_of_threads, None))
         {
             error!("Failed to setup external services.\n{err}\n");
         }
@@ -400,7 +404,8 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        // See the note at init: plugin-contributed file types are not routed here yet.
+        let Some(kind) = classify_file_kind(Arc::from(path), None) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };

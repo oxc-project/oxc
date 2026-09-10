@@ -1,5 +1,6 @@
 ---
 source: tasks/website_formatter/src/json_schema.rs
+assertion_line: 30
 expression: snapshot
 ---
 ---
@@ -325,6 +326,21 @@ type: `object`
 
 Format options to apply for matched files.
 Accepts the same options as the top-level format options.
+
+
+## plugins
+
+type: `string[]`
+
+
+Prettier plugins to load, as package names or paths.
+Resolved from the directory containing this configuration file.
+
+A plugin's declared file extensions are formatted by delegating to Prettier.
+Plugins declared in nested configurations or in `overrides` are not read:
+the set of extensions to collect is settled before per-file resolution.
+
+- Default: `[]`
 
 
 ## printWidth
