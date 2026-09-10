@@ -60,6 +60,7 @@
       "env": null,
       "globals": null,
       "plugins": null,
+      "settings": null,
       "rules": {
         "no-debugger": "deny"
       }
