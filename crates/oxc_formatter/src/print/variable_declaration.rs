@@ -15,11 +15,7 @@ use crate::{
     write,
 };
 
-use crate::utils::suppressed::FormatSuppressedNode;
-
-use super::{
-    FormatWrite, variable_declaration_content_end, write_suppressed_statement_with_semicolon,
-};
+use super::FormatWrite;
 
 /// Whether the declaration is a `for`/`for-in`/`for-of` head,
 /// terminated by the head itself (the head-vs-body test is by span: a declaration can also be the body).
@@ -37,21 +33,6 @@ fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool 
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
-    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
-        if is_for_head_declaration(self) {
-            // No terminator of its own to re-add:
-            // Prettier appends one anyway and corrupts the head (DIVERGENCES.md#suppressed-for-head-declaration)
-            FormatSuppressedNode(self.span()).fmt(f);
-        } else {
-            // The ignored range ends at the last declarator; the terminator is always the formatter's
-            write_suppressed_statement_with_semicolon(
-                self.span().start,
-                variable_declaration_content_end(self, f),
-                f,
-            );
-        }
-    }
-
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let semicolon = !is_for_head_declaration(self);
 

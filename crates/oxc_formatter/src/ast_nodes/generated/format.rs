@@ -15,7 +15,7 @@ use crate::{
     parentheses::NeedsParentheses,
     print::FormatWrite,
     utils::{
-        suppressed::{FormatSuppressedNode, write_suppressed_expression},
+        suppressed::{FormatSuppressedNode, write_suppressed_expression, write_suppressed_node},
         typecast::{
             format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren,
             format_type_cast_comment_node,
@@ -32,7 +32,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Program<'a>> {
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().has_trailing_suppression_comment(self.span().end) {
+        if f.comments().is_trailing_suppressed(self.span()) {
             format_leading_comments(self.span()).fmt(f);
             FormatSuppressedNode(self.span()).fmt(f);
             format_trailing_comments(
@@ -476,7 +476,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierName<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -520,7 +520,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingIdentifier<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -533,7 +533,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabelIdentifier<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -649,7 +649,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Elision> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -723,7 +723,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectProperty<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -839,7 +839,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateElement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -1109,7 +1109,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SpreadElement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1503,7 +1503,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayAssignmentTarget<'
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1516,7 +1516,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectAssignmentTarget<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1529,7 +1529,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetRest<'a
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1573,7 +1573,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetWithDef
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1616,7 +1616,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1629,7 +1629,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -1837,10 +1837,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Statement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if !matches!(self.inner, Statement::ExpressionStatement(_))
-            && f.comments().has_trailing_suppression_comment(self.span().end)
+            && f.comments().is_trailing_suppressed(self.span())
         {
             format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
+            write_suppressed_node(self.span(), f);
             format_trailing_comments(
                 self.parent.span(),
                 self.inner.span(),
@@ -2063,7 +2063,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Directive<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2076,7 +2076,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Hashbang<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2089,7 +2089,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BlockStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2212,7 +2212,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclaration<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2225,7 +2225,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclarator<'a>>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2238,7 +2238,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2251,7 +2251,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2264,7 +2264,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2277,7 +2277,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2290,7 +2290,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2303,7 +2303,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2347,7 +2347,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForInStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2391,7 +2391,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2404,7 +2404,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2417,7 +2417,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2430,7 +2430,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2443,7 +2443,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2456,7 +2456,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2469,7 +2469,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchCase<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2482,7 +2482,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2495,7 +2495,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2508,7 +2508,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2521,7 +2521,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchClause<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2534,7 +2534,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchParameter<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2547,7 +2547,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DebuggerStatement> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2610,7 +2610,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentPattern<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2623,7 +2623,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPattern<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2636,7 +2636,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingProperty<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2649,7 +2649,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayPattern<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2662,7 +2662,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingRestElement<'a>>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2706,7 +2706,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameters<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2719,7 +2719,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameter<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2732,7 +2732,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameterRest<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2745,7 +2745,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FunctionBody<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2882,7 +2882,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2895,7 +2895,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassBody<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2968,7 +2968,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MethodDefinition<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2981,7 +2981,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyDefinition<'a>>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -2994,7 +2994,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateIdentifier<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3007,7 +3007,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticBlock<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3110,7 +3110,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AccessorProperty<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3154,7 +3154,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDeclaration<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3207,7 +3207,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportSpecifier<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3220,7 +3220,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDefaultSpecifier<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3233,7 +3233,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportNamespaceSpecifie
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3246,7 +3246,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithClause<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3259,7 +3259,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttribute<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3302,7 +3302,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDeclaration<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3315,7 +3315,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3328,7 +3328,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportFromDeclaration<'
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3341,7 +3341,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDefaultDeclaratio
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3354,7 +3354,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportAllDeclaration<'a
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3367,7 +3367,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportSpecifier<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3704,7 +3704,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningElement<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3717,7 +3717,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingElement<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3746,7 +3746,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningFragment> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3759,7 +3759,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingFragment> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3832,7 +3832,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXNamespacedName<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3845,7 +3845,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXMemberExpression<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3898,7 +3898,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpressionContainer<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3942,7 +3942,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXEmptyExpression> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3985,7 +3985,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttribute<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -3998,7 +3998,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadAttribute<'a>>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4091,7 +4091,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXIdentifier<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4164,7 +4164,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadChild<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4177,7 +4177,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXText<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4190,7 +4190,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisParameter<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4203,7 +4203,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumDeclaration<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4216,7 +4216,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumBody<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4229,7 +4229,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumMember<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4292,7 +4292,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAnnotation<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4305,7 +4305,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSLiteralType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4804,7 +4804,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
         format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4851,7 +4851,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSParenthesizedType<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4895,7 +4895,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSArrayType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4908,7 +4908,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexedAccessType<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4921,7 +4921,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4934,7 +4934,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamedTupleMember<'a>>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4947,7 +4947,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSOptionalType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -4960,7 +4960,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSRestType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5014,7 +5014,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAnyKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5027,7 +5027,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSStringKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5040,7 +5040,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBooleanKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5053,7 +5053,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNumberKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5066,7 +5066,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNeverKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5079,7 +5079,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntrinsicKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5092,7 +5092,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnknownKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5105,7 +5105,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNullKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5118,7 +5118,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUndefinedKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5131,7 +5131,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSVoidKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5144,7 +5144,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSymbolKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5157,7 +5157,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisType> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5170,7 +5170,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSObjectKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5183,7 +5183,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBigIntKeyword> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5196,7 +5196,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeReference<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5249,7 +5249,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSQualifiedName<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5262,7 +5262,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterInstanti
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5275,7 +5275,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameter<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5288,7 +5288,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterDeclarat
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5301,7 +5301,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAliasDeclaration<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5314,7 +5314,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSClassImplements<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5327,7 +5327,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceDeclaration<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5340,7 +5340,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceBody<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5353,7 +5353,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSPropertySignature<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5426,7 +5426,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignature<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5439,7 +5439,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSCallSignatureDeclarat
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5452,7 +5452,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMethodSignature<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5465,7 +5465,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructSignatureDec
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5478,7 +5478,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignatureName<'a
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5491,7 +5491,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceHeritage<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5504,7 +5504,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicate<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5547,7 +5547,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclara
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5560,7 +5560,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5603,7 +5603,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSGlobalDeclaration<'a>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5616,7 +5616,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleBlock<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5629,7 +5629,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeLiteral<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5735,7 +5735,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5778,7 +5778,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifiedNa
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5853,7 +5853,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMappedType<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5866,7 +5866,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTemplateLiteralType<'
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -5972,7 +5972,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportEqualsDeclarati
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6025,7 +6025,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleReferen
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6069,7 +6069,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Decorator<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6082,7 +6082,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExportAssignment<'a>>
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6095,7 +6095,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceExportDeclar
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6139,7 +6139,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNullableType<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6152,7 +6152,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNonNullableType<'a
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }
@@ -6165,7 +6165,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocUnknownType> {
         let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            write_suppressed_node(self.suppressed_span(), f);
         } else {
             self.write(f);
         }

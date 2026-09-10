@@ -2,9 +2,11 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// A suppressed statement keeps its source text up to the content end;
-// the terminator is printed by the formatter (`;` added or removed per options),
-// and comments between the content and the source `;` lead the next statement.
+// A suppressed statement prints its source text as-is, `;` or no `;`, whatever `semi` says:
+// nothing is added to or removed from the line the user marked.
+// A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style)
+// is left out and re-printed as the next statement's ASI guard.
+// Prettier re-adds or strips the `;` per its `locEnd` table (DIVERGENCES.md#suppressed-node-verbatim).
 
 // prettier-ignore
 do;   while(   1)
@@ -32,9 +34,7 @@ lbl3: for (;;) {
   break   lbl3
 }
 
-// A suppressed variable declaration always gets the formatter's terminator:
-// the ignored range ends at the last declarator, source `;` or not
-// (unlike content-terminated statements, and unlike `export const`).
+// A variable declaration is no different (Prettier always re-adds its `;`).
 
 // prettier-ignore
 const noSemi   =   1
@@ -62,9 +62,8 @@ export const exported   =   1
 
 foo()
 
-// A suppressed expression statement also ends its ignored range at the content
-// (`;` re-added only when a source `;` was stripped),
-// and still gets its `semi: false` ASI guard.
+// A suppressed expression statement keeps its source `;` under `semi: false` too,
+// and still gets its ASI guard.
 
 // prettier-ignore
 stmt(   );
@@ -76,12 +75,14 @@ stmt(   );
 ------------------------------
 { printWidth: 80, semi: true }
 ------------------------------
-// A suppressed statement keeps its source text up to the content end;
-// the terminator is printed by the formatter (`;` added or removed per options),
-// and comments between the content and the source `;` lead the next statement.
+// A suppressed statement prints its source text as-is, `;` or no `;`, whatever `semi` says:
+// nothing is added to or removed from the line the user marked.
+// A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style)
+// is left out and re-printed as the next statement's ASI guard.
+// Prettier re-adds or strips the `;` per its `locEnd` table (DIVERGENCES.md#suppressed-node-verbatim).
 
 // prettier-ignore
-do;   while(   1);
+do;   while(   1)
 
 [].sort();
 
@@ -90,7 +91,7 @@ do  {}   while(   two  );
 
 lbl: for (;;) {
   // prettier-ignore
-  continue                   lbl;
+  continue                   lbl
 
   // breaking comment
   (possibleArray || []).sort();
@@ -103,17 +104,15 @@ lbl2: for (;;) {
 
 lbl3: for (;;) {
   // prettier-ignore
-  break   lbl3;
+  break   lbl3
 }
 
-// A suppressed variable declaration always gets the formatter's terminator:
-// the ignored range ends at the last declarator, source `;` or not
-// (unlike content-terminated statements, and unlike `export const`).
+// A variable declaration is no different (Prettier always re-adds its `;`).
 
 // prettier-ignore
-const noSemi   =   1;
+const noSemi   =   1
 
-[].sort();
+;[].sort();
 
 // prettier-ignore
 let cast = /** @type {string} */ (   value  );
@@ -121,24 +120,23 @@ let cast = /** @type {string} */ (   value  );
 [].sort();
 
 // prettier-ignore
-var multi   =   1,   multi2   =   2;
+var multi   =   1,   multi2   =   2
 
-[].sort();
+;[].sort();
 
 // The rightmost-body recursion reaches the declaration
 // prettier-ignore
-if (cond) var inBody   =   1;
+if (cond) var inBody   =   1
 
-[].sort();
+;[].sort();
 
 // prettier-ignore
 export const exported   =   1
 
 foo();
 
-// A suppressed expression statement also ends its ignored range at the content
-// (`;` re-added only when a source `;` was stripped),
-// and still gets its `semi: false` ASI guard.
+// A suppressed expression statement keeps its source `;` under `semi: false` too,
+// and still gets its ASI guard.
 
 // prettier-ignore
 stmt(   );
@@ -149,12 +147,14 @@ stmt(   );
 -------------------------------
 { printWidth: 100, semi: true }
 -------------------------------
-// A suppressed statement keeps its source text up to the content end;
-// the terminator is printed by the formatter (`;` added or removed per options),
-// and comments between the content and the source `;` lead the next statement.
+// A suppressed statement prints its source text as-is, `;` or no `;`, whatever `semi` says:
+// nothing is added to or removed from the line the user marked.
+// A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style)
+// is left out and re-printed as the next statement's ASI guard.
+// Prettier re-adds or strips the `;` per its `locEnd` table (DIVERGENCES.md#suppressed-node-verbatim).
 
 // prettier-ignore
-do;   while(   1);
+do;   while(   1)
 
 [].sort();
 
@@ -163,7 +163,7 @@ do  {}   while(   two  );
 
 lbl: for (;;) {
   // prettier-ignore
-  continue                   lbl;
+  continue                   lbl
 
   // breaking comment
   (possibleArray || []).sort();
@@ -176,17 +176,15 @@ lbl2: for (;;) {
 
 lbl3: for (;;) {
   // prettier-ignore
-  break   lbl3;
+  break   lbl3
 }
 
-// A suppressed variable declaration always gets the formatter's terminator:
-// the ignored range ends at the last declarator, source `;` or not
-// (unlike content-terminated statements, and unlike `export const`).
+// A variable declaration is no different (Prettier always re-adds its `;`).
 
 // prettier-ignore
-const noSemi   =   1;
+const noSemi   =   1
 
-[].sort();
+;[].sort();
 
 // prettier-ignore
 let cast = /** @type {string} */ (   value  );
@@ -194,24 +192,23 @@ let cast = /** @type {string} */ (   value  );
 [].sort();
 
 // prettier-ignore
-var multi   =   1,   multi2   =   2;
+var multi   =   1,   multi2   =   2
 
-[].sort();
+;[].sort();
 
 // The rightmost-body recursion reaches the declaration
 // prettier-ignore
-if (cond) var inBody   =   1;
+if (cond) var inBody   =   1
 
-[].sort();
+;[].sort();
 
 // prettier-ignore
 export const exported   =   1
 
 foo();
 
-// A suppressed expression statement also ends its ignored range at the content
-// (`;` re-added only when a source `;` was stripped),
-// and still gets its `semi: false` ASI guard.
+// A suppressed expression statement keeps its source `;` under `semi: false` too,
+// and still gets its ASI guard.
 
 // prettier-ignore
 stmt(   );
@@ -222,9 +219,11 @@ stmt(   );
 -------------------------------
 { printWidth: 80, semi: false }
 -------------------------------
-// A suppressed statement keeps its source text up to the content end;
-// the terminator is printed by the formatter (`;` added or removed per options),
-// and comments between the content and the source `;` lead the next statement.
+// A suppressed statement prints its source text as-is, `;` or no `;`, whatever `semi` says:
+// nothing is added to or removed from the line the user marked.
+// A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style)
+// is left out and re-printed as the next statement's ASI guard.
+// Prettier re-adds or strips the `;` per its `locEnd` table (DIVERGENCES.md#suppressed-node-verbatim).
 
 // prettier-ignore
 do;   while(   1)
@@ -232,7 +231,7 @@ do;   while(   1)
 ;[].sort()
 
 // prettier-ignore
-do  {}   while(   two  )
+do  {}   while(   two  );
 
 lbl: for (;;) {
   // prettier-ignore
@@ -244,7 +243,7 @@ lbl: for (;;) {
 
 lbl2: for (;;) {
   // prettier-ignore
-  break                   lbl2
+  break                   lbl2;
 }
 
 lbl3: for (;;) {
@@ -252,9 +251,7 @@ lbl3: for (;;) {
   break   lbl3
 }
 
-// A suppressed variable declaration always gets the formatter's terminator:
-// the ignored range ends at the last declarator, source `;` or not
-// (unlike content-terminated statements, and unlike `export const`).
+// A variable declaration is no different (Prettier always re-adds its `;`).
 
 // prettier-ignore
 const noSemi   =   1
@@ -262,9 +259,9 @@ const noSemi   =   1
 ;[].sort()
 
 // prettier-ignore
-let cast = /** @type {string} */ (   value  )
+let cast = /** @type {string} */ (   value  );
 
-;[].sort()
+[].sort()
 
 // prettier-ignore
 var multi   =   1,   multi2   =   2
@@ -282,22 +279,23 @@ export const exported   =   1
 
 foo()
 
-// A suppressed expression statement also ends its ignored range at the content
-// (`;` re-added only when a source `;` was stripped),
-// and still gets its `semi: false` ASI guard.
+// A suppressed expression statement keeps its source `;` under `semi: false` too,
+// and still gets its ASI guard.
 
 // prettier-ignore
-stmt(   )
+stmt(   );
 
 // prettier-ignore
-;[breaking].sort()
+[breaking].sort();
 
 --------------------------------
 { printWidth: 100, semi: false }
 --------------------------------
-// A suppressed statement keeps its source text up to the content end;
-// the terminator is printed by the formatter (`;` added or removed per options),
-// and comments between the content and the source `;` lead the next statement.
+// A suppressed statement prints its source text as-is, `;` or no `;`, whatever `semi` says:
+// nothing is added to or removed from the line the user marked.
+// A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style)
+// is left out and re-printed as the next statement's ASI guard.
+// Prettier re-adds or strips the `;` per its `locEnd` table (DIVERGENCES.md#suppressed-node-verbatim).
 
 // prettier-ignore
 do;   while(   1)
@@ -305,7 +303,7 @@ do;   while(   1)
 ;[].sort()
 
 // prettier-ignore
-do  {}   while(   two  )
+do  {}   while(   two  );
 
 lbl: for (;;) {
   // prettier-ignore
@@ -317,7 +315,7 @@ lbl: for (;;) {
 
 lbl2: for (;;) {
   // prettier-ignore
-  break                   lbl2
+  break                   lbl2;
 }
 
 lbl3: for (;;) {
@@ -325,9 +323,7 @@ lbl3: for (;;) {
   break   lbl3
 }
 
-// A suppressed variable declaration always gets the formatter's terminator:
-// the ignored range ends at the last declarator, source `;` or not
-// (unlike content-terminated statements, and unlike `export const`).
+// A variable declaration is no different (Prettier always re-adds its `;`).
 
 // prettier-ignore
 const noSemi   =   1
@@ -335,9 +331,9 @@ const noSemi   =   1
 ;[].sort()
 
 // prettier-ignore
-let cast = /** @type {string} */ (   value  )
+let cast = /** @type {string} */ (   value  );
 
-;[].sort()
+[].sort()
 
 // prettier-ignore
 var multi   =   1,   multi2   =   2
@@ -355,14 +351,13 @@ export const exported   =   1
 
 foo()
 
-// A suppressed expression statement also ends its ignored range at the content
-// (`;` re-added only when a source `;` was stripped),
-// and still gets its `semi: false` ASI guard.
+// A suppressed expression statement keeps its source `;` under `semi: false` too,
+// and still gets its ASI guard.
 
 // prettier-ignore
-stmt(   )
+stmt(   );
 
 // prettier-ignore
-;[breaking].sort()
+[breaking].sort();
 
 ===================== End =====================

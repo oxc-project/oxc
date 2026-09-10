@@ -453,7 +453,69 @@ for (/* prettier-ignore */ var i   =   1;; ;) [].sort();
 
 Prettier's `shouldIgnoredNodePrintSemicolon` lists `VariableDeclaration` unconditionally,
 so a suppressed declaration in a `for` head gets an extra `;` and the head no longer parses (a `for (;;)` head admits exactly two semicolons).
-In the head the declaration has no terminator of its own; we keep it verbatim and let the `for` statement print its separators.
+In the head the declaration has no terminator of its own; we keep it verbatim (the rule for every suppressed node, see #suppressed-node-verbatim) and let the `for` statement print its separators.
+
+## suppressed-node-verbatim
+
+- Why: uniform-rule (same construct, same output: suppressed class member)
+- Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/js/semicolons/suppressed-trailing-semicolon.js`, `tests/fixtures/ts/ignore/class-member-trailing.ts`
+
+```js
+// input
+// prettier-ignore
+const noSemi   =   1
+// prettier-ignore
+stmt(   );
+
+// ours (semi: true and semi: false alike)
+// prettier-ignore
+const noSemi   =   1
+// prettier-ignore
+stmt(   );
+
+// prettier (semi: true)
+// prettier-ignore
+const noSemi   =   1;
+// prettier-ignore
+stmt(   );
+
+// prettier (semi: false)
+// prettier-ignore
+const noSemi   =   1
+// prettier-ignore
+stmt(   )
+```
+
+A suppressed node prints its source text as written: the formatter neither adds nor strips its `;`, whatever `semi` says.
+Prettier prints a suppressed class member, interface member, type alias or `declare function` that way, but its `locEnd` override table ends a statement's ignored range before the `;`
+and `shouldIgnoredNodePrintSemicolon` re-adds one per `semi` (always for `debugger`/`break`/`continue`/variable declarations, else only when a source `;` was stripped);
+`debugger ;` even loses its space.
+One rule instead: the line the user marked is untouched.
+A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style) is the one exception: it is left out and re-printed as the next statement's ASI guard (or a class member's own `;`), the same place the source had it.
+
+Conformance failures owned by this entry: `js/comments/break-continue-statements-3.js`, and the `semi: true` variant of `js/no-semi/{debugger,do-while,for,for-in,for-of,if,labeled,return,while,with}-statement.js`.
+
+## suppressed-unterminated-asi-guard
+
+- Why: semantics (Prettier's output re-parses as a call and no longer parses)
+- Pin: `tests/fixtures/js/semicolons/suppressed-unterminated-asi-guard.js`
+
+```js
+// input (semi: true)
+foo(  ) // prettier-ignore
+a => a
+
+// ours
+foo(  ) // prettier-ignore
+;(a) => a;
+
+// prettier
+foo(  ) // prettier-ignore
+(a) => a;
+```
+
+The verbatim statement keeps every token, so the source's statement boundary survives unless the reprint of the next statement introduces a first token that continues an expression (`arrowParens: "always"` here).
+That statement takes the ASI guard the `semi: false` output always has; Prettier's output re-parses as `foo(  )(a) => a`.
 
 ## suppressed-source-paren-asi-guard
 
@@ -496,13 +558,14 @@ We check the verbatim range's first byte instead and print the guard.
 
 // ours
 // prettier-ignore
-;/** @type {string[]} */ (cast).sort()
+;/** @type {string[]} */ (cast).sort();
 
 // prettier
 // prettier-ignore
 /** @type {string[]} */ ;(cast).sort()
 ```
 
+(The source `;` staying is #suppressed-node-verbatim.)
 A cast comment types its parenthesized expression only when directly adjacent:
 with Prettier's placement tsc reports the target as its uncast type again.
 

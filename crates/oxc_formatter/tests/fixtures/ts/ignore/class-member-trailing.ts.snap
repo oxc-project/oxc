@@ -1,0 +1,120 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A trailing suppression comment suppresses a class member like a leading one:
+// the source text prints as-is, `;` included, and the formatter adds none.
+// Same for interface members, whose leading comment is printed too.
+
+abstract class C {
+  m(  ) {} // prettier-ignore
+  p   = 1; // prettier-ignore
+  q   = 2 // prettier-ignore
+  accessor a   = 1; // prettier-ignore
+  static s   = 2 // prettier-ignore
+  abstract n(  ): void; // prettier-ignore
+  abstract o(  ): void // prettier-ignore
+  [k: string]:   any; // prettier-ignore
+  static {  } // prettier-ignore
+  /* leading */ r   = 3; // prettier-ignore
+  // own-line
+  t   = 4; // prettier-ignore
+  z() {}
+}
+
+// A `;` the parser attached from the next line (`;[k] = 2`, the `semi: false` style)
+// is the formatter's again and goes where a class member's `;` goes
+class D {
+  p   = 1 // prettier-ignore
+  ;[k] = 2
+  // prettier-ignore
+  q   = 3
+  ;[j] = 4
+}
+
+interface I {
+  /* leading */ p:   1; // prettier-ignore
+  m(  ): void // prettier-ignore
+  z: 0;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A trailing suppression comment suppresses a class member like a leading one:
+// the source text prints as-is, `;` included, and the formatter adds none.
+// Same for interface members, whose leading comment is printed too.
+
+abstract class C {
+  m(  ) {} // prettier-ignore
+  p   = 1; // prettier-ignore
+  q   = 2 // prettier-ignore
+  accessor a   = 1; // prettier-ignore
+  static s   = 2 // prettier-ignore
+  abstract n(  ): void; // prettier-ignore
+  abstract o(  ): void // prettier-ignore
+  [k: string]:   any; // prettier-ignore
+  static {  } // prettier-ignore
+  /* leading */ r   = 3; // prettier-ignore
+  // own-line
+  t   = 4; // prettier-ignore
+  z() {}
+}
+
+// A `;` the parser attached from the next line (`;[k] = 2`, the `semi: false` style)
+// is the formatter's again and goes where a class member's `;` goes
+class D {
+  p   = 1; // prettier-ignore
+  [k] = 2;
+  // prettier-ignore
+  q   = 3;
+  [j] = 4;
+}
+
+interface I {
+  /* leading */ p:   1; // prettier-ignore
+  m(  ): void // prettier-ignore
+  z: 0;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A trailing suppression comment suppresses a class member like a leading one:
+// the source text prints as-is, `;` included, and the formatter adds none.
+// Same for interface members, whose leading comment is printed too.
+
+abstract class C {
+  m(  ) {} // prettier-ignore
+  p   = 1; // prettier-ignore
+  q   = 2 // prettier-ignore
+  accessor a   = 1; // prettier-ignore
+  static s   = 2 // prettier-ignore
+  abstract n(  ): void; // prettier-ignore
+  abstract o(  ): void // prettier-ignore
+  [k: string]:   any; // prettier-ignore
+  static {  } // prettier-ignore
+  /* leading */ r   = 3; // prettier-ignore
+  // own-line
+  t   = 4; // prettier-ignore
+  z() {}
+}
+
+// A `;` the parser attached from the next line (`;[k] = 2`, the `semi: false` style)
+// is the formatter's again and goes where a class member's `;` goes
+class D {
+  p   = 1; // prettier-ignore
+  [k] = 2;
+  // prettier-ignore
+  q   = 3;
+  [j] = 4;
+}
+
+interface I {
+  /* leading */ p:   1; // prettier-ignore
+  m(  ): void // prettier-ignore
+  z: 0;
+}
+
+===================== End =====================

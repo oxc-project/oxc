@@ -3,7 +3,10 @@ use oxc_span::Span;
 
 use crate::{
     Buffer, Format,
-    formatter::prelude::*,
+    formatter::{
+        prelude::*,
+        trivia::{FormatTrailingComments, format_leading_comments},
+    },
     utils::typecast::{format_leading_comments_and_open_paren, write_suppressed_cast_target},
     write,
 };
@@ -36,6 +39,8 @@ pub fn write_suppressed_expression(
     }
 }
 
+/// Prints the given range of source text and marks its comments printed.
+/// Nodes go through [`write_suppressed_node`] / [`write_suppressed_expression`]; this is the bytes primitive.
 pub struct FormatSuppressedNode(pub Span);
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatSuppressedNode {
@@ -49,4 +54,31 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatSuppressedNode {
         // The suppressed node contains comments that should be marked as printed.
         f.context_mut().comments_mut().skip_comments_before(self.0.end);
     }
+}
+
+/// Prints a non-expression node's source text (`Comments::suppressed_range`)
+/// and records it for the next statement's ASI guard (`previous_statement_terminated`).
+/// Expression-shaped nodes go through [`write_suppressed_expression`] and never record:
+/// a statement ending in a verbatim expression still prints its own `;`.
+pub fn write_suppressed_node(span: Span, f: &mut JsFormatter<'_, '_>) {
+    let range = f.comments().suppressed_range(span);
+    FormatSuppressedNode(range).fmt(f);
+    let terminated = f.source_text().text_for(&range).ends_with(';');
+    f.context_mut().set_last_verbatim_node(span.end, terminated);
+    // The `;` left out sits on a later line; the same-line comments before it
+    // (the suppression comment itself) stay on the content's line
+    if range.end < span.end {
+        let comments = f.context().comments().end_of_line_comments_after(range.end);
+        FormatTrailingComments::Comments(comments).fmt(f);
+    }
+}
+
+/// Prints a member suppressed by a trailing comment (`p = 1; // prettier-ignore`)
+/// from a container whose generated `fmt` only sees a leading one:
+/// its leading comments, the source text, and the comments on its line.
+pub fn write_trailing_suppressed_node(span: Span, f: &mut JsFormatter<'_, '_>) {
+    format_leading_comments(span).fmt(f);
+    write_suppressed_node(span, f);
+    let comments = f.context().comments().end_of_line_comments_after(span.end);
+    FormatTrailingComments::Comments(comments).fmt(f);
 }

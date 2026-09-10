@@ -50,7 +50,7 @@ let x = 1;
 let x = 1
 
 // prettier-ignore
-;(sourceParen).sort()
+;(sourceParen).sort();
 
 --------------------------------
 { printWidth: 100, semi: false }
@@ -63,6 +63,6 @@ let x = 1
 let x = 1
 
 // prettier-ignore
-;(sourceParen).sort()
+;(sourceParen).sort();
 
 ===================== End =====================

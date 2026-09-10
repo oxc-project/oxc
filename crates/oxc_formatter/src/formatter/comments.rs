@@ -549,6 +549,44 @@ impl<'a> Comments<'a> {
             .any(|comment| self.is_suppression_comment(comment))
     }
 
+    /// Whether a trailing suppression comment suppresses the node ([`Self::has_trailing_suppression_comment`]
+    /// at the end of its [`Self::suppressed_range`]: `foo() // prettier-ignore` + `;[].sort()` counts).
+    pub fn is_trailing_suppressed(&self, span: Span) -> bool {
+        self.has_trailing_suppression_comment(self.suppressed_range(span).end)
+    }
+
+    /// The range a suppressed node prints verbatim: its span, minus a `;` the parser attached from a later line
+    /// (`foo() // prettier-ignore` + `;[].sort()`: the `semi: false` style's guard belongs to the next line).
+    /// That `;` is the formatter's terminator again, re-printed where its own rules put it
+    /// (the next statement's ASI guard, a class member's own `;`).
+    pub fn suppressed_range(&self, span: Span) -> Span {
+        // Detached only through trivia: the byte before the `;` is whitespace or a comment's `/`
+        if span.size() < 2
+            || !self.source_text.text_for(&span).ends_with(';')
+            || !matches!(
+                self.source_text.bytes_range(span.end - 2, span.end - 1),
+                b" " | b"\t" | b"\n" | b"\r" | b"/"
+            )
+        {
+            return span;
+        }
+        let semicolon = span.end - 1;
+        let comments = self.all_comments_before(semicolon);
+        let comments =
+            &comments[comments.partition_point(|comment| comment.span.start < span.start)..];
+        let run = self.comment_run_before(comments, semicolon);
+        let end = run.first().map_or(semicolon, |comment| comment.span.start);
+        let content = self.source_text.slice_range(span.start, end).trim_end();
+        #[expect(clippy::cast_possible_truncation)]
+        let content_end = span.start + content.len() as u32;
+        // An empty statement is its `;`: content, not a terminator
+        if !content.is_empty() && self.source_text.bytes_contain(content_end, semicolon, b'\n') {
+            Span::new(span.start, content_end)
+        } else {
+            span
+        }
+    }
+
     /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).
     /// Why a `)` counts as a statement terminator: see `trailing_comments_to_move_behind_semicolon`
     /// (a lexical byte scan, see the module doc).
@@ -697,6 +735,23 @@ impl<'a> Comments<'a> {
         let run = self.comment_run_after(comments, pos);
         let end = run.last()?.span.end;
         self.source_text.next_non_whitespace_byte_is(end, b')').then_some(run)
+    }
+
+    /// The mirror of [`Self::comment_run_after`]: the run ending at `pos` (a suffix of `comments`).
+    fn comment_run_before(&self, comments: &'a [Comment], pos: u32) -> &'a [Comment] {
+        let mut cursor = pos;
+        let mut count = 0;
+        for comment in comments.iter().rev() {
+            if !self
+                .source_text
+                .all_bytes_match(comment.span.end, cursor, |b| b.is_ascii_whitespace())
+            {
+                break;
+            }
+            count += 1;
+            cursor = comment.span.start;
+        }
+        &comments[comments.len() - count..]
     }
 
     /// The run of comments after `pos` separated only by whitespace (a prefix of `comments`).

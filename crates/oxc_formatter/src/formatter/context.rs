@@ -109,6 +109,10 @@ pub struct JsFormatContext<'ast> {
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
+
+    /// The last node printed verbatim (`write_suppressed_node`): its span end and whether its text ends with `;`.
+    /// The next statement's ASI guard asks whether the statement before it was that node (`previous_statement_terminated`).
+    last_verbatim_node: Option<(u32, bool)>,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -167,6 +171,7 @@ impl<'ast> JsFormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
+            last_verbatim_node: None,
         }
     }
 
@@ -228,6 +233,21 @@ impl<'ast> JsFormatContext<'ast> {
     /// `write` (a suppressed arrow prints its source verbatim instead).
     pub(crate) fn clear_arrow_assignment_layout(&mut self) {
         self.arrow_assignment_layout = None;
+    }
+
+    pub(crate) fn set_last_verbatim_node(&mut self, span_end: u32, terminated: bool) {
+        self.last_verbatim_node = Some((span_end, terminated));
+    }
+
+    pub(crate) fn has_verbatim_node(&self) -> bool {
+        self.last_verbatim_node.is_some()
+    }
+
+    /// Whether the node ending at `span_end` printed verbatim, and then whether its text ends with `;`
+    /// (a suppressed statement's rightmost body ends where the statement does).
+    pub(crate) fn verbatim_node_terminated(&self, span_end: u32) -> Option<bool> {
+        self.last_verbatim_node
+            .and_then(|(end, terminated)| (end == span_end).then_some(terminated))
     }
 
     /// Pushes a new quote needed state onto the stack.

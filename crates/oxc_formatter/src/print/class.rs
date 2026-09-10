@@ -31,6 +31,7 @@ use crate::{
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
         statement_body::write_head_body_separator,
+        suppressed::write_trailing_suppressed_node,
     },
     write,
 };
@@ -602,19 +603,32 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let span = self.element.span();
+        let leading_suppressed = f.comments().is_suppressed(span.start);
+        // A trailing suppression comment (`p = 1; // prettier-ignore`) suppresses like a leading one;
+        // the element kinds' generated `fmt` only see a leading one, so the gate is here.
+        if leading_suppressed || f.comments().is_trailing_suppressed(span) {
+            // A suppressed element prints its source text, `;` included, and the formatter adds none.
+            if leading_suppressed {
+                write!(f, self.element);
+            } else {
+                write_trailing_suppressed_node(span, f);
+            }
+            // Only a `;` its range left on a later line (`p = 1 // prettier-ignore` + `;[k] = 2`)
+            // is the formatter's again, printed where a class member's `;` goes
+            if f.comments().suppressed_range(span).end < span.end {
+                write!(f, ";");
+            }
+            return;
+        }
+
         let needs_semi = matches!(
             self.element.as_ref(),
             ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
-        );
-
-        let needs_semi = needs_semi
-            && match f.options().semicolons {
-                Semicolons::Always => true,
-                Semicolons::AsNeeded => self.needs_semicolon(),
-            }
-            // Don't add semicolon if the element is suppressed (has `oxfmt-ignore`),
-            // because the suppressed source text already includes the original semicolon.
-            && !f.comments().is_suppressed(self.element.span().start);
+        ) && match f.options().semicolons {
+            Semicolons::Always => true,
+            Semicolons::AsNeeded => self.needs_semicolon(),
+        };
 
         if needs_semi {
             // Same-line comments between the content end and the source semicolon

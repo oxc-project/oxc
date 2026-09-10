@@ -1,6 +1,8 @@
-// A suppressed statement keeps its source text up to the content end;
-// the terminator is printed by the formatter (`;` added or removed per options),
-// and comments between the content and the source `;` lead the next statement.
+// A suppressed statement prints its source text as-is, `;` or no `;`, whatever `semi` says:
+// nothing is added to or removed from the line the user marked.
+// A `;` the parser attached from a later line (`;[].sort()`, the `semi: false` style)
+// is left out and re-printed as the next statement's ASI guard.
+// Prettier re-adds or strips the `;` per its `locEnd` table (DIVERGENCES.md#suppressed-node-verbatim).
 
 // prettier-ignore
 do;   while(   1)
@@ -28,9 +30,7 @@ lbl3: for (;;) {
   break   lbl3
 }
 
-// A suppressed variable declaration always gets the formatter's terminator:
-// the ignored range ends at the last declarator, source `;` or not
-// (unlike content-terminated statements, and unlike `export const`).
+// A variable declaration is no different (Prettier always re-adds its `;`).
 
 // prettier-ignore
 const noSemi   =   1
@@ -58,9 +58,8 @@ export const exported   =   1
 
 foo()
 
-// A suppressed expression statement also ends its ignored range at the content
-// (`;` re-added only when a source `;` was stripped),
-// and still gets its `semi: false` ASI guard.
+// A suppressed expression statement keeps its source `;` under `semi: false` too,
+// and still gets its ASI guard.
 
 // prettier-ignore
 stmt(   );

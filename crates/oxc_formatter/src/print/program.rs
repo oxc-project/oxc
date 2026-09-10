@@ -152,7 +152,7 @@ fn format_import_decls_with_sort<'a, 'iter>(
 fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
     let span = stmt.span();
     let comments = f.comments();
-    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
+    comments.is_suppressed(span.start) || comments.is_trailing_suppressed(span)
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {

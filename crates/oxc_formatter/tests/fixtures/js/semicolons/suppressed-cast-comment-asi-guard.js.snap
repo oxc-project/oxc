@@ -42,7 +42,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 // the guarded line deviates (DIVERGENCES.md#suppressed-cast-comment-asi-guard).
 
 // prettier-ignore
-;/** @type {string[]} */ (cast).sort()
+;/** @type {string[]} */ (cast).sort();
 
 --------------------------------
 { printWidth: 100, semi: false }
@@ -53,6 +53,6 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 // the guarded line deviates (DIVERGENCES.md#suppressed-cast-comment-asi-guard).
 
 // prettier-ignore
-;/** @type {string[]} */ (cast).sort()
+;/** @type {string[]} */ (cast).sort();
 
 ===================== End =====================

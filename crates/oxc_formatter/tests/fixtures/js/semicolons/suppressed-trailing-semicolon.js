@@ -1,7 +1,9 @@
-// The ignored range of a suppressed statement excludes a (possibly distant)
-// trailing `;` — even one owned by a nested single-statement body — and the
-// formatter prints its own terminator only when one was stripped, never
-// doubling it (a doubled `;` would re-parse as an extra EmptyStatement).
+// A `;` the parser attached to a suppressed statement from a later line,
+// even through a nested single-statement body, is left out of the verbatim text:
+// the next statement's ASI guard re-prints it where the `semi: false` style put it,
+// never doubling it (a doubled `;` would re-parse as an extra EmptyStatement).
+// Under `semi: true` the guard prints only when the next statement needs it
+// (DIVERGENCES.md#suppressed-unterminated-asi-guard).
 
 // oxfmt-ignore
 debugger
@@ -37,7 +39,7 @@ function g() {
   ;[].sort()
 }
 
-// No source `;` at the end — nothing is stripped, nothing is added.
+// No source `;` at the end: nothing is added.
 // oxfmt-ignore
 while   (   1)   { foo (   ) }
 

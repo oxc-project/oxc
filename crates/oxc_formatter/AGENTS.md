@@ -138,7 +138,7 @@ JS-side mechanics of the shared "never cross" invariants:
   - Both are structural guarantees, keep them
   - One known violation, kept for Prettier compat: an own-line comment claimed mid-line inlines onto that line (`const // c` + break), see the NOTE in `FormatLeadingComments` (`formatter/trivia.rs`)
 - User content: attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (e.g. DIVERGENCES.md#array-hole-trailing-comment)
-- Suppression: when hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+- Suppression: when hiding comments from a node (`limit_comments_up_to`), check `is_trailing_suppressed` first, or the node loses its suppression
 
 Head-body comment policy ("never cross user content" applied to statement/declaration heads):
 a body's `{` `}` and a head's `(` `)` are delimiters, and an empty-statement body's `;` is content, not a terminator (the verbatim empty-statement note in "Statement terminators and suppression"), so a comment between a head and its body keeps its side of each, uniformly across constructs:
@@ -171,21 +171,26 @@ deciding on the spot, we encode the same policy per site, so keep them in step:
 - return/throw: the same-line-prefix dangling split in `ReturnAndThrowStatement`
 - capture side: `Comments::get_trailing_comments` lets deferred own-line comments escape when the statement shares its distant `;` with the enclosing statement
   (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
-- suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
-  so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+- suppressed side: a suppressed node prints its source text as written, `;` or no `;`, whatever `semi` says
+  (`write_suppressed_node` in `print/mod.rs`; the generated `Statement` fmt and `FormatClassElementWithSemicolon` gate a trailing suppression comment the same way);
+  the formatter neither adds nor strips a terminator, the line the user marked is untouched (DIVERGENCES.md#suppressed-node-verbatim).
+  Prettier's `locEnd` override table re-adds or strips the `;` of statements and prints class members whole; ours is the one rule
+  - The exception is a `;` the parser attached from a LATER line (`foo() // prettier-ignore` + `;[].sort()`, the `semi: false` style's guard):
+    `Comments::suppressed_range` leaves it out and it is the formatter's again, re-printed where its own rules put it
+    (the next statement's ASI guard, a class member's own `;`); keeping it would double it with the guard on every pass
 - suppressed expression side: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence
   for expression-shaped nodes (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed), so a cast target keeps its source cast parens (excluded from its span, `utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
 
-Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
+The ASI guard (`write_leading_comments_with_asi_guard`) prints when the statement starts with a token that would continue an expression
+and the previous statement's terminator is not there: per `semi` after a formatted statement, per its source text after a verbatim one
+(`previous_statement_terminated`, read back through `JsFormatContext::last_verbatim_node`).
+A verbatim statement without `;` is the only case the guard prints under `semi: true` (DIVERGENCES.md#suppressed-unterminated-asi-guard):
+the source parsed the two apart, so only a first token the reprint introduces (`a => a` -> `(a) => a`) can merge them.
 
-- Whether a suppressed statement re-adds `;` is a compat table, not a principle:
-  keyword statements (`debugger`/`break`/`continue`) and variable declarations (ignored range ends at the last declarator) always re-add;
-  content-terminated ones, including `export const` (measured, keep the asymmetry), only when a source `;` was stripped.
-  A `for` head declaration instead stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
-- The `semi: false` ASI guard is decided from the guarded statement alone,
-  never from the previous statement's output;
-  sound because no statement leaves its own trailing `;`,
-  except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
+Accepted edges (semantically inert, idempotent):
+
+- A `for` head declaration has no terminator of its own; Prettier re-adds one anyway (DIVERGENCES.md#suppressed-for-head-declaration)
+- A verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content) plus the guard re-parse as one extra inert `EmptyStatement`
 
 ## Verification
 

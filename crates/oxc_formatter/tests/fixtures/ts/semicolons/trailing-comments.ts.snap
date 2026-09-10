@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/fixtures/mod.rs
-assertion_line: 43
 ---
 ==================== Input ====================
 // https://github.com/oxc-project/oxc/issues/23110
@@ -149,7 +148,7 @@ beforeExport = 5;
 export default quux;
 
 // A trailing suppression comment keeps the statement's original text
-suppressed  =  ugly(   1); // prettier-ignore
+suppressed  =  ugly(   1) // prettier-ignore
 notSuppressed3();
 
 // The `;` on a later line still moves the comment: in the output the semicolon
@@ -236,7 +235,7 @@ beforeExport = 5;
 export default quux;
 
 // A trailing suppression comment keeps the statement's original text
-suppressed  =  ugly(   1); // prettier-ignore
+suppressed  =  ugly(   1) // prettier-ignore
 notSuppressed3();
 
 // The `;` on a later line still moves the comment: in the output the semicolon
