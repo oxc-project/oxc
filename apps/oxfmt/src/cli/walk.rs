@@ -253,7 +253,7 @@ impl ScopedWalker {
                 directly_processed,
             },
             WalkConfigState {
-                plugin_languages: Arc::clone(&plugin_languages),
+                plugin_languages,
                 root_config_resolver: Arc::clone(&root_config_resolver),
                 nested_config_ctx: nested_config_ctx.clone(),
                 detect_nested,

@@ -1,0 +1,6 @@
+[
+  { "args": ["--check", "--config", "./fmt-plugins.json"] },
+  { "args": ["--check", "--config", "./fmt-no-plugins.json"] },
+  { "args": ["--check", "--config", "./fmt-missing-plugin.json"] },
+  { "args": ["--config", "./fmt-plugins.json"] }
+]
