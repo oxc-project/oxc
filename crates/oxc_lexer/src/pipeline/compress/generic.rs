@@ -4,7 +4,7 @@ use crate::{lanes::Lanes, tables::Tables, token::is_trivia_byte};
 
 use super::super::{
     BIGINT, HASHBANG, IDENT_ESC, NUM, PRIV_IDENT_ESC,
-    chunk::{eqm, load8},
+    chunk::{eqm, load64},
 };
 
 use super::common::{emit_value, invalid_diags};
@@ -70,7 +70,7 @@ pub(super) unsafe fn lanes_post(
     let mut inv = 0u64;
     let mut i = 0usize;
     while i + 8 <= m {
-        let x = load8(out_kinds, i);
+        let x = load64(out_kinds, i);
         let mut hits = eqm(x, NUM) | eqm(x, BIGINT) | eqm(x, IDENT_ESC) | eqm(x, PRIV_IDENT_ESC);
         inv |= eqm(x, 255);
         while hits != 0 {

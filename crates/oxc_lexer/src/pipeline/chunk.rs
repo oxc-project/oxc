@@ -23,7 +23,7 @@ mod primitives {
     use core::ptr;
 
     #[inline(always)]
-    pub unsafe fn load8(src: *const u8, i: usize) -> u64 {
+    pub unsafe fn load64(src: *const u8, i: usize) -> u64 {
         ptr::read_unaligned(src.add(i) as *const u64)
     }
 

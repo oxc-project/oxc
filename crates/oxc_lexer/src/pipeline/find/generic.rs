@@ -1,9 +1,9 @@
-use super::super::chunk::{eqm, load8};
+use super::super::chunk::{eqm, load64};
 
 #[inline]
 pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
     while i + 8 <= n {
-        let m = eqm(load8(src, i), a);
+        let m = eqm(load64(src, i), a);
         if m != 0 {
             return i + (m.trailing_zeros() >> 3) as usize;
         }
@@ -21,7 +21,7 @@ pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
 #[inline]
 pub unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
     while i + 8 <= n {
-        let x = load8(src, i);
+        let x = load64(src, i);
         let m = eqm(x, a) | eqm(x, b);
         if m != 0 {
             return i + (m.trailing_zeros() >> 3) as usize;
@@ -41,7 +41,7 @@ pub unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usi
 #[inline]
 pub unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
     while i + 8 <= n {
-        let x = load8(src, i);
+        let x = load64(src, i);
         let m = eqm(x, a) | eqm(x, b) | eqm(x, c);
         if m != 0 {
             return i + (m.trailing_zeros() >> 3) as usize;
@@ -61,7 +61,7 @@ pub unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8)
 #[inline]
 pub unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8, d: u8) -> usize {
     while i + 8 <= n {
-        let x = load8(src, i);
+        let x = load64(src, i);
         let m = eqm(x, a) | eqm(x, b) | eqm(x, c) | eqm(x, d);
         if m != 0 {
             return i + (m.trailing_zeros() >> 3) as usize;
@@ -83,10 +83,10 @@ macro_rules! define_find_function {
         $(#[$attr])*
         #[inline]
         pub unsafe fn $name(src: *const u8, n: usize, mut i: usize) -> usize {
-            use super::super::chunk::{load8, eqm};
+            use super::super::chunk::{load64, eqm};
 
             while i + 8 <= n {
-                let x = load8(src, i);
+                let x = load64(src, i);
                 let m = $(eqm(x, $needle))|+;
                 if m != 0 {
                     return i + (m.trailing_zeros() >> 3) as usize;

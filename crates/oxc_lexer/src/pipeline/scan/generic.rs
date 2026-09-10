@@ -1,4 +1,4 @@
-use super::super::chunk::{eqm, load8};
+use super::super::chunk::{eqm, load64};
 
 use super::common::lic_verify_at;
 
@@ -6,8 +6,8 @@ pub unsafe fn scan_block_comment(src: *const u8, n: usize, mut i: usize) -> (usi
     let mut saw_nl = false;
     let mut lic_q: i64 = -1;
     while i + 8 <= n {
-        let x = load8(src, i);
-        let y = load8(src, i + 1);
+        let x = load64(src, i);
+        let y = load64(src, i + 1);
         let term = eqm(x, b'*') & eqm(y, b'/');
         let nl = eqm(x, b'\n') | eqm(x, b'\r');
         let at = eqm(x, b'@');
@@ -53,7 +53,7 @@ pub unsafe fn scan_block_comment(src: *const u8, n: usize, mut i: usize) -> (usi
 pub unsafe fn scan_line_comment(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
     let mut lic_q: i64 = -1;
     while i + 8 <= n {
-        let x = load8(src, i);
+        let x = load64(src, i);
         let mut term = eqm(x, b'\n') | eqm(x, b'\r') | eqm(x, 0xE2);
         let at = eqm(x, b'@');
         while term != 0 {
