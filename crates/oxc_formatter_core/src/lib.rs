@@ -36,7 +36,7 @@ pub use format_element::document::Document;
 pub use format_element::formatted::Formatted;
 pub use format_element::group_id::{GroupId, UniqueGroupIdBuilder};
 pub use format_element::tag::{
-    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Tag, TagKind,
+    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Prefix, Tag, TagKind,
 };
 pub use format_element::{
     BestFittingElement, FormatElement, FormatElements, Interned, LINE_TERMINATORS, LineMode,

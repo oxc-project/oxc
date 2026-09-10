@@ -14,7 +14,7 @@ use serde_json::Value;
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder, format_element::BestFittingElement,
+    Prefix, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder, format_element::BestFittingElement,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -325,8 +325,19 @@ fn convert_align<'a>(
             out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
         }
-        Value::String(s) => {
-            // String alignment (e.g., "  " for markdown list continuation indent).
+        // A visible string align is a prefix on every line
+        // (markdown's blockquote `"> "` is the only one Prettier's own printers emit):
+        // intern here if a plugin brings another.
+        Value::String(s) if s == "> " => {
+            out.push(FormatElement::Tag(Tag::StartPrefix(Prefix::new(&"> "))));
+            if let Some(contents) = obj.get("contents") {
+                convert_doc(contents, out, ctx)?;
+            }
+            out.push(FormatElement::Tag(Tag::EndPrefix));
+            Ok(())
+        }
+        Value::String(s) if s.trim().is_empty() => {
+            // Whitespace alignment (e.g., "  " for markdown list continuation indent).
             // Prettier uses the string length as the number of spaces to align by.
             if s.is_empty() {
                 // Empty string → no alignment, just render contents
@@ -578,6 +589,15 @@ mod tests {
             .print(0, PrinterOptions::default().with_print_width(PrintWidth::new(print_width)))
             .unwrap()
             .into_code()
+    }
+
+    #[test]
+    fn blockquote_string_align_keeps_its_prefix() {
+        let doc = json!([
+            "> ",
+            { "type": "align", "n": "> ", "contents": ["a", { "type": "line", "hard": true }, "b"] }
+        ]);
+        assert_eq!(print_doc(&doc, 80), "> a\n> b");
     }
 
     #[test]

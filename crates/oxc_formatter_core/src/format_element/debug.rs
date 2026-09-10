@@ -91,9 +91,10 @@ where
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         w!(f, [ContentArrayStart]);
@@ -322,6 +323,18 @@ where
                             );
                         }
 
+                        StartPrefix(prefix) => {
+                            w!(
+                                f,
+                                [
+                                    token("prefix_align("),
+                                    text(f.allocator().alloc_str(&format!("{:?}", prefix.0))),
+                                    token(","),
+                                    space(),
+                                ]
+                            );
+                        }
+
                         StartLineSuffix => {
                             w!(f, [token("line_suffix(")]);
                         }
@@ -423,6 +436,7 @@ where
                         | EndConditionalContent
                         | EndIndentIfGroupBreaks(_)
                         | EndAlign
+                        | EndPrefix
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix
