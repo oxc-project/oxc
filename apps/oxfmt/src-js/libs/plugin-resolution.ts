@@ -87,7 +87,35 @@ function installForCommonJs(urls: Record<string, string>): void {
   };
 }
 
-/** ESM plugins go through the loader, which only `register()` can intercept. */
+/**
+ * ESM plugins resolve through the loader, which needs a registered hook.
+ *
+ * `registerHooks` runs in-thread and can close over the map directly, but it
+ * only exists from Node 22.15. Below that, `register` is the only option, and
+ * its hooks run on a separate thread, so the map has to be passed as data.
+ * Newer runtimes deprecate `register`, and its warning would reach stderr.
+ */
 function installForEsm(urls: Record<string, string>): void {
+  const { registerHooks } = Module as unknown as {
+    registerHooks?: (hooks: {
+      resolve: (
+        specifier: string,
+        context: unknown,
+        nextResolve: (specifier: string, context: unknown) => unknown,
+      ) => unknown;
+    }) => void;
+  };
+
+  if (typeof registerHooks === "function") {
+    registerHooks({
+      resolve(specifier, context, nextResolve) {
+        const redirect = urls[specifier];
+        if (redirect !== undefined) return { url: redirect, shortCircuit: true };
+        return nextResolve(specifier, context);
+      },
+    });
+    return;
+  }
+
   register(new URL("hooks.js", HOST_DIR), { data: { map: urls } });
 }
