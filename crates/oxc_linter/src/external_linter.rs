@@ -56,9 +56,11 @@ pub type ExternalLinterLintFileCb = Arc<
                 // Workspace URI (e.g. `file:///path/to/workspace`).
                 // `None` in CLI mode (single workspace), `Some` in LSP mode.
                 Option<String>,
+                // Whether to collect per-rule timings.
+                bool,
                 // Allocator
                 &Allocator,
-            ) -> Result<Vec<LintFileResult>, String>
+            ) -> Result<LintFileOutput, String>
             + Sync
             + Send,
     >,
@@ -81,6 +83,21 @@ pub struct LintFileResult {
     pub end: u32,
     pub fixes: Option<Vec<JsFix>>,
     pub suggestions: Option<Vec<JsSuggestion>>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintFileOutput {
+    pub diagnostics: Vec<LintFileResult>,
+    pub timings: Vec<JsRuleTiming>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsRuleTiming {
+    pub rule_index: u32,
+    pub duration: u64,
+    pub calls: u64,
 }
 
 /// Fix in form sent from JS to Rust.

@@ -12,6 +12,7 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
+    time::Duration,
 };
 
 use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
@@ -77,7 +78,8 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
+        JsFix, JsRuleTiming, LintFileOutput, LintFileResult, LoadPluginResult,
+        convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
@@ -477,12 +479,13 @@ impl Linter {
         // Pass 2: Run JS plugin rules on every sub host in turn
         ctx_host.rewind_sub_hosts();
         loop {
-            self.run_external_rules(
+            self.run_external_rules::<TIMINGS>(
                 &external_rules,
                 path,
                 &mut ctx_host,
                 allocator,
                 js_allocator_pool,
+                rule_timing_store,
             );
 
             if !ctx_host.next_sub_host() {
@@ -531,13 +534,14 @@ impl Linter {
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    fn run_external_rules<'a>(
+    fn run_external_rules<'a, const TIMINGS: bool>(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
         if external_rules.is_empty() {
             return;
@@ -583,12 +587,13 @@ impl Linter {
 
         // If `js_allocator_pool` is provided, use clone-into-fixed-allocator approach
         if let Some(js_allocator_pool) = js_allocator_pool {
-            self.clone_into_fixed_size_allocator_and_run_external_rules(
+            self.clone_into_fixed_size_allocator_and_run_external_rules::<TIMINGS>(
                 external_rules,
                 path,
                 ctx_host,
                 program,
                 js_allocator_pool,
+                rule_timing_store,
             );
             return;
         }
@@ -604,24 +609,26 @@ impl Linter {
                 .insert(0, Comment::new(hashbang.span.start, hashbang.span.end, CommentKind::Line));
         }
 
-        self.convert_and_call_external_linter(
+        self.convert_and_call_external_linter::<TIMINGS>(
             external_rules,
             path,
             ctx_host,
             program,
             tokens,
             allocator,
+            rule_timing_store,
         );
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    fn run_external_rules<'a>(
+    fn run_external_rules<'a, const TIMINGS: bool>(
         &self,
         _external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         _path: &Path,
         _ctx_host: &mut Rc<ContextHost<'a>>,
         _allocator: &'a Allocator,
         _js_allocator_pool: Option<&AllocatorPool>,
+        _rule_timing_store: Option<&RuleTimingStore>,
     ) {
         // External rules (JS plugins) are not supported on non-64-bit or big-endian platforms
     }
@@ -632,13 +639,14 @@ impl Linter {
     /// allocator before passing to JS plugins. This allows using standard allocators for
     /// parsing/linting while still supporting JS plugin raw transfer.
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    fn clone_into_fixed_size_allocator_and_run_external_rules(
+    fn clone_into_fixed_size_allocator_and_run_external_rules<const TIMINGS: bool>(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
         ctx_host: &ContextHost<'_>,
         original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
         let js_allocator_guard = js_allocator_pool.get();
         let js_allocator = &*js_allocator_guard;
@@ -690,13 +698,14 @@ impl Linter {
         // Clone tokens into fixed-size allocator
         let tokens = js_allocator.alloc_slice_copy(ctx_host.parser_tokens());
 
-        self.convert_and_call_external_linter(
+        self.convert_and_call_external_linter::<TIMINGS>(
             external_rules,
             path,
             ctx_host,
             program,
             tokens,
             js_allocator,
+            rule_timing_store,
         );
 
         // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
@@ -708,7 +717,7 @@ impl Linter {
     /// This is the common code path shared by both `run_external_rules` and
     /// `clone_into_fixed_size_allocator_and_run_external_rules`.
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    fn convert_and_call_external_linter(
+    fn convert_and_call_external_linter<const TIMINGS: bool>(
         &self,
         external_rules: &[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)],
         path: &Path,
@@ -716,6 +725,7 @@ impl Linter {
         program: &mut Program<'_>,
         tokens: &mut [Token],
         allocator: &Allocator,
+        rule_timing_store: Option<&RuleTimingStore>,
     ) {
         // If has BOM, remove it
         const BOM: &str = "\u{feff}";
@@ -852,11 +862,30 @@ impl Linter {
             settings_json,
             globals_json,
             self.workspace_uri.as_ref().map(ToString::to_string),
+            TIMINGS,
             allocator,
         );
         match result {
-            Ok(diagnostics) => {
-                for diagnostic in diagnostics {
+            Ok(output) => {
+                if TIMINGS {
+                    rule_timing_store.expect("missing rule timing store").merge(
+                        output.timings.into_iter().map(|timing| {
+                            let (external_rule_id, _, _) =
+                                external_rules[timing.rule_index as usize];
+                            let (plugin_name, rule_name) =
+                                self.config.resolve_plugin_rule_names(external_rule_id);
+                            RuleTimingRecord {
+                                source: RuleTimingSource::JsPlugin,
+                                plugin_name: plugin_name.to_string(),
+                                rule_name: rule_name.to_string(),
+                                duration: Duration::from_nanos(timing.duration),
+                                calls: timing.calls,
+                            }
+                        }),
+                    );
+                }
+
+                for diagnostic in output.diagnostics {
                     // Convert UTF-16 offsets back to UTF-8.
                     // External plugins may report locations outside the source text, or which end
                     // before they start. Clamp them to the end of the source, and represent

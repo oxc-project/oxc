@@ -1,0 +1,4 @@
+{
+  "args": ["--debug", "timings"],
+  "singleThread": true
+}
