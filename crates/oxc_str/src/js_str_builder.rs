@@ -131,9 +131,8 @@ impl<'a> JSStrBuilder<'a> {
     }
 
     fn push_js_str_slow(&mut self, value: JSStr<'_>) {
-        if value.is_empty() {
-            return;
-        }
+        debug_assert!(value.has_lone_surrogate());
+
         let mut bytes = value.as_bytes();
         let additional = bytes.len() + self.pending_bytes();
         self.bytes.reserve(additional);
@@ -158,15 +157,12 @@ impl<'a> JSStrBuilder<'a> {
             trimmed = true;
         }
 
-        // The input's flag remains valid unless we removed an edge surrogate.
-        // A removed edge may have been its only lone surrogate, so inspect the
-        // interior in that case. An already-set output flag needs no further scan.
+        // Without trimming, the appended bytes still contain a lone surrogate.
+        // Trimming may remove the only one, so inspect the interior in that case.
+        // An already-set output flag needs no further scan.
         self.has_lone_surrogate = self.has_lone_surrogate
-            || if trimmed {
-                bytes.windows(3).any(|bytes| bytes[0] == 0xED && bytes[1] >= 0xA0)
-            } else {
-                value.has_lone_surrogate()
-            };
+            || !trimmed
+            || bytes.windows(3).any(|bytes| bytes[0] == 0xED && bytes[1] >= 0xA0);
         self.bytes.extend_from_slice_copy(bytes);
     }
 
