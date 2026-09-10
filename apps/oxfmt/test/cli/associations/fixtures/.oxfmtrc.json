@@ -1,8 +1,0 @@
-{
-  "associations": {
-    "**/*.html": "angular",
-    "index.html": "html",
-    "*.wxml": "html",
-    "*.conf": "jsonc"
-  }
-}

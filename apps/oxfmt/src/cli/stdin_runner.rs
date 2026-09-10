@@ -133,11 +133,11 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = config_resolver.classify(Arc::from(filepath)) else {
+        let Some(outcome) = config_resolver.resolve(Arc::from(filepath)) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
-        let strategy = match config_resolver.resolve(kind) {
+        let strategy = match outcome {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
             Ok(ResolveOutcome::MissingPlugin(_)) => {
                 utils::print_and_flush(stdout, &source_text);

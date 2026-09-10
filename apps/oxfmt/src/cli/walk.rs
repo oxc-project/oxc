@@ -680,8 +680,7 @@ fn resolve_format_strategy(
     tx_error: &DiagnosticSender,
     cwd: &Path,
 ) -> Option<FormatStrategy> {
-    let kind = resolver.classify(Arc::clone(&path))?;
-    match resolver.resolve(kind) {
+    match resolver.resolve(Arc::clone(&path))? {
         Ok(ResolveOutcome::Format(strategy)) => Some(strategy),
         Ok(ResolveOutcome::MissingPlugin(_)) => None,
         Err(err) => {

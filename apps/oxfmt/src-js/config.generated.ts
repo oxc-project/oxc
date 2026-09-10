@@ -4,8 +4,21 @@
  */
 
 export type ArrowParensConfig = "always" | "avoid";
+export type EmbeddedLanguageFormattingConfig = "auto" | "off";
+export type EndOfLineConfig = "lf" | "crlf" | "cr";
+export type OperatorPositionConfig = "start" | "end";
+export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
+export type JsdocUserConfig = boolean | JsdocConfig;
+export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
+export type LineWrappingStyleConfig = "greedy" | "balance";
+export type ObjectWrapConfig = "preserve" | "collapse";
 /**
- * A language Oxfmt can format, addressable by a stable ID in configuration (`associations`).
+ * A set of glob patterns.
+ * Patterns are matched against paths relative to the configuration file's directory.
+ */
+export type GlobSet = string[];
+/**
+ * A language Oxfmt can format, addressable by a stable ID in configuration (`overrides[].language`).
  *
  * IDs name what a file *is*, not which parser handles it,
  * so they stay valid when a Prettier-delegated language is rewritten in Rust.
@@ -32,19 +45,6 @@ export type Language =
   | "mdx"
   | "handlebars"
   | "mjml";
-export type EmbeddedLanguageFormattingConfig = "auto" | "off";
-export type EndOfLineConfig = "lf" | "crlf" | "cr";
-export type OperatorPositionConfig = "start" | "end";
-export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
-export type JsdocUserConfig = boolean | JsdocConfig;
-export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
-export type LineWrappingStyleConfig = "greedy" | "balance";
-export type ObjectWrapConfig = "preserve" | "collapse";
-/**
- * A set of glob patterns.
- * Patterns are matched against paths relative to the configuration file's directory.
- */
-export type GlobSet = string[];
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
@@ -89,18 +89,6 @@ export interface Oxfmtrc {
    * - Default: `"always"`
    */
   arrowParens?: ArrowParensConfig;
-  /**
-   * Route files matching a glob pattern to a language, overriding built-in extension detection.
-   *
-   * Keys are glob patterns relative to the directory containing the configuration file, values are language IDs.
-   * When a file matches multiple patterns, the later entry takes precedence (object order matters).
-   * Use it for custom extensions (`"*.wxml": "html"`) or dialects sharing an extension (`"*.html": "angular"`).
-   *
-   * - Default: `{}`
-   */
-  associations?: {
-    [k: string]: Language;
-  };
   /**
    * Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
    * instead of being alone on the next line (does not apply to self closing elements).
@@ -423,6 +411,16 @@ export interface OxfmtOverrideConfig {
    * Glob patterns to match files for this override.
    */
   files: GlobSet;
+  /**
+   * Format matched files as this language, instead of detecting the language from the file name.
+   *
+   * Use it for custom extensions (`"*.wxml"` as `"html"`) or dialects sharing an extension (`"*.html"` as `"angular"`).
+   * When several overrides with `language` match a file, the later one takes precedence.
+   * This selects the formatter rather than tuning it, so it sits beside `options`, not inside.
+   *
+   * - Default: detect from the file name
+   */
+  language?: Language;
   /**
    * Format options to apply for matched files.
    * Accepts the same options as the top-level format options.

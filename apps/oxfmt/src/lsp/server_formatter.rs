@@ -400,11 +400,11 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = resolver.classify(Arc::from(path)) else {
+        let Some(outcome) = resolver.resolve(Arc::from(path)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
-        let strategy = match resolver.resolve(kind) {
+        let strategy = match outcome {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
                 warn!(

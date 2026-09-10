@@ -84,9 +84,23 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     None
 }
 
+/// Classify `path`, routed to `language` when one is given
+/// (`overrides[].language` or the API `language` option) instead of detected from the file name.
+///
+/// An explicit language never overrides the lock-file exclusion.
+pub fn classify_file_kind_with(path: Arc<Path>, language: Option<Language>) -> Option<FileKind> {
+    let Some(language) = language else {
+        return classify_file_kind(path);
+    };
+    if is_excluded_file(&path) {
+        return None;
+    }
+    language.into_file_kind(path)
+}
+
 /// Returns `true` for machine-generated files (lock files) that must never be reformatted,
-/// even when an explicit `associations` entry matches them.
-pub fn is_excluded_file(path: &Path) -> bool {
+/// even when an explicit `language` route matches them.
+fn is_excluded_file(path: &Path) -> bool {
     path.file_name().and_then(|f| f.to_str()).is_some_and(|name| EXCLUDE_FILENAMES.contains(name))
 }
 
@@ -178,7 +192,7 @@ impl FileKind {
 
 // ---
 
-/// A language Oxfmt can format, addressable by a stable ID in configuration (`associations`).
+/// A language Oxfmt can format, addressable by a stable ID in configuration (`overrides[].language`).
 ///
 /// IDs name what a file *is*, not which parser handles it,
 /// so they stay valid when a Prettier-delegated language is rewritten in Rust.
@@ -762,6 +776,28 @@ mod tests {
     fn language_into_file_kind_prettier_unsupported_without_napi() {
         // Same as built-in detection: Prettier-delegated languages are skipped, not an error.
         assert!(Language::Angular.into_file_kind(Arc::from(Path::new("user.html"))).is_none());
+    }
+
+    #[test]
+    fn classify_with_language_overrides_detection_but_not_exclusion() {
+        let path = |name: &str| Arc::from(Path::new(name));
+        // No language: built-in detection
+        assert!(matches!(
+            classify_file_kind_with(path("tsconfig.json"), None),
+            Some(FileKind::OxcFormatterJson { variant: JsonVariant::Json, .. })
+        ));
+        assert!(classify_file_kind_with(path("a.custom"), None).is_none());
+        // Explicit language: routes unknown extensions and overrides detection
+        assert!(matches!(
+            classify_file_kind_with(path("a.custom"), Some(Language::Jsonc)),
+            Some(FileKind::OxcFormatterJson { variant: JsonVariant::Jsonc, .. })
+        ));
+        assert!(matches!(
+            classify_file_kind_with(path("tsconfig.json"), Some(Language::Jsonc)),
+            Some(FileKind::OxcFormatterJson { variant: JsonVariant::Jsonc, .. })
+        ));
+        // ...but never a lock file
+        assert!(classify_file_kind_with(path("pnpm-lock.yaml"), Some(Language::Yaml)).is_none());
     }
 
     #[test]

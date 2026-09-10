@@ -32,7 +32,7 @@ export interface OxfmtConfig extends Oxfmtrc {}
  * Options for the `format()` API.
  *
  * `language` routes the document explicitly instead of detecting it from `fileName`,
- * the API counterpart of the `associations` config (like Prettier's `parser` option).
+ * the API counterpart of the `overrides[].language` config (like Prettier's `parser` option).
  */
 export type FormatApiOptions = FormatConfig & {
   language?: Language;
