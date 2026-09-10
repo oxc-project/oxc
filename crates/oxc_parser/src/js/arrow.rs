@@ -352,8 +352,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
-        let pos = self.cur_token().start();
-        if self.state.not_parenthesized_arrow.contains(&pos) {
+        let key = (self.cur_token().start(), allow_return_type_in_arrow_function);
+        if self.state.not_parenthesized_arrow.contains(&key) {
             return None;
         }
 
@@ -361,7 +361,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let head = self.parse_parenthesized_arrow_function_head();
         if self.has_fatal_error() {
-            self.state.not_parenthesized_arrow.insert(pos);
+            self.state.not_parenthesized_arrow.insert(key);
             self.rewind(checkpoint);
             return None;
         }
@@ -393,8 +393,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // the conditional expression. It's okay to do this because this code would
             // be a syntax error in JavaScript (as the second colon shouldn't be there).
 
-            if !self.at(Kind::Colon) {
-                self.state.not_parenthesized_arrow.insert(pos);
+            // A colon reached after a fatal body error does not validate the speculation.
+            if self.has_fatal_error() || !self.at(Kind::Colon) {
+                // Cache this rejection only for the current return-type context. An outer
+                // speculation can rewind and revisit this position where a return type is allowed.
+                self.state.not_parenthesized_arrow.insert(key);
                 self.rewind(checkpoint);
                 return None;
             }

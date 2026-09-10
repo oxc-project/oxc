@@ -521,6 +521,22 @@ fn ts_satisfies_expression() {
 }
 
 #[test]
+fn conditional_arrow_cache() {
+    for preserve_parens in [false, true] {
+        let options = ParseOptions { preserve_parens, ..Default::default() };
+        for (source, expected) in [
+            ("a ? (b) : x => x ? c : (): any => b;", "a ? b : (x) => x ? c : (): any => b;\n"),
+            ("a ? (b) : x => x;", "a ? b : (x) => x;\n"),
+            ("a ? x => ({ b }) : y => ({ c });", "a ? (x) => ({ b }) : (y) => ({ c });\n"),
+            ("a ? (x): any => x : b;", "a ? (x): any => x : b;\n"),
+        ] {
+            test_with_parse_options(source, expected, options);
+            test_with_parse_options(expected, expected, options);
+        }
+    }
+}
+
+#[test]
 fn type_codegen_with_preserve_parens_off() {
     let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
 
