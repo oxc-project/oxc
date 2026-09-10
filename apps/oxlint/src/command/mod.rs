@@ -3,58 +3,50 @@ mod lint;
 
 use std::path::PathBuf;
 
-use bpaf::Bpaf;
+use usage_rs::Args;
 
 pub use self::{
     ignore::IgnoreOptions,
-    lint::{
-        DebugOption, LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions,
-        lint_command,
-    },
+    lint::{DebugOption, LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions},
 };
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
 /// Miscellaneous
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct MiscOptions {
     /// Do not display any diagnostics
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub silent: bool,
 
     /// Do not exit with an error when no files are selected for linting
     /// (for example, after applying ignore patterns)
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub no_error_on_unmatched_pattern: bool,
 
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
-    #[bpaf(argument("INT"), hide_usage)]
+    #[usage(long, value_name = "INT")]
     pub threads: Option<usize>,
 
     /// This option outputs the configuration to be used.
     /// When present, no linting is performed and only config-related options are valid.
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub print_config: bool,
 }
 
-#[expect(clippy::ptr_arg)]
-fn validate_paths(paths: &Vec<PathBuf>) -> bool {
-    if paths.is_empty() {
-        true
-    } else {
-        paths.iter().all(|p| p.components().all(|c| c != std::path::Component::ParentDir))
-    }
+fn invalid_path(paths: &[PathBuf]) -> Option<&PathBuf> {
+    paths.iter().find(|path| {
+        path.components().any(|component| component == std::path::Component::ParentDir)
+    })
 }
 
 const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 
 #[cfg(test)]
 mod misc_options {
-    use super::{MiscOptions, lint::lint_command};
+    use super::{MiscOptions, lint::LintCommand};
 
     fn get_misc_options(arg: &str) -> MiscOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap().misc_options
+        LintCommand::parse_from(args.as_slice()).unwrap().misc_options
     }
 
     #[test]

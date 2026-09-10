@@ -40,7 +40,6 @@ oxc_language_server = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_span = { workspace = true }
 
-bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 editorconfig-parser = { workspace = true }
 fast-glob = { workspace = true }
@@ -59,6 +58,7 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 tower-lsp-server = { workspace = true, features = ["proposed"] }
+usage-rs = { workspace = true, features = ["completions"] }
 
 # NAPI dependencies (conditional on napi feature)
 napi = { workspace = true, features = ["async", "serde-json"], optional = true }

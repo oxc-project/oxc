@@ -1,42 +1,120 @@
-use std::path::PathBuf;
+use std::{
+    ffi::{OsStr, OsString},
+    path::PathBuf,
+};
 
-use bpaf::{Bpaf, Parser};
-#[cfg(feature = "napi")]
-use cow_utils::CowUtils;
+use usage_rs as usage;
+use usage_rs::{Args, Cli, ValidationError};
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[expect(clippy::ptr_arg)]
-fn validate_paths(paths: &Vec<PathBuf>) -> bool {
-    if paths.is_empty() {
-        true
-    } else {
-        paths.iter().all(|p| p.components().all(|c| c != std::path::Component::ParentDir))
-    }
+fn invalid_path(paths: &[PathBuf]) -> Option<&PathBuf> {
+    paths.iter().find(|path| {
+        path.components().any(|component| component == std::path::Component::ParentDir)
+    })
 }
 
 const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 
-#[derive(Debug, Clone, Bpaf)]
-#[bpaf(options, version(VERSION))]
+#[derive(Debug, Clone)]
 pub struct FormatCommand {
-    #[bpaf(external(mode))]
     pub mode: Mode,
-    #[bpaf(external)]
     pub config_options: ConfigOptions,
-    #[bpaf(external)]
     pub ignore_options: IgnoreOptions,
-    #[bpaf(external)]
     pub runtime_options: RuntimeOptions,
     /// Single file, path or list of paths.
     /// Glob patterns are also supported.
     /// (Be sure to quote them, otherwise your shell may expand them before passing.)
     /// Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported.
     /// If not provided, current working directory is used.
-    // `bpaf(fallback)` seems to have issues with `many` or `positional`,
-    // so we implement the fallback behavior in code instead.
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Cli)]
+#[usage(
+    bin = "oxfmt",
+    version,
+    completion,
+    unknown_flags = "error",
+    args_override_self = false,
+    usage = "oxfmt [-c=PATH] [PATH]...",
+    help_template = "{{usage}}\n\n{{commands}}\n\n{{grouped_flags}}\n\n{{ungrouped_args}}\n\n{{ungrouped_flags}}\n\n{{after_help}}",
+    example("oxfmt --check .", header = "Check formatting"),
+    example("oxfmt --write src", header = "Format files"),
+    exit_code(0, "files are formatted or were formatted successfully"),
+    exit_code(1, "invalid configuration or formatting differences were found"),
+    exit_code(2, "no files were found or formatting failed"),
+    try_into = FormatCommand
+)]
+struct FormatCli {
+    #[usage(flatten)]
+    mode_options: ModeOptions,
+    #[usage(flatten, next_help_heading = "Config Options")]
+    config_options: ConfigOptions,
+    #[usage(flatten, next_help_heading = "Ignore Options")]
+    ignore_options: IgnoreOptions,
+    #[usage(flatten, next_help_heading = "Runtime Options")]
+    runtime_options: RuntimeOptions,
+    /// Single file, path or list of paths.
+    /// Glob patterns are also supported.
+    /// (Be sure to quote them, otherwise your shell may expand them before passing.)
+    /// Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported.
+    /// If not provided, current working directory is used.
+    #[usage(name = "PATH", value_hint = usage::ValueHint::AnyPath)]
+    paths: Vec<PathBuf>,
+}
+
+impl FormatCommand {
+    pub fn parse() -> Self {
+        FormatCli::parse_into()
+    }
+
+    /// Parses formatter options from an argument slice.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when an argument is invalid or conflicts with another option.
+    pub fn parse_from<'v, T>(args: &'v [T]) -> Result<Self, usage::Error<'static, 'v>>
+    where
+        T: AsRef<OsStr> + 'v,
+    {
+        let refs = args.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        FormatCli::parse_into_from(&refs)
+    }
+
+    pub fn command() -> &'static usage::Command<'static> {
+        FormatCli::command()
+    }
+
+    pub fn render_help(cmd: &usage::Command<'_>, long: bool) -> Option<String> {
+        FormatCli::render_help(cmd, long)
+    }
+
+    pub fn to_kdl() -> String {
+        FormatCli::to_kdl()
+    }
+
+    pub fn embedded_outcome(args: &[OsString]) -> usage::embedded::Outcome<Self> {
+        FormatCli::embedded_outcome_into(args)
+    }
+}
+
+impl TryFrom<FormatCli> for FormatCommand {
+    type Error = ValidationError;
+
+    fn try_from(cli: FormatCli) -> Result<Self, Self::Error> {
+        if let Some(path) = invalid_path(&cli.paths) {
+            return Err(ValidationError::field("PATH")
+                .value(path.display().to_string())
+                .reason(PATHS_ERROR_MESSAGE));
+        }
+
+        Ok(Self {
+            mode: cli.mode_options.into(),
+            config_options: cli.config_options,
+            ignore_options: cli.ignore_options,
+            runtime_options: cli.runtime_options,
+            paths: cli.paths,
+        })
+    }
 }
 
 // ---
@@ -62,41 +140,81 @@ pub enum Mode {
     Migrate(MigrateSource),
 }
 
-fn mode() -> impl bpaf::Parser<Mode> {
-    let output_mode_options = output_mode().map(Mode::Cli);
-
+#[derive(Debug, Clone, Args)]
+#[usage(group("mode"))]
+struct ModeOptions {
+    /// Initialize `.oxfmtrc.json` with default values
     #[cfg(feature = "napi")]
-    {
-        let init = bpaf::long("init")
-            .help("Initialize `.oxfmtrc.json` with default values")
-            .req_flag(Mode::Init)
-            .hide_usage();
-        let migrate = bpaf::long("migrate")
-            .help("Migrate configuration to `.oxfmtrc.json` from specified source\nAvailable sources: prettier, biome")
-            .argument::<String>("SOURCE")
-            .parse(|s| match s.cow_to_lowercase().as_ref() {
-                "prettier" => Ok(Mode::Migrate(MigrateSource::Prettier)),
-                "biome" => Ok(Mode::Migrate(MigrateSource::Biome)),
-                _ => Err(format!("Unknown migration source: {s}. Supported: prettier, biome.")),
-            })
-            .hide_usage();
-        let lsp = bpaf::long("lsp")
-            .help("Start language server protocol (LSP) server")
-            .req_flag(Mode::Lsp)
-            .hide_usage();
-        let stdin_filepath = bpaf::long("stdin-filepath")
-            .help("Specify the file name to use to infer which parser to use")
-            .argument::<PathBuf>("PATH")
-            .map(Mode::Stdin)
-            .hide_usage();
-        let mode_options =
-            bpaf::construct!([init, migrate, lsp, stdin_filepath]).group_help("Mode Options:");
+    #[usage(long, group = "mode", help_heading = "Mode Options")]
+    init: bool,
 
-        bpaf::construct!([mode_options, output_mode_options]).fallback(Mode::Cli(OutputMode::Write))
-    }
-    #[cfg(not(feature = "napi"))]
-    {
-        output_mode_options.fallback(Mode::Cli(OutputMode::Write))
+    /// Migrate configuration to `.oxfmtrc.json` from specified source.
+    /// Available sources: prettier, biome.
+    #[cfg(feature = "napi")]
+    #[usage(
+        long,
+        value_name = "SOURCE",
+        value_enum,
+        group = "mode",
+        help_heading = "Mode Options"
+    )]
+    migrate: Option<MigrateSource>,
+
+    /// Start language server protocol (LSP) server
+    #[cfg(feature = "napi")]
+    #[usage(long, group = "mode", help_heading = "Mode Options")]
+    lsp: bool,
+
+    /// Specify the file name to use to infer which parser to use
+    #[cfg(feature = "napi")]
+    #[usage(
+        long,
+        value_name = "PATH",
+        value_hint = usage::ValueHint::FilePath,
+        group = "mode",
+        help_heading = "Mode Options"
+    )]
+    stdin_filepath: Option<PathBuf>,
+
+    /// Format and write files in place (default)
+    #[usage(long, group = "mode", help_heading = "Output Options")]
+    write: bool,
+
+    /// Check if files are formatted, also show statistics
+    #[usage(long, group = "mode", help_heading = "Output Options")]
+    check: bool,
+
+    /// List files that would be changed
+    #[usage(long, group = "mode", help_heading = "Output Options")]
+    list_different: bool,
+}
+
+impl From<ModeOptions> for Mode {
+    fn from(options: ModeOptions) -> Self {
+        #[cfg(feature = "napi")]
+        if options.init {
+            return Self::Init;
+        }
+        #[cfg(feature = "napi")]
+        if let Some(source) = options.migrate {
+            return Self::Migrate(source);
+        }
+        #[cfg(feature = "napi")]
+        if options.lsp {
+            return Self::Lsp;
+        }
+        #[cfg(feature = "napi")]
+        if let Some(path) = options.stdin_filepath {
+            return Self::Stdin(path);
+        }
+        if options.check {
+            Self::Cli(OutputMode::Check)
+        } else if options.list_different {
+            Self::Cli(OutputMode::ListDifferent)
+        } else {
+            let _ = options.write;
+            Self::Cli(OutputMode::Write)
+        }
     }
 }
 
@@ -111,26 +229,10 @@ pub enum OutputMode {
     ListDifferent,
 }
 
-fn output_mode() -> impl bpaf::Parser<OutputMode> {
-    let write = bpaf::long("write")
-        .help("Format and write files in place (default)")
-        .req_flag(OutputMode::Write)
-        .hide_usage();
-    let check = bpaf::long("check")
-        .help("Check if files are formatted, also show statistics")
-        .req_flag(OutputMode::Check)
-        .hide_usage();
-    let list_different = bpaf::long("list-different")
-        .help("List files that would be changed")
-        .req_flag(OutputMode::ListDifferent)
-        .hide_usage();
-
-    bpaf::construct!([write, check, list_different]).group_help("Output Options:")
-}
-
 /// Migration Source
 #[cfg(feature = "napi")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, usage::ValueEnum)]
+#[usage(ignore_case)]
 pub enum MigrateSource {
     /// Migrate from Prettier configuration
     Prettier,
@@ -141,35 +243,74 @@ pub enum MigrateSource {
 // ---
 
 /// Config Options
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct ConfigOptions {
     /// Path to the configuration file (.json, .jsonc, .ts, .mts, .cts, .js, .mjs, .cjs)
-    #[bpaf(short, long, argument("PATH"))]
+    #[usage(short, long, value_name = "PATH", value_hint = usage::ValueHint::FilePath)]
     pub config: Option<PathBuf>,
     /// Do not search for configuration files in subdirectories
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub disable_nested_config: bool,
 }
 
 /// Ignore Options
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct IgnoreOptions {
     /// Path to ignore file(s). Can be specified multiple times.
     /// If not specified, .gitignore and .prettierignore in the current directory are used.
-    #[bpaf(argument("PATH"), many, hide_usage)]
+    #[usage(long, value_name = "PATH", value_hint = usage::ValueHint::FilePath)]
     pub ignore_path: Vec<PathBuf>,
     /// Format code in node_modules directory (skipped by default)
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub with_node_modules: bool,
 }
 
 /// Runtime Options
-#[derive(Debug, Clone, Bpaf)]
+#[derive(Debug, Clone, Args)]
 pub struct RuntimeOptions {
     /// Do not exit with error when pattern is unmatched
-    #[bpaf(switch, hide_usage)]
+    #[usage(long)]
     pub no_error_on_unmatched_pattern: bool,
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
-    #[bpaf(argument("INT"), hide_usage)]
+    #[usage(long, value_name = "INT")]
     pub threads: Option<usize>,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::OsString;
+
+    use usage_rs as usage;
+
+    use super::FormatCommand;
+
+    #[test]
+    fn typed_finalization_reports_invalid_paths() {
+        let error = FormatCommand::parse_from(&["../src"]).unwrap_err();
+        let usage::Error::InvalidValue(error) = error else {
+            panic!("expected invalid path value");
+        };
+        assert_eq!(error.name, "PATH");
+        assert_eq!(error.value, "../src");
+    }
+
+    #[test]
+    fn embedded_help_preserves_section_order() {
+        let args = [OsString::from("--help")];
+        let outcome = FormatCommand::embedded_outcome(&args);
+        let exit = outcome.exit().expect("help should return an embedded exit");
+        assert_eq!(exit.code, 0);
+        assert!(!exit.stderr);
+
+        let output_options = exit.text.find("Output Options:").expect("output options heading");
+        let arguments = exit.text.find("Arguments:").expect("arguments heading");
+        let flags = exit.text.find("Flags:").expect("flags heading");
+        assert!(output_options < arguments && arguments < flags);
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn migration_source_remains_case_insensitive() {
+        assert!(FormatCommand::parse_from(&["--migrate", "PRETTIER"]).is_ok());
+    }
 }
