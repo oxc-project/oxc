@@ -455,7 +455,10 @@ impl Linter {
                         assert_eq!(
                             *opt_diag,
                             *unopt_diag,
-                            "Diagnostic differs between optimized and unoptimized runs",
+                            "Diagnostic differs between optimized and unoptimized runs for {}",
+                            path.strip_prefix(std::env::current_dir().unwrap_or_default())
+                                .unwrap_or(path)
+                                .display(),
                         );
                     }
 
