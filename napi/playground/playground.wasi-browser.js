@@ -51,11 +51,11 @@ let __emnapiWasmEnvCleanupDrained = false
 let __emnapiWasmEnvCleanupDrainPromise
 let __wasiDisposed = false
 let __wasiDisposePromise
-let __completeWasiDisposal = function() {}
+let __completeWasiDisposal = function () {}
 // Overridden by loader flavors that have a last-resort reclaim for a rollback
 // that stopped short of destroying the context. See
 // `__rollbackWasiInitialization`.
-let __retainWasiRollbackForRetry = function() {}
+let __retainWasiRollbackForRetry = function () {}
 
 function __isThenable(value) {
   return (

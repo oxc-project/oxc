@@ -1,10 +1,10 @@
-import fs from "node:fs";
-import { createRequire } from "node:module";
-import { parse } from "node:path";
-import { WASI } from "node:wasi";
-import { parentPort, Worker } from "node:worker_threads";
+import fs from 'node:fs'
+import { createRequire } from 'node:module'
+import { parse } from 'node:path'
+import { WASI } from 'node:wasi'
+import { parentPort, Worker, workerData } from 'node:worker_threads'
 
-const require = createRequire(import.meta.url);
+const require = createRequire(import.meta.url)
 
 const {
   instantiateNapiModuleSync,
@@ -12,12 +12,12 @@ const {
   getDefaultContext,
   emnapiAsyncWorkPlugin,
   emnapiTSFNPlugin,
-} = require("@napi-rs/wasm-runtime");
+} = require('@napi-rs/wasm-runtime')
 
 if (parentPort) {
-  parentPort.on("message", (data) => {
-    globalThis.onmessage({ data });
-  });
+  parentPort.on('message', (data) => {
+    globalThis.onmessage({ data })
+  })
 }
 
 Object.assign(globalThis, {
@@ -25,18 +25,25 @@ Object.assign(globalThis, {
   require,
   Worker,
   importScripts: function (f) {
-    ;(0, eval)(fs.readFileSync(f, "utf8") + "//# sourceURL=" + f);
+    // oxlint-disable-next-line no-eval -- WASI importScripts polyfill
+    ;(0, eval)(fs.readFileSync(f, 'utf8') + '//# sourceURL=' + f)
   },
   postMessage: function (msg) {
     if (parentPort) {
-      parentPort.postMessage(msg);
+      parentPort.postMessage(msg)
     }
   },
-});
+})
 
-const emnapiContext = getDefaultContext();
+const emnapiContext = getDefaultContext()
 
-const __rootDir = parse(process.cwd()).root;
+const __cwd = process.cwd()
+const __rootDir =
+  (workerData && typeof workerData.rootDir === 'string' && workerData.rootDir) ||
+  parse(__cwd).root
+const __hostRoot =
+  (workerData && typeof workerData.hostRoot === 'string' && workerData.hostRoot) ||
+  (process.platform === 'android' ? __cwd : __rootDir)
 
 const handler = new MessageHandler({
   onLoad({ wasmModule, wasmMemory }) {
@@ -44,9 +51,10 @@ const handler = new MessageHandler({
       version: 'preview1',
       env: process.env,
       preopens: {
-        [__rootDir]: __rootDir,
+        [__rootDir]: __hostRoot,
+        [__hostRoot]: __hostRoot,
       },
-    });
+    })
 
     return instantiateNapiModuleSync(wasmModule, {
       childThread: true,
@@ -62,13 +70,13 @@ const handler = new MessageHandler({
           ...importObject.env,
           ...importObject.napi,
           ...importObject.emnapi,
-          memory: wasmMemory
-        };
+          memory: wasmMemory,
+        }
       },
-    });
+    })
   },
-});
+})
 
 globalThis.onmessage = function (e) {
-  handler.handle(e);
-};
+  handler.handle(e)
+}

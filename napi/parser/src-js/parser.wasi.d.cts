@@ -22,8 +22,9 @@ export interface OxcError {
 export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
-  Advice = 'Advice'
+  Advice = 'Advice',
 }
+
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
@@ -69,7 +70,7 @@ export declare const enum ExportExportNameKind {
   /** `export default expression` */
   Default = 'Default',
   /** `export * from "mod" */
-  None = 'None'
+  None = 'None',
 }
 
 export interface ExportImportName {
@@ -87,7 +88,7 @@ export declare const enum ExportImportNameKind {
   /** `export * from "mod"` */
   AllButDefault = 'AllButDefault',
   /** Does not have a specifier. */
-  None = 'None'
+  None = 'None',
 }
 
 export interface ExportLocalName {
@@ -106,7 +107,7 @@ export declare const enum ExportLocalNameKind {
    * If the exported value is not locally accessible from within the module.
    * `export default function () {}`
    */
-  None = 'None'
+  None = 'None',
 }
 
 export interface ImportName {
@@ -122,7 +123,7 @@ export declare const enum ImportNameKind {
   /** `import * as ns from "mod"` */
   NamespaceObject = 'NamespaceObject',
   /** `import defaultExport from "mod"` */
-  Default = 'Default'
+  Default = 'Default',
 }
 
 /**
