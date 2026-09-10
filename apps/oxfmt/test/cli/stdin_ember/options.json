@@ -1,0 +1,10 @@
+[
+  {
+    "args": ["--stdin-filepath", "Foo.gjs", "--config", "./fmt-with-ember.json"],
+    "stdin": "input.gjs"
+  },
+  {
+    "args": ["--stdin-filepath", "Foo.gjs", "--config", "./fmt-without-ember.json"],
+    "stdin": "input.gjs"
+  }
+]

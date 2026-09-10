@@ -30,7 +30,7 @@ pub mod trivia;
 pub use self::builders::JoinBuilderJsExt;
 pub use self::comments::Comments;
 pub use self::{
-    context::{JsFormatContext, TailwindContextEntry},
+    context::{JsFormatContext, OpaqueRegion, TailwindContextEntry},
     formatter_js::{JsFormatter, JsFormatterExt},
 };
 use oxc_formatter_core::{

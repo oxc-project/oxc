@@ -182,6 +182,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Covers a placeholder in expression and statement position; the class-member
+        // form is taken by `PropertyDefinition`, whose span covers the whole member.
+        if crate::utils::opaque::write_opaque(self.span(), f) {
+            return;
+        }
         write!(f, text_without_whitespace(self.name().as_str()));
     }
 }
@@ -721,6 +726,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
         }
 
         let expression = self.expression();
+        // A statement that opens with an opaque region is a declaration in another
+        // language, terminated by its own syntax, so it takes no terminator here. Matching
+        // on the start rather than the whole span keeps that uniform when the region is
+        // wrapped, as in `<region> as Type`.
+        let opens_with_region = f
+            .context()
+            .opaque_region_at_start(expression.span().start)
+            .is_some_and(|region| region.span.start == expression.span().start);
+        if opens_with_region {
+            write!(f, expression);
+            return;
+        }
         let content_end = semicolon_terminated_expression_content_end(
             f,
             expression.as_ref(),

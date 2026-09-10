@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["**/*.gjs", "**/*.gts"],
+      "options": {
+        "ember": {}
+      }
+    }
+  ]
+}

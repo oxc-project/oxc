@@ -6,6 +6,7 @@ use oxc_formatter_css::CssVariant;
 use oxc_formatter_json::JsonVariant;
 use oxc_span::SourceType;
 
+use super::hosted;
 #[cfg(feature = "napi")]
 use super::oxfmtrc::FormatConfig;
 
@@ -36,6 +37,15 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
 
     if is_extra_js_file(file_name, extension) {
         return Some(FileKind::OxcFormatter { path, source_type: SourceType::default() });
+    }
+    // A hosted format is JS/TS apart from its islands, which the format step locates and
+    // dispatches. Each is gated by its own config key, like `.svelte`.
+    if let Some(format) = extension.and_then(hosted::lookup) {
+        return Some(FileKind::OxcFormatterHosted {
+            path,
+            source_type: format.source_type,
+            locate_islands: format.locate,
+        });
     }
     if is_toml_file(file_name, extension) {
         return Some(FileKind::OxfmtToml { path });
@@ -115,10 +125,18 @@ pub enum FileKind {
     OxcFormatterYamlRc { path: Arc<Path> },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
+    /// A JavaScript-hosted format (see `core::hosted`): JS/TS hosting islands of another
+    /// language, formatted by `oxc_formatter` with each island dispatched as an opaque
+    /// region.
+    OxcFormatterHosted {
+        path: Arc<Path>,
+        source_type: SourceType,
+        locate_islands: fn(&str) -> Vec<oxc_formatter::OpaqueRegion<'static>>,
+    },
     /// Files formatted by delegating to Prettier (Tier 3/4).
     ///
-    /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability
-    /// flags that say "this file kind CAN use the corresponding plugin".
+    /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability flags that
+    /// say "this file kind CAN use the corresponding plugin".
     /// Whether the plugin is actually activated is decided at the format step by resolved config.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
@@ -141,7 +159,8 @@ impl FileKind {
             | Self::OxcFormatterCss { path, .. }
             | Self::OxcFormatterYaml { path }
             | Self::OxcFormatterYamlRc { path }
-            | Self::OxfmtToml { path } => path,
+            | Self::OxfmtToml { path }
+            | Self::OxcFormatterHosted { path, .. } => path,
             #[cfg(feature = "napi")]
             Self::Prettier { path, .. } => path,
         }
@@ -150,18 +169,26 @@ impl FileKind {
     /// Returns the config key (e.g. `"svelte"`) of an opt-in Prettier plugin
     /// that this file's parser requires but the resolved config did NOT enable.
     ///
-    /// `.svelte` files cannot be formatted without `prettier-plugin-svelte`,
-    /// which is gated behind the `svelte` config key. The plugin is considered
-    /// disabled when the field is unset or `false`; the resolver bails out with
+    /// A `.svelte` file cannot be formatted without its plugin, and a hosted format
+    /// (`core::hosted`) is opt-in the same way. Each is gated behind its own config key and
+    /// is disabled when the field is unset or `false`; the resolver bails out with
     /// [`super::ResolveOutcome::MissingPlugin`] in that case.
     #[cfg(feature = "napi")]
     pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
-        if let Self::Prettier { parser_name: "svelte", .. } = self
-            && !config.is_svelte_enabled()
-        {
-            return Some("svelte");
+        match self {
+            Self::OxcFormatterHosted { path, .. } => {
+                let key = path
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .and_then(hosted::lookup)
+                    .map(|format| format.config_key)?;
+                (!config.is_hosted_format_enabled(key)).then_some(key)
+            }
+            Self::Prettier { parser_name: "svelte", .. } if !config.is_svelte_enabled() => {
+                Some("svelte")
+            }
+            _ => None,
         }
-        None
     }
 }
 
@@ -648,6 +675,11 @@ mod tests {
             ("email.mjml", Some("mjml")),
             // Vue
             ("App.vue", Some("vue")),
+            // Svelte is classified here and gated at resolve time. `.gjs`/`.gts` are not:
+            // they are hosted by `oxc_formatter`, so they never reach this map.
+            ("App.svelte", Some("svelte")),
+            ("Foo.gjs", None),
+            ("Bar.gts", None),
             // CSS files are routed to `oxc_formatter_css` in `classify_file_kind`
             // and excluded from this map.
             ("styles.css", None),
@@ -724,6 +756,22 @@ mod tests {
         // but is the lone dedicated kind for the sorting pre-process
         let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
         assert!(matches!(kind, FileKind::OxcFormatterJsonPackageJson { .. }));
+    }
+
+    #[test]
+    fn test_hosted_formats_route_to_oxc_formatter() {
+        for file_name in ["Foo.gjs", "Bar.gts", "nested/Baz.gjs"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterHosted { .. })),
+                "`{file_name}` should be hosted by oxc_formatter"
+            );
+        }
+        // An extension no registry row claims stays an ordinary JS/TS file.
+        assert!(matches!(
+            classify_file_kind(Arc::from(Path::new("plain.js"))),
+            Some(FileKind::OxcFormatter { .. })
+        ));
     }
 
     #[test]

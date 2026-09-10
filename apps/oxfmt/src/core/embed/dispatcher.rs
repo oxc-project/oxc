@@ -8,10 +8,11 @@ use std::sync::{Arc, OnceLock};
 
 use tracing::{debug, debug_span};
 
+use oxc_allocator::Vec as ArenaVec;
 use oxc_formatter::CssInJsTemplate;
 use oxc_formatter_core::{
-    CoreFormatOptions, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
-    FormatSession,
+    CoreFormatOptions, DispatchPayload, DispatchRequest, DispatchResponse, EmbeddedIr,
+    FormatDispatcher, FormatElement, FormatSession, Group, LineMode, Tag,
 };
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
@@ -48,6 +49,7 @@ pub enum PrettierLanguage {
     Html,
     Angular,
     Markdown,
+    Glimmer,
 }
 
 #[cfg(feature = "napi")]
@@ -63,6 +65,7 @@ impl PrettierLanguage {
             Self::Html => "html",
             Self::Angular => "angular",
             Self::Markdown => "markdown",
+            Self::Glimmer => "glimmer",
         }
     }
 
@@ -80,6 +83,9 @@ pub enum Route {
     /// Prettier serves it (napi Doc→IR fallback / string channel);
     /// the pure build preserves it as-is.
     Prettier(PrettierLanguage),
+    /// An Ember template tag: the `<template>` … `</template>` wrapper is ours to print,
+    /// the body inside it is Handlebars and goes to [`PrettierLanguage::Glimmer`].
+    EmberTemplateTag,
     /// No formatter anywhere: the part deliberately stays as-is in every build.
     Unsupported,
 }
@@ -101,6 +107,10 @@ pub fn route(language: &str) -> Route {
         "html" => Route::Prettier(PrettierLanguage::Html),
         "angular" => Route::Prettier(PrettierLanguage::Angular),
         "markdown" | "md" => Route::Prettier(PrettierLanguage::Markdown),
+        // NOTE: `glimmer` is deliberately absent. It is reachable only through
+        // `EmberTemplateTag` below, which calls the fallback directly. Naming it here would
+        // also start formatting ` ```hbs ` fences, which is a separate decision.
+        "ember-template-tag" => Route::EmberTemplateTag,
         _ => Route::Unsupported,
     }
 }
@@ -340,6 +350,14 @@ pub fn build_dispatcher(
                 }
             }
 
+            Route::EmberTemplateTag => {
+                let Some(fallback) = &fallback else {
+                    debug!("No fallback in this build, template tag stays as-is");
+                    return Ok(DispatchResponse::PreserveOriginal);
+                };
+                Ok(format_ember_template_tag(session, fallback, text))
+            }
+
             // A language without a formatter is a deliberate skip, in every build.
             Route::Unsupported => {
                 debug!("No formatter for language '{}', part stays as-is", request.language);
@@ -363,6 +381,111 @@ fn format_native<'a, E: std::fmt::Display>(
             DispatchResponse::PreserveOriginal
         }
     })
+}
+
+/// Print one Ember template tag: our `<template>` … `</template>` wrapper around the
+/// Handlebars body, which Prettier's `glimmer` formats.
+///
+/// The wrapper is printed here rather than by the glimmer formatter because glimmer also
+/// serves bare `.hbs`, which has no wrapper. Anything that stops the body being formatted
+/// leaves the whole tag verbatim, since a wrapper around an unformatted body would reindent
+/// content we did not lay out.
+fn format_ember_template_tag<'a>(
+    session: &FormatSession<'a>,
+    fallback: &PrettierDocFallback,
+    text: &str,
+) -> DispatchResponse<'a> {
+    const OPEN: &str = "<template>";
+    const CLOSE: &str = "</template>";
+
+    let Some(body) = text.strip_prefix(OPEN).and_then(|rest| rest.strip_suffix(CLOSE)) else {
+        return DispatchResponse::PreserveOriginal;
+    };
+
+    // An empty tag has nothing to lay out, and the body would come back as an empty doc
+    // whose surrounding line breaks would then be ours to invent.
+    if body.trim().is_empty() {
+        let mut doc = ArenaVec::new_in(&session.allocator());
+        doc.push(FormatElement::Token { text: OPEN });
+        doc.push(FormatElement::Token { text: CLOSE });
+        return DispatchResponse::Formatted(DispatchPayload {
+            doc,
+            tailwind_classes: Vec::new(),
+            child_context: None,
+        });
+    }
+
+    // The wrapper below supplies the indentation and the line breaks, so the body's own
+    // surrounding whitespace would be laid out twice.
+    let body = body.trim();
+
+    let Ok(DispatchResponse::Formatted(payload)) =
+        fallback(session, PrettierLanguage::Glimmer, body)
+    else {
+        return DispatchResponse::PreserveOriginal;
+    };
+
+    // Markup is laid out across lines, so a tag containing any breaks around it; a body of
+    // text, expressions or block helpers may stay on one line when it fits.
+    let line = if has_element_tag(body) { LineMode::Hard } else { LineMode::Soft };
+
+    let body_doc = expand_around_handlebars_comments(payload.doc, session);
+
+    let mut doc = ArenaVec::new_in(&session.allocator());
+    doc.push(FormatElement::Tag(Tag::StartGroup(Group::new())));
+    doc.push(FormatElement::Token { text: OPEN });
+    doc.push(FormatElement::Tag(Tag::StartIndent));
+    doc.push(FormatElement::Line(line));
+    doc.extend(body_doc);
+    doc.push(FormatElement::Tag(Tag::EndIndent));
+    doc.push(FormatElement::Line(line));
+    doc.push(FormatElement::Token { text: CLOSE });
+    doc.push(FormatElement::Tag(Tag::EndGroup));
+
+    DispatchResponse::Formatted(DispatchPayload {
+        doc,
+        tailwind_classes: payload.tailwind_classes,
+        child_context: None,
+    })
+}
+
+/// Whether the body holds an element tag, i.e. a `<` with a `>` somewhere after it.
+fn has_element_tag(body: &str) -> bool {
+    body.split_once('<').is_some_and(|(_, rest)| rest.contains('>'))
+}
+
+/// Force whatever group holds a Handlebars comment to break.
+///
+/// Prettier's Handlebars printer keeps `{{! … }}` inline while it fits, which parks a
+/// comment on the same line as the attributes it annotates and detaches directives like
+/// `{{! @glint-expect-error }}` from the attribute they refer to. An `ExpandParent` beside
+/// the comment makes the enclosing group break, which is the layout
+/// `prettier-plugin-ember-template-tag` produces by re-breaking the group itself.
+fn expand_around_handlebars_comments<'a>(
+    body: ArenaVec<'a, FormatElement<'a>>,
+    session: &FormatSession<'a>,
+) -> ArenaVec<'a, FormatElement<'a>> {
+    fn is_comment(element: &FormatElement<'_>) -> bool {
+        let text = match element {
+            FormatElement::Text { text, .. } | FormatElement::Token { text } => *text,
+            _ => return false,
+        };
+        text.trim_start().starts_with("{{!")
+    }
+
+    if !body.iter().any(is_comment) {
+        return body;
+    }
+
+    let mut out = ArenaVec::new_in(&session.allocator());
+    for element in body {
+        let comment = is_comment(&element);
+        out.push(element);
+        if comment {
+            out.push(FormatElement::ExpandParent);
+        }
+    }
+    out
 }
 
 #[cfg(test)]

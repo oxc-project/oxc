@@ -128,6 +128,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
 
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
+        // An opaque region that is a whole default export carries its own syntax for that,
+        // so the keyword here would be a second spelling of the same declaration.
+        if f.context().opaque_region_at(declaration.span()).is_some() {
+            write!(f, declaration);
+            return;
+        }
         format_export_keyword_with_class_decorators(
             self.span,
             "export default",

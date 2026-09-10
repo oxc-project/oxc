@@ -163,6 +163,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if crate::utils::opaque::write_opaque(self.span(), f) {
+            return;
+        }
         AssignmentLike::PropertyDefinition(self).fmt(f);
     }
 }
@@ -614,7 +617,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             }
             // Don't add semicolon if the element is suppressed (has `oxfmt-ignore`),
             // because the suppressed source text already includes the original semicolon.
-            && !f.comments().is_suppressed(self.element.span().start);
+            && !f.comments().is_suppressed(self.element.span().start)
+            // An opaque region is a whole member in another language; its own syntax
+            // terminates it, and the placeholder standing in for it is not a property.
+            && f.context().opaque_region_at(self.element.span()).is_none();
 
         if needs_semi {
             // Same-line comments between the content end and the source semicolon

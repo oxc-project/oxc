@@ -27,6 +27,7 @@ describe("LSP formatting", () => {
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],
       ["config-svelte/test.svelte", "svelte"],
+      ["config-ember/test.gjs", "glimmer-js"],
       ["config-sort-imports/test.js", "javascript"],
       ["config-sort-tailwindcss/test.tsx", "typescriptreact"],
       ["config-sort-tailwindcss/test.vue", "vue"],
