@@ -5,6 +5,7 @@
 
 export type ArrowParensConfig = "always" | "avoid";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
+export type EmberUserConfig = boolean | EmberConfig;
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type OperatorPositionConfig = "start" | "end";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
@@ -83,6 +84,18 @@ export interface Oxfmtrc {
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
+  /**
+   * Format Ember `.gjs`/`.gts` files.
+   *
+   * Pass `true` or an object to enable them, or `false` (handy in overrides) / omit to
+   * disable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+   * `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
+   * formatted as Handlebars.
+   *
+   * - Languages: Ember Template Tag
+   * - Default: Disabled
+   */
+  ember?: EmberUserConfig;
   /**
    * Which end of line characters to apply.
    *
@@ -298,6 +311,13 @@ export interface Oxfmtrc {
   vueIndentScriptAndStyle?: boolean;
   [k: string]: unknown;
 }
+/**
+ * Reserved for per-format options; none are supported yet, so `ember: {}` and
+ * `ember: true` mean the same thing.
+ */
+export interface EmberConfig {
+  [k: string]: unknown;
+}
 export interface JsdocConfig {
   /**
    * Append default values to `@param` descriptions (e.g. "Default is `value`").
@@ -420,6 +440,18 @@ export interface FormatConfig {
    * - Default: `"auto"`
    */
   embeddedLanguageFormatting?: EmbeddedLanguageFormattingConfig;
+  /**
+   * Format Ember `.gjs`/`.gts` files.
+   *
+   * Pass `true` or an object to enable them, or `false` (handy in overrides) / omit to
+   * disable. The JavaScript is formatted by Oxfmt itself, so `sortImports`,
+   * `oxfmt-ignore` and the rest apply inside these files; each `<template>` body is
+   * formatted as Handlebars.
+   *
+   * - Languages: Ember Template Tag
+   * - Default: Disabled
+   */
+  ember?: EmberUserConfig;
   /**
    * Which end of line characters to apply.
    *

@@ -88,6 +88,8 @@ pub struct JsFormatContext<'ast> {
 
     comments: Comments<'ast>,
 
+    opaque_regions: &'ast [OpaqueRegion<'ast>],
+
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
 
     /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
@@ -154,6 +156,7 @@ impl<'ast> JsFormatContext<'ast> {
         source_text: &'ast str,
         source_type: SourceType,
         comments: &'ast [Comment],
+        opaque_regions: &'ast [OpaqueRegion<'ast>],
         options: JsFormatOptions,
     ) -> Self {
         let source_text = SourceText::new(source_text);
@@ -162,6 +165,7 @@ impl<'ast> JsFormatContext<'ast> {
             source_text,
             source_type,
             comments: Comments::new(source_text, comments),
+            opaque_regions,
             cached_elements: FxHashMap::default(),
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
@@ -183,6 +187,25 @@ impl<'ast> JsFormatContext<'ast> {
     /// Returns the source text wrapper
     pub fn source_text(&self) -> SourceText<'ast> {
         self.source_text
+    }
+
+    /// The opaque region beginning at `start`, if there is one.
+    pub fn opaque_region_at_start(&self, start: u32) -> Option<&'ast OpaqueRegion<'ast>> {
+        let index =
+            self.opaque_regions.binary_search_by_key(&start, |region| region.span.start).ok()?;
+        Some(&self.opaque_regions[index])
+    }
+
+    /// The opaque region occupying exactly `span`, if there is one.
+    ///
+    /// Regions are sorted and disjoint, so an exact start match identifies at most one.
+    pub fn opaque_region_at(&self, span: Span) -> Option<&'ast OpaqueRegion<'ast>> {
+        let index = self
+            .opaque_regions
+            .binary_search_by_key(&span.start, |region| region.span.start)
+            .ok()?;
+        let region = &self.opaque_regions[index];
+        (region.span == span).then_some(region)
     }
 
     /// Returns the source type
@@ -292,4 +315,25 @@ impl<'ast> JsFormatContext<'ast> {
     pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
         self.tailwind_context_stack.last_mut()
     }
+}
+
+/// A byte range of the source that is not JavaScript, to be formatted as another language.
+///
+/// This is how a host language whose syntax `oxc_parser` does not accept is formatted by
+/// `oxc_formatter` anyway. The caller locates the regions, replaces each with a placeholder
+/// identifier of the same byte length so that every span outside them is unchanged, parses
+/// that substituted text, and then formats with the ORIGINAL text plus these spans. At each
+/// placeholder the formatter dispatches the region's original text under `language` and
+/// splices the returned IR in, so line breaks are measured against the real contents.
+///
+/// The caller must confirm that each `span` corresponds to a placeholder node in the parsed
+/// AST and decline to format otherwise; a span that does not is a mis-located region, and
+/// formatting it would emit the placeholder instead of the source.
+///
+/// `language` is opaque here. Which formatter serves it is the embedding application's
+/// routing decision, as is any wrapper syntax the region needs around the dispatched body.
+#[derive(Debug, Clone, Copy)]
+pub struct OpaqueRegion<'a> {
+    pub span: Span,
+    pub language: &'a str,
 }

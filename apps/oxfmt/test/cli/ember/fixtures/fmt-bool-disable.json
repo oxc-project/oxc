@@ -1,0 +1,11 @@
+{
+  "ember": {},
+  "overrides": [
+    {
+      "files": ["legacy/**"],
+      "options": {
+        "ember": false
+      }
+    }
+  ]
+}

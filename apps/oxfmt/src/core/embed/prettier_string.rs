@@ -58,7 +58,11 @@ pub fn build_string_embedder(
             Route::Prettier(prettier_language) => prettier_language.parser(),
             // NOTE: Do not return `Ok(original)` here.
             // We need to keep unsupported content as-is.
-            Route::Unsupported => return Err(format!("Unsupported language: {language}")),
+            // A template tag is a whole-file construct, not a fence language, so it joins
+            // the unsupported arm rather than getting a fence spelling of its own.
+            Route::EmberTemplateTag | Route::Unsupported => {
+                return Err(format!("Unsupported language: {language}"));
+            }
         };
         debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(|| {
             // `clone()` is unavoidable here,

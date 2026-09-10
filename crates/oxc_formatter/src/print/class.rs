@@ -166,6 +166,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if crate::utils::opaque::write_opaque(self.span(), f) {
+            return;
+        }
         AssignmentLike::PropertyDefinition(self).fmt(f);
     }
 }
@@ -639,7 +642,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             && match f.options().semicolons {
                 Semicolons::Always => true,
                 Semicolons::AsNeeded => self.needs_semicolon(),
-            };
+            }
+            // An opaque region is a whole member in another language; its own syntax
+            // terminates it, and the placeholder standing in for it is not a property.
+            && f.context().opaque_region_at(span).is_none();
 
         // A suppressed element prints its content verbatim and its terminator stays the formatter's,
         // like a statement (`write_suppressed_statement`); the element's own `fmt` would print the `;` as content.

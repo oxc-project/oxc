@@ -1,0 +1,56 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Ember Template Tag support > Basic > should format \`.gjs\` with \`ember: {}\` (defaults) 1`] = `
+"import Component from "@glimmer/component";
+export default class Foo extends Component {
+  <template>
+    <button {{on "click" this.onClick}}>{{yield}}</button>
+  </template>
+}
+"
+`;
+
+exports[`Ember Template Tag support > Basic > should format \`.gts\` including TypeScript syntax 1`] = `
+"import Component from "@glimmer/component";
+interface Signature {
+  Args: { count: number };
+}
+export default class Bar extends Component<Signature> {
+  <template>
+    <span>{{@count}}</span>
+  </template>
+}
+"
+`;
+
+exports[`Ember Template Tag support > Script section (JS) > should format the surrounding JS with \`oxc_formatter\` 1`] = `
+"const y = { c: 3, d: 4 };
+<template>x</template>
+"
+`;
+
+exports[`Ember Template Tag support > Statement position > should break a group holding a Handlebars comment 1`] = `
+"<template>
+  <A
+    @a={{1}}
+    {{! note }}
+    @b={{2}}
+  />
+</template>
+"
+`;
+
+exports[`Ember Template Tag support > Template section > should respect \`prettier-ignore\` on a template tag 1`] = `
+"<template>
+  {{! prettier-ignore }}
+  <div    >keep</div>
+</template>
+"
+`;
+
+exports[`Ember Template Tag support > Template section > should sort Tailwind classes in template attributes 1`] = `
+"<template>
+  <div class="flex bg-red-500 p-4 text-white"></div>
+</template>
+"
+`;

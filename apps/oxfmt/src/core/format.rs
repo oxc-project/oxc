@@ -18,6 +18,8 @@ use super::options::{
     inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
     inject_tailwind_plugin_payload, to_prettier,
 };
+use oxc_formatter::OpaqueRegion;
+
 use super::{
     embed::dispatcher::ResolvedDispatchConfig,
     options::{
@@ -48,6 +50,10 @@ pub enum FormatStrategy {
         /// The validated core bundle, carried from resolution so dispatch-config
         /// construction never re-derives (or re-fails) it.
         core: CoreFormatOptions,
+        /// Locates the islands of a JavaScript-hosted format (see `core::hosted`), or
+        /// `None` for ordinary JS/TS. Islands are dispatched as opaque regions rather than
+        /// parsed as JavaScript.
+        locate_islands: Option<fn(&str) -> Vec<OpaqueRegion<'static>>>,
         insert_final_newline: bool,
     },
     /// For JSON (and JSON-like) files formatted by `oxc_formatter_json`.
@@ -165,8 +171,24 @@ impl FormatStrategy {
                 )),
                 config,
                 core,
+                locate_islands: None,
                 insert_final_newline,
             },
+            FileKind::OxcFormatterHosted { path, source_type, locate_islands } => {
+                Self::OxcFormatter {
+                    path,
+                    source_type,
+                    format_options: Box::new(to_oxc_formatter(
+                        &config,
+                        core,
+                        validated.sort_imports.clone(),
+                    )),
+                    config,
+                    core,
+                    locate_islands: Some(locate_islands),
+                    insert_final_newline,
+                }
+            }
             FileKind::OxcFormatterJson { path, variant } => Self::OxcFormatterJson {
                 path,
                 format_options: Box::new(to_oxc_formatter_json(&config, core, variant)),
@@ -291,6 +313,7 @@ impl SourceFormatter {
                 format_options,
                 config,
                 core,
+                locate_islands,
                 insert_final_newline,
             } => (
                 self.format_by_oxc_formatter(
@@ -300,6 +323,7 @@ impl SourceFormatter {
                     *format_options,
                     &config,
                     core,
+                    locate_islands,
                 ),
                 insert_final_newline,
             ),
@@ -415,6 +439,7 @@ impl SourceFormatter {
         format_options: JsFormatOptions,
         config: &Arc<FormatConfig>,
         core: CoreFormatOptions,
+        locate_islands: Option<fn(&str) -> Vec<OpaqueRegion<'static>>>,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
         let session = {
@@ -423,7 +448,18 @@ impl SourceFormatter {
             FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
         };
 
-        let code = {
+        let code = if let Some(locate) = locate_islands {
+            let printed = format_hosted(&session, source_text, source_type, format_options, locate)
+                .map_err(|err| err.with_help(path.display().to_string()))?;
+            if has_leaked_placeholder(printed.as_code()) {
+                return Err(OxcDiagnostic::error(format!(
+                    "Refusing to format {}: an embedded region reached a position this \
+                     formatter does not handle",
+                    path.display()
+                )));
+            }
+            printed
+        } else {
             let formatted = oxc_formatter::format_with_session(
                 &session,
                 source_text,
@@ -675,6 +711,81 @@ impl SourceFormatter {
 /// The JS root's session wiring (registry dispatcher installed / off-gate honored),
 /// which the registry-level tests in `embed::dispatcher` cannot see.
 /// The napi build runs on `ExternalServices::dummy()` (native branches never call JS).
+/// Identifies a stand-in for an island. Must stay short enough to fit the smallest island
+/// any registry row can report, today an Ember `<template></template>` at 21 bytes.
+const ISLAND_PLACEHOLDER: &str = "__oxfmtIsland";
+
+/// Format a JavaScript-hosted source: locate its islands with `locate`, hide them from the
+/// parser, and format the JavaScript around them with each island dispatched as an opaque
+/// region (see [`oxc_formatter::OpaqueRegion`]).
+///
+/// Each island is replaced by an identifier of the same byte length, so every span outside
+/// one is unchanged and the AST indexes the original text.
+fn format_hosted<'a>(
+    session: &FormatSession<'a>,
+    source_text: &'a str,
+    source_type: SourceType,
+    format_options: JsFormatOptions,
+    locate: fn(&str) -> Vec<OpaqueRegion<'static>>,
+) -> Result<oxc_formatter_core::Printed, OxcDiagnostic> {
+    let islands = locate(source_text);
+    if islands.is_empty() {
+        let formatted =
+            oxc_formatter::format_with_session(session, source_text, source_type, format_options)?;
+        return formatted
+            .print()
+            .map_err(|err| OxcDiagnostic::error(format!("Failed to print: {err}")));
+    }
+
+    let allocator = session.allocator();
+    let substituted = allocator.alloc_str(&substitute_islands(source_text, &islands));
+    let parsed = oxc_formatter::parse_for_format(allocator, substituted, source_type);
+    if let Some(error) = parsed.diagnostics.into_iter().next() {
+        return Err(error);
+    }
+    let program = allocator.alloc(parsed.program);
+    let opaque = allocator.alloc_slice_copy(&islands);
+
+    let formatted = oxc_formatter::format_program_with_opaque_regions(
+        session,
+        program,
+        source_text,
+        opaque,
+        format_options,
+    );
+    formatted.print().map_err(|err| OxcDiagnostic::error(format!("Failed to print: {err}")))
+}
+
+/// Replace each island with a marked identifier of its exact byte length.
+///
+/// Equal length is what keeps every other span valid against the original text, and an
+/// identifier is legal in each position an island may occupy. The marker makes a
+/// placeholder that reached the output recognisable; see [`has_leaked_placeholder`].
+fn substitute_islands(source_text: &str, islands: &[OpaqueRegion<'_>]) -> String {
+    let mut out = String::with_capacity(source_text.len());
+    let mut cursor = 0;
+    for island in islands {
+        let (start, end) = (island.span.start as usize, island.span.end as usize);
+        out.push_str(&source_text[cursor..start]);
+        out.push_str(ISLAND_PLACEHOLDER);
+        out.extend(std::iter::repeat_n('_', end - start - ISLAND_PLACEHOLDER.len()));
+        cursor = end;
+    }
+    out.push_str(&source_text[cursor..]);
+    debug_assert_eq!(out.len(), source_text.len(), "substitution must preserve byte length");
+    out
+}
+
+/// Whether formatted output still holds an island placeholder.
+///
+/// A locator cannot promise every island lands on a node the formatter intercepts; one that
+/// does not prints its placeholder over the user's code. Catching it in the output covers
+/// every such gap, including positions not yet anticipated, and the caller refuses the file
+/// rather than writing it.
+fn has_leaked_placeholder(code: &str) -> bool {
+    code.contains(ISLAND_PLACEHOLDER)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
