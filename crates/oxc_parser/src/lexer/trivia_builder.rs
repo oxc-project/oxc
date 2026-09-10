@@ -1101,6 +1101,29 @@ function bar() {}";
     }
 
     #[test]
+    fn block_comment_line_terminators() {
+        for (separator, kind) in [
+            ("\u{2028}", CommentKind::MultiLineBlock),
+            ("\u{2029}", CommentKind::MultiLineBlock),
+            ("\n", CommentKind::MultiLineBlock),
+            ("\r", CommentKind::MultiLineBlock),
+            ("\r\n", CommentKind::MultiLineBlock),
+            ("", CommentKind::SingleLineBlock),
+            ("\u{2027}", CommentKind::SingleLineBlock),
+            ("\u{202a}", CommentKind::SingleLineBlock),
+            ("\u{00a0}", CommentKind::SingleLineBlock),
+        ] {
+            // A newline before the comment must not affect its kind.
+            for prefix in ["", "let a;", "let a;\n"] {
+                let source = format!("{prefix}/* first{separator}second */ let b;");
+                let comments = get_comments(&source);
+                assert_eq!(comments.len(), 1, "{source:?}");
+                assert_eq!(comments[0].kind, kind, "{source:?}");
+            }
+        }
+    }
+
+    #[test]
     fn comment_parsing() {
         let data = [
             ("/*! legal */", CommentContent::Legal),
