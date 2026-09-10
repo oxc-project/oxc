@@ -143,7 +143,9 @@ pub struct ExternalServices {
     handles: TsfnHandles,
     /// Plugins the session was initialized with, injected into every whole-file
     /// Prettier delegation so the JS side loads them alongside the bundled ones.
-    plugins: Arc<RwLock<Option<PluginRequest>>>,
+    /// Held pre-serialized because it is constant for the session and the
+    /// injection sits on the per-file path.
+    plugins: Arc<RwLock<Option<Value>>>,
     pub init: InitExternalServicesCallback,
     pub format_file: FormatFileWithConfigCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
@@ -234,7 +236,10 @@ impl ExternalServices {
     ) -> Result<ResolvedPlugins, String> {
         let resolved = debug_span!("oxfmt::external::init", num_threads = num_threads)
             .in_scope(|| (self.init)(num_threads, plugins.as_ref()))?;
-        *self.plugins.write().unwrap() = plugins;
+        *self.plugins.write().unwrap() = match plugins {
+            Some(plugins) => Some(serde_json::to_value(plugins).map_err(|err| err.to_string())?),
+            None => None,
+        };
         Ok(resolved)
     }
 
@@ -248,10 +253,7 @@ impl ExternalServices {
         if let Some(plugins) = self.plugins.read().unwrap().as_ref()
             && let Some(object) = options.as_object_mut()
         {
-            object.insert(
-                "_userPlugins".to_string(),
-                serde_json::to_value(plugins).map_err(|err| err.to_string())?,
-            );
+            object.insert("_userPlugins".to_string(), plugins.clone());
         }
         (self.format_file)(options, code)
     }

@@ -47,10 +47,11 @@ export function installPluginResolution(): void {
   if (installed) return;
   installed = true;
 
-  const urls: Record<string, string> = {
-    prettier: new URL("prettier.js", HOST_DIR).href,
-    "prettier/doc": new URL("doc.js", HOST_DIR).href,
-  };
+  // Null-prototype: these are looked up with an arbitrary module specifier, and
+  // an inherited `constructor` or `toString` would resolve to a function.
+  const urls: Record<string, string> = Object.create(null);
+  urls["prettier"] = new URL("prettier.js", HOST_DIR).href;
+  urls["prettier/doc"] = new URL("doc.js", HOST_DIR).href;
   for (const name of PLUGIN_SUBPATHS) {
     urls[`prettier/plugins/${name}`] = new URL(`plugins/${name}.js`, HOST_DIR).href;
   }
@@ -68,7 +69,7 @@ export function installPluginResolution(): void {
  * `require()` of an ESM graph works.
  */
 function installForCommonJs(urls: Record<string, string>): void {
-  const paths: Record<string, string> = {};
+  const paths: Record<string, string> = Object.create(null);
   for (const [specifier, url] of Object.entries(urls)) {
     paths[specifier] = fileURLToPath(url);
   }

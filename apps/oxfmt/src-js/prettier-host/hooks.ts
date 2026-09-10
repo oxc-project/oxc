@@ -8,10 +8,12 @@ type ResolveContext = { conditions: string[]; importAttributes: object; parentUR
 type ResolveResult = { url: string; shortCircuit?: boolean; format?: string };
 type NextResolve = (specifier: string, context: ResolveContext) => ResolveResult;
 
-let map: Record<string, string> = {};
+let map: Record<string, string> = Object.create(null);
 
 export function initialize(data: Data): void {
-  map = data.map;
+  // Copied onto a null-prototype object: the map crosses a thread boundary as a
+  // plain object, and lookups use arbitrary module specifiers.
+  map = Object.assign(Object.create(null), data.map);
 }
 
 export function resolve(

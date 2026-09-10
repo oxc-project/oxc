@@ -5,7 +5,13 @@
 import { doc } from "prettier";
 
 export const languages = [
-  { name: "Tiny", parsers: ["tiny"], extensions: [".tiny"], filenames: ["TINYFILE"] },
+  {
+    name: "Tiny",
+    parsers: ["tiny"],
+    // `.tiny.txt` spans two dot-segments, which `Path::extension` cannot see.
+    extensions: [".tiny", ".tiny.txt"],
+    filenames: ["TINYFILE"],
+  },
 ];
 
 export const parsers = {

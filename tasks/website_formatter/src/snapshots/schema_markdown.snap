@@ -1,6 +1,5 @@
 ---
 source: tasks/website_formatter/src/json_schema.rs
-assertion_line: 30
 expression: snapshot
 ---
 ---

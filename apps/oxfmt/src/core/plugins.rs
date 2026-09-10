@@ -52,6 +52,10 @@ pub struct PluginRequest {
 #[derive(Debug, Default)]
 pub struct PluginLanguages {
     extensions: FxHashMap<String, &'static str>,
+    /// Extensions spanning more than one dot-segment, such as `blade.php`.
+    /// `Path::extension` only ever yields the last segment, so these are matched
+    /// against the whole file name. Kept longest-first so the most specific wins.
+    compound_extensions: Vec<(String, &'static str)>,
     filenames: FxHashMap<String, &'static str>,
 }
 
@@ -64,18 +68,31 @@ impl PluginLanguages {
             let Some(parser) = language.parsers.first() else { continue };
             let parser = intern(parser);
             for extension in language.extensions {
-                this.extensions.entry(extension).or_insert(parser);
+                if extension.contains('.') {
+                    let suffix = format!(".{extension}");
+                    if !this.compound_extensions.iter().any(|(known, _)| *known == suffix) {
+                        this.compound_extensions.push((suffix, parser));
+                    }
+                } else {
+                    this.extensions.entry(extension).or_insert(parser);
+                }
             }
             for file_name in language.filenames {
                 this.filenames.entry(file_name).or_insert(parser);
             }
         }
+        this.compound_extensions.sort_by(|(a, _), (b, _)| b.len().cmp(&a.len()));
         this
     }
 
     /// The parser a plugin declared for this file, if any.
     pub fn parser_for(&self, file_name: &str, extension: Option<&str>) -> Option<&'static str> {
         if let Some(parser) = self.filenames.get(file_name) {
+            return Some(parser);
+        }
+        if let Some((_, parser)) =
+            self.compound_extensions.iter().find(|(suffix, _)| file_name.ends_with(suffix.as_str()))
+        {
             return Some(parser);
         }
         self.extensions.get(extension?).copied()
@@ -146,6 +163,26 @@ mod test {
     #[test]
     fn interning_is_stable() {
         assert_eq!(intern("some-parser").as_ptr(), intern("some-parser").as_ptr());
+    }
+
+    #[test]
+    fn matches_an_extension_spanning_several_dot_segments() {
+        let languages = PluginLanguages::new(vec![language("blade", &["blade.php"], &[])]);
+
+        // `Path::extension` yields only `php` here, so the whole name must be matched.
+        assert_eq!(languages.parser_for("index.blade.php", Some("php")), Some("blade"));
+        assert_eq!(languages.parser_for("index.php", Some("php")), None);
+    }
+
+    #[test]
+    fn the_most_specific_compound_extension_wins() {
+        let languages = PluginLanguages::new(vec![
+            language("short", &["b.php"], &[]),
+            language("long", &["a.b.php"], &[]),
+        ]);
+
+        assert_eq!(languages.parser_for("x.a.b.php", Some("php")), Some("long"));
+        assert_eq!(languages.parser_for("x.c.b.php", Some("php")), Some("short"));
     }
 
     #[test]

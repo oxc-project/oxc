@@ -88,14 +88,18 @@ impl StdinRunner {
             self.external_services.init(num_of_threads, plugin_request)
         }) {
             Ok(resolved) => {
-                for failure in &resolved.failures {
-                    utils::print_and_flush(
-                        stderr,
-                        &format!(
-                            "Failed to load plugin `{}`.\n{}\n",
-                            failure.specifier, failure.message
-                        ),
-                    );
+                // Fatal, for the same reason as the walk: see `walk_runner`.
+                if !resolved.failures.is_empty() {
+                    for failure in &resolved.failures {
+                        utils::print_and_flush(
+                            stderr,
+                            &format!(
+                                "Failed to load plugin `{}`.\n{}\n",
+                                failure.specifier, failure.message
+                            ),
+                        );
+                    }
+                    return CliRunResult::InvalidOptionConfig;
                 }
                 PluginLanguages::new(resolved.languages)
             }

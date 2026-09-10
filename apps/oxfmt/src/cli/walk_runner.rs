@@ -120,16 +120,21 @@ impl WalkRunner {
                     .init(num_of_threads, request)
             }) {
                 Ok(resolved) => {
-                    // A plugin that failed to load is reported, not fatal: the rest of
-                    // the run still formats every file it can handle.
-                    for failure in &resolved.failures {
-                        utils::print_and_flush(
-                            stderr,
-                            &format!(
-                                "Failed to load plugin `{}`.\n{}\n",
-                                failure.specifier, failure.message
-                            ),
-                        );
+                    // A plugin that cannot load is a configuration error, as it is for
+                    // Prettier. Continuing would silently drop that plugin's file types
+                    // from the walk and still exit zero, which turns a CI format gate
+                    // into a no-op.
+                    if !resolved.failures.is_empty() {
+                        for failure in &resolved.failures {
+                            utils::print_and_flush(
+                                stderr,
+                                &format!(
+                                    "Failed to load plugin `{}`.\n{}\n",
+                                    failure.specifier, failure.message
+                                ),
+                            );
+                        }
+                        return CliRunResult::InvalidOptionConfig;
                     }
                     PluginLanguages::new(resolved.languages)
                 }
