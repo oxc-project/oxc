@@ -393,8 +393,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // the conditional expression. It's okay to do this because this code would
             // be a syntax error in JavaScript (as the second colon shouldn't be there).
 
-            if !self.at(Kind::Colon) {
-                self.state.not_parenthesized_arrow.insert(pos);
+            // A colon reached after a fatal body error does not validate the speculation.
+            if self.has_fatal_error() || !self.at(Kind::Colon) {
+                // This rejection depends on the enclosing conditional, not the arrow head.
+                // An outer speculation can rewind and revisit this position where a return
+                // type is allowed, so do not cache it as a non-arrow.
                 self.rewind(checkpoint);
                 return None;
             }
