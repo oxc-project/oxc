@@ -4,8 +4,7 @@
 //! and compares the output byte-for-byte against Prettier's committed jest snapshots.
 //! Every output is also re-formatted; files whose second pass differs are tracked in the report's `# Not idempotent` section.
 //! Language specifics arrive through [`ConformanceConfig`] (which fixture dirs, which parser names, what to ignore)
-//! and the `format` callback (spec options → typed options → formatted output),
-//! so this module never depends on a language crate.
+//! and the `format` callback (spec options → typed options → formatted output), so this module never depends on a language crate.
 //!
 //! A spec dir looks like:
 //!
@@ -158,8 +157,8 @@ where
     let passed = total_tested_file_count - total_failed_file_count;
     #[expect(clippy::cast_precision_loss)]
     let percentage = (passed as f64 / total_tested_file_count as f64) * 100.0;
-    // Files the formatter cannot parse are counted as passed above
-    // (they have no diff to report); surface them so the gap is visible.
+    // Files the formatter cannot parse are counted as passed above (they have no diff to report);
+    // surface them so the gap is visible.
     let summary = format!(
         "{} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%), {} files skipped",
         config.language,
@@ -191,15 +190,16 @@ fn report_path(path: &Path, format_root: &Path) -> String {
 }
 
 /// Ignore / filter substrings match the SUITE-RELATIVE path (`/`-separated):
-/// matching the absolute path would let the checkout location leak in (a repo
-/// under e.g. `.../cursor-work/` would silently ignore everything via `"cursor"`).
+/// matching the absolute path would let the checkout location leak in
+/// (a repo under e.g. `.../cursor-work/` would silently ignore everything via `"cursor"`).
 fn is_selected(report_path: &str, ignore: &[&str], filter: Option<&str>) -> bool {
     !report_path.contains(UNIVERSAL_IGNORE)
         && !ignore.iter().any(|s| report_path.contains(s))
         && filter.is_none_or(|name| report_path.contains(name))
 }
 
-/// Read the first level of directories that contain `__snapshots__` and `format.test.js`
+/// Read the first level of directories that contain `__snapshots__` and `format.test.js`.
+///
 /// ```text
 /// js/arrows <------------------------------- THIS
 /// ├── __snapshots__
@@ -331,8 +331,8 @@ where
         tally.finish(report_path(path, format_root), &mut results);
     }
 
-    // `snippets` cases live only in the snapshot (see `collect_snippets`) and are matched by
-    // parser name. A dir-level ignore entry covers every snippet in the dir.
+    // `snippets` cases live only in the snapshot (see `collect_snippets`) and are matched by parser name.
+    // A dir-level ignore entry covers every snippet in the dir.
     let dir_report_path = report_path(dir, format_root);
     if let Some(exact) = config.exact_parser
         && is_selected(&format!("{dir_report_path}/"), config.ignore, None)
@@ -341,11 +341,11 @@ where
         if let Some(skip_spec) = config.skip_spec {
             cases.retain(|case| !skip_spec(&case.call.options));
         }
-        // One row per name, like a file run under several option sets.
+        // One row per name, like a file run under several option sets
         cases.sort_by(|a, b| a.name.cmp(&b.name));
         for group in cases.chunk_by(|a, b| a.name == b.name) {
-            // Synthetic `<dir>/snippet: <name>` path: ignore / filter substrings, report rows and
-            // the `format` callback's path argument all see snippets the same way as files.
+            // Synthetic `<dir>/snippet: <name>` path: ignore / filter substrings, report rows
+            // and the `format` callback's path argument all see snippets the same way as files.
             // The row path is built from the dir so a `\` inside the name survives as-is.
             let leaf = format!("snippet: {}", group[0].name);
             let row_path = format!("{dir_report_path}/{leaf}");
@@ -416,8 +416,8 @@ where
 
     // Idempotency: re-formatting the raw output must reproduce it.
     // Checked before snapshot escaping/EOL visualization.
-    // A second pass that fails to parse is the stronger violation
-    // (the output's own parser rejects it) and is annotated separately in the report.
+    // A second pass that fails to parse is the stronger violation (the output's own parser rejects it)
+    // and is annotated separately in the report.
     let reformatted = format(path, &actual, &call.options);
     let idempotent = reformatted.as_deref() == Some(actual.as_str());
     if !idempotent {
@@ -557,14 +557,13 @@ fn find_output_from_snapshots(
     let filename_started = snap_content.find(&format!("exports[`{file_name} "))?;
     let after_filename = &snap_content[filename_started..];
 
-    // Anchor on the options block (header + key:value lines). The line that
-    // follows is a `printWidth` visualization whose exact rendering varies by
-    // Prettier version, so we skip it by jumping to the following
-    // `=====input=====`. To disambiguate between blocks where one options
-    // list is a prefix of another (e.g. `parsers: [...]` vs
-    // `parsers: [...] + singleQuote: true`), we require the gap between the
-    // matched options and the input marker to be exactly one line (the
-    // visualization), retrying past the false match otherwise.
+    // Anchor on the options block (header + key:value lines).
+    // The line that follows is a `printWidth` visualization whose exact rendering varies by Prettier version,
+    // so we skip it by jumping to the following `=====input=====`.
+    // To disambiguate between blocks where one options list is a prefix of another
+    // (e.g. `parsers: [...]` vs `parsers: [...] + singleQuote: true`),
+    // we require the gap between the matched options and the input marker to be exactly one line (the visualization),
+    // retrying past the false match otherwise.
     let options_pattern = format!(
         "{OPTIONS_SEPARATOR}{}\n",
         snapshot_options.iter().map(|(k, v)| format!("{k}: {v}")).collect::<Vec<_>>().join("\n"),
@@ -625,10 +624,11 @@ fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
 
 /// One `snippet:` section of a snapshot file.
 ///
-/// `runFormatTest({ importMeta, snippets: [...] })` cases have no input file: the spec builds
-/// their inputs at runtime (npm test suites, `outdent`, loops), so the snapshot is the only
-/// record of input, options and expected output. Prettier writes every explicit option into
-/// the section's options block (`parsers` included), which is why the spec is not consulted.
+/// `runFormatTest({ importMeta, snippets: [...] })` cases have no input file:
+/// the spec builds their inputs at runtime (npm test suites, `outdent`, loops),
+/// so the snapshot is the only record of input, options and expected output.
+/// Prettier writes every explicit option into the section's options block (`parsers` included),
+/// which is why the spec is not consulted.
 struct SnippetCase<'a> {
     /// Snippet title without the options suffix, e.g. `example-1.md (Tabs)` or `#0`.
     name: String,
@@ -641,8 +641,8 @@ const SNIPPET_KEY_PREFIX: &str = "exports[`snippet: ";
 
 /// Extracts every `snippet:` section that targets `exact` parser.
 ///
-/// A title is snapshotted once under the first parser (`format 1`); parsers whose output
-/// differs get their own `format[<parser>] 1` entry, which wins over the shared entry.
+/// A title is snapshotted once under the first parser (`format 1`);
+/// parsers whose output differs get their own `format[<parser>] 1` entry, which wins over the shared entry.
 ///
 /// Sections with placeholder-driven options (`cursorOffset`, `rangeStart`, `rangeEnd`)
 /// or values the option set cannot hold (`Infinity`) are dropped.
@@ -652,7 +652,7 @@ fn collect_snippets<'a>(snap_content: &'a str, exact: &str) -> Vec<SnippetCase<'
     for section in snap_content.split(SNIPPET_KEY_PREFIX).skip(1) {
         let Some((key, rest)) = section.split_once("`] = `\n") else { continue };
         let Some((body, _)) = rest.split_once(END_SEPARATOR) else { continue };
-        // The key is a template literal too, so it carries the same escaping as the body.
+        // The key is a template literal too, so it carries the same escaping as the body
         let Some((title, variant)) = parse_snippet_key(&unescape_snapshot_text(key)) else {
             continue;
         };
@@ -771,8 +771,8 @@ struct SpecCall {
     /// The literal options from the call's third argument, as an [`OptionSet`]
     /// (same shape the fixture harness feeds `parse_options`).
     options: OptionSet,
-    /// `(key, raw source text)` pairs used to locate the matching snapshot
-    /// section (Prettier renders them verbatim into the snapshot header).
+    /// `(key, raw source text)` pairs used to locate the matching snapshot section
+    /// (Prettier renders them verbatim into the snapshot header).
     snapshot_options: Vec<(String, String)>,
 }
 
@@ -884,8 +884,8 @@ impl VisitMut<'_> for SpecParser<'_> {
             return;
         }
 
-        // Collect the literal options; non-literal values (e.g. the `errors`
-        // object) never influence formatting and are left out.
+        // Collect the literal options;
+        // non-literal values (e.g. the `errors` object) never influence formatting and are left out.
         let mut options = OptionSet::new();
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
             obj_expr.properties.iter().for_each(|item| {
@@ -897,8 +897,8 @@ impl VisitMut<'_> for SpecParser<'_> {
                             Some(serde_json::Value::Bool(literal.value))
                         }
                         Expression::NumericLiteral(literal) => {
-                            // Integral options (printWidth/tabWidth) must round-trip
-                            // through `as_u64`, so avoid `Number::from_f64`.
+                            // Integral options (printWidth/tabWidth) must round-trip through `as_u64`,
+                            // so avoid `Number::from_f64`.
                             #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                             if literal.value.fract() == 0.0 && literal.value >= 0.0 {
                                 Some(serde_json::Value::Number((literal.value as u64).into()))
@@ -935,8 +935,8 @@ impl VisitMut<'_> for SpecParser<'_> {
             ),
         ));
 
-        // Prettier omits `printWidth` from the options block when it equals the
-        // default (80); the value is only shown in the trailing visualization line.
+        // Prettier omits `printWidth` from the options block when it equals the default (80);
+        // the value is only shown in the trailing visualization line.
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
         self.calls.push(SpecCall { options, snapshot_options });
