@@ -134,8 +134,14 @@ fn cmp_diagnostics_for_runtime_optimization_assertion(
     left.error
         .labels
         .iter()
-        .map(|label| (label.offset(), label.len(), label.primary()))
-        .cmp(right.error.labels.iter().map(|label| (label.offset(), label.len(), label.primary())))
+        .map(|label| (label.offset(), label.len(), label.primary(), label.label()))
+        .cmp(
+            right
+                .error
+                .labels
+                .iter()
+                .map(|label| (label.offset(), label.len(), label.primary(), label.label())),
+        )
         .then_with(|| left.error.message.cmp(&right.error.message))
         .then_with(|| left.error.help.cmp(&right.error.help))
         .then_with(|| left.error.note.cmp(&right.error.note))
