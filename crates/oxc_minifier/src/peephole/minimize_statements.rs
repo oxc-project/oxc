@@ -539,8 +539,7 @@ impl<'a> PeepholeOptimizations {
         Self::merge_last_expression_into_sequence(&mut if_stmt.test, result, ctx);
 
         if ctx.options().sequences {
-            if if_stmt.alternate.is_none()
-                && let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
+            if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
                 && prev_if_stmt.alternate.is_none()
                 && if_stmt.consequent.is_terminated()
                 && prev_if_stmt.consequent.content_eq(&if_stmt.consequent)
