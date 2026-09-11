@@ -101,7 +101,7 @@ impl RuleRunner for crate::rules::import::no_commonjs::NoCommonjs {
 
 impl RuleRunner for crate::rules::import::no_cycle::NoCycle {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::ProjectOnly;
 }
 
 impl RuleRunner for crate::rules::import::no_default_export::NoDefaultExport {

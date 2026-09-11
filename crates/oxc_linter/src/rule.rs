@@ -1,18 +1,20 @@
 #[cfg(feature = "ruledocs")]
 use std::borrow::Cow;
-use std::{fmt, hash::Hash};
+use std::{fmt, hash::Hash, path::PathBuf};
 
+use rustc_hash::FxHashMap;
 use schemars::{
     JsonSchema, SchemaGenerator,
     schema::{InstanceType, Schema, SchemaObject},
 };
 use serde::{Deserialize, Serialize};
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstTypesBitset;
 
 use crate::{
     AstNode, FixKind,
-    context::{ContextHost, LintContext},
+    context::{ContextHost, LintContext, ProjectLintContext},
     utils::PossibleJestNode,
 };
 
@@ -371,6 +373,15 @@ where
     }
 }
 
+pub trait ProjectRule: Rule {
+    /// Runs on the full project instead of per file. Useful when a large
+    /// portion of modules are traversed
+    fn run_on_project(
+        &self,
+        ctx: &ProjectLintContext<'_>,
+    ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>>;
+}
+
 pub trait RuleRunner: Rule {
     /// `AstType`s that this rule acts on, or `None` if the codegen
     /// can't figure it out and the linter should call `run` on every node.
@@ -401,6 +412,8 @@ pub enum RuleRunFunctionsImplemented {
     RunOnce,
     /// Only `run_on_jest_node` is implemented
     RunOnJestNode,
+    /// `run_on_project` is implemented
+    ProjectOnly,
 }
 
 impl RuleRunFunctionsImplemented {

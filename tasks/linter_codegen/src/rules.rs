@@ -13,6 +13,8 @@ pub struct RuleEntry<'e> {
     pub has_custom_from_configuration: bool,
     /// Whether the rule overrides `Rule::to_configuration`.
     pub has_custom_to_configuration: bool,
+    /// Whether the rule should be run over the project instead of per file
+    pub is_project_rule: bool,
 }
 
 impl RuleEntry<'_> {
@@ -59,6 +61,7 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
                 // uses the default implementation.
                 has_custom_from_configuration: true,
                 has_custom_to_configuration: true,
+                is_project_rule: false,
             });
         }
     }

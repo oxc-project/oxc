@@ -63,6 +63,7 @@ lazy-regex = { workspace = true }
 memchr = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
 papaya = { workspace = true }
+petgraph = { workspace = true, default-features = false, features = ["graphmap"] }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rust-lapper = { workspace = true }

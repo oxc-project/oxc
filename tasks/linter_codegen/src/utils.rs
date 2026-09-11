@@ -35,23 +35,28 @@ pub fn astkind_variant_from_path(path: &syn::Path) -> Option<String> {
     Some(path.segments[1].ident.to_string())
 }
 
+fn find_impl_block_for<'a>(
+    file: &'a File,
+    rule_struct_name: &str,
+    trait_name: &str,
+) -> Option<&'a syn::ItemImpl> {
+    file.items.iter().find_map(|item| {
+        let syn::Item::Impl(imp) = item else { return None };
+        let syn::Type::Path(self_ty) = imp.self_ty.as_ref() else { return None };
+        let (trait_path, _) = imp.trait_.as_ref()?;
+        (self_ty.path.is_ident(rule_struct_name) && trait_path.is_ident(trait_name)).then_some(imp)
+    })
+}
+
 pub fn find_rule_impl_block<'a>(
     file: &'a File,
     rule_struct_name: &str,
 ) -> Option<&'a syn::ItemImpl> {
-    for item in &file.items {
-        let syn::Item::Impl(imp) = item else { continue };
-        let ident = match imp.self_ty.as_ref() {
-            syn::Type::Path(p) => p.path.get_ident(),
-            _ => None,
-        };
-        if ident.is_some_and(|id| id == rule_struct_name)
-            && imp.trait_.as_ref().is_some_and(|(path, _)| path.is_ident("Rule"))
-        {
-            return Some(imp);
-        }
-    }
-    None
+    find_impl_block_for(file, rule_struct_name, "Rule")
+}
+
+pub fn implements_project_rule(file: &File, rule_struct_name: &str) -> bool {
+    find_impl_block_for(file, rule_struct_name, "ProjectRule").is_some()
 }
 
 pub fn find_impl_function<'a>(

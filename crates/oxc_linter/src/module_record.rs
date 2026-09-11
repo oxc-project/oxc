@@ -28,6 +28,9 @@ pub struct ModuleRecord {
     /// Resolved absolute path to this module record
     pub resolved_absolute_path: PathBuf,
 
+    /// The source text offset of the module record
+    pub source_text_offset: u32,
+
     /// `[[RequestedModules]]`
     ///
     /// A List of all the ModuleSpecifier strings used by the module represented by this record to request the importation of a module. The List is in source text occurrence order.
@@ -103,6 +106,7 @@ impl fmt::Debug for ModuleRecord {
         f.debug_struct("ModuleRecord")
             .field("has_module_syntax", &self.has_module_syntax)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
+            .field("source_text_offset", &self.source_text_offset)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
             .field("import_entries", &self.import_entries)
@@ -462,12 +466,14 @@ impl<'a> From<&oxc_syntax::module_record::ExportLocalName<'a>> for ExportLocalNa
 impl ModuleRecord {
     pub fn new(
         path: &Path,
+        source_text_offset: u32,
         other: &oxc_syntax::module_record::ModuleRecord,
         _semantic: &Semantic,
     ) -> Self {
         Self {
             has_module_syntax: other.has_module_syntax,
             resolved_absolute_path: path.to_path_buf(),
+            source_text_offset,
             requested_modules: other
                 .requested_modules
                 .iter()
