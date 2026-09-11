@@ -68,7 +68,13 @@ impl<'a> SourceText<'a> {
     // Byte checking
     /// First non-whitespace byte at or after position
     pub fn next_non_whitespace_byte(&self, position: u32) -> Option<u8> {
-        self.bytes_from(position).find(|byte| !byte.is_ascii_whitespace())
+        self.next_byte_skipping(position, |byte| byte.is_ascii_whitespace())
+    }
+
+    /// First byte at or after position that `skip` rejects
+    #[inline]
+    pub fn next_byte_skipping(&self, position: u32, skip: impl Fn(u8) -> bool) -> Option<u8> {
+        self.bytes_from(position).find(|&byte| !skip(byte))
     }
 
     /// Check if first non-whitespace byte at position matches expected

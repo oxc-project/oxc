@@ -209,6 +209,9 @@ impl<'a> Comments<'a> {
 
     /// Temporarily limits the unprinted comments view to only those before the given position.
     /// Returns the previous view limit to allow restoration.
+    ///
+    /// Check [`Self::has_trailing_suppression_comment`] BEFORE hiding a node's trailing comments,
+    /// or the node loses its suppression.
     pub fn limit_comments_up_to(&mut self, end_pos: u32) -> Option<usize> {
         let original_limit = self.view_limit;
         let limit_index = self.printed_count
@@ -289,10 +292,10 @@ impl<'a> Comments<'a> {
     }
 
     /// Returns comments that end at or after the given position.
+    #[inline]
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let comments = self.unprinted_comments();
-        let start_index = comments.iter().take_while(|c| c.span.end < pos).count();
-        &comments[start_index..]
+        &comments[comments.partition_point(|c| c.span.end < pos)..]
     }
 
     /// Returns comments between the given positions.
@@ -307,9 +310,7 @@ impl<'a> Comments<'a> {
     pub fn end_of_line_comments_after(&self, mut pos: u32) -> &'a [Comment] {
         let comments = self.comments_after(pos);
         for (index, comment) in comments.iter().enumerate() {
-            if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ' | b'=' | b':' | b',')
-            }) {
+            if self.source_text.all_bytes_match(pos, comment.span.start, is_end_of_line_gap_byte) {
                 if comment.is_line() || comment.followed_by_newline() {
                     return &comments[..=index];
                 }
@@ -543,10 +544,43 @@ impl<'a> Comments<'a> {
     /// `statement(); // prettier-ignore`
     /// `statement(); /* prettier-ignore */`
     /// `value, // prettier-ignore`
+    #[inline]
     pub fn has_trailing_suppression_comment(&self, pos: u32) -> bool {
-        self.end_of_line_comments_after(pos)
-            .iter()
-            .any(|comment| self.is_suppression_comment(comment))
+        // Asked once per node: gate on the (cache-hot) source bytes before searching the comment array.
+        // A same-line comment follows only the gap bytes and starts with `/`
+        self.source_text.next_byte_skipping(pos, is_end_of_line_gap_byte) == Some(b'/')
+            && self
+                .end_of_line_comments_after(pos)
+                .iter()
+                .any(|comment| self.is_suppression_comment(comment))
+    }
+
+    /// Whether a leading comment or one trailing the node's end suppresses it
+    /// (`A = 1, // prettier-ignore`); the check every generated `fmt` runs.
+    #[inline]
+    pub fn is_span_suppressed(&self, span: Span) -> bool {
+        self.is_suppressed(span.start) || self.has_trailing_suppression_comment(span.end)
+    }
+
+    /// [`Self::is_span_suppressed`], plus the shape a formatter-owned terminator adds: a trailing comment after the content
+    /// when the source `;` sits on a later line (`foo() // prettier-ignore` + `;[].sort()`, the `semi: false` style).
+    /// `content_end` is asked only for that shape (the span's last comment is a suppression comment).
+    pub fn is_node_suppressed(
+        &self,
+        span: Span,
+        content_end: impl FnOnce() -> Option<u32>,
+    ) -> bool {
+        // The common case, every statement pays this check
+        if self.unprinted_comments().is_empty() {
+            return false;
+        }
+        if self.is_span_suppressed(span) {
+            return true;
+        }
+        let Some(last) = self.all_comments_before(span.end).last() else { return false };
+        last.span.start >= span.start
+            && self.is_suppression_comment(last)
+            && content_end().is_some_and(|end| self.has_trailing_suppression_comment(end))
     }
 
     /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).
@@ -716,6 +750,12 @@ impl<'a> Comments<'a> {
         }
         &comments[..count]
     }
+}
+
+/// The bytes that may sit between a node's end and a comment still on its line
+/// (`a = // c`, `key: // c`, `x, // c`).
+fn is_end_of_line_gap_byte(byte: u8) -> bool {
+    matches!(byte, b'\t' | b' ' | b'=' | b':' | b',')
 }
 
 /// Byte segments between `start` and `bound` lying outside the given comment spans:
