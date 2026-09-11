@@ -79,8 +79,11 @@ pub fn trailing_comments_to_move_behind_semicolon<'a>(
 ///
 /// `gated` is `true` when `expr` itself sits in one of those positions.
 ///
+/// This is the statement side of the table: it promises not to hide/move the comment,
+/// [`write_trailing_comments_inside_parens`] (the expression side) actually prints it.
 /// [`arrow_body_keeps_trailing_comment_inside_parens`] encodes the arrow-body slice of this table (plus JSX)
-/// for the chain-leaf walk; change them together.
+/// for the chain-leaf walk. Change all three together: if they drift, the comment silently lands elsewhere
+/// (no assert catches it), so pin every position change in a fixture.
 pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) -> bool {
     match expr {
         Expression::SequenceExpression(_) => gated,
@@ -110,6 +113,8 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
 /// assigned = a = c; /* c */
 /// ```
 ///
+/// Bounds the content at every semicolon-terminated content site
+/// (expression statements, export defaults, variable declarations, class property values, return arguments).
 /// The chain also passes through arrow expression bodies (prettier#19930 family);
 /// bodies matching [`arrow_body_keeps_trailing_comment_inside_parens`] stop the walk.
 ///
@@ -257,6 +262,8 @@ where
 /// and returns whether it was: its leading comments, then the source text up to its content end,
 /// then the formatter's terminator per `semi` like every other statement (the token-class table in AGENTS.md).
 /// A statement without a terminator of its own prints its whole span.
+/// Any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`)
+/// must call this first, or the generic verbatim path prints the source `;` regardless of `semi`.
 /// Same-line comments between the content end and a later-line source `;` stay on the content's line,
 /// own-line ones are left for the next node's leading pass;
 /// the caller (the generated `Statement` fmt) prints the trailing comments.
@@ -295,6 +302,9 @@ const CONTINUE_KEYWORD_LEN: u32 = "continue".len() as u32;
 /// `None` for a statement without a terminator of its own (a block, a declaration with a body, ...);
 /// a statement ending in a body answers for its rightmost body.
 /// Mirrors the `;`-printing sites of the reprint (`FormatContentWithSemicolon` / `OptionalSemicolon`): keep them in step.
+/// Same terminator, NOT the same content end, and not to be unified:
+/// the reprint's is the comment-move boundary (chain leaf, cast target),
+/// this one is the token end past the source parens the reprint drops (`p = (q = 1)`).
 pub fn suppressed_statement_content_end(
     stmt: &Statement<'_>,
     f: &JsFormatter<'_, '_>,

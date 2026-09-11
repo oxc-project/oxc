@@ -209,6 +209,9 @@ impl<'a> Comments<'a> {
 
     /// Temporarily limits the unprinted comments view to only those before the given position.
     /// Returns the previous view limit to allow restoration.
+    ///
+    /// Check [`Self::has_trailing_suppression_comment`] BEFORE hiding a node's trailing comments,
+    /// or the node loses its suppression.
     pub fn limit_comments_up_to(&mut self, end_pos: u32) -> Option<usize> {
         let original_limit = self.view_limit;
         let limit_index = self.printed_count

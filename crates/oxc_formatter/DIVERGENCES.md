@@ -341,7 +341,7 @@ Drop when: the union printer's claiming is bounded to its own gap; this exclusio
 - Why: invariant (prettier/prettier#19894, prettier/prettier#12880, prettier/prettier#7745, prettier/prettier#5900)
 - Pin: see the per-shape list below
 
-The head-body comment policy family (see AGENTS.md "Comment placement invariants"): comments between a head and its body keep their position, where Prettier's attachment relocates them across the delimiters (a body's braces, a head's parens), user content.
+The head-body comment policy family (see AGENTS.md "Head-body and operator gaps (class 3)"): comments between a head and its body keep their position, where Prettier's attachment relocates them across the delimiters (a body's braces, a head's parens), user content.
 
 ```js
 // input
