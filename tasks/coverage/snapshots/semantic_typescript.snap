@@ -2,7 +2,7 @@ commit: f29aeb9f
 
 semantic_typescript Summary:
 AST Parsed     : 5575/5575 (100.00%)
-Positive Passed: 4073/5575 (73.06%)
+Positive Passed: 4078/5575 (73.15%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -3484,9 +3484,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/decl
 Bindings mismatch:
 after transform: ScopeId(0): ["N", "o"]
 rebuilt        : ScopeId(0): ["o"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPatternAmbientModuleImportAttributes.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitStaticMethodNonIdentifierNames.ts
 Bindings mismatch:
@@ -7654,18 +7651,6 @@ Namespaces exporting non-const are not supported by Oxc. Change to const or see:
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDuplicatePatternMergedResolution.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDynamicImports.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeMostSpecificType.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts
-Expected a semicolon or an implicit semicolon after a statement, but found none
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts
 An export assignment cannot be used in a module with other exported elements

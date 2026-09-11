@@ -3035,9 +3035,17 @@ impl ESTree for TSModuleDeclarationAttribute<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("key", &self.key);
-        state.serialize_field("value", &self.value);
         state.serialize_span(self.span);
         state.end();
+    }
+}
+
+impl ESTree for TSModuleDeclarationAttributeValue<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::StringLiteral(it) => it.serialize(serializer),
+            Self::TemplateLiteral(it) => it.serialize(serializer),
+        }
     }
 }
 

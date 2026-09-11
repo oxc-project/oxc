@@ -71,6 +71,6 @@ kitchen-sink.tsx:
   sys deallocs: 17087
   sys alloc bytes: 4436340 # 4.44 MB
   sys peak growth: 1491796 # 1.49 MB
-  arena allocs: 558280
+  arena allocs: 558281
   arena reallocs: 1041
   arena size: 38442704 # 38.44 MB

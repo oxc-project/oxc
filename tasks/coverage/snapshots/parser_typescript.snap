@@ -1,9 +1,9 @@
 commit: f29aeb9f
 
 parser_typescript Summary:
-AST Parsed     : 9658/9666 (99.92%)
-Positive Passed: 9651/9666 (99.84%)
-Negative Passed: 1689/2759 (61.22%)
+AST Parsed     : 9664/9666 (99.98%)
+Positive Passed: 9657/9666 (99.91%)
+Negative Passed: 1683/2759 (61.00%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -480,6 +480,16 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAssertionsDeprecatedIgnored.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeArbitraryExtension.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeModuleAugmentations.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributePlainStringAmbientModule.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypesJsImports.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeferCallCommonJS.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importTypeAssertionDeprecation.ts
@@ -801,6 +811,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/parameterDecoratorsEmitCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/pathsValidation5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleAugmentationMergedSymbol.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/primitiveMembers.ts
 
@@ -2144,16 +2156,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/witness/witness.ts
 
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPatternAmbientModuleImportAttributes.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPatternAmbientModuleImportAttributes.ts:1:25]
- 1 │ declare module "*.style" with { type: "css" } {
-   ·                         ▲
- 2 │     export interface Style {
-   ╰────
-  help: Try inserting a semicolon here
-
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateNameInTypeQuery.ts
 
   × Unexpected token
@@ -2194,57 +2196,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exp
  4 │ export { SomeTypeAlias };
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDuplicatePatternMergedResolution.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeDuplicatePatternMergedResolution.ts:1:25]
- 1 │ declare module "*.asset" with { type: "css", format: "module" } {
-   ·                         ▲
- 2 │     export const fromA: "a";
-   ╰────
-  help: Try inserting a semicolon here
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDynamicImports.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeDynamicImports.ts:5:34]
- 4 │ 
- 5 │ declare module "typed/*.resource" with { type: "text" } {
-   ·                                  ▲
- 6 │     export const kind: "text";
-   ╰────
-  help: Try inserting a semicolon here
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeMostSpecificType.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeMostSpecificType.ts:1:36]
- 1 │ declare module "databases/*.sqlite" with { type: "sqlite" } {
-   ·                                    ▲
- 2 │     const database: {
-   ╰────
-  help: Try inserting a semicolon here
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeType2.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeType2.ts:1:36]
- 1 │ declare module "databases/*.sqlite" with { type: "sqlite", embed: "false" } {
-   ·                                    ▲
- 2 │     const database: {
-   ╰────
-  help: Try inserting a semicolon here
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts:1:25]
- 1 │ declare module "*.style" with { type: "css" } {
-   ·                         ▲
- 2 │     export interface Style {
-   ╰────
-  help: Try inserting a semicolon here
 
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts
 
@@ -8262,70 +8213,45 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
   help: Wrap this with quotes
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeArbitraryExtension.ts:1:23]
- 1 │ declare module "*.ext" with { type: "custom" } {
-   ·                       ▲
- 2 │     export const ambient: "ambient";
-   ╰────
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeType1.ts:11:44]
+ 10 │ 
+ 11 │ declare module "*.data" with { type: "json" | "json5" } {
+    ·                                            ▲
+ 12 │   const data: { version: number };
+    ╰────
   help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeModuleAugmentations.ts:5:36]
- 4 │ 
- 5 │ declare module "attributed/*.asset" with { type: "css" } {
-   ·                                    ▲
- 6 │     export const attributed: "attributed";
-   ╰────
-  help: Try inserting a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributePlainStringAmbientModule.ts:1:29]
- 1 │ declare module "plainstring" with { type: "css" } {
-   ·                             ▲
- 2 │     export const value: "plain";
-   ╰────
-  help: Try inserting a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeType1.ts:1:25]
- 1 │ declare module "*.asset" with { type: "css" } {
-   ·                         ▲
- 2 │   const stylesheet: CSSStyleSheet;
-   ╰────
-  help: Try inserting a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts:1:25]
- 1 │ declare module "*.style" with { type: "css" } {
-   ·                         ▲
- 2 │     export interface Style {
-   ╰────
-  help: Try inserting a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:1:23]
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:1:31]
  1 │ declare module "*.css" with { readonly type: "css" } {
-   ·                       ▲
+   ·                               ────────
  2 │     const stylesheet: CSSStyleSheet;
    ╰────
-  help: Try inserting a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts:3:25]
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:6:32]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {
+   ·                                ────────
+ 7 │     const data: any;
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:6:55]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {
+   ·                                                       ────────
+ 7 │     const data: any;
+   ╰────
+
+  × Only string literals are allowed as module attribute values.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts:3:39]
  2 │ 
  3 │ declare module "*.asset" with { type: AttributeValue } {
-   ·                         ▲
+   ·                                       ──────────────
  4 │     export type AttributeValue = "text";
    ╰────
-  help: Try inserting a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypesJsImports.ts:1:25]
- 1 │ declare module "*.asset" with { type: "css" } {
-   ·                         ▲
- 2 │     export const shared: "css";
-   ╰────
-  help: Try inserting a semicolon here
+  help: Wrap this with quotes
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclWithClassModifiers.ts:5:8]
@@ -11508,14 +11434,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  1 │ export = } x = ( y = z ==== 'function') {
    ·          ─
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/patternAmbientModuleAugmentationMergedSymbol.ts:1:25]
- 1 │ declare module "*.asset" with {} {
-   ·                         ▲
- 2 │     export const fromAttributed: "attributed";
-   ╰────
-  help: Try inserting a semicolon here
 
   × Expected `}` but found `EOF`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/prettyContextNotDebugAssertion.ts:1:12]
