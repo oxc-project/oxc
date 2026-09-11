@@ -116,10 +116,11 @@ impl ServerLinterBuilder {
         #[cfg(feature = "napi")]
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
+        #[expect(clippy::manual_unwrap_or_default)] // TODO @sysix
         let mut oxlintrc = match loader.load_root_config(&root_path, config_path.as_ref()) {
             Ok(config) => config,
-            Err(e) => {
-                warn!("Failed to load config: {e}");
+            Err(_e) => {
+                // warn!("Failed to load config: {e}"); TODO @sysix
                 Oxlintrc::default()
             }
         };

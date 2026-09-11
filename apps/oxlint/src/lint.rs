@@ -267,24 +267,16 @@ impl CliRunner {
         let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
             Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
             Err(error) => {
-                match error {
-                    CliConfigLoadError::RootConfig(error) => {
-                        print_and_flush_stdout(
-                            stdout,
-                            &format!(
-                                "Failed to parse oxlint configuration file.\n{}\n",
-                                render_report(&handler, &error)
-                            ),
-                        );
-                    }
-                    CliConfigLoadError::NestedConfigs(errors) => {
-                        if let Some(error) = errors.into_iter().next() {
-                            let message = match &error {
+                fn config_load_error_message(
+                    error: &ConfigLoadError,
+                    handler: &GraphicalReportHandler,
+                ) -> String {
+                    match &error {
                                 ConfigLoadError::Parse { path, error } => {
                                     format!(
                                         "Failed to parse oxlint configuration file at {}.\n{}\n",
                                         path.to_string_lossy().cow_replace('\\', "/"),
-                                        render_report(&handler, error)
+                                        render_report(handler, error)
                                     )
                                 }
                                 ConfigLoadError::Build { path, error } => {
@@ -292,9 +284,16 @@ impl CliRunner {
                                         "Failed to build configuration from {}.\n{}\n",
                                         path.to_string_lossy().cow_replace('\\', "/"),
                                         render_report(
-                                            &handler,
+                                            handler,
                                             &OxcDiagnostic::error(error.clone())
                                         )
+                                    )
+                                }
+                                ConfigLoadError::Conflict { directory, error } => {
+                                    format!(
+                                        "Configuration conflict in directory {}.\n{}\n",
+                                        directory.to_string_lossy().cow_replace('\\', "/"),
+                                        render_report(handler, error)
                                     )
                                 }
                                 ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
@@ -303,11 +302,25 @@ impl CliRunner {
                                      Please use JSON config files (.oxlintrc.json or .oxlintrc.jsonc) instead, or run oxlint via the npm package.\n".to_string()
                                 }
                                 ConfigLoadError::Diagnostic(error) => {
-                                    let report = render_report(&handler, error);
+                                    let report = render_report(handler, error);
                                     format!("Failed to parse oxlint configuration file.\n{report}\n")
                                 }
-                            };
-                            print_and_flush_stdout(stdout, &message);
+                            }
+                }
+
+                match error {
+                    CliConfigLoadError::RootConfig(error) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &config_load_error_message(&error, &handler),
+                        );
+                    }
+                    CliConfigLoadError::NestedConfigs(errors) => {
+                        if let Some(error) = errors.into_iter().next() {
+                            print_and_flush_stdout(
+                                stdout,
+                                &config_load_error_message(&error, &handler),
+                            );
                         }
                     }
                 }

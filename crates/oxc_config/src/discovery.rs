@@ -214,6 +214,10 @@ impl ConfigConflict {
             })
             .collect()
     }
+
+    pub fn dir(&self) -> &PathBuf {
+        &self.dir
+    }
 }
 
 impl From<ConfigConflict> for OxcDiagnostic {

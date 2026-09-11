@@ -5,10 +5,9 @@ source: apps/oxlint/src/tester.rs
 arguments: debugger.js
 working directory: fixtures/cli/auto_config_parse_error
 ----------
-Failed to parse oxlint configuration file.
+Failed to parse oxlint configuration file at <cwd>/fixtures/cli/auto_config_parse_error/.oxlintrc.json.
 
-  x Failed to parse oxlint config <cwd>/fixtures/cli/auto_config_parse_error/.oxlintrc.json.
-  | expected `:` at line 2 column 11
+  x expected `:` at line 2 column 11
 
 ----------
 CLI result: InvalidOptionConfig

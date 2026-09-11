@@ -221,6 +221,11 @@ pub enum ConfigLoadError {
         path: PathBuf,
         error: String,
     },
+    // Detected 2 configurations for the same directory, causing a conflict.
+    Conflict {
+        directory: PathBuf,
+        error: OxcDiagnostic,
+    },
 
     JsConfigFileFoundButJsRuntimeNotAvailable,
 
@@ -244,7 +249,7 @@ impl ConfigLoadError {
 #[derive(Debug)]
 pub enum CliConfigLoadError {
     /// An error that occurred while loading or parsing the root configuration.
-    RootConfig(OxcDiagnostic),
+    RootConfig(ConfigLoadError),
     /// One or more errors that occurred while loading nested configuration files.
     NestedConfigs(Vec<ConfigLoadError>),
 }
@@ -378,9 +383,10 @@ impl<'a> ConfigLoader<'a> {
 
         for (dir, config_files) in by_dir {
             if config_files.len() > 1 {
-                errors.push(ConfigLoadError::Diagnostic(
-                    ConfigConflict::new(dir.clone(), config_files).into(),
-                ));
+                errors.push(ConfigLoadError::Conflict {
+                    directory: dir.clone(),
+                    error: ConfigConflict::new(dir.clone(), config_files).into(),
+                });
                 continue;
             }
 
@@ -514,13 +520,19 @@ impl<'a> ConfigLoader<'a> {
         &self,
         discovery: &ConfigDiscovery,
         dir: &Path,
-    ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let config_file =
-            discovery.find_unique_config_by_readdir(dir, true).map_err(OxcDiagnostic::from)?;
+    ) -> Result<Option<Oxlintrc>, ConfigLoadError> {
+        let config_file = discovery.find_unique_config_by_readdir(dir, true).map_err(|e| {
+            ConfigLoadError::Conflict {
+                directory: dir.to_path_buf(),
+                error: OxcDiagnostic::from(e),
+            }
+        })?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
-                Oxlintrc::from_file(&path).map(Some)
+                Oxlintrc::from_file(&path)
+                    .map(Some)
+                    .map_err(|e| ConfigLoadError::Parse { path, error: e })
             }
             Some(DiscoveredConfigFile::Js(path)) => {
                 let config = self.load_root_js_config(&path)?;
@@ -549,10 +561,15 @@ impl<'a> ConfigLoader<'a> {
         &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
-    ) -> Result<Oxlintrc, OxcDiagnostic> {
+    ) -> Result<Oxlintrc, ConfigLoadError> {
         // If an explicit config path is provided, use it directly
         if let Some(config_path) = config_path {
-            return self.load_explicit_config(cwd, config_path);
+            // Normalize away `.`/`..` components:
+            // this path (config's parent directory) becomes the root for `ignorePatterns` matching,
+            // which is compared against the (normalized) lint target paths as a literal prefix.
+            // If a root containing `..`, it never matches.
+            let full_path = normalize_path(cwd.join(config_path));
+            return self.load_explicit_config(&full_path);
         }
 
         // Search up the directory tree for a config file
@@ -571,46 +588,33 @@ impl<'a> ConfigLoader<'a> {
 
     /// Load an explicitly specified config file (via `--config`).
     /// For JS/TS configs, `None` from JS side (e.g., vite.config.ts without `.lint`) is an error.
-    fn load_explicit_config(
-        &self,
-        cwd: &Path,
-        config_path: &Path,
-    ) -> Result<Oxlintrc, OxcDiagnostic> {
-        // Normalize away `.`/`..` components:
-        // this path (config's parent directory) becomes the root for `ignorePatterns` matching,
-        // which is compared against the (normalized) lint target paths as a literal prefix.
-        // If a root containing `..`, it never matches.
-        let full_path = normalize_path(cwd.join(config_path));
-        if is_js_config_path(&full_path) {
-            return self.load_root_js_config(&full_path)?.ok_or_else(|| {
-                OxcDiagnostic::error(format!(
+    fn load_explicit_config(&self, config_path: &Path) -> Result<Oxlintrc, ConfigLoadError> {
+        if is_js_config_path(config_path) {
+            return self.load_root_js_config(config_path)?.ok_or_else(|| ConfigLoadError::Parse {
+                path: config_path.to_path_buf(),
+                error: OxcDiagnostic::error(format!(
                     "Expected a `lint` field in the default export of {}",
-                    full_path.display()
-                ))
+                    config_path.display()
+                )),
             });
         }
-        Oxlintrc::from_file(&full_path)
+        Oxlintrc::from_file(config_path)
+            .map_err(|err| ConfigLoadError::Parse { path: config_path.to_path_buf(), error: err })
     }
 
     /// Load a single JS/TS config file. Returns `Ok(None)` when JS side signals "skip"
     /// (e.g., vite.config.ts without `.lint` field).
-    fn load_root_js_config(&self, path: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+    fn load_root_js_config(&self, path: &Path) -> Result<Option<Oxlintrc>, ConfigLoadError> {
         match self.load_js_configs(&[path.to_path_buf()]) {
             Ok(mut results) => Ok(results.pop().and_then(|r| r.config)),
             Err(errors) => {
                 if let Some(first) = errors.into_iter().next() {
-                    match first {
-                        ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
-                            Err(js_config_not_supported_diagnostic(path))
-                        }
-                        ConfigLoadError::Diagnostic(diag) => Err(diag),
-                        // `load_js_configs` only returns the two variants above, but keep this
-                        // resilient if that changes.
-                        ConfigLoadError::Parse { error, .. } => Err(error),
-                        ConfigLoadError::Build { error, .. } => Err(OxcDiagnostic::error(error)),
-                    }
+                    Err(first)
                 } else {
-                    Err(OxcDiagnostic::error("Failed to load JavaScript/TypeScript config."))
+                    Err(ConfigLoadError::Parse {
+                        path: path.to_path_buf(),
+                        error: OxcDiagnostic::error("Failed to load JavaScript/TypeScript config."),
+                    })
                 }
             }
         }
@@ -661,7 +665,10 @@ impl<'a> ConfigLoader<'a> {
 
         // Propagate upstream conflicts as load errors alongside parse/build failures.
         for conflict in conflicts {
-            errors.push(ConfigLoadError::Diagnostic(conflict.into()));
+            errors.push(ConfigLoadError::Conflict {
+                directory: conflict.dir().to_path_buf(),
+                error: conflict.into(),
+            });
         }
 
         // Fail if any config failed (CLI requires all configs to be valid)
@@ -706,6 +713,7 @@ pub fn build_nested_configs(
     nested_configs
 }
 
+#[expect(unused)]
 fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "JavaScript/TypeScript config file ({}) found but JS runtime not available.",

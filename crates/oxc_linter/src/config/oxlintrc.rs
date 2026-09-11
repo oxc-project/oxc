@@ -317,17 +317,12 @@ impl Oxlintrc {
     ///
     /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
-        let mut string = read_to_string(path).map_err(|e| {
-            OxcDiagnostic::error(format!(
-                "Failed to parse config {} with error {e:?}",
-                path.display()
-            ))
-        })?;
+        let mut string =
+            read_to_string(path).map_err(|e| OxcDiagnostic::error(format!("{e:?}")))?;
 
         // jsonc support
-        json_strip_comments::strip(&mut string).map_err(|err| {
-            OxcDiagnostic::error(format!("Failed to parse jsonc file {}: {err:?}", path.display()))
-        })?;
+        json_strip_comments::strip(&mut string)
+            .map_err(|err| OxcDiagnostic::error(format!("Failed to parse jsonc: {err:?}")))?;
 
         let json = serde_json::from_str::<serde_json::Value>(&string).map_err(|err| {
             let ext = path.extension().and_then(OsStr::to_str);
@@ -341,17 +336,11 @@ impl Oxlintrc {
                     )
                 }
             };
-            OxcDiagnostic::error(format!(
-                "Failed to parse oxlint config {}.\n{err}",
-                path.display()
-            ))
+            OxcDiagnostic::error(err)
         })?;
 
         if !json.is_object() {
-            return Err(OxcDiagnostic::error(format!(
-                "Failed to parse oxlint config {}.\nExpected a JSON object.",
-                path.display()
-            )));
+            return Err(OxcDiagnostic::error("Expected a JSON object.".to_string()));
         }
 
         let mut config = Self::from_json_value(&json).map_err(|err| {
