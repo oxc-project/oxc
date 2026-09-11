@@ -339,7 +339,7 @@ fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Str<'a
             Some(expr.property.name.as_arena_str())
         }
         AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
-            expr.static_property_name()
+            expr.static_property_name().and_then(oxc_str::JSStr::as_str).map(Str::from)
         }
         AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
             Some(expr.field.name.as_arena_str())

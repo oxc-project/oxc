@@ -109,7 +109,7 @@ impl BadMinMaxFunc {
             if let Argument::NumericLiteral(literal) = arg { Some(literal.value) } else { None }
         });
 
-        let min_max = match member_expr.static_property_name() {
+        let min_max = match member_expr.static_property_name().and_then(oxc_str::JSStr::as_str) {
             Some("max") => MinMax::Max(number_args.fold(f64::NEG_INFINITY, f64::max)),
             Some("min") => MinMax::Min(number_args.fold(f64::INFINITY, f64::min)),
             _ => return None,

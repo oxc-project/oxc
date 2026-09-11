@@ -3,11 +3,11 @@
 //! This module provides methods and utilities for working with [`AstKind`],
 //! including type checking, conversions, and tree traversal helpers.
 
-use std::ptr::NonNull;
+use std::{borrow::Cow, ptr::NonNull};
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr};
 
 use super::{AstKind, AstType, ast::*};
 
@@ -420,14 +420,18 @@ impl AstKind<'_> {
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
+            Self::StringLiteral(s) => match s.value.as_str() {
+                Some(value) => format!("StringLiteral({value})").into(),
+                None => format!("StringLiteral({:?})", s.value).into(),
+            },
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.single_quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+                t.single_quasi()
+                    .map_or_else(|| "None".into(), |q| format!("Some({})", string_value_name(q)))
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
@@ -447,9 +451,11 @@ impl AstKind<'_> {
             Self::BinaryExpression(b) => {
                 format!("BinaryExpression({})", b.operator.as_str()).into()
             }
-            Self::CallExpression(c) => {
-                format!("CallExpression({})", c.callee_name().unwrap_or(COMPUTED)).into()
-            }
+            Self::CallExpression(c) => format!(
+                "CallExpression({})",
+                string_value_name(c.callee_name().unwrap_or_else(|| COMPUTED.into()))
+            )
+            .into(),
             Self::ChainExpression(_) => "ChainExpression".into(),
             Self::ComputedMemberExpression(_) => "ComputedMemberExpression".into(),
             Self::ConditionalExpression(_) => "ConditionalExpression".into(),
@@ -457,9 +463,11 @@ impl AstKind<'_> {
             Self::NewExpression(n) => {
                 let callee = match &n.callee {
                     Expression::Identifier(id) => Some(id.name.as_str()),
-                    match_member_expression!(Expression) => {
-                        n.callee.to_member_expression().static_property_name()
-                    }
+                    match_member_expression!(Expression) => n
+                        .callee
+                        .to_member_expression()
+                        .static_property_name()
+                        .and_then(JSStr::as_str),
                     _ => None,
                 };
                 format!("NewExpression({})", callee.unwrap_or(COMPUTED)).into()
@@ -513,7 +521,9 @@ impl AstKind<'_> {
 
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
             Self::ImportSpecifier(i) => format!("ImportSpecifier({})", i.local.name).into(),
-            Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
+            Self::ExportSpecifier(e) => {
+                format!("ExportSpecifier({})", string_value_name(e.local.name())).into()
+            }
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),
@@ -591,7 +601,7 @@ impl AstKind<'_> {
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
             Self::TSExternalModuleDeclaration(m) => {
-                format!("TSExternalModuleDeclaration({})", m.id).into()
+                format!("TSExternalModuleDeclaration({})", string_value_name(m.id.value)).into()
             }
             Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
@@ -649,7 +659,7 @@ impl<'a> MemberExpressionKind<'a> {
     /// Returns the property name of the member expression, otherwise `None`.
     ///
     /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
-    pub fn static_property_name(&self) -> Option<Str<'a>> {
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
             Self::Static(member_expr) => Some(member_expr.property.name.into()),
@@ -661,20 +671,20 @@ impl<'a> MemberExpressionKind<'a> {
     /// or `None` otherwise.
     ///
     /// If you don't need the [`Span`], use [`MemberExpressionKind::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, JSStr<'a>)> {
         match self {
             Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked))
                     } else {
                         None
                     }
                 }
                 _ => None,
             },
-            Self::Static(expr) => Some((expr.property.span, expr.property.name.as_str())),
+            Self::Static(expr) => Some((expr.property.span, expr.property.name.into())),
             Self::PrivateField(_) => None,
         }
     }
@@ -868,6 +878,14 @@ impl GetAddress for PropertyKeyKind<'_> {
             Self::Static(ident) => ident.unstable_address(),
             Self::Private(ident) => ident.unstable_address(),
         }
+    }
+}
+
+/// Keep ordinary string values readable while escaping lone surrogates in debug names.
+fn string_value_name(value: JSStr<'_>) -> Cow<'_, str> {
+    match value.as_str() {
+        Some(value) => Cow::Borrowed(value),
+        None => Cow::Owned(format!("{value:?}")),
     }
 }
 

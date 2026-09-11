@@ -84,7 +84,9 @@ fn check_and_fix<'a>(
         return;
     };
     // Get property `name` field from expect(file.NAME) call
-    let Some(expect_property_name) = static_mem_expr.static_property_name() else {
+    let Some(expect_property_name) =
+        static_mem_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+    else {
         return;
     };
     let Some(matcher) = parsed_expect_call.matcher() else {

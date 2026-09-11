@@ -555,7 +555,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
         if self.at(Kind::Str)
-            && self.cur_string() == "constructor"
+            && self.cur_js_string() == "constructor"
             && self.lexer.peek_token().kind() == Kind::LParen
         {
             let string_literal = self.parse_literal_string();
@@ -809,10 +809,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `&'a str` for use in a diagnostic. `prop_name()` yields a borrow tied to `&self`, so the
     /// name is promoted into the arena to reach `'a`.
     fn abstract_member_name(&self, key: &PropertyKey<'a>) -> (&'a str, Span) {
-        let (name, span) = key.prop_name().unwrap_or_else(|| {
-            let span = key.span();
-            (&self.source_text[span], span)
-        });
+        let (name, span) = key
+            .prop_name()
+            .and_then(|(name, span)| name.as_str().map(|name| (name, span)))
+            .unwrap_or_else(|| {
+                let span = key.span();
+                (&self.source_text[span], span)
+            });
         (self.allocator().alloc_str(name), span)
     }
 

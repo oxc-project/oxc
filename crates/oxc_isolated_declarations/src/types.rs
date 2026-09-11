@@ -70,14 +70,18 @@ impl<'a> IsolatedDeclarations<'a> {
     fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
         match key {
             // ["string"] -> string
-            PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
-                PropertyKey::new_static_identifier(literal.span, literal.value.as_str(), self)
+            PropertyKey::StringLiteral(literal)
+                if let Some(name) = literal.value.as_str()
+                    && is_identifier_name(name) =>
+            {
+                PropertyKey::new_static_identifier(literal.span, name, self)
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)
-                if is_identifier_name(&literal.quasis[0].value.raw) =>
+                if let Some(name) = literal.single_quasi().and_then(oxc_str::JSStr::as_str)
+                    && is_identifier_name(name) =>
             {
-                PropertyKey::new_static_identifier(literal.span, literal.quasis[0].value.raw, self)
+                PropertyKey::new_static_identifier(literal.span, name, self)
             }
             // [100] -> 100
             // number literal will be cloned as-is

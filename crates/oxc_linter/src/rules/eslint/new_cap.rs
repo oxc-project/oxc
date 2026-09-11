@@ -556,7 +556,7 @@ fn get_computed_member_name(
 
     match &expression {
         Expression::StringLiteral(lit) if !lit.value.is_empty() => {
-            Some((lit.value.as_ref().into(), lit.span))
+            Some((lit.value.as_str()?.into(), lit.span))
         }
         Expression::TemplateLiteral(lit)
             if lit.expressions.is_empty()

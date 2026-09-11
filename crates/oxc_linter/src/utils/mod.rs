@@ -121,7 +121,7 @@ pub fn pad_fix_with_token_boundary(source_text: &str, span: Span, replacement: &
 
 pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> bool {
     if let Some(member) = expr.get_member_expr()
-        && member.static_property_name() == Some("raw")
+        && member.static_property_name().and_then(oxc_str::JSStr::as_str) == Some("raw")
         && let Expression::Identifier(ident) = member.object().get_inner_expression()
     {
         ident.is_global_reference_name(static_ident!("String"), scoping)

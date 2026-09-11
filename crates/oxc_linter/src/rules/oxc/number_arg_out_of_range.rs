@@ -62,7 +62,7 @@ impl Rule for NumberArgOutOfRange {
             && let Some(Argument::NumericLiteral(literal)) = expr.arguments.first()
         {
             let value = literal.value;
-            match member.static_property_name() {
+            match member.static_property_name().and_then(oxc_str::JSStr::as_str) {
                 Some(name @ "toString") if !(2.0_f64..=36.0_f64).contains(&value) => {
                     ctx.diagnostic(number_arg_out_of_range_diagnostic(name, 2, 36, expr.span));
                 }

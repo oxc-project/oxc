@@ -282,7 +282,9 @@ impl NoLargeSnapshotsConfig {
         member_expr: &MemberExpression,
         ctx: &LintContext,
     ) -> bool {
-        let Some(snapshot_name) = member_expr.static_property_name() else {
+        let Some(snapshot_name) =
+            member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return false;
         };
         let Some(file_name) = ctx.file_path().to_str() else {

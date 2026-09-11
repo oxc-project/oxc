@@ -5,7 +5,7 @@ use std::{
 
 use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
@@ -455,6 +455,7 @@ impl<'a> ObjectPropertyKind<'a> {
 
 impl<'a> PropertyKey<'a> {
     /// Returns the static name of this property, if it has one, or `None` otherwise.
+    /// Names containing lone surrogates return `None`, as they cannot be represented as UTF-8.
     ///
     /// ## Example
     ///
@@ -465,12 +466,14 @@ impl<'a> PropertyKey<'a> {
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::StringLiteral(lit) => lit.value.as_str().map(Cow::Borrowed),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit.single_quasi().map(Into::into),
+            Self::TemplateLiteral(lit) => {
+                lit.single_quasi().and_then(JSStr::as_str).map(Cow::Borrowed)
+            }
             _ => None,
         }
     }
@@ -557,7 +560,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn single_quasi(&self) -> Option<Str<'a>> {
+    pub fn single_quasi(&self) -> Option<JSStr<'a>> {
         if self.is_no_substitution_template() { self.quasis[0].value.cooked } else { None }
     }
 }
@@ -607,12 +610,10 @@ impl<'a> MemberExpression<'a> {
     /// - `a["b"]` would return `Some("b")`
     /// - `a[b]` would return `None`
     /// - `a.#b` would return `None`
-    pub fn static_property_name(&self) -> Option<&'a str> {
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
-            MemberExpression::ComputedMemberExpression(expr) => {
-                expr.static_property_name().map(|name| name.as_str())
-            }
-            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
+            MemberExpression::ComputedMemberExpression(expr) => expr.static_property_name(),
+            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.into()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
@@ -621,13 +622,13 @@ impl<'a> MemberExpression<'a> {
     /// or `None` otherwise.
     ///
     /// If you don't need the [`Span`], use [`MemberExpression::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, JSStr<'a>)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked))
                     } else {
                         None
                     }
@@ -635,7 +636,7 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, expr.property.name.as_str()))
+                Some((expr.property.span, expr.property.name.into()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -668,11 +669,11 @@ impl<'a> MemberExpression<'a> {
 
 impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
-    pub fn static_property_name(&self) -> Option<Str<'a>> {
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
-            Expression::RegExpLiteral(lit) => lit.raw,
+            Expression::RegExpLiteral(lit) => lit.raw.map(Into::into),
             _ => None,
         }
     }
@@ -680,13 +681,13 @@ impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
     /// or `None` otherwise.
     /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, JSStr<'a>)> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            Expression::StringLiteral(lit) => Some((lit.span, lit.value)),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked))
             }
-            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
+            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.into())),
             _ => None,
         }
     }
@@ -747,11 +748,11 @@ impl<'a> From<ChainElement<'a>> for Expression<'a> {
     }
 }
 
-impl CallExpression<'_> {
+impl<'a> CallExpression<'a> {
     /// Returns the static name of the callee, if it has one, or `None` otherwise.
-    pub fn callee_name(&self) -> Option<&str> {
+    pub fn callee_name(&self) -> Option<JSStr<'a>> {
         match &self.callee {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::Identifier(ident) => Some(ident.name.into()),
             expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
         }
     }
@@ -786,7 +787,7 @@ impl CallExpression<'_> {
             expr => match expr.as_member_expression() {
                 Some(member) => {
                     matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
-                        && member.static_property_name() == Some("for")
+                        && member.static_property_name().is_some_and(|name| name == "for")
                 }
                 None => false,
             },
@@ -916,7 +917,9 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_identifier_name(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
-            match_member_expression!(Self) => self.to_member_expression().static_property_name(),
+            match_member_expression!(Self) => {
+                self.to_member_expression().static_property_name().and_then(JSStr::as_str)
+            }
             _ => None,
         }
     }
@@ -2038,7 +2041,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
 
 impl<'a> ImportAttributeKey<'a> {
     /// Returns the string value of this import attribute key.
-    pub fn as_arena_str(&self) -> Str<'a> {
+    pub fn as_js_str(&self) -> JSStr<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.into(),
             Self::StringLiteral(literal) => literal.value,
@@ -2109,7 +2112,7 @@ impl Display for ModuleExportName<'_> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.fmt(f),
             Self::IdentifierReference(identifier) => identifier.name.fmt(f),
-            Self::StringLiteral(literal) => write!(f, r#""{}""#, literal.value),
+            Self::StringLiteral(literal) => write!(f, "{:?}", literal.value),
         }
     }
 }
@@ -2122,7 +2125,7 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { foo }` => `"foo"`
     /// - `export { foo as bar }` => `"bar"`
     /// - `export { foo as "anything" }` => `"anything"`
-    pub fn name(&self) -> Str<'a> {
+    pub fn name(&self) -> JSStr<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.into(),
             Self::IdentifierReference(identifier) => identifier.name.into(),

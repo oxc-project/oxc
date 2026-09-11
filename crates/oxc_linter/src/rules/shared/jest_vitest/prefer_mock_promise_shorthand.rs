@@ -73,6 +73,9 @@ pub fn run<'a>(node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
     let Some(expr) = call_expr.arguments.first().and_then(Argument::as_expression) else {
         return;
     };
+    let Some(property_name) = property_name.as_str() else {
+        return;
+    };
     let is_once = property_name.ends_with("Once");
 
     if property_name.eq("mockReturnValue") || property_name.eq("mockReturnValueOnce") {

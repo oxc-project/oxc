@@ -64,6 +64,9 @@ impl Rule for PreferAddEventListener {
             return;
         };
 
+        let Some(name) = name.as_str() else {
+            return;
+        };
         if !name.starts_with("on") {
             return;
         }

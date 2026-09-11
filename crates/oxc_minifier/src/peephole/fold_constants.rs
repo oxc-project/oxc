@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     GlobalContext, ToJsString,
@@ -7,6 +7,7 @@ use oxc_ecmascript::{
     with_number_literal,
 };
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::{JSStr, JSStrBuilder};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::TraverseCtx;
@@ -618,6 +619,30 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
+    fn concat_template_raw<const N: usize>(
+        parts: [&str; N],
+        cooked: Option<JSStr<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Str<'a> {
+        let mut previous: &str = "";
+        for part in parts {
+            if part.is_empty() {
+                continue;
+            }
+            let starts_with_digit = part.as_bytes()[0].is_ascii_digit();
+            if ((previous.ends_with("\\0") && starts_with_digit)
+                || (previous.ends_with('$') && part.starts_with('{')))
+                && let Some(cooked) = cooked
+            {
+                // Re-encode from the merged value when joining raw spellings would
+                // create an octal escape or a template interpolation.
+                return Str::from_str_in(&Self::escape_string_for_template_literal(cooked), ctx);
+            }
+            previous = part;
+        }
+        Str::from_strs_array_in(parts, ctx)
+    }
+
     fn try_fold_add_op(
         left_expr: &mut Expression<'a>,
         right_expr: &mut Expression<'a>,
@@ -634,17 +659,24 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                left_last_quasi.value.raw = Str::from_strs_array_in(
-                    [left_last_quasi.value.raw.as_str(), right_first_quasi.value.raw.as_str()],
-                    ctx,
-                );
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(Str::from_strs_array_in([cooked1.as_str(), cooked2.as_str()], ctx))
+                    let mut builder = JSStrBuilder::with_capacity_in(
+                        cooked1.len() + cooked2.len(),
+                        ctx.allocator(),
+                    );
+                    builder.push_js_str(cooked1);
+                    builder.push_js_str(cooked2);
+                    Some(builder.into_js_str())
                 } else {
                     None
                 };
+                left_last_quasi.value.raw = Self::concat_template_raw(
+                    [left_last_quasi.value.raw.as_str(), right_first_quasi.value.raw.as_str()],
+                    new_cooked,
+                    ctx,
+                );
                 left_last_quasi.value.cooked = new_cooked;
                 if !right.quasis.is_empty() {
                     left_last_quasi.tail = false;
@@ -659,16 +691,24 @@ impl<'a> PeepholeOptimizations {
                 left.span = left.span.merge_within(right_expr.span(), parent_span).unwrap_or(SPAN);
                 let last_quasi =
                     left.quasis.last_mut().expect("template literal must have at least one quasi");
-                last_quasi.value.raw = Str::from_strs_array_in(
+                let new_cooked = last_quasi.value.cooked.map(|cooked| {
+                    let mut builder = JSStrBuilder::with_capacity_in(
+                        cooked.len() + right_str.len(),
+                        ctx.allocator(),
+                    );
+                    builder.push_js_str(cooked);
+                    builder.push_str(&right_str);
+                    builder.into_js_str()
+                });
+                last_quasi.value.raw = Self::concat_template_raw(
                     [
                         last_quasi.value.raw.as_str(),
-                        Self::escape_string_for_template_literal(&right_str).as_ref(),
+                        Self::escape_string_for_template_literal(right_str.as_ref().into())
+                            .as_ref(),
                     ],
+                    new_cooked,
                     ctx,
                 );
-                let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([cooked.as_str(), right_str.as_ref()], ctx)
-                });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
             }
@@ -680,16 +720,23 @@ impl<'a> PeepholeOptimizations {
                     .quasis
                     .first_mut()
                     .expect("template literal must have at least one quasi");
-                first_quasi.value.raw = Str::from_strs_array_in(
+                let new_cooked = first_quasi.value.cooked.map(|cooked| {
+                    let mut builder = JSStrBuilder::with_capacity_in(
+                        left_str.len() + cooked.len(),
+                        ctx.allocator(),
+                    );
+                    builder.push_str(&left_str);
+                    builder.push_js_str(cooked);
+                    builder.into_js_str()
+                });
+                first_quasi.value.raw = Self::concat_template_raw(
                     [
-                        Self::escape_string_for_template_literal(&left_str).as_ref(),
+                        Self::escape_string_for_template_literal(left_str.as_ref().into()).as_ref(),
                         first_quasi.value.raw.as_str(),
                     ],
+                    new_cooked,
                     ctx,
                 );
-                let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([left_str.as_ref(), cooked.as_str()], ctx)
-                });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
             }
@@ -851,7 +898,9 @@ impl<'a> PeepholeOptimizations {
             );
 
             let may_be_equal = match &e.right {
-                Expression::StringLiteral(string_lit) => is_typeof_string(&string_lit.value),
+                Expression::StringLiteral(string_lit) => {
+                    string_lit.value.as_str().is_some_and(is_typeof_string)
+                }
                 right => {
                     let ty = right.value_type(ctx);
                     matches!(ty, ValueType::Undetermined | ValueType::String)
@@ -1027,32 +1076,23 @@ impl<'a> PeepholeOptimizations {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let escaped = Self::escape_string_for_template_literal(&str);
+            let escaped = Self::escape_string_for_template_literal(str.as_ref().into());
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
             let raw = quasi.value.raw.as_str();
-            let starts_with_digit = escaped
-                .as_bytes()
-                .first()
-                .or_else(|| next_raw.as_bytes().first())
-                .is_some_and(u8::is_ascii_digit);
-            let cooked_ends_with_null =
-                quasi.value.cooked.is_some_and(|cooked| cooked.as_str().ends_with('\0'));
-            quasi.value.raw = if starts_with_digit
-                && cooked_ends_with_null
-                && let Some(prefix) = raw.strip_suffix("\\0")
-            {
-                Str::from_strs_array_in([prefix, "\\x00", &escaped, next_raw], ctx)
-            } else {
-                Str::from_strs_array_in([raw, &escaped, next_raw], ctx)
-            };
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(Str::from_strs_array_in([cooked1.as_str(), &str, cooked2_str], ctx))
+                let mut builder = JSStrBuilder::new_in(ctx.allocator());
+                builder.push_js_str(cooked1);
+                builder.push_str(&str);
+                if let Some(cooked2) = cooked2 {
+                    builder.push_js_str(cooked2);
+                }
+                Some(builder.into_js_str())
             } else {
                 None
             };
+            quasi.value.raw = Self::concat_template_raw([raw, &escaped, next_raw], new_cooked, ctx);
             quasi.value.cooked = new_cooked;
             if next_quasi.is_some_and(|q| q.tail) {
                 quasi.tail = true;

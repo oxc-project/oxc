@@ -9,7 +9,7 @@ use oxc::{
     ast::ast::{Comment, Program},
     diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, Severity},
     span::Span,
-    syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, NameSpan},
+    syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, ModuleRequest},
 };
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
@@ -185,7 +185,7 @@ pub struct StaticImport<'a> {
     /// import { foo } from "mod";
     /// //                   ^^^
     /// ```
-    pub module_request: NameSpan<'a>,
+    pub module_request: ModuleRequest<'a>,
     /// Import specifiers.
     ///
     /// Empty for `import "mod"`.
@@ -214,7 +214,7 @@ impl<'a> FromIn<'a, ModuleRecord<'a>> for EcmaScriptModule<'a> {
 
                     StaticImport {
                         span: m.statement_span,
-                        module_request: NameSpan { name: *name, span: m.span },
+                        module_request: ModuleRequest { name: *name, span: m.span },
                         entries,
                     }
                 })

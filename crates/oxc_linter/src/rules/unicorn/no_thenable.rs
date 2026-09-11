@@ -170,7 +170,8 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 Some(me) => {
                     me.object().get_identifier_reference().is_some_and(|ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
-                    }) && me.static_property_name() == Some("defineProperty")
+                    }) && me.static_property_name().and_then(oxc_str::JSStr::as_str)
+                        == Some("defineProperty")
                         && !me.optional()
                 }
                 _ => false,
@@ -192,7 +193,8 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                     me.object()
                         .get_identifier_reference()
                         .is_some_and(|ident_ref| ident_ref.name == "Object")
-                        && me.static_property_name() == Some("fromEntries")
+                        && me.static_property_name().and_then(oxc_str::JSStr::as_str)
+                            == Some("fromEntries")
                         && !me.optional()
                 }
                 _ => false,

@@ -19,6 +19,15 @@ impl ESTree for NameSpan<'_> {
     }
 }
 
+impl ESTree for ModuleRequest<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("value", &self.name);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
 impl ESTree for ImportEntry<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();

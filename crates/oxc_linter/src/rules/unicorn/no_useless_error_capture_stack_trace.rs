@@ -204,7 +204,8 @@ fn is_referencing_class(
         _ => {
             if let Some(member) = expr.as_member_expression()
                 && let Expression::ThisExpression(_) = member.object().get_inner_expression()
-                && let Some(prop_name) = member.static_property_name()
+                && let Some(prop_name) =
+                    member.static_property_name().and_then(oxc_str::JSStr::as_str)
                 && prop_name == "constructor"
             {
                 return true;

@@ -4,7 +4,8 @@
 //! the `json-stringify` variant rejects them at parse time (see `parse::validate_comments_for_variant`),
 //! which is also why none of the comment / suppression machinery appears here.
 
-use std::borrow::Cow;
+use oxc_str::JSStr;
+use std::{borrow::Cow, fmt::Write};
 
 use oxc_ast::ast::{
     ArrayExpression, ArrayExpressionElement, Expression, NumericLiteral, ObjectExpression,
@@ -178,73 +179,34 @@ fn write_template<'a>(template: &TemplateLiteral<'a>, f: &mut JsonFormatter<'_, 
         write!(f, FormatInvalidJson(template.span));
         return;
     };
-    let body = json_stringify_escape(cooked.as_str(), quasi.lone_surrogates);
+    let body = json_stringify_escape(*cooked);
     write_quoted_str(f, b'"', arena_cow_str(&body, f));
 }
 
 /// Escapes `content` the way `JSON.stringify` does for a string body
 /// (the quotes themselves are not included): `"` and `\` get a backslash,
 /// control characters use their short escapes (`\b\f\n\r\t`) or `\uXXXX`.
-///
-/// When `lone_surrogates` is set, `content` encodes each lone surrogate as
-/// `\u{FFFD}XXXX` (and a literal U+FFFD as `\u{FFFD}fffd`).
-/// The same scheme `oxc_codegen` decodes, `JSON.stringify` prints lone surrogates as `\uXXXX`.
-fn json_stringify_escape(content: &str, lone_surrogates: bool) -> Cow<'_, str> {
-    const HEX: &[u8; 16] = b"0123456789abcdef";
-
-    if !lone_surrogates && !content.bytes().any(|b| matches!(b, b'"' | b'\\') || b < 0x20) {
+fn json_stringify_escape(content: JSStr<'_>) -> Cow<'_, str> {
+    if let Some(content) = content.as_str()
+        && !content.bytes().any(|b| matches!(b, b'"' | b'\\') || b < 0x20)
+    {
         return Cow::Borrowed(content);
     }
-
     let mut out = String::with_capacity(content.len() + 8);
-    // Start of the pending run of as-is characters, flushed in one `push_str`
-    // before each escape (mirrors `oxc_formatter_core::spec::normalize_string`).
-    let mut copy_start = 0;
-    let mut chars = content.char_indices();
-    while let Some((i, c)) = chars.next() {
-        let short_escape = match c {
-            '"' => Some("\\\""),
-            '\\' => Some("\\\\"),
-            '\u{8}' => Some("\\b"),
-            '\u{c}' => Some("\\f"),
-            '\n' => Some("\\n"),
-            '\r' => Some("\\r"),
-            '\t' => Some("\\t"),
-            _ => None,
-        };
-        if let Some(escaped) = short_escape {
-            out.push_str(&content[copy_start..i]);
-            out.push_str(escaped);
-            copy_start = i + 1; // every short-escaped char is a single byte
-        } else if (c as u32) < 0x20 {
-            out.push_str(&content[copy_start..i]);
-            // Always `\u00XX` — the guard caps the code point below 0x20.
-            let code = c as u32;
-            out.push_str("\\u00");
-            out.push(HEX[(code >> 4) as usize] as char);
-            out.push(HEX[(code & 0xF) as usize] as char);
-            copy_start = i + 1;
-        } else if c == '\u{FFFD}' && lone_surrogates {
-            out.push_str(&content[copy_start..i]);
-            // 4 lowercase-hex ASCII chars always follow the 3-byte escape marker;
-            // `get` only guards against malformed input the parser never produces,
-            // falling back (like the `fffd` self-escape) to a literal U+FFFD.
-            let hex_start = i + 3;
-            match content.get(hex_start..hex_start + 4) {
-                Some(hex) if hex != "fffd" => {
-                    out.push_str("\\u");
-                    out.push_str(hex);
-                }
-                _ => out.push('\u{FFFD}'),
-            }
-            copy_start = (hex_start + 4).min(content.len());
-            // Skip the 4 (single-byte) hex chars.
-            for _ in 0..4 {
-                chars.next();
-            }
+    for ch in content.chars() {
+        match ch.to_char() {
+            Some('"') => out.push_str("\\\""),
+            Some('\\') => out.push_str("\\\\"),
+            Some('\u{8}') => out.push_str("\\b"),
+            Some('\u{c}') => out.push_str("\\f"),
+            Some('\n') => out.push_str("\\n"),
+            Some('\r') => out.push_str("\\r"),
+            Some('\t') => out.push_str("\\t"),
+            None => std::write!(out, "\\u{:04x}", ch.to_u32()).unwrap(),
+            Some(ch) if ch < ' ' => std::write!(out, "\\u{:04x}", ch as u32).unwrap(),
+            Some(ch) => out.push(ch),
         }
     }
-    out.push_str(&content[copy_start..]);
     Cow::Owned(out)
 }
 
@@ -276,14 +238,18 @@ mod tests {
 
     #[test]
     fn stringify_escape() {
-        assert_eq!(json_stringify_escape("plain", false), "plain");
-        assert_eq!(json_stringify_escape("a\"b\\c", false), "a\\\"b\\\\c");
-        assert_eq!(json_stringify_escape("\u{8}\u{c}\n\r\t", false), "\\b\\f\\n\\r\\t");
-        assert_eq!(json_stringify_escape("\0\u{1}\u{1f}", false), "\\u0000\\u0001\\u001f");
-        // U+2028 / U+2029 are NOT escaped by `JSON.stringify`
-        assert_eq!(json_stringify_escape("\u{2028}\u{2029}", false), "\u{2028}\u{2029}");
-        // Lone surrogate `\u{FFFD}XXXX` encoding; `\u{FFFD}fffd` is a literal U+FFFD
-        assert_eq!(json_stringify_escape("a\u{FFFD}d800b", true), "a\\ud800b");
-        assert_eq!(json_stringify_escape("a\u{FFFD}fffdb", true), "a\u{FFFD}b");
+        assert_eq!(json_stringify_escape("plain".into()), "plain");
+        assert_eq!(json_stringify_escape("a\"b\\c".into()), "a\\\"b\\\\c");
+        assert_eq!(json_stringify_escape("\u{8}\u{c}\n\r\t".into()), "\\b\\f\\n\\r\\t");
+        assert_eq!(json_stringify_escape("\0\u{1}\u{1f}".into()), "\\u0000\\u0001\\u001f");
+        assert_eq!(json_stringify_escape("\u{2028}\u{2029}".into()), "\u{2028}\u{2029}");
+        assert_eq!(json_stringify_escape("a\u{FFFD}fffdb".into()), "a\u{FFFD}fffdb");
+
+        let allocator = oxc_allocator::Allocator::new();
+        let mut builder = oxc_str::JSStrBuilder::new_in(&allocator);
+        builder.push_str("a");
+        builder.push_code_unit(0xD800);
+        builder.push_str("b");
+        assert_eq!(json_stringify_escape(builder.into_js_str()), "a\\ud800b");
     }
 }

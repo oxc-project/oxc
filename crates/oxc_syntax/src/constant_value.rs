@@ -9,4 +9,6 @@ use oxc_str::CompactStr;
 pub enum ConstantValue {
     Number(f64),
     String(CompactStr),
+    /// A string containing lone surrogates, stored without a UTF-8 conversion.
+    Utf16String(Box<[u16]>),
 }

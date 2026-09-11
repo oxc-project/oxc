@@ -145,13 +145,16 @@ impl NoReservedProps {
     fn check_array_props<'a>(&self, arr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
-            let (name, span): (&str, Span) = match expr.get_inner_expression() {
+            let (name, span): (Option<&str>, Span) = match expr.get_inner_expression() {
                 Expression::StringLiteral(lit) => (lit.value.as_str(), lit.span),
                 Expression::TemplateLiteral(tpl) => match tpl.single_quasi() {
                     Some(quasi) => (quasi.as_str(), tpl.span),
                     None => continue,
                 },
                 _ => continue,
+            };
+            let Some(name) = name else {
+                continue;
             };
             self.report(name, span, ctx);
         }

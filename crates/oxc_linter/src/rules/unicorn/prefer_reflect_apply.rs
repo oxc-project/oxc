@@ -63,7 +63,7 @@ fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {
 }
 
 fn is_static_property_name_equal(expr: &MemberExpression, value: &str) -> bool {
-    expr.static_property_name().is_some_and(|name| name == value)
+    expr.static_property_name().and_then(oxc_str::JSStr::as_str).is_some_and(|name| name == value)
 }
 
 impl Rule for PreferReflectApply {

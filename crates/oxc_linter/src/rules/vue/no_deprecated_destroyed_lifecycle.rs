@@ -191,11 +191,12 @@ fn get_property_key_info(
             Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))
         }
         PropertyKey::StringLiteral(lit) => {
-            Some((lit.value.to_string(), lit.span, false, KeyType::StringLiteral))
+            Some((lit.value.as_str()?.to_owned(), lit.span, false, KeyType::StringLiteral))
         }
-        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
-            tpl.single_quasi().map(|s| (s.to_string(), tpl.span, false, KeyType::TemplateLiteral))
-        }
+        PropertyKey::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => tpl
+            .single_quasi()
+            .and_then(oxc_str::JSStr::as_str)
+            .map(|s| (s.to_owned(), tpl.span, false, KeyType::TemplateLiteral)),
         _ => None,
     }
 }

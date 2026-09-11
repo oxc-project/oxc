@@ -123,7 +123,8 @@ fn classify_member_callee<'a>(
     ctx: &LintContext<'a>,
 ) -> Option<EvalLikeTarget> {
     let member = member_expression_through_chain(callee)?;
-    let target = EvalLikeTarget::from_name(member.static_property_name()?)?;
+    let target =
+        EvalLikeTarget::from_name(member.static_property_name().and_then(oxc_str::JSStr::as_str)?)?;
     let root = global_root_after_same_name_chain(member.object())?;
 
     is_enabled_global_reference(root, ctx).then_some(target)
@@ -148,7 +149,7 @@ fn global_root_after_same_name_chain<'a>(
         }
         expr => {
             let member = member_expression_through_chain(expr)?;
-            let property_name = member.static_property_name()?;
+            let property_name = member.static_property_name().and_then(oxc_str::JSStr::as_str)?;
             let root = global_root_after_same_name_chain(member.object())?;
 
             (property_name == root.name.as_str()).then_some(root)

@@ -71,14 +71,17 @@ impl Rule for PreferNegativeIndex {
 
         let callee_object_expr = call_expr.callee.to_member_expression().object();
 
-        let Some(name) = call_expr.callee_name() else { return };
+        let Some(name) = call_expr.callee_name().and_then(oxc_str::JSStr::as_str) else { return };
         let is_prototype_call = name == "call";
         let is_prototype_apply = name == "apply";
         let is_prototype =
             callee_object_expr.is_member_expression() && (is_prototype_call || is_prototype_apply);
 
         let Some(callee_name) = (if is_prototype {
-            callee_object_expr.to_member_expression().static_property_name()
+            callee_object_expr
+                .to_member_expression()
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)
         } else {
             Some(name)
         }) else {
@@ -193,10 +196,10 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::ComputedMemberExpression(right_computed_expr),
         ) => is_same_node(&left_computed_expr.expression, &right_computed_expr.expression, ctx),
         (Expression::StringLiteral(left_lit), Expression::NumericLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            left_lit.value == right_lit.to_string().as_str()
         }
         (Expression::NumericLiteral(left_lit), Expression::StringLiteral(right_lit)) => {
-            left_lit.to_string() == right_lit.to_string()
+            right_lit.value == left_lit.to_string().as_str()
         }
         (
             Expression::TemplateLiteral(left_template_lit),
@@ -206,7 +209,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            template_str.as_str() == right_string_lit.to_string()
+            template_str == right_string_lit.value
         }
         (
             Expression::StringLiteral(left_string_lit),
@@ -216,7 +219,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            left_string_lit.to_string() == template_str.as_str()
+            left_string_lit.value == template_str
         }
         _ => false,
     }

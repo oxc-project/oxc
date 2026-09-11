@@ -322,7 +322,7 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
     };
     let mut flags = RegExpFlags::empty();
     for ch in flag_arg.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
+        let flag = RegExpFlags::try_from(ch.to_char()?).ok()?;
         flags |= flag;
     }
     Some(flags)
@@ -412,7 +412,9 @@ pub fn is_method_call<'a>(
     }
 
     if let Some(methods) = methods {
-        let Some(static_property_name) = member_expr.static_property_name() else {
+        let Some(static_property_name) =
+            member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return false;
         };
         if !methods.contains(&static_property_name) {
@@ -455,7 +457,8 @@ pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
     let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
-    member_expr.static_property_info()
+    let (span, name) = member_expr.static_property_info()?;
+    Some((span, name.as_str()?))
 }
 
 pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
@@ -647,7 +650,7 @@ fn is_array_from_family_method(callee: &Expression) -> bool {
 
     let object = member_expr.object();
 
-    match member_expr.static_property_name() {
+    match member_expr.static_property_name().and_then(oxc_str::JSStr::as_str) {
         Some("from") => matches!(
             object.get_inner_expression(),
             Expression::Identifier(ident) if ident.name.ends_with("Array")
@@ -762,6 +765,7 @@ pub fn is_default_this_binding<'a>(
                 if member_expr_kind.object().span() == current_node.span()
                     && member_expr_kind
                         .static_property_name()
+                        .and_then(oxc_str::JSStr::as_str)
                         .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
@@ -792,6 +796,7 @@ pub fn is_default_this_binding<'a>(
                 if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
                     mem_expr
                         .static_property_name()
+                        .and_then(oxc_str::JSStr::as_str)
                         .is_some_and(|name| METHOD_WHICH_HAS_THIS_ARG.binary_search(&name).is_ok())
                 }) {
                     return call_expr.arguments.len() != 2
@@ -833,7 +838,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
                 && template.quasis.len() == 1
                 && let Some(cooked) = &template.quasis[0].value.cooked
             {
-                return Some(Cow::Borrowed(cooked.as_str()));
+                return Some(Cow::Borrowed(cooked.as_str()?));
             }
 
             None

@@ -66,7 +66,8 @@ impl Rule for NoIterator {
         let Some(member_expression) = node.kind().as_member_expression_kind() else {
             return;
         };
-        if let Some(static_property_name) = member_expression.static_property_name()
+        if let Some(static_property_name) =
+            member_expression.static_property_name().and_then(oxc_str::JSStr::as_str)
             && static_property_name == "__iterator__"
         {
             let mem_span = member_expression.span();

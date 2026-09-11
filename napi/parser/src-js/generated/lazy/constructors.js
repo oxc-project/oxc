@@ -1009,7 +1009,7 @@ export class TemplateElementValue {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $raw: void 0, $cooked: void 0 };
+    this.#internal = { pos, ast, $raw: void 0 };
     nodes.set(pos, this);
   }
 
@@ -1021,10 +1021,8 @@ export class TemplateElementValue {
   }
 
   get cooked() {
-    const internal = this.#internal,
-      cached = internal.$cooked;
-    if (cached !== void 0) return cached;
-    return (internal.$cooked = constructOptionStr(internal.pos + 16, internal.ast));
+    const internal = this.#internal;
+    return constructOptionJSStr(internal.pos + 16, internal.ast);
   }
 
   toJSON() {
@@ -6667,7 +6665,7 @@ export class StringLiteral {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $value: void 0, $raw: void 0 };
+    this.#internal = { pos, ast, $raw: void 0 };
     nodes.set(pos, this);
   }
 
@@ -6682,10 +6680,8 @@ export class StringLiteral {
   }
 
   get value() {
-    const internal = this.#internal,
-      cached = internal.$value;
-    if (cached !== void 0) return cached;
-    return (internal.$value = constructStr(internal.pos + 16, internal.ast));
+    const internal = this.#internal;
+    return constructJSStr(internal.pos + 16, internal.ast);
   }
 
   get raw() {
@@ -12200,6 +12196,50 @@ export class NameSpan {
 
 const DebugNameSpan = class NameSpan {};
 
+export class ModuleRequest {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return constructJSStr(internal.pos + 8, internal.ast);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      value: this.value,
+      start: this.start,
+      end: this.end,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugModuleRequest.prototype);
+  }
+}
+
+const DebugModuleRequest = class ModuleRequest {};
+
 export class ImportEntry {
   #internal;
 
@@ -12283,7 +12323,7 @@ export class ExportEntry {
 
   get moduleRequest() {
     const internal = this.#internal;
-    return constructOptionNameSpan(internal.pos + 16, internal.ast);
+    return constructOptionModuleRequest(internal.pos + 16, internal.ast);
   }
 
   get importName() {
@@ -12827,7 +12867,7 @@ export class StaticImport {
 
   get moduleRequest() {
     const internal = this.#internal;
-    return new NameSpan(internal.pos + 8, internal.ast);
+    return new ModuleRequest(internal.pos + 8, internal.ast);
   }
 
   get entries() {
@@ -13189,9 +13229,41 @@ function constructOptionBoxTSTypeParameterInstantiation(pos, ast) {
   return constructBoxTSTypeParameterInstantiation(pos, ast);
 }
 
-function constructOptionStr(pos, ast) {
-  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
-  return constructStr(pos, ast);
+function constructJSStr(pos, ast) {
+  const { buffer } = ast;
+  if (buffer[pos + 12] === 0) return constructStr(pos, ast);
+  const { int32 } = buffer;
+
+  const pos32 = pos >> 2,
+    len = int32[pos32 + 2];
+  pos = int32[pos32];
+  const end = pos + len;
+  let out = "";
+  while (pos < end) {
+    const first = buffer[pos++];
+    let codePoint;
+    if (first < 0x80) {
+      codePoint = first;
+    } else if (first < 0xe0) {
+      codePoint = ((first & 0x1f) << 6) | (buffer[pos++] & 0x3f);
+    } else if (first < 0xf0) {
+      codePoint = ((first & 0x0f) << 12) | ((buffer[pos++] & 0x3f) << 6) | (buffer[pos++] & 0x3f);
+    } else {
+      codePoint =
+        ((first & 7) << 18)
+        | ((buffer[pos++] & 0x3f) << 12)
+        | ((buffer[pos++] & 0x3f) << 6)
+        | (buffer[pos++] & 0x3f);
+    }
+    // Unlike UTF-8 decoders, fromCodePoint preserves surrogate code points.
+    out += String.fromCodePoint(codePoint);
+  }
+  return out;
+}
+
+function constructOptionJSStr(pos, ast) {
+  if (ast.buffer[pos + 12] === 2) return null;
+  return constructJSStr(pos, ast);
 }
 
 function constructBoxComputedMemberExpression(pos, ast) {
@@ -13696,6 +13768,11 @@ function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
+function constructOptionStr(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructStr(pos, ast);
+}
+
 function constructU8(pos, ast) {
   return ast.buffer[pos];
 }
@@ -14054,9 +14131,9 @@ function constructI32(pos, ast) {
   return ast.buffer.int32[pos >> 2];
 }
 
-function constructOptionNameSpan(pos, ast) {
-  if (ast.buffer.int32[(pos >> 2) + 2] === 0 && ast.buffer.int32[(pos >> 2) + 3] === 0) return null;
-  return new NameSpan(pos, ast);
+function constructOptionModuleRequest(pos, ast) {
+  if (ast.buffer[pos + 20] === 2) return null;
+  return new ModuleRequest(pos, ast);
 }
 
 function constructVecError(pos, ast) {

@@ -99,21 +99,19 @@ impl Rule for NoSync {
 
 fn get_sync_property_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     match expr.get_inner_expression() {
-        Expression::Identifier(ident) if ident.name.as_str().ends_with("Sync") => {
-            Some(ident.name.as_str())
-        }
+        Expression::Identifier(ident) if ident.name.ends_with("Sync") => Some(ident.name.as_str()),
         Expression::StaticMemberExpression(member) => {
-            if member.property.name.as_str().ends_with("Sync") {
+            if member.property.name.ends_with("Sync") {
                 Some(member.property.name.as_str())
             } else {
                 get_sync_property_name(&member.object)
             }
         }
         Expression::ComputedMemberExpression(member) => {
-            if let Some(name) = member.static_property_name()
-                && name.as_str().ends_with("Sync")
+            if let Some(name) = member.static_property_name().and_then(oxc_str::JSStr::as_str)
+                && name.ends_with("Sync")
             {
-                return Some(name.as_str());
+                return Some(name);
             }
             get_sync_property_name(&member.object)
         }

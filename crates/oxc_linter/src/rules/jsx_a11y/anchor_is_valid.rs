@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -249,7 +249,7 @@ impl AnchorIsValid {
         match value {
             JSXAttributeValue::Element(_) => HrefValueKind::Valid,
             JSXAttributeValue::StringLiteral(str_lit) => {
-                Self::href_value_kind_from_string(&str_lit.value)
+                Self::href_value_kind_from_string(str_lit.value)
             }
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
                 JSXExpression::Identifier(ident) if ident.name == "undefined" => {
@@ -257,7 +257,7 @@ impl AnchorIsValid {
                 }
                 JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
                 JSXExpression::StringLiteral(str_lit) => {
-                    Self::href_value_kind_from_string(&str_lit.value)
+                    Self::href_value_kind_from_string(str_lit.value)
                 }
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {
@@ -267,7 +267,7 @@ impl AnchorIsValid {
                     let Some(quasi) = temp_lit.single_quasi() else {
                         return HrefValueKind::Valid;
                     };
-                    Self::href_value_kind_from_string(&quasi)
+                    Self::href_value_kind_from_string(quasi)
                 }
                 _ => HrefValueKind::Valid,
             },
@@ -275,14 +275,18 @@ impl AnchorIsValid {
         }
     }
 
-    fn href_value_kind_from_string(href: &str) -> HrefValueKind {
+    fn href_value_kind_from_string(href: JSStr) -> HrefValueKind {
         if Self::is_invalid_href(href) { HrefValueKind::Invalid } else { HrefValueKind::Valid }
     }
 
-    fn is_invalid_href(href: &str) -> bool {
-        let href_without_leading_non_word =
-            href.trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_');
-        href.is_empty() || href == "#" || href_without_leading_non_word.starts_with("javascript:")
+    fn is_invalid_href(href: JSStr) -> bool {
+        let mut chars = href
+            .chars()
+            .map(oxc_str::JSChar::to_char)
+            .skip_while(|ch| ch.is_none_or(|ch| !ch.is_ascii_alphanumeric() && ch != '_'));
+        href.is_empty()
+            || href == "#"
+            || chars.by_ref().take(11).eq("javascript:".chars().map(Some))
     }
 }
 

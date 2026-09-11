@@ -156,7 +156,8 @@ fn is_valid_value_for_aria_prop_type(
             {
                 return true;
             }
-            parse_aria_prop_value_as_string(value, false).is_some()
+            matches!(value, JSXAttributeValue::StringLiteral(_))
+                || matches!(value, JSXAttributeValue::ExpressionContainer(container) if matches!(container.expression, JSXExpression::StringLiteral(_) | JSXExpression::TemplateLiteral(_)))
         }
         AriaPropType::Integer | AriaPropType::Number => {
             if let Some(value_string) = parse_aria_prop_value_as_string(value, false) {
@@ -214,14 +215,14 @@ fn parse_aria_prop_value_as_string(
 ) -> Option<CompactStr> {
     match value {
         JSXAttributeValue::StringLiteral(string_lit) => {
-            Some(string_lit.value.cow_to_lowercase().into())
+            Some(string_lit.value.as_str()?.cow_to_lowercase().into())
         }
         JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
             JSXExpression::StringLiteral(string_lit) => {
-                Some(string_lit.value.cow_to_lowercase().into())
+                Some(string_lit.value.as_str()?.cow_to_lowercase().into())
             }
             JSXExpression::TemplateLiteral(template_lit) => {
-                Some(template_lit.single_quasi()?.cow_to_lowercase().into())
+                Some(template_lit.single_quasi()?.as_str()?.cow_to_lowercase().into())
             }
             JSXExpression::BooleanLiteral(bool_lit) => {
                 if boolean_as_string {

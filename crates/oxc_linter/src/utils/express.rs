@@ -1,5 +1,5 @@
 use oxc_ast::ast::{Argument, CallExpression, Expression, FormalParameter};
-use oxc_str::Str;
+use oxc_str::JSStr;
 
 /// Check if the given call is registering an endpoint handler or middleware to
 /// a route or Express application object. If it is, it
@@ -16,9 +16,9 @@ use oxc_str::Str;
 /// ```
 pub fn as_endpoint_registration<'a, 'n>(
     call: &'n CallExpression<'a>,
-) -> Option<(Option<Str<'a>>, &'n [Argument<'a>])> {
+) -> Option<(Option<JSStr<'a>>, &'n [Argument<'a>])> {
     let callee = call.callee.as_member_expression()?;
-    let method_name = callee.static_property_name()?;
+    let method_name = callee.static_property_name().and_then(oxc_str::JSStr::as_str)?;
     if ROUTER_HANDLER_METHOD_NAMES.binary_search(&method_name).is_err() {
         return None;
     }

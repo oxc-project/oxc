@@ -92,7 +92,7 @@ fn get_function_constructor_reference<'a>(
 ) -> Option<&'a IdentifierReference<'a>> {
     callee.get_identifier_reference().or_else(|| {
         let member_expr = member_expression_through_chain(callee)?;
-        let property_name = member_expr.static_property_name()?;
+        let property_name = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)?;
         matches!(property_name, "apply" | "bind" | "call")
             .then(|| member_expr.object().get_identifier_reference())?
     })

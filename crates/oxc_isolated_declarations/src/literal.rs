@@ -8,17 +8,6 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         lit: &TemplateLiteral<'a>,
     ) -> Option<ArenaBox<'a, StringLiteral<'a>>> {
-        if lit.expressions.is_empty() {
-            lit.quasis.first().map(|item| {
-                StringLiteral::boxed(
-                    lit.span,
-                    item.value.cooked.unwrap_or(item.value.raw),
-                    None,
-                    self,
-                )
-            })
-        } else {
-            None
-        }
+        lit.single_quasi().map(|value| StringLiteral::boxed(lit.span, value, None, self))
     }
 }

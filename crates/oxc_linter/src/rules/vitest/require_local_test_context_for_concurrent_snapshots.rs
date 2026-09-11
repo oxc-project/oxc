@@ -28,7 +28,8 @@ fn is_test_or_describe_node(member_expr: &MemberExpression) -> bool {
             JestFnKind::from(id.name.as_str()),
             JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
         )
-        && let Some(property_name) = member_expr.static_property_name()
+        && let Some(property_name) =
+            member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
     {
         return property_name == "concurrent";
     }
@@ -109,7 +110,11 @@ impl RequireLocalTestContextForConcurrentSnapshots {
 
             let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
-            let Some(property_name) = member_expr.static_property_name() else { return };
+            let Some(property_name) =
+                member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+            else {
+                return;
+            };
 
             if !is_snapshot_method(property_name) {
                 return;

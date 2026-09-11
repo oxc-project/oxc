@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::{CompactStr, Str};
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -214,7 +214,7 @@ impl NoAsyncEndpointHandlers {
     fn check_endpoint_arg<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Str<'a>>,
+        endpoint: Option<JSStr<'a>>,
         arg: &Expression<'a>,
     ) {
         let mut visited = FxHashSet::default();
@@ -224,7 +224,7 @@ impl NoAsyncEndpointHandlers {
     fn check_endpoint_expr<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Str<'a>>,
+        endpoint: Option<JSStr<'a>>,
         id_name: Option<&str>,
         registered_at: Option<Span>,
         arg: &Expression<'a>,
@@ -299,7 +299,7 @@ impl NoAsyncEndpointHandlers {
     fn check_function<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Str<'a>>,
+        endpoint: Option<JSStr<'a>>,
         registered_at: Option<Span>,
         id_name: Option<&str>,
         f: &Function<'a>,
@@ -317,14 +317,14 @@ impl NoAsyncEndpointHandlers {
             f.span,
             registered_at,
             name,
-            endpoint.map(|endpoint| endpoint.as_str()),
+            endpoint.and_then(oxc_str::JSStr::as_str),
         ));
     }
 
     fn check_arrow<'a>(
         &self,
         ctx: &LintContext<'a>,
-        endpoint: Option<Str<'a>>,
+        endpoint: Option<JSStr<'a>>,
         registered_at: Option<Span>,
         id_name: Option<&str>,
         f: &ArrowFunctionExpression<'a>,
@@ -340,7 +340,7 @@ impl NoAsyncEndpointHandlers {
             f.span,
             registered_at,
             id_name,
-            endpoint.map(|endpoint| endpoint.as_str()),
+            endpoint.and_then(oxc_str::JSStr::as_str),
         ));
     }
 

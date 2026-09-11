@@ -308,7 +308,7 @@ fn is_hoc_component(call: &CallExpression, ctx: &LintContext) -> bool {
 /// Get the name of a HOC callee, resolving local aliases
 fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<String> {
     // Direct name like React.memo, memo, or forwardRef
-    if let Some(name) = call.callee_name() {
+    if let Some(name) = call.callee_name().and_then(oxc_str::JSStr::as_str) {
         return Some(name.to_string());
     }
 
@@ -415,6 +415,7 @@ fn is_es6_component_class(class: &Class) -> bool {
         {
             return member_expr
                 .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)
                 .is_some_and(|name| matches!(name, "Component" | "PureComponent"));
         }
         super_class
@@ -429,7 +430,8 @@ fn is_es5_component_call(call: &CallExpression) -> bool {
         && let Expression::Identifier(ident) = member_expr.object()
         && ident.name == "React"
     {
-        return member_expr.static_property_name() == Some("createReactClass");
+        return member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+            == Some("createReactClass");
     }
     call.callee.get_identifier_reference().is_some_and(|id| id.name == "createReactClass")
 }

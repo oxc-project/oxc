@@ -76,7 +76,7 @@ impl Rule for PreferObjectHasOwn {
             return;
         };
 
-        let object_property_name = object.static_property_name();
+        let object_property_name = object.static_property_name().and_then(oxc_str::JSStr::as_str);
         let is_object = has_left_hand_object(object);
         let is_global_scope =
             ctx.scoping().find_binding(node.scope_id(), static_ident!("Object")).is_none();
@@ -114,7 +114,9 @@ fn has_left_hand_object(node: &MemberExpression) -> bool {
 
     let object_node_to_check = match object.get_member_expr() {
         Some(member_expr) => {
-            if member_expr.static_property_name() == Some("prototype") {
+            if member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                == Some("prototype")
+            {
                 member_expr.object()
             } else {
                 object

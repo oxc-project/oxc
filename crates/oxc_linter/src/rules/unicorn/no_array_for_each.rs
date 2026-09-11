@@ -104,7 +104,10 @@ impl Rule for NoArrayForEach {
                     return;
                 }
                 match_member_expression!(Expression) => {
-                    if let Some(name) = object.to_member_expression().static_property_name()
+                    if let Some(name) = object
+                        .to_member_expression()
+                        .static_property_name()
+                        .and_then(oxc_str::JSStr::as_str)
                         && IGNORED_OBJECTS.contains(&name)
                     {
                         return;

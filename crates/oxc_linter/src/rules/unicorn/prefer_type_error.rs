@@ -128,7 +128,11 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
             TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(&ident.name.as_str())
         }
         callee @ match_member_expression!(Expression) => {
-            if let Some(ident) = callee.to_member_expression().static_property_name() {
+            if let Some(ident) = callee
+                .to_member_expression()
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)
+            {
                 return TYPE_CHECKING_IDENTIFIERS.contains(ident);
             }
             false
@@ -138,7 +142,7 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
 }
 
 fn is_type_checking_member_expr(member_expr: &MemberExpression) -> bool {
-    if let Some(ident) = member_expr.static_property_name() {
+    if let Some(ident) = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str) {
         return TYPE_CHECKING_IDENTIFIERS.contains(ident);
     }
 

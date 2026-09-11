@@ -248,7 +248,8 @@ impl SnapshotHintMode {
                 continue;
             }
 
-            let Some(callee_name) = expect_call_expr.callee_name() else {
+            let Some(callee_name) = expect_call_expr.callee_name().and_then(oxc_str::JSStr::as_str)
+            else {
                 continue;
             };
 
@@ -276,7 +277,7 @@ impl SnapshotHintMode {
 }
 
 fn is_test_node(ancestor_call_expr: &CallExpression<'_>) -> bool {
-    let Some(id) = ancestor_call_expr.callee_name() else {
+    let Some(id) = ancestor_call_expr.callee_name().and_then(oxc_str::JSStr::as_str) else {
         return false;
     };
 

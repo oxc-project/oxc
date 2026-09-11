@@ -135,13 +135,15 @@ impl Rule for CatchErrorName {
             }
             AstKind::CallExpression(call_expr) => {
                 if let Some(member_expr) = call_expr.callee.as_member_expression() {
-                    if member_expr.static_property_name() == Some("catch")
+                    if member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                        == Some("catch")
                         && let Some(arg) = call_expr.arguments.first()
                     {
                         self.check_function_arguments(arg, ctx);
                     }
 
-                    if member_expr.static_property_name() == Some("then")
+                    if member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                        == Some("then")
                         && let Some(arg) = call_expr.arguments.get(1)
                     {
                         self.check_function_arguments(arg, ctx);

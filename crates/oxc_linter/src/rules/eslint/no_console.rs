@@ -115,7 +115,10 @@ impl Rule for NoConsole {
         }
 
         let (mem_span, prop_name) = match node.kind() {
-            AstKind::StaticMemberExpression(member_expr) => member_expr.static_property_info(),
+            AstKind::StaticMemberExpression(member_expr) => {
+                let (span, name) = member_expr.static_property_info();
+                (span, oxc_str::JSStr::from(name))
+            }
             AstKind::ComputedMemberExpression(member_expr) => {
                 match member_expr.static_property_info() {
                     Some(info) => info,
@@ -125,7 +128,7 @@ impl Rule for NoConsole {
             _ => unreachable!(),
         };
 
-        if self.allow.iter().any(|allowed_name| allowed_name == prop_name) {
+        if self.allow.iter().any(|allowed_name| prop_name == allowed_name.as_str()) {
             return;
         }
 

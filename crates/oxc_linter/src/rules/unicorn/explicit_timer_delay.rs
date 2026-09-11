@@ -166,7 +166,7 @@ fn timer_name<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) -> Opti
                 return None;
             }
 
-            let name = member_expr.static_property_name()?;
+            let name = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)?;
 
             if !is_timer_function_name(name) {
                 return None;

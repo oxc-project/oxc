@@ -73,6 +73,7 @@ impl Rule for PreferCatch {
 
         let is_promise_then_call = member_expr
             .static_property_name()
+            .and_then(oxc_str::JSStr::as_str)
             .map_or_else(|| false, |prop_name| matches!(prop_name, "then"));
 
         if is_promise_then_call && call_expr.arguments.len() >= 2 {

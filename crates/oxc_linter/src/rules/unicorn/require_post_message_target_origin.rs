@@ -115,7 +115,10 @@ fn is_message_port_expression(expr: &Expression<'_>) -> bool {
             return false;
         };
 
-        if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2"))
+        if member_expr
+            .static_property_name()
+            .and_then(oxc_str::JSStr::as_str)
+            .is_some_and(|name| matches!(name, "port1" | "port2"))
         {
             return true;
         }
@@ -123,7 +126,10 @@ fn is_message_port_expression(expr: &Expression<'_>) -> bool {
         if member_expr.is_computed()
             && member_expr.object().without_parentheses().get_member_expr().is_some_and(
                 |object_member| {
-                    object_member.static_property_name().is_some_and(|name| name == "ports")
+                    object_member
+                        .static_property_name()
+                        .and_then(oxc_str::JSStr::as_str)
+                        .is_some_and(|name| name == "ports")
                 },
             )
         {

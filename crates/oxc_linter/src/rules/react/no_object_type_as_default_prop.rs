@@ -189,9 +189,10 @@ fn is_in_component_context<'a>(func_node: &AstNode<'a>, ctx: &LintContext<'a>) -
         AstKind::VariableDeclarator(decl) => {
             decl.id.get_identifier_name().is_some_and(|name| is_react_component_name(&name))
         }
-        AstKind::CallExpression(call) => {
-            call.callee_name().is_some_and(|name| is_hoc_call(name, ctx))
-        }
+        AstKind::CallExpression(call) => call
+            .callee_name()
+            .and_then(oxc_str::JSStr::as_str)
+            .is_some_and(|name| is_hoc_call(name, ctx)),
         _ => false,
     }
 }

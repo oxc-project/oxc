@@ -145,7 +145,10 @@ fn is_react_pure_component<'a>(class: &'a Class<'a>) -> bool {
             && let Expression::Identifier(ident) = member_expr.object()
         {
             return ident.name == "React"
-                && member_expr.static_property_name().is_some_and(|name| name == "PureComponent");
+                && member_expr
+                    .static_property_name()
+                    .and_then(oxc_str::JSStr::as_str)
+                    .is_some_and(|name| name == "PureComponent");
         }
 
         if let Some(ident_reference) = super_class.get_identifier_reference() {

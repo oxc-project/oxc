@@ -104,7 +104,11 @@ fn is_useless_check<'a>(
         Expression::CallExpression(expr) => {
             array_name =
                 expr.callee.get_member_expr()?.object().get_identifier_reference()?.name.as_str();
-            let property_name = expr.callee.get_member_expr()?.static_property_name()?;
+            let property_name = expr
+                .callee
+                .get_member_expr()?
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)?;
             call_expression_span = Some(expr.span);
 
             let is_same_method = property_name == active_condition.property_name;
@@ -137,7 +141,11 @@ fn is_useless_check<'a>(
             if call_expression_span.is_some() {
                 return None;
             }
-            let property_name = expr.callee.get_member_expr()?.static_property_name()?;
+            let property_name = expr
+                .callee
+                .get_member_expr()?
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)?;
             let is_same_method = property_name == active_condition.property_name;
             let is_optional = expr.optional;
 

@@ -128,7 +128,7 @@ fn parse_target(callee: &Expression, ctx: &LintContext) -> Option<ParseTarget> {
             if !ctx.is_reference_to_global_variable(object) {
                 return None;
             }
-            match member_expr.static_property_name()? {
+            match member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)? {
                 "parseFloat" => Some(ParseTarget::ParseFloat),
                 "parseInt" => Some(ParseTarget::ParseInt),
                 _ => None,

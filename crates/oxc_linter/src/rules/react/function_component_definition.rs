@@ -203,7 +203,11 @@ fn is_component_expression_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a
                     expression.get_inner_expression().span() == node.span()
                 })
             });
-            is_first_argument && call.callee_name().is_some_and(|name| is_hoc_call(name, ctx))
+            is_first_argument
+                && call
+                    .callee_name()
+                    .and_then(oxc_str::JSStr::as_str)
+                    .is_some_and(|name| is_hoc_call(name, ctx))
         }
         _ => false,
     }

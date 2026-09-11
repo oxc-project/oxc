@@ -84,7 +84,10 @@ impl Rule for NoDidMountSetState {
         let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
-            || member_expr.static_property_name().is_none_or(|name| name != "setState")
+            || member_expr
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)
+                .is_none_or(|name| name != "setState")
         {
             return;
         }

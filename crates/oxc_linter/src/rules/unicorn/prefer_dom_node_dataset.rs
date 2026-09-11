@@ -79,6 +79,9 @@ impl Rule for PreferDomNodeDataset {
             return;
         };
 
+        let Some(method_name) = method_name.as_str() else {
+            return;
+        };
         match method_name {
             "setAttribute" => {
                 if call_expr.arguments.len() != 2 {
@@ -110,7 +113,8 @@ impl Rule for PreferDomNodeDataset {
             return;
         };
 
-        let Some(dataset_property_name) = strip_data_prefix(&string_lit.value) else {
+        let Some(dataset_property_name) = string_lit.value.as_str().and_then(strip_data_prefix)
+        else {
             return;
         };
 

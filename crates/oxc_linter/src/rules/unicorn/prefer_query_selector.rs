@@ -96,6 +96,9 @@ impl Rule for PreferQuerySelector {
             return;
         };
 
+        let Some(property_name) = property_name.as_str() else {
+            return;
+        };
         if let Some(preferred_selector) = get_preferred_identifier_name(property_name) {
             let diagnostic =
                 prefer_query_selector_diagnostic(preferred_selector, property_name, property_span);
@@ -107,10 +110,17 @@ impl Rule for PreferQuerySelector {
             }
 
             let literal_value = match argument_expr {
-                Expression::StringLiteral(literal) => Some(literal.value.trim()),
+                Expression::StringLiteral(literal) => literal.value.as_str().map(str::trim),
                 Expression::TemplateLiteral(literal) => {
                     if literal.expressions.is_empty() {
-                        literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
+                        literal
+                            .quasis
+                            .first()
+                            .unwrap()
+                            .value
+                            .cooked
+                            .and_then(oxc_str::JSStr::as_str)
+                            .map(str::trim)
                     } else {
                         None
                     }

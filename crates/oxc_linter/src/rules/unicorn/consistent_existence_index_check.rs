@@ -111,7 +111,7 @@ impl Rule for ConsistentExistenceIndexCheck {
                 return;
             }
 
-            let Some(callee_name) = call.callee_name() else {
+            let Some(callee_name) = call.callee_name().and_then(oxc_str::JSStr::as_str) else {
                 return;
             };
 

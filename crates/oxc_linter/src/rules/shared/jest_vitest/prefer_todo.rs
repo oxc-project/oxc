@@ -94,7 +94,7 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
 
 fn filter_todo_case(expr: &CallExpression) -> bool {
     if let Some(mem_expr) = expr.callee.as_member_expression()
-        && let Some(name) = mem_expr.static_property_name()
+        && let Some(name) = mem_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
     {
         return name == "todo";
     }

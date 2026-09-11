@@ -1,12 +1,12 @@
 use std::cell::Cell;
 
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
-use oxc_str::{Ident, static_ident};
+use oxc_str::{Ident, JSStr, JSStrBuilder, static_ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::NumberBase,
@@ -135,6 +135,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 ConstantValue::Number(n) => Self::get_initializer_expr(n, ctx),
                 ConstantValue::String(s) => {
                     Expression::new_string_literal(SPAN, Str::from_str_in(&s, ctx), None, ctx)
+                }
+                ConstantValue::Utf16String(units) => {
+                    Self::get_utf16_literal_expression(&units, ctx)
                 }
             };
         }
@@ -334,10 +337,9 @@ impl<'a> TypeScriptEnum {
 
             let init = if let Some(mut initializer) = member.initializer {
                 // Look up the pre-computed constant value from Scoping
-                let constant_value: Option<ConstantValue> = ctx
+                let constant_value = ctx
                     .scoping()
-                    .get_binding(enum_scope_id, member_name.as_str().into())
-                    .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
+                    .get_enum_member_value_by_name(enum_scope_id, member_name)
                     .cloned();
 
                 match constant_value {
@@ -362,6 +364,10 @@ impl<'a> TypeScriptEnum {
                                 None,
                                 ctx,
                             )
+                        }
+                        ConstantValue::Utf16String(units) => {
+                            prev_constant_number = None;
+                            Self::get_utf16_literal_expression(&units, ctx)
                         }
                     },
                 }
@@ -480,17 +486,21 @@ impl<'a> TypeScriptEnum {
                 .get_binding(scope_id, ident.name.as_str().into())
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
-            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => ctx
-                .scoping()
-                .get_binding(scope_id, lit.value.as_str().into())
-                .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
-                .is_some(),
+            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
+                ctx.scoping().get_enum_member_value_by_name(scope_id, lit.value).is_some()
+            }
             TSEnumMemberName::ComputedTemplateString(_) => false,
         })
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         Expression::new_numeric_literal(SPAN, value, None, NumberBase::Decimal, ctx)
+    }
+
+    fn get_utf16_literal_expression(units: &[u16], ctx: &TraverseCtx<'a>) -> Expression<'a> {
+        let mut value = JSStrBuilder::with_capacity_in(units.len(), ctx.allocator());
+        value.push_utf16(units);
+        Expression::new_string_literal(SPAN, value.into_js_str(), None, ctx)
     }
 
     fn get_initializer_expr(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
@@ -522,7 +532,7 @@ impl<'a> TypeScriptEnum {
         ctx: &TraverseCtx<'a>,
     ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
-        self.resolve_enum_member(ident, expr.property.name.as_str(), ctx)
+        self.resolve_enum_member(ident, expr.property.name.into(), ctx)
     }
 
     /// Try to inline `Foo["%/*"]` to its literal value.
@@ -533,7 +543,7 @@ impl<'a> TypeScriptEnum {
     ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         let Expression::StringLiteral(prop) = &expr.expression else { return None };
-        self.resolve_enum_member(ident, prop.value.as_str(), ctx)
+        self.resolve_enum_member(ident, prop.value, ctx)
     }
 
     /// Resolve an enum member value by identifier and property name.
@@ -542,7 +552,7 @@ impl<'a> TypeScriptEnum {
     fn resolve_enum_member(
         &self,
         ident: &IdentifierReference<'a>,
-        property_name: &str,
+        property_name: JSStr<'_>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(ConstantValue, ReferenceId)> {
         let ref_id = ident.reference_id.get()?;
@@ -562,9 +572,8 @@ impl<'a> TypeScriptEnum {
         }
 
         for &body_scope_id in body_scopes {
-            if let Some(member_symbol_id) =
-                ctx.scoping().get_binding(body_scope_id, property_name.into())
-                && let Some(value) = ctx.scoping().get_enum_member_value(member_symbol_id)
+            if let Some(value) =
+                ctx.scoping().get_enum_member_value_by_name(body_scope_id, property_name)
             {
                 return Some((value.clone(), ref_id));
             }

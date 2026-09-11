@@ -91,9 +91,9 @@ impl Rule for NoImportAssign {
                                     AstKind::StaticMemberExpression(expr) => {
                                         Some(expr.static_property_info())
                                     }
-                                    AstKind::ComputedMemberExpression(expr) => {
-                                        expr.static_property_info()
-                                    }
+                                    AstKind::ComputedMemberExpression(expr) => expr
+                                        .static_property_info()
+                                        .and_then(|(span, name)| Some((span, name.as_str()?))),
                                     _ => return,
                                 }
                                 && span != ctx.semantic().reference_span(reference)
@@ -175,7 +175,9 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
     };
 
     if let Expression::Identifier(ident) = member_expr.object() {
-        let Some(property_name) = member_expr.static_property_name() else {
+        let Some(property_name) =
+            member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return false;
         };
 

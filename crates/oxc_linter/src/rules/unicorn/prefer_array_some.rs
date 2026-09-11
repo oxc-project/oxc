@@ -233,7 +233,9 @@ impl Rule for PreferArraySome {
                     return;
                 };
 
-                let Some(static_property_name) = left_member_expr.static_property_name() else {
+                let Some(static_property_name) =
+                    left_member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                else {
                     return;
                 };
 

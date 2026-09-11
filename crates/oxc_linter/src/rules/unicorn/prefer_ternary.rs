@@ -320,7 +320,7 @@ fn is_same_assignment_target(
 }
 
 fn member_static_property_name(member: &MemberExpression<'_>) -> Option<String> {
-    if let Some(name) = member.static_property_name() {
+    if let Some(name) = member.static_property_name().and_then(oxc_str::JSStr::as_str) {
         return Some(name.to_string());
     }
 

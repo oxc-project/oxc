@@ -92,7 +92,7 @@ impl Rule for NoCloneElement {
         // import React from 'react';
         // React.cloneElement(...) / React?.cloneElement(...) / React["cloneElement"](...)
         if let Some(member_expr) = call_expr.callee.get_inner_expression().get_member_expr()
-            && let Some(name) = member_expr.static_property_name()
+            && let Some(name) = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
             && name == "cloneElement"
             && let Expression::Identifier(ident) = member_expr.object()
             && is_import_from_module(ident, "react", ctx)

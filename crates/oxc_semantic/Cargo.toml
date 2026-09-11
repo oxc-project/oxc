@@ -37,6 +37,7 @@ oxc_span = { workspace = true }
 oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
+hashbrown = { workspace = true }
 itertools = { workspace = true }
 memchr = { workspace = true }
 rustc-hash = { workspace = true }

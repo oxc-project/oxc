@@ -276,8 +276,10 @@ impl Rule for RulesOfHooks {
         let cfg = ctx.cfg();
 
         let span = call.span;
-        let hook_name =
-            call.callee_name().expect("We identify hooks using their names so it should be named.");
+        let hook_name = call
+            .callee_name()
+            .and_then(oxc_str::JSStr::as_str)
+            .expect("We identify hooks using their names so it should be named.");
 
         let nodes = ctx.nodes();
 
@@ -859,6 +861,7 @@ fn is_effect_or_effect_event_call(
         || is_react_function_call(call, "useEffectEvent")
         || additional_effect_hooks.is_some_and(|regex| {
             call.callee_name()
+                .and_then(oxc_str::JSStr::as_str)
                 .is_some_and(|name| is_react_function_call(call, name) && regex.is_match(name))
         })
 }
@@ -970,7 +973,9 @@ fn get_declaration_identifier<'a>(
 fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes.ancestors(node_id).any(|node| {
         if let AstKind::CallExpression(call) = node.kind() {
-            call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))
+            call.callee_name()
+                .and_then(oxc_str::JSStr::as_str)
+                .is_some_and(|name| matches!(name, "forwardRef" | "memo"))
         } else {
             false
         }

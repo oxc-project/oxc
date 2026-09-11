@@ -196,6 +196,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     if let Some(expr) = callee.as_member_expression() {
         return expr
             .static_property_name()
+            .and_then(oxc_str::JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
@@ -203,6 +204,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
         let expr = chain.expression.as_member_expression()?;
         return expr
             .static_property_name()
+            .and_then(oxc_str::JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 

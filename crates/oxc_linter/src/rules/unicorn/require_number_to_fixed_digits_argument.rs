@@ -63,7 +63,8 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                 return;
             }
 
-            if let Some(property_name) = member.static_property_name()
+            if let Some(property_name) =
+                member.static_property_name().and_then(oxc_str::JSStr::as_str)
                 && property_name == "toFixed"
             {
                 let parenthesis_span = Span::new(member.span().end, expr.span.end);

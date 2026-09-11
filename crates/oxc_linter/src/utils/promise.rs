@@ -14,7 +14,7 @@ pub const PROMISE_STATIC_METHODS: [&str; 8] =
 
 pub fn is_promise(call_expr: &CallExpression) -> Option<String> {
     let member_expr = call_expr.callee.get_member_expr()?;
-    let prop_name = member_expr.static_property_name()?;
+    let prop_name = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)?;
 
     // hello.then(), hello.catch(), hello.finally()
     if matches!(prop_name, "then" | "catch" | "finally") {

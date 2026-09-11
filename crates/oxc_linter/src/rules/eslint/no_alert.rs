@@ -114,7 +114,9 @@ impl Rule for NoAlert {
             return;
         }
 
-        let Some(property_name) = member_expr.static_property_name() else {
+        let Some(property_name) =
+            member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return;
         };
         if is_prohibited_identifier(property_name) {

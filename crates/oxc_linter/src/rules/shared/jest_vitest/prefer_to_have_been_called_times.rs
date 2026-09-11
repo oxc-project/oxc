@@ -93,12 +93,14 @@ fn check_and_fix<'a>(
         });
 
     let is_expect_argument_mock_calls = expect_argument_mem_expr.is_some_and(|mem_expr| {
-        let is_last_member_calls = mem_expr.static_property_name() == Some("calls");
+        let is_last_member_calls =
+            mem_expr.static_property_name().and_then(oxc_str::JSStr::as_str) == Some("calls");
 
         let is_reversed_second_member_mock = match mem_expr.object() {
             expr_inner @ match_member_expression!(Expression) => {
                 let inner_mem_expr = expr_inner.to_member_expression();
-                inner_mem_expr.static_property_name() == Some("mock")
+                inner_mem_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                    == Some("mock")
             }
             _ => false,
         };
@@ -142,9 +144,9 @@ fn build_expect_argument<'a>(
     fixer: RuleFixer<'_, 'a>,
 ) -> &'a str {
     if let Some(mem_expr) = expect_argument_mem_expr
-        && mem_expr.static_property_name().unwrap().eq("calls")
+        && mem_expr.static_property_name().is_some_and(|name| name == "calls")
         && let Some(expr) = mem_expr.object().as_member_expression()
-        && expr.static_property_name() == Some("mock")
+        && expr.static_property_name().and_then(oxc_str::JSStr::as_str) == Some("mock")
     {
         return fixer.source_range(expr.object().span());
     }

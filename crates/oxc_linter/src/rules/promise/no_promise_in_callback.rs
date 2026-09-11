@@ -150,7 +150,11 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
         .iter()
         .any(|arg| matches!(arg.as_expression(), Some(expr) if expr.span() == node.span()));
 
-    is_argument && matches!(call_expr.callee_name(), Some("then" | "catch"))
+    is_argument
+        && matches!(
+            call_expr.callee_name().and_then(oxc_str::JSStr::as_str),
+            Some("then" | "catch")
+        )
 }
 
 #[test]

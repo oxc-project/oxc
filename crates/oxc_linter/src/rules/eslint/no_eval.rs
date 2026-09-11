@@ -142,6 +142,7 @@ impl Rule for NoEval {
                                     AstKind::ComputedMemberExpression(computed_mem_expr) => {
                                         if computed_mem_expr
                                             .static_property_name()
+                                            .and_then(oxc_str::JSStr::as_str)
                                             .is_some_and(|p| p == name)
                                         {
                                             parent = Self::outermost_mem_expr(parent, ctx).unwrap();
@@ -162,6 +163,7 @@ impl Rule for NoEval {
                                 AstKind::ComputedMemberExpression(comp_mem_expr)
                                     if comp_mem_expr
                                         .static_property_name()
+                                        .and_then(oxc_str::JSStr::as_str)
                                         .is_some_and(|name| name == "eval") =>
                                 {
                                     ctx.diagnostic(no_eval_diagnostic(
@@ -180,9 +182,9 @@ impl Rule for NoEval {
                     AstKind::StaticMemberExpression(mem_expr) => {
                         Some(mem_expr.static_property_info())
                     }
-                    AstKind::ComputedMemberExpression(comp_mem_expr) => {
-                        comp_mem_expr.static_property_info()
-                    }
+                    AstKind::ComputedMemberExpression(comp_mem_expr) => comp_mem_expr
+                        .static_property_info()
+                        .and_then(|(span, name)| Some((span, name.as_str()?))),
                     _ => None,
                 };
 

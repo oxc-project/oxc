@@ -160,7 +160,7 @@ fn is_length_member_for<'a>(
         return false;
     }
 
-    if member.static_property_name() != Some("length") {
+    if member.static_property_name().and_then(oxc_str::JSStr::as_str) != Some("length") {
         return false;
     }
 

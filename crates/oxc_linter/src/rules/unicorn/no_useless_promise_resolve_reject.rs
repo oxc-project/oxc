@@ -224,7 +224,9 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     if member_expr.is_computed() {
         return false;
     }
-    let Some(static_prop_name) = member_expr.static_property_name() else {
+    let Some(static_prop_name) =
+        member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+    else {
         return false;
     };
 
@@ -268,7 +270,10 @@ fn is_bind_member_expression(node: &AstNode) -> bool {
     let Some(member_expr) = node.kind().as_member_expression_kind() else {
         return false;
     };
-    member_expr.static_property_name().is_some_and(|name| name == "bind")
+    member_expr
+        .static_property_name()
+        .and_then(oxc_str::JSStr::as_str)
+        .is_some_and(|name| name == "bind")
 }
 
 fn generate_fix<'a>(

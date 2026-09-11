@@ -57,11 +57,14 @@ impl Rule for NoTemplateCurlyInString {
             return;
         };
 
-        let text = literal.value.as_str();
-        let Some(start) = text.find("${") else { return };
-
-        if text[start + 2..].contains('}') {
-            ctx.diagnostic(no_template_curly_in_string_diagnostic(literal.span));
+        let mut chars = literal.value.chars().map(oxc_str::JSChar::to_u32).peekable();
+        while let Some(ch) = chars.next() {
+            if ch == u32::from(b'$') && chars.next_if_eq(&u32::from(b'{')).is_some() {
+                if chars.any(|ch| ch == u32::from(b'}')) {
+                    ctx.diagnostic(no_template_curly_in_string_diagnostic(literal.span));
+                }
+                return;
+            }
         }
     }
 }

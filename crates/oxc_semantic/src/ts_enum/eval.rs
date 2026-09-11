@@ -3,7 +3,7 @@ use oxc_ast::ast::{
     UnaryExpression,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::ToJsString,
@@ -65,22 +65,20 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
         } else {
             match &prev_value {
                 Some(ConstantValue::Number(n)) => Some(ConstantValue::Number(n + 1.0)),
-                None | Some(ConstantValue::String(_)) => None,
+                None | Some(ConstantValue::String(_) | ConstantValue::Utf16String(_)) => None,
             }
         };
 
         if let Some(ref val) = value {
             let member_name = match &member.id {
-                TSEnumMemberName::Identifier(ident) => Some(ident.name.as_str()),
+                TSEnumMemberName::Identifier(ident) => Some(ident.name.into()),
                 TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
-                    Some(lit.value.as_str())
+                    Some(lit.value)
                 }
                 TSEnumMemberName::ComputedTemplateString(_) => None,
             };
-            if let Some(name) = member_name
-                && let Some(symbol_id) = scoping.get_binding(scope_id, name.into())
-            {
-                scoping.set_enum_member_value(symbol_id, val.clone());
+            if let Some(name) = member_name {
+                scoping.set_enum_member_value_by_name(scope_id, name, val.clone());
             }
         }
 
@@ -97,30 +95,69 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
         Expression::BinaryExpression(expr) => eval_binary_expression(expr, ctx),
         Expression::UnaryExpression(expr) => eval_unary_expression(expr, ctx),
         Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
-        Expression::StringLiteral(lit) => {
-            Some(ConstantValue::String(CompactStr::from(lit.value.as_str())))
-        }
+        Expression::StringLiteral(lit) => Some(string_constant(lit.value)),
         Expression::TemplateLiteral(lit) => {
             if let Some(quasi) = lit.single_quasi() {
-                Some(ConstantValue::String(CompactStr::from(quasi.as_str())))
+                Some(string_constant(quasi))
             } else {
                 let mut value = String::new();
+                let mut utf16 = None;
                 for (i, quasi) in lit.quasis.iter().enumerate() {
-                    let cooked_or_raw = quasi.value.cooked.as_ref().unwrap_or(&quasi.value.raw);
-                    value.push_str(cooked_or_raw.as_str());
+                    let cooked = quasi.value.cooked?;
+                    if let Some(cooked) = cooked.as_str() {
+                        append_utf8(&mut value, &mut utf16, cooked);
+                    } else {
+                        append_utf16(&value, &mut utf16, cooked.encode_utf16());
+                    }
                     if i < lit.expressions.len() {
                         match evaluate_expression(&lit.expressions[i], ctx)? {
-                            ConstantValue::String(s) => value.push_str(&s),
-                            ConstantValue::Number(n) => value.push_str(&n.to_js_string()),
+                            ConstantValue::String(s) => append_utf8(&mut value, &mut utf16, &s),
+                            ConstantValue::Number(n) => {
+                                append_utf8(&mut value, &mut utf16, &n.to_js_string());
+                            }
+                            ConstantValue::Utf16String(units) => {
+                                append_utf16(&value, &mut utf16, units.iter().copied());
+                            }
                         }
                     }
                 }
-                Some(ConstantValue::String(CompactStr::from(value.as_str())))
+                Some(match utf16 {
+                    Some(units) => utf16_string_constant(units),
+                    None => ConstantValue::String(CompactStr::from(value.as_str())),
+                })
             }
         }
         Expression::ParenthesizedExpression(expr) => evaluate_expression(&expr.expression, ctx),
         _ => None,
     }
+}
+
+fn string_constant(value: JSStr<'_>) -> ConstantValue {
+    match value.as_str() {
+        Some(value) => ConstantValue::String(CompactStr::from(value)),
+        None => ConstantValue::Utf16String(value.encode_utf16().collect()),
+    }
+}
+
+fn utf16_string_constant(units: Vec<u16>) -> ConstantValue {
+    // Concatenation can pair two previously lone surrogates. Keep well-formed
+    // results in the same representation as ordinary UTF-8 string constants.
+    match String::from_utf16(&units) {
+        Ok(value) => ConstantValue::String(CompactStr::from(value)),
+        Err(_) => ConstantValue::Utf16String(units.into_boxed_slice()),
+    }
+}
+
+fn append_utf8(value: &mut String, utf16: &mut Option<Vec<u16>>, part: &str) {
+    if let Some(units) = utf16 {
+        units.extend(part.encode_utf16());
+    } else {
+        value.push_str(part);
+    }
+}
+
+fn append_utf16(value: &str, utf16: &mut Option<Vec<u16>>, part: impl Iterator<Item = u16>) {
+    utf16.get_or_insert_with(|| value.encode_utf16().collect()).extend(part);
 }
 
 /// Resolve an identifier or member expression to a previously evaluated enum value.
@@ -165,7 +202,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
         Expression::StaticMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(member_expr.property.name.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(member_expr.property.name.into(), obj_symbol_id, ctx.scoping)
         }
         Expression::ComputedMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
@@ -173,7 +210,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 return None;
             };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(prop_lit.value.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(prop_lit.value, obj_symbol_id, ctx.scoping)
         }
         _ => None,
     }
@@ -200,27 +237,46 @@ fn eval_binary_expression(
     let left = evaluate_expression(&expr.left, ctx)?;
     let right = evaluate_expression(&expr.right, ctx)?;
 
+    if matches!(left, ConstantValue::Utf16String(_))
+        || matches!(right, ConstantValue::Utf16String(_))
+    {
+        if expr.operator != BinaryOperator::Addition {
+            return None;
+        }
+        let mut units = Vec::new();
+        for part in [left, right] {
+            match part {
+                ConstantValue::Utf16String(part) => units.extend_from_slice(&part),
+                ConstantValue::String(part) => units.extend(part.encode_utf16()),
+                ConstantValue::Number(part) => units.extend(part.to_js_string().encode_utf16()),
+            }
+        }
+        return Some(utf16_string_constant(units));
+    }
+
     if matches!(expr.operator, BinaryOperator::Addition)
         && (matches!(left, ConstantValue::String(_)) || matches!(right, ConstantValue::String(_)))
     {
         let mut result = match &left {
             ConstantValue::String(s) => s.to_string(),
             ConstantValue::Number(v) => v.to_js_string(),
+            ConstantValue::Utf16String(_) => unreachable!(),
         };
         match &right {
             ConstantValue::String(s) => result.push_str(s),
             ConstantValue::Number(v) => result.push_str(&v.to_js_string()),
+            ConstantValue::Utf16String(_) => unreachable!(),
         }
         return Some(ConstantValue::String(CompactStr::from(result.as_str())));
     }
 
     let left = match left {
         ConstantValue::Number(v) => v,
-        ConstantValue::String(_) => return None,
+        ConstantValue::String(_) | ConstantValue::Utf16String(_) => return None,
     };
     let right = match right {
         ConstantValue::Number(v) => v,
-        ConstantValue::String(_) => return None,
+        ConstantValue::String(_) | ConstantValue::Utf16String(_) => return None,
     };
 
     match expr.operator {
@@ -262,7 +318,7 @@ fn eval_unary_expression(
     // TypeScript would leave these unevaluated (computed members). We align with Babel.
     let value = match value {
         ConstantValue::Number(v) => v,
-        ConstantValue::String(_) => {
+        ConstantValue::String(_) | ConstantValue::Utf16String(_) => {
             return match expr.operator {
                 UnaryOperator::UnaryPlus => Some(value),
                 UnaryOperator::UnaryNegation => Some(ConstantValue::Number(f64::NAN)),
@@ -289,15 +345,13 @@ fn eval_unary_expression(
 /// // The symbol `A` has two body scopes — this searches both.
 /// ```
 fn find_in_enum_body_scopes(
-    member_name: &str,
+    member_name: JSStr<'_>,
     enum_symbol_id: SymbolId,
     scoping: &Scoping,
 ) -> Option<ConstantValue> {
     let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id)?;
     for &body_scope in body_scopes {
-        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name.into())
-            && let Some(value) = scoping.get_enum_member_value(member_symbol_id)
-        {
+        if let Some(value) = scoping.get_enum_member_value_by_name(body_scope, member_name) {
             return Some(value.clone());
         }
     }

@@ -24,7 +24,10 @@ fn no_duplicate_enum_values_diagnostic(
     let second_init_span = second_member.initializer.as_ref().map(GetSpan::span).unwrap();
 
     OxcDiagnostic::warn(format!("Duplicate enum value `{value}`"))
-        .with_help(format!("Give {second_name} a unique value"))
+        .with_help(format!(
+            "Give {} a unique value",
+            second_name.as_str().map_or_else(|| format!("{second_name:?}"), str::to_owned)
+        ))
         .with_labels([
             first_init_span.label(format!("{value} is first used as an initializer here")),
             second_init_span.label("and is re-used here"),
@@ -97,7 +100,7 @@ impl Rule for NoDuplicateEnumValues {
             return;
         };
         let mut seen_number_values: Vec<(f64, Span)> = vec![];
-        let mut seen_string_values: FxHashMap<&str, Span> = FxHashMap::default();
+        let mut seen_string_values: FxHashMap<oxc_str::JSStr, Span> = FxHashMap::default();
         for enum_member in &enum_body.members {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
@@ -117,10 +120,13 @@ impl Rule for NoDuplicateEnumValues {
                     }
                 }
                 Expression::StringLiteral(s) => {
-                    if let Some(old_span) = seen_string_values.insert(s.value.as_str(), s.span) {
+                    if let Some(old_span) = seen_string_values.insert(s.value, s.span) {
                         // Formatting here for prettier messages. This makes it
                         // look like "Duplicate enum value 'A'"
-                        let v = format!("'{}'", s.value);
+                        let v = s
+                            .value
+                            .as_str()
+                            .map_or_else(|| format!("{:?}", s.value), |value| format!("'{value}'"));
                         ctx.diagnostic(no_duplicate_enum_values_diagnostic(
                             old_span,
                             enum_member,

@@ -324,7 +324,7 @@ fn extract_member_expression_path(expr: &Expression) -> String {
 
 /// Check if a call expression is a createContext call
 fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
-    call.callee_name().is_some_and(|name| name == "createContext")
+    call.callee_name().and_then(oxc_str::JSStr::as_str).is_some_and(|name| name == "createContext")
 }
 
 /// Check if a class extends React.Component or React.PureComponent
@@ -336,6 +336,7 @@ fn extends_react_component(class: &oxc_ast::ast::Class) -> bool {
             return ident.name == "React"
                 && member_expr
                     .static_property_name()
+                    .and_then(oxc_str::JSStr::as_str)
                     .is_some_and(|name| name == "Component" || name == "PureComponent");
         }
         if let Some(ident_reference) = super_class.get_identifier_reference() {
@@ -439,7 +440,7 @@ fn is_react_component_node<'a>(
             }
 
             if let Some(Expression::CallExpression(call)) = &decl.init
-                && let Some(callee_name) = call.callee_name()
+                && let Some(callee_name) = call.callee_name().and_then(oxc_str::JSStr::as_str)
             {
                 // Check for HOC patterns
                 if is_hoc_call(callee_name, ctx) {
@@ -448,7 +449,8 @@ fn is_react_component_node<'a>(
                         && let Some(first_arg) = call.arguments.first()
                         && let Some(Expression::CallExpression(inner_call)) =
                             first_arg.as_expression()
-                        && let Some(inner_callee_name) = inner_call.callee_name()
+                        && let Some(inner_callee_name) =
+                            inner_call.callee_name().and_then(oxc_str::JSStr::as_str)
                         && is_hoc_call(inner_callee_name, ctx)
                         && version_cache.get_memo_forwardref_compatible(ctx)
                     {
@@ -591,7 +593,8 @@ fn is_react_component_node<'a>(
 
                             // Check if it returns createReactClass
                             if let Expression::CallExpression(call) = expr
-                                && let Some(callee_name) = call.callee_name()
+                                && let Some(callee_name) =
+                                    call.callee_name().and_then(oxc_str::JSStr::as_str)
                                 && (callee_name == "createClass"
                                     || callee_name == "createReactClass")
                             {
@@ -740,7 +743,7 @@ fn is_module_exports_component(
                 });
             }
             Expression::CallExpression(call) => {
-                if let Some(callee_name) = call.callee_name() {
+                if let Some(callee_name) = call.callee_name().and_then(oxc_str::JSStr::as_str) {
                     if callee_name == "createClass" || callee_name == "createReactClass" {
                         if !has_create_react_class_display_name(call, ignore_transpiler_name) {
                             return Some(ReactComponentInfo {

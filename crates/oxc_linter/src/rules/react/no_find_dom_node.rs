@@ -71,7 +71,10 @@ impl Rule for NoFindDomNode {
         {
             return;
         }
-        let Some((span, "findDOMNode")) = member_expr.static_property_info() else {
+        let Some((span, "findDOMNode")) = member_expr
+            .static_property_info()
+            .and_then(|(span, name)| Some((span, name.as_str()?)))
+        else {
             return;
         };
         ctx.diagnostic(no_find_dom_node_diagnostic(span));

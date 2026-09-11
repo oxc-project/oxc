@@ -67,7 +67,9 @@ fn check_unicorn_prefer_spread<'a>(
         return;
     };
 
-    let Some(static_property_name) = member_expr.static_property_name() else {
+    let Some(static_property_name) =
+        member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+    else {
         return;
     };
 
@@ -246,7 +248,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
 
     if let Expression::CallExpression(call_expr) = expr {
         if let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() {
-            if Some("join") == member_expr.static_property_name() && call_expr.arguments.len() < 2 {
+            if Some("join") == member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                && call_expr.arguments.len() < 2
+            {
                 return true;
             }
             return false;
@@ -270,7 +274,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
             ident.name.as_str()
         }
         expr @ match_member_expression!(Expression) => {
-            if let Some(v) = expr.to_member_expression().static_property_name() {
+            if let Some(v) =
+                expr.to_member_expression().static_property_name().and_then(oxc_str::JSStr::as_str)
+            {
                 v
             } else {
                 return false;
