@@ -52,7 +52,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
-            self.bump(Kind::Comma);
+            if !self.at(Kind::RParen) {
+                self.expect(Kind::Comma);
+            }
             Some(param)
         } else {
             None

@@ -245,21 +245,14 @@ impl<'a> PeepholeOptimizations {
         let new_value = if let Expression::Identifier(ident) = &unary_expr.argument
             && ctx.is_global_reference(ident)
         {
-            let left = e.left.take_in(ctx);
-            let right = Expression::new_string_literal(e.right.span(), "u", None, ctx);
-            Expression::new_binary_expression(e.span, left, new_comp_op, right, ctx)
+            e.operator = new_comp_op;
+            Expression::new_string_literal(e.right.span(), "u", None, ctx)
         } else {
-            let span = e.span;
-            let Expression::UnaryExpression(unary_expr) = &mut e.left else { return };
-            Expression::new_binary_expression(
-                span,
-                unary_expr.take_in(ctx).argument,
-                new_eq_op,
-                Expression::new_void_0(e.right.span(), ctx),
-                ctx,
-            )
+            e.operator = new_eq_op;
+            ctx.replace_expression_with(&mut e.left, Self::unwrap_unary);
+            Expression::new_void_0(e.right.span(), ctx)
         };
-        ctx.replace_expression(expr, new_value);
+        ctx.replace_expression(&mut e.right, new_value);
     }
 
     /// Remove unary `+` if `ToNumber` conversion is done by the parent expression
@@ -435,10 +428,8 @@ impl<'a> PeepholeOptimizations {
                 && !right.left.may_have_side_effects(ctx)
                 && !right.right.may_have_side_effects(ctx)
             {
-                let left = e.left.take_in(ctx);
-                let right = e.right.take_in(ctx);
-                e.right = left;
-                e.left = right;
+                let binary_expr = e.as_mut();
+                std::mem::swap(&mut binary_expr.left, &mut binary_expr.right);
                 ctx.notice_change();
             }
         }
@@ -1206,14 +1197,14 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let Some(name) = Self::get_fold_constructor_name(callee, ctx) else { return };
-        let (span, callee, args, is_new_expr) = match expr {
+        let (span, args, is_new_expr) = match expr {
             Expression::NewExpression(e) => {
-                let NewExpression { span, callee, arguments, .. } = e.as_mut();
-                (span, callee, arguments, true)
+                let NewExpression { span, arguments, .. } = e.as_mut();
+                (span, arguments, true)
             }
             Expression::CallExpression(e) => {
-                let CallExpression { span, callee, arguments, .. } = e.as_mut();
-                (span, callee, arguments, false)
+                let CallExpression { span, arguments, .. } = e.as_mut();
+                (span, arguments, false)
             }
             _ => return,
         };
@@ -1257,12 +1248,10 @@ impl<'a> PeepholeOptimizations {
                             }
                         }
                         if is_new_expr {
-                            let callee = callee.take_in(ctx);
-                            let args = args.take_in(ctx);
-                            let new_value = Expression::new_call_expression(
-                                *span, callee, None, args, false, ctx,
+                            ctx.replace_expression_with(
+                                expr,
+                                Self::transform_new_expr_to_call_expr,
                             );
-                            ctx.replace_expression(expr, new_value);
                         }
                     }
                     // `new Array(literal)` -> `[literal]`
@@ -1276,11 +1265,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     // `new Array(x)` -> `Array(x)`
                     else if is_new_expr {
-                        let callee = callee.take_in(ctx);
-                        let args = args.take_in(ctx);
-                        let new_value =
-                            Expression::new_call_expression(*span, callee, None, args, false, ctx);
-                        ctx.replace_expression(expr, new_value);
+                        ctx.replace_expression_with(expr, Self::transform_new_expr_to_call_expr);
                     }
                 } else {
                     // `Array` has special length-constructor behavior only when it receives
@@ -1350,16 +1335,7 @@ impl<'a> PeepholeOptimizations {
             _ if Self::is_native_error_name(name) => true,
             _ => unreachable!(),
         } {
-            let new_value = Expression::new_call_expression_with_pure(
-                e.span,
-                e.callee.take_in(ctx),
-                None,
-                e.arguments.take_in(ctx),
-                false,
-                e.pure,
-                ctx,
-            );
-            ctx.replace_expression(expr, new_value);
+            ctx.replace_expression_with(expr, Self::transform_new_expr_to_call_expr);
         }
     }
 
@@ -1983,12 +1959,7 @@ impl<'a> PeepholeOptimizations {
                     {
                         Expression::new_sequence_expression(
                             expr_stmt.span,
-                            {
-                                let mut sequence = ArenaVec::new_in(ctx);
-                                sequence.push(taken);
-                                sequence.push(Expression::new_void_0(call_expr.span, ctx));
-                                sequence
-                            },
+                            [taken, Expression::new_void_0(call_expr.span, ctx)],
                             ctx,
                         )
                     } else {
@@ -2084,6 +2055,23 @@ impl<'a> PeepholeOptimizations {
             }
         }
         Some(taken)
+    }
+
+    fn transform_new_expr_to_call_expr(
+        expr: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let Expression::NewExpression(new_expr) = expr else { unreachable!() };
+        let e = new_expr.unbox();
+        Expression::new_call_expression_with_pure(
+            e.span,
+            e.callee,
+            None,
+            e.arguments,
+            false,
+            e.pure,
+            ctx,
+        )
     }
 }
 

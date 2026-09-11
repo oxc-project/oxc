@@ -391,6 +391,23 @@ pub struct CodegenOptions {
     /// @default true
     pub remove_whitespace: Option<bool>,
 
+    /// Escape non-ASCII characters in string literals, untagged template literals, regular
+    /// expression literals and identifier names.
+    ///
+    /// Uses `\uXXXX` for characters up to U+FFFF and `\u{...}` for higher code points.
+    /// Regular expressions use escaped UTF-16 surrogate pairs for higher code points instead;
+    /// escaping changes the observable `RegExp.prototype.source` value.
+    ///
+    /// Code point escapes (`\u{...}`) require ES2015 or later; this option does not provide
+    /// ES5-compatible output.
+    ///
+    /// Non-ASCII characters are left unescaped in tagged template quasis (whose raw text is
+    /// observable), JSX names and text, JSX attribute strings, hashbangs and preserved comments.
+    /// JavaScript expressions inside tagged templates and JSX are escaped normally.
+    ///
+    /// @default false
+    pub ascii_only: Option<bool>,
+
     /// How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
     ///
     /// * `"none"` - Do not preserve any legal comments.
@@ -406,7 +423,7 @@ pub struct CodegenOptions {
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true), legal_comments: None }
+        Self { remove_whitespace: Some(true), ascii_only: None, legal_comments: None }
     }
 }
 
@@ -423,6 +440,7 @@ impl CodegenOptions {
             // Need to remove all comments.
             oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
         };
+        opts.ascii_only = self.ascii_only.unwrap_or(false);
 
         if let Some(legal) = &self.legal_comments {
             opts.comments.legal = match legal {

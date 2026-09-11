@@ -129,7 +129,6 @@ struct TrackedSymbol {
     symbol_id: SymbolId,
     scope_id: ScopeId,
     is_used: bool,
-    is_exported: bool,
     has_captured_read: bool,
 }
 
@@ -174,13 +173,16 @@ impl Rule for NoUselessAssignment {
                 continue;
             }
 
+            if Self::is_exported(ctx, symbol_id, decl_node) {
+                continue;
+            }
+
             #[expect(clippy::cast_possible_truncation)]
             let compact_idx = tracked_symbols.len() as u32;
             tracked_symbols.push(TrackedSymbol {
                 symbol_id,
                 scope_id: ctx.scoping().symbol_scope_id(symbol_id),
                 is_used: false,
-                is_exported: Self::is_exported(ctx, symbol_id, decl_node),
                 has_captured_read: false,
             });
 
@@ -450,7 +452,7 @@ impl Rule for NoUselessAssignment {
                         let compact_idx = op.compact_idx as usize;
                         let tracked_symbol = &tracked_symbols[compact_idx];
 
-                        if !tracked_symbol.is_used && !tracked_symbol.is_exported {
+                        if !tracked_symbol.is_used {
                             continue;
                         }
 
@@ -458,7 +460,6 @@ impl Rule for NoUselessAssignment {
                             Operation::Write => {
                                 if !scratch_live.has_bit(compact_idx)
                                     && !scratch_catch.has_bit(compact_idx)
-                                    && !tracked_symbol.is_exported
                                     && !tracked_symbol.has_captured_read
                                     && !*is_in_try_block.get_or_insert_with(|| {
                                         Self::is_in_try_block(graph, block_node_id)
@@ -1503,6 +1504,21 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                     console.log(x, y);",
         "let x = 'used';
                     [x] = condition ? x : x;",
+        // Keep local references within exported declarations and assignments.
+        "let local = 1;
+                    export let exported = local;
+                    local = 2;
+                    use(local);",
+        "let local = 0;
+                    export let published = { read: () => local };
+                    local = 1;",
+        "export let published;
+                    let local = 0;
+                    while (condition) {
+                        published = local;
+                        published = (local = 1);
+                        continue;
+                    }",
     ];
 
     let fail = vec![
@@ -1841,6 +1857,12 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                     [y] = (x = 1, [0]);
                     x = 2;
                     console.log(x);",
+        "let local = 0;
+                    export let published = local;
+                    published = (local = 1);",
+        "let local = 0;
+                    export let exported = (local = 1);
+                    use(local);",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)

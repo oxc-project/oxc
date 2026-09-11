@@ -70,3 +70,10 @@ pn = "pn"
 oce = "oce"
 ome = "ome"
 froms = "froms"
+
+[type.ascii-only-tests]
+extend-glob = ["ascii_only.rs"]
+
+[type.ascii-only-tests.extend-words]
+# Prefix of café in escaped Unicode test fixtures.
+caf = "caf"

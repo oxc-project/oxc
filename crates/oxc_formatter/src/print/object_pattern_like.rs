@@ -39,6 +39,8 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
+    /// A parameter pattern never groups: `FormalParameter` groups the pattern with its type annotation (as Prettier's `printObject` does),
+    /// so a source-broken type literal must break the pattern too (`{ log, logger }: {\n ... }`); a group here would cut that.
     fn is_inline(&self, _f: &JsFormatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => match node.parent() {

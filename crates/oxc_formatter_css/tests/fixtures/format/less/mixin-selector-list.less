@@ -1,0 +1,45 @@
+// Prettier reads the prelude as a selector list: whitespace runs become one space, parens keep their
+// layout, a comment keeps it verbatim; guard alternatives stay inline (DIVERGENCES.md "less-guard-list-inline")
+.mixiny
+(@a: 0, @b: 0) {
+  a: @a;
+}
+.m(2)  when (default()) {
+  a: b;
+}
+.m(@x) when (default()), not(default()) {
+  a: b;
+}
+.bool () when not (false) and (false),
+  not (false) {
+  a: b;
+}
+.bool () when (false) and (true),  (true) {
+  a: b;
+}
+.multiple when (@b = 1), (@c = 2), (@d = 3) {
+  a: b;
+}
+.attr[data-x="a,b"]   when (@x) {
+  a: b;
+}
+.spaced(@a,   @b)   when   (@a > 0) {
+  a: b;
+}
+.commented(@a, /* keep */ @b)   when (@a) {
+  a: b;
+}
+// `when(` glued to its condition stays glued
+.glued() when(@a > 0) {
+  a: b;
+}
+// over the width: the guard breaks before `when` and after `,`, never inside `when <cond>`
+.popover-customize-bg(@containerClass, @background: @popover-background, @prefix: @ant-prefix) when (@theme = dark) {
+  a: b;
+}
+.short-mixin(@a) when (@aaaaaaaaaaaaaaaaaaaaaaa > 0), (@bbbbbbbbbbbbbbbbbbbbbbbbbb < 100), (@cccccccccc = 1) {
+  a: b;
+}
+.some-very-long-selector-name .another-long-selector-name .third-one when (@theme = dark) {
+  a: b;
+}

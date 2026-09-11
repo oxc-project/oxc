@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::{
     Buffer, Format,
-    formatter::prelude::*,
+    formatter::{prelude::*, trivia::FormatTrailingComments},
     utils::typecast::{format_leading_comments_and_open_paren, write_suppressed_cast_target},
     write,
 };
@@ -36,6 +36,25 @@ pub fn write_suppressed_expression(
     }
 }
 
+/// Prints a suppressed node whose terminator the formatter owns: the source text up to `content_end`,
+/// then the same-line comments before a later-line source `;` (they stay on the content's line),
+/// and returns `true` so the caller prints its terminator per `semi`.
+/// Without a content end (no terminator of its own) the whole span prints and nothing follows.
+pub fn write_suppressed_content(
+    span: Span,
+    content_end: Option<u32>,
+    f: &mut JsFormatter<'_, '_>,
+) -> bool {
+    let Some(content_end) = content_end else {
+        FormatSuppressedNode(span).fmt(f);
+        return false;
+    };
+    FormatSuppressedNode(Span::new(span.start, content_end)).fmt(f);
+    let comments = f.context().comments().end_of_line_comments_after(content_end);
+    FormatTrailingComments::Comments(comments).fmt(f);
+    true
+}
+
 pub struct FormatSuppressedNode(pub Span);
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatSuppressedNode {
@@ -47,11 +66,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatSuppressedNode {
         write!(f, [text(arena_cow_str(&normalized, f))]);
 
         // The suppressed node contains comments that should be marked as printed.
-        mark_comments_as_printed_before(self.0.end, f);
+        f.context_mut().comments_mut().skip_comments_before(self.0.end);
     }
-}
-
-fn mark_comments_as_printed_before(end: u32, f: &mut JsFormatter<'_, '_>) {
-    let count = f.comments().unprinted_comments().iter().take_while(|c| c.span.end <= end).count();
-    f.context_mut().comments_mut().increase_printed_count_by(count);
 }

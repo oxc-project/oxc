@@ -712,6 +712,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.fatal_error(error);
         }
 
+        // `async` is valid on methods, but not fields.
+        self.verify_modifiers(
+            modifiers,
+            ModifierKinds::all_except([ModifierKind::Async]),
+            false,
+            diagnostics::modifier_cannot_be_used_here,
+        );
+
         let r#abstract = modifiers.contains(ModifierKind::Abstract);
         let r#type = if r#abstract {
             PropertyDefinitionType::TSAbstractPropertyDefinition
@@ -886,10 +894,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // class Foo { constructor(this: number) {} }
             self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
-        if method.value.body.is_some()
-            && let Some(return_type) = &method.value.return_type
-        {
-            self.error(diagnostics::constructor_return_type(return_type.span));
+        if let Some(return_type) = &method.value.return_type {
+            self.error(diagnostics::constructor_return_type(return_type.type_annotation.span()));
         }
     }
 }

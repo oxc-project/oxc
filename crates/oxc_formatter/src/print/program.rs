@@ -9,9 +9,9 @@ use crate::{
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
-    print::semicolon::OptionalSemicolon,
+    print::semicolon::{OptionalSemicolon, suppressed_statement_content_end},
     utils::{
-        export_declaration_span, export_default_declaration_span, is_dropped_statement,
+        is_dropped_statement, statement_span,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
     },
     write,
@@ -79,16 +79,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
                 }
             }
 
-            let span = match stmt.as_ref() {
-                // `@decorator export class A {}`: Start the span at the decorator
-                Statement::ExportDeclaration(export) => export_declaration_span(export),
-                Statement::ExportDefaultDeclaration(export) => {
-                    export_default_declaration_span(export)
-                }
-                _ => stmt.span(),
-            };
-
-            join.entry(span, stmt);
+            join.entry(statement_span(stmt.as_ref()), stmt);
         }
     }
 }
@@ -150,9 +141,8 @@ fn format_import_decls_with_sort<'a, 'iter>(
 /// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
 /// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
 fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
-    let span = stmt.span();
-    let comments = f.comments();
-    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
+    f.comments()
+        .is_node_suppressed(stmt.span(), || suppressed_statement_content_end(stmt.as_ref(), f))
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {

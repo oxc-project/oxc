@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Backtick JavaScript evaluation prints verbatim (see DIVERGENCES.md "less-javascript-verbatim")
+.a {
+  js: `"hello world"`;
+  ternary: `(1 + 1 == 2 ? true : false)`;
+  multiline: `(function(){var x = 1 + 1;
+           return x})()`;
+  ary: `@{ary}.join(', ')`;
+  escaped: ~`2 + 5 + 'px'`;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Backtick JavaScript evaluation prints verbatim (see DIVERGENCES.md "less-javascript-verbatim")
+.a {
+  js: `"hello world"`;
+  ternary: `(1 + 1 == 2 ? true : false)`;
+  multiline: `(function(){var x = 1 + 1;
+           return x})()`;
+  ary: `@{ary}.join(', ')`;
+  escaped: ~`2 + 5 + 'px'`;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Backtick JavaScript evaluation prints verbatim (see DIVERGENCES.md "less-javascript-verbatim")
+.a {
+  js: `"hello world"`;
+  ternary: `(1 + 1 == 2 ? true : false)`;
+  multiline: `(function(){var x = 1 + 1;
+           return x})()`;
+  ary: `@{ary}.join(', ')`;
+  escaped: ~`2 + 5 + 'px'`;
+}
+
+===================== End =====================

@@ -154,6 +154,19 @@ What the formatter relies on per shape:
   A new one is admitted when its scope is bounded and it improves how structured output is laid out;
   never to match a fixture, and never to reproduce Prettier's string handling
 
+### Case
+
+Lowercased: what the spec makes ASCII case-insensitive AND that can only be a keyword in its position.
+e.g. at-rule names, property names (a `@supports` declaration's included), media feature names, media types,
+`only` / `and` / `not` / `or`.
+Everything else prints as written:
+values (a value may be a case-sensitive custom ident: `animation-name`, `grid-area`; keyword values are a linter's `value-keyword-case`),
+case-sensitive names (`layer(FOO)`), identifiers carrying a variable or interpolation marker (`@PHONE`, `#{$Q}`),
+and syntax whose meaning comes from a tool's string match rather than the spec (`/DEEP/`: vue-loader and Angular match `/deep/` literally).
+
+A normalization that could change what a consumer reads is never applied, even from broken to working
+(`and(max-width: 1px)` stays glued).
+
 ### Absorbing dialect tokens
 
 Plugin dialects (`xstyled` dotted tokens, Tailwind `theme()` paths, postcss plugin at-rules, ...) are absorbed at the highest rung that covers them, cheapest first:
@@ -194,7 +207,13 @@ At the current version (v3.9.6), these divergences have been confirmed and are i
   `css/postcss-8-improment/test.css` (custom-property-raw-verbatim), `css/parens/empty-lines.css` (postcss-simple-var-raw-verbatim)
 - SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/trailing-comma/comments.scss`, `scss/trailing-comma/list.scss`, `scss/trailing-comma/variable.scss`, `scss/function/arbitrary-arguments-comment.scss`, `scss/map/15193.scss`, `scss/comments/variable-declaration.scss` (terminator-gap-normalized), `scss/variables/postcss-8-improment.scss` (custom-property-raw-verbatim),
   `scss/comments/4594.scss`, `scss/comments/lists.scss`, `scss/comments/maps.scss`, `scss/trailing-comma/issue-6920.scss` and one more hunk of `scss/trailing-comma/comments.scss` (line-comment-after-comma)
-- Less: `less/comments/value-lists.less` (line-comment-after-comma), `less/postcss-8-improment/test.less` (custom-property-raw-verbatim)
+- Less: `less/comments/value-lists.less` (line-comment-after-comma), `less/postcss-8-improment/test.less` (custom-property-raw-verbatim),
+  and in `less/less-test-suite`: `globalVars/extended.less`, `color-functions/rgba.less`, `extend-selector/extend-selector.less` (trailing-line-comment-print-width),
+  `extend-chaining/extend-chaining.less` (less-extend-statement-break), `javascript/javascript.less` (less-javascript-verbatim),
+  `variables/variables.less`, `strings/strings.less` (less-escaped-string-gap),
+  `namespacing/namespacing-functions.less`, `namespacing/namespacing-media.less`, `namespace-targeted/namespace-targeted.less` (less-lookup-glue),
+  `mixins-guards/mixins-guards.less`, `mixins-guards-default-func/mixins-guards-default-func.less` (less-guard-list-inline),
+  `comments/comments2.less` (less-variable-value-comments, line-comment-continuation-indent), `property-name-interp/property-name-interp.less` (less-variable-value-comments)
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
 

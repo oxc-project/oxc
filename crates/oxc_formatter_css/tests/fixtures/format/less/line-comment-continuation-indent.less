@@ -1,0 +1,13 @@
+// A continuation line inside a parenthesized operation sits one level under the operation,
+// whether the width or a `//` comment broke the line (see DIVERGENCES.md "line-comment-continuation-indent")
+@a1: (@column-width * // c
+  @columns) + 1;
+@a2: (@column-width * @a-very-long-variable-name-that-forces-the-line-to-wrap-somewhere-ok) + 1;
+@b1: @column-width * // c
+  @columns;
+@f1: ((@column-width * // c
+  @columns) / 2);
+.d {
+  width: (@column-width * // c
+    @columns);
+}

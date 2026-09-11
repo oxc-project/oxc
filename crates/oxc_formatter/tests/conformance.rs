@@ -125,6 +125,7 @@ fn skip_unsupported_options(spec: &OptionSet) -> bool {
 const JS: ConformanceConfig = ConformanceConfig {
     language: "js",
     fixture_roots: &["js", "jsx"],
+    // `None` also leaves `jsx/jsx-test-suite` snippets unexercised, on purpose for now
     exact_parser: None,
     ignore: IGNORE,
     skip_spec: Some(skip_unsupported_options),

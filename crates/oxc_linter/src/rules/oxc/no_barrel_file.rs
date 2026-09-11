@@ -100,8 +100,7 @@ impl Rule for NoBarrelFile {
                     }
                 }
                 None
-            })
-            .collect::<Vec<_>>();
+            });
 
         let mut labels = vec![];
         let mut total: u32 = 0;

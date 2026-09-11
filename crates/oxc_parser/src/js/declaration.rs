@@ -189,6 +189,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let is_await = self.eat(Kind::Await);
         let kind = if is_await {
+            if !self.ctx.has_await() {
+                let error = diagnostics::await_expression(Span::sized(start, 5));
+                if self.ctx.has_top_level() {
+                    // Top-level `await using` is module syntax in unambiguous mode.
+                    self.module_record_builder.set_module_syntax();
+                    self.error_on_script(error);
+                } else {
+                    self.error(error);
+                }
+            }
             VariableDeclarationKind::AwaitUsing
         } else {
             VariableDeclarationKind::Using

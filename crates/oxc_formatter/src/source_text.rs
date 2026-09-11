@@ -39,6 +39,8 @@ pub trait SourceTextExt {
     /// Encodes JS/TS leading-trivia rules:
     /// it skips an ASI semicolon (`;(function(){});`)
     /// and discounts newlines inside non-preserved parens (`(`…`)`).
+    /// That `;` is the ASI guard the next statement's own format emitted, sitting immediately before it;
+    /// a different token from the already-printed terminators [`Self::lines_after_skipping_terminators`] skips.
     ///
     /// `first_unprinted_comment` is the span of the first not-yet-printed comment, or `None`.
     /// When that comment ends before `span.start`, its leading trivia is included in the count.

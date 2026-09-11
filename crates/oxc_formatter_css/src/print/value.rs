@@ -39,7 +39,7 @@ use crate::{
     CssFormatOptions,
     comments::{self, BlockCommentAfter, FormatCommentBeforeContent, FormatLineCommentSuffix},
     format::to_span,
-    print::{CssFormatter, format_with, less, scss, statement},
+    print::{CssFormatter, format_with, is_glued, less, scss, statement},
 };
 
 /// Prettier's `printNumber` + `printCssNumber` (trailing `.0` removal included).
@@ -152,6 +152,10 @@ pub(super) fn adjust_numbers_and_strings<'a>(
     options: &CssFormatOptions,
 ) -> Cow<'a, str> {
     let bytes = raw.as_bytes();
+    // Only strings and numbers ever change: most params / guards have neither
+    if !bytes.iter().any(|b| matches!(b, b'"' | b'\'') || b.is_ascii_digit()) {
+        return Cow::Borrowed(raw);
+    }
     let mut out = String::with_capacity(raw.len());
     let mut changed = false;
     let mut i = 0usize;
@@ -1653,6 +1657,11 @@ pub(super) fn write_component_value<'a>(
         }
         ComponentValue::Function(func) => write_function(func, ctx, f),
         ComponentValue::Calc(calc) => write_calc(calc, ctx, f),
+        ComponentValue::CalcParenthesized(paren) => {
+            write!(f, "(");
+            write_component_value(&paren.expr, ctx, f);
+            write!(f, ")");
+        }
         ComponentValue::SassMap(map) => scss::write_sass_map(map, ctx, f),
         ComponentValue::SassList(list) => scss::write_sass_list(list, ctx, f),
         ComponentValue::SassParenthesizedExpression(paren) => {
@@ -2000,16 +2009,13 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
     // A parenthesized sub-expression stays a single chunk.
     // Source-glued runs (`1px+2px`) stay glued.
     enum Piece<'b, 'a> {
-        /// The bool: print the operand's own source parens around it
-        /// (computed once at flatten time, `calc_operand_has_own_parens` scans the source).
-        Operand(&'b ComponentValue<'a>, bool),
+        Operand(&'b ComponentValue<'a>),
         Op(&'static str),
         Space,
     }
 
     fn flatten<'b, 'a>(
         calc: &'b Calc<'a>,
-        f: &CssFormatter<'_, 'a>,
         chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
         current: &mut Vec<Piece<'b, 'a>>,
     ) {
@@ -2025,7 +2031,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
         let op_span = to_span(&calc.op.span);
         let right_start = to_span(calc.right.span()).start;
 
-        push_operand(&calc.left, f, chunks, current);
+        push_operand(&calc.left, chunks, current);
         if left_end != op_span.start {
             current.push(Piece::Space);
         }
@@ -2033,28 +2039,25 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
         if op_span.end != right_start {
             chunks.push(std::mem::take(current));
         }
-        push_operand(&calc.right, f, chunks, current);
+        push_operand(&calc.right, chunks, current);
     }
 
+    // A parenthesized sub-expression (`CalcParenthesized`) is one operand: its parens come from the AST
     fn push_operand<'b, 'a>(
         operand: &'b ComponentValue<'a>,
-        f: &CssFormatter<'_, 'a>,
         chunks: &mut Vec<Vec<Piece<'b, 'a>>>,
         current: &mut Vec<Piece<'b, 'a>>,
     ) {
-        let wrapped = calc_operand_has_own_parens(operand, f);
-        if let ComponentValue::Calc(inner) = operand
-            && !wrapped
-        {
-            flatten(inner, f, chunks, current);
+        if let ComponentValue::Calc(inner) = operand {
+            flatten(inner, chunks, current);
         } else {
-            current.push(Piece::Operand(operand, wrapped));
+            current.push(Piece::Operand(operand));
         }
     }
 
     let mut chunks: Vec<Vec<Piece<'_, 'a>>> = vec![];
     let mut current: Vec<Piece<'_, 'a>> = vec![];
-    flatten(calc, f, &mut chunks, &mut current);
+    flatten(calc, &mut chunks, &mut current);
     if !current.is_empty() {
         chunks.push(current);
     }
@@ -2062,15 +2065,7 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
     let write_chunk = |chunk: &[Piece<'_, 'a>], f: &mut CssFormatter<'_, 'a>| {
         for piece in chunk {
             match piece {
-                Piece::Operand(operand, wrapped) => {
-                    if *wrapped {
-                        write!(f, "(");
-                    }
-                    write_component_value(operand, ctx, f);
-                    if *wrapped {
-                        write!(f, ")");
-                    }
-                }
+                Piece::Operand(operand) => write_component_value(operand, ctx, f),
                 Piece::Op(op) => write!(f, token(op)),
                 Piece::Space => write!(f, " "),
             }
@@ -2108,16 +2103,18 @@ fn write_calc<'a>(calc: &Calc<'a>, ctx: ValueContext<'a>, f: &mut CssFormatter<'
 /// Nested unparenthesized operations flatten into the SAME fill;
 /// a parenthesized sub-expression is its own nested group (it can break inside its parens).
 ///
-/// Operator spacing follows the source, with one exception:
-/// a `+`/`-` glued to a preceding CALL prints spaced
-/// (`fade(@c, 4%)-1` → `fade(@c, 4%) - 1`, a folded sign the parser split off; Prettier spaces the `+` there too).
-/// Every other glue is kept, matching Prettier's Less word lexing:
-/// `10px+20px`, `@a+1`, `(@a)+1`, `@base*2` all stay glued
-/// (unlike SCSS, where `write_sass_binary` also spaces word-like neighbors and `*`).
+/// Operator spacing mirrors Prettier's Less word lexing (postcss-values-parser) plus its math-operator rules:
+/// - `+`/`-` keep the source glue (`10px+20px`, `@a+1`: a glued sign folds into the next word),
+///   except after a CALL (`fade(@c, 4%)-1` → `fade(@c, 4%) - 1`, a sign the parser split off)
+/// - `*` is always spaced (`2em*1em` → `2em * 1em`), unless an `@word` on its left swallowed it
+///   (an atword only ends at whitespace / `(` / `)` / `,` / `/` / quotes: `@base*2` stays glued)
+/// - `/` is spaced next to a word-like operand (`@w/2` → `@w / 2`), number-only division
+///   keeps the source glue (`10px/8px`); so does `./`
+///
+/// Only a parsed operation gets here: outside parens a `/` after a plain number (`font: 12px/1.5`)
+/// is a value delimiter for `oxc-css-parser`, printed with its source glue.
+///
 /// Signed values never reach here: `-@b` in a `margin` shorthand stays a separate `LessNegativeValue`, not an operand.
-/// KNOWN GAP (pre-existing): Prettier's division word-neighbor rule
-/// (`@w/2` → `@w / 2`, `2/@w` → `2 / @w`, call left spaced; `10px/8px` glued)
-/// is not ported; ours keeps the source glue for all of them.
 fn write_less_binary_operation<'a>(
     op: &LessBinaryOperation<'a>,
     ctx: ValueContext<'a>,
@@ -2138,30 +2135,67 @@ fn write_less_binary_operation<'a>(
         let op_str: &'static str = match op.op.kind {
             LessOperationOperatorKind::Multiply => "*",
             LessOperationOperatorKind::Division => "/",
+            LessOperationOperatorKind::DotDivision => "./",
             LessOperationOperatorKind::Plus => "+",
             LessOperationOperatorKind::Minus => "-",
         };
-        let left_end = to_span(op.left.span()).end;
-        let op_span = to_span(&op.op.span);
-        let right_start = to_span(op.right.span()).start;
 
         push_operand(&op.left, chunks, current);
-        // The call-left exception (see the doc comment);
-        // the left neighbor in the flattened stream is the piece `push_operand` just pushed last.
-        let after_call = matches!(
-            op.op.kind,
-            LessOperationOperatorKind::Plus | LessOperationOperatorKind::Minus
-        ) && matches!(current.last(), Some(Piece::Operand(v)) if is_func_like(v));
-        if left_end != op_span.start || after_call {
+        // The left neighbor in the flattened stream is the piece `push_operand` just pushed last
+        let left_operand = match current.last() {
+            Some(Piece::Operand(v)) => Some(*v),
+            _ => None,
+        };
+        let source_before = !is_glued(op.left.span(), &op.op.span);
+        let source_after = !is_glued(&op.op.span, op.right.span());
+        // Spaces on both sides regardless of the source (see the doc comment), else the source glue
+        let forced = match op.op.kind {
+            LessOperationOperatorKind::Multiply => {
+                source_before || !left_operand.is_some_and(is_less_atword)
+            }
+            LessOperationOperatorKind::Division => {
+                left_operand.is_some_and(is_word_like_division_operand)
+                    || is_word_like_division_operand(leftmost_operand(&op.right))
+            }
+            LessOperationOperatorKind::DotDivision => false,
+            LessOperationOperatorKind::Plus | LessOperationOperatorKind::Minus => {
+                left_operand.is_some_and(is_func_like)
+            }
+        };
+        let (space_before, space_after) = (forced || source_before, forced || source_after);
+        if space_before {
             current.push(Piece::Space);
         }
         current.push(Piece::Op(op_str));
-        // Break opportunity when the source has a gap after the operator
-        // (or the call-left exception applies)
-        if op_span.end != right_start || after_call {
+        // Break opportunity where a space follows the operator
+        if space_after {
             chunks.push(std::mem::take(current));
         }
         push_operand(&op.right, chunks, current);
+    }
+
+    /// The operand on the far left of a (possibly nested) operation: the `/`'s right neighbor
+    fn leftmost_operand<'b, 'a>(operand: &'b ComponentValue<'a>) -> &'b ComponentValue<'a> {
+        match operand {
+            ComponentValue::LessBinaryOperation(inner) => leftmost_operand(&inner.left),
+            other => other,
+        }
+    }
+
+    /// postcss-values-parser's `atword`: `@var`, `@@var`, `$prop` and lookups (`@config[key]`)
+    fn is_less_atword(value: &ComponentValue<'_>) -> bool {
+        matches!(
+            value,
+            ComponentValue::LessVariable(_)
+                | ComponentValue::LessVariableVariable(_)
+                | ComponentValue::LessPropertyVariable(_)
+                | ComponentValue::LessNamespaceValue(_)
+        )
+    }
+
+    /// Prettier's `value-word` / `value-atword` / `value-func` (the same neighbors `write_sass_binary` spaces)
+    fn is_word_like_division_operand(value: &ComponentValue<'_>) -> bool {
+        is_word_like(value) || is_func_like(value) || is_less_atword(value)
     }
 
     fn push_operand<'b, 'a>(
@@ -2246,106 +2280,6 @@ fn write_less_parenthesized_operation<'a>(
     write!(f, [text("("), group(&body), text(")")]);
 }
 
-/// Whether a calc operand has ONE pair of source parens of its own to restore.
-///
-/// `oxc-css-parser` folds `(a - b) * c` into nested `Calc` nodes whose spans EXCLUDE the parens,
-/// so they must be recovered from the source
-/// (postcss keeps them as a `value-paren_group` and Prettier preserves them).
-/// Only an operand position can do this safely:
-/// at the top of `calc(...)` the function's own parens are indistinguishable from a redundant pair.
-fn calc_operand_has_own_parens(operand: &ComponentValue<'_>, f: &CssFormatter<'_, '_>) -> bool {
-    let span = to_span(operand.span());
-    let source_len = u32::try_from(f.context().source_text().len()).unwrap_or(u32::MAX);
-    own_paren_layers(span.start, span.end, 0, source_len, f) >= 1
-}
-
-/// Layers of source parens that belong to a function-argument group itself.
-///
-/// `oxc-css-parser` drops bare parens around argument values:
-/// `min(((@a)), @b)` parses the first argument as just `@a`,
-/// and a `Calc` argument's span excludes its outermost source parens (`max(((a - b) / 2), 0)`).
-/// postcss keeps every pair as a `value-paren_group`, so Prettier prints them all.
-/// The scan is bounded by the function's own parens (`region`).
-fn group_own_paren_layers(
-    group: &[ComponentValue<'_>],
-    region_start: u32,
-    region_end: u32,
-    f: &CssFormatter<'_, '_>,
-) -> u32 {
-    let (Some(first), Some(last)) = (group.first(), group.last()) else { return 0 };
-    let start = to_span(first.span()).start;
-    let end = to_span(last.span()).end;
-    if start < region_start || end > region_end {
-        return 0;
-    }
-    own_paren_layers(start, end, region_start, region_end, f)
-}
-
-/// How many pairs of source parens around `start..end` (within `region`)
-/// belong to that span itself.
-///
-/// The span may already contain unbalanced parens belonging to CHILD operands,
-/// whose own pairs also sit outside their spans (`(a - 1) * b` spans from `a`).
-/// Those are reprinted when the child's own chunk is written;
-/// the span owns a pair only when a further `(`/`)` exists beyond what the children account for.
-fn own_paren_layers(
-    start: u32,
-    end: u32,
-    region_start: u32,
-    region_end: u32,
-    f: &CssFormatter<'_, '_>,
-) -> u32 {
-    let source = f.context().source_text();
-    let bytes = source.as_bytes();
-
-    // The adjacency scans stop at the first non-paren byte, so they are cheap.
-    // Run them first and bail out before the O(span) balance scan
-    // (in plain CSS there is almost never an adjacent paren at all).
-    let opens = i32::try_from(
-        bytes[region_start as usize..start as usize]
-            .iter()
-            .rev()
-            .filter(|b| !b.is_ascii_whitespace())
-            .take_while(|&&b| b == b'(')
-            .count(),
-    )
-    .unwrap_or(0);
-    if opens == 0 {
-        return 0;
-    }
-
-    let closes = i32::try_from(
-        bytes[end as usize..region_end as usize]
-            .iter()
-            .filter(|b| !b.is_ascii_whitespace())
-            .take_while(|&&b| b == b')')
-            .count(),
-    )
-    .unwrap_or(0);
-    if closes == 0 {
-        return 0;
-    }
-
-    let mut depth = 0i32;
-    let mut min_depth = 0i32;
-    for &b in &bytes[start as usize..end as usize] {
-        match b {
-            b'(' => depth += 1,
-            b')' => {
-                depth -= 1;
-                min_depth = min_depth.min(depth);
-            }
-            _ => {}
-        }
-    }
-    // `[need_left x '('] span [need_right x ')']` balances to zero;
-    // anything beyond that within the region is the span's own.
-    let need_left = -min_depth;
-    let need_right = depth - min_depth;
-
-    u32::try_from((opens - need_left).min(closes - need_right).max(0)).unwrap_or(0)
-}
-
 /// Function call: `name(` + args + `)`.
 /// Mirrors `value-func` + `value-paren_group` with parens.
 pub(super) fn write_function<'a>(
@@ -2391,27 +2325,12 @@ pub(super) fn write_function<'a>(
         return;
     }
 
-    let args_region = (name_span.end + 1, to_span(func.span()).end.saturating_sub(1));
-    // One argument group, with the source parens oxc-css-parser dropped restored
-    let write_arg_group = move |group_values: &[ComponentValue<'a>],
-                                ctx: ValueContext<'a>,
-                                f: &mut CssFormatter<'_, 'a>| {
-        let layers = group_own_paren_layers(group_values, args_region.0, args_region.1, f);
-        for _ in 0..layers {
-            write!(f, "(");
-        }
-        write_comma_group(group_values, ctx, f);
-        for _ in 0..layers {
-            write!(f, ")");
-        }
-    };
-
     // `no_break` (composes `removeLines` / media-value flat text):
     // no break opportunities, args joined inline.
     if ctx.no_break {
         write!(f, "(");
         for (i, &(group_values, comma)) in groups.iter().enumerate() {
-            write_arg_group(group_values, ctx, f);
+            write_comma_group(group_values, ctx, f);
             if i + 1 < groups.len() {
                 write_group_comma(comma, f);
                 write!(f, " ");
@@ -2470,7 +2389,7 @@ pub(super) fn write_function<'a>(
             }
             let arg_ctx =
                 ValueContext { paren_break: first_arg_is_kw && is_kw_arg(group_values), ..ctx };
-            write_arg_group(group_values, arg_ctx, f);
+            write_comma_group(group_values, arg_ctx, f);
             // `has_trailing_comma`: the kept `var(--x /* c */,)` comma counts too
             if i + 1 < groups_ref.len() || has_trailing_comma {
                 write_group_comma(comma, f);

@@ -2,7 +2,7 @@
 
 Shared policy for every formatter crate in the oxc ecosystem:
 
-- `oxc_formatter` (JS/TS)
+- `oxc_formatter` (JS/TSX)
 - `oxc_formatter_json`
 - `oxc_formatter_css`
 - `oxc_formatter_graphql`

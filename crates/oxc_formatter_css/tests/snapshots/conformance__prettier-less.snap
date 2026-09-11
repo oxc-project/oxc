@@ -2,13 +2,27 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-less compatibility: 38/40 (95.00%), 7 files skipped
+less compatibility: 222/238 (93.28%), 7 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | less/comments/value-lists.less | 💥 | 76.92% |
+| less/less-test-suite/snippet: tests-config/globalVars/extended.less | 💥 | 78.26% |
+| less/less-test-suite/snippet: tests-config/namespacing/namespacing-functions.less | 💥 | 97.30% |
+| less/less-test-suite/snippet: tests-config/namespacing/namespacing-media.less | 💥 | 96.15% |
+| less/less-test-suite/snippet: tests-unit/color-functions/rgba.less | 💥 | 82.93% |
+| less/less-test-suite/snippet: tests-unit/comments/comments2.less | 💥 | 87.50% |
+| less/less-test-suite/snippet: tests-unit/extend-chaining/extend-chaining.less | 💥 | 98.25% |
+| less/less-test-suite/snippet: tests-unit/extend-selector/extend-selector.less | 💥 | 98.67% |
+| less/less-test-suite/snippet: tests-unit/javascript/javascript.less | 💥 | 81.01% |
+| less/less-test-suite/snippet: tests-unit/mixins-guards-default-func/mixins-guards-default-func.less | 💥 | 99.21% |
+| less/less-test-suite/snippet: tests-unit/mixins-guards/mixins-guards.less | 💥 | 99.48% |
+| less/less-test-suite/snippet: tests-unit/namespace-targeted/namespace-targeted.less | 💥 | 96.88% |
+| less/less-test-suite/snippet: tests-unit/property-name-interp/property-name-interp.less | 💥 | 98.28% |
+| less/less-test-suite/snippet: tests-unit/strings/strings.less | 💥 | 98.68% |
+| less/less-test-suite/snippet: tests-unit/variables/variables.less | 💥 | 98.95% |
 | less/postcss-8-improment/test.less | 💥 | 88.24% |
 
 # Skipped (parse error, TODO: should be ignored or supported)

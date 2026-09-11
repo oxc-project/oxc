@@ -1157,3 +1157,166 @@ a {
 lowercase keyword, one space around the comment.
 Prettier normalizes only the plain shape (`raws.important` is replaced when it matches `\s*!\s*important`)
 and prints any other run verbatim, so a comment inside freezes the keyword's case and the glue.
+
+## less-javascript-verbatim
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/javascript-verbatim.less`
+
+```less
+/* input */
+.a {
+  js: `"hello world"`;
+  ary: `@{ary}.join(', ')`;
+}
+
+/* ours */
+.a {
+  js: `"hello world"`;
+  ary: `@{ary}.join(', ')`;
+}
+
+/* prettier */
+.a {
+  js: ` "hello world" `;
+  ary: ` @{ary}.join(", ") `;
+}
+```
+
+A backtick JavaScript evaluation (`` `...` `` / `` ~`...` ``) is a program, not a CSS value:
+`oxc-css-parser` keeps it as one `LessJavaScriptSnippet` and ours prints it verbatim.
+Prettier's value printer sees the backticks as plain words and the content as CSS tokens:
+it pads the backticks, re-quotes JavaScript strings and reflows a multi-line function onto one line.
+
+## less-escaped-string-gap
+
+- Why: invariant
+- Pin: `tests/fixtures/format/less/escaped-string-gap.less`
+
+```less
+/* input */
+@quotes: "~" "~";
+
+/* ours */
+@quotes: "~" "~";
+
+/* prettier */
+@quotes: "~""~";
+```
+
+Two space-separated values keep their gap (the lossless contract): `"~" "~"` is a two-item list.
+Prettier's `~` handling for escaped strings (`~"..."`) fires on a string whose content is `~` and glues the next value onto it.
+
+## less-lookup-glue
+
+- Why: semantics
+- Pin: `tests/fixtures/format/less/lookup-glue.less`
+
+```less
+/* input */
+.a {
+  value: #namespace[$@prop-name];
+  width: .add(10px, 10px)[];
+}
+
+/* ours */
+.a {
+  value: #namespace[$@prop-name];
+  width: .add(10px, 10px)[];
+}
+
+/* prettier */
+.a {
+  value: #namespace[$ @prop-name];
+  width: .add(10px, 10px) [];
+}
+```
+
+`$@var` inside a lookup is one token (a property name held in a variable): less.js rejects `[$ @prop-name]` ("Unrecognised input").
+The space before `[]` is harmless to less.js (`.add() []` still evaluates), so that half is the lossless side of the same rule:
+a lookup prints glued as written, like a selector's attribute bracket.
+Prettier's value printer treats `[` as a word boundary and `$` as a postcss-simple-vars prefix, spacing both.
+The `$@` half is fixed upstream after v3.9.6 (prettier/prettier#19782 keeps `[$@prop-name]` tight); the `[]` half remains.
+
+## less-guard-list-inline
+
+- Why: uniform-rule (same construct, same output: guard alternatives are a list, not selectors; the `less-extend-statement-break` leak again)
+- Pin: `tests/fixtures/format/less/mixin-selector-list.less`
+
+```less
+/* input */
+.m(@x) when (default()), not(default()) {
+}
+
+/* ours */
+.m(@x) when (default()), not(default()) {
+}
+
+/* prettier */
+.m(@x) when (default()),
+not(default()) {
+}
+```
+
+The commas after `when` separate guard alternatives (`or`), so they print inline like any other list;
+a comma before `when` is a real selector list and breaks the line.
+Over the width the prelude breaks like a selector, one indent in: before `when` and after each `,`, never inside a `when <cond>` (`...)\n  when (@theme = dark) {`).
+Prettier reads the whole prelude with postcss-selector-parser, where every top-level comma is a selector boundary, except that it throws on a `(`-led piece (`when (a), (b)` prints verbatim), so the same guard list breaks or not depending on whether the alternative starts with `not`;
+over the width every word gap is a descendant combinator, so `when`, `and` and each condition land on their own line, while a `,`-joined guard never breaks at all.
+
+## line-comment-continuation-indent
+
+- Why: uniform-rule (same construct, same output: the width-wrapped continuation of the same operation)
+- Pin: `tests/fixtures/format/less/line-comment-continuation-indent.less`, `tests/fixtures/format/scss/line-comment-continuation-indent.scss`
+
+```less
+/* input */
+@a: (@column-width * // c
+  @columns) + 1;
+
+/* ours */
+@a: (
+    @column-width * // c
+      @columns
+  ) +
+  1;
+
+/* prettier */
+@a: (
+    @column-width * // c
+    @columns
+  ) +
+  1;
+```
+
+An operation's continuation line is indented one level under the operation, whatever broke the line:
+the width (`@column-width *\n      @a-very-long-name`, identical in Prettier) or a `//` comment.
+Prettier prints the comment-forced break inside a paren group as `dedent(hardline)` (prettier/prettier#7844, aimed at `//` lines in maps), so the same operation continues at the paren's indent after a comment but one level deeper after a width wrap.
+Outside parens the two agree (the root indent is the operation's indent there).
+
+## prelude-keyword-case
+
+- Why: uniform-rule (same construct, same output: a case-insensitive keyword prints lowercase wherever it stands)
+- Pin: `tests/fixtures/format/css/prelude-keyword-case.css`
+
+```css
+/* input */
+@media ONLY SCREEN AND (MAX-WIDTH: 1PX), PRINT {}
+@import url("a.css") SCREEN AND (MAX-WIDTH: 1px);
+@supports (DISPLAY: FLEX) AND (NOT (DISPLAY: GRID)) {}
+
+/* ours */
+@media only screen and (max-width: 1px), print {}
+@import url("a.css") screen and (max-width: 1px);
+@supports (display: FLEX) and (not (display: GRID)) {}
+
+/* prettier */
+@media ONLY SCREEN AND (max-width: 1px), PRINT {}
+@import url("a.css") SCREEN AND (MAX-WIDTH: 1px);
+@supports (DISPLAY: FLEX) AND (NOT (DISPLAY: GRID)) {}
+```
+
+At-rule names, property names, media feature names and the prelude keywords next to them (media types, `only` / `and` / `not` / `or`, a `@supports` declaration's property) are all ASCII case-insensitive, so they all print lowercase, the way at-rule and property names already do.
+Values keep their case (`LANDSCAPE`, `FLEX`), as in any declaration: a value may be a case-sensitive custom ident (`animation-name`, `grid-area`).
+So do case-sensitive names (`layer(FOO)`) and any identifier carrying a variable or interpolation marker (`@media @PHONE`, `#{$Q}`).
+Prettier lowercases only what its `maybeToLowerCase` reaches (at-rule names, `media-feature`, declaration props) and prints the neighbouring keywords as its media-query parser or value parser hands them over: verbatim.

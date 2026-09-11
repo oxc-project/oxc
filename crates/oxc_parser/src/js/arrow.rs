@@ -75,7 +75,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        if self.eat(Kind::Async) {
+        let is_async = self.eat(Kind::Async);
+        if is_async {
             if self.cur_token().is_on_new_line() {
                 return Tristate::False;
             }
@@ -100,7 +101,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.bump_any();
                         let third = self.cur_kind();
                         match third {
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
+                            // `async()` can be a call on the true side of a conditional.
+                            Kind::Colon if self.is_ts && is_async => Tristate::Maybe,
+                            // Bare `()` cannot be a parenthesized expression, so the colon
+                            // must start a return type, even inside a conditional expression.
+                            Kind::Colon if self.is_ts => Tristate::True,
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
                         }

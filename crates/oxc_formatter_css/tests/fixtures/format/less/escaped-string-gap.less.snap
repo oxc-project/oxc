@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Two space-separated strings keep their gap (see DIVERGENCES.md "less-escaped-string-gap")
+@quotes: "~" "~";
+.a {
+  v: "~" "~";
+  w: "a" "b";
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Two space-separated strings keep their gap (see DIVERGENCES.md "less-escaped-string-gap")
+@quotes: "~" "~";
+.a {
+  v: "~" "~";
+  w: "a" "b";
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Two space-separated strings keep their gap (see DIVERGENCES.md "less-escaped-string-gap")
+@quotes: "~" "~";
+.a {
+  v: "~" "~";
+  w: "a" "b";
+}
+
+===================== End =====================
