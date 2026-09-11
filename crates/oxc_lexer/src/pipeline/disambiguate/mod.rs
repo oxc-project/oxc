@@ -11,9 +11,11 @@ use super::{
     PRIV_IDENT_ESC, REGEX, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS,
     bitmap::{bm_get, bm_next0, bm_next1, bm_prev1},
     find::{find_line_terminator, unicode_ws_len},
-    replay::replay_is_keyword,
     scan::{scan_block_comment, scan_number},
 };
+
+mod replay;
+use replay::replay_is_keyword;
 
 #[cfg(test)]
 mod tests;
@@ -35,7 +37,7 @@ unsafe fn glue_anchor(src: *const u8, st: *const u64, qi: usize) -> usize {
 }
 
 #[inline]
-pub(super) unsafe fn prop_name(src: *const u8, pos: usize) -> bool {
+unsafe fn prop_name(src: *const u8, pos: usize) -> bool {
     pos > 0 && *src.add(pos - 1) == b'.' && (pos < 2 || *src.add(pos - 2) != b'.')
 }
 
@@ -337,7 +339,7 @@ fn is_operand_punct(ch: u8) -> bool {
     )
 }
 
-pub(super) unsafe fn lt_in_range(src: *const u8, a: usize, b: usize) -> bool {
+unsafe fn lt_in_range(src: *const u8, a: usize, b: usize) -> bool {
     let mut i = a;
     while i < b {
         let c = *src.add(i);
@@ -360,7 +362,7 @@ pub(super) unsafe fn lt_in_range(src: *const u8, a: usize, b: usize) -> bool {
 /// a regex may follow `;`/`:`/`else`, but a `{` there is a block, so reusing
 /// it would be unsound. Complement of acorn's `braceIsBlock`.
 #[inline]
-pub(super) unsafe fn operand_position(
+unsafe fn operand_position(
     t: &Tables,
     src: *const u8,
     st: *const u64,
@@ -614,7 +616,7 @@ unsafe fn decorator_start(
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
 #[inline]
-pub(super) unsafe fn ident_is(src: *const u8, pos: usize, kw: &[u8]) -> bool {
+unsafe fn ident_is(src: *const u8, pos: usize, kw: &[u8]) -> bool {
     let mut i = 0;
     while i < kw.len() {
         if *src.add(pos + i) != kw[i] {
@@ -628,13 +630,13 @@ pub(super) unsafe fn ident_is(src: *const u8, pos: usize, kw: &[u8]) -> bool {
 
 const ANGLE_MATCH_CAP: u32 = 4096;
 
-pub(super) enum AngleMatch {
+enum AngleMatch {
     Found(usize),
     NotType,
     Unknown,
 }
 
-pub(super) unsafe fn angle_match_back(
+unsafe fn angle_match_back(
     src: *const u8,
     st: *const u64,
     kind: *const u8,
@@ -837,7 +839,7 @@ unsafe fn delim_memo_opener(
 /// interiors are invisible. Past the cap the answer comes from a per-file
 /// closer-to-opener table built once, so it is exact; None if unbalanced.
 #[inline]
-pub(super) unsafe fn match_delim_back(
+unsafe fn match_delim_back(
     src: *const u8,
     st: *const u64,
     kind: *const u8,
@@ -1278,7 +1280,7 @@ unsafe fn colon_return_type_value(
         .is_some_and(|fk| operand_position(t, src, st, kind, n, fk, ts, depth))
 }
 
-pub(super) unsafe fn tail_before(
+unsafe fn tail_before(
     t: &Tables,
     src: *const u8,
     st: *const u64,
@@ -1866,7 +1868,7 @@ unsafe fn type_annotation_asi(
     false
 }
 
-pub(super) unsafe fn return_type_signature_paren(
+unsafe fn return_type_signature_paren(
     src: *const u8,
     st: *const u64,
     kind: *const u8,

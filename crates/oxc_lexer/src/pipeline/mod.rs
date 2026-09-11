@@ -19,7 +19,6 @@ mod compress;
 mod disambiguate;
 mod find;
 mod misc;
-mod replay;
 mod scan;
 
 use oxc_span::Span;
