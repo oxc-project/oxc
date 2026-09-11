@@ -61,6 +61,17 @@ fn drop_console() {
     // return-position `console.*` call was dropped (otherwise the call would
     // keep the IIFE alive).
     test_options("(() => { try { return console.log() } catch {} })()", "", &options);
+    // Keep the bind call and its arguments, while replacing the console method with a no-op.
+    test_options(
+        "const log = console.log.bind(console); log('hello');",
+        "(() => {}).bind(console)('hello');",
+        &options,
+    );
+    test_options(
+        "const error = console['error'].bind(console); error('hello');",
+        "(() => {}).bind(console)('hello');",
+        &options,
+    );
 }
 
 // Same leak class as `test_void_ident_does_not_leak_reference`: dropped
