@@ -699,9 +699,8 @@ impl<'a> PeepholeOptimizations {
                         ctx.notice_change();
                         let prev_stmt = result.pop().unwrap();
                         let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                        let prev_if = prev_if.unbox();
+                        let test_expr = prev_if.unbox().test;
 
-                        let test_expr = prev_if.test;
                         Self::push_new_expression_stmt_to_result(test_expr, result, ctx);
                         break 'return_loop;
                     }
