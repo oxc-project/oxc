@@ -619,8 +619,8 @@ impl<'a> PeepholeOptimizations {
                             Self::try_minimize_if(&mut if_stmt, ctx).unwrap_or_else(|| {
                                 Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx))
                             });
-                        result.push(if_stmt);
                         ctx.notice_change();
+                        Self::minimize_statement(if_stmt, stmts, result, ctx);
                         return;
                     }
                 }
