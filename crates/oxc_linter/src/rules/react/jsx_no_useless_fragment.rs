@@ -383,6 +383,11 @@ fn test() {
         (r"<Fragment ref={fragmentRef}><Heading /></Fragment>", None),
         (r"<React.Fragment ref={fragmentRef}><Heading /></React.Fragment>", None),
         (r"<div><Fragment ref={fragmentRef}><Heading /></Fragment></div>", None),
+        (r"<Fragment key={item.id} ref={fragmentRef}><Heading /></Fragment>", None),
+        (
+            r"{items.map(item => <Fragment key={item.id} ref={refs[item.id]}>{item.value}</Fragment>)}",
+            None,
+        ),
         (r"<Fooo content={<>eeee ee eeeeeee eeeeeeee</>} />", None),
         (r"<>{foos.map(foo => foo)}</>", None),
         (r"<>{moo}</>", Some(json!([{ "allowExpressions": true }]))),
