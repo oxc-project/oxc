@@ -2852,9 +2852,9 @@ fn ox_transform_program<'a>(
     //     original function (Babel `insertAfter`), however deeply nested it is.
     //   - (Arrow)FunctionExpression originals: appended at the end of the program
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
-    //     would corrupt the parent expression. For a nested original this can hoist
-    //     the outlined function past bindings it references — upstream has the same
-    //     behavior, so we reproduce it rather than diverge.
+    //     would corrupt the parent expression. Candidates whose HIR references
+    //     an outer lexical binding are kept inline for these roots, so this
+    //     placement cannot hoist them past the binding they reference.
     let mut appended_outlined_decls: Vec<Statement<'a>> = Vec::new();
 
     // Substitute every non-gated compiled function into its original in a single
