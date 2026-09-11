@@ -22,7 +22,7 @@ impl ESTree for JsonSafeString<'_> {
 /// [`ESTree`] implementation for string slice.
 impl ESTree for str {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
-        write_str(self, serializer.buffer_mut());
+        write_str::<StandardEscapeTable>(self, serializer.buffer_mut());
     }
 }
 
@@ -80,47 +80,82 @@ const fn create_table() -> [Escape; 256] {
     ]
 }
 
-/// Adapted from:
-/// <https://chromium.googlesource.com/v8/v8/+/1645281bbd1b183a252835d376166bd210135bbe/src/json/json-stringifier.cc#521>
-///
-/// An efficient way to check 8 bytes in one go, without any branches.
-/// <https://godbolt.org/z/TEKqxcnP4>
-///
-/// I (@overlookmotel) tried to expand this search to 16 bytes using loops which I'd hoped would be
-/// auto-vectorized to SIMD ops, but compiler does not do a good job of auto-vectorizing this.
-/// It is SIMD-able, but would require explicit SIMD ops.
-#[inline]
-fn get_escapes_mask(bytes: [u8; 8]) -> u64 {
-    const SPACES: u64 = splat_u64(b' ');
-    const QUOTES: u64 = splat_u64(b'"');
-    const SLASHES: u64 = splat_u64(b'\\');
-    const ONES: u64 = splat_u64(1);
-    const TOP_BITS: u64 = splat_u64(0x80);
+/// Trait for tables determining whether bytes need escaping.
+trait EscapeTable {
+    /// Get `Escape` for a byte.
+    /// If byte does not require escaping, returns `Escape::__`.
+    fn get_escape_for_byte(b: u8) -> Escape;
 
-    // Convert bytes to a `u64` in native byte order
-    let n = u64::from_ne_bytes(bytes);
+    /// Check a block of 8 bytes for whether any byte needs escaping.
+    ///
+    /// Returns a `u64` mask, with each byte representing whether the corresponding byte in `bytes`
+    /// needs escaping or not.
+    ///
+    /// * Bytes which need escaping are represented by `0x80`.
+    /// * Bytes which don't need escaping are represented by `0`.
+    ///
+    /// If no bytes in `bytes` require escaping, the returned `u64` is 0.
+    ///
+    /// The returned `u64` is in native byte order.
+    /// i.e. 1st byte in `bytes` is lowest byte in returned `u64`.
+    ///
+    /// For `_"_____"`, returns:
+    /// * `0x0080_0000_0000_0080` on little endian.
+    /// * `0x8000_0000_0000_8000` on big endian.
+    fn get_escapes_mask(bytes: [u8; 8]) -> u64;
+}
 
-    // 0x00..=0x1F -> 0xE0..=0xFF (top bit set).
-    // All other ASCII bytes -> 0x00..=0x5F (top bit unset).
-    // Some non-ASCII bytes also have top bit set.
-    let less_than_spaces = n.wrapping_sub(SPACES);
-    // `"` -> 0xFF (top bit set).
-    // All other ASCII bytes -> values with top bit unset.
-    let quotes = (n ^ QUOTES).wrapping_sub(ONES);
-    // `\` -> 0xFF (top bit set).
-    // All other ASCII bytes -> values with top bit unset.
-    let slashes = (n ^ SLASHES).wrapping_sub(ONES);
-    // Any bytes requiring escape -> top bit set.
-    // Any ASCII bytes not requiring escape -> top bit unset.
-    // Non-ASCII bytes -> may or may not have top bit set.
-    let escapes = less_than_spaces | quotes | slashes;
-    // ASCII bytes -> 0x80 (top bit set).
-    // Non-ASCII bytes -> 0x00 (top bit unset).
-    let asciis = (!n) & TOP_BITS;
-    // Mask `escapes` to only top bits, and zero any non-ASCII bytes.
-    // Now any bytes needing escape = 0x80.
-    // Any bytes not needing escape = 0.
-    escapes & asciis
+/// Escape table for standard strings (`impl ESTree for str`).
+struct StandardEscapeTable;
+
+impl EscapeTable for StandardEscapeTable {
+    #[inline]
+    fn get_escape_for_byte(b: u8) -> Escape {
+        ESCAPE[b as usize]
+    }
+
+    /// Adapted from:
+    /// <https://chromium.googlesource.com/v8/v8/+/1645281bbd1b183a252835d376166bd210135bbe/src/json/json-stringifier.cc#521>
+    ///
+    /// An efficient way to check 8 bytes in one go, without any branches.
+    /// <https://godbolt.org/z/TEKqxcnP4>
+    ///
+    /// I (@overlookmotel) tried to expand this search to 16 bytes using loops which I'd hoped would be
+    /// auto-vectorized to SIMD ops, but compiler does not do a good job of auto-vectorizing this.
+    /// It is SIMD-able, but would require explicit SIMD ops.
+    #[inline]
+    fn get_escapes_mask(bytes: [u8; 8]) -> u64 {
+        const SPACES: u64 = splat_u64(b' ');
+        const QUOTES: u64 = splat_u64(b'"');
+        const SLASHES: u64 = splat_u64(b'\\');
+        const ONES: u64 = splat_u64(1);
+        const TOP_BITS: u64 = splat_u64(0x80);
+
+        // Convert bytes to a `u64` in native byte order
+        let n = u64::from_ne_bytes(bytes);
+
+        // 0x00..=0x1F -> 0xE0..=0xFF (top bit set).
+        // All other ASCII bytes -> 0x00..=0x5F (top bit unset).
+        // Some non-ASCII bytes also have top bit set.
+        let less_than_spaces = n.wrapping_sub(SPACES);
+        // `"` -> 0xFF (top bit set).
+        // All other ASCII bytes -> values with top bit unset.
+        let quotes = (n ^ QUOTES).wrapping_sub(ONES);
+        // `\` -> 0xFF (top bit set).
+        // All other ASCII bytes -> values with top bit unset.
+        let slashes = (n ^ SLASHES).wrapping_sub(ONES);
+        // Any bytes requiring escape -> top bit set.
+        // Any ASCII bytes not requiring escape -> top bit unset.
+        // Non-ASCII bytes -> may or may not have top bit set.
+        let escapes = less_than_spaces | quotes | slashes;
+        // ASCII bytes -> 0x80 (top bit set).
+        // Non-ASCII bytes -> 0x00 (top bit unset).
+        let asciis = (!n) & TOP_BITS;
+        // Mask `escapes` to only top bits, and zero any non-ASCII bytes.
+        // Now any bytes needing escape = 0x80.
+        // Any bytes not needing escape = 0.
+        escapes & asciis
+    }
 }
 
 /// Create `u64` with all bytes set to `n`.
@@ -131,7 +166,7 @@ const fn splat_u64(n: u8) -> u64 {
 
 /// Write string to buffer.
 /// String is wrapped in `"`s, and with any characters which are not valid in JSON escaped.
-fn write_str(s: &str, buffer: &mut CodeBuffer) {
+fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
     buffer.print_ascii_byte(b'"');
 
     let bytes = s.as_bytes();
@@ -148,7 +183,7 @@ fn write_str(s: &str, buffer: &mut CodeBuffer) {
             if let Some(chunk) = iter.as_slice().get(..8) {
                 let chunk: &[u8; 8] = chunk.try_into().unwrap(); // Infallible
 
-                let escapes_mask = get_escapes_mask(*chunk);
+                let escapes_mask = T::get_escapes_mask(*chunk);
                 // `NonZeroU64::trailing_zeros` is more efficient than `u64::trailing_zeros`
                 // on some platforms. Ditto `leading_zeros`.
                 if let Some(escapes_mask) = NonZeroU64::new(escapes_mask) {
@@ -164,7 +199,7 @@ fn write_str(s: &str, buffer: &mut CodeBuffer) {
                     // So `found_bit_index <= 63`, therefore `found_byte_index <= 7`.
                     // Chunk is 8 bytes, so `found_byte_index` cannot be out of bounds.
                     byte = unsafe { *chunk.get_unchecked(found_byte_index) };
-                    escape = ESCAPE[byte as usize];
+                    escape = T::get_escape_for_byte(byte);
                     // Consume bytes before this one.
                     // SAFETY: `found_byte_index < 8` and there are at least 8 bytes remaining in `iter`
                     unsafe { iter.advance_unchecked(found_byte_index) };
@@ -180,7 +215,7 @@ fn write_str(s: &str, buffer: &mut CodeBuffer) {
                 // Not enough bytes remaining for a batch. Search byte-by-byte.
                 for (i, &next_byte) in iter.clone().enumerate() {
                     byte = next_byte;
-                    escape = ESCAPE[byte as usize];
+                    escape = T::get_escape_for_byte(byte);
                     if escape != Escape::__ {
                         // Consume bytes before this one.
                         // SAFETY: `i` is an index of `iter`, so cannot be out of bounds.
