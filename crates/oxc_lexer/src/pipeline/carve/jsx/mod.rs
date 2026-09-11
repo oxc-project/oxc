@@ -8,11 +8,11 @@ use crate::{
 use super::super::{
     HASHBANG, JEND, JSX_LT, JTEXT, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
     bitmap::{bm_clear, bm_clear_range, bm_set},
+    disambiguate::{bm_prev_sig, prev_is_regex},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
-    regex_div::{bm_prev_sig, prev_is_regex},
     scan::scan_block_comment,
 };
 

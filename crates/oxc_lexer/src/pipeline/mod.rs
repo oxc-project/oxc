@@ -16,9 +16,9 @@ mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
+mod disambiguate;
 mod find;
 mod misc;
-mod regex_div;
 mod replay;
 mod scan;
 
@@ -180,7 +180,7 @@ impl Lexer {
         self.ensure(n);
         self.lanes.clear();
         self.lanes.module = module;
-        regex_div::memo_new_lex();
+        disambiguate::memo_new_lex();
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds);
             self.sig_len = 0;

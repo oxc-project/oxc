@@ -1,7 +1,7 @@
 use crate::tables::Tables;
 
 use super::bitmap::bm_next1;
-use super::regex_div::{
+use super::disambiguate::{
     AngleMatch, angle_match_back, bm_prev_sig, ident_is, lt_in_range, match_delim_back,
     operand_position, prop_name, return_type_signature_paren, tail_before,
 };

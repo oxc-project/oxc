@@ -9,7 +9,7 @@ use crate::{
 use super::super::{
     BCOM, LCOM, REGEX, STR,
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    regex_div::prev_is_regex,
+    disambiguate::prev_is_regex,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
 };
 
