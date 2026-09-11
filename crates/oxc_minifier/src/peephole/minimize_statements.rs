@@ -169,6 +169,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Merge `expr` expression with the previous expression statement or emit as a new one.
     fn push_new_expression_stmt_to_result(
         mut expr: Expression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -188,6 +189,8 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Fold `target` expression into previous expression as sequence
+    /// `a; b` -> `a, b`.
     fn merge_last_expression_into_sequence(
         target: &mut Expression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
