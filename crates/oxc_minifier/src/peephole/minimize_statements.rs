@@ -171,13 +171,11 @@ impl<'a> PeepholeOptimizations {
 
     /// Merge `expr` expression with the previous expression statement or emit as a new one.
     fn push_new_expression_stmt_to_result(
-        mut expr: Expression<'a>,
+        expr: Expression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if Self::remove_unused_expression(&mut expr, ctx) {
-            ctx.drop_expression(&expr);
-        } else if ctx.options().sequences
+        if ctx.options().sequences
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
             ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
@@ -280,8 +278,12 @@ impl<'a> PeepholeOptimizations {
                 // it in place (peeling pure-call wrappers, etc). It is taken
                 // out first because it may survive as an expression statement
                 // — the declarator walk below must not mark its refs dead.
-                if let Some(init) = decl.init.take() {
-                    Self::push_new_expression_stmt_to_result(init, result, ctx);
+                if let Some(mut init) = decl.init.take() {
+                    if Self::remove_unused_expression(&mut init, ctx) {
+                        ctx.drop_expression(&init);
+                    } else {
+                        Self::push_new_expression_stmt_to_result(init, result, ctx);
+                    }
                 }
                 // Walk the rest of the dropped declarator (binding pattern +
                 // TS type annotation, which can contain references). Also
