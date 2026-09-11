@@ -44,6 +44,11 @@ fn test_inline_single_use_variable_preserves_local_indirect_eval() {
 }
 
 #[test]
+fn test_eval_bound_to_console_log() {
+    test_script_same("let x = console.log; var eval = x; eval('.....');");
+}
+
+#[test]
 fn test_inline_single_use_variable() {
     test_same("function wrapper(arg0, arg1) {using x = foo; return x}");
     test_same("async function wrapper(arg0, arg1) { await using x = foo; return x}");
