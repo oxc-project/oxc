@@ -5528,10 +5528,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclara
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttributeClause<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5541,10 +5541,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttr
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }

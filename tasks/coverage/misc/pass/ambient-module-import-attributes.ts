@@ -12,4 +12,7 @@ declare module "*.empty" with {} {}
 
 declare module "*.text" with { "type": "text" };
 
-declare module "*.config" with { readonly mode: `strict` } {}
+declare module "*.config" with { mode: `strict` } {}
+
+declare module "*.readonly" with { readonly: "true" } {}
+declare module "*.quoted-readonly" with { "readonly": "true" } {}

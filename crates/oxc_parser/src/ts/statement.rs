@@ -499,7 +499,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_ts_module_declaration_attribute(&mut self) -> TSModuleDeclarationAttribute<'a> {
         let start = self.cur_start();
+        let modifier_span = self.cur_token().span();
         let readonly = self.parse_contextual_modifier(Kind::Readonly);
+        if readonly {
+            self.error(diagnostics::import_attribute_cannot_be_readonly(modifier_span));
+        }
         let key = match self.cur_kind() {
             Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
             kind if kind.is_identifier_name() => {

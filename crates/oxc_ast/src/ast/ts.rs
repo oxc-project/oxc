@@ -1284,7 +1284,8 @@ pub struct TSModuleDeclarationAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, GetAddress, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[estree(skip, no_ts_def)]
 pub enum TSModuleDeclarationAttributeValue<'a> {
     StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 1,

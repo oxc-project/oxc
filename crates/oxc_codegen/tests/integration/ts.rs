@@ -131,17 +131,17 @@ fn quoted_type_import_names() {
 fn ambient_module_import_attributes() {
     let source = r#"declare module "*.css" with { type: "css" } {}
 declare module "*.text" with { type: "text" };
-declare module "*.config" with { readonly mode: `strict` } {}"#;
+declare module "*.config" with { mode: `strict` } {}"#;
 
     test_options_with_source_type(
         source,
-        "declare module \"*.css\" with {\n\ttype: \"css\";\n} {}\ndeclare module \"*.text\" with {\n\ttype: \"text\";\n};\ndeclare module \"*.config\" with {\n\treadonly mode: `strict`;\n} {}\n",
+        "declare module \"*.css\" with {\n\ttype: \"css\";\n} {}\ndeclare module \"*.text\" with {\n\ttype: \"text\";\n};\ndeclare module \"*.config\" with {\n\tmode: `strict`;\n} {}\n",
         SourceType::ts(),
         default_options(),
     );
     test_options_with_source_type(
         source,
-        "declare module \"*.css\"with{type:\"css\";}{}declare module \"*.text\"with{type:\"text\";};declare module \"*.config\"with{readonly mode:`strict`;}{}",
+        "declare module \"*.css\"with{type:\"css\";}{}declare module \"*.text\"with{type:\"text\";};declare module \"*.config\"with{mode:`strict`;}{}",
         SourceType::ts(),
         CodegenOptions::minify(),
     );
