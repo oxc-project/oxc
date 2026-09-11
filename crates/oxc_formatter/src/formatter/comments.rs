@@ -291,8 +291,7 @@ impl<'a> Comments<'a> {
     /// Returns comments that end at or after the given position.
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let comments = self.unprinted_comments();
-        let start_index = comments.iter().take_while(|c| c.span.end < pos).count();
-        &comments[start_index..]
+        &comments[comments.partition_point(|c| c.span.end < pos)..]
     }
 
     /// Returns comments between the given positions.
@@ -547,6 +546,28 @@ impl<'a> Comments<'a> {
         self.end_of_line_comments_after(pos)
             .iter()
             .any(|comment| self.is_suppression_comment(comment))
+    }
+
+    /// Whether a node whose terminator the formatter owns is suppressed by a leading comment or a trailing one:
+    /// on its line after the `;` (`foo(); // prettier-ignore`),
+    /// or after the content when the source `;` sits on a later line (`foo() // prettier-ignore` + `;[].sort()`, the `semi: false` style).
+    /// `content_end` is asked only for that last shape (the span's last comment is a suppression comment).
+    pub fn is_node_suppressed(
+        &self,
+        span: Span,
+        content_end: impl FnOnce() -> Option<u32>,
+    ) -> bool {
+        // The common case, every statement pays this check
+        if self.unprinted_comments().is_empty() {
+            return false;
+        }
+        if self.is_suppressed(span.start) || self.has_trailing_suppression_comment(span.end) {
+            return true;
+        }
+        let Some(last) = self.all_comments_before(span.end).last() else { return false };
+        last.span.start >= span.start
+            && self.is_suppression_comment(last)
+            && content_end().is_some_and(|end| self.has_trailing_suppression_comment(end))
     }
 
     /// Whether the range holds a `;` or a `)` outside comments (`foo /* ; */` doesn't count).

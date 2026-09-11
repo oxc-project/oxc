@@ -12,11 +12,16 @@ use crate::{
     formatter::{
         prelude::*,
         separated::FormatSeparatedIter,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{
+            FormatLeadingComments, FormatTrailingComments, format_leading_comments,
+            format_trailing_comments,
+        },
     },
     parentheses::NeedsParentheses,
     print::{
-        function::should_group_function_parameters,
+        function::{
+            function_content_end, function_signature_end, should_group_function_parameters,
+        },
         semicolon::{
             OptionalSemicolon, assignment_chain_leaf_end,
             trailing_comments_to_move_behind_semicolon,
@@ -31,6 +36,7 @@ use crate::{
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
         statement_body::write_head_body_separator,
+        suppressed::write_suppressed_content,
     },
     write,
 };
@@ -146,10 +152,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         let node_end = self.span.end;
         let comments = f.context().comments().comments_before(node_end);
         if !comments.is_empty() {
-            let content_end = f.comments().end_including_source_parens(
-                value.return_type().map_or_else(|| value.params().span.end, |rt| rt.span.end),
-                node_end,
-            );
+            let content_end = function_signature_end(value, f);
             if let Some(trailing_comments) =
                 trailing_comments_to_move_behind_semicolon(f, content_end, node_end)
             {
@@ -600,46 +603,77 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
     }
 }
 
+impl FormatClassElementWithSemicolon<'_, '_> {
+    /// Where the element's content ends and its `;` takes over, for the kinds that take one:
+    /// a property's value (the chain leaf, like an expression statement), type annotation or key,
+    /// a bodyless method's signature, an index signature's type.
+    /// A definite/optional marker may sit between it and the `;` (`z? /* e */;`);
+    /// a comment there still ends up behind the semicolon like Prettier.
+    fn content_end(&self, f: &JsFormatter<'_, '_>) -> Option<u32> {
+        let (value, type_annotation, key) = match self.element.as_ref() {
+            ClassElement::PropertyDefinition(def) => (&def.value, &def.type_annotation, &def.key),
+            ClassElement::AccessorProperty(def) => (&def.value, &def.type_annotation, &def.key),
+            ClassElement::MethodDefinition(def) => return function_content_end(&def.value, f),
+            ClassElement::TSIndexSignature(def) => return Some(def.type_annotation.span.end),
+            ClassElement::StaticBlock(_) => return None,
+        };
+        Some(
+            value
+                .as_ref()
+                .map(|value| assignment_chain_leaf_end(value, f))
+                .or_else(|| type_annotation.as_ref().map(|ta| ta.span.end))
+                .unwrap_or_else(|| key.span().end),
+        )
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let needs_semi = matches!(
-            self.element.as_ref(),
+        let element = self.element;
+        let span = element.span();
+        let is_property = matches!(
+            element.as_ref(),
             ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
         );
-
-        let needs_semi = needs_semi
+        let needs_semi = is_property
             && match f.options().semicolons {
                 Semicolons::Always => true,
                 Semicolons::AsNeeded => self.needs_semicolon(),
-            }
-            // Don't add semicolon if the element is suppressed (has `oxfmt-ignore`),
-            // because the suppressed source text already includes the original semicolon.
-            && !f.comments().is_suppressed(self.element.span().start);
+            };
 
-        if needs_semi {
+        // A suppressed element (leading or trailing comment) prints its content verbatim
+        // and its terminator stays the formatter's, like a statement (`write_suppressed_statement`).
+        // The element kinds' generated `fmt` only see a leading comment, so the gate is here.
+        let suppressed = f.comments().is_node_suppressed(span, || self.content_end(f));
+        if !suppressed && !needs_semi {
+            return write!(f, element);
+        }
+
+        if suppressed {
+            format_leading_comments(span).fmt(f);
+            // The verbatim range keeps the source parens the reprint would drop (`p = (q = 1)`),
+            // which the comment-move boundary `content_end` stops short of.
+            let verbatim_end = self
+                .content_end(f)
+                .map(|end| f.comments().end_including_source_parens(end, span.end));
+            if write_suppressed_content(span, verbatim_end, f) {
+                if is_property {
+                    if needs_semi {
+                        write!(f, ";");
+                    }
+                } else {
+                    // A bodyless method / index signature: the formatter's `;`, per `semi`
+                    OptionalSemicolon.fmt(f);
+                }
+            }
+        } else {
             // Same-line comments between the content end and the source semicolon
             // move behind it like Prettier: `x = 1 /* c */;` -> `x = 1; /* c */`
             // (the class element owns its own semicolon machinery,
             // so this cannot go through `FormatContentWithSemicolon`)
-            let node_end = self.element.span().end;
-            let (value, type_annotation, key) = match self.element.as_ref() {
-                ClassElement::PropertyDefinition(def) => {
-                    (&def.value, &def.type_annotation, &def.key)
-                }
-                ClassElement::AccessorProperty(def) => (&def.value, &def.type_annotation, &def.key),
-                _ => {
-                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
-                }
-            };
-            // The value end is the chain leaf's, like an expression statement.
-            // A definite/optional marker may sit between `content_end` and the `;`
-            // (`z? /* e */;` -> `content_end` is after `z`);
-            // the comment still ends up behind the semicolon like Prettier.
-            let content_end = value
-                .as_ref()
-                .map(|value| assignment_chain_leaf_end(value, f))
-                .or_else(|| type_annotation.as_ref().map(|ta| ta.span.end))
-                .unwrap_or_else(|| key.span().end);
+            let node_end = span.end;
+            // A property always has a content end
+            let content_end = self.content_end(f).unwrap();
             // `node_end` bound: the element may have no source `;` at all
             // (a dropped-paren terminator, `p = (q = 1 /* c */)`).
             // The gate's same-line run moves behind the `;`,
@@ -647,25 +681,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             if let Some(trailing_comments) =
                 trailing_comments_to_move_behind_semicolon(f, content_end, node_end)
             {
-                format_content_without_comments_after(self.element, content_end, f);
+                format_content_without_comments_after(element, content_end, f);
                 write!(f, [";", FormatTrailingComments::Comments(trailing_comments)]);
             } else {
-                write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+                write!(f, [FormatNodeWithoutTrailingComments(element), ";"]);
             }
-            match self.element.as_ast_nodes() {
-                AstNodes::PropertyDefinition(prop) => {
-                    prop.format_trailing_comments(f);
-                }
-                AstNodes::AccessorProperty(prop) => {
-                    prop.format_trailing_comments(f);
-                }
-                _ => {
-                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
-                }
-            }
-        } else {
-            write!(f, self.element);
         }
+        format_trailing_comments(element.parent().span(), span, element.following_span_start())
+            .fmt(f);
     }
 }
 

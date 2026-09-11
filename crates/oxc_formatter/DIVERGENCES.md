@@ -455,6 +455,39 @@ Prettier's `shouldIgnoredNodePrintSemicolon` lists `VariableDeclaration` uncondi
 so a suppressed declaration in a `for` head gets an extra `;` and the head no longer parses (a `for (;;)` head admits exactly two semicolons).
 In the head the declaration has no terminator of its own; we keep it verbatim and let the `for` statement print its separators.
 
+## suppressed-terminator-per-semi
+
+- Why: uniform-rule (same construct, same output: suppressed statement)
+- Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/ts/semicolons/suppressed-class-member.ts`
+
+```js
+// input (semi: true)
+stmt(   ) // prettier-ignore
+a => a
+class C {
+  q   = 2 // prettier-ignore
+}
+
+// ours
+stmt(   ); // prettier-ignore
+(a) => a;
+class C {
+  q   = 2; // prettier-ignore
+}
+
+// prettier
+stmt(   ) // prettier-ignore
+(a) => a;
+class C {
+  q   = 2 // prettier-ignore
+}
+```
+
+A suppression comment protects content; a terminator the formatter owns (a statement's or class member's `;`, the token-class table in AGENTS.md) follows `semi` as it does everywhere else.
+Prettier prints that way for statements whose source had a `;` (its `__contentEnd`), but leaves a `;`-less statement alone (the output above re-parses as `stmt(   )(a) => a`, a syntax error),
+and prints class members, type aliases and `declare function`s whole, `;` included, so `semi: false` keeps a `;` there and `semi: true` never adds one.
+One rule instead, the statement's, for every terminator-owned node.
+
 ## suppressed-source-paren-asi-guard
 
 - Why: semantics (Prettier's output re-parses as a call)
@@ -506,7 +539,8 @@ We check the verbatim range's first byte instead and print the guard.
 A cast comment types its parenthesized expression only when directly adjacent:
 with Prettier's placement tsc reports the target as its uncast type again.
 
-Prettier's `printIgnored` prepends the guard to the ignored slice, which starts after the leading comments; we reuse the reprint path's split (`ExpressionStatement::write`), so the guard, the cast comment, and the verbatim content print in that order.
+Prettier's `printIgnored` prepends the guard to the ignored slice, which starts after the leading comments;
+we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, called from `write_suppressed_statement`), so the guard, the cast comment, and the verbatim content print in that order.
 
 ## cast-comment-inside-added-parens
 

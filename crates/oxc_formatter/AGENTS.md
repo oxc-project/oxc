@@ -164,27 +164,28 @@ that is FORMATTER_POLICY's uniform-rule ground (reason 3): one rule over the emu
 ### Statement terminators and suppression
 
 The formatter owns statement terminators (and the trivia up to them); the user owns content.
-Prettier encodes "the trailing `;` is outside the statement" once, in `locEnd`;
-deciding on the spot, we encode the same policy per site, so keep them in step:
 
 - print side: `FormatContentWithSemicolon` and the move-behind table above
 - return/throw: the same-line-prefix dangling split in `ReturnAndThrowStatement`
 - capture side: `Comments::get_trailing_comments` lets deferred own-line comments escape when the statement shares its distant `;` with the enclosing statement
   (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
-- suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
-  so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+- suppressed side: a suppressed node keeps the token classes above: content verbatim, terminator per `semi`
+  (`write_suppressed_statement`, `FormatClassElementWithSemicolon`); a node without a terminator of its own prints its whole span.
+  Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
+  - A statement is decided before its own generated `fmt`, so leading and trailing comments take one path and a pre-`export` decorator is inside the ignored range (`statement_span`)
+  - Any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) must ask `write_suppressed_statement` first,
+    or the generic verbatim path prints the source `;` regardless of `semi`
+  - The import sorter's partition test and the printer share `is_node_suppressed`: a suppressed import must be a boundary to both
+  - Keep `suppressed_statement_content_end` in step with the reprint's `;`-printing sites (`FormatContentWithSemicolon` / `OptionalSemicolon`): same content end, same terminator
+  - A `for` head declaration has no terminator of its own and stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
 - suppressed expression side: `write_suppressed_expression` (`utils/suppressed.rs`) owns the whole sequence
-  for expression-shaped nodes (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed), so a cast target keeps its source cast parens (excluded from its span, `utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
+  for expression-shaped nodes (the generated `fmt` and the arrow sequence-body site call it before anything of the node is printed),
+  so a cast target keeps its source cast parens (excluded from its span, `utils/typecast.rs`'s `write_suppressed_cast_target`) and in-paren comments print in place via the verbatim range
 
-Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
+Accepted edges (semantically inert, idempotent):
 
-- Whether a suppressed statement re-adds `;` is a compat table, not a principle:
-  keyword statements (`debugger`/`break`/`continue`) and variable declarations (ignored range ends at the last declarator) always re-add;
-  content-terminated ones, including `export const` (measured, keep the asymmetry), only when a source `;` was stripped.
-  A `for` head declaration instead stays verbatim (DIVERGENCES.md#suppressed-for-head-declaration)
-- The `semi: false` ASI guard is decided from the guarded statement alone,
-  never from the previous statement's output;
-  sound because no statement leaves its own trailing `;`,
+- The `semi: false` ASI guard is decided from the guarded statement alone, never from the previous statement's output;
+  sound because no statement leaves its own trailing `;` (a suppressed one hands it back to the formatter),
   except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
 
 ## Verification

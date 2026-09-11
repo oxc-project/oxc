@@ -19,9 +19,7 @@ use crate::{
             semicolon_terminated_expression_content_end,
         },
     },
-    utils::{
-        decorators_before_export_start, export_declaration_span, export_default_declaration_span,
-    },
+    utils::decorators_before_export_start,
     write,
 };
 
@@ -122,10 +120,6 @@ fn format_export_specifiers_block<'a>(
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
-    fn suppressed_span(&self) -> Span {
-        export_default_declaration_span(self)
-    }
-
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
         format_export_keyword_with_class_decorators(
@@ -172,10 +166,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportDeclaration<'a>> {
-    fn suppressed_span(&self) -> Span {
-        export_declaration_span(self)
-    }
-
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
         format_export_keyword_with_class_decorators(

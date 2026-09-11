@@ -5,7 +5,7 @@ checker.ts:
   sys deallocs: 19382
   sys alloc bytes: 6767781 # 6.77 MB
   sys peak growth: 2973674 # 2.97 MB
-  arena allocs: 1070155
+  arena allocs: 1070143
   arena reallocs: 927
   arena size: 90259056 # 90.26 MB
 
@@ -16,9 +16,9 @@ App.tsx:
   sys deallocs: 5191
   sys alloc bytes: 1564670 # 1.56 MB
   sys peak growth: 435358 # 435.36 kB
-  arena allocs: 211361
+  arena allocs: 210975
   arena reallocs: 364
-  arena size: 16936624 # 16.94 MB
+  arena size: 16925816 # 16.93 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
@@ -38,9 +38,9 @@ pdf.mjs:
   sys deallocs: 9775
   sys alloc bytes: 3141552 # 3.14 MB
   sys peak growth: 1156432 # 1.16 MB
-  arena allocs: 432553
+  arena allocs: 432125
   arena reallocs: 428
-  arena size: 29572816 # 29.57 MB
+  arena size: 29560832 # 29.56 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -71,6 +71,6 @@ kitchen-sink.tsx:
   sys deallocs: 17087
   sys alloc bytes: 4436340 # 4.44 MB
   sys peak growth: 1491796 # 1.49 MB
-  arena allocs: 561600
+  arena allocs: 560906
   arena reallocs: 1041
-  arena size: 38563072 # 38.56 MB
+  arena size: 38543616 # 38.54 MB
