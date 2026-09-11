@@ -76,9 +76,9 @@ impl Rule for NoWebpackLoaderSyntax {
                         return;
                     }
 
-                    if ident.value.contains('!') {
+                    if ident.value.chars().any(|ch| ch.to_u32() == u32::from(b'!')) {
                         ctx.diagnostic(no_named_as_default_diagnostic(
-                            ident.value.as_str(),
+                            ident.value.as_str().unwrap_or_else(|| ctx.source_range(ident.span)),
                             ident.span,
                         ));
                     }
@@ -90,9 +90,13 @@ impl Rule for NoWebpackLoaderSyntax {
                     return;
                 }
 
-                if import_decl.source.value.contains('!') {
+                if import_decl.source.value.chars().any(|ch| ch.to_u32() == u32::from(b'!')) {
                     ctx.diagnostic(no_named_as_default_diagnostic(
-                        &import_decl.source.value,
+                        import_decl
+                            .source
+                            .value
+                            .as_str()
+                            .unwrap_or_else(|| ctx.source_range(import_decl.source.span)),
                         import_decl.source.span,
                     ));
                 }

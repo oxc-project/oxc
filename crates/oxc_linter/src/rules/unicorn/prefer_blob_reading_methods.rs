@@ -78,7 +78,10 @@ impl Rule for PreferBlobReadingMethods {
             return;
         }
 
-        let (current, replacement, span) = match member_expr.static_property_info() {
+        let (current, replacement, span) = match member_expr
+            .static_property_info()
+            .and_then(|(span, name)| Some((span, name.as_str()?)))
+        {
             Some((span, "readAsText")) => ("readAsText", "text", span),
             Some((span, "readAsArrayBuffer")) => ("readAsArrayBuffer", "arrayBuffer", span),
             _ => return,

@@ -72,7 +72,9 @@ impl Rule for PreferExponentiationOperator {
             }
             match_member_expression!(Expression) => {
                 let member_expr = member_expor_obj.to_member_expression();
-                let Some(static_prop_name) = member_expr.static_property_name() else {
+                let Some(static_prop_name) =
+                    member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                else {
                     return;
                 };
                 if static_prop_name != "Math" {

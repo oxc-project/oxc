@@ -218,15 +218,18 @@ pub struct ImportEntry {
     pub is_type: bool,
 }
 
-impl<'a> From<&oxc_syntax::module_record::ImportEntry<'a>> for ImportEntry {
-    fn from(other: &oxc_syntax::module_record::ImportEntry<'a>) -> Self {
-        Self {
+impl ImportEntry {
+    fn from_module_record(other: &oxc_syntax::module_record::ImportEntry<'_>) -> Option<Self> {
+        Some(Self {
             statement_span: other.statement_span,
-            module_request: NameSpan::from(&other.module_request),
+            module_request: NameSpan {
+                name: CompactStr::from(other.module_request.name.as_str()?),
+                span: other.module_request.span,
+            },
             import_name: ImportImportName::from(&other.import_name),
             local_name: NameSpan::from(&other.local_name),
             is_type: other.is_type,
-        }
+        })
     }
 }
 
@@ -318,17 +321,22 @@ pub struct ExportEntry {
     pub is_type: bool,
 }
 
-impl<'a> From<&oxc_syntax::module_record::ExportEntry<'a>> for ExportEntry {
-    fn from(other: &oxc_syntax::module_record::ExportEntry<'a>) -> Self {
-        Self {
+impl ExportEntry {
+    fn from_module_record(other: &oxc_syntax::module_record::ExportEntry<'_>) -> Option<Self> {
+        let module_request = if let Some(request) = &other.module_request {
+            Some(NameSpan { name: CompactStr::from(request.name.as_str()?), span: request.span })
+        } else {
+            None
+        };
+        Some(Self {
             statement_span: other.statement_span,
             span: other.span,
-            module_request: other.module_request.as_ref().map(NameSpan::from),
+            module_request,
             import_name: ExportImportName::from(&other.import_name),
             export_name: ExportExportName::from(&other.export_name),
             local_name: ExportLocalName::from(&other.local_name),
             is_type: other.is_type,
-        }
+        })
     }
 }
 
@@ -471,26 +479,35 @@ impl ModuleRecord {
             requested_modules: other
                 .requested_modules
                 .iter()
-                .map(|(name, requested_modules)| {
-                    (
-                        CompactStr::from(name.as_str()),
+                // The filesystem resolver accepts UTF-8 module names.
+                .filter_map(|(name, requested_modules)| {
+                    Some((
+                        CompactStr::from(name.as_str()?),
                         requested_modules.iter().copied().collect::<Vec<_>>(),
-                    )
+                    ))
                 })
                 .collect(),
-            import_entries: other.import_entries.iter().map(ImportEntry::from).collect(),
+            import_entries: other
+                .import_entries
+                .iter()
+                .filter_map(ImportEntry::from_module_record)
+                .collect(),
 
             local_export_entries: other
                 .local_export_entries
                 .iter()
-                .map(ExportEntry::from)
+                .filter_map(ExportEntry::from_module_record)
                 .collect(),
             indirect_export_entries: other
                 .indirect_export_entries
                 .iter()
-                .map(ExportEntry::from)
+                .filter_map(ExportEntry::from_module_record)
                 .collect(),
-            star_export_entries: other.star_export_entries.iter().map(ExportEntry::from).collect(),
+            star_export_entries: other
+                .star_export_entries
+                .iter()
+                .filter_map(ExportEntry::from_module_record)
+                .collect(),
             exported_bindings: other
                 .exported_bindings
                 .iter()

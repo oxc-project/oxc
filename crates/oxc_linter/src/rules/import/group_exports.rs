@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
@@ -67,9 +68,9 @@ declare_oxc_lint!(
 impl Rule for GroupExports {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
-        let mut modules_source_record: FxHashMap<String, Vec<Span>> = FxHashMap::default();
+        let mut modules_source_record: FxHashMap<JSStr, Vec<Span>> = FxHashMap::default();
         let mut modules_nodes = Vec::new();
-        let mut type_source_record: FxHashMap<String, Vec<Span>> = FxHashMap::default();
+        let mut type_source_record: FxHashMap<JSStr, Vec<Span>> = FxHashMap::default();
         let mut type_nodes = Vec::new();
         let mut commonjs_nodes = Vec::new();
 
@@ -78,13 +79,13 @@ impl Rule for GroupExports {
                 AstKind::ExportFromDeclaration(export_decl) => match export_decl.export_kind {
                     ImportOrExportKind::Value => {
                         modules_source_record
-                            .entry(export_decl.source.value.to_string())
+                            .entry(export_decl.source.value)
                             .or_default()
                             .push(export_decl.span);
                     }
                     ImportOrExportKind::Type => {
                         type_source_record
-                            .entry(export_decl.source.value.to_string())
+                            .entry(export_decl.source.value)
                             .or_default()
                             .push(export_decl.span);
                     }
@@ -152,7 +153,8 @@ impl Rule for GroupExports {
 }
 
 fn check_module_export(member_expr: &MemberExpression) -> bool {
-    let Some(property_name) = member_expr.static_property_name() else {
+    let Some(property_name) = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+    else {
         return false;
     };
     if member_expr.object().is_specific_id("module") && property_name == "exports" {

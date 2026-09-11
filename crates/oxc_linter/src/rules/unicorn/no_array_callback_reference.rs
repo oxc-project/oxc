@@ -131,7 +131,8 @@ fn should_wrap_callback(expr: &Expression) -> bool {
         }
         Expression::CallExpression(call_expr) => {
             if let Some(member_expr) = call_expr.callee.get_member_expr()
-                && let Some(prop_name) = member_expr.static_property_name()
+                && let Some(prop_name) =
+                    member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
                 && prop_name == "bind"
             {
                 return false;
@@ -235,7 +236,8 @@ fn is_ignored_object(expr: &Expression, ctx: &LintContext<'_>) -> bool {
             let member_expr = expr.to_member_expression();
             if let Expression::Identifier(obj_ident) = member_expr.object()
                 && obj_ident.name == "React"
-                && let Some(prop_name) = member_expr.static_property_name()
+                && let Some(prop_name) =
+                    member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
                 && prop_name == "Children"
             {
                 return true;

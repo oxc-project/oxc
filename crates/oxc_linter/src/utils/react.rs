@@ -48,7 +48,10 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
                 return false;
             }
 
-            member_expr.static_property_name().is_some_and(|name| name == "createElement")
+            member_expr
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)
+                .is_some_and(|name| name == "createElement")
         }
         Expression::Identifier(ident) => ident.name == "createElement",
         _ => false,
@@ -87,7 +90,9 @@ pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
 }
 
 pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
-    get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
+    get_prop_value(item)
+        .and_then(JSXAttributeValue::as_string_literal)
+        .and_then(|s| s.value.as_str())
 }
 
 // TODO: Move the a11y methods to their own util for jsx-a11y?
@@ -561,7 +566,9 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     if let Some(member_expr) = call_expr.callee.as_member_expression()
         && let Expression::Identifier(ident) = member_expr.object()
     {
-        return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
+        return ident.name == PRAGMA
+            && member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                == Some(CREATE_CLASS);
     }
 
     if let Some(ident_reference) = call_expr.callee.get_identifier_reference() {
@@ -585,6 +592,7 @@ pub fn is_es6_component(node: &AstNode) -> bool {
             return ident.name == PRAGMA
                 && member_expr
                     .static_property_name()
+                    .and_then(oxc_str::JSStr::as_str)
                     .is_some_and(|name| name == COMPONENT || name == PURE_COMPONENT);
         }
 
@@ -693,7 +701,7 @@ pub fn get_element_type<'c, 'a>(
         })
         .and_then(get_prop_value)
         .and_then(JSXAttributeValue::as_string_literal)
-        .map(|s| s.value.as_str());
+        .and_then(|s| s.value.as_str());
 
     let raw_type = polymorphic_prop.map_or(name, Cow::Borrowed);
     match jsx_a11y.components.get(raw_type.as_ref()) {
@@ -704,7 +712,7 @@ pub fn get_element_type<'c, 'a>(
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
-        JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
+        JSXAttributeValue::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         JSXAttributeValue::ExpressionContainer(container) => {
             parse_jsx_expression(&container.expression)
         }
@@ -722,7 +730,7 @@ fn parse_jsx_expression(expression: &JSXExpression) -> Result<f64, ()> {
 
 fn parse_expression(expression: &Expression) -> Result<f64, ()> {
     match expression {
-        Expression::StringLiteral(str) => str.value.parse().or(Err(())),
+        Expression::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         Expression::TemplateLiteral(tmpl) => {
             tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
         }
@@ -792,7 +800,7 @@ pub fn is_react_component_or_hook_name(name: &str) -> bool {
 }
 
 pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> bool {
-    let Some(subject) = call.callee_name() else { return false };
+    let Some(subject) = call.callee_name().and_then(oxc_str::JSStr::as_str) else { return false };
 
     if subject != expected_call {
         return false;
@@ -982,7 +990,7 @@ pub fn find_innermost_function_with_jsx<'a>(
     match expr {
         Expression::CallExpression(call) => {
             // Check if this is a HOC call
-            if let Some(callee_name) = call.callee_name()
+            if let Some(callee_name) = call.callee_name().and_then(oxc_str::JSStr::as_str)
                 && is_hoc_call(callee_name, ctx)
             {
                 // This is a HOC, recursively check the first argument

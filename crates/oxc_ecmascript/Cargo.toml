@@ -31,6 +31,7 @@ oxc_compat = { workspace = true, optional = true }
 oxc_data_structures = { workspace = true, features = ["inline_string"] }
 oxc_regular_expression = { workspace = true, optional = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 cow-utils = { workspace = true, optional = true }

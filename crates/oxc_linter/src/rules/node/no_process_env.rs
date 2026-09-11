@@ -82,13 +82,15 @@ impl Rule for NoProcessEnv {
         // Match `process.env` as either static `process.env` or computed `process["env"]`
         let span = match node.kind() {
             AstKind::StaticMemberExpression(mem)
-                if mem.property.name.as_str() == "env"
-                    && is_process_global_object(&mem.object, ctx) =>
+                if mem.property.name == "env" && is_process_global_object(&mem.object, ctx) =>
             {
                 mem.span
             }
             AstKind::ComputedMemberExpression(mem)
-                if mem.static_property_name().is_some_and(|name| name.as_str() == "env")
+                if mem
+                    .static_property_name()
+                    .and_then(oxc_str::JSStr::as_str)
+                    .is_some_and(|name| name == "env")
                     && is_process_global_object(&mem.object, ctx) =>
             {
                 mem.span
@@ -115,7 +117,7 @@ impl Rule for NoProcessEnv {
                 if let Some(obj_mem) = parent_mem.object.as_member_expression()
                     && obj_mem.span() == span
                     && let Some((_, name)) = parent_mem.static_property_info()
-                    && self.0.allowed_variables.contains(name)
+                    && name.as_str().is_some_and(|name| self.0.allowed_variables.contains(name))
                 {
                     should_report = false;
                 }

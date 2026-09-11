@@ -1,16 +1,15 @@
-use std::borrow::Cow;
-
-use cow_utils::CowUtils;
+use std::{borrow::Cow, fmt::Write};
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
+    ToBigInt, ToIntegerIndex,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -39,7 +38,10 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
-                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                    Expression::StringLiteral(s) => {
+                        let Some(name) = s.value.as_str() else { return };
+                        (name, &member.object)
+                    }
                     _ => return,
                 }
             }
@@ -203,7 +205,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
@@ -284,22 +286,10 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
-                // Borrow the arena builder field directly.
-                // It's disjoint from `&mut ctx.state` below, so the two can coexist.
                 let ast = &ctx.ast;
 
-                // Reuse a scratch `String` held on `MinifierState` across calls
-                // to accumulate the cooked text of the in-progress quasi. On
-                // flush we copy the text into the arena and clear the scratch.
-                //
-                // INVARIANT: every flush must end with `scratch.clear()` so
-                // the next string-arg `push_str` starts a fresh quasi. Two
-                // expressions in a row rely on this — the second one's flush
-                // sees an empty `scratch`, producing the required empty
-                // separator quasi without a state-machine flag.
-                let scratch = &mut ctx.state.concat_scratch;
-                scratch.clear();
-                scratch.push_str(base_str.value.as_str());
+                let mut builder = JSStrBuilder::new_in(ast.allocator());
+                builder.push_js_str(base_str.value);
 
                 let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
                 let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
@@ -307,12 +297,14 @@ impl<'a> PeepholeOptimizations {
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
                         // Append onto the in-progress quasi.
-                        scratch.push_str(&str_lit.value);
+                        builder.push_js_str(str_lit.value);
                     } else {
                         // Flush the current quasi (possibly empty) before
                         // pushing the next expression.
-                        let cooked = Str::from_str_in(scratch, ast);
-                        let raw_cow = Self::escape_string_for_template_literal(scratch);
+                        let cooked =
+                            std::mem::replace(&mut builder, JSStrBuilder::new_in(ast.allocator()))
+                                .into_js_str();
+                        let raw_cow = Self::escape_string_for_template_literal(cooked);
                         let raw = Str::from_str_in(&raw_cow, ast);
                         // `raw` is already escaped
                         quasis.push(TemplateElement::new(
@@ -321,7 +313,6 @@ impl<'a> PeepholeOptimizations {
                             false,
                             ast,
                         ));
-                        scratch.clear(); // maintains INVARIANT above
                         // checked that all the arguments are expression above
                         expressions.push(argument.into_expression());
                     }
@@ -329,15 +320,13 @@ impl<'a> PeepholeOptimizations {
 
                 if expressions.is_empty() {
                     debug_assert_eq!(quasis.len(), 0);
-                    let s = Str::from_str_in(scratch, ast);
+                    let s = builder.into_js_str();
                     return Some(Expression::new_string_literal(span, s, None, ast));
                 }
 
-                // Flush the trailing quasi. If the last arg was an expression
-                // `scratch` is empty, giving the required trailing empty
-                // quasi; otherwise it holds the accumulated tail text.
-                let cooked = Str::from_str_in(scratch, ast);
-                let raw_cow = Self::escape_string_for_template_literal(scratch);
+                // Flush the trailing quasi, including an empty one after an expression.
+                let cooked = builder.into_js_str();
+                let raw_cow = Self::escape_string_for_template_literal(cooked);
                 let raw = Str::from_str_in(&raw_cow, ast);
                 // `raw` is already escaped
                 quasis.push(TemplateElement::new(
@@ -354,18 +343,26 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
-        if s.contains(['\\', '`', '$', '\r']) {
-            Cow::Owned(
-                s.cow_replace("\\", "\\\\")
-                    .cow_replace("`", "\\`")
-                    .cow_replace("$", "\\$")
-                    .cow_replace('\r', "\\r")
-                    .into_owned(),
-            )
-        } else {
-            Cow::Borrowed(s)
+    pub(super) fn escape_string_for_template_literal(s: JSStr<'_>) -> Cow<'_, str> {
+        if let Some(s) = s.as_str()
+            && !s.contains(['\\', '`', '$', '\r', '\0'])
+        {
+            return Cow::Borrowed(s);
         }
+        let mut escaped = String::with_capacity(s.len());
+        for ch in s.chars() {
+            match ch.to_char() {
+                None => write!(escaped, "\\u{:04x}", ch.to_u32()).unwrap(),
+                Some(ch @ ('\\' | '`' | '$')) => {
+                    escaped.push('\\');
+                    escaped.push(ch);
+                }
+                Some('\r') => escaped.push_str("\\r"),
+                Some('\0') => escaped.push_str("\\x00"),
+                Some(ch) => escaped.push(ch),
+            }
+        }
+        Cow::Owned(escaped)
     }
 
     pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -386,7 +383,8 @@ impl<'a> PeepholeOptimizations {
                 match &member.expression {
                     Expression::StringLiteral(s) => {
                         let span = member.span;
-                        (s.value.as_str(), &mut member.object, span)
+                        let Some(name) = s.value.as_str() else { return };
+                        (name, &mut member.object, span)
                     }
                     Expression::NumericLiteral(n) => {
                         if let Some(integer_index) = n.value.to_integer_index() {
@@ -551,17 +549,15 @@ impl<'a> PeepholeOptimizations {
 
         match object {
             Expression::StringLiteral(s) => {
-                if let StringCharAtResult::Value(c) =
-                    s.value.as_str().char_at(Some(property.into()))
-                {
-                    s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx);
-                    s.raw = None;
-                    Some(object.take_in(ctx))
-                } else {
-                    None
-                }
+                let unit = s.value.encode_utf16().nth(property as usize)?;
+                let mut builder = JSStrBuilder::new_in(ctx.allocator());
+                builder.push_code_unit(unit);
+                s.span = span;
+                s.value = builder.into_js_str();
+                s.raw = None;
+                Some(object.take_in(ctx))
             }
+
             Expression::ArrayExpression(array_expr) => {
                 let length_until_spread =
                     array_expr.elements.iter().take_while(|el| !el.is_spread()).count();

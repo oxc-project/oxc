@@ -93,7 +93,10 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             .static_property_info()
             .expect("callee is a static property");
 
-        let diagnostic = no_single_promise_in_promise_methods_diagnostic(span, method_name);
+        let diagnostic = no_single_promise_in_promise_methods_diagnostic(
+            span,
+            method_name.as_str().expect("is_method_call matched a known Promise method"),
+        );
 
         let await_expr_span = ctx
             .nodes()

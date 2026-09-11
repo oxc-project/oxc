@@ -88,11 +88,11 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith};
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::PropName;
 use oxc_span::{SPAN, Span};
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, JSStrBuilder, Str};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_white_space_single_line},
     keyword::is_reserved_keyword,
@@ -912,13 +912,14 @@ impl<'a> JsxImpl<'a> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let mut decoded = None;
-                decode_entities(s.value.as_str(), &mut decoded, s.value.len(), ctx.allocator());
+                if let Some(value) = s.value.as_str() {
+                    decode_entities(value, &mut decoded, s.value.len(), ctx.allocator());
+                }
                 let jsx_text = if let Some(decoded) = decoded {
                     // Text contains HTML entities which were decoded.
-                    // `decoded` contains the decoded string as an `ArenaString`. Convert it to `Str`.
-                    Str::from(decoded)
+                    decoded.into_js_str()
                 } else {
-                    // No HTML entities needed to be decoded. Use the original `Str` without copying.
+                    // No HTML entities needed to be decoded. Use the original value without copying.
                     s.value
                 };
                 Expression::new_string_literal(s.span, jsx_text, None, ctx)
@@ -1028,15 +1029,15 @@ impl<'a> JsxImpl<'a> {
     fn fixup_whitespace_and_decode_entities(
         text: Str<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> Option<Str<'a>> {
+    ) -> Option<JSStr<'a>> {
         // Avoid copying strings in the common case where there's only 1 line of text,
         // and it contains no HTML entities that need decoding.
         //
         // Where we do have to decode HTML entities, or concatenate multiple lines, assemble the
-        // concatenated text directly in arena, in an `ArenaString` (the accumulator `acc`),
+        // concatenated text directly in arena, in a `JSStrBuilder` (the accumulator `acc`),
         // to avoid allocations. Initialize that `ArenaString` with capacity equal to length of
         // the original text. This may be a bit more capacity than is required, once whitespace
-        // is removed, but it's highly unlikely to be insufficient capacity, so the `ArenaString`
+        // is removed, but it's highly unlikely to be insufficient capacity, so the `JSStrBuilder`
         // shouldn't need to reallocate while it's being constructed.
         //
         // When first line containing some text is found:
@@ -1049,12 +1050,12 @@ impl<'a> JsxImpl<'a> {
         // * Decode current line into the accumulator.
         //
         // At the end:
-        // * If accumulator is initialized, convert the `ArenaString` to a `Str` and return it.
+        // * If accumulator is initialized, convert the `JSStrBuilder` to a `JSStr` and return it.
         // * If `only_line` contains a string, that means only 1 line contained text, and that line
         //   didn't contain any HTML entities which needed decoding.
         //   So we can just return the `Str` that's in `only_line` (without any copying).
 
-        let mut acc: Option<ArenaStringBuilder> = None;
+        let mut acc: Option<JSStrBuilder> = None;
         let mut only_line: Option<Str<'a>> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
@@ -1088,12 +1089,12 @@ impl<'a> JsxImpl<'a> {
             );
         }
 
-        if let Some(acc) = acc { Some(Str::from(acc)) } else { only_line }
+        if let Some(acc) = acc { Some(acc.into_js_str()) } else { only_line.map(JSStr::from) }
     }
 
     fn add_line_of_jsx_text(
         trimmed_line: Str<'a>,
-        acc: &mut Option<ArenaStringBuilder<'a>>,
+        acc: &mut Option<JSStrBuilder<'a>>,
         only_line: &mut Option<Str<'a>>,
         text_len: usize,
         ctx: &TraverseCtx<'a>,
@@ -1105,7 +1106,7 @@ impl<'a> JsxImpl<'a> {
             // This is the 2nd line containing text. Previous line did not contain any HTML entities.
             // Generate an accumulator containing previous line and a trailing space.
             // Current line will be added to the accumulator after it.
-            let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.allocator());
+            let mut buffer = JSStrBuilder::with_capacity_in(text_len, ctx.allocator());
             buffer.push_str(only_line.as_str());
             buffer.push(' ');
             *acc = Some(buffer);
@@ -1117,7 +1118,7 @@ impl<'a> JsxImpl<'a> {
         if acc.is_none() {
             // This is the first line containing text, and there are no HTML entities in this line.
             // Record this line in `only_line`.
-            // If this turns out to be the only line, we won't need to construct an `ArenaString`,
+            // If this turns out to be the only line, we won't need to construct a `JSStrBuilder`,
             // so avoid all copying.
             *only_line = Some(trimmed_line);
         }

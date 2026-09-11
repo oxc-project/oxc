@@ -86,14 +86,19 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
         }
         Expression::CallExpression(call_expr) => {
             let Some(callee) = call_expr.callee.get_member_expr() else {
-                return call_expr.callee_name().is_some_and(|name| name == "Array");
+                return call_expr
+                    .callee_name()
+                    .and_then(oxc_str::JSStr::as_str)
+                    .is_some_and(|name| name == "Array");
             };
 
             if callee.is_computed() || callee.optional() {
                 return false;
             }
 
-            let Some(name) = callee.static_property_name() else { return false };
+            let Some(name) = callee.static_property_name().and_then(oxc_str::JSStr::as_str) else {
+                return false;
+            };
 
             is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }

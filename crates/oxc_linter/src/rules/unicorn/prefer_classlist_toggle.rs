@@ -314,7 +314,8 @@ fn is_classlist_access(expr: &Expression) -> bool {
         }
         Expression::ChainExpression(chain) => {
             if let Some(member_expr) = chain.expression.as_member_expression() {
-                member_expr.static_property_name() == Some("classList")
+                member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                    == Some("classList")
             } else {
                 false
             }

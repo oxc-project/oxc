@@ -116,11 +116,11 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(EcmaScriptModule, has_module_syntax) == 64);
 
     // Padding: 0 bytes
-    assert!(size_of::<StaticImport>() == 40);
+    assert!(size_of::<StaticImport>() == 44);
     assert!(align_of::<StaticImport>() == 4);
     assert!(offset_of!(StaticImport, span) == 0);
     assert!(offset_of!(StaticImport, module_request) == 8);
-    assert!(offset_of!(StaticImport, entries) == 24);
+    assert!(offset_of!(StaticImport, entries) == 28);
 
     // Padding: 0 bytes
     assert!(size_of::<StaticExport>() == 24);

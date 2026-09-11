@@ -475,7 +475,7 @@ impl<'a> StyledComponents<'a> {
         for statement in &program.body {
             let Statement::ImportDeclaration(import) = &statement else { continue };
             let Some(specifiers) = &import.specifiers else { continue };
-            if !is_valid_styled_component_source(&import.source.value) {
+            if !import.source.value.as_str().is_some_and(is_valid_styled_component_source) {
                 continue;
             }
 
@@ -483,8 +483,10 @@ impl<'a> StyledComponents<'a> {
                 match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                         let symbol_id = specifier.local.symbol_id();
-                        let imported_name = specifier.imported.name();
-                        match imported_name.as_str() {
+                        let Some(imported_name) = specifier.imported.name().as_str() else {
+                            continue;
+                        };
+                        match imported_name {
                             // Handle `import { default as styled }` and `import { styled }`
                             "default" | "styled" => {
                                 self.styled_bindings.styled = Some(symbol_id);
@@ -1161,7 +1163,7 @@ mod tests {
                 SPAN,
                 TemplateElementValue {
                     raw: Str::from_str_in(input, &ast),
-                    cooked: Some(Str::from_str_in(input, &ast)),
+                    cooked: Some(Str::from_str_in(input, &ast).into()),
                 },
                 true,
                 &ast,

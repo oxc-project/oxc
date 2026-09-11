@@ -25603,18 +25603,6 @@ Negative Passed: 4651/4651 (100.00%)
  24 │ 
     ╰────
 
-  × Duplicated export '�d83c'
-    ╭─[test262/test/language/module-code/early-export-ill-formed-string.js:21:17]
- 20 │ // 🌙 is '\uD83C\uDF19'
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
-    ·                 ────┬───
-    ·                     ╰── Export has already been declared here
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────┬───
-    ·             ╰── It cannot be redeclared here
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ╰────
-
   × Export 'unresolvable' is not defined
     ╭─[test262/test/language/module-code/early-export-unresolvable.js:17:10]
  16 │ 

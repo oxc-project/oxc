@@ -232,7 +232,9 @@ fn check_array_callback_methods(
     if callee_member_expr.optional() {
         return false;
     }
-    let Some(method_name) = callee_member_expr.static_property_name() else {
+    let Some(method_name) =
+        callee_member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+    else {
         return false;
     };
     if !ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.contains(&method_name) {

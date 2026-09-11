@@ -485,11 +485,11 @@ fn ox_codegen_reactive_function<'a>(
                 d.span,
                 oxc_ast::ast::StringLiteral::new(
                     d.expression_span,
-                    ox_str(&cx.ast, &d.value),
+                    d.value.clone_in(cx.ast.allocator()),
                     None,
                     &cx.ast,
                 ),
-                ox_str(&cx.ast, &d.value),
+                ox_str(&cx.ast, &d.raw),
                 &cx.ast,
             )
         }),
@@ -2335,7 +2335,7 @@ fn ox_template_literal<'a>(
     for (i, q) in quasis.iter().enumerate() {
         let value = oxc::TemplateElementValue {
             raw: ox_str(&cx.ast, &q.raw).into(),
-            cooked: q.cooked.as_deref().map(|c| ox_str(&cx.ast, c).into()),
+            cooked: q.cooked.map(|c| c.clone_in(cx.ast.allocator())),
         };
         quasi_vec.push(oxc_ast::ast::TemplateElement::new(q.span, value, i == len - 1, &cx.ast));
     }
@@ -3247,7 +3247,9 @@ fn ox_codegen_jsx_attribute<'a>(
             let inner_value = ox_codegen_place_to_expression(cx, place)?;
             let attr_value = match inner_value {
                 oxc::Expression::StringLiteral(ref s)
-                    if !ox_string_requires_expr_container(s.value.as_str()) || is_fbt_operand =>
+                    if s.value.as_str().is_some_and(|value| {
+                        !ox_string_requires_expr_container(value) || is_fbt_operand
+                    }) =>
                 {
                     let value = s.value;
                     Some(oxc_ast::ast::JSXAttributeValue::new_string_literal(
@@ -3390,7 +3392,9 @@ fn ox_expression_to_jsx_tag<'a>(
             ))
         }
         oxc::Expression::StringLiteral(s) => {
-            let tag_text = s.value.as_str();
+            let tag_text = s.value.as_str().ok_or_else(|| {
+                diagnostics::invariant_expected_jsx_tag_identifier_or_string(Some(span))
+            })?;
             if tag_text.contains(':') {
                 let parts: Vec<&str> = tag_text.splitn(2, ':').collect();
                 let namespace =
@@ -3613,9 +3617,12 @@ fn ox_codegen_primitive_value<'a>(
             }
         }
         PrimitiveValue::Boolean(b) => oxc_ast::ast::Expression::new_boolean_literal(span, *b, ast),
-        PrimitiveValue::String(s) => {
-            oxc_ast::ast::Expression::new_string_literal(span, ox_str(ast, s.as_str()), None, ast)
-        }
+        PrimitiveValue::String(s) => oxc_ast::ast::Expression::new_string_literal(
+            span,
+            s.clone_in(ast.allocator()),
+            None,
+            ast,
+        ),
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(span, ast),
         PrimitiveValue::Undefined => {
             oxc_ast::ast::Expression::new_identifier(span, "undefined", ast)

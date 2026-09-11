@@ -423,7 +423,11 @@ fn assignment_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<(&'a s
         AssignmentTarget::AssignmentTargetIdentifier(identifier) => {
             Some((identifier.name.as_str(), false))
         }
-        target => target.as_member_expression()?.static_property_name().map(|name| (name, true)),
+        target => target
+            .as_member_expression()?
+            .static_property_name()
+            .and_then(oxc_str::JSStr::as_str)
+            .map(|name| (name, true)),
     }
 }
 
@@ -435,7 +439,8 @@ fn is_module_exports(target: &AssignmentTarget) -> bool {
         return false;
     };
 
-    object.name == "module" && member_expr.static_property_name() == Some("exports")
+    object.name == "module"
+        && member_expr.static_property_name().and_then(oxc_str::JSStr::as_str) == Some("exports")
 }
 
 fn property_key_is_identifier(key: &PropertyKey) -> bool {
@@ -444,14 +449,14 @@ fn property_key_is_identifier(key: &PropertyKey) -> bool {
 
 fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
     match key {
-        PropertyKey::StringLiteral(lit) => Some(lit.value.as_str()),
+        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
         _ => None,
     }
 }
 
 fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a str> {
     match argument.as_expression()?.without_parentheses() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::StringLiteral(lit) => lit.value.as_str(),
         _ => None,
     }
 }

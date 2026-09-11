@@ -391,10 +391,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut keys = FxHashMap::default();
         for e in &with_entries {
-            let key = e.key.as_arena_str().as_str();
+            let key = e.key.as_js_str();
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
-                self.error(diagnostics::redeclaration(key, old_span, span));
+                let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
+                self.error(diagnostics::redeclaration(name, old_span, span));
             }
         }
 
@@ -935,8 +936,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let local =
-                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
+                // Recovery for an invalid local string name, already diagnosed above.
+                let local_name = name.name().as_str().unwrap_or_default();
+                let local = BindingIdentifier::new(name.span(), self.ident(local_name), self);
                 let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_start),
@@ -999,13 +1001,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
             }
             ModuleExportName::StringLiteral(literal) => {
-                ModuleExportName::new_string_literal_with_lone_surrogates(
-                    literal.span,
-                    literal.value,
-                    literal.raw,
-                    literal.lone_surrogates,
-                    self,
-                )
+                ModuleExportName::new_string_literal(literal.span, literal.value, literal.raw, self)
             }
         }
     }

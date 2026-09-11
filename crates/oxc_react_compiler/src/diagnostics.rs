@@ -922,6 +922,12 @@ where
 }
 
 #[cold]
+pub fn todo_jsx_text_with_lone_surrogates(span: Span) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Todo, "JSX text containing lone surrogates is not supported")
+        .with_label(span)
+}
+
+#[cold]
 pub fn todo_build_hir_lower_expression_handle_super_expressions<L, T>(labels: T) -> OxcDiagnostic
 where
     L: Into<oxc_diagnostics::LabeledSpan>,

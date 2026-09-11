@@ -170,7 +170,7 @@ fn is_define_property_call(call_expr: &CallExpression) -> bool {
     };
     match member_expression {
         Some(me) => {
-            let prop_name = me.static_property_name();
+            let prop_name = me.static_property_name().and_then(oxc_str::JSStr::as_str);
             me.object()
                 .get_identifier_reference()
                 .is_some_and(|ident_ref| ident_ref.name == "Object")
@@ -223,7 +223,7 @@ fn get_prototype_property_accessed<'a>(
         prop_access_expr if prop_access_expr.is_member_expression_kind() => {
             let prop_name = prop_access_expr
                 .as_member_expression_kind()
-                .and_then(|m| m.static_property_name())?;
+                .and_then(|m| m.static_property_name().and_then(oxc_str::JSStr::as_str))?;
             if prop_name != "prototype" {
                 return None;
             }

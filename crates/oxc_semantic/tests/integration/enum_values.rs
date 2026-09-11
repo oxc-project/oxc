@@ -1,8 +1,78 @@
+use std::fmt::Write;
+
 use oxc_allocator::Allocator;
+use oxc_ast::ast::Statement;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use oxc_str::JSStrBuilder;
 use oxc_syntax::constant_value::ConstantValue;
+
+#[test]
+fn lone_surrogate_constants_and_concatenation() {
+    let source = r#"enum E { A = "\uD800", B = A + "\uDC00", C = `x${A}y`, D = "\uFFFDd800" }"#;
+    assert_eq!(
+        get_enum_member_value(source, "A"),
+        Some(ConstantValue::Utf16String(Box::new([0xD800])))
+    );
+    assert_eq!(get_enum_member_value(source, "B"), Some(ConstantValue::String("𐀀".into())));
+    assert_eq!(
+        get_enum_member_value(source, "C"),
+        Some(ConstantValue::Utf16String(Box::new([0x78, 0xD800, 0x79])))
+    );
+    assert_eq!(get_enum_member_value(source, "D"), Some(ConstantValue::String("�d800".into())));
+}
+
+#[test]
+fn lone_surrogate_member_names_in_merged_enums() {
+    let source = r#"enum E { "\uD800" = "\uD800", "\uFFFDd800" = "marker" }
+        enum E { A = E["\uD800"] + "\uDC00", B = E["\uFFFDd800"] }"#;
+    assert_eq!(get_enum_member_value(source, "A"), Some(ConstantValue::String("𐀀".into())));
+    assert_eq!(get_enum_member_value(source, "B"), Some(ConstantValue::String("marker".into())));
+}
+
+#[test]
+fn scoped_surrogate_member_values_survive_growth_and_cloning() {
+    let (scoping, scopes) = {
+        let mut source = String::new();
+        for (name, offset) in [("A", 0), ("B", 100)] {
+            write!(source, "enum {name} {{").unwrap();
+            for index in 0..64 {
+                write!(source, r#""\uD800𐀀{index}" = {},"#, offset + index).unwrap();
+            }
+            source.push('}');
+        }
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, &source, SourceType::ts()).parse();
+        assert!(parsed.diagnostics.is_empty());
+        let semantic = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
+        assert!(semantic.diagnostics.is_empty());
+        let scopes: Vec<_> = parsed
+            .program
+            .body
+            .iter()
+            .map(|statement| {
+                let Statement::TSEnumDeclaration(decl) = statement else { unreachable!() };
+                decl.body.scope_id.get().unwrap()
+            })
+            .collect();
+        (semantic.semantic.into_scoping().clone_in_with_semantic_ids_with_another_arena(), scopes)
+    };
+
+    // All original source and arena storage has been dropped. Look up the cloned
+    // values using names from a different arena, after the table has grown.
+    let allocator = Allocator::default();
+    for index in 0..=64 {
+        let mut name = JSStrBuilder::new_in(&allocator);
+        name.push_code_unit(0xD800);
+        name.push_str(&format!("𐀀{index}"));
+        let name = name.into_js_str();
+        for (scope, offset) in scopes.iter().zip([0, 100]) {
+            let expected = (index < 64).then(|| ConstantValue::Number(f64::from(index + offset)));
+            assert_eq!(scoping.get_enum_member_value_by_name(*scope, name), expected.as_ref());
+        }
+    }
+}
 
 fn get_enum_member_value(source: &str, member_name: &str) -> Option<ConstantValue> {
     let allocator = Allocator::default();

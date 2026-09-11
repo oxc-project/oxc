@@ -7,7 +7,7 @@ function Component() {
 	const $ = _c(1);
 	let t0;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		t0 = <Emoji codepoints={["�d83e", "�dd21"]} size={16} />;
+		t0 = <Emoji codepoints={["\ud83e", "\udd21"]} size={16} />;
 		$[0] = t0;
 	} else {
 		t0 = $[0];

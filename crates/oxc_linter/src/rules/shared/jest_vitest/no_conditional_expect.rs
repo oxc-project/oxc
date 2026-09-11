@@ -165,7 +165,8 @@ fn check_parents<'a>(
             }
 
             if let Some(member_expr) = call_expr.callee.as_member_expression()
-                && member_expr.static_property_name() == Some("catch")
+                && member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+                    == Some("catch")
             {
                 return check_parents(parent_node, visited, InConditional(true), ctx);
             }

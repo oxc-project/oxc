@@ -67,8 +67,11 @@ impl Rule for NoNamespace {
                     return;
                 };
 
-                if str_lit.value.contains(':') {
-                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &str_lit.value));
+                if str_lit.value.chars().any(|ch| ch.to_u32() == u32::from(b':')) {
+                    ctx.diagnostic(no_namespace_diagnostic(
+                        str_lit.span,
+                        str_lit.value.as_str().unwrap_or_else(|| ctx.source_range(str_lit.span)),
+                    ));
                 }
             }
             _ => {}

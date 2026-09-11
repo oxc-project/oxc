@@ -251,9 +251,11 @@ impl NoSelfAssign {
         if !self.props {
             return false;
         }
-        let member1_static_property_name = member1.static_property_name();
+        let member1_static_property_name =
+            member1.static_property_name().and_then(oxc_str::JSStr::as_str);
         if member1_static_property_name.is_some()
-            && member1_static_property_name == member2.static_property_name()
+            && member1_static_property_name
+                == member2.static_property_name().and_then(oxc_str::JSStr::as_str)
         {
             return self.is_same_reference(member1.object(), member2.object());
         }

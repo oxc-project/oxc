@@ -6,7 +6,7 @@ use self_cell::self_cell;
 use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn, CloneInSemanticIds};
 use oxc_index::IndexVec;
 use oxc_span::Span;
-use oxc_str::{ArenaIdentHashMap, Ident};
+use oxc_str::{ArenaIdentHashMap, Ident, JSStr};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,
@@ -712,9 +712,34 @@ impl Scoping {
         self.enum_data.get_member_value(symbol_id)
     }
 
-    /// Set a computed constant value for an enum member symbol.
-    pub(crate) fn set_enum_member_value(&mut self, symbol_id: SymbolId, value: ConstantValue) {
-        self.enum_data.set_member_value(symbol_id, value);
+    /// Get a computed enum member value by body scope and JavaScript property name.
+    /// Includes string names containing lone surrogates, which have no lexical binding.
+    pub fn get_enum_member_value_by_name(
+        &self,
+        scope_id: ScopeId,
+        name: JSStr<'_>,
+    ) -> Option<&ConstantValue> {
+        if let Some(name) = name.as_str() {
+            self.get_binding(scope_id, name.into()).and_then(|id| self.get_enum_member_value(id))
+        } else {
+            self.enum_data.get_utf16_member_value(scope_id, name)
+        }
+    }
+
+    /// Set a computed constant value for an enum member.
+    pub(crate) fn set_enum_member_value_by_name(
+        &mut self,
+        scope_id: ScopeId,
+        name: JSStr<'_>,
+        value: ConstantValue,
+    ) {
+        if let Some(name) = name.as_str() {
+            if let Some(symbol_id) = self.get_binding(scope_id, name.into()) {
+                self.enum_data.set_member_value(symbol_id, value);
+            }
+        } else {
+            self.enum_data.set_utf16_member_value(scope_id, name, value);
+        }
     }
 
     /// Get the body scopes for an enum declaration symbol.

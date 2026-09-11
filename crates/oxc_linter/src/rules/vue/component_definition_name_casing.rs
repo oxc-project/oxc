@@ -120,7 +120,10 @@ impl ComponentDefinitionNameCasing {
         // `Vue.component('Name', ...)` / `app.component('Name', ...)` /
         // `(Vue as VueConstructor<Vue>).component('Name', ...)`
         if let Some(member_expr) = call.callee.get_inner_expression().as_member_expression()
-            && member_expr.static_property_name().is_some_and(|prop_name| prop_name == "component")
+            && member_expr
+                .static_property_name()
+                .and_then(oxc_str::JSStr::as_str)
+                .is_some_and(|prop_name| prop_name == "component")
             && call.arguments.len() == 2
             && let Some(first_arg) = call.arguments.first()
             && let Some(first_expr) = first_arg.as_expression()
@@ -172,7 +175,7 @@ fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
     match expr {
         Expression::StringLiteral(lit) => {
             let inner = Span::new(lit.span.start + 1, lit.span.end - 1);
-            Some((lit.value.to_string(), inner))
+            Some((lit.value.as_str()?.to_owned(), inner))
         }
         Expression::TemplateLiteral(tpl) => {
             if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
@@ -181,7 +184,7 @@ fn extract_convertible(expr: &Expression<'_>) -> Option<(String, Span)> {
             let quasi = tpl.quasis.first()?;
             let cooked = quasi.value.cooked.as_ref()?;
             let inner = Span::new(tpl.span.start + 1, tpl.span.end - 1);
-            Some((cooked.to_string(), inner))
+            Some((cooked.as_str()?.to_owned(), inner))
         }
         _ => None,
     }

@@ -12,7 +12,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
-use oxc_str::static_ident;
+use oxc_str::{JSStr, JSStrBuilder, static_ident};
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
@@ -124,7 +124,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -139,7 +142,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -154,7 +160,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -1425,11 +1434,11 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
-                let value = s.value.as_str();
+                let Some(value) = s.value.as_str() else { return };
                 if is_identifier_name_patched(value) {
                     // Bool field flip on an existing AST node, not a slot replacement.
                     *computed = false;
-                    let new_key = PropertyKey::new_static_identifier(s.span, s.value, ctx);
+                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
@@ -1752,23 +1761,25 @@ impl<'a> PeepholeOptimizations {
 
         let strings = array.elements.iter().map(|element| {
             let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.value.as_str()
+            str.value
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
-        let concatenated_string = strings.collect::<Vec<_>>().join(delimiter);
+        let mut builder = JSStrBuilder::new_in(ctx.allocator());
+        for (index, value) in strings.enumerate() {
+            if index != 0 {
+                builder.push_str(delimiter);
+            }
+            builder.push_js_str(value);
+        }
+        let concatenated_string = builder.into_js_str();
 
         // "str1,str2".split(',')
         let new_value = Expression::new_call_expression_with_pure(
             expr.span(),
             Expression::new_static_member_expression(
                 expr.span(),
-                Expression::new_string_literal(
-                    expr.span(),
-                    Str::from_str_in(&concatenated_string, ctx),
-                    None,
-                    ctx,
-                ),
+                Expression::new_string_literal(expr.span(), concatenated_string, None, ctx),
                 IdentifierName::new(expr.span(), "split", ctx),
                 false,
                 ctx,
@@ -1788,18 +1799,22 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn pick_delimiter<'s>(
-        strings: &(impl Iterator<Item = &'s str> + Clone),
+        strings: &(impl Iterator<Item = JSStr<'s>> + Clone),
     ) -> Option<&'static str> {
         // These delimiters are chars that appears a lot in the program
         // therefore probably have a small Huffman encoding.
         const DELIMITERS: [&str; 5] = [".", ",", "(", ")", " "];
 
-        let is_all_length_1 = strings.clone().all(|s| s.len() == 1);
+        let is_all_length_1 = strings.clone().all(|s| s.len_utf16() == 1);
         if is_all_length_1 {
             return Some("");
         }
 
-        DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
+        DELIMITERS.into_iter().find(|&delimiter| {
+            strings
+                .clone()
+                .all(|s| !s.chars().any(|ch| ch.to_u32() == u32::from(delimiter.as_bytes()[0])))
+        })
     }
 
     pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &TraverseCtx<'a>) {

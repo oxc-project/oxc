@@ -193,7 +193,7 @@ fn check_call_mutation<'a>(
         return;
     }
 
-    let Some(method_name) = member.static_property_name() else {
+    let Some(method_name) = member.static_property_name().and_then(oxc_str::JSStr::as_str) else {
         return;
     };
 
@@ -414,7 +414,7 @@ fn is_object_assign_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bo
         return false;
     }
 
-    let Some(prop_name) = member.static_property_name() else {
+    let Some(prop_name) = member.static_property_name().and_then(oxc_str::JSStr::as_str) else {
         return false;
     };
 

@@ -79,7 +79,8 @@ impl Rule for PreferAwaitToCallbacks {
                     let callee_property_name = expr
                         .callee
                         .as_member_expression()
-                        .and_then(MemberExpression::static_property_name);
+                        .and_then(MemberExpression::static_property_name)
+                        .and_then(oxc_str::JSStr::as_str);
 
                     if matches!(
                         callee_property_name,

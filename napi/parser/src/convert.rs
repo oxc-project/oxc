@@ -1,3 +1,4 @@
+use napi::bindgen_prelude::Either;
 use rustc_hash::FxHashMap;
 
 use oxc::syntax::module_record::{self, ModuleRecord};
@@ -21,17 +22,13 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
                         .filter(|e| e.statement_span == m.statement_span)
                         .map(StaticImportEntry::from)
                         .collect::<Vec<_>>();
-                    {
-                        StaticImport {
-                            start: m.statement_span.start,
-                            end: m.statement_span.end,
-                            module_request: ValueSpan {
-                                value: name.to_string(),
-                                start: m.span.start,
-                                end: m.span.end,
-                            },
-                            entries,
-                        }
+                    StaticImport {
+                        start: m.statement_span.start,
+                        end: m.statement_span.end,
+                        module_request: ValueSpan::from(&module_record::ModuleRequest::new(
+                            *name, m.span,
+                        )),
+                        entries,
                     }
                 })
             })
@@ -130,9 +127,22 @@ impl From<&module_record::ImportImportName<'_>> for ImportName {
 impl From<&module_record::NameSpan<'_>> for ValueSpan {
     fn from(name_span: &module_record::NameSpan) -> Self {
         Self {
-            value: name_span.name.to_string(),
+            value: Either::A(name_span.name.to_string()),
             start: name_span.span.start,
             end: name_span.span.end,
+        }
+    }
+}
+
+impl From<&module_record::ModuleRequest<'_>> for ValueSpan {
+    fn from(request: &module_record::ModuleRequest<'_>) -> Self {
+        Self {
+            value: request.name.as_str().map_or_else(
+                || Either::B(request.name.encode_utf16().collect::<Vec<_>>().into()),
+                |name| Either::A(name.to_owned()),
+            ),
+            start: request.span.start,
+            end: request.span.end,
         }
     }
 }

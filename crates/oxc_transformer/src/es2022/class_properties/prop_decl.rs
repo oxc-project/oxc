@@ -287,7 +287,9 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 )
             }
-            PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
+            PropertyKey::StringLiteral(str_lit)
+                if str_lit.value.as_str().is_some_and(needs_define) =>
+            {
                 return self
                     .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }

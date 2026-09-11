@@ -133,7 +133,7 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
         return;
     }
     if !matches!(call.callee, Expression::Identifier(_))
-        || call.callee_name() != Some("defineProps")
+        || call.callee_name().and_then(oxc_str::JSStr::as_str) != Some("defineProps")
     {
         return;
     }
@@ -318,8 +318,10 @@ fn report_or_add<'a>(
 /// Non-string literals are stringified like JS `String(value)`; `null` has no name.
 fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
     match expr {
-        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
-        Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
+        Expression::StringLiteral(s) => s.value.as_str().map(Cow::Borrowed),
+        Expression::TemplateLiteral(t) => {
+            t.single_quasi().and_then(oxc_str::JSStr::as_str).map(Cow::Borrowed)
+        }
         Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
         Expression::BooleanLiteral(b) => {
             Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
@@ -475,7 +477,7 @@ fn is_define_props_initializer<'a>(init: &'a Expression<'a>, call: &'a CallExpre
         Expression::CallExpression(c) => {
             std::ptr::eq(c.as_ref(), call)
                 || (matches!(c.callee, Expression::Identifier(_))
-                    && c.callee_name() == Some("withDefaults")
+                    && c.callee_name().and_then(oxc_str::JSStr::as_str) == Some("withDefaults")
                     && c.arguments
                         .first()
                         .and_then(|a| a.as_expression())

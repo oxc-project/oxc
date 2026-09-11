@@ -514,7 +514,9 @@ impl OnlyExportComponents {
             let span = export_spec.local.span();
 
             let export = if exported_name == Some("default") {
-                self.classify_export(local_name.as_str(), span, false, None)
+                local_name.as_str().map_or(ExportType::NonComponent(span), |name| {
+                    self.classify_export(name, span, false, None)
+                })
             } else if let Some(name) = exported_name {
                 self.classify_export(name, span, false, None)
             } else {
@@ -632,6 +634,7 @@ impl OnlyExportComponents {
             {
                 return member_expr
                     .static_property_name()
+                    .and_then(oxc_str::JSStr::as_str)
                     .is_some_and(|name| matches!(name, "Component" | "PureComponent"));
             }
 

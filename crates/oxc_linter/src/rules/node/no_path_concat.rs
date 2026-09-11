@@ -110,7 +110,9 @@ fn is_dirname_or_filename(expr: &Expression, ctx: &LintContext) -> bool {
 
 fn starts_with_path_separator(expr: &Expression) -> bool {
     match expr {
-        Expression::StringLiteral(s) => s.value.chars().next().is_some_and(is_path_separator),
+        Expression::StringLiteral(s) => {
+            s.value.chars().next().and_then(oxc_str::JSChar::to_char).is_some_and(is_path_separator)
+        }
         Expression::TemplateLiteral(temp_lit) => {
             template_element_starts_with_path_separator(temp_lit, 0)
         }
@@ -139,7 +141,7 @@ fn template_element_starts_with_path_separator(temp_lit: &TemplateLiteral, i: us
     };
 
     if let Some(c) = quasi.value.cooked.as_ref().and_then(|cooked| cooked.chars().next())
-        && is_path_separator(c)
+        && c.to_char().is_some_and(is_path_separator)
     {
         return true;
     }

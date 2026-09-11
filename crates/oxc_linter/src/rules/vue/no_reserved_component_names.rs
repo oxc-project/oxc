@@ -147,7 +147,9 @@ impl NoReservedComponentNames {
     fn check_name_expression<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
         match expr {
             Expression::StringLiteral(lit) => {
-                self.report_if_reserved(&lit.value, lit.span, ctx);
+                if let Some(value) = lit.value.as_str() {
+                    self.report_if_reserved(value, lit.span, ctx);
+                }
             }
             Expression::TemplateLiteral(tpl) => {
                 if let Some(value) = single_quasi_value(tpl) {
@@ -221,7 +223,10 @@ impl NoReservedComponentNames {
 
 fn is_x_dot_component_call(call: &CallExpression<'_>) -> bool {
     let Some(member) = call.callee.get_member_expr() else { return false };
-    member.static_property_name().is_some_and(|name| name == "component")
+    member
+        .static_property_name()
+        .and_then(oxc_str::JSStr::as_str)
+        .is_some_and(|name| name == "component")
 }
 
 fn is_define_options_call(call: &CallExpression<'_>) -> bool {
@@ -232,7 +237,7 @@ fn single_quasi_value<'a>(tpl: &'a TemplateLiteral<'a>) -> Option<&'a str> {
     if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
         return None;
     }
-    tpl.quasis[0].value.cooked.as_deref()
+    tpl.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str)
 }
 
 fn lower_first_char(name: &str) -> Option<String> {

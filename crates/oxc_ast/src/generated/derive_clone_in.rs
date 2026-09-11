@@ -592,11 +592,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             tail: CloneIn::clone_in_impl(&self.tail, with_semantic_ids, allocator),
-            lone_surrogates: CloneIn::clone_in_impl(
-                &self.lone_surrogates,
-                with_semantic_ids,
-                allocator,
-            ),
         }
     }
 }
@@ -3239,11 +3234,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            lone_surrogates: CloneIn::clone_in_impl(
-                &self.lone_surrogates,
-                with_semantic_ids,
-                allocator,
-            ),
         }
     }
 }

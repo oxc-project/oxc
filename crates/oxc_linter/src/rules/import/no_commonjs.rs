@@ -144,7 +144,7 @@ impl Rule for NoCommonjs {
                     return;
                 };
                 let Some(property_name) =
-                    member_expr_kind.static_property_name().map(|s| s.as_str())
+                    member_expr_kind.static_property_name().and_then(oxc_str::JSStr::as_str)
                 else {
                     return;
                 };
@@ -260,7 +260,8 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                let Some(callee_name) = call_expr.callee_name() else {
+                let Some(callee_name) = call_expr.callee_name().and_then(oxc_str::JSStr::as_str)
+                else {
                     return;
                 };
 

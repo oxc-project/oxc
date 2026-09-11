@@ -129,7 +129,7 @@ impl Rule for NoNamedAsDefaultMember {
                         continue;
                     };
                     let Some(prop_str) =
-                        member_expr_kind.static_property_name().map(|n| n.as_str())
+                        member_expr_kind.static_property_name().and_then(oxc_str::JSStr::as_str)
                     else {
                         continue;
                     };

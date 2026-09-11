@@ -173,7 +173,8 @@ impl NoCallbackInPromise {
             call_expr
                 .callee
                 .as_member_expression()
-                .and_then(MemberExpression::static_property_name),
+                .and_then(MemberExpression::static_property_name)
+                .and_then(oxc_str::JSStr::as_str),
             Some("then" | "catch")
         )
     }

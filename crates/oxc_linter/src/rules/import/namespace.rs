@@ -276,7 +276,9 @@ fn check_deep_namespace_for_node(
 ) -> Option<()> {
     let (span, name) = match node.kind() {
         AstKind::StaticMemberExpression(mem_expr) => mem_expr.static_property_info(),
-        AstKind::ComputedMemberExpression(computed_expr) => computed_expr.static_property_info()?,
+        AstKind::ComputedMemberExpression(computed_expr) => computed_expr
+            .static_property_info()
+            .and_then(|(span, name)| Some((span, name.as_str()?)))?,
         _ => return None,
     };
 

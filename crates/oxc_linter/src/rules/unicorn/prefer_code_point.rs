@@ -67,7 +67,9 @@ impl Rule for PreferCodePoint {
                 };
                 if call_expr.optional
                     || call_expr.callee.as_member_expression().and_then(|callee| {
-                        callee.static_property_info().map(|(_, property_name)| property_name)
+                        callee
+                            .static_property_info()
+                            .and_then(|(_, property_name)| property_name.as_str())
                     }) != Some("charCodeAt")
                 {
                     return;

@@ -23,7 +23,10 @@ pub fn is_global_exports_assignment_target(node: &AssignmentTarget, ctx: &LintCo
 
 /// Returns whether `member_expr` is a `module.exports` access on the global CommonJS `module`.
 pub fn is_global_module_exports(member_expr: &MemberExpression, ctx: &LintContext) -> bool {
-    member_expr.static_property_name().is_some_and(|name| name == "exports")
+    member_expr
+        .static_property_name()
+        .and_then(oxc_str::JSStr::as_str)
+        .is_some_and(|name| name == "exports")
         && member_expr
             .object()
             .get_identifier_reference()

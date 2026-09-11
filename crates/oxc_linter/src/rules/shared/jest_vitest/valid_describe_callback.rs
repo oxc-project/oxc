@@ -55,7 +55,9 @@ pub fn run<'a>(
         && arg_len == 1
         && let Some(member_expr) = call_expr.callee.as_member_expression()
     {
-        let Some(property_name) = member_expr.static_property_name() else {
+        let Some(property_name) =
+            member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return;
         };
         if property_name == "todo" {

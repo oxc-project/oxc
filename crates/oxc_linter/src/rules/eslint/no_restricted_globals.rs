@@ -351,6 +351,9 @@ impl NoRestrictedGlobals {
                     }
                     _ => return,
                 };
+                let Some(property_name) = property_name else {
+                    return;
+                };
                 let Some(message) = self.globals.get(property_name) else {
                     return;
                 };

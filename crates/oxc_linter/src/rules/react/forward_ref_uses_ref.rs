@@ -72,7 +72,7 @@ impl Rule for ForwardRefUsesRef {
             return;
         };
 
-        let Some("forwardRef") = call_expr.callee_name() else {
+        let Some("forwardRef") = call_expr.callee_name().and_then(oxc_str::JSStr::as_str) else {
             return;
         };
         let Some(first_arg) = call_expr.arguments.first() else {

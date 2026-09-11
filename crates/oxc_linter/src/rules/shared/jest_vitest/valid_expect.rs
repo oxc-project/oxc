@@ -463,7 +463,7 @@ fn get_parent_if_thenable<'a, 'b>(
     let Some(member_expr) = call_expr.callee.as_member_expression() else {
         return node;
     };
-    let Some(name) = member_expr.static_property_name() else {
+    let Some(name) = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str) else {
         return node;
     };
 

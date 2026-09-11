@@ -160,7 +160,11 @@ impl Rule for PreferForOf {
             let array_name = match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
                 expr @ match_member_expression!(Expression) => {
-                    match expr.to_member_expression().static_property_name() {
+                    match expr
+                        .to_member_expression()
+                        .static_property_name()
+                        .and_then(oxc_str::JSStr::as_str)
+                    {
                         Some(array_name) => array_name,
                         None => return,
                     }

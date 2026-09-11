@@ -146,7 +146,7 @@ impl Rule for JsxKey {
 }
 
 pub fn is_to_array(call: &CallExpression<'_>) -> bool {
-    call.callee_name().is_some_and(|subject| subject == "toArray")
+    call.callee_name().and_then(oxc_str::JSStr::as_str).is_some_and(|subject| subject == "toArray")
 }
 
 pub fn import_matcher<'a>(
@@ -227,7 +227,10 @@ pub fn is_children<'a, 'b>(call: &'b CallExpression<'a>, ctx: &'b LintContext<'a
 
     let Some(ident) = inner_member.object().get_identifier_reference() else { return false };
 
-    let Some(local_name) = inner_member.static_property_name() else { return false };
+    let Some(local_name) = inner_member.static_property_name().and_then(oxc_str::JSStr::as_str)
+    else {
+        return false;
+    };
 
     is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN
 }
@@ -294,7 +297,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 if let Some(member_expr) = callee.as_member_expression()
                     && let Some((span, ident)) = member_expr.static_property_info()
-                    && TARGET_METHODS.contains(&ident)
+                    && ident.as_str().is_some_and(|ident| TARGET_METHODS.contains(&ident))
                 {
                     // Early exit if no arguments to check
                     if v.arguments.is_empty() {
@@ -389,7 +392,10 @@ fn gen_diagnostic(span: Span, outer: &InsideArrayOrIterator) -> OxcDiagnostic {
     }
 }
 
-fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
+fn get_jsx_element_key_value<'a>(
+    jsx_elem: &JSXElement<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(oxc_str::JSStr<'a>, Span)> {
     for attr in &jsx_elem.opening_element.attributes {
         if let JSXAttributeItem::Attribute(attr) = attr
             && let JSXAttributeName::Identifier(ident) = &attr.name
@@ -399,21 +405,27 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
             if let Some(value) = &attr.value {
                 match value {
                     JSXAttributeValue::StringLiteral(lit) => {
-                        return Some((lit.value.to_string(), attr.span));
+                        return Some((lit.value, attr.span));
                     }
                     JSXAttributeValue::ExpressionContainer(container) => {
                         // JSXExpression inherits from Expression, so we match the Expression variants directly
                         match &container.expression {
                             JSXExpression::StringLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                return Some((lit.value, attr.span));
                             }
                             JSXExpression::NumericLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                return Some((
+                                    oxc_str::JSStr::from_str_in(
+                                        &lit.value.to_string(),
+                                        &ctx.allocator(),
+                                    ),
+                                    attr.span,
+                                ));
                             }
                             JSXExpression::TemplateLiteral(lit)
                                 if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
                             {
-                                return Some((lit.quasis[0].value.raw.to_string(), attr.span));
+                                return Some((lit.single_quasi()?, attr.span));
                             }
                             _ => {}
                         }
@@ -427,28 +439,34 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
 }
 
 fn check_duplicate_keys_in_array<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
-    let mut seen_keys: FxHashSet<String> = FxHashSet::default();
+    let mut seen_keys: FxHashSet<oxc_str::JSStr> = FxHashSet::default();
 
     for element in &array_expr.elements {
         // ArrayExpressionElement also inherits from Expression
         if let ArrayExpressionElement::JSXElement(jsx_elem) = element
-            && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem, ctx)
+            && !seen_keys.insert(key_value)
         {
-            ctx.diagnostic(duplicate_key_prop(&key_value, span));
+            ctx.diagnostic(duplicate_key_prop(
+                key_value.as_str().unwrap_or_else(|| ctx.source_range(span)),
+                span,
+            ));
         }
     }
 }
 
 fn check_duplicate_keys_in_children<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    let mut seen_keys: FxHashSet<String> = FxHashSet::default();
+    let mut seen_keys: FxHashSet<oxc_str::JSStr> = FxHashSet::default();
 
     for child in &jsx_elem.children {
         if let JSXChild::Element(child_elem) = child
-            && let Some((key_value, span)) = get_jsx_element_key_value(child_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some((key_value, span)) = get_jsx_element_key_value(child_elem, ctx)
+            && !seen_keys.insert(key_value)
         {
-            ctx.diagnostic(duplicate_key_prop(&key_value, span));
+            ctx.diagnostic(duplicate_key_prop(
+                key_value.as_str().unwrap_or_else(|| ctx.source_range(span)),
+                span,
+            ));
         }
     }
 }

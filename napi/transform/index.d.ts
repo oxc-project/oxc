@@ -309,8 +309,8 @@ export interface ModuleRunnerTransformResult {
    * This will be set if {@link TransformOptions#sourcemap} is `true`.
    */
   map?: SourceMap
-  deps: Array<string>
-  dynamicDeps: Array<string>
+  deps: string[]
+  dynamicDeps: string[]
   /**
    * Parse and transformation errors.
    *

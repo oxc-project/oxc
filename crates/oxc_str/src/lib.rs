@@ -9,6 +9,8 @@ mod ident_hasher;
 mod js_char;
 mod js_str;
 mod js_str_builder;
+#[cfg(feature = "serialize")]
+mod serialize;
 mod str;
 
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};

@@ -121,7 +121,8 @@ impl Rule for NoReactChildren {
 
         // Pattern 2: *.Children.method(), where `*` is any `react` import
         if let Some(inner_member) = object.as_member_expression()
-            && inner_member.static_property_name() == Some("Children")
+            && inner_member.static_property_name().and_then(oxc_str::JSStr::as_str)
+                == Some("Children")
             && let Some(ident) =
                 inner_member.object().get_inner_expression().get_identifier_reference()
             && is_import_from_module(ident, "react", ctx)

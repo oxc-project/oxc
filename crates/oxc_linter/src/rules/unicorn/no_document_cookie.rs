@@ -76,7 +76,8 @@ impl Rule for NoDocumentCookie {
             return;
         };
 
-        let Some(static_prop_name) = ident.static_property_name() else {
+        let Some(static_prop_name) = ident.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return;
         };
 
@@ -117,7 +118,9 @@ fn is_document_cookie_reference<'a, 'b>(
         }
         match_member_expression!(Expression) => {
             let member_expr = expr.to_member_expression();
-            let Some(static_prop_name) = member_expr.static_property_name() else {
+            let Some(static_prop_name) =
+                member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+            else {
                 return false;
             };
             if static_prop_name != "document" {

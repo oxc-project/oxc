@@ -545,6 +545,7 @@ fn is_map_callback(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         .callee
         .as_member_expression()
         .and_then(oxc_ast::ast::MemberExpression::static_property_name)
+        .and_then(oxc_str::JSStr::as_str)
         != Some("map")
     {
         return false;
@@ -578,7 +579,7 @@ fn is_first_argument_of_hoc_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> b
 }
 
 fn is_hoc_component_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bool {
-    call.callee_name().is_some_and(|name| is_hoc_call(name, ctx))
+    call.callee_name().and_then(oxc_str::JSStr::as_str).is_some_and(|name| is_hoc_call(name, ctx))
         && call.arguments.first().is_some_and(|arg| argument_contains_jsx(arg, ctx))
 }
 

@@ -63,7 +63,8 @@ impl Rule for NoNewStatics {
             return;
         }
 
-        let Some(prop_name) = member_expr.static_property_name() else {
+        let Some(prop_name) = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+        else {
             return;
         };
 

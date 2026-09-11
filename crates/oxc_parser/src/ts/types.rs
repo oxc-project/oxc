@@ -1196,8 +1196,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if (!is_with && !is_assert) || self.cur_token().escaped() {
             self.error(diagnostics::ts_import_type_options_expected_with(key_span));
         }
-        // Use the actual string from the source (not a static string) to ensure it's in the arena
-        let key_name = self.ident(self.cur_string());
+        // Only identifiers use the UTF-8 string table. Recover with an empty name for
+        // other tokens, including string literals whose decoded value may contain surrogates.
+        let key_name =
+            self.ident(if self.cur_kind().is_identifier_name() { self.cur_string() } else { "" });
         let with_key_start = self.cur_start();
         self.bump_any();
         let with_key = IdentifierName::boxed(self.end_span(with_key_start), key_name, self);

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 91/91 (100.00%)
 Positive Passed: 91/91 (100.00%)
-Negative Passed: 190/190 (100.00%)
+Negative Passed: 191/191 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -687,6 +687,20 @@ Negative Passed: 190/190 (100.00%)
    ╭─[misc/fail/import-sync-expression.js:1:11]
  1 │ const x = import.sync("baz");
    ·           ───────────
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[misc/fail/import-type-escaped-option-key.ts:1:30]
+ 1 │ type Escaped = import("x", { "\u0077ith": { type: "json" } });
+   ·                              ───────────
+ 2 │ type LoneSurrogate = import("x", { "\uD800": { type: "json" } });
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[misc/fail/import-type-escaped-option-key.ts:2:36]
+ 1 │ type Escaped = import("x", { "\u0077ith": { type: "json" } });
+ 2 │ type LoneSurrogate = import("x", { "\uD800": { type: "json" } });
+   ·                                    ────────
    ╰────
 
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.

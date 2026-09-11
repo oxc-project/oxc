@@ -95,6 +95,9 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
+    let Some(property_name) = property_name.as_str() else {
+        return;
+    };
     let is_once = property_name.ends_with("Once");
 
     if !property_name.eq("mockImplementation") && !property_name.eq("mockImplementationOnce") {

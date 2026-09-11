@@ -233,7 +233,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if matches!(
                     import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
+                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
                 ) {
                     let original = find_original_name(import_decl, name);
                     return Some(
@@ -252,7 +252,7 @@ fn find_original_name<'a>(import_decl: &'a ImportDeclaration<'a>, name: &str) ->
     import_decl.specifiers.iter().flatten().find_map(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
             if import_specifier.local.name.as_str() == name {
-                return Some(import_specifier.imported.name().as_str());
+                return import_specifier.imported.name().as_str();
             }
             None
         }
@@ -285,11 +285,18 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>
     match expr {
         Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
         Expression::StringLiteral(string_literal) => {
-            chain.push(Cow::Borrowed(&string_literal.value));
+            chain.push(
+                string_literal.value.as_str().map_or_else(
+                    || Cow::Owned(format!("{:?}", string_literal.value)),
+                    Cow::Borrowed,
+                ),
+            );
         }
         Expression::TemplateLiteral(template_literal) => {
             if let Some(quasi) = template_literal.single_quasi() {
-                chain.push(Cow::Borrowed(quasi.as_str()));
+                chain.push(
+                    quasi.as_str().map_or_else(|| Cow::Owned(format!("{quasi:?}")), Cow::Borrowed),
+                );
             }
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
@@ -299,7 +306,8 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>
         match_member_expression!(Expression) => {
             let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));
-            if let Some(name) = member_expr.static_property_name() {
+            if let Some(name) = member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
+            {
                 chain.push(Cow::Borrowed(name));
             }
         }

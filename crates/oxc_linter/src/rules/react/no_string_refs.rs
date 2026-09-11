@@ -135,7 +135,10 @@ impl Rule for NoStringRefs {
                     return;
                 };
                 if matches!(member_expr.object(), Expression::ThisExpression(_))
-                    && member_expr.static_property_name().is_some_and(|name| name == "refs")
+                    && member_expr
+                        .static_property_name()
+                        .and_then(oxc_str::JSStr::as_str)
+                        .is_some_and(|name| name == "refs")
                     && get_parent_component(node, ctx).is_some()
                 {
                     ctx.diagnostic(this_refs_deprecated(member_expr.span()));

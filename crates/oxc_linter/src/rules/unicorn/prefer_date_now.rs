@@ -68,14 +68,12 @@ impl Rule for PreferDateNow {
                     call_expr.callee.get_inner_expression().as_member_expression()
                     && call_expr.arguments.is_empty()
                     && !member_expr.is_computed()
-                    && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
+                    && let Some(method_name @ ("getTime" | "valueOf")) =
+                        member_expr.static_property_name().and_then(oxc_str::JSStr::as_str)
                     && is_new_date(member_expr.object().get_inner_expression())
                 {
                     ctx.diagnostic_with_fix(
-                        prefer_date_now_over_methods(
-                            call_expr.span,
-                            member_expr.static_property_name().unwrap(),
-                        ),
+                        prefer_date_now_over_methods(call_expr.span, method_name),
                         |fixer| fixer.replace(call_expr.span, "Date.now()"),
                     );
                 }

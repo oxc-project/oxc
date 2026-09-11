@@ -140,7 +140,8 @@ fn classify_callee<'a>(callee: &'a Expression<'a>) -> Option<ClassifiedCallee<'a
         return None;
     }
 
-    let kind = CallOrApply::from_name(callee.static_property_name()?)?;
+    let kind =
+        CallOrApply::from_name(callee.static_property_name().and_then(oxc_str::JSStr::as_str)?)?;
     Some(ClassifiedCallee { kind, applied: callee.object().without_parentheses() })
 }
 

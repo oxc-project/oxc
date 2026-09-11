@@ -22,8 +22,8 @@ use crate::{
 
 use super::define_generator;
 use super::raw_transfer::{
-    VEC_LEN_FIELD_OFFSET, VEC_PTR_FIELD_OFFSET, pos_offset, pos_offset_shift, pos32_offset,
-    should_skip_innermost_type,
+    VEC_LEN_FIELD_OFFSET, VEC_PTR_FIELD_OFFSET, WTF8_DESERIALIZER_BODY, pos_offset,
+    pos_offset_shift, pos32_offset, should_skip_innermost_type,
 };
 
 /// Generator for raw transfer lazy deserializer and visitor.
@@ -904,6 +904,7 @@ fn generate_enum(
 /// Generate construct function for a primitive.
 /// Note: Primitives don't require walk functions.
 fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &Schema) {
+    let js_str_body;
     // Generate code to deserialize value
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
@@ -936,6 +937,17 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         ",
         "f64" => "return ast.buffer.float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
+        "JSStr" => {
+            js_str_body = format!(
+                "
+                const {{ buffer }} = ast;
+                if (buffer[pos + 12] === 0) return constructStr(pos, ast);
+                const {{ int32 }} = buffer;
+                {WTF8_DESERIALIZER_BODY}
+            "
+            );
+            &js_str_body
+        }
         // Reuse constructors for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
         type_name if type_name.starts_with("Atomic") => return,

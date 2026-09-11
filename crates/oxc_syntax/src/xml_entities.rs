@@ -2,7 +2,8 @@
 
 use phf::{Map, phf_map};
 
-use oxc_allocator::{Allocator, ArenaStringBuilder};
+use oxc_allocator::Allocator;
+use oxc_str::{JSChar, JSStrBuilder};
 
 /// XML Entities
 ///
@@ -276,7 +277,7 @@ pub const XML_ENTITIES: Map<&'static str, char> = phf_map! {
 /// <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617-L635>.
 pub fn decode_entities<'a>(
     s: &str,
-    acc: &mut Option<ArenaStringBuilder<'a>>,
+    acc: &mut Option<JSStrBuilder<'a>>,
     text_len: usize,
     allocator: &'a Allocator,
 ) {
@@ -295,24 +296,24 @@ pub fn decode_entities<'a>(
                 }
             }
             if let Some(end) = end {
-                let buffer = acc.get_or_insert_with(|| {
-                    ArenaStringBuilder::with_capacity_in(text_len, allocator)
-                });
+                let buffer =
+                    acc.get_or_insert_with(|| JSStrBuilder::with_capacity_in(text_len, allocator));
 
                 buffer.push_str(&s[prev..start]);
                 prev = end + 1;
                 let word = &s[start + 1..end];
                 if let Some(decimal) = word.strip_prefix('#') {
                     if let Some(hex) = decimal.strip_prefix('x') {
-                        if let Some(c) = u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+                        if let Some(c) =
+                            u32::from_str_radix(hex, 16).ok().and_then(JSChar::from_u32)
                         {
                             // `&#x0123;`
-                            buffer.push(c);
+                            buffer.push_js_char(c);
                             continue;
                         }
-                    } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32) {
+                    } else if let Some(c) = decimal.parse::<u32>().ok().and_then(JSChar::from_u32) {
                         // `&#0123;`
-                        buffer.push(c);
+                        buffer.push_js_char(c);
                         continue;
                     }
                 } else if let Some(c) = XML_ENTITIES.get(word) {
@@ -349,6 +350,6 @@ mod tests {
         let input = "& &amp;";
         let mut acc = None;
         decode_entities(input, &mut acc, input.len(), &allocator);
-        assert_eq!(acc.as_ref().unwrap().as_str(), "& &");
+        assert_eq!(acc.unwrap().into_js_str(), "& &");
     }
 }

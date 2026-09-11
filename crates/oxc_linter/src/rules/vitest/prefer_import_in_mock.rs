@@ -102,7 +102,7 @@ impl PreferImportInMock {
             return;
         };
 
-        let Some(callee_name) = call_expr.callee_name() else {
+        let Some(callee_name) = call_expr.callee_name().and_then(oxc_str::JSStr::as_str) else {
             return;
         };
 
@@ -121,7 +121,7 @@ impl PreferImportInMock {
         ctx.diagnostic_with_fix(
             prefer_import_in_mock_diagnostic(
                 call_expr.arguments_span().unwrap(),
-                import_value.value.as_ref(),
+                import_value.value.as_str().unwrap_or_else(|| ctx.source_range(import_value.span)),
             ),
             |fixer| {
                 if !self.fixable {
@@ -130,7 +130,7 @@ impl PreferImportInMock {
 
                 fixer.replace(
                     import_value.span,
-                    format!("import('{}')", import_value.value.as_ref()),
+                    format!("import({})", ctx.source_range(import_value.span)),
                 )
             },
         );
@@ -196,10 +196,10 @@ fn test() {
 
     let fix = vec![
         ("vi.mock('foo', () => {})", "vi.mock(import('foo'), () => {})"),
-        (r#"vi.mock("node:fs/promises")"#, "vi.mock(import('node:fs/promises'))"),
+        (r#"vi.mock("node:fs/promises")"#, r#"vi.mock(import("node:fs/promises"))"#),
         (
             r#"vi.mock("./foo.js", () => ({ Foo: vi.fn() }))"#,
-            "vi.mock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+            r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#,
         ),
         (
             "
@@ -212,10 +212,10 @@ fn test() {
                   ",
         ),
         ("vi.doMock('foo', () => {})", "vi.doMock(import('foo'), () => {})"),
-        (r#"vi.doMock("node:fs/promises")"#, "vi.doMock(import('node:fs/promises'))"),
+        (r#"vi.doMock("node:fs/promises")"#, r#"vi.doMock(import("node:fs/promises"))"#),
         (
             r#"vi.doMock("./foo.js", () => ({ Foo: vi.fn() }))"#,
-            "vi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))",
+            r#"vi.doMock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#,
         ),
         (
             "
@@ -227,6 +227,8 @@ fn test() {
                     renamedVi.doMock(import('./foo.js'), () => ({ Foo: vi.fn() }))
                   ",
         ),
+        (r#"vi.mock("./a'b\ud800.js")"#, r#"vi.mock(import("./a'b\ud800.js"))"#),
+        (r"vi.doMock('./a\\b.js')", r"vi.doMock(import('./a\\b.js'))"),
     ];
 
     Tester::new(PreferImportInMock::NAME, PreferImportInMock::PLUGIN, pass, fail)

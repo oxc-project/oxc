@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use oxc_str::Str;
+use oxc_str::JSStr;
 
 use crate::ast::*;
 
@@ -13,7 +13,7 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     /// # Panics
     /// Panics if `self` is a `TemplateString` with no quasi.
-    pub fn static_name(&self) -> Str<'a> {
+    pub fn static_name(&self) -> JSStr<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
@@ -265,9 +265,9 @@ impl<'a> Decorator<'a> {
     /// @decorator(xx)
     /// @decorator.a.b(xx)
     /// ```
-    pub fn name(&self) -> Option<&'a str> {
+    pub fn name(&self) -> Option<JSStr<'a>> {
         match &self.expression {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
+            Expression::Identifier(ident) => Some(ident.name.into()),
             expr @ match_member_expression!(Expression) => {
                 expr.to_member_expression().static_property_name()
             }

@@ -159,7 +159,10 @@ impl ExportsStyle {
             };
             // Skip `module` in property position (`foo[module]`) and any property but `exports`.
             if member_expr.object().get_inner_expression().node_id() != node_id
-                || !member_expr.static_property_name().is_some_and(|name| name == "exports")
+                || member_expr
+                    .static_property_name()
+                    .and_then(oxc_str::JSStr::as_str)
+                    .is_none_or(|name| name != "exports")
             {
                 continue;
             }
