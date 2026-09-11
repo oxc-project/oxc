@@ -24,6 +24,8 @@ use crate::{VITE_CONFIG_NAME, vp_version};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
+const PACKAGE_JSON_FILE: &str = "package.json";
+const PNPM_WORKSPACE_FILE: &str = "pnpm-workspace.yaml";
 
 #[cfg(feature = "napi")]
 use crate::js_config;
@@ -42,8 +44,29 @@ const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     vite: VITE_CONFIG_NAME,
 };
 
+fn vite_plus_mode() -> bool {
+    cfg!(feature = "napi") && vp_version().is_some()
+}
+
 fn config_discovery() -> ConfigDiscovery {
-    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, cfg!(feature = "napi") && vp_version().is_some())
+    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, vite_plus_mode())
+}
+
+/// Does `dir` declare a package manager workspace of its own?
+///
+/// A directory that is itself a workspace root owns a complete dependency tree
+/// and configuration. A checkout nested inside another checkout (a git worktree
+/// under the repository it belongs to, for example) is therefore self-contained,
+/// and the outer checkout's configuration does not apply to it.
+fn is_workspace_root(dir: &Path) -> bool {
+    if dir.join(PNPM_WORKSPACE_FILE).is_file() {
+        return true;
+    }
+    let Ok(package_json) = std::fs::read_to_string(dir.join(PACKAGE_JSON_FILE)) else {
+        return false;
+    };
+    serde_json::from_str::<serde_json::Value>(&package_json)
+        .is_ok_and(|package_json| package_json.get("workspaces").is_some())
 }
 
 pub fn config_file_names() -> Vec<&'static str> {
@@ -550,6 +573,23 @@ impl<'a> ConfigLoader<'a> {
         cwd: &Path,
         config_path: Option<&PathBuf>,
     ) -> Result<Oxlintrc, OxcDiagnostic> {
+        // Vite+ mode only: `vite.config.ts` outside the workspace belongs to a
+        // different project, so the search must not leave the workspace. Plain
+        // oxlint keeps the unbounded ESLint-compatible search.
+        self.load_root_config_with(cwd, config_path, config_discovery(), vite_plus_mode())
+    }
+
+    /// [`load_root_config`](Self::load_root_config) with the discovery settings passed in.
+    ///
+    /// `stop_at_workspace_root` bounds the upward search to the workspace the
+    /// files belong to.
+    fn load_root_config_with(
+        &self,
+        cwd: &Path,
+        config_path: Option<&PathBuf>,
+        discovery: ConfigDiscovery,
+        stop_at_workspace_root: bool,
+    ) -> Result<Oxlintrc, OxcDiagnostic> {
         // If an explicit config path is provided, use it directly
         if let Some(config_path) = config_path {
             return self.load_explicit_config(cwd, config_path);
@@ -558,8 +598,11 @@ impl<'a> ConfigLoader<'a> {
         // Search up the directory tree for a config file
         let mut current = Some(cwd);
         while let Some(dir) = current {
-            if let Some(config) = self.try_load_config_from_dir(&config_discovery(), dir)? {
+            if let Some(config) = self.try_load_config_from_dir(&discovery, dir)? {
                 return Ok(config);
+            }
+            if stop_at_workspace_root && is_workspace_root(dir) {
+                break;
             }
             // Move to parent directory
             current = dir.parent();
@@ -768,10 +811,10 @@ mod test {
 
     use oxc_linter::{ConfigStoreBuilder, ExternalPluginStore};
 
-    use super::{ConfigLoadError, ConfigLoader};
+    use super::{ConfigLoadError, ConfigLoader, OXLINT_CONFIG_FILE_NAMES};
     #[cfg(feature = "napi")]
     use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
-    use oxc_config::DiscoveredConfigFile;
+    use oxc_config::{ConfigDiscovery, DiscoveredConfigFile};
 
     #[cfg(feature = "napi")]
     fn make_js_loader<F>(f: F) -> JsConfigLoaderCb
@@ -877,6 +920,85 @@ mod test {
         let result = loader.load_root_config(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
+    }
+
+    /// A directory that declares its own workspace terminates the upward search:
+    /// a checkout nested inside another checkout is self-contained, and the outer
+    /// checkout's config must not be loaded for it.
+    #[test]
+    fn root_config_search_stops_at_a_nested_pnpm_workspace_root() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let outer = temp_dir.path();
+        let nested = outer.join("nested");
+        std::fs::create_dir_all(nested.join("src")).unwrap();
+        std::fs::write(outer.join(".oxlintrc.json"), r#"{ "rules": { "no-console": "error" } }"#)
+            .unwrap();
+        std::fs::write(nested.join("pnpm-workspace.yaml"), "packages:\n  - \"packages/*\"\n")
+            .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let discovery = ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, false);
+
+        let bounded =
+            loader.load_root_config_with(&nested.join("src"), None, discovery, true).unwrap();
+        assert_eq!(
+            bounded.path,
+            PathBuf::new(),
+            "expected the default config, got the outer workspace's config"
+        );
+
+        let unbounded =
+            loader.load_root_config_with(&nested.join("src"), None, discovery, false).unwrap();
+        assert_eq!(unbounded.path, outer.join(".oxlintrc.json"));
+    }
+
+    #[test]
+    fn root_config_search_stops_at_a_nested_npm_workspace_root() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let outer = temp_dir.path();
+        let nested = outer.join("nested");
+        std::fs::create_dir_all(nested.join("src")).unwrap();
+        std::fs::write(outer.join(".oxlintrc.json"), r#"{ "rules": { "no-console": "error" } }"#)
+            .unwrap();
+        std::fs::write(
+            nested.join("package.json"),
+            r#"{ "name": "nested", "workspaces": ["packages/*"] }"#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let discovery = ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, false);
+
+        let bounded =
+            loader.load_root_config_with(&nested.join("src"), None, discovery, true).unwrap();
+        assert_eq!(
+            bounded.path,
+            PathBuf::new(),
+            "expected the default config, got the outer workspace's config"
+        );
+    }
+
+    /// A package inside the workspace still inherits the workspace root config.
+    #[test]
+    fn root_config_search_crosses_a_plain_package_directory() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root = temp_dir.path();
+        let package = root.join("packages/a");
+        std::fs::create_dir_all(&package).unwrap();
+        std::fs::write(root.join("pnpm-workspace.yaml"), "packages:\n  - \"packages/*\"\n")
+            .unwrap();
+        std::fs::write(root.join(".oxlintrc.json"), r#"{ "rules": { "no-console": "error" } }"#)
+            .unwrap();
+        std::fs::write(package.join("package.json"), r#"{ "name": "a" }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let discovery = ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, false);
+
+        let config = loader.load_root_config_with(&package, None, discovery, true).unwrap();
+        assert_eq!(config.path, root.join(".oxlintrc.json"));
     }
 
     #[test]
