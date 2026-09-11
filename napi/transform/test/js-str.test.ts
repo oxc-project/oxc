@@ -9,6 +9,8 @@ test.each(["enum", "const enum"])("preserves %s string values", (declaration) =>
   const result = transformSync("test.ts", source);
   expect(result.errors).toEqual([]);
   let values: unknown;
+  // Execute the transformed fixture to check its runtime string values.
+  // oxlint-disable-next-line typescript/no-implied-eval
   new Function("capture", result.code)((result: unknown) => {
     values = result;
   });
@@ -45,6 +47,8 @@ test.each([false, true])(
     });
     expect(result.errors).toEqual([]);
     let values: unknown;
+    // Execute the transformed fixture to check its runtime string values.
+    // oxlint-disable-next-line typescript/no-implied-eval
     new Function("capture", result.code)((result: unknown) => {
       values = result;
     });
@@ -85,6 +89,8 @@ test("preserves numeric JSX entities", () => {
   });
   expect(result.errors).toEqual([]);
   let value: unknown;
+  // Execute the transformed fixture to check the decoded JSX attribute value.
+  // oxlint-disable-next-line typescript/no-implied-eval
   new Function("React", "capture", result.code)(
     { createElement: (_tag: string, props: { value: string }) => props.value },
     (result: unknown) => {
