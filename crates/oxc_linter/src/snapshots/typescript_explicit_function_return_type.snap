@@ -164,6 +164,33 @@ source: crates/oxc_linter/src/tester.rs
   help: Require explicit return types on functions and class methods.
 
   ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:30]
+ 2 │             const buildRepo = (): Repo => {
+ 3 │               const repo = { count: async () => 0 };
+   ·                              ─────────────
+ 4 │               return repo;
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:17]
+ 2 │             const buildRepo = (): Repo => (
+ 3 │               { count: async () => 0 },
+   ·                 ─────────────
+ 4 │               repo
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
+   ╭─[explicit_function_return_type.tsx:3:17]
+ 2 │             const buildRepo = (): Repo => [
+ 3 │               { count: async () => 0 }
+   ·                 ─────────────
+ 4 │             ][0];
+   ╰────
+  help: Require explicit return types on functions and class methods.
+
+  ⚠ typescript(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:3:36]
  2 │             function foo(): any {
  3 │               const bar = () => () => console.log('aa');
