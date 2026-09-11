@@ -73,14 +73,15 @@ pub struct LintCommand {
     pub paths: Vec<PathBuf>,
 }
 
+/// Suppress Violations
 #[derive(Debug, Clone, Bpaf)]
 pub struct SuppressionOptions {
     /// Generate suppressions for all current violations
-    #[bpaf(switch, hide)]
+    #[bpaf(switch, hide_usage)]
     pub suppress_all: bool,
 
     /// Remove entries for violations that no longer exist
-    #[bpaf(switch, hide)]
+    #[bpaf(switch, hide_usage)]
     pub prune_suppressions: bool,
 }
 
