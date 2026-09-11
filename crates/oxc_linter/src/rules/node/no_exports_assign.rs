@@ -54,7 +54,7 @@ declare_oxc_lint!(
     /// ```
     NoExportsAssign,
     node,
-    style,
+    suspicious,
     fix,
     version = "0.9.3",
     short_description = "Disallows assignment to `exports`.",
