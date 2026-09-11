@@ -3,7 +3,7 @@ commit: 5237fd46
 parser_typescript Summary:
 AST Parsed     : 9859/9862 (99.97%)
 Positive Passed: 9849/9862 (99.87%)
-Negative Passed: 1704/2806 (60.73%)
+Negative Passed: 1706/2806 (60.80%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -502,11 +502,7 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributePlainStringAmbientModule.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeType1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeOnlyImports.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeTypesJsImports.ts
 
@@ -8371,13 +8367,46 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Wrap this with quotes
 
-  × TS(1070): 'public' modifier cannot appear on a type member.
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeType1.ts:11:44]
+ 10 │ 
+ 11 │ declare module "*.data" with { type: "json" | "json5" } {
+    ·                                            ▲
+ 12 │   const data: { version: number };
+    ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:1:31]
- 1 │ declare module "*.svg" with { public type: "svg" } {
-   ·                               ──────
- 2 │     const content: string;
+ 1 │ declare module "*.css" with { readonly type: "css" } {
+   ·                               ────────
+ 2 │     const stylesheet: CSSStyleSheet;
    ╰────
-  help: Only 'readonly' modifier is allowed here.
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:6:32]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {
+   ·                                ────────
+ 7 │     const data: any;
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeReadonly.ts:6:55]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {
+   ·                                                       ────────
+ 7 │     const data: any;
+   ╰────
+
+  × Only string literals are allowed as module attribute values.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importAttributeTypeScope.ts:3:39]
+ 2 │ 
+ 3 │ declare module "*.asset" with { type: AttributeValue } {
+   ·                                       ──────────────
+ 4 │     export type AttributeValue = "text";
+   ╰────
+  help: Wrap this with quotes
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclWithClassModifiers.ts:5:8]
