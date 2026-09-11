@@ -1315,6 +1315,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSEnumMemb
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // A trailing suppression comment (`A = 1, // prettier-ignore`) suppresses like a leading one;
+        // the `,` is a separator the list prints, so the member prints whole
+        if f.comments().has_trailing_suppression_comment(self.span().end) {
+            write!(f, [FormatSuppressedNode(self.span())]);
+            return;
+        }
+
         let id = self.id();
         let is_computed = matches!(id.as_ref(), TSEnumMemberName::ComputedTemplateString(_));
 
