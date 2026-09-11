@@ -641,9 +641,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
                 Semicolons::AsNeeded => self.needs_semicolon(),
             };
 
-        // A suppressed element (leading or trailing comment) prints its content verbatim
-        // and its terminator stays the formatter's, like a statement (`write_suppressed_statement`).
-        // The element kinds' generated `fmt` only see a leading comment, so the gate is here.
+        // A suppressed element prints its content verbatim and its terminator stays the formatter's,
+        // like a statement (`write_suppressed_statement`); the element's own `fmt` would print the `;` as content.
         let suppressed = f.comments().is_node_suppressed(span, || self.content_end(f));
         if !suppressed && !needs_semi {
             return write!(f, element);

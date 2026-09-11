@@ -49,6 +49,10 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
     &["TSUnionType", "ExpressionStatement"];
 
+// A trailing suppression comment counts like a leading one, and the outermost node ending there claims it.
+// A union leaves it to its member instead, like Prettier (`handleUnionTypeComments`); see `format_union_types`.
+const AST_NODE_WITHOUT_TRAILING_SUPPRESSION_LIST: &[&str] = &["TSUnionType"];
+
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -198,8 +202,10 @@ fn generate_struct_implementation(
                 | "ExportDefaultDeclaration"
         ))
         .then(|| {
-            quote! {
-                let is_suppressed = f.comments().is_suppressed(self.span().start);
+            if AST_NODE_WITHOUT_TRAILING_SUPPRESSION_LIST.contains(&struct_name) {
+                quote! { let is_suppressed = f.comments().is_suppressed(self.span().start); }
+            } else {
+                quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); }
             }
         });
 
@@ -359,17 +365,6 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
             // and hands its terminator back to the formatter, decided once per statement here.
             quote! {
                 if write_suppressed_statement(self, f) {
-                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-                        .fmt(f);
-                    return;
-                }
-            }
-        }
-        "Expression" => {
-            quote! {
-                if f.comments().has_trailing_suppression_comment(self.span().end) {
-                    format_leading_comments(self.span()).fmt(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
                     format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
                         .fmt(f);
                     return;

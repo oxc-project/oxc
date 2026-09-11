@@ -172,6 +172,8 @@ The formatter owns statement terminators (and the trivia up to them); the user o
 - suppressed side: a suppressed node keeps the token classes above: content verbatim, terminator per `semi`
   (`write_suppressed_statement`, `FormatClassElementWithSemicolon`); a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
+  - A trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`);
+    the outermost node ending there claims it, except a union, whose member does
   - A statement is decided before its own generated `fmt`, so leading and trailing comments take one path and a pre-`export` decorator is inside the ignored range (`statement_span`)
   - Any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) must ask `write_suppressed_statement` first,
     or the generic verbatim path prints the source `;` regardless of `semi`

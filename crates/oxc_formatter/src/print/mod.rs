@@ -86,7 +86,6 @@ use crate::{
             write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        suppressed::{FormatSuppressedNode, write_suppressed_content},
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
         typecast::is_cast_target,
     },
@@ -212,11 +211,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ObjectProp
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().has_trailing_suppression_comment(self.span().end) {
-            write!(f, [FormatSuppressedNode(self.span())]);
-            return;
-        }
-
         let is_accessor = match &self.kind() {
             PropertyKind::Init => false,
             PropertyKind::Get => {
@@ -1315,13 +1309,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSEnumMemb
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // A trailing suppression comment (`A = 1, // prettier-ignore`) suppresses like a leading one;
-        // the `,` is a separator the list prints, so the member prints whole
-        if f.comments().has_trailing_suppression_comment(self.span().end) {
-            write!(f, [FormatSuppressedNode(self.span())]);
-            return;
-        }
-
         let id = self.id();
         let is_computed = matches!(id.as_ref(), TSEnumMemberName::ComputedTemplateString(_));
 
@@ -1745,17 +1732,9 @@ impl GetSpan for FormatTSSignature<'_, '_> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSSignature<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().is_suppressed(self.signature.span().start) {
+        // A suppressed member prints whole: its `;`/`,` is a separator, not a terminator
+        if f.comments().is_span_suppressed(self.signature.span()) {
             return write!(f, [self.signature]);
-        }
-
-        if f.comments().has_trailing_suppression_comment(self.signature.span().end) {
-            format_leading_comments(self.signature.span()).fmt(f);
-            write_suppressed_content(self.signature.span(), None, f);
-            let comments =
-                f.context().comments().end_of_line_comments_after(self.signature.span().end);
-            write!(f, FormatTrailingComments::Comments(comments));
-            return;
         }
 
         write!(f, [&self.signature]);
