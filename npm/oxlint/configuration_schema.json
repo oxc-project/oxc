@@ -9100,6 +9100,9 @@
         "unicorn/no-document-cookie": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-duplicate-if-branches": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-empty-file": {
           "$ref": "#/definitions/RuleNoConfig"
         },
