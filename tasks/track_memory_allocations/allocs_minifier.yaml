@@ -6,7 +6,7 @@ checker.ts:
   sys alloc bytes: 14996287 # 15.00 MB
   sys peak growth: 10169560 # 10.17 MB
   arena allocs: 56184
-  arena reallocs: 5085
+  arena reallocs: 5084
   arena size: 16316976 # 16.32 MB
 
 App.tsx:
