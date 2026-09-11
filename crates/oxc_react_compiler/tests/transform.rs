@@ -98,6 +98,120 @@ function Component({ onChange, onInput }) {\n\
 }
 
 #[test]
+fn keeps_outer_capture_inline_for_arrow_factory() {
+    let source = r#"
+import { useEffect } from "react";
+
+function createBridge(options, fallback) {
+  const alias = options;
+  const useBridge = () => {
+    useEffect(() => {
+      const sendReadyMessages = () =>
+        options?.onReady?.() ?? alias?.onReady?.() ?? fallback?.onReady?.();
+      sendReadyMessages();
+    }, []);
+  };
+  return { useBridge };
+}
+"#;
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the hook factory should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+
+    assert!(
+        output.contains("options?.onReady?.()")
+            && output.contains("alias?.onReady?.()")
+            && output.contains("fallback?.onReady?.()"),
+        "the callback must retain all direct, aliased, and multiple factory captures:
+{output}"
+    );
+    assert!(
+        !output.contains("function _temp()"),
+        "the capturing callback must not be outlined past the arrow hook:
+{output}"
+    );
+}
+
+#[test]
+fn still_outlines_module_and_global_callback_dependencies() {
+    let source = r#"
+import { useEffect } from "react";
+import { notify } from "./notify";
+
+const useBridge = function () {
+  useEffect(() => {
+    notify(window.location.href);
+  }, []);
+};
+"#;
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the function expression should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+
+    assert!(
+        output.contains("useEffect(_temp"),
+        "a callback using only module/global bindings should remain outlineable:
+{output}"
+    );
+    assert!(
+        output.contains("function _temp()"),
+        "expected the outline declaration for the capture-free callback:
+{output}"
+    );
+    assert!(
+        output.contains("notify(window.location.href)"),
+        "callback body was lost:
+{output}"
+    );
+}
+
+#[test]
+fn keeps_outer_capture_inline_through_object_method() {
+    let source = r#"
+import { useEffect } from "react";
+
+function createBridge(options) {
+  const useBridge = () => {
+    const bridge = {
+      subscribe() {
+        return () => options?.onReady?.();
+      },
+    };
+    useEffect(() => bridge.subscribe()(), []);
+    return bridge;
+  };
+  return useBridge;
+}
+"#;
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the hook factory should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+
+    assert!(
+        output.contains("options?.onReady?.()"),
+        "the object-method callback must retain its factory capture:
+{output}"
+    );
+    assert!(
+        !output.contains("function _temp()"),
+        "the object-method callback must not be outlined past the arrow root:
+{output}"
+    );
+}
+
+#[test]
 fn preserves_manual_memoization_guarantees() {
     let source = "\
 import { useCallback, useMemo } from 'react';
