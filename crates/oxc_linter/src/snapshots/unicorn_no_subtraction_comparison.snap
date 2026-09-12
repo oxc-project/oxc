@@ -1,0 +1,261 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:5]
+ 1 │ if (a - b > 0) {}
+   ·     ─────────
+   ╰────
+  help: Replace `a - b > 0` with `a > b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:5]
+ 1 │ if (a - b >= 0) {}
+   ·     ──────────
+   ╰────
+  help: Replace `a - b >= 0` with `a >= b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:5]
+ 1 │ if (a - b < 0) {}
+   ·     ─────────
+   ╰────
+  help: Replace `a - b < 0` with `a < b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:5]
+ 1 │ if (a - b <= 0) {}
+   ·     ──────────
+   ╰────
+  help: Replace `a - b <= 0` with `a <= b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a - b === 0
+   · ───────────
+   ╰────
+  help: Replace `a - b === 0` with `a === b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a - b !== 0
+   · ───────────
+   ╰────
+  help: Replace `a - b !== 0` with `a !== b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a - b == 0
+   · ──────────
+   ╰────
+  help: Replace `a - b == 0` with `a == b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a - b != 0
+   · ──────────
+   ╰────
+  help: Replace `a - b != 0` with `a != b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 < a - b
+   · ─────────
+   ╰────
+  help: Replace `0 < a - b` with `a > b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 <= a - b
+   · ──────────
+   ╰────
+  help: Replace `0 <= a - b` with `a >= b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 > a - b
+   · ─────────
+   ╰────
+  help: Replace `0 > a - b` with `a < b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 >= a - b
+   · ──────────
+   ╰────
+  help: Replace `0 >= a - b` with `a <= b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 === a - b
+   · ───────────
+   ╰────
+  help: Replace `0 === a - b` with `a === b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 !== a - b
+   · ───────────
+   ╰────
+  help: Replace `0 !== a - b` with `a !== b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 1 - 2 > 0
+   · ─────────
+   ╰────
+  help: Replace `1 - 2 > 0` with `1 > 2`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ foo.length - bar.length > 0
+   · ───────────────────────────
+   ╰────
+  help: Replace `foo.length - bar.length > 0` with `foo.length > bar.length`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ Number(a) - Number(b) < 0
+   · ─────────────────────────
+   ╰────
+  help: Replace `Number(a) - Number(b) < 0` with `Number(a) < Number(b)`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ Number.POSITIVE_INFINITY - Number.POSITIVE_INFINITY > 0
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: Replace `Number.POSITIVE_INFINITY - Number.POSITIVE_INFINITY > 0` with `Number.POSITIVE_INFINITY > Number.POSITIVE_INFINITY`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 1 - 2 >= 0
+   · ──────────
+   ╰────
+  help: Replace `1 - 2 >= 0` with `1 >= 2`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 1 - 1 === 0
+   · ───────────
+   ╰────
+  help: Replace `1 - 1 === 0` with `1 === 1`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ 0 < foo.length - bar.length
+   · ───────────────────────────
+   ╰────
+  help: Replace `0 < foo.length - bar.length` with `foo.length > bar.length`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ Number.POSITIVE_INFINITY - Number.POSITIVE_INFINITY >= 0
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Replace `Number.POSITIVE_INFINITY - Number.POSITIVE_INFINITY >= 0` with `Number.POSITIVE_INFINITY >= Number.POSITIVE_INFINITY`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ Number.POSITIVE_INFINITY - Number.POSITIVE_INFINITY === 0
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Replace `Number.POSITIVE_INFINITY - Number.POSITIVE_INFINITY === 0` with `Number.POSITIVE_INFINITY === Number.POSITIVE_INFINITY`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ foo.length - bar.length >= 0
+   · ────────────────────────────
+   ╰────
+  help: Replace `foo.length - bar.length >= 0` with `foo.length >= bar.length`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ foo.length - bar > 0
+   · ────────────────────
+   ╰────
+  help: Replace `foo.length - bar > 0` with `foo.length > bar`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ Math.round(a) - Math.round(b) > 0
+   · ─────────────────────────────────
+   ╰────
+  help: Replace `Math.round(a) - Math.round(b) > 0` with `Math.round(a) > Math.round(b)`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a.length - b.length - c > 0
+   · ───────────────────────────
+   ╰────
+  help: Replace `a.length - b.length - c > 0` with `a.length - b.length > c`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ (foo.length) - (bar.length) > 0
+   · ───────────────────────────────
+   ╰────
+  help: Replace `(foo.length) - (bar.length) > 0` with `(foo.length) > (bar.length)`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:48]
+ 1 │ const modes = new Set(['foo']); modes.clear(); (modes.size ? 1 : 'x') - (modes.size ? 1 : 'x') === 0
+   ·                                                ─────────────────────────────────────────────────────
+   ╰────
+  help: Replace `(modes.size ? 1 : 'x') - (modes.size ? 1 : 'x') === 0` with `(modes.size ? 1 : 'x') === (modes.size ? 1 : 'x')`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:48]
+ 1 │ const modes = new Set(['foo']); modes.clear(); ((modes.size && 1) || value) - 1 === 0
+   ·                                                ──────────────────────────────────────
+   ╰────
+  help: Replace `((modes.size && 1) || value) - 1 === 0` with `((modes.size && 1) || value) === 1`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:98]
+ 1 │ const object = {value: true}; Object.defineProperty(object, 'value', {get() { return false; }}); (object.value ? 1 : value) - 1 === 0
+   ·                                                                                                  ────────────────────────────────────
+   ╰────
+  help: Replace `(object.value ? 1 : value) - 1 === 0` with `(object.value ? 1 : value) === 1`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:48]
+ 1 │ const modes = new Set(['foo']); modes.clear(); ((modes.size ? 1 : value) as number) - 1 === 0
+   ·                                                ──────────────────────────────────────────────
+   ╰────
+  help: Replace `((modes.size ? 1 : value) as number) - 1 === 0` with `((modes.size ? 1 : value) as number) === 1`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ (a - b) > 0
+   · ───────────
+   ╰────
+  help: Replace `(a - b) > 0` with `a > b`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a?.b - c?.d > 0
+   · ───────────────
+   ╰────
+  help: Replace `a?.b - c?.d > 0` with `a?.b > c?.d`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ a - /* comment */ b > 0
+   · ───────────────────────
+   ╰────
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:1]
+ 1 │ (a as number) - (b as number) > 0
+   · ─────────────────────────────────
+   ╰────
+  help: Replace `(a as number) - (b as number) > 0` with `(a as number) > (b as number)`.
+
+  ⚠ unicorn(no-subtraction-comparison): Prefer comparing the values directly over comparing the difference with `0`.
+   ╭─[no_subtraction_comparison.tsx:1:48]
+ 1 │ const alias = condition; var condition = true; (alias ? 1 : value) - 1 === 0
+   ·                                                ─────────────────────────────
+   ╰────
+  help: Replace `(alias ? 1 : value) - 1 === 0` with `(alias ? 1 : value) === 1`.

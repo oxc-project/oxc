@@ -9194,6 +9194,9 @@
         "unicorn/no-static-only-class": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-subtraction-comparison": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-thenable": {
           "$ref": "#/definitions/RuleNoConfig"
         },
