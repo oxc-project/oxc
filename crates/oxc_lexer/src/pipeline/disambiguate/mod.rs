@@ -358,7 +358,7 @@ unsafe fn lt_in_range(src: *const u8, a: usize, b: usize) -> bool {
 }
 
 /// Is the token at `pos` in operand (expression-only) position? Strict
-/// whitelist; anything else returns false. Deliberately not `prev_is_regex`:
+/// whitelist; anything else returns false. Deliberately not `not_operator_position`:
 /// a regex may follow `;`/`:`/`else`, but a `{` there is a block, so reusing
 /// it would be unsound. Complement of acorn's `braceIsBlock`.
 #[inline]
@@ -4993,7 +4993,32 @@ unsafe fn type_args_head_before(
     bk >= OP_KIND_BASE && matches!(*src.add(bw), b')' | b']')
 }
 
-pub(super) unsafe fn prev_is_regex(
+/// Check if `p` is a position where an operator cannot go.
+///
+/// Operator position is directly after a complete value, e.g. after `a`, `f(x)`, or `a[0]`.
+/// Anywhere else, an operator can't go, and something must start instead:
+///
+/// - An expression e.g. `x = /re/`, `x = <Foo />`.
+/// - A statement e.g. `if (c) /re/.test(s)`, `if (c) <Foo />`.
+/// - In TypeScript, a type e.g. `let f: <T>(x: T) => T`.
+///
+/// Returns `true` if `p` is not in operator position, `false` if it is.
+///
+/// Callers use this to decide:
+///
+/// - `/` starts a regex if `true`, or is a division operator (`/` or `/=`) if `false`.
+/// - `<` may start a JSX element if `true`, or is a less-than operator if `false`.
+///   In TS, a `<` in operator position can also open type arguments e.g. `f<T>()`.
+///
+/// This is a looser test than [`operand_position`], which checks whether *only*
+/// an expression can start at a position.
+///
+/// The two differ where a statement can start, e.g. after `;` or `else`, or at the start of the file.
+/// A `/` there starts a regex, so this function returns `true`.
+/// But a `{` there opens a block, not an object literal, so `operand_position` returns `false`.
+///
+/// [`operand_position`]: operand_position
+pub(super) unsafe fn not_operator_position(
     t: &Tables,
     src: *const u8,
     st: *const u64,

@@ -9,7 +9,7 @@ use crate::{
 use super::super::{
     BCOM, LCOM, REGEX, STR,
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    disambiguate::prev_is_regex,
+    disambiguate::not_operator_position,
     scan::{scan_block_comment, scan_line_comment, scan_quoted, scan_regex, scan_tmpl_text},
 };
 
@@ -101,7 +101,7 @@ pub(super) unsafe fn lex_slash(
         lex_line_comment(src, srcs, n, st, kind, s, lanes)
     } else if d == b'*' {
         lex_block_comment(src, srcs, n, st, kind, s, lanes)
-    } else if prev_is_regex(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
+    } else if not_operator_position(t, src, st, kind, word, digit, n, s, ts, lanes.module) {
         lex_regex(src, srcs, n, st, kind, word, s, lanes)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
         // `/=`: absorb the `=`.

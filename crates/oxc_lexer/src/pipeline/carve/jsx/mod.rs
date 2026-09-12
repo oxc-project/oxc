@@ -8,7 +8,7 @@ use crate::{
 use super::super::{
     HASHBANG, JEND, JSX_LT, JTEXT, STR, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
     bitmap::{bm_clear, bm_clear_range, bm_set},
-    disambiguate::{bm_prev_sig, prev_is_regex},
+    disambiguate::{bm_prev_sig, not_operator_position},
     find::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
@@ -198,7 +198,7 @@ pub(super) unsafe fn carve_jsx(
                         } else if c1 == b'=' || is_digit(c1) {
                             // `<=` / `a<5`: leave for coalesce.
                             i = s + 1;
-                        } else if prev_is_regex(
+                        } else if not_operator_position(
                             t,
                             src,
                             st,
