@@ -15,7 +15,6 @@ use super::{
 };
 
 mod operator;
-mod replay;
 pub(super) use operator::not_operator_position;
 
 #[cfg(test)]

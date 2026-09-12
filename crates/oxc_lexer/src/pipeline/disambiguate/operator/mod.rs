@@ -13,9 +13,12 @@ use super::super::{
 use super::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, as_gated_type_ref, as_type_operand,
     bm_prev_sig, brace_opens_value, declarator_without_init, ident_is, kind_at, lt_in_range,
-    match_delim_back, of_is_forof_keyword, prop_name, replay::replay_is_keyword,
-    signature_return_type, trivia_at, type_annotation_asi, word_is_any,
+    match_delim_back, of_is_forof_keyword, prop_name, signature_return_type, trivia_at,
+    type_annotation_asi, word_is_any,
 };
+
+mod replay;
+use replay::replay_is_keyword;
 
 #[cfg(test)]
 mod tests;
