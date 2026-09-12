@@ -167,10 +167,11 @@ impl<'a> PeepholeOptimizations {
                         _ => {}
                     }
                 }
-                Expression::NumericLiteral(_) => delta += if boolean_context { 0 } else { 1 },
+                Expression::NumericLiteral(_) if boolean_context => {}
                 Expression::Identifier(_)
                 | Expression::ThisExpression(_)
                 | Expression::NullLiteral(_)
+                | Expression::NumericLiteral(_)
                 | Expression::BigIntLiteral(_)
                 | Expression::RegExpLiteral(_)
                 | Expression::StringLiteral(_)
