@@ -331,7 +331,8 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
                     | PrimitiveValue::Boolean(_)
-                    | PrimitiveValue::String(_) => {}
+                    | PrimitiveValue::String(_)
+                    | PrimitiveValue::BigInt { .. } => {}
                 }
             }
             None
@@ -375,7 +376,8 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
                     | PrimitiveValue::Boolean(_)
-                    | PrimitiveValue::String(_) => {}
+                    | PrimitiveValue::String(_)
+                    | PrimitiveValue::BigInt { .. } => {}
                 }
             }
             None
@@ -546,6 +548,7 @@ fn evaluate_instruction<'a>(
                     PrimitiveValue::Boolean(b) => b.to_string(),
                     PrimitiveValue::Number(n) => n.value().to_js_string(),
                     PrimitiveValue::String(s) => s.as_str().to_string(),
+                    PrimitiveValue::BigInt { value, .. } => value.as_str().to_string(),
                     // TS rejects undefined subexpression values
                     PrimitiveValue::Undefined => return None,
                 };
@@ -689,6 +692,7 @@ fn is_truthy(value: &PrimitiveValue) -> bool {
             v != 0.0 && !v.is_nan()
         }
         PrimitiveValue::String(s) => !s.as_str().is_empty(),
+        PrimitiveValue::BigInt { value, .. } => value.as_str() != "0" && !value.as_str().is_empty(),
     }
 }
 
@@ -837,6 +841,9 @@ fn js_strict_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             av == bv
         }
         (PrimitiveValue::String(a), PrimitiveValue::String(b)) => a == b,
+        (PrimitiveValue::BigInt { value: a, .. }, PrimitiveValue::BigInt { value: b, .. }) => {
+            a == b
+        }
         // Different types => false
         _ => false,
     }
@@ -858,6 +865,9 @@ fn js_abstract_equal(lhs: &PrimitiveValue, rhs: &PrimitiveValue) -> bool {
             av == bv
         }
         (PrimitiveValue::String(a), PrimitiveValue::String(b)) => a == b,
+        (PrimitiveValue::BigInt { value: a, .. }, PrimitiveValue::BigInt { value: b, .. }) => {
+            a == b
+        }
         // Cross-type coercions for primitives
         (PrimitiveValue::Number(n), PrimitiveValue::String(s))
         | (PrimitiveValue::String(s), PrimitiveValue::Number(n)) => {
