@@ -213,6 +213,16 @@ fn remove_unreachable() {
 }
 
 #[test]
+fn preserves_indirect_eval_with_global_var_declaration() {
+    // A top-level var declaration without an initializer keeps the built-in eval.
+    test_same_options_source_type(
+        "var eval; function f(x) { return [x, (0, eval)('x')]; }",
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
+}
+
+#[test]
 fn remove_unused_expressions_in_sequence() {
     test("true, foo();", "foo();");
     test("(0, foo)();", "foo();");
@@ -221,7 +231,7 @@ fn remove_unused_expressions_in_sequence() {
     test_same("(0, eval)();"); // this can be compressed to `eval?.()`
     test_same("(0, eval)``;"); // this can be compressed to `eval?.()`
     test_same("(0, eval)?.();"); // this can be compressed to `eval?.()`
-    test("var eval; (0, eval)();", "var eval; eval();");
+    test_same("var eval; (0, eval)();");
     test_same("(0, foo.bar)();");
     test_same("(0, foo.bar)``;");
     test_same("(0, foo.bar)?.();");

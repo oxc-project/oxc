@@ -1598,7 +1598,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::CallExpression(call_expr)
-                // Don't substitute something into a call target that could change "this"
+                // Don't substitute something into a call target that could change "this".
                 if !((replacement.is_member_expression()
                     || matches!(replacement, Expression::ChainExpression(_)))
                     && call_expr.callee.is_identifier_reference())
@@ -1610,6 +1610,11 @@ impl<'a> PeepholeOptimizations {
                         replacement_has_side_effect,
                         ctx,
                     ) {
+                        if changed && call_expr.callee.is_specific_id("eval") {
+                            // Keep evaluation indirect, including for local bindings named eval.
+                            let callee = call_expr.callee.take_in(ctx);
+                            call_expr.callee = Self::preserve_indirect_access(callee.span(), callee, ctx);
+                        }
                         return Some(changed);
                     }
 

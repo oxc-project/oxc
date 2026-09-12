@@ -671,7 +671,8 @@ impl<'a> PeepholeOptimizations {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {
-                    Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
+                    // A local binding named eval can also hold the built-in eval function.
+                    Expression::Identifier(id) => id.name == "eval",
                     match_member_expression!(Expression) => true,
                     _ => false,
                 }

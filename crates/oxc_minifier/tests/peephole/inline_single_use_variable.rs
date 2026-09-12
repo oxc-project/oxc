@@ -28,6 +28,27 @@ fn test_keep_names(source_text: &str, expected: &str) {
 }
 
 #[test]
+fn test_inline_single_use_variable_preserves_indirect_eval() {
+    test(
+        "function f(script) { const alias = eval; alias(script); }",
+        "function f(script) { (0, eval)(script); }",
+    );
+}
+
+#[test]
+fn test_inline_single_use_variable_preserves_local_indirect_eval() {
+    test_script(
+        "function f(eval, script, x) { const alias = eval; return [x, alias(script)]; }",
+        "function f(eval, script, x) { return [x, (0, eval)(script)]; }",
+    );
+}
+
+#[test]
+fn test_eval_bound_to_console_log() {
+    test_script_same("let x = console.log; var eval = x; eval('.....');");
+}
+
+#[test]
 fn test_inline_single_use_variable() {
     test_same("function wrapper(arg0, arg1) {using x = foo; return x}");
     test_same("async function wrapper(arg0, arg1) { await using x = foo; return x}");
