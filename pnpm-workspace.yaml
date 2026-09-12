@@ -6,6 +6,7 @@ packages:
   - npm/*
   - tasks/codegen_conformance
   - tasks/e2e
+  - tasks/react_compiler
   - tasks/transform_conformance
   - tasks/compat_data
 
