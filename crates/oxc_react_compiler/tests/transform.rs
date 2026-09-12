@@ -137,6 +137,91 @@ function createBridge(options, fallback) {
 }
 
 #[test]
+fn keeps_named_factory_capture_lexical_and_outlines_safe_callback() {
+    let source = r#"
+import { useEffect } from "react";
+import { notify } from "./notify";
+
+function createBridge(options) {
+  function useBridge() {
+    useEffect(() => options?.onReady?.(), []);
+    useEffect(() => notify(window.location.href), []);
+  }
+  return useBridge;
+}
+"#;
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the nested hook declaration should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    let semantic = SemanticBuilder::new().build(&program).semantic;
+    assert!(
+        !semantic.scoping().root_unresolved_references().contains_key("options"),
+        "the factory capture must resolve lexically rather than become a root global:\n{output}"
+    );
+
+    assert!(
+        output.contains("options?.onReady?.()"),
+        "the declaration-root callback must retain its factory capture:
+{output}"
+    );
+    assert!(
+        output.contains("useEffect(_temp"),
+        "the capture-free callback should remain safely outlineable:
+{output}"
+    );
+    assert!(
+        output.contains("function _temp()") && output.contains("notify(window.location.href)"),
+        "the safe outlined callback body must be preserved:
+{output}"
+    );
+}
+
+#[test]
+fn keeps_nested_function_expression_capture_inline() {
+    let source = r#"
+import { useEffect } from "react";
+
+function createBridge(options) {
+  const useBridge = function () {
+    useEffect(() => options?.onReady?.(), []);
+  };
+  return useBridge;
+}
+"#;
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(
+        result.changed,
+        "the nested function expression should compile: {:?}",
+        result.diagnostics
+    );
+    assert!(!result.diagnostics.has_errors(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    let semantic = SemanticBuilder::new().build(&program).semantic;
+    assert!(
+        !semantic.scoping().root_unresolved_references().contains_key("options"),
+        "the factory capture must resolve lexically rather than become a root global:\n{output}"
+    );
+
+    assert!(
+        output.contains("options?.onReady?.()"),
+        "the function-expression callback must retain its factory capture:
+{output}"
+    );
+    assert!(
+        !output.contains("function _temp()"),
+        "the captured callback must stay inline instead of becoming a program-scope binding:
+{output}"
+    );
+}
+
+#[test]
 fn still_outlines_module_and_global_callback_dependencies() {
     let source = r#"
 import { useEffect } from "react";
