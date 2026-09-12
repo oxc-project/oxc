@@ -578,6 +578,11 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         self.current.kind
     }
 
+    /// Return whether the current block has instructions.
+    pub fn current_block_has_instructions(&self) -> bool {
+        !self.current.instructions.is_empty()
+    }
+
     /// Construct the final HIR and instruction table from the completed blocks.
     ///
     /// Performs these post-build passes:

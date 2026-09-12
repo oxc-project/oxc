@@ -372,6 +372,7 @@ pub enum Terminal<'a> {
     },
     For {
         init: BlockId,
+        init_is_direct_expression: bool,
         test: BlockId,
         update: Option<BlockId>,
         loop_block: BlockId,
@@ -1687,6 +1688,7 @@ impl<'a> CloneIn<'a> for Terminal<'a> {
             }
             Terminal::For {
                 init,
+                init_is_direct_expression,
                 test,
                 update,
                 loop_block,
@@ -1696,6 +1698,7 @@ impl<'a> CloneIn<'a> for Terminal<'a> {
                 span,
             } => Terminal::For {
                 init: *init,
+                init_is_direct_expression: *init_is_direct_expression,
                 test: *test,
                 update: *update,
                 loop_block: *loop_block,

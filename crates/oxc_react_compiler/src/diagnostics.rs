@@ -1049,21 +1049,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_statement_handle_non_variable_initialization_statement<L, T>(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
-        ErrorCategory::Todo,
-        "(BuildHIR::lowerStatement) Handle non-variable initialization in ForStatement",
-    )
-    .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_build_hir_lower_statement_handle_await_loops<L, T>(labels: T) -> OxcDiagnostic
 where
     L: Into<oxc_diagnostics::LabeledSpan>,

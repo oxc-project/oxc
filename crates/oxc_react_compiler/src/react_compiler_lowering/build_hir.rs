@@ -5920,15 +5920,14 @@ fn lower_statement<'a>(
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
 
-            // Init block: lower init expression/declaration, then goto test
+            // Init block: lower initializer, then goto test
+            let mut init_is_direct_expression = false;
             let init_block = builder.try_enter(BlockKind::Loop, |builder, _block_id| {
                 let init_span = match &for_stmt.init {
                     None => {
-                        // No init expression (e.g., `for (; ...)`), add a placeholder
-                        let placeholder = InstructionValue::Primitive {
-                            value: PrimitiveValue::Undefined,
-                            span,
-                        };
+                        // No initializer (e.g., `for (; ...)`), add a placeholder
+                        let placeholder =
+                            InstructionValue::Primitive { value: PrimitiveValue::Undefined, span };
                         lower_value_to_temporary(builder, placeholder)?;
                         span
                     }
@@ -5940,10 +5939,23 @@ fn lower_statement<'a>(
                     Some(init) => {
                         let expr = init.to_expression();
                         let init_span = Some(expr.span());
-                                                builder.record_error(
-                            diagnostics::todo_build_hir_lower_statement_handle_non_variable_initialization_statement(span),
-                        )?;
-                        lower_expression_to_temporary(builder, expr)?;
+                        let value = lower_expression_to_temporary(builder, expr)?;
+                        init_is_direct_expression = builder.current_block_has_instructions();
+                        if !init_is_direct_expression {
+                            // Expressions that lower through a value block finish in an empty
+                            // continuation block. Store their result so the block remains
+                            // reachable, and emit the initializer in declaration form.
+                            let place = build_temporary_place(builder, init_span);
+                            promote_temporary(builder, place.identifier);
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::StoreLocal {
+                                    lvalue: LValue { place, kind: InstructionKind::Const },
+                                    value,
+                                    span: init_span,
+                                },
+                            )?;
+                        }
                         init_span
                     }
                 };
@@ -5990,6 +6002,7 @@ fn lower_statement<'a>(
             builder.terminate_with_continuation(
                 Terminal::For {
                     init: init_block,
+                    init_is_direct_expression,
                     test: test_block_id,
                     update: update_block_id,
                     loop_block: body_block,
