@@ -1,0 +1,19 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(no-blank-block-descriptions): No blank block descriptions
+   ╭─[no_blank_block_descriptions.tsx:1:4]
+ 1 │ ╭─▶ /**
+ 2 │ │    *
+ 3 │ │    * @param {number} x
+ 4 │ ╰─▶  */
+   ╰────
+
+  ⚠ jsdoc(no-blank-block-descriptions): No blank block descriptions
+   ╭─[no_blank_block_descriptions.tsx:1:4]
+ 1 │ ╭─▶ /**
+ 2 │ │    *
+ 3 │ │    *
+ 4 │ ╰─▶  */
+   ╰────
