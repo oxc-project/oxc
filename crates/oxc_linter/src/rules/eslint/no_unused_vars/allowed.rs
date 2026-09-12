@@ -119,7 +119,6 @@ fn has_explicit_exports(block: &TSModuleBlock) -> bool {
             stmt,
             Statement::ExportAllDeclaration(_)
                 | Statement::ExportDefaultDeclaration(_)
-                | Statement::ExportDeclaration(_)
                 | Statement::ExportNamedDeclaration(_)
                 | Statement::ExportFromDeclaration(_)
                 | Statement::TSExportAssignment(_)

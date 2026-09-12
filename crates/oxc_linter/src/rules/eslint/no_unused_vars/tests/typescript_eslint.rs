@@ -2257,3 +2257,66 @@ fn test_autofixer_imports() {
         .expect_fix(fix)
         .test();
 }
+
+#[test]
+fn test_ambient_export_modifiers() {
+    let pass = vec![
+        (
+            r#"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export interface ExplicitlyExportedInterface { otherProperty?: string; }
+            }
+            "#,
+            None,
+        ),
+        (
+            r#"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+            }
+            "#,
+            None,
+        ),
+        (
+            r#"
+            export {};
+            declare namespace NS {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export interface ExplicitlyExportedInterface { otherProperty?: string; }
+            }
+            "#,
+            None,
+        ),
+    ];
+    let fail = vec![
+        (
+            r#"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export {};
+            }
+            "#,
+            None,
+        ),
+        (
+            r#"
+            export {};
+            declare module 'some-package' {
+                interface ImplicitlyExportedInterface { addedProperty?: string; }
+                export = Assigned;
+            }
+            declare const Assigned: unknown;
+            "#,
+            None,
+        ),
+        ("interface LocalUnused {}", None),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .change_rule_path_extension("ts")
+        .test();
+}
