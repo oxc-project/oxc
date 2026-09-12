@@ -169,6 +169,26 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Merge `expr` expression with the previous expression statement or emit as a new one.
+    fn push_new_expression_stmt_to_result(
+        expr: Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
+                Self::join_sequence(a, expr, ctx)
+            });
+        } else {
+            result.push(Statement::new_expression_statement(expr.span(), expr, ctx));
+            ctx.notice_change();
+        }
+    }
+
+    /// Fold `target` expression into previous expression as sequence
+    /// `a; b` -> `a, b`.
     fn merge_last_expression_into_sequence(
         target: &mut Expression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -255,7 +275,7 @@ impl<'a> PeepholeOptimizations {
                     if Self::remove_unused_expression(&mut init, ctx) {
                         ctx.drop_expression(&init);
                     } else {
-                        result.push(Statement::new_expression_statement(init.span(), init, ctx));
+                        Self::push_new_expression_stmt_to_result(init, result, ctx);
                     }
                 }
                 // Walk the rest of the dropped declarator (binding pattern +
@@ -509,11 +529,7 @@ impl<'a> PeepholeOptimizations {
             }
 
             if !discriminant.is_literal() {
-                result.push(Statement::new_expression_statement(
-                    discriminant.span(),
-                    discriminant,
-                    ctx,
-                ));
+                Self::push_new_expression_stmt_to_result(discriminant, result, ctx);
             }
 
             result.push(block_stmt);
@@ -645,19 +661,9 @@ impl<'a> PeepholeOptimizations {
         {
             let argument = ret_stmt.argument.take().unwrap();
             if argument.may_have_side_effects(ctx) {
-                if ctx.options().sequences
-                    && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-                {
-                    // `x; return a,void 0;` -> `x,a,void 0; return;`
-                    ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
-                        Self::join_sequence(a, argument, ctx)
-                    });
-                } else {
-                    // `return a,void 0;` -> `a,void 0; return;`
-                    let span = argument.span();
-                    result.push(Statement::new_expression_statement(span, argument, ctx));
-                    ctx.notice_change();
-                }
+                // `x; return a,void 0;` -> `x,a,void 0; return;`
+                // `return a,void 0;` -> `a,void 0; return;`
+                Self::push_new_expression_stmt_to_result(argument, result, ctx);
             } else {
                 // `return void 0;` -> `return;`
                 ctx.drop_expression(&argument);
@@ -683,14 +689,9 @@ impl<'a> PeepholeOptimizations {
                         ctx.notice_change();
                         let prev_stmt = result.pop().unwrap();
                         let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                        let prev_if = prev_if.unbox();
+                        let test_expr = prev_if.unbox().test;
 
-                        let test_expr = prev_if.test;
-                        result.push(Statement::new_expression_statement(
-                            test_expr.span(),
-                            test_expr,
-                            ctx,
-                        ));
+                        Self::push_new_expression_stmt_to_result(test_expr, result, ctx);
                         break 'return_loop;
                     }
 
