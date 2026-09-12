@@ -60,6 +60,31 @@ impl<'a> PeepholeOptimizations {
                 num.value = if num.value.is_nan() || num.value == 0.0 { 1.0 } else { 0.0 };
                 true
             }
+            // `!(a ? !b : !c)` => `(a ? b : c)`
+            // `!(a ? b : !c)` => `(a ? !b : c)`
+            // `!(a ? !b : c)` => `(a ? b : !c)`
+            Expression::ConditionalExpression(cond_expr) if boolean_context => {
+                // TODO: we should calculate cost first instead of negating it directly
+                let try_compress = (
+                    Self::try_negate_expression(&mut cond_expr.consequent, ctx, boolean_context),
+                    Self::try_negate_expression(&mut cond_expr.alternate, ctx, boolean_context),
+                );
+                match try_compress {
+                    (true, true) => true,
+                    (true, false) => {
+                        ctx.replace_expression_with(&mut cond_expr.alternate, Self::wrap_unary_not);
+                        true
+                    }
+                    (false, true) => {
+                        ctx.replace_expression_with(
+                            &mut cond_expr.consequent,
+                            Self::wrap_unary_not,
+                        );
+                        true
+                    }
+                    _ => false,
+                }
+            }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
             // De Morgan's law, only when every comparison in the `&&`/`||` chain
@@ -113,6 +138,10 @@ impl<'a> PeepholeOptimizations {
         e.unbox().argument
     }
 
+    pub fn wrap_unary_not(old: Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        Expression::new_unary_expression(old.span(), UnaryOperator::LogicalNot, old, ctx)
+    }
+
     /// Character delta from parentheses added or removed by De Morgan's law
     /// (flipping `&&` <-> `||` changes which nested operands need parens), or
     /// `None` if some operand cannot invert its operator in place.
@@ -138,6 +167,7 @@ impl<'a> PeepholeOptimizations {
                         _ => {}
                     }
                 }
+                Expression::NumericLiteral(_) if boolean_context => {}
                 Expression::Identifier(_)
                 | Expression::ThisExpression(_)
                 | Expression::NullLiteral(_)
@@ -204,9 +234,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         if !Self::try_negate_expression(expr, ctx, boolean_context) {
-            ctx.replace_expression_with(expr, |expr, ctx| {
-                Expression::new_unary_expression(expr.span(), UnaryOperator::LogicalNot, expr, ctx)
-            });
+            ctx.replace_expression_with(expr, Self::wrap_unary_not);
         }
     }
 }
