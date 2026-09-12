@@ -1,9 +1,9 @@
 use tower_lsp_server::{
-    jsonrpc::ErrorCode,
-    ls_types::{
-        CodeActionOrCommand, Diagnostic, MessageType, Pattern, ServerCapabilities, TextEdit, Uri,
+    gen_lsp_types::{
+        CodeActionResponse, Diagnostic, MessageType, Pattern, ServerCapabilities, TextEdit, Uri,
         WorkspaceEdit,
     },
+    jsonrpc::ErrorCode,
 };
 
 use crate::{CodeActionParams, TextDocument, capabilities::Capabilities};
@@ -77,7 +77,7 @@ pub trait Tool: Send + Sync {
     /// The tool should filter the code actions based on the requested range.
     /// The context can be used to further filter the code actions,
     /// for example by the `only` field which indicates that only code actions of certain kinds are requested.
-    fn get_code_actions_or_commands(&self, _params: CodeActionParams) -> Vec<CodeActionOrCommand> {
+    fn get_code_actions_or_commands(&self, _params: CodeActionParams) -> Vec<CodeActionResponse> {
         Vec::new()
     }
 
