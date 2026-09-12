@@ -64,12 +64,12 @@ fn drop_console() {
     // Keep the bind call and its arguments, while replacing the console method with a no-op.
     test_options(
         "const log = console.log.bind(console); log('hello');",
-        "(() => {}).bind(console)('hello');",
+        "/* @__NO_SIDE_EFFECTS__ */ (() => {}).bind(console)('hello');",
         &options,
     );
     test_options(
         "const error = console['error'].bind(console); error('hello');",
-        "(() => {}).bind(console)('hello');",
+        "/* @__NO_SIDE_EFFECTS__ */ (() => {}).bind(console)('hello');",
         &options,
     );
 }

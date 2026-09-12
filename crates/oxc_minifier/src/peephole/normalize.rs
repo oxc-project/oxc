@@ -296,7 +296,7 @@ impl<'a> Normalize {
         let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function);
         let empty_function =
             Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-                span, false, None, params, None, body, scope_id, false, false, ctx,
+                span, false, None, params, None, body, scope_id, true, false, ctx,
             );
         ctx.replace_expression(bound_method, empty_function);
         true
