@@ -189,6 +189,7 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts: &ArenaVec<'a, Statement<'a>>,
     ) -> ArenaVec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts, false);
+        self.collect_constant_bindings(stmts);
 
         let mut stmts = stmts
             .iter()
