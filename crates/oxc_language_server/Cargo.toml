@@ -23,12 +23,13 @@ doctest = false
 cow-utils = { workspace = true }
 futures = { workspace = true }
 papaya = { workspace = true }
+percent-encoding = { workspace = true }
 tracing = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
-tower-lsp-server = { workspace = true, features = ["proposed"] }
+tower-lsp-server = { workspace = true, features = ["url-fluent-uri"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "io-util", "macros", "time"] }

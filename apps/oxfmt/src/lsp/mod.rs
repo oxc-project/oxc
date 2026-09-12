@@ -5,7 +5,7 @@ use std::{
 };
 
 use oxc_language_server::{LanguageId, run_server};
-use tower_lsp_server::ls_types::Uri;
+use tower_lsp_server::gen_lsp_types::Uri;
 
 use crate::core::{ExternalServices, JsConfigLoaderCb, utils};
 
@@ -84,7 +84,7 @@ mod test {
     use std::str::FromStr;
 
     use oxc_language_server::LanguageId;
-    use tower_lsp_server::ls_types::Uri;
+    use tower_lsp_server::gen_lsp_types::Uri;
 
     use crate::lsp::create_fake_file_path_from_language_id;
 

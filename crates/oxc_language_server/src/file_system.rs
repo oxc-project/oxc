@@ -5,9 +5,9 @@ use std::{
     sync::Arc,
 };
 
-use tower_lsp_server::ls_types::Uri;
+use tower_lsp_server::gen_lsp_types::Uri;
 
-use crate::{ConcurrentHashMap, LanguageId, TextDocument};
+use crate::{ConcurrentHashMap, LanguageId, TextDocument, uri_utils::uri_to_file_path};
 
 #[derive(Debug, Default)]
 pub struct LSPFileSystem {
@@ -35,7 +35,7 @@ impl TryFrom<&Uri> for ResolvedPath {
     type Error = String;
 
     fn try_from(uri: &Uri) -> Result<Self, Self::Error> {
-        let path = uri.to_file_path().ok_or_else(|| "Invalid URI".to_string())?;
+        let path = uri_to_file_path(uri).ok_or_else(|| "Invalid URI".to_string())?;
         Ok(Self::canonical(path.to_path_buf()))
     }
 }
@@ -121,6 +121,8 @@ mod tests {
     use cow_utils::CowUtils;
     use std::{borrow::Cow, path::Path};
 
+    use crate::uri_utils::file_path_to_uri;
+
     use super::*;
 
     fn path_from_fixture(fixture: &str) -> PathBuf {
@@ -136,8 +138,8 @@ mod tests {
         let dir = path_from_fixture("same_path_different_uri");
         let file = dir.join("test.txt");
 
-        let uri = Uri::from_file_path(&file).unwrap();
-        let unresolved_uri = Uri::from_file_path(dir.join("Test.txt")).unwrap();
+        let uri = file_path_to_uri(&file).unwrap();
+        let unresolved_uri = file_path_to_uri(dir.join("Test.txt")).unwrap();
 
         let resolved_path = ResolvedPath::try_from(&uri).unwrap();
         let unresolved_path = ResolvedPath::try_from(&unresolved_uri).unwrap();
@@ -161,8 +163,8 @@ mod tests {
         let unresolved_dir =
             unresolved_dir.cow_replace("same_path_different_uri", "Same_Path_Different_URI");
 
-        let uri = Uri::from_file_path(&dir).unwrap();
-        let unresolved_uri = Uri::from_file_path(unresolved_dir.as_ref()).unwrap();
+        let uri = file_path_to_uri(&dir).unwrap();
+        let unresolved_uri = file_path_to_uri(unresolved_dir.as_ref()).unwrap();
 
         let resolved_path = ResolvedPath::try_from(&uri).unwrap();
         let unresolved_path = ResolvedPath::try_from(&unresolved_uri).unwrap();
