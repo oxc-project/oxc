@@ -130,11 +130,41 @@ fn test_mathematical_expression_edge_cases() {
     test("Infinity + 1", ""); // eliminated as unused expression
     test("Infinity - Infinity", ""); // eliminated as unused expression
     test("Infinity / Infinity", ""); // eliminated as unused expression
-    test_same("Math.PI * 2"); // runtime value
-    test_same("Math.E + 1"); // runtime value
+    test("Math.PI * 2", ""); // eliminated as unused expression
+    test("Math.E + 1", ""); // eliminated as unused expression
     test("-0 + 0", ""); // eliminated as unused expression
     test("-0 * 1", ""); // eliminated as unused expression
     test("1 / -0", ""); // eliminated as unused expression
+}
+
+#[test]
+fn test_mathematical_constants() {
+    let constants = [
+        "NaN",
+        "Infinity",
+        "Math.E",
+        "Math.LN10",
+        "Math.LN2",
+        "Math.LOG10E",
+        "Math.LOG2E",
+        "Math.PI",
+        "Math.SQRT1_2",
+        "Math.SQRT2",
+        "Number.POSITIVE_INFINITY",
+        "Number.NEGATIVE_INFINITY",
+        "Number.EPSILON",
+        "Number.NaN",
+        "Number.MAX_VALUE",
+        "Number.MIN_VALUE",
+        "Number.MAX_SAFE_INTEGER",
+        "Number.MIN_SAFE_INTEGER",
+    ];
+    for s in constants {
+        // typeof
+        test(&format!("x = typeof {s}"), "x = 'number'");
+        // unused
+        test(s, "");
+    }
 }
 
 #[test]
