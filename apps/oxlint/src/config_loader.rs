@@ -227,16 +227,6 @@ pub enum ConfigLoadError {
     Diagnostic(OxcDiagnostic),
 }
 
-impl ConfigLoadError {
-    /// Get the path of the config file that failed
-    pub fn path(&self) -> Option<&Path> {
-        match self {
-            ConfigLoadError::Parse { path, .. } | ConfigLoadError::Build { path, .. } => Some(path),
-            _ => None,
-        }
-    }
-}
-
 /// High-level errors that can occur when loading CLI configurations.
 ///
 /// This groups together failures related to the root configuration file
