@@ -28,6 +28,7 @@ include = ["src/**/*", "examples/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
 doctest = false
 
 [dependencies]
+lazy-regex = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }

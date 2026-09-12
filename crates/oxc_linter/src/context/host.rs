@@ -25,7 +25,7 @@ use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
-    utils::ReactCompilerResults,
+    utils::{ReactCompilerEnvOptions, ReactCompilerResults},
 };
 
 #[cfg(not(test))]
@@ -185,6 +185,9 @@ pub struct ContextHost<'a> {
     /// every rule in the React Compiler family (`react/hooks`, `react/refs`, …).
     /// Stays empty until the first such rule runs on this file.
     pub(super) react_compiler_results: OnceCell<ReactCompilerResults>,
+    /// Config-derived environment additions for that shared run (from the
+    /// `react/capitalized-calls` rule's options).
+    react_compiler_env_options: ReactCompilerEnvOptions,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -225,8 +228,22 @@ impl<'a> ContextHost<'a> {
             frameworks: options.framework_hints,
             with_ignore_fixes: options.with_ignore_fixes,
             react_compiler_results: OnceCell::new(),
+            react_compiler_env_options: ReactCompilerEnvOptions::default(),
         }
         .sniff_for_frameworks()
+    }
+
+    /// Set the config-derived environment additions for the shared React
+    /// Compiler run. Must happen before the first React Compiler family rule
+    /// runs on this file.
+    pub fn with_react_compiler_env_options(mut self, env_options: ReactCompilerEnvOptions) -> Self {
+        self.react_compiler_env_options = env_options;
+        self
+    }
+
+    /// Config-derived environment additions for the shared React Compiler run.
+    pub(crate) fn react_compiler_env_options(&self) -> &ReactCompilerEnvOptions {
+        &self.react_compiler_env_options
     }
 
     /// The current [`ContextSubHost`]

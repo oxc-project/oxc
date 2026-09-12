@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use lazy_regex::Regex;
 use oxc_diagnostics::OxcCode;
 use oxc_react_compiler::{
     CompilerOutputMode, EnvironmentConfig, ErrorCategory, ExhaustiveEffectDepsMode, LintDiagnostic,
@@ -11,16 +12,29 @@ use crate::{
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
 };
 
+/// Environment additions to the shared React Compiler run that come from rule
+/// configuration, extracted once per resolved config in `Linter::run` (from the
+/// `react/capitalized-calls` rule's options). Config-derived rather than
+/// per-run rule state, so the single shared run stays valid for any
+/// combination of enabled rules.
+#[derive(Debug, Default, Clone)]
+pub struct ReactCompilerEnvOptions {
+    /// Extra allowed names for `validateNoCapitalizedCalls`.
+    pub capitalized_calls_allow: Vec<String>,
+    /// Allowed-name pattern for `validateNoCapitalizedCalls`.
+    pub capitalized_calls_allow_pattern: Option<Regex>,
+}
+
 /// The compiler options the React Compiler family of rules lints with — `lint`
 /// output mode plus validations that are off by default in the compiler.
 /// Mirrors `COMPILER_OPTIONS` in `eslint-plugin-react-hooks`'s
 /// `src/shared/RunReactCompiler.ts`.
 ///
-/// The options are a fixed superset shared by every rule in the family: which
-/// rules are enabled only routes categories to reporters, it never changes
-/// what the compiler analyzes. That keeps the single shared run valid for any
-/// combination of enabled rules.
-fn react_compiler_plugin_options() -> PluginOptions {
+/// The options are a superset shared by every rule in the family: which rules
+/// are enabled only routes categories to reporters, and the only per-config
+/// variation is [`ReactCompilerEnvOptions`]. That keeps the single shared run
+/// valid for any combination of enabled rules.
+fn react_compiler_plugin_options(env_options: &ReactCompilerEnvOptions) -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
         // Oxlint does not parse Flow files.
@@ -44,7 +58,10 @@ fn react_compiler_plugin_options() -> PluginOptions {
             validate_static_components: true,
             validate_no_freezing_known_mutable_functions: true,
             validate_no_void_use_memo: true,
-            validate_no_capitalized_calls: Some(vec![]),
+            validate_no_capitalized_calls: Some(env_options.capitalized_calls_allow.clone()),
+            validate_no_capitalized_calls_pattern: env_options
+                .capitalized_calls_allow_pattern
+                .clone(),
             validate_hooks_usage: true,
             validate_no_derived_computations_in_effects: true,
             validate_exhaustive_memoization_dependencies: true,
@@ -82,7 +99,7 @@ pub fn build_react_compiler_results(host: &ContextHost) -> ReactCompilerResults 
         program,
         semantic,
         host.allocator(),
-        react_compiler_plugin_options(),
+        react_compiler_plugin_options(host.react_compiler_env_options()),
     );
 
     ReactCompilerResults { diagnostics: result.diagnostics }
