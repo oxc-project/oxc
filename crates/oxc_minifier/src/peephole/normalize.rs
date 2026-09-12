@@ -6,6 +6,7 @@ use oxc_ecmascript::{
     side_effects::{is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
+use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 
 use super::PeepholeOptimizations;
@@ -149,6 +150,12 @@ impl<'a> Traverse<'a> for Normalize {
             ctx.replace_expression(expr, new_expr);
             return;
         }
+        if ctx.options().drop_console
+            && let Expression::CallExpression(call_expr) = &mut *expr
+            && Self::replace_bound_console_method(call_expr, ctx)
+        {
+            return;
+        }
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
@@ -254,6 +261,45 @@ impl<'a> Normalize {
         let obj = member_expr.object();
         let Some(ident) = obj.get_identifier_reference() else { return false };
         ident.name == "console"
+    }
+
+    fn replace_bound_console_method(
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let Some(bind_member) = call_expr.callee.as_member_expression_mut() else {
+            return false;
+        };
+        if bind_member.static_property_name() != Some("bind") {
+            return false;
+        }
+        let bound_method = bind_member.object_mut();
+        let Some(console_member) = bound_method.as_member_expression() else {
+            return false;
+        };
+        let Some(console) = console_member.object().get_identifier_reference() else {
+            return false;
+        };
+        if console.name != "console" {
+            return false;
+        }
+
+        let span = bound_method.span();
+        let params = FormalParameters::boxed(
+            span,
+            FormalParameterKind::ArrowFormalParameters,
+            [],
+            None,
+            ctx,
+        );
+        let body = ArrowFunctionBody::new_function_body(span, [], [], ctx);
+        let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function);
+        let empty_function =
+            Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
+                span, false, None, params, None, body, scope_id, true, false, ctx,
+            );
+        ctx.replace_expression(bound_method, empty_function);
+        true
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
