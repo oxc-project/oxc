@@ -272,12 +272,24 @@ impl<'a> DetermineValueType<'a> for LogicalExpression<'a> {
 
 impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY")
-            && ctx.is_global_expr("Number", &self.object)
-        {
-            return ValueType::Number;
+        match self.property.name.as_str() {
+            "POSITIVE_INFINITY" | "NEGATIVE_INFINITY" | "EPSILON" | "NaN" | "MAX_VALUE"
+            | "MIN_VALUE" => {
+                if ctx.is_global_expr("Number", &self.object) {
+                    ValueType::Number
+                } else {
+                    ValueType::Undetermined
+                }
+            }
+            "E" | "LN10" | "LN2" | "LOG10E" | "LOG2E" | "PI" | "SQRT1_2" | "SQRT2" => {
+                if ctx.is_global_expr("Math", &self.object) {
+                    ValueType::Number
+                } else {
+                    ValueType::Undetermined
+                }
+            }
+            _ => ValueType::Undetermined,
         }
-        ValueType::Undetermined
     }
 }
 

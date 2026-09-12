@@ -455,6 +455,9 @@ pub(super) fn is_known_global_property(global: &str, property: &str) -> bool {
     match global {
         "Math" => matches!(property, "E" | "LN10" | "LN2" | "LOG10E" | "LOG2E" | "PI" | "SQRT1_2" | "SQRT2")
             || is_pure_math_method(property),
+        "Number" => matches!(property,
+            "POSITIVE_INFINITY" | "NEGATIVE_INFINITY"  | "EPSILON" | "NaN"
+            | "MAX_VALUE" | "MIN_VALUE" | "MAX_SAFE_INTEGER" | "MIN_SAFE_INTEGER"),
         "console" => matches!(property,
             "assert" | "clear" | "count" | "countReset" | "debug" | "dir" | "dirxml"
             | "error" | "group" | "groupCollapsed" | "groupEnd" | "info" | "log"
