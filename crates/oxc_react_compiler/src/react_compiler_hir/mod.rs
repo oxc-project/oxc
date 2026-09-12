@@ -196,6 +196,9 @@ pub struct HirFunction<'a> {
     pub params: ArenaVec<'a, ParamPattern>,
     pub returns: Place,
     pub context: ArenaVec<'a, Place>,
+    /// Whether this function references a binding in an enclosing function
+    /// outside the compiled-function boundary.
+    pub has_outer_lexical_reference: bool,
     pub body: HIR<'a>,
     pub instructions: ArenaVec<'a, Instruction<'a>>,
     pub generator: bool,
@@ -1558,6 +1561,7 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             params: self.params.clone_in_impl(sem, alloc),
             returns: self.returns,
             context: self.context.clone_in_impl(sem, alloc),
+            has_outer_lexical_reference: self.has_outer_lexical_reference,
             body: self.body.clone_in_impl(sem, alloc),
             instructions: self.instructions.clone_in_impl(sem, alloc),
             generator: self.generator,

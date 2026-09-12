@@ -154,6 +154,10 @@ pub struct HirBuilder<'a, 'b> {
     context_identifiers: rustc_hash::FxHashSet<SymbolId>,
     /// Index mapping identifier byte offsets to source locations and JSX status.
     identifier_spans: &'b IdentifierLocIndex,
+    /// Whether this function references a binding in an enclosing function
+    /// outside the compiled-function boundary. Such a function cannot be
+    /// safely outlined to module scope.
+    has_outer_lexical_reference: bool,
 }
 
 impl<'a, 'b> HirBuilder<'a, 'b> {
@@ -201,6 +205,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             component_scope,
             context_identifiers,
             identifier_spans,
+            has_outer_lexical_reference: false,
         }
     }
 
@@ -274,6 +279,18 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Returns the 'a reference to avoid conflicts with mutable borrows on self.
     pub fn identifier_spans(&self) -> &'b IdentifierLocIndex {
         self.identifier_spans
+    }
+
+    /// Mark this function as depending on an enclosing lexical binding that is
+    /// outside the compiled-function boundary.
+    pub fn note_outer_lexical_reference(&mut self) {
+        self.has_outer_lexical_reference = true;
+    }
+
+    /// Whether this function depends on an enclosing lexical binding outside
+    /// the compiled-function boundary.
+    pub fn has_outer_lexical_reference(&self) -> bool {
+        self.has_outer_lexical_reference
     }
 
     /// Access the bindings map.
@@ -799,6 +816,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 None => VariableBinding::ModuleLocal { name },
             })
         } else if !self.is_scope_within_compiled_function(symbol_scope) {
+            self.has_outer_lexical_reference = true;
             Ok(VariableBinding::ModuleLocal { name })
         } else {
             let binding_kind = crate::react_compiler_lowering::convert_binding_kind(
