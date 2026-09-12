@@ -587,6 +587,10 @@ fn test() {
         r"[...not.array]",
         r"[...not.array()]",
         r"[...array.unknown()]",
+        // Issue: <https://github.com/oxc-project/oxc/issues/26159>
+        r"[...foo.slice(1)]",
+        r"[...foo.slice().slice().slice().slice().slice().slice().slice().slice()]",
+        r"const nif = '123456789'; export const a = [...nif.slice(0, 8)].reduce((acc, ch) => acc + Number(ch), 0)",
         r"const arr = [1, 2, 3]; const unique = [...arr];", // valid method to shallow-clone an array
         r"[...Object.notReturningArray(foo)]",
         r"[...NotObject.keys(foo)]",
@@ -624,6 +628,7 @@ fn test() {
         "[...Uint8Array.from([1, 2, 3])]",
         "[...Uint8Array.from([1, 2, 3]).slice(0)]",
         // the typed-array hint survives a chain of clone methods
+        "[...new Uint8Array(buf).slice(0, 12).slice(0)]",
         "[...new Uint8Array(buf).slice(0, 12).map(f)]",
         // every typed array constructor
         "[...new Int8Array(buf).slice(0)]",
@@ -719,7 +724,8 @@ fn test() {
         r"[...foo.flat()]",
         r"[...foo.flatMap(bar)]",
         r"[...foo.map(bar)]",
-        r"[...foo.slice(1)]",
+        r"[...[1, 2, 3].slice(1)]",
+        r"[...[1, 2, 3].slice(1).slice(1)]",
         r"[...foo.splice(1)]",
         r"[...foo.toReversed()]",
         r"[...foo.toSorted()]",
@@ -783,6 +789,8 @@ fn test() {
         // (r"new Map(...[...iterable])", r"new Map(iterable)"),
         // useless clones - simple arrays
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
+        ("[...[1, 2, 3].slice(1)]", "[1, 2, 3].slice(1)"),
+        ("[...[1, 2, 3].slice(1).slice(1)]", "[1, 2, 3].slice(1).slice(1)"),
         ("[...new Array()]", "new Array()"),
         ("[...new Array(3)]", "new Array(3).fill()"),
         ("[...new Array(1, 2, 3)]", "new Array(1, 2, 3)"),
