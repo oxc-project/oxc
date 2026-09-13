@@ -59,6 +59,10 @@ export type JsCreateWorkspaceCb = ((arg: string) => Promise<undefined>)
 /** JS callback to destroy a workspace. */
 export type JsDestroyWorkspaceCb = ((arg: string) => void)
 
+/** JS callback which creates worker isolates for external plugins. */
+export type JsInitializePluginWorkersCb =
+  ((arg0: number, arg1: number, arg2: string) => Promise<undefined>)
+
 /** JS callback to lint a file. */
 export type JsLintFileCb = ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null)
 
@@ -82,10 +86,11 @@ export type JsSetupRuleConfigsCb = ((arg: string) => string | null)
  * 5. `create_workspace`: Create a workspace.
  * 6. `destroy_workspace`: Destroy a workspace.
  * 7. `load_js_configs`: Load JavaScript config files.
+ * 8. `initialize_plugin_workers`: Create worker isolates for JS plugins.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb, initializePluginWorkers: JsInitializePluginWorkersCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
@@ -128,3 +133,14 @@ export interface ParserOptions {
 
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
+
+/**
+ * Register a JS-plugin worker isolate with the currently initializing worker pool.
+ *
+ * # Errors
+ * Returns an error if the pool or worker index is invalid, or the worker already registered.
+ */
+export declare function registerJsPluginWorker(poolId: number, workerIndex: number, lintFile: JsLintFileCb): void
+
+/** Report that a JS-plugin worker isolate failed after it was created. */
+export declare function reportJsPluginWorkerFailure(poolId: number, workerIndex: number, error: string): void

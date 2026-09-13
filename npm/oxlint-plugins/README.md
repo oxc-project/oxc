@@ -90,6 +90,16 @@ So a plugin which depends on `@oxlint/plugins` can be:
 - Used with ESLint 8+.
 - Published as either ESM or CommonJS.
 
+## Experimental parallel execution
+
+Oxlint can run JavaScript plugins in parallel with `--js-plugin-threads <N>`. The count includes
+the main JavaScript thread, so `1` preserves the default behavior and values above `1` create
+additional Node.js worker isolates.
+
+Each isolate loads an independent instance of every plugin. Do not rely on module-level mutable
+state for cross-file aggregation when this option is enabled. File execution order is
+nondeterministic, just as it is for Oxlint's normal multithreaded file processing.
+
 ## Docs
 
 For full documentation, see [Oxlint JS Plugins docs](https://oxc.rs/docs/guide/usage/linter/js-plugins).

@@ -19,6 +19,11 @@ fn main() -> CliRunResult {
     // (Rayon-based); `#[tokio::main]` would otherwise spawn one idle Tokio worker thread per core
     // on every lint invocation.
     if command.lsp {
+        if command.misc_options.js_plugin_threads.is_some_and(|threads| threads > 1) {
+            print_js_plugin_threads_lsp_error();
+            return CliRunResult::InvalidOptionJsPluginThreads;
+        }
+
         let runtime =
             tokio::runtime::Runtime::new().expect("Failed to build the Tokio runtime for the LSP");
         return runtime.block_on(async {
@@ -40,4 +45,9 @@ fn main() -> CliRunResult {
 
     // Run without external linter (no JS plugins)
     CliRunner::new(command, None).run(&mut stdout)
+}
+
+#[expect(clippy::print_stderr, reason = "LSP reserves stdout for protocol messages")]
+fn print_js_plugin_threads_lsp_error() {
+    eprintln!("`--js-plugin-threads` greater than 1 is not supported with `--lsp`.");
 }
