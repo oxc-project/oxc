@@ -1159,6 +1159,12 @@ fn test_arguments() {
             "function foo(a, ...args: unknown[]) { return a } foo()",
             Some(json!([{ "args": "none" }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/26562
+        // `after-used`: params before a used rest parameter are allowed
+        (
+            "function foo(unusedBeforeRest: string, ...usedRest: string[]) { console.log(usedRest); } foo('x', 'y');",
+            Some(json!([{ "args": "after-used" }])),
+        ),
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),

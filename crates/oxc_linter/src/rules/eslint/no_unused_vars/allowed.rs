@@ -300,8 +300,10 @@ impl NoUnusedVars {
             return false;
         };
 
-        // This is the last parameter, so need to check for usages on following parameters
-        if position == params.items.len() - 1 {
+        // If this is the last parameter in `items` and there is no rest
+        // parameter, there are no following parameters to check, so this
+        // parameter is not allowed (it will be reported).
+        if position == params.items.len() - 1 && params.rest.is_none() {
             return false;
         }
 
@@ -315,6 +317,13 @@ impl NoUnusedVars {
             // no need to check if param is in a constructor, because if it's
             // not that's a parse error.
             .any(|p| p.has_modifier() || p.pattern.has_any_used_binding(ctx))
+            // A rest parameter, if present, is always the last parameter.
+            // If it has a used binding, parameters before it are allowed under
+            // `after-used` (they occur before the last used argument).
+            || params
+                .rest
+                .as_ref()
+                .is_some_and(|rest| rest.rest.argument.has_any_used_binding(ctx))
     }
 
     /// The following allowed conditions are handled:
