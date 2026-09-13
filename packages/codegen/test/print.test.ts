@@ -249,15 +249,19 @@ describe("numbers", () => {
     ["int-max-safe", e(num(9007199254740991)), "9007199254740991;\n"],
     ["hex", e(num(281474976710655)), "0xffffffffffff;\n"],
     ["hex-negative", e(num(-281474976710655)), "-0xffffffffffff;\n"],
-    // hexadecimal is tried first and wins, though `1e12` is shorter
-    ["hex-over-exponent", e(num(1e12)), "0xe8d4a51000;\n"],
+    // Hexadecimal is only tried once the plain digits have been shortened, and only wins when it
+    // is strictly shorter than those digits and no longer than the shortened form. `1e12` has
+    // trailing zeros the exponent form pays for, so hexadecimal loses to it.
+    ["exponent-over-hex", e(num(1e12)), "1e12;\n"],
     // The two cases above reach the hexadecimal test from plain digits. These reach it from
     // exponent notation, where the length it is judged against is one less than the text `String`
-    // gave, because the `+` of the exponent always goes. The second is the boundary: hexadecimal is
-    // exactly as long as the exponent form, so it must lose - and would wrongly win, as
-    // `0x21e2073de72ea800000`, if that one character were not taken off.
-    ["hex-from-exponent", e(num(1.0000990573316814e21)), "0x36372999e429e40000;\n"],
-    ["hex-from-exponent-boundary", e(num(1.0000473745167254e22)), "10000473745167254e6;\n"],
+    // gave, because the `+` of the exponent always goes. Hexadecimal is longer than the shortened
+    // form in both, so each prints the exponent form; the second is the boundary, where the two are
+    // exactly as long as each other.
+    ["exponent-over-hex-from-exponent", e(num(1.0000990573316814e21)), "10000990573316814e5;\n"],
+    ["exponent-over-hex-boundary", e(num(1.0000473745167254e22)), "10000473745167254e6;\n"],
+    // ...and hexadecimal still wins when the shortened digits are no shorter than it
+    ["hex-when-shortest", e(num(1.8446744073709552e19)), "0x10000000000000000;\n"],
     ["exponent-fold", e(num(1.2e101)), "12e100;\n"], // the point folds into the exponent
     ["max-value", e(num(1.7976931348623157e308)), "17976931348623157e292;\n"],
     ["min-value", e(num(5e-324)), "5e-324;\n"],
