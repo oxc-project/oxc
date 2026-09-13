@@ -13,480 +13,480 @@
   "exports": {
     "./helpers/AwaitValue": [
       {
-        "node": "./src/helpers/AwaitValue.js",
         "import": "./src/helpers/esm/AwaitValue.js",
+        "node": "./src/helpers/AwaitValue.js",
         "default": "./src/helpers/AwaitValue.js"
       },
       "./src/helpers/AwaitValue.js"
     ],
     "./helpers/OverloadYield": [
       {
-        "node": "./src/helpers/OverloadYield.js",
         "import": "./src/helpers/esm/OverloadYield.js",
+        "node": "./src/helpers/OverloadYield.js",
         "default": "./src/helpers/OverloadYield.js"
       },
       "./src/helpers/OverloadYield.js"
     ],
     "./helpers/applyDecoratedDescriptor": [
       {
-        "node": "./src/helpers/applyDecoratedDescriptor.js",
         "import": "./src/helpers/esm/applyDecoratedDescriptor.js",
+        "node": "./src/helpers/applyDecoratedDescriptor.js",
         "default": "./src/helpers/applyDecoratedDescriptor.js"
       },
       "./src/helpers/applyDecoratedDescriptor.js"
     ],
     "./helpers/applyDecs": [
       {
-        "node": "./src/helpers/applyDecs.js",
         "import": "./src/helpers/esm/applyDecs.js",
+        "node": "./src/helpers/applyDecs.js",
         "default": "./src/helpers/applyDecs.js"
       },
       "./src/helpers/applyDecs.js"
     ],
     "./helpers/applyDecs2203": [
       {
-        "node": "./src/helpers/applyDecs2203.js",
         "import": "./src/helpers/esm/applyDecs2203.js",
+        "node": "./src/helpers/applyDecs2203.js",
         "default": "./src/helpers/applyDecs2203.js"
       },
       "./src/helpers/applyDecs2203.js"
     ],
     "./helpers/applyDecs2203R": [
       {
-        "node": "./src/helpers/applyDecs2203R.js",
         "import": "./src/helpers/esm/applyDecs2203R.js",
+        "node": "./src/helpers/applyDecs2203R.js",
         "default": "./src/helpers/applyDecs2203R.js"
       },
       "./src/helpers/applyDecs2203R.js"
     ],
     "./helpers/applyDecs2301": [
       {
-        "node": "./src/helpers/applyDecs2301.js",
         "import": "./src/helpers/esm/applyDecs2301.js",
+        "node": "./src/helpers/applyDecs2301.js",
         "default": "./src/helpers/applyDecs2301.js"
       },
       "./src/helpers/applyDecs2301.js"
     ],
     "./helpers/applyDecs2305": [
       {
-        "node": "./src/helpers/applyDecs2305.js",
         "import": "./src/helpers/esm/applyDecs2305.js",
+        "node": "./src/helpers/applyDecs2305.js",
         "default": "./src/helpers/applyDecs2305.js"
       },
       "./src/helpers/applyDecs2305.js"
     ],
     "./helpers/applyDecs2311": [
       {
-        "node": "./src/helpers/applyDecs2311.js",
         "import": "./src/helpers/esm/applyDecs2311.js",
+        "node": "./src/helpers/applyDecs2311.js",
         "default": "./src/helpers/applyDecs2311.js"
       },
       "./src/helpers/applyDecs2311.js"
     ],
     "./helpers/arrayLikeToArray": [
       {
-        "node": "./src/helpers/arrayLikeToArray.js",
         "import": "./src/helpers/esm/arrayLikeToArray.js",
+        "node": "./src/helpers/arrayLikeToArray.js",
         "default": "./src/helpers/arrayLikeToArray.js"
       },
       "./src/helpers/arrayLikeToArray.js"
     ],
     "./helpers/arrayWithHoles": [
       {
-        "node": "./src/helpers/arrayWithHoles.js",
         "import": "./src/helpers/esm/arrayWithHoles.js",
+        "node": "./src/helpers/arrayWithHoles.js",
         "default": "./src/helpers/arrayWithHoles.js"
       },
       "./src/helpers/arrayWithHoles.js"
     ],
     "./helpers/arrayWithoutHoles": [
       {
-        "node": "./src/helpers/arrayWithoutHoles.js",
         "import": "./src/helpers/esm/arrayWithoutHoles.js",
+        "node": "./src/helpers/arrayWithoutHoles.js",
         "default": "./src/helpers/arrayWithoutHoles.js"
       },
       "./src/helpers/arrayWithoutHoles.js"
     ],
     "./helpers/assertClassBrand": [
       {
-        "node": "./src/helpers/assertClassBrand.js",
         "import": "./src/helpers/esm/assertClassBrand.js",
+        "node": "./src/helpers/assertClassBrand.js",
         "default": "./src/helpers/assertClassBrand.js"
       },
       "./src/helpers/assertClassBrand.js"
     ],
     "./helpers/assertThisInitialized": [
       {
-        "node": "./src/helpers/assertThisInitialized.js",
         "import": "./src/helpers/esm/assertThisInitialized.js",
+        "node": "./src/helpers/assertThisInitialized.js",
         "default": "./src/helpers/assertThisInitialized.js"
       },
       "./src/helpers/assertThisInitialized.js"
     ],
     "./helpers/asyncGeneratorDelegate": [
       {
-        "node": "./src/helpers/asyncGeneratorDelegate.js",
         "import": "./src/helpers/esm/asyncGeneratorDelegate.js",
+        "node": "./src/helpers/asyncGeneratorDelegate.js",
         "default": "./src/helpers/asyncGeneratorDelegate.js"
       },
       "./src/helpers/asyncGeneratorDelegate.js"
     ],
     "./helpers/asyncIterator": [
       {
-        "node": "./src/helpers/asyncIterator.js",
         "import": "./src/helpers/esm/asyncIterator.js",
+        "node": "./src/helpers/asyncIterator.js",
         "default": "./src/helpers/asyncIterator.js"
       },
       "./src/helpers/asyncIterator.js"
     ],
     "./helpers/asyncToGenerator": [
       {
-        "node": "./src/helpers/asyncToGenerator.js",
         "import": "./src/helpers/esm/asyncToGenerator.js",
+        "node": "./src/helpers/asyncToGenerator.js",
         "default": "./src/helpers/asyncToGenerator.js"
       },
       "./src/helpers/asyncToGenerator.js"
     ],
     "./helpers/awaitAsyncGenerator": [
       {
-        "node": "./src/helpers/awaitAsyncGenerator.js",
         "import": "./src/helpers/esm/awaitAsyncGenerator.js",
+        "node": "./src/helpers/awaitAsyncGenerator.js",
         "default": "./src/helpers/awaitAsyncGenerator.js"
       },
       "./src/helpers/awaitAsyncGenerator.js"
     ],
     "./helpers/callSuper": [
       {
-        "node": "./src/helpers/callSuper.js",
         "import": "./src/helpers/esm/callSuper.js",
+        "node": "./src/helpers/callSuper.js",
         "default": "./src/helpers/callSuper.js"
       },
       "./src/helpers/callSuper.js"
     ],
     "./helpers/checkInRHS": [
       {
-        "node": "./src/helpers/checkInRHS.js",
         "import": "./src/helpers/esm/checkInRHS.js",
+        "node": "./src/helpers/checkInRHS.js",
         "default": "./src/helpers/checkInRHS.js"
       },
       "./src/helpers/checkInRHS.js"
     ],
     "./helpers/checkPrivateRedeclaration": [
       {
-        "node": "./src/helpers/checkPrivateRedeclaration.js",
         "import": "./src/helpers/esm/checkPrivateRedeclaration.js",
+        "node": "./src/helpers/checkPrivateRedeclaration.js",
         "default": "./src/helpers/checkPrivateRedeclaration.js"
       },
       "./src/helpers/checkPrivateRedeclaration.js"
     ],
     "./helpers/classApplyDescriptorDestructureSet": [
       {
-        "node": "./src/helpers/classApplyDescriptorDestructureSet.js",
         "import": "./src/helpers/esm/classApplyDescriptorDestructureSet.js",
+        "node": "./src/helpers/classApplyDescriptorDestructureSet.js",
         "default": "./src/helpers/classApplyDescriptorDestructureSet.js"
       },
       "./src/helpers/classApplyDescriptorDestructureSet.js"
     ],
     "./helpers/classApplyDescriptorGet": [
       {
-        "node": "./src/helpers/classApplyDescriptorGet.js",
         "import": "./src/helpers/esm/classApplyDescriptorGet.js",
+        "node": "./src/helpers/classApplyDescriptorGet.js",
         "default": "./src/helpers/classApplyDescriptorGet.js"
       },
       "./src/helpers/classApplyDescriptorGet.js"
     ],
     "./helpers/classApplyDescriptorSet": [
       {
-        "node": "./src/helpers/classApplyDescriptorSet.js",
         "import": "./src/helpers/esm/classApplyDescriptorSet.js",
+        "node": "./src/helpers/classApplyDescriptorSet.js",
         "default": "./src/helpers/classApplyDescriptorSet.js"
       },
       "./src/helpers/classApplyDescriptorSet.js"
     ],
     "./helpers/classCallCheck": [
       {
-        "node": "./src/helpers/classCallCheck.js",
         "import": "./src/helpers/esm/classCallCheck.js",
+        "node": "./src/helpers/classCallCheck.js",
         "default": "./src/helpers/classCallCheck.js"
       },
       "./src/helpers/classCallCheck.js"
     ],
     "./helpers/classCheckPrivateStaticAccess": [
       {
-        "node": "./src/helpers/classCheckPrivateStaticAccess.js",
         "import": "./src/helpers/esm/classCheckPrivateStaticAccess.js",
+        "node": "./src/helpers/classCheckPrivateStaticAccess.js",
         "default": "./src/helpers/classCheckPrivateStaticAccess.js"
       },
       "./src/helpers/classCheckPrivateStaticAccess.js"
     ],
     "./helpers/classCheckPrivateStaticFieldDescriptor": [
       {
-        "node": "./src/helpers/classCheckPrivateStaticFieldDescriptor.js",
         "import": "./src/helpers/esm/classCheckPrivateStaticFieldDescriptor.js",
+        "node": "./src/helpers/classCheckPrivateStaticFieldDescriptor.js",
         "default": "./src/helpers/classCheckPrivateStaticFieldDescriptor.js"
       },
       "./src/helpers/classCheckPrivateStaticFieldDescriptor.js"
     ],
     "./helpers/classExtractFieldDescriptor": [
       {
-        "node": "./src/helpers/classExtractFieldDescriptor.js",
         "import": "./src/helpers/esm/classExtractFieldDescriptor.js",
+        "node": "./src/helpers/classExtractFieldDescriptor.js",
         "default": "./src/helpers/classExtractFieldDescriptor.js"
       },
       "./src/helpers/classExtractFieldDescriptor.js"
     ],
     "./helpers/classNameTDZError": [
       {
-        "node": "./src/helpers/classNameTDZError.js",
         "import": "./src/helpers/esm/classNameTDZError.js",
+        "node": "./src/helpers/classNameTDZError.js",
         "default": "./src/helpers/classNameTDZError.js"
       },
       "./src/helpers/classNameTDZError.js"
     ],
     "./helpers/classPrivateFieldDestructureSet": [
       {
-        "node": "./src/helpers/classPrivateFieldDestructureSet.js",
         "import": "./src/helpers/esm/classPrivateFieldDestructureSet.js",
+        "node": "./src/helpers/classPrivateFieldDestructureSet.js",
         "default": "./src/helpers/classPrivateFieldDestructureSet.js"
       },
       "./src/helpers/classPrivateFieldDestructureSet.js"
     ],
     "./helpers/classPrivateFieldGet": [
       {
-        "node": "./src/helpers/classPrivateFieldGet.js",
         "import": "./src/helpers/esm/classPrivateFieldGet.js",
+        "node": "./src/helpers/classPrivateFieldGet.js",
         "default": "./src/helpers/classPrivateFieldGet.js"
       },
       "./src/helpers/classPrivateFieldGet.js"
     ],
     "./helpers/classPrivateFieldGet2": [
       {
-        "node": "./src/helpers/classPrivateFieldGet2.js",
         "import": "./src/helpers/esm/classPrivateFieldGet2.js",
+        "node": "./src/helpers/classPrivateFieldGet2.js",
         "default": "./src/helpers/classPrivateFieldGet2.js"
       },
       "./src/helpers/classPrivateFieldGet2.js"
     ],
     "./helpers/classPrivateFieldInitSpec": [
       {
-        "node": "./src/helpers/classPrivateFieldInitSpec.js",
         "import": "./src/helpers/esm/classPrivateFieldInitSpec.js",
+        "node": "./src/helpers/classPrivateFieldInitSpec.js",
         "default": "./src/helpers/classPrivateFieldInitSpec.js"
       },
       "./src/helpers/classPrivateFieldInitSpec.js"
     ],
     "./helpers/classPrivateFieldLooseBase": [
       {
-        "node": "./src/helpers/classPrivateFieldLooseBase.js",
         "import": "./src/helpers/esm/classPrivateFieldLooseBase.js",
+        "node": "./src/helpers/classPrivateFieldLooseBase.js",
         "default": "./src/helpers/classPrivateFieldLooseBase.js"
       },
       "./src/helpers/classPrivateFieldLooseBase.js"
     ],
     "./helpers/classPrivateFieldLooseKey": [
       {
-        "node": "./src/helpers/classPrivateFieldLooseKey.js",
         "import": "./src/helpers/esm/classPrivateFieldLooseKey.js",
+        "node": "./src/helpers/classPrivateFieldLooseKey.js",
         "default": "./src/helpers/classPrivateFieldLooseKey.js"
       },
       "./src/helpers/classPrivateFieldLooseKey.js"
     ],
     "./helpers/classPrivateFieldSet": [
       {
-        "node": "./src/helpers/classPrivateFieldSet.js",
         "import": "./src/helpers/esm/classPrivateFieldSet.js",
+        "node": "./src/helpers/classPrivateFieldSet.js",
         "default": "./src/helpers/classPrivateFieldSet.js"
       },
       "./src/helpers/classPrivateFieldSet.js"
     ],
     "./helpers/classPrivateFieldSet2": [
       {
-        "node": "./src/helpers/classPrivateFieldSet2.js",
         "import": "./src/helpers/esm/classPrivateFieldSet2.js",
+        "node": "./src/helpers/classPrivateFieldSet2.js",
         "default": "./src/helpers/classPrivateFieldSet2.js"
       },
       "./src/helpers/classPrivateFieldSet2.js"
     ],
     "./helpers/classPrivateGetter": [
       {
-        "node": "./src/helpers/classPrivateGetter.js",
         "import": "./src/helpers/esm/classPrivateGetter.js",
+        "node": "./src/helpers/classPrivateGetter.js",
         "default": "./src/helpers/classPrivateGetter.js"
       },
       "./src/helpers/classPrivateGetter.js"
     ],
     "./helpers/classPrivateMethodGet": [
       {
-        "node": "./src/helpers/classPrivateMethodGet.js",
         "import": "./src/helpers/esm/classPrivateMethodGet.js",
+        "node": "./src/helpers/classPrivateMethodGet.js",
         "default": "./src/helpers/classPrivateMethodGet.js"
       },
       "./src/helpers/classPrivateMethodGet.js"
     ],
     "./helpers/classPrivateMethodInitSpec": [
       {
-        "node": "./src/helpers/classPrivateMethodInitSpec.js",
         "import": "./src/helpers/esm/classPrivateMethodInitSpec.js",
+        "node": "./src/helpers/classPrivateMethodInitSpec.js",
         "default": "./src/helpers/classPrivateMethodInitSpec.js"
       },
       "./src/helpers/classPrivateMethodInitSpec.js"
     ],
     "./helpers/classPrivateMethodSet": [
       {
-        "node": "./src/helpers/classPrivateMethodSet.js",
         "import": "./src/helpers/esm/classPrivateMethodSet.js",
+        "node": "./src/helpers/classPrivateMethodSet.js",
         "default": "./src/helpers/classPrivateMethodSet.js"
       },
       "./src/helpers/classPrivateMethodSet.js"
     ],
     "./helpers/classPrivateSetter": [
       {
-        "node": "./src/helpers/classPrivateSetter.js",
         "import": "./src/helpers/esm/classPrivateSetter.js",
+        "node": "./src/helpers/classPrivateSetter.js",
         "default": "./src/helpers/classPrivateSetter.js"
       },
       "./src/helpers/classPrivateSetter.js"
     ],
     "./helpers/classStaticPrivateFieldDestructureSet": [
       {
-        "node": "./src/helpers/classStaticPrivateFieldDestructureSet.js",
         "import": "./src/helpers/esm/classStaticPrivateFieldDestructureSet.js",
+        "node": "./src/helpers/classStaticPrivateFieldDestructureSet.js",
         "default": "./src/helpers/classStaticPrivateFieldDestructureSet.js"
       },
       "./src/helpers/classStaticPrivateFieldDestructureSet.js"
     ],
     "./helpers/classStaticPrivateFieldSpecGet": [
       {
-        "node": "./src/helpers/classStaticPrivateFieldSpecGet.js",
         "import": "./src/helpers/esm/classStaticPrivateFieldSpecGet.js",
+        "node": "./src/helpers/classStaticPrivateFieldSpecGet.js",
         "default": "./src/helpers/classStaticPrivateFieldSpecGet.js"
       },
       "./src/helpers/classStaticPrivateFieldSpecGet.js"
     ],
     "./helpers/classStaticPrivateFieldSpecSet": [
       {
-        "node": "./src/helpers/classStaticPrivateFieldSpecSet.js",
         "import": "./src/helpers/esm/classStaticPrivateFieldSpecSet.js",
+        "node": "./src/helpers/classStaticPrivateFieldSpecSet.js",
         "default": "./src/helpers/classStaticPrivateFieldSpecSet.js"
       },
       "./src/helpers/classStaticPrivateFieldSpecSet.js"
     ],
     "./helpers/classStaticPrivateMethodGet": [
       {
-        "node": "./src/helpers/classStaticPrivateMethodGet.js",
         "import": "./src/helpers/esm/classStaticPrivateMethodGet.js",
+        "node": "./src/helpers/classStaticPrivateMethodGet.js",
         "default": "./src/helpers/classStaticPrivateMethodGet.js"
       },
       "./src/helpers/classStaticPrivateMethodGet.js"
     ],
     "./helpers/classStaticPrivateMethodSet": [
       {
-        "node": "./src/helpers/classStaticPrivateMethodSet.js",
         "import": "./src/helpers/esm/classStaticPrivateMethodSet.js",
+        "node": "./src/helpers/classStaticPrivateMethodSet.js",
         "default": "./src/helpers/classStaticPrivateMethodSet.js"
       },
       "./src/helpers/classStaticPrivateMethodSet.js"
     ],
     "./helpers/construct": [
       {
-        "node": "./src/helpers/construct.js",
         "import": "./src/helpers/esm/construct.js",
+        "node": "./src/helpers/construct.js",
         "default": "./src/helpers/construct.js"
       },
       "./src/helpers/construct.js"
     ],
     "./helpers/createClass": [
       {
-        "node": "./src/helpers/createClass.js",
         "import": "./src/helpers/esm/createClass.js",
+        "node": "./src/helpers/createClass.js",
         "default": "./src/helpers/createClass.js"
       },
       "./src/helpers/createClass.js"
     ],
     "./helpers/createForOfIteratorHelper": [
       {
-        "node": "./src/helpers/createForOfIteratorHelper.js",
         "import": "./src/helpers/esm/createForOfIteratorHelper.js",
+        "node": "./src/helpers/createForOfIteratorHelper.js",
         "default": "./src/helpers/createForOfIteratorHelper.js"
       },
       "./src/helpers/createForOfIteratorHelper.js"
     ],
     "./helpers/createForOfIteratorHelperLoose": [
       {
-        "node": "./src/helpers/createForOfIteratorHelperLoose.js",
         "import": "./src/helpers/esm/createForOfIteratorHelperLoose.js",
+        "node": "./src/helpers/createForOfIteratorHelperLoose.js",
         "default": "./src/helpers/createForOfIteratorHelperLoose.js"
       },
       "./src/helpers/createForOfIteratorHelperLoose.js"
     ],
     "./helpers/createSuper": [
       {
-        "node": "./src/helpers/createSuper.js",
         "import": "./src/helpers/esm/createSuper.js",
+        "node": "./src/helpers/createSuper.js",
         "default": "./src/helpers/createSuper.js"
       },
       "./src/helpers/createSuper.js"
     ],
     "./helpers/decorate": [
       {
-        "node": "./src/helpers/decorate.js",
         "import": "./src/helpers/esm/decorate.js",
+        "node": "./src/helpers/decorate.js",
         "default": "./src/helpers/decorate.js"
       },
       "./src/helpers/decorate.js"
     ],
     "./helpers/decorateMetadata": [
       {
-        "node": "./src/helpers/decorateMetadata.js",
         "import": "./src/helpers/esm/decorateMetadata.js",
+        "node": "./src/helpers/decorateMetadata.js",
         "default": "./src/helpers/decorateMetadata.js"
       },
       "./src/helpers/decorateMetadata.js"
     ],
     "./helpers/decorateParam": [
       {
-        "node": "./src/helpers/decorateParam.js",
         "import": "./src/helpers/esm/decorateParam.js",
+        "node": "./src/helpers/decorateParam.js",
         "default": "./src/helpers/decorateParam.js"
       },
       "./src/helpers/decorateParam.js"
     ],
     "./helpers/defaults": [
       {
-        "node": "./src/helpers/defaults.js",
         "import": "./src/helpers/esm/defaults.js",
+        "node": "./src/helpers/defaults.js",
         "default": "./src/helpers/defaults.js"
       },
       "./src/helpers/defaults.js"
     ],
     "./helpers/defineAccessor": [
       {
-        "node": "./src/helpers/defineAccessor.js",
         "import": "./src/helpers/esm/defineAccessor.js",
+        "node": "./src/helpers/defineAccessor.js",
         "default": "./src/helpers/defineAccessor.js"
       },
       "./src/helpers/defineAccessor.js"
     ],
     "./helpers/defineEnumerableProperties": [
       {
-        "node": "./src/helpers/defineEnumerableProperties.js",
         "import": "./src/helpers/esm/defineEnumerableProperties.js",
+        "node": "./src/helpers/defineEnumerableProperties.js",
         "default": "./src/helpers/defineEnumerableProperties.js"
       },
       "./src/helpers/defineEnumerableProperties.js"
     ],
     "./helpers/defineProperty": [
       {
-        "node": "./src/helpers/defineProperty.js",
         "import": "./src/helpers/esm/defineProperty.js",
+        "node": "./src/helpers/defineProperty.js",
         "default": "./src/helpers/defineProperty.js"
       },
       "./src/helpers/defineProperty.js"
     ],
     "./helpers/dispose": [
       {
-        "node": "./src/helpers/dispose.js",
         "import": "./src/helpers/esm/dispose.js",
+        "node": "./src/helpers/dispose.js",
         "default": "./src/helpers/dispose.js"
       },
       "./src/helpers/dispose.js"
@@ -608,448 +608,448 @@
     "./helpers/esm/writeOnlyError": "./src/helpers/esm/writeOnlyError.js",
     "./helpers/extends": [
       {
-        "node": "./src/helpers/extends.js",
         "import": "./src/helpers/esm/extends.js",
+        "node": "./src/helpers/extends.js",
         "default": "./src/helpers/extends.js"
       },
       "./src/helpers/extends.js"
     ],
     "./helpers/get": [
       {
-        "node": "./src/helpers/get.js",
         "import": "./src/helpers/esm/get.js",
+        "node": "./src/helpers/get.js",
         "default": "./src/helpers/get.js"
       },
       "./src/helpers/get.js"
     ],
     "./helpers/getPrototypeOf": [
       {
-        "node": "./src/helpers/getPrototypeOf.js",
         "import": "./src/helpers/esm/getPrototypeOf.js",
+        "node": "./src/helpers/getPrototypeOf.js",
         "default": "./src/helpers/getPrototypeOf.js"
       },
       "./src/helpers/getPrototypeOf.js"
     ],
     "./helpers/identity": [
       {
-        "node": "./src/helpers/identity.js",
         "import": "./src/helpers/esm/identity.js",
+        "node": "./src/helpers/identity.js",
         "default": "./src/helpers/identity.js"
       },
       "./src/helpers/identity.js"
     ],
     "./helpers/importDeferProxy": [
       {
-        "node": "./src/helpers/importDeferProxy.js",
         "import": "./src/helpers/esm/importDeferProxy.js",
+        "node": "./src/helpers/importDeferProxy.js",
         "default": "./src/helpers/importDeferProxy.js"
       },
       "./src/helpers/importDeferProxy.js"
     ],
     "./helpers/inherits": [
       {
-        "node": "./src/helpers/inherits.js",
         "import": "./src/helpers/esm/inherits.js",
+        "node": "./src/helpers/inherits.js",
         "default": "./src/helpers/inherits.js"
       },
       "./src/helpers/inherits.js"
     ],
     "./helpers/inheritsLoose": [
       {
-        "node": "./src/helpers/inheritsLoose.js",
         "import": "./src/helpers/esm/inheritsLoose.js",
+        "node": "./src/helpers/inheritsLoose.js",
         "default": "./src/helpers/inheritsLoose.js"
       },
       "./src/helpers/inheritsLoose.js"
     ],
     "./helpers/initializerDefineProperty": [
       {
-        "node": "./src/helpers/initializerDefineProperty.js",
         "import": "./src/helpers/esm/initializerDefineProperty.js",
+        "node": "./src/helpers/initializerDefineProperty.js",
         "default": "./src/helpers/initializerDefineProperty.js"
       },
       "./src/helpers/initializerDefineProperty.js"
     ],
     "./helpers/initializerWarningHelper": [
       {
-        "node": "./src/helpers/initializerWarningHelper.js",
         "import": "./src/helpers/esm/initializerWarningHelper.js",
+        "node": "./src/helpers/initializerWarningHelper.js",
         "default": "./src/helpers/initializerWarningHelper.js"
       },
       "./src/helpers/initializerWarningHelper.js"
     ],
     "./helpers/instanceof": [
       {
-        "node": "./src/helpers/instanceof.js",
         "import": "./src/helpers/esm/instanceof.js",
+        "node": "./src/helpers/instanceof.js",
         "default": "./src/helpers/instanceof.js"
       },
       "./src/helpers/instanceof.js"
     ],
     "./helpers/interopRequireDefault": [
       {
-        "node": "./src/helpers/interopRequireDefault.js",
         "import": "./src/helpers/esm/interopRequireDefault.js",
+        "node": "./src/helpers/interopRequireDefault.js",
         "default": "./src/helpers/interopRequireDefault.js"
       },
       "./src/helpers/interopRequireDefault.js"
     ],
     "./helpers/interopRequireWildcard": [
       {
-        "node": "./src/helpers/interopRequireWildcard.js",
         "import": "./src/helpers/esm/interopRequireWildcard.js",
+        "node": "./src/helpers/interopRequireWildcard.js",
         "default": "./src/helpers/interopRequireWildcard.js"
       },
       "./src/helpers/interopRequireWildcard.js"
     ],
     "./helpers/isNativeFunction": [
       {
-        "node": "./src/helpers/isNativeFunction.js",
         "import": "./src/helpers/esm/isNativeFunction.js",
+        "node": "./src/helpers/isNativeFunction.js",
         "default": "./src/helpers/isNativeFunction.js"
       },
       "./src/helpers/isNativeFunction.js"
     ],
     "./helpers/isNativeReflectConstruct": [
       {
-        "node": "./src/helpers/isNativeReflectConstruct.js",
         "import": "./src/helpers/esm/isNativeReflectConstruct.js",
+        "node": "./src/helpers/isNativeReflectConstruct.js",
         "default": "./src/helpers/isNativeReflectConstruct.js"
       },
       "./src/helpers/isNativeReflectConstruct.js"
     ],
     "./helpers/iterableToArray": [
       {
-        "node": "./src/helpers/iterableToArray.js",
         "import": "./src/helpers/esm/iterableToArray.js",
+        "node": "./src/helpers/iterableToArray.js",
         "default": "./src/helpers/iterableToArray.js"
       },
       "./src/helpers/iterableToArray.js"
     ],
     "./helpers/iterableToArrayLimit": [
       {
-        "node": "./src/helpers/iterableToArrayLimit.js",
         "import": "./src/helpers/esm/iterableToArrayLimit.js",
+        "node": "./src/helpers/iterableToArrayLimit.js",
         "default": "./src/helpers/iterableToArrayLimit.js"
       },
       "./src/helpers/iterableToArrayLimit.js"
     ],
     "./helpers/jsx": [
       {
-        "node": "./src/helpers/jsx.js",
         "import": "./src/helpers/esm/jsx.js",
+        "node": "./src/helpers/jsx.js",
         "default": "./src/helpers/jsx.js"
       },
       "./src/helpers/jsx.js"
     ],
     "./helpers/maybeArrayLike": [
       {
-        "node": "./src/helpers/maybeArrayLike.js",
         "import": "./src/helpers/esm/maybeArrayLike.js",
+        "node": "./src/helpers/maybeArrayLike.js",
         "default": "./src/helpers/maybeArrayLike.js"
       },
       "./src/helpers/maybeArrayLike.js"
     ],
     "./helpers/newArrowCheck": [
       {
-        "node": "./src/helpers/newArrowCheck.js",
         "import": "./src/helpers/esm/newArrowCheck.js",
+        "node": "./src/helpers/newArrowCheck.js",
         "default": "./src/helpers/newArrowCheck.js"
       },
       "./src/helpers/newArrowCheck.js"
     ],
     "./helpers/nonIterableRest": [
       {
-        "node": "./src/helpers/nonIterableRest.js",
         "import": "./src/helpers/esm/nonIterableRest.js",
+        "node": "./src/helpers/nonIterableRest.js",
         "default": "./src/helpers/nonIterableRest.js"
       },
       "./src/helpers/nonIterableRest.js"
     ],
     "./helpers/nonIterableSpread": [
       {
-        "node": "./src/helpers/nonIterableSpread.js",
         "import": "./src/helpers/esm/nonIterableSpread.js",
+        "node": "./src/helpers/nonIterableSpread.js",
         "default": "./src/helpers/nonIterableSpread.js"
       },
       "./src/helpers/nonIterableSpread.js"
     ],
     "./helpers/nullishReceiverError": [
       {
-        "node": "./src/helpers/nullishReceiverError.js",
         "import": "./src/helpers/esm/nullishReceiverError.js",
+        "node": "./src/helpers/nullishReceiverError.js",
         "default": "./src/helpers/nullishReceiverError.js"
       },
       "./src/helpers/nullishReceiverError.js"
     ],
     "./helpers/objectDestructuringEmpty": [
       {
-        "node": "./src/helpers/objectDestructuringEmpty.js",
         "import": "./src/helpers/esm/objectDestructuringEmpty.js",
+        "node": "./src/helpers/objectDestructuringEmpty.js",
         "default": "./src/helpers/objectDestructuringEmpty.js"
       },
       "./src/helpers/objectDestructuringEmpty.js"
     ],
     "./helpers/objectSpread": [
       {
-        "node": "./src/helpers/objectSpread.js",
         "import": "./src/helpers/esm/objectSpread.js",
+        "node": "./src/helpers/objectSpread.js",
         "default": "./src/helpers/objectSpread.js"
       },
       "./src/helpers/objectSpread.js"
     ],
     "./helpers/objectSpread2": [
       {
-        "node": "./src/helpers/objectSpread2.js",
         "import": "./src/helpers/esm/objectSpread2.js",
+        "node": "./src/helpers/objectSpread2.js",
         "default": "./src/helpers/objectSpread2.js"
       },
       "./src/helpers/objectSpread2.js"
     ],
     "./helpers/objectWithoutProperties": [
       {
-        "node": "./src/helpers/objectWithoutProperties.js",
         "import": "./src/helpers/esm/objectWithoutProperties.js",
+        "node": "./src/helpers/objectWithoutProperties.js",
         "default": "./src/helpers/objectWithoutProperties.js"
       },
       "./src/helpers/objectWithoutProperties.js"
     ],
     "./helpers/objectWithoutPropertiesLoose": [
       {
-        "node": "./src/helpers/objectWithoutPropertiesLoose.js",
         "import": "./src/helpers/esm/objectWithoutPropertiesLoose.js",
+        "node": "./src/helpers/objectWithoutPropertiesLoose.js",
         "default": "./src/helpers/objectWithoutPropertiesLoose.js"
       },
       "./src/helpers/objectWithoutPropertiesLoose.js"
     ],
     "./helpers/possibleConstructorReturn": [
       {
-        "node": "./src/helpers/possibleConstructorReturn.js",
         "import": "./src/helpers/esm/possibleConstructorReturn.js",
+        "node": "./src/helpers/possibleConstructorReturn.js",
         "default": "./src/helpers/possibleConstructorReturn.js"
       },
       "./src/helpers/possibleConstructorReturn.js"
     ],
     "./helpers/readOnlyError": [
       {
-        "node": "./src/helpers/readOnlyError.js",
         "import": "./src/helpers/esm/readOnlyError.js",
+        "node": "./src/helpers/readOnlyError.js",
         "default": "./src/helpers/readOnlyError.js"
       },
       "./src/helpers/readOnlyError.js"
     ],
     "./helpers/regeneratorRuntime": [
       {
-        "node": "./src/helpers/regeneratorRuntime.js",
         "import": "./src/helpers/esm/regeneratorRuntime.js",
+        "node": "./src/helpers/regeneratorRuntime.js",
         "default": "./src/helpers/regeneratorRuntime.js"
       },
       "./src/helpers/regeneratorRuntime.js"
     ],
     "./helpers/set": [
       {
-        "node": "./src/helpers/set.js",
         "import": "./src/helpers/esm/set.js",
+        "node": "./src/helpers/set.js",
         "default": "./src/helpers/set.js"
       },
       "./src/helpers/set.js"
     ],
     "./helpers/setFunctionName": [
       {
-        "node": "./src/helpers/setFunctionName.js",
         "import": "./src/helpers/esm/setFunctionName.js",
+        "node": "./src/helpers/setFunctionName.js",
         "default": "./src/helpers/setFunctionName.js"
       },
       "./src/helpers/setFunctionName.js"
     ],
     "./helpers/setPrototypeOf": [
       {
-        "node": "./src/helpers/setPrototypeOf.js",
         "import": "./src/helpers/esm/setPrototypeOf.js",
+        "node": "./src/helpers/setPrototypeOf.js",
         "default": "./src/helpers/setPrototypeOf.js"
       },
       "./src/helpers/setPrototypeOf.js"
     ],
     "./helpers/skipFirstGeneratorNext": [
       {
-        "node": "./src/helpers/skipFirstGeneratorNext.js",
         "import": "./src/helpers/esm/skipFirstGeneratorNext.js",
+        "node": "./src/helpers/skipFirstGeneratorNext.js",
         "default": "./src/helpers/skipFirstGeneratorNext.js"
       },
       "./src/helpers/skipFirstGeneratorNext.js"
     ],
     "./helpers/slicedToArray": [
       {
-        "node": "./src/helpers/slicedToArray.js",
         "import": "./src/helpers/esm/slicedToArray.js",
+        "node": "./src/helpers/slicedToArray.js",
         "default": "./src/helpers/slicedToArray.js"
       },
       "./src/helpers/slicedToArray.js"
     ],
     "./helpers/superPropBase": [
       {
-        "node": "./src/helpers/superPropBase.js",
         "import": "./src/helpers/esm/superPropBase.js",
+        "node": "./src/helpers/superPropBase.js",
         "default": "./src/helpers/superPropBase.js"
       },
       "./src/helpers/superPropBase.js"
     ],
     "./helpers/superPropGet": [
       {
-        "node": "./src/helpers/superPropGet.js",
         "import": "./src/helpers/esm/superPropGet.js",
+        "node": "./src/helpers/superPropGet.js",
         "default": "./src/helpers/superPropGet.js"
       },
       "./src/helpers/superPropGet.js"
     ],
     "./helpers/superPropSet": [
       {
-        "node": "./src/helpers/superPropSet.js",
         "import": "./src/helpers/esm/superPropSet.js",
+        "node": "./src/helpers/superPropSet.js",
         "default": "./src/helpers/superPropSet.js"
       },
       "./src/helpers/superPropSet.js"
     ],
     "./helpers/taggedTemplateLiteral": [
       {
-        "node": "./src/helpers/taggedTemplateLiteral.js",
         "import": "./src/helpers/esm/taggedTemplateLiteral.js",
+        "node": "./src/helpers/taggedTemplateLiteral.js",
         "default": "./src/helpers/taggedTemplateLiteral.js"
       },
       "./src/helpers/taggedTemplateLiteral.js"
     ],
     "./helpers/taggedTemplateLiteralLoose": [
       {
-        "node": "./src/helpers/taggedTemplateLiteralLoose.js",
         "import": "./src/helpers/esm/taggedTemplateLiteralLoose.js",
+        "node": "./src/helpers/taggedTemplateLiteralLoose.js",
         "default": "./src/helpers/taggedTemplateLiteralLoose.js"
       },
       "./src/helpers/taggedTemplateLiteralLoose.js"
     ],
     "./helpers/tdz": [
       {
-        "node": "./src/helpers/tdz.js",
         "import": "./src/helpers/esm/tdz.js",
+        "node": "./src/helpers/tdz.js",
         "default": "./src/helpers/tdz.js"
       },
       "./src/helpers/tdz.js"
     ],
     "./helpers/temporalRef": [
       {
-        "node": "./src/helpers/temporalRef.js",
         "import": "./src/helpers/esm/temporalRef.js",
+        "node": "./src/helpers/temporalRef.js",
         "default": "./src/helpers/temporalRef.js"
       },
       "./src/helpers/temporalRef.js"
     ],
     "./helpers/temporalUndefined": [
       {
-        "node": "./src/helpers/temporalUndefined.js",
         "import": "./src/helpers/esm/temporalUndefined.js",
+        "node": "./src/helpers/temporalUndefined.js",
         "default": "./src/helpers/temporalUndefined.js"
       },
       "./src/helpers/temporalUndefined.js"
     ],
     "./helpers/toArray": [
       {
-        "node": "./src/helpers/toArray.js",
         "import": "./src/helpers/esm/toArray.js",
+        "node": "./src/helpers/toArray.js",
         "default": "./src/helpers/toArray.js"
       },
       "./src/helpers/toArray.js"
     ],
     "./helpers/toConsumableArray": [
       {
-        "node": "./src/helpers/toConsumableArray.js",
         "import": "./src/helpers/esm/toConsumableArray.js",
+        "node": "./src/helpers/toConsumableArray.js",
         "default": "./src/helpers/toConsumableArray.js"
       },
       "./src/helpers/toConsumableArray.js"
     ],
     "./helpers/toPrimitive": [
       {
-        "node": "./src/helpers/toPrimitive.js",
         "import": "./src/helpers/esm/toPrimitive.js",
+        "node": "./src/helpers/toPrimitive.js",
         "default": "./src/helpers/toPrimitive.js"
       },
       "./src/helpers/toPrimitive.js"
     ],
     "./helpers/toPropertyKey": [
       {
-        "node": "./src/helpers/toPropertyKey.js",
         "import": "./src/helpers/esm/toPropertyKey.js",
+        "node": "./src/helpers/toPropertyKey.js",
         "default": "./src/helpers/toPropertyKey.js"
       },
       "./src/helpers/toPropertyKey.js"
     ],
     "./helpers/toSetter": [
       {
-        "node": "./src/helpers/toSetter.js",
         "import": "./src/helpers/esm/toSetter.js",
+        "node": "./src/helpers/toSetter.js",
         "default": "./src/helpers/toSetter.js"
       },
       "./src/helpers/toSetter.js"
     ],
     "./helpers/typeof": [
       {
-        "node": "./src/helpers/typeof.js",
         "import": "./src/helpers/esm/typeof.js",
+        "node": "./src/helpers/typeof.js",
         "default": "./src/helpers/typeof.js"
       },
       "./src/helpers/typeof.js"
     ],
     "./helpers/unsupportedIterableToArray": [
       {
-        "node": "./src/helpers/unsupportedIterableToArray.js",
         "import": "./src/helpers/esm/unsupportedIterableToArray.js",
+        "node": "./src/helpers/unsupportedIterableToArray.js",
         "default": "./src/helpers/unsupportedIterableToArray.js"
       },
       "./src/helpers/unsupportedIterableToArray.js"
     ],
     "./helpers/using": [
       {
-        "node": "./src/helpers/using.js",
         "import": "./src/helpers/esm/using.js",
+        "node": "./src/helpers/using.js",
         "default": "./src/helpers/using.js"
       },
       "./src/helpers/using.js"
     ],
     "./helpers/usingCtx": [
       {
-        "node": "./src/helpers/usingCtx.js",
         "import": "./src/helpers/esm/usingCtx.js",
+        "node": "./src/helpers/usingCtx.js",
         "default": "./src/helpers/usingCtx.js"
       },
       "./src/helpers/usingCtx.js"
     ],
     "./helpers/wrapAsyncGenerator": [
       {
-        "node": "./src/helpers/wrapAsyncGenerator.js",
         "import": "./src/helpers/esm/wrapAsyncGenerator.js",
+        "node": "./src/helpers/wrapAsyncGenerator.js",
         "default": "./src/helpers/wrapAsyncGenerator.js"
       },
       "./src/helpers/wrapAsyncGenerator.js"
     ],
     "./helpers/wrapNativeSuper": [
       {
-        "node": "./src/helpers/wrapNativeSuper.js",
         "import": "./src/helpers/esm/wrapNativeSuper.js",
+        "node": "./src/helpers/wrapNativeSuper.js",
         "default": "./src/helpers/wrapNativeSuper.js"
       },
       "./src/helpers/wrapNativeSuper.js"
     ],
     "./helpers/wrapRegExp": [
       {
-        "node": "./src/helpers/wrapRegExp.js",
         "import": "./src/helpers/esm/wrapRegExp.js",
+        "node": "./src/helpers/wrapRegExp.js",
         "default": "./src/helpers/wrapRegExp.js"
       },
       "./src/helpers/wrapRegExp.js"
     ],
     "./helpers/writeOnlyError": [
       {
-        "node": "./src/helpers/writeOnlyError.js",
         "import": "./src/helpers/esm/writeOnlyError.js",
+        "node": "./src/helpers/writeOnlyError.js",
         "default": "./src/helpers/writeOnlyError.js"
       },
       "./src/helpers/writeOnlyError.js"
