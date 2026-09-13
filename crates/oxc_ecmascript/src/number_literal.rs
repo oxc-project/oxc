@@ -29,21 +29,10 @@ fn number_literal(value: f64) -> LiteralString {
         }
         best_candidate.push(byte);
     }
+    let raw_len = best_candidate.len_usize();
 
-    let mut is_hex = false;
-    if value.fract() == 0.0 {
-        let integer = value as u128;
-        let hex_digits = (128 - integer.leading_zeros() as usize).div_ceil(4);
-        let hex_len = 2 + hex_digits;
-        if hex_len < best_candidate.len_usize() {
-            let mut candidate = LiteralString::new();
-            candidate.push(b'0');
-            candidate.push(b'x');
-            push_hex(integer, &mut candidate);
-            best_candidate = candidate;
-            is_hex = true;
-        }
-    } else if best_candidate.starts_with(".0")
+    if value.fract() != 0.0
+        && best_candidate.starts_with(".0")
         && let Some(index) = best_candidate.bytes().skip(2).position(|byte| byte != b'0')
     {
         let digits_start = index + 2;
@@ -61,8 +50,7 @@ fn number_literal(value: f64) -> LiteralString {
         }
     }
 
-    if !is_hex
-        && best_candidate.ends_with('0')
+    if best_candidate.ends_with('0')
         && let Some(exponent) = best_candidate.bytes().rev().position(|byte| byte != b'0')
     {
         let base_len = best_candidate.len_usize() - exponent;
@@ -103,6 +91,24 @@ fn number_literal(value: f64) -> LiteralString {
             {
                 candidate.push(byte);
             }
+            best_candidate = candidate;
+        }
+    }
+
+    // The hexadecimal candidate is compared against the *shortened* decimal candidate as well as
+    // the raw digits. Comparing against the raw digits alone picks `0xe8d4a51000` for `1e12`,
+    // because those digits are 13 bytes while hex is 12 — but the shortened form is 4 bytes.
+    // Hex is still only used when it is strictly shorter than the raw digits, so that values
+    // where both forms have the same length keep the output they had before.
+    if value.fract() == 0.0 {
+        let integer = value as u128;
+        let hex_digits = (128 - integer.leading_zeros() as usize).div_ceil(4);
+        let hex_len = 2 + hex_digits;
+        if hex_len < raw_len && hex_len <= best_candidate.len_usize() {
+            let mut candidate = LiteralString::new();
+            candidate.push(b'0');
+            candidate.push(b'x');
+            push_hex(integer, &mut candidate);
             best_candidate = candidate;
         }
     }
@@ -175,6 +181,33 @@ mod tests {
             (f64::MAX, "17976931348623157e292"),
         ] {
             with_number_literal(value, |literal| assert_eq!(literal, expected));
+        }
+    }
+
+    /// Shortening a large integer-valued number must be preferred over its hex form:
+    /// `0xe8d4a51000` is shorter than the raw digits `1000000000000`, but `1e12` is shorter still.
+    #[test]
+    fn shortened_integer_literals_beat_hex() {
+        for (value, expected) in [
+            (1e12, "1e12"),
+            (1e13, "1e13"),
+            (1e14, "1e14"),
+            (1e15, "1e15"),
+            (1e16, "1e16"),
+            (1e17, "1e17"),
+            (1e18, "1e18"),
+            (1e19, "1e19"),
+            (1e20, "1e20"),
+            (5e20, "5e20"),
+            (1.5e15, "15e14"),
+            (3e15, "3e15"),
+            (1.23e17, "123e15"),
+            // Hex is still used when it is no longer than the shortened form
+            (281_474_976_710_655.0, "0xffffffffffff"),
+            (1.844_674_407_370_955_2e19, "0x10000000000000000"),
+            (9_007_199_254_740_992.0, "9007199254740992"),
+        ] {
+            with_number_literal(value, |literal| assert_eq!(literal, expected, "value: {value:?}"));
         }
     }
 }
