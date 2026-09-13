@@ -704,7 +704,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         Expression::new_sequence_expression(
-            span,
+            span.merge(expr.span()),
             [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
             ctx,
         )
