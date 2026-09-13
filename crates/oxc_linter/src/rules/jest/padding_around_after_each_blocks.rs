@@ -5,16 +5,11 @@ use crate::utils::{
     JestGeneralFnKind, ParsedGeneralJestFnCall, parse_general_jest_fn_call,
     report_missing_padding_after_jest_block, report_missing_padding_before_jest_block,
 };
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::PossibleJestNode,
-};
+use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct PaddingAroundAfterEachBlocks;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -93,6 +88,7 @@ fn test() {
     let pass = vec![
         "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});",
         "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});",
+        "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n})\n\ndescribe('foo', () => {});",
     ];
 
     let fail = vec![
@@ -101,16 +97,22 @@ fn test() {
         "const something = 123;\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});",
     ];
 
-    let fix = vec![(
-        "const something = 123;\nafterEach(() => {\n//  // more stuff\n});\ndescribe('foo', () => {});",
-        "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});"
-    ), (
-        "
+    let fix = vec![
+        (
+            "const something = 123;\nafterEach(() => {\n//  // more stuff\n});\ndescribe('foo', () => {});",
+            "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});",
+        ),
+        (
+            "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n})\ndescribe('foo', () => {});",
+            "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n})\n\ndescribe('foo', () => {});",
+        ),
+        (
+            "
             const someText = 'abc';
             afterEach(() => {
             });
             describe('someText', () => {
-              const something = 'abc';
+              const something = '123';
               // A comment
               afterEach(() => {
                 // stuff
@@ -119,21 +121,21 @@ fn test() {
                 // other stuff
               });
             });
-            describe('someText', () => {
-              const something = 'abc';
+            describe('someText2', () => {
+              const something = 'xyz';
               afterEach(() => {
-                // stuff
+                // more stuff
               });
             });
         ",
-        "
+            "
             const someText = 'abc';
 
             afterEach(() => {
             });
 
             describe('someText', () => {
-              const something = 'abc';
+              const something = '123';
 
               // A comment
               afterEach(() => {
@@ -148,11 +150,12 @@ fn test() {
               const something = 'xyz';
 
               afterEach(() => {
-                // stuff
+                // more stuff
               });
             });
-        "
-        )];
+        ",
+        ),
+    ];
 
     Tester::new(
         PaddingAroundAfterEachBlocks::NAME,

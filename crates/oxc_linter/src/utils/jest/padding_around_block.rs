@@ -135,10 +135,10 @@ pub fn report_missing_padding_after_jest_block<'a>(
 }
 
 fn get_statement_span_after_node(node: &AstNode, statements: &[Statement]) -> Option<Span> {
-    statements
-        .iter()
-        .filter_map(|statement| {
-            if statement.span().start >= node.span().end { Some(statement.span()) } else { None }
-        })
-        .next_back()
+    let Some(statement) =
+        statements.iter().find(|statement| statement.span().start >= node.span().end)
+    else {
+        return None;
+    };
+    Some(statement.span())
 }
