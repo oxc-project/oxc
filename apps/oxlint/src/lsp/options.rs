@@ -119,7 +119,7 @@ pub struct LintOptions {
     pub rules_customization: Option<RulesCustomization>,
     /// Severity used to render bulk-suppressed violations. Defaults to `warn`. Set to `off` to
     /// hide them.
-    #[schemars(with = "Option<SuppressedViolationSeverity>")]
+    #[schemars(skip)] // hide from documentation until CLI docs are published too
     pub suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
