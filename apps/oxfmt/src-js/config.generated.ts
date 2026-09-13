@@ -17,6 +17,34 @@ export type ObjectWrapConfig = "preserve" | "collapse";
  * Patterns are matched against paths relative to the configuration file's directory.
  */
 export type GlobSet = string[];
+/**
+ * A language Oxfmt can format, addressable by a stable ID in configuration (`overrides[].language`).
+ *
+ * IDs name what a file *is*, not which parser handles it,
+ * so they stay valid when a Prettier-delegated language is rewritten in Rust.
+ */
+export type Language =
+  | "js"
+  | "jsx"
+  | "ts"
+  | "tsx"
+  | "json"
+  | "jsonc"
+  | "json5"
+  | "css"
+  | "scss"
+  | "less"
+  | "yaml"
+  | "toml"
+  | "graphql"
+  | "html"
+  | "angular"
+  | "vue"
+  | "svelte"
+  | "markdown"
+  | "mdx"
+  | "handlebars"
+  | "mjml";
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
@@ -383,6 +411,16 @@ export interface OxfmtOverrideConfig {
    * Glob patterns to match files for this override.
    */
   files: GlobSet;
+  /**
+   * Format matched files as this language, instead of detecting the language from the file name.
+   *
+   * Use it for custom extensions (`"*.wxml"` as `"html"`) or dialects sharing an extension (`"*.html"` as `"angular"`).
+   * When several overrides with `language` match a file, the later one takes precedence.
+   * This selects the formatter rather than tuning it, so it sits beside `options`, not inside.
+   *
+   * - Default: detect from the file name
+   */
+  language?: Language;
   /**
    * Format options to apply for matched files.
    * Accepts the same options as the top-level format options.

@@ -14,8 +14,8 @@ use oxc_language_server::{
 
 use crate::core::{
     ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
-    resolve_editorconfig_path, resolve_file_scope_config, utils,
+    ResolveOutcome, SourceFormatter, config_discovery, resolve_editorconfig_path,
+    resolve_file_scope_config, utils,
 };
 use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
@@ -400,11 +400,11 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        let Some(outcome) = resolver.resolve(Arc::from(path)) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
-        let strategy = match resolver.resolve(kind) {
+        let strategy = match outcome {
             Ok(ResolveOutcome::Format(strategy)) => strategy,
             Ok(ResolveOutcome::MissingPlugin(plugin)) => {
                 warn!(

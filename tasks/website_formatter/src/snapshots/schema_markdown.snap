@@ -318,6 +318,20 @@ A set of glob patterns.
 Patterns are matched against paths relative to the configuration file's directory.
 
 
+#### overrides[n].language
+
+type: `"js" | "jsx" | "ts" | "tsx" | "json" | "jsonc" | "json5" | "css" | "scss" | "less" | "yaml" | "toml" | "graphql" | "html" | "angular" | "vue" | "svelte" | "markdown" | "mdx" | "handlebars" | "mjml"`
+
+
+Format matched files as this language, instead of detecting the language from the file name.
+
+Use it for custom extensions (`"*.wxml"` as `"html"`) or dialects sharing an extension (`"*.html"` as `"angular"`).
+When several overrides with `language` match a file, the later one takes precedence.
+This selects the formatter rather than tuning it, so it sits beside `options`, not inside.
+
+- Default: detect from the file name
+
+
 #### overrides[n].options
 
 type: `object`
