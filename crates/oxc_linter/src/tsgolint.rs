@@ -1309,9 +1309,46 @@ fn parse_single_message(
     }
 }
 
+/// File names of the `tsgolint` executable to look for, in priority order.
+///
+/// Executing a sub-command on Windows needs a `cmd` or `ps1` extension. Since `cmd` is the most
+/// compatible one with older systems, we look for that one first, then for `exe` which is also
+/// common. Bun, for example, does not create a `cmd` file but still produces an `exe` file
+/// (<https://github.com/oxc-project/oxc/issues/13784>).
+///
+/// These names must be spelled exactly as package managers write them, i.e. all lowercase. Windows
+/// paths are usually case-insensitive, but NTFS directories can opt into case sensitivity
+/// (`fsutil file setCaseSensitiveInfo <dir> enable`, which WSL sets on directories it creates and
+/// which newly created sub-directories inherit). Inside such a directory a mismatched spelling like
+/// `tsgolint.CMD` does not match the `tsgolint.cmd` shim that npm, pnpm and Yarn generate.
+#[cfg(windows)]
+const TSGOLINT_EXECUTABLE_NAMES: &[&str] = &["tsgolint.cmd", "tsgolint.exe"];
+#[cfg(not(windows))]
+const TSGOLINT_EXECUTABLE_NAMES: &[&str] = &["tsgolint"];
+
+/// Searches for a `tsgolint` executable in the `node_modules/.bin` directory of `cwd`, moving
+/// upwards through its ancestors until one is found.
+fn find_tsgolint_in_node_modules(cwd: &Path) -> Option<PathBuf> {
+    let mut current_dir = cwd.to_path_buf();
+    loop {
+        for file in TSGOLINT_EXECUTABLE_NAMES {
+            let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
+            if node_modules_bin.exists() {
+                return Some(node_modules_bin);
+            }
+        }
+
+        // If we reach the root directory, stop searching
+        if !current_dir.pop() {
+            return None;
+        }
+    }
+}
+
 /// Tries to find the `tsgolint` executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
 /// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
+/// 3. The directories listed in the `PATH` environment variable.
 ///
 /// # Errors
 /// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
@@ -1321,9 +1358,11 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
         let path = PathBuf::from(&path_str);
         if path.is_dir() {
-            let tsgolint_path = path.join("tsgolint");
-            if tsgolint_path.exists() {
-                return Ok(tsgolint_path);
+            for file in TSGOLINT_EXECUTABLE_NAMES {
+                let tsgolint_path = path.join(file);
+                if tsgolint_path.exists() {
+                    return Ok(tsgolint_path);
+                }
             }
             return Err(format!(
                 "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but 'tsgolint' binary not found inside"
@@ -1337,29 +1376,9 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         ));
     }
 
-    // Executing a sub-command in Windows needs a `cmd` or `ps1` extension.
-    // Since `cmd` is the most compatible one with older systems, we use that one first,
-    // then check for `exe` which is also common. Bun, for example, does not create a `cmd`
-    // file but still produces an `exe` file (https://github.com/oxc-project/oxc/issues/13784).
-    #[cfg(windows)]
-    let files = &["tsgolint.CMD", "tsgolint.exe"];
-    #[cfg(not(windows))]
-    let files = &["tsgolint"];
-
-    // Move upwards until we find a `package.json`, then look at `node_modules/.bin/tsgolint`
-    let mut current_dir = cwd.to_path_buf();
-    loop {
-        for file in files {
-            let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
-            if node_modules_bin.exists() {
-                return Ok(node_modules_bin);
-            }
-        }
-
-        // If we reach the root directory, stop searching
-        if !current_dir.pop() {
-            break;
-        }
+    // Move upwards until we find a `node_modules/.bin/tsgolint`
+    if let Some(path) = find_tsgolint_in_node_modules(cwd) {
+        return Ok(path);
     }
 
     // Finally, search in the system PATH
@@ -1367,7 +1386,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // available via PATH
     if let Ok(path_env) = std::env::var("PATH") {
         for dir in std::env::split_paths(&path_env) {
-            for file in files {
+            for file in TSGOLINT_EXECUTABLE_NAMES {
                 let candidate = dir.join(file);
                 if candidate.is_file() {
                     return Ok(candidate);
@@ -1381,13 +1400,67 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
 
 #[cfg(test)]
 mod test {
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+    };
+
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
     use oxc_span::Span;
 
     use crate::{
         fixer::{FixKind, Message, PossibleFixes},
-        tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
+        tsgolint::{
+            Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic,
+            find_tsgolint_in_node_modules,
+        },
     };
+
+    /// The shims npm, pnpm and Yarn write to `node_modules/.bin` when installing `oxlint-tsgolint`.
+    #[cfg(windows)]
+    const SHIM_NAMES: &[&str] = &["tsgolint", "tsgolint.cmd", "tsgolint.ps1"];
+    #[cfg(not(windows))]
+    const SHIM_NAMES: &[&str] = &["tsgolint"];
+
+    /// The shim `oxlint` must pick. On Windows the extension-less `tsgolint` is a shell script,
+    /// which `Command` cannot execute, so the `cmd` shim has to be the one that is found.
+    #[cfg(windows)]
+    const EXPECTED_SHIM_NAME: &str = "tsgolint.cmd";
+    #[cfg(not(windows))]
+    const EXPECTED_SHIM_NAME: &str = "tsgolint";
+
+    /// Installs the `tsgolint` shims into `<dir>/node_modules/.bin`, and returns the path of the
+    /// one that is expected to be found.
+    fn install_tsgolint_shims(dir: &Path) -> PathBuf {
+        let bin_dir = dir.join("node_modules").join(".bin");
+        fs::create_dir_all(&bin_dir).unwrap();
+        for name in SHIM_NAMES {
+            fs::write(bin_dir.join(name), "").unwrap();
+        }
+        bin_dir.join(EXPECTED_SHIM_NAME)
+    }
+
+    // Regression test for `tsgolint` not being found inside `node_modules/.bin` directories which
+    // have the NTFS case sensitivity attribute enabled. Asserting on the whole path catches a
+    // candidate file name whose casing differs from the shims package managers actually write,
+    // which a plain `exists()` check happily matches on a case-insensitive file system.
+    #[test]
+    fn test_find_tsgolint_in_node_modules() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let root = temp_dir.path();
+        let expected = install_tsgolint_shims(root);
+
+        assert_eq!(find_tsgolint_in_node_modules(root), Some(expected.clone()));
+
+        // It is also found from a nested directory, by walking up the ancestor directories
+        let nested = root.join("packages").join("foo").join("src");
+        fs::create_dir_all(&nested).unwrap();
+        assert_eq!(find_tsgolint_in_node_modules(&nested), Some(expected));
+
+        // The closest `node_modules/.bin` wins over one further up the tree
+        let nested_expected = install_tsgolint_shims(&root.join("packages").join("foo"));
+        assert_eq!(find_tsgolint_in_node_modules(&nested), Some(nested_expected));
+    }
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {
