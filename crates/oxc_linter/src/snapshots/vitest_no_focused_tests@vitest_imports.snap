@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:3:16]
+ 2 │             import { it } from '$test/setup/fixtures';
+ 3 │             it.only("test", () => {});
+   ·                ────
+ 4 │             
+   ╰────
+  help: Remove focus from test.

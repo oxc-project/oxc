@@ -215,3 +215,50 @@ fn test() {
         .expect_fix(fix)
         .test_and_snapshot();
 }
+
+#[test]
+fn test_vitest_imports() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // `test` and `it` imported from a module that is NOT configured via
+        // `settings.vitest.vitestImports` stay invisible to the rule.
+        (
+            r"
+            import { test, it } from './fixtures';
+            test('a', () => {});
+            it('b', () => {});
+            ",
+            Some(serde_json::json!([{ "fn": "test" }])),
+            None,
+            None,
+        ),
+    ];
+
+    let fail = vec![
+        // With `vitestImports` configured, both bindings are recognized as
+        // Vitest functions, so mixing `test` and `it` is reported.
+        (
+            r"
+            import { test, it } from '$test/setup/fixtures';
+            test('a', () => {});
+            it('b', () => {});
+            ",
+            Some(serde_json::json!([{ "fn": "test" }])),
+            Some(serde_json::json!({
+                "settings": {
+                    "vitest": {
+                        "vitestImports": ["$test/setup/fixtures"]
+                    }
+                }
+            })),
+            None,
+        ),
+    ];
+
+    Tester::new(ConsistentTestIt::NAME, ConsistentTestIt::PLUGIN, pass, fail)
+        .with_vitest_plugin(true)
+        .intentionally_allow_no_fix_tests()
+        .with_snapshot_suffix("vitest_imports")
+        .test_and_snapshot();
+}
