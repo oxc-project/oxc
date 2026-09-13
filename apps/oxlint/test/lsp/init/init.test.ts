@@ -75,10 +75,7 @@ describe("LSP initialization", () => {
         "oxlint-suppressions.json",
       ],
     ],
-    [
-      { configPath: "./custom-config.json" },
-      ["custom-config.json", "oxlint-suppressions.json"],
-    ],
+    [{ configPath: "./custom-config.json" }, ["custom-config.json", "oxlint-suppressions.json"]],
   ])(
     "should send correct dynamic watch pattern registration for config: %s",
     async (lspConfig, expectedPatterns) => {
