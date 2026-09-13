@@ -1702,6 +1702,16 @@ mod test {
     }
 
     #[test]
+    fn test_rules_agent_output() {
+        let tester = Tester::new().with_cwd("fixtures".into());
+        let (stdout, _) = tester.test_output(&["--rules"]);
+        let (agent_stdout, _) = tester.test_output(&["--rules", "-f=agent"]);
+
+        // Agent auto-detection selects this formatter, so it must support `--rules`.
+        assert_eq!(agent_stdout, stdout);
+    }
+
+    #[test]
     fn test_disable_directive_issue_13311() {
         // Test that exhaustive-deps diagnostics are reported at the dependency array
         // so that disable directives work correctly
