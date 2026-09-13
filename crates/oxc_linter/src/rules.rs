@@ -592,6 +592,7 @@ pub(crate) mod unicorn {
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
+    pub mod no_exports_in_scripts;
     pub mod no_hex_escape;
     pub mod no_immediate_mutation;
     pub mod no_instanceof_array;
