@@ -62,6 +62,7 @@ const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 const DEFAULT_JSONC_OXLINTRC_NAME: &str = ".oxlintrc.jsonc";
 const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 const DEFAULT_MTS_OXLINTRC_NAME: &str = "oxlint.config.mts";
+pub(crate) const DEFAULT_SUPPRESSIONS_FILE_NAME: &str = "oxlint-suppressions.json";
 /// Vite config file that may contain oxlint config under a `.lint` field.
 const VITE_CONFIG_NAME: &str = "vite.config.ts";
 

@@ -24,6 +24,7 @@ use oxc_linter::{
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
 use crate::{
+    DEFAULT_SUPPRESSIONS_FILE_NAME,
     cli::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
@@ -400,7 +401,7 @@ impl CliRunner {
 
         let mut suppression_manager = SuppressionManager::load(
             options.cwd(),
-            "oxlint-suppressions.json",
+            DEFAULT_SUPPRESSIONS_FILE_NAME,
             suppression_options.suppress_all,
             suppression_options.prune_suppressions || fix_options.is_enabled(),
         );
