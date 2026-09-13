@@ -453,6 +453,9 @@ impl CliRunner {
                 },
             }
         };
+        let report_unused_directives_exempt: Vec<String> =
+            config_store.report_unused_disable_directives_exempt().to_vec();
+
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
             &warning_options,
@@ -549,7 +552,11 @@ impl CliRunner {
 
         match lint_result {
             Ok(lint_runner) => {
-                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+                lint_runner.report_unused_directives(
+                    report_unused_directives,
+                    &report_unused_directives_exempt,
+                    &tx_error,
+                );
             }
             Err(err) => {
                 print_and_flush_stdout(stdout, &format!("{err}\n"));
