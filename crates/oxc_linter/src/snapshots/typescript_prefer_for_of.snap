@@ -204,3 +204,33 @@ source: crates/oxc_linter/src/tester.rs
  3 │              console.log(obj.a.b[i]); // Same nested array
    ╰────
   help: Consider using a `for...of` loop for this simple iteration.
+
+  ⚠ typescript(prefer-for-of): Expected a `for...of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:5:22]
+ 4 │             print(key: string) {
+ 5 │                 for (let index = 0; index < this.values[key].length; index++) {
+   ·                      ───────────────────────────────────────────────────────
+ 6 │                     console.log(this.values[key][index]);
+   ╰────
+  help: Consider using a `for...of` loop for this simple iteration.
+
+  ⚠ typescript(prefer-for-of): Expected a `for...of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < values[key].length; i++) { console.log(values[key][i]); }
+   ·      ──────────────────────────────────────
+   ╰────
+  help: Consider using a `for...of` loop for this simple iteration.
+
+  ⚠ typescript(prefer-for-of): Expected a `for...of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:6]
+ 1 │ for (let i = 0; i < this.values[key].length; i++) { [obj[this.values[key][i]]] = [0]; }
+   ·      ───────────────────────────────────────────
+   ╰────
+  help: Consider using a `for...of` loop for this simple iteration.
+
+  ⚠ typescript(prefer-for-of): Expected a `for...of` loop instead of a `for` loop with this simple iteration.
+   ╭─[prefer_for_of.tsx:1:46]
+ 1 │ class Example { #values = []; print() { for (let i = 0; i < this.#values.length; i++) { console.log(this.#values[i]); } } }
+   ·                                              ───────────────────────────────────────
+   ╰────
+  help: Consider using a `for...of` loop for this simple iteration.
