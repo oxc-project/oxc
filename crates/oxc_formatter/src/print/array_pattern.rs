@@ -36,6 +36,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(
+                            self.span(),
                             self.elements.len() + usize::from(self.rest.is_some()),
                             self.elements().iter().map(AstNode::as_ref),
                             f,

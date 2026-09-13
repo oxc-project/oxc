@@ -15,6 +15,17 @@ const d = [,, // line
 ];
 // Comments trailing a real element are unaffected
 const e = [1, 2 /* t */];
+// A comment in a hole's slot leads the hole, keeping its side of both commas
+// (DIVERGENCES.md#array-hole-leading-comment: Prettier relocates it across a comma)
+;[f, /* repeatable */, optional] = params;
+const g = [1, /* c */, 3];
+const h = [1, /* c1 */, /* c2 */, 4];
+const i = [/* lead */, 2];
+const j = [1,
+  // own-line
+  , 3];
+// A comment before the separator still trails the element, the slot begins after the `,`
+const k = [1 /* t */, /* slot */, 3];
 
 ==================== Output ====================
 ------------------
@@ -31,6 +42,20 @@ const d = [
 ];
 // Comments trailing a real element are unaffected
 const e = [1, 2 /* t */];
+// A comment in a hole's slot leads the hole, keeping its side of both commas
+// (DIVERGENCES.md#array-hole-leading-comment: Prettier relocates it across a comma)
+[f, /* repeatable */, optional] = params;
+const g = [1, /* c */, 3];
+const h = [1, /* c1 */, /* c2 */, 4];
+const i = [/* lead */, 2];
+const j = [
+  1,
+  // own-line
+  ,
+  3,
+];
+// A comment before the separator still trails the element, the slot begins after the `,`
+const k = [1 /* t */, /* slot */, 3];
 
 -------------------
 { printWidth: 100 }
@@ -46,5 +71,19 @@ const d = [
 ];
 // Comments trailing a real element are unaffected
 const e = [1, 2 /* t */];
+// A comment in a hole's slot leads the hole, keeping its side of both commas
+// (DIVERGENCES.md#array-hole-leading-comment: Prettier relocates it across a comma)
+[f, /* repeatable */, optional] = params;
+const g = [1, /* c */, 3];
+const h = [1, /* c1 */, /* c2 */, 4];
+const i = [/* lead */, 2];
+const j = [
+  1,
+  // own-line
+  ,
+  3,
+];
+// A comment before the separator still trails the element, the slot begins after the `,`
+const k = [1 /* t */, /* slot */, 3];
 
 ===================== End =====================

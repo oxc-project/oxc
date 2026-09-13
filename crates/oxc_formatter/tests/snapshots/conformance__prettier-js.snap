@@ -3,12 +3,13 @@ source: crates/oxc_formatter/tests/conformance.rs
 assertion_line: 172
 expression: report
 ---
-js compatibility: 765/810 (94.44%), 23 files skipped
+js compatibility: 764/810 (94.32%), 23 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| js/arrays/numbers-with-holes.js | 💥 | 92.86% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 93.75% |
 | js/arrows/issue-17421.js | 💥💥 | 88.70% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
@@ -84,7 +85,6 @@ js compatibility: 765/810 (94.44%), 23 files skipped
 # Not idempotent
 
 - js/arrays/numbers-negative-comment-after-minus.js
-- js/arrays/numbers-with-holes.js
 - js/comments/return-statement.js
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js
