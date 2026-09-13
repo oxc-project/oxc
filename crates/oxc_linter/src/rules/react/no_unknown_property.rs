@@ -105,6 +105,8 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "checked" => phf_set! {"input"},
     // Intentionally lowercased, per the react types.
     "closedby" => phf_set! {"dialog"},
+    // Intentionally lowercased, React 19.3 recognizes it as a boolean attribute and warns on `credentialLess`.
+    "credentialless" => phf_set! {"iframe"},
     // image is required for SVG support, all other tags are HTML.
     "crossOrigin" => phf_set! {"script", "img", "video", "audio", "link", "image"},
     "displaystyle" => phf_set! {"math"},
@@ -260,7 +262,8 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onCompositionUpdate", "onCut", "onDoubleClick", "onDrag", "onDragEnd", "onDragEnter", "onDragExit", "onDragLeave",
     "onError", "onFocus", "onInput", "onKeyDown", "onKeyPress", "onKeyUp", "onLoad", "onWheel", "onDragOver",
     "onDragStart", "onDrop", "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseOut", "onMouseOver",
-    "onMouseUp", "onPaste", "onScroll", "onScrollEnd", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
+    "onMouseUp", "onPaste", "onScroll", "onScrollEnd", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd",
+    "onFullscreenChange", "onFullscreenError", "radioGroup",
     "readOnly", "referrerPolicy", "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
     // SVG attributes
     // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
@@ -275,7 +278,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "gradientUnits", "horizAdvX", "horizOriginX", "imageRendering", "kernelMatrix",
     "kernelUnitLength", "keyPoints", "keySplines", "keyTimes", "lengthAdjust", "letterSpacing",
     "lightingColor", "limitingConeAngle", "markerEnd", "markerMid", "markerStart", "markerHeight",
-    "markerUnits", "markerWidth", "maskContentUnits", "maskUnits", "mathematical", "numOctaves",
+    "markerUnits", "markerWidth", "maskContentUnits", "maskType", "maskUnits", "mathematical", "numOctaves",
     "overlinePosition", "overlineThickness", "panose1", "paintOrder", "pathLength",
     "patternContentUnits", "patternTransform", "patternUnits", "pointerEvents", "pointsAtX",
     "pointsAtY", "pointsAtZ", "preserveAlpha", "preserveAspectRatio", "primitiveUnits",
@@ -311,7 +314,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onPlayingCapture", "onProgressCapture", "onRateChangeCapture", "onSeekedCapture", "onSeekingCapture", "onStalledCapture", "onSuspendCapture",
     "onTimeUpdateCapture", "onVolumeChangeCapture", "onWaitingCapture", "onSelectCapture", "onTouchCancelCapture", "onTouchEndCapture",
     "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onScrollEndCapture", "onWheelCapture", "onAnimationEndCapture",
-    "onAnimationStartCapture", "onTransitionEndCapture",
+    "onAnimationStartCapture", "onTransitionEndCapture", "onFullscreenChangeCapture", "onFullscreenErrorCapture",
     "onAuxClick", "onAuxClickCapture", "onClickCapture", "onContextMenuCapture", "onDoubleClickCapture",
     "onDragCapture", "onDragEndCapture", "onDragEnterCapture", "onDragExitCapture", "onDragLeaveCapture",
     "onDragOverCapture", "onDragStartCapture", "onDropCapture", "onMouseDownCapture",
@@ -387,6 +390,7 @@ const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "marker-end" => "markerEnd",
     "marker-mid" => "markerMid",
     "marker-start" => "markerStart",
+    "mask-type" => "maskType",
     "overline-position" => "overlinePosition",
     "overline-thickness" => "overlineThickness",
     "paint-order" => "paintOrder",
@@ -599,6 +603,12 @@ fn test() {
         (r#"<div className="bar"></div>;"#, None),
         (r"<div onMouseDown={this._onMouseDown}></div>;", None),
         (r"<div onScrollEnd={this._onScrollEnd}></div>;", None),
+        (r"<div onFullscreenChange={this._onFullscreenChange}></div>;", None),
+        (r"<div onFullscreenError={this._onFullscreenError}></div>;", None),
+        (r"<div onFullscreenChangeCapture={this._onFullscreenChange}></div>;", None),
+        (r"<div onFullscreenErrorCapture={this._onFullscreenError}></div>;", None),
+        (r#"<iframe credentialless src="https://example.com" />"#, None),
+        (r#"<mask maskType="alpha" />"#, None),
         (r"<div onScrollEndCapture={this._onScrollEndCapture}></div>;", None),
         (r#"<a href="someLink" download="foo">Read more</a>"#, None),
         (r#"<area download="foo" />"#, None),
@@ -838,6 +848,9 @@ fn test() {
         ),
         ("<t onChñnge/>", None),
         (r#"<div precedence="default" />"#, None),
+        (r"<div credentialless />", None),
+        (r#"<iframe credentialLess src="https://example.com" />"#, None),
+        (r#"<mask mask-type="alpha" />"#, None),
         (r#"<script precedence="high" src="foo.js" />"#, None),
     ];
 
