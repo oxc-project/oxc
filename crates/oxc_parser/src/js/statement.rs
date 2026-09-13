@@ -403,7 +403,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     r#await,
                 );
             }
-            Kind::Let => {
+            Kind::Let if !self.cur_token().escaped() => {
                 // `for (let`
                 let decl_start = self.cur_start();
                 // disallow `for (let in ...`
@@ -460,7 +460,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_for_loop(for_start, parenthesis_opening_span, None, r#await);
         }
 
-        let is_let = self.at(Kind::Let);
+        let is_let = self.at(Kind::Let) && !self.cur_token().escaped();
         // `async` is allowed as `for (async of ...)` if `async` is escaped
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
         let expr_start = self.cur_start();
