@@ -1542,14 +1542,7 @@ impl<'a> PeepholeOptimizations {
             return;
         };
 
-        let new_callee = Expression::new_sequence_expression(
-            span,
-            [
-                Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx),
-                arg_expr.take_in(ctx),
-            ],
-            ctx,
-        );
+        let new_callee = Self::preserve_indirect_access(span, arg_expr.take_in(ctx), ctx);
         ctx.replace_expression(&mut expr.callee, new_callee);
     }
 
