@@ -785,6 +785,7 @@ pub(crate) mod nextjs {
     pub mod no_head_import_in_document;
     pub mod no_html_link_for_pages;
     pub mod no_img_element;
+    pub mod no_location_assign_relative_destination;
     pub mod no_page_custom_font;
     pub mod no_script_component_in_head;
     pub mod no_styled_jsx_in_document;
