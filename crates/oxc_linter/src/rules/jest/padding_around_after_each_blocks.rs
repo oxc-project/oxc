@@ -1,26 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::utils::{
     JestGeneralFnKind, ParsedGeneralJestFnCall, parse_general_jest_fn_call,
     report_missing_padding_after_jest_block, report_missing_padding_before_jest_block,
 };
 use crate::{
-    AstNode,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::PossibleJestNode,
 };
-
-fn padding_around_after_each_blocks_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
-        .with_label(span)
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct PaddingAroundAfterEachBlocks;
@@ -29,32 +18,43 @@ pub struct PaddingAroundAfterEachBlocks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// FIXME: Briefly describe the rule's purpose.
+    /// This rule enforces a line of padding before and after 1 or more
+    /// `afterEach` statements.
     ///
     /// ### Why is this bad?
     ///
-    /// FIXME: Explain why violating this rule is problematic.
+    /// Inconsistent formatting of code can make the code more difficult to read
+    /// and follow. This rule helps ensure that `afterEach` blocks are visually
+    /// separated from the rest of the code, making them easier to identify while
+    /// looking through test files.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Add at least one example of code that violates the rule.
+    /// const something = 123;
+    /// afterEach(() => {
+    ///   // more stuff
+    /// });
+    /// describe('foo', () => {});
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Add at least one example of code that is allowed with the rule.
+    /// const something = 123;
+    ///
+    /// afterEach(() => {
+    ///   // more stuff
+    /// });
+    ///
+    /// describe('foo', () => {});
     /// ```
     PaddingAroundAfterEachBlocks,
     jest,
-    style, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    fix, // TODO: describe fix capabilities. Remove or set to `none` if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
+    fix,
     version = "next",
-    short_description = "FIXME: One-sentence description of the rule.",
+    short_description = "Enforce padding around afterEach blocks.",
 );
 
 impl Rule for PaddingAroundAfterEachBlocks {
@@ -92,6 +92,7 @@ fn test() {
 
     let pass = vec![
         "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});",
+        "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});",
     ];
 
     let fail = vec![
@@ -102,8 +103,56 @@ fn test() {
 
     let fix = vec![(
         "const something = 123;\nafterEach(() => {\n//  // more stuff\n});\ndescribe('foo', () => {});",
-        "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});",
-    )];
+        "const something = 123;\n\nafterEach(() => {\n//  // more stuff\n});\n\ndescribe('foo', () => {});"
+    ), (
+        "
+            const someText = 'abc';
+            afterEach(() => {
+            });
+            describe('someText', () => {
+              const something = 'abc';
+              // A comment
+              afterEach(() => {
+                // stuff
+              });
+              afterEach(() => {
+                // other stuff
+              });
+            });
+            describe('someText', () => {
+              const something = 'abc';
+              afterEach(() => {
+                // stuff
+              });
+            });
+        ",
+        "
+            const someText = 'abc';
+
+            afterEach(() => {
+            });
+
+            describe('someText', () => {
+              const something = 'abc';
+
+              // A comment
+              afterEach(() => {
+                // stuff
+              });
+
+              afterEach(() => {
+                // other stuff
+              });
+            });
+            describe('someText2', () => {
+              const something = 'xyz';
+
+              afterEach(() => {
+                // stuff
+              });
+            });
+        "
+        )];
 
     Tester::new(
         PaddingAroundAfterEachBlocks::NAME,
