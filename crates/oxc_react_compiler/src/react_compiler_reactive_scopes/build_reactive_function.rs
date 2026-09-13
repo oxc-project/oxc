@@ -545,6 +545,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
 
                 Terminal::For {
                     init,
+                    init_is_direct_expression,
                     test,
                     update,
                     loop_block,
@@ -572,7 +573,11 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     )?);
 
                     let init_result = self.visit_value_block(*init, *span, None)?;
-                    let init_value = self.value_block_result_to_sequence(init_result, *span);
+                    let init_value = if *init_is_direct_expression {
+                        init_result.value
+                    } else {
+                        self.value_block_result_to_sequence(init_result, *span)
+                    };
 
                     let test_result = self.visit_value_block(*test, *span, None)?;
 
@@ -594,6 +599,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::For {
                                 init: init_value,
+                                init_is_direct_expression: *init_is_direct_expression,
                                 test: test_result.value,
                                 update: update_result.map(|r| r.value),
                                 loop_block: loop_body,
