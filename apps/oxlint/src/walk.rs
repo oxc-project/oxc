@@ -24,11 +24,14 @@ pub struct Walk {
     inner: ignore::WalkParallel,
     /// The file extensions to include during the traversal.
     extensions: Extensions,
+    /// Whether to include files whose name looks minified, e.g. `*.min.js`.
+    with_minified: bool,
 }
 
 struct WalkBuilder {
     sender: mpsc::Sender<Vec<Arc<OsStr>>>,
     extensions: Extensions,
+    with_minified: bool,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
@@ -37,6 +40,7 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
             paths: vec![],
             sender: self.sender.clone(),
             extensions: self.extensions.clone(),
+            with_minified: self.with_minified,
         })
     }
 }
@@ -45,6 +49,7 @@ struct WalkCollector {
     paths: Vec<Arc<OsStr>>,
     sender: mpsc::Sender<Vec<Arc<OsStr>>>,
     extensions: Extensions,
+    with_minified: bool,
 }
 
 impl Drop for WalkCollector {
@@ -65,7 +70,7 @@ impl ignore::ParallelVisitor for WalkCollector {
                 {
                     return ignore::WalkState::Skip;
                 }
-                if Walk::is_wanted_entry(&entry, &self.extensions) {
+                if Walk::is_wanted_entry(&entry, &self.extensions, self.with_minified) {
                     self.paths.push(entry.path().as_os_str().into());
                 }
                 ignore::WalkState::Continue
@@ -112,12 +117,13 @@ impl Walk {
             // Use the same thread count as rayon (controlled by `--threads`)
             .threads(rayon::current_num_threads())
             .build_parallel();
-        Self { inner, extensions: Extensions::default() }
+        Self { inner, extensions: Extensions::default(), with_minified: options.with_minified }
     }
 
     pub fn paths(self) -> Vec<Arc<OsStr>> {
         let (sender, receiver) = mpsc::channel::<Vec<Arc<OsStr>>>();
-        let mut builder = WalkBuilder { sender, extensions: self.extensions };
+        let mut builder =
+            WalkBuilder { sender, extensions: self.extensions, with_minified: self.with_minified };
         self.inner.visit(&mut builder);
         drop(builder);
         receiver.into_iter().flatten().collect()
@@ -129,7 +135,7 @@ impl Walk {
         self
     }
 
-    fn is_wanted_entry(dir_entry: &DirEntry, extensions: &Extensions) -> bool {
+    fn is_wanted_entry(dir_entry: &DirEntry, extensions: &Extensions, with_minified: bool) -> bool {
         let Some(file_type) = dir_entry.file_type() else { return false };
         if file_type.is_dir() {
             return false;
@@ -137,7 +143,7 @@ impl Walk {
         let Some(file_name) = dir_entry.path().file_name() else { return false };
         let file_name = file_name.to_string_lossy();
         let file_name = file_name.as_ref();
-        if [".min.", "-min.", "_min."].iter().any(|e| file_name.contains(e)) {
+        if !with_minified && [".min.", "-min.", "_min."].iter().any(|e| file_name.contains(e)) {
             return false;
         }
         let Some(extension) = dir_entry.path().extension() else { return false };
@@ -179,6 +185,7 @@ mod test {
             no_ignore: false,
             ignore_path: OsString::from(".eslintignore"),
             ignore_pattern: vec![],
+            with_minified: false,
         }
     }
 
@@ -190,6 +197,7 @@ mod test {
             no_ignore: false,
             ignore_path: OsString::from(".gitignore"),
             ignore_pattern: vec![],
+            with_minified: false,
         };
 
         let override_builder = OverrideBuilder::new("/").build().unwrap();
@@ -217,5 +225,25 @@ mod test {
         fs::write(temp_path.join(".jj").join("ignored.js"), "debugger;").unwrap();
 
         assert_eq!(collect_js_paths(temp_path, &empty_ignore_options()), vec!["included.js"]);
+    }
+
+    #[test]
+    fn test_walk_skips_minified_files_unless_opted_in() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path();
+
+        fs::write(temp_path.join("included.js"), "debugger;").unwrap();
+        fs::write(temp_path.join("bundle.min.js"), "debugger;").unwrap();
+        fs::write(temp_path.join("a-min.js"), "debugger;").unwrap();
+        fs::write(temp_path.join("a_min.js"), "debugger;").unwrap();
+
+        assert_eq!(collect_js_paths(temp_path, &empty_ignore_options()), vec!["included.js"]);
+
+        let with_minified = IgnoreOptions { with_minified: true, ..empty_ignore_options() };
+
+        assert_eq!(
+            collect_js_paths(temp_path, &with_minified),
+            vec!["a-min.js", "a_min.js", "bundle.min.js", "included.js"]
+        );
     }
 }

@@ -63,6 +63,8 @@ Ignore Files
                               `.eslintignore`)
         --no-ignore           Disable excluding files from `.eslintignore` files, --ignore-path
                               flags and --ignore-pattern flags
+        --with-minified       Lint files whose name looks minified, e.g. `*.min.js` (skipped by
+                              default)
 
 Handle Warnings
         --quiet               Disable reporting on warnings, only errors are reported
