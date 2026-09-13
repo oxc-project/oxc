@@ -14565,7 +14565,7 @@
       "properties": {
         "blockScopedFunctions": {
           "description": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).",
-          "default": null,
+          "default": "allow",
           "allOf": [
             {
               "$ref": "#/definitions/BlockScopedFunctions"
