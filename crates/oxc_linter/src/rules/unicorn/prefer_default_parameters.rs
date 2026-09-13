@@ -522,11 +522,7 @@ fn check_no_extra_references_logical_assignment<'a>(
     let (reads, writes) = ctx.scoping().get_resolved_references(symbol_id).fold(
         (0usize, 0usize),
         |(reads, writes), r| {
-            if r.is_write() {
-                (reads, writes + 1)
-            } else {
-                (reads + 1, writes)
-            }
+            if r.is_write() { (reads, writes + 1) } else { (reads + 1, writes) }
         },
     );
 
