@@ -143,7 +143,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 return Some(logical_expr.left.take_in(ctx));
             } else if !left.may_have_side_effects(ctx) {
-                // (true && o.f) => (0, o.f)
+                // `(true && o.f)` => `(0, o.f)`
                 if Self::should_keep_indirect_access(&logical_expr.right, ctx) {
                     return Some(Self::preserve_indirect_access(
                         logical_expr.left.span(),
