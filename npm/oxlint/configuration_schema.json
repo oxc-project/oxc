@@ -9422,6 +9422,26 @@
         "unicorn/prefer-global-this": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-https": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferHttpsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/prefer-import-meta-properties": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -17764,6 +17784,18 @@
           "markdownDescription": "Type arguments that only appear on the constructor are disallowed."
         }
       ]
+    },
+    "PreferHttpsConfig": {
+      "type": "object",
+      "properties": {
+        "ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "PreferImportInMockConfig": {
       "type": "object",
