@@ -93,7 +93,7 @@ use oxc_ast::{
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
@@ -862,7 +862,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
 
-        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        // Reparse in reverse statement order so removing stale statements never
+        // invalidates the indices of later checkpoints.
+        let mut checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        checkpoints.reverse();
+
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
             self.rewind(checkpoint);
@@ -874,7 +878,17 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
             // Replace the statement if the index is valid
             if stmt_index < statements.len() {
+                let prev_end = stmt.span().end;
                 statements[stmt_index] = stmt;
+                // The first pass ended the statement at the line break and
+                // started a new statement on the `await` operand. The reparsed
+                // statement now covers that operand, so drop the stale
+                // statements swallowed by the reparse.
+                while stmt_index + 1 < statements.len()
+                    && statements[stmt_index + 1].span().start < prev_end
+                {
+                    statements.remove(stmt_index + 1);
+                }
             }
         }
 
@@ -1167,6 +1181,38 @@ mod test {
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.program.source_type.is_script());
+        }
+    }
+
+    #[test]
+    fn unambiguous_top_level_await_reparse_removes_stale_statements() {
+        // https://github.com/oxc-project/oxc/issues/26414
+        // In unambiguous mode, `await` parses as an identifier until module syntax
+        // commits to the Module goal. If that `await` statement is followed by a
+        // line break, the first pass ends the statement early and the next
+        // statement begins on the `await` operand. Reparsing then produces a
+        // single statement covering both, but the stale statement from the first
+        // pass must be removed.
+        let allocator = Allocator::default();
+        let source_type = SourceType::unambiguous();
+        for source in [
+            "await\nx\nexport {}",
+            "await\nimport('./x.js')\nexport {}",
+            "await\nimport.meta\nexport {}",
+            "import { x } from 'y';\nawait\nx\nimport { z } from 'w';",
+        ] {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.diagnostics.is_empty(), "{source}");
+            // After the reparse, no statement may start inside the span of a
+            // preceding statement: every `await` operand must be covered by the
+            // `await` statement itself, not duplicated as its own statement.
+            for pair in ret.program.body.windows(2) {
+                let (prev, next) = (&pair[0], &pair[1]);
+                assert!(
+                    prev.span().end <= next.span().start,
+                    "statement {next:?} starts inside {prev:?} for source {source:?}"
+                );
+            }
         }
     }
 
