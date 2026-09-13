@@ -78,10 +78,7 @@ describe("LSP initialization", () => {
         "oxlint-suppressions.json",
       ],
     ],
-    [
-      { configPath: "./custom-config.json" },
-      ["custom-config.json", "oxlint-suppressions.json"],
-    ],
+    [{ configPath: "./custom-config.json" }, ["custom-config.json", "oxlint-suppressions.json"]],
     [
       { disableNestedConfig: true },
       [
