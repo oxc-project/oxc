@@ -1,0 +1,117 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             for (const chunk of chunks) {
+ 3 │                 result = result.concat(chunk);
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             for (let index = 0; index < chunks.length; index++) {
+ 3 │                 result = result.concat(chunks[index]);
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             for (const index in chunks) {
+ 3 │                 result = result.concat(chunks[index]);
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             while (chunks.length > 0) {
+ 3 │                 result = result.concat(chunks.pop());
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             do {
+ 3 │                 result = result.concat(getChunk());
+   ·                                 ──────
+ 4 │             } while (hasMoreChunks());
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:2:72]
+ 1 │ let result = [];
+ 2 │             for (let index = 0; index < chunks.length; result = result.concat(chunks[index++])) {}
+   ·                                                                        ──────
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:34]
+ 2 │             for (const chunk of chunks) {
+ 3 │                 result = (result.concat(chunk));
+   ·                                  ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             for (const chunk of chunks) {
+ 3 │                 result = result.concat(chunk);
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:37]
+ 2 │             for (const chunk of chunks) {
+ 3 │                 (result) = (result).concat(chunk);
+   ·                                     ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             for (const chunk of chunks) {
+ 3 │                 result = result.concat(first, second);
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:3:33]
+ 2 │             for (const chunk of chunks) {
+ 3 │                 result = result.concat(...chunkGroups);
+   ·                                 ──────
+ 4 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:1:50]
+ 1 │ for (let result = []; condition; result = result.concat(chunk)) {}
+   ·                                                  ──────
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.
+
+  ⚠ unicorn(no-array-concat-in-loop): Do not use `Array#concat()` to accumulate an array in a loop.
+   ╭─[no_array_concat_in_loop.mjs:2:33]
+ 1 │ for (let result = []; condition;) {
+ 2 │                 result = result.concat(chunk);
+   ·                                 ──────
+ 3 │             }
+   ╰────
+  help: Use `Array#push()` or collect the chunks and flatten them after the loop.

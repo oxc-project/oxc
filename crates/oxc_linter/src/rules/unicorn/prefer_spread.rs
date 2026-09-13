@@ -9,6 +9,8 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
+use super::no_array_concat_in_loop::is_array_concat_in_loop_call;
+
 fn unicorn_prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {bad_method}"))
         .with_help("The spread operator (`...`) is more concise and readable.")
@@ -97,6 +99,10 @@ fn check_unicorn_prefer_spread<'a>(
         }
         // `array.concat()`
         "concat" => {
+            if is_array_concat_in_loop_call(node, call_expr, ctx) {
+                return;
+            }
+
             if is_not_array(member_expr.object().without_parentheses(), ctx) {
                 return;
             }
@@ -354,6 +360,35 @@ fn test() {
         r#"["1", "2"].join(",").concat("...")"#,
         r#"foo.join(",").concat("...")"#,
         "foo.join().concat(bar)",
+        "export {};
+            let result = [];
+            for (const chunk of chunks) {
+                result = result.concat(chunk);
+            }",
+        "export {};
+            let result = [];
+            for (const chunk of chunks) {
+                result = result.concat([chunk]);
+            }",
+        "export {};
+            let result = [];
+            for (const chunk of chunks) {
+                result = (result.concat([chunk]));
+            }",
+        "for (let result = []; condition; result = result.concat(chunk)) {}",
+        "for (let result = []; condition;) {
+                result = result.concat(chunk);
+            }",
+        "export {};
+            let result = [] as string[];
+            for (const chunk of chunks) {
+                result = (result as string[]).concat(chunk);
+            }",
+        "export {};
+            let result = [] as string[];
+            for (const chunk of chunks) {
+                result = (result.concat(chunk) as string[]);
+            }",
         // "(a + b).concat(c)",
         "new Array.slice()",
         "slice()",

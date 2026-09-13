@@ -3231,6 +3231,12 @@ impl RuleRunner for crate::rules::unicorn::no_array_callback_reference::NoArrayC
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_array_concat_in_loop::NoArrayConcatInLoop {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::AssignmentExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::no_array_fill_with_reference_type::NoArrayFillWithReferenceType
 {
