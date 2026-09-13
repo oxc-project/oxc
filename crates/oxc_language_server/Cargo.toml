@@ -21,7 +21,7 @@ doctest = false
 
 [dependencies]
 cow-utils = { workspace = true }
-futures = { workspace = true }
+futures-util = { workspace = true }
 papaya = { workspace = true }
 percent-encoding = { workspace = true }
 tracing = { workspace = true }
