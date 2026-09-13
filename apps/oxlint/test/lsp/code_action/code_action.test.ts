@@ -35,6 +35,7 @@ describe("LSP code actions", () => {
   describe("with code action only context", () => {
     it.each([
       ["quickfix"],
+      ["source"],
       ["source.fixAll"],
       ["source.fixAll.oxc"],
       ["source.fixAllDangerous.oxc"],

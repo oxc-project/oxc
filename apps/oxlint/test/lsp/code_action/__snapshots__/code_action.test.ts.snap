@@ -263,6 +263,22 @@ if (bar == NaN) {}
 --------------------"
 `;
 
+exports[`LSP code actions > with code action only context > should handle source 1`] = `
+"--- FILE -----------
+context_only/test.ts
+--- Original Content ---------
+if (foo == NaN) {}
+if (bar == NaN) {}
+--- Code Actions ---------
+
+Title : fix all safe fixable oxlint issues
+Preferred: Yes
+Resulting Content:
+if (isNaN(foo)) {}
+if (isNaN(bar)) {}
+--------------------"
+`;
+
 exports[`LSP code actions > with code action only context > should handle source.fixAll 1`] = `
 "--- FILE -----------
 context_only/test.ts
