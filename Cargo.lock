@@ -2203,7 +2203,7 @@ name = "oxc_language_server"
 version = "1.41.0"
 dependencies = [
  "cow-utils",
- "futures",
+ "futures-util",
  "papaya",
  "percent-encoding",
  "rustc-hash",
