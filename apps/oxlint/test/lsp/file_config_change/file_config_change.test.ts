@@ -22,4 +22,18 @@ describe("diagnostics after config change", () => {
       ).toMatchSnapshot();
     },
   );
+
+  it("reloads the suppression baseline after a watched file changes", async () => {
+    const diagnostics = await lintFixtureWithFileContentChange(
+      FIXTURES_DIR,
+      "suppression-refresh/test.js",
+      "javascript",
+      "oxlint-suppressions.json",
+      "without-suppressions.json",
+    );
+    const [beforeChange, afterChange] = diagnostics.split("=== After Config Change ===");
+
+    expect(beforeChange).toContain("Warning: Unexpected console statement");
+    expect(afterChange).toContain("Error: Unexpected console statement");
+  });
 });
