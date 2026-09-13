@@ -273,6 +273,6 @@ impl<'a> PeepholeOptimizations {
             let e = e.unbox();
             let target = e.left.into_simple_assignment_target();
             Expression::new_update_expression(e.span, operator, true, target, ctx)
-        })
+        });
     }
 }
