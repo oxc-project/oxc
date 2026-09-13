@@ -8,7 +8,7 @@ use crate::{
 use super::{
     NUM,
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0, bm_set},
-    regex_div::{gt_run_split, lt_run_split},
+    disambiguate::{gt_run_split, lt_run_split},
     scan::scan_number,
 };
 

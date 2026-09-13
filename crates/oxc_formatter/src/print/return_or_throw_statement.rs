@@ -10,9 +10,8 @@ use crate::{
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     print::{
-        ExpressionLeftSide, return_statement_content_end,
+        ExpressionLeftSide,
         semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
-        semicolon_terminated_content_end, write_suppressed_statement,
     },
     utils::{
         format_node_without_trailing_comments::format_content_without_comments_after,
@@ -24,25 +23,12 @@ use crate::{
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
-    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
-        // The ignored range ends at the argument (or the keyword),
-        // excluding a stripped trailing `;`
-        let (content_end, print_semicolon) = return_statement_content_end(self, f);
-        write_suppressed_statement(self.span, content_end, print_semicolon, f);
-    }
-
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
-    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
-        let (content_end, print_semicolon) =
-            semicolon_terminated_content_end(self.argument().span().end, self.span, f);
-        write_suppressed_statement(self.span, content_end, print_semicolon, f);
-    }
-
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }

@@ -27,9 +27,10 @@
 //! Such comments stay unprinted (defer) and the next leading pass claims them;
 //! the already-printed terminator left in the gap is transparent to their break measurement
 //! (`lines_after_skipping_terminators`).
+//! A downstream pass must exist to print a deferred comment:
+//! the next sibling's leading pass or the container's dangling pass.
 //!
-//! The per-site rules for WHEN a trailing run moves behind its terminator live in AGENTS.md,
-//! "Comment placement invariants" (the move-behind table).
+//! The rule for a trailing run and its terminator lives in AGENTS.md, "Moving behind a terminator (class 1)".
 //!
 //! ## Comment Formatting Implementation
 //!

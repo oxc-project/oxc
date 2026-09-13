@@ -13,7 +13,7 @@ use crate::{
         trivia::{format_leading_comments, format_trailing_comments},
     },
     parentheses::NeedsParentheses,
-    print::FormatWrite,
+    print::{FormatWrite, semicolon::write_suppressed_statement},
     utils::{
         suppressed::{FormatSuppressedNode, write_suppressed_expression},
         typecast::{
@@ -32,17 +32,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Program<'a>> {
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().has_trailing_suppression_comment(self.span().end) {
-            format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
-            format_trailing_comments(
-                self.parent.span(),
-                self.inner.span(),
-                self.following_span_start,
-            )
-            .fmt(f);
-            return;
-        }
         let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
@@ -473,10 +462,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -486,7 +475,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierName<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierReference<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -517,10 +506,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierReference<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -530,10 +519,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingIdentifier<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabelIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -543,7 +532,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabelIdentifier<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThisExpression> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -574,7 +563,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThisExpression> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -646,10 +635,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpressionElement<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Elision> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -659,7 +648,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Elision> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -720,10 +709,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPropertyKind<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -774,7 +763,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyKey<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -805,7 +794,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateLiteral<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -836,10 +825,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TaggedTemplateExpressio
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -889,7 +878,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MemberExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -920,7 +909,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ComputedMemberExpressio
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticMemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -951,7 +940,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticMemberExpression<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateFieldExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -982,7 +971,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateFieldExpression<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CallExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1013,7 +1002,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CallExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1044,7 +1033,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportMeta> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1075,7 +1064,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportMeta> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewTarget> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1106,10 +1095,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewTarget> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SpreadElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1150,7 +1139,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Argument<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UpdateExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1181,7 +1170,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UpdateExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UnaryExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1212,7 +1201,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UnaryExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BinaryExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1243,7 +1232,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BinaryExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateInExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1274,7 +1263,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateInExpression<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LogicalExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1305,7 +1294,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LogicalExpression<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ConditionalExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1336,7 +1325,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ConditionalExpression<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1500,10 +1489,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPattern
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1513,10 +1502,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayAssignmentTarget<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1526,10 +1515,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectAssignmentTarget<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetRest<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1570,10 +1559,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetMaybeDe
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetWithDefault<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1613,10 +1602,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1626,10 +1615,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1639,7 +1628,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SequenceExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1670,7 +1659,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SequenceExpression<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Super> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1701,7 +1690,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Super> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AwaitExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1732,7 +1721,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AwaitExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1804,7 +1793,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainElement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ParenthesizedExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1836,11 +1825,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ParenthesizedExpression
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Statement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if !matches!(self.inner, Statement::ExpressionStatement(_))
-            && f.comments().has_trailing_suppression_comment(self.span().end)
-        {
-            format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
+        if write_suppressed_statement(self, f) {
             format_trailing_comments(
                 self.parent.span(),
                 self.inner.span(),
@@ -2060,10 +2045,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Statement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Directive<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2073,10 +2058,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Directive<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Hashbang<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2086,10 +2071,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Hashbang<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BlockStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2209,10 +2194,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Declaration<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2222,10 +2207,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclaration<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclarator<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2235,10 +2220,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclarator<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2248,10 +2233,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2261,10 +2246,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2274,10 +2259,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2287,10 +2272,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2300,10 +2285,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2344,10 +2329,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatementInit<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForInStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2388,10 +2373,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatementLeft<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2401,10 +2386,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2414,10 +2399,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2427,10 +2412,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2440,10 +2425,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2453,10 +2438,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2466,10 +2451,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchCase<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2479,10 +2464,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchCase<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2492,10 +2477,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2505,10 +2490,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2518,10 +2503,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchClause<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2531,10 +2516,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchClause<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2544,10 +2529,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchParameter<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DebuggerStatement> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2607,10 +2592,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingPattern<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentPattern<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2620,10 +2605,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentPattern<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPattern<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2633,10 +2618,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPattern<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2646,10 +2631,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingProperty<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayPattern<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2659,10 +2644,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayPattern<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingRestElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2672,7 +2657,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingRestElement<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Function<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2703,10 +2688,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Function<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameters<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2716,10 +2701,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameters<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2729,10 +2714,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameter<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameterRest<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2742,10 +2727,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameterRest<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FunctionBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2786,7 +2771,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionBody<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2817,7 +2802,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionExpression
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, YieldExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2848,7 +2833,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, YieldExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2879,10 +2864,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2892,10 +2877,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2965,10 +2950,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassElement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MethodDefinition<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2978,10 +2963,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MethodDefinition<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyDefinition<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2991,10 +2976,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyDefinition<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3004,10 +2989,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateIdentifier<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticBlock<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3107,10 +3092,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ModuleDeclaration<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AccessorProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3120,7 +3105,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AccessorProperty<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3151,10 +3136,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3204,10 +3189,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDeclarationSpecif
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3217,10 +3202,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportSpecifier<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDefaultSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3230,10 +3215,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDefaultSpecifier<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3243,10 +3228,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportNamespaceSpecifie
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithClause<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3256,10 +3241,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithClause<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3299,23 +3284,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttributeKey<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
-            self.format_trailing_comments(f);
-        } else {
-            self.write(f);
-        }
+        self.write(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3325,10 +3303,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportFromDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3338,23 +3316,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportFromDeclaration<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDefaultDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
-            self.format_trailing_comments(f);
-        } else {
-            self.write(f);
-        }
+        self.write(f);
     }
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportAllDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3364,10 +3335,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportAllDeclaration<'a
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3468,7 +3439,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ModuleExportName<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, V8IntrinsicExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3499,7 +3470,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, V8IntrinsicExpression<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BooleanLiteral> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3530,7 +3501,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BooleanLiteral> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NullLiteral> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3561,7 +3532,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NullLiteral> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NumericLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3592,7 +3563,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NumericLiteral<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StringLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3623,7 +3594,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StringLiteral<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BigIntLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3654,7 +3625,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BigIntLiteral<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, RegExpLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3701,10 +3672,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXElement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3714,10 +3685,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningElement<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3743,10 +3714,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXFragment<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningFragment> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3756,10 +3727,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningFragment> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingFragment> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3829,10 +3800,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXElementName<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXNamespacedName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3842,10 +3813,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXNamespacedName<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXMemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3895,10 +3866,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXMemberExpressionObje
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpressionContainer<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3939,10 +3910,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXEmptyExpression> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3982,10 +3953,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttributeItem<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3995,10 +3966,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttribute<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4088,10 +4059,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttributeValue<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4161,10 +4132,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXChild<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadChild<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4174,10 +4145,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadChild<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXText<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4187,10 +4158,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXText<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4200,10 +4171,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisParameter<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4213,10 +4184,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumDeclaration<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4226,10 +4197,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumBody<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumMember<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4289,10 +4260,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumMemberName<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAnnotation<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4302,10 +4273,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAnnotation<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSLiteralType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4765,7 +4736,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConditionalType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -4796,15 +4767,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConditionalType<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
         let needs_parentheses = self.needs_parentheses(f);
         format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4817,7 +4788,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntersectionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -4848,10 +4819,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntersectionType<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSParenthesizedType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4861,7 +4832,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSParenthesizedType<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeOperator<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -4892,10 +4863,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeOperator<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSArrayType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4905,10 +4876,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSArrayType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexedAccessType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4918,10 +4889,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexedAccessType<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4931,10 +4902,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamedTupleMember<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4944,10 +4915,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamedTupleMember<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSOptionalType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4957,10 +4928,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSOptionalType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSRestType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5011,10 +4982,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleElement<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAnyKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5024,10 +4995,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAnyKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSStringKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5037,10 +5008,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSStringKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBooleanKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5050,10 +5021,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBooleanKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNumberKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5063,10 +5034,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNumberKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNeverKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5076,10 +5047,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNeverKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntrinsicKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5089,10 +5060,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntrinsicKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnknownKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5102,10 +5073,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnknownKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNullKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5115,10 +5086,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNullKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUndefinedKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5128,10 +5099,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUndefinedKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSVoidKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5141,10 +5112,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSVoidKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSymbolKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5154,10 +5125,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSymbolKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisType> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5167,10 +5138,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisType> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSObjectKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5180,10 +5151,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSObjectKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBigIntKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5193,10 +5164,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBigIntKeyword> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeReference<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5246,10 +5217,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeName<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSQualifiedName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5259,10 +5230,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSQualifiedName<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5272,10 +5243,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterInstanti
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5285,10 +5256,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameter<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5298,10 +5269,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterDeclarat
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5311,10 +5282,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAliasDeclaration<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSClassImplements<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5324,10 +5295,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSClassImplements<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5337,10 +5308,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceDeclaration<
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5350,10 +5321,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceBody<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSPropertySignature<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5423,10 +5394,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSignature<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignature<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5436,10 +5407,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignature<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5449,10 +5420,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSCallSignatureDeclarat
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMethodSignature<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5462,10 +5433,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMethodSignature<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5475,10 +5446,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructSignatureDec
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignatureName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5488,10 +5459,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignatureName<'a
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceHeritage<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5501,10 +5472,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceHeritage<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicate<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5544,10 +5515,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicateName<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5557,10 +5528,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclara
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5600,10 +5571,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclarationB
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSGlobalDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5613,10 +5584,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSGlobalDeclaration<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleBlock<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5626,10 +5597,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleBlock<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5639,7 +5610,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeLiteral<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInferType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5670,7 +5641,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInferType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeQuery<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5732,10 +5703,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeQueryExprName<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5775,10 +5746,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifier<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5788,7 +5759,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifiedNa
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSFunctionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5819,7 +5790,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSFunctionType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructorType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5850,10 +5821,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructorType<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMappedType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5863,10 +5834,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMappedType<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTemplateLiteralType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5876,7 +5847,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTemplateLiteralType<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAsExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5907,7 +5878,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAsExpression<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5938,7 +5909,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSatisfiesExpression<'
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAssertion<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5969,10 +5940,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAssertion<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6022,10 +5993,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleReference<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleReference<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6035,7 +6006,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleReferen
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNonNullExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -6066,10 +6037,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNonNullExpression<'a>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Decorator<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6079,10 +6050,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Decorator<'a>> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExportAssignment<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6092,10 +6063,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExportAssignment<'a>>
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6105,7 +6076,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceExportDeclar
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInstantiationExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -6136,10 +6107,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInstantiationExpressi
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNullableType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6149,10 +6120,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNullableType<'a>> 
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNonNullableType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6162,10 +6133,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNonNullableType<'a
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocUnknownType> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }

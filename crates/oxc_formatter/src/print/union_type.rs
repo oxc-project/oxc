@@ -22,7 +22,7 @@ use crate::{
     },
     parentheses::NeedsParentheses,
     print::FormatWrite,
-    utils::{suppressed::FormatSuppressedNode, typescript::should_hug_type},
+    utils::{suppressed::write_suppressed_expression, typescript::should_hug_type},
     write,
 };
 
@@ -367,20 +367,15 @@ fn format_union_types<'a>(
     let mut node_iter = node.iter().peekable();
     while let Some(element) = node_iter.next() {
         let element_span = element.span();
-        let has_trailing_suppression_comment =
-            f.comments().has_trailing_suppression_comment(element_span.end);
-
-        if suppressed_node_span == element_span || has_trailing_suppression_comment {
-            let comments = f.context().comments().comments_before(element_span.start);
-            FormatLeadingComments::Comments(comments).fmt(f);
-            let needs_parentheses = element.needs_parentheses(f);
-            if needs_parentheses {
-                write!(f, "(");
-            }
-            write!(f, [FormatSuppressedNode(element_span)]);
-            if needs_parentheses {
-                write!(f, ")");
-            }
+        if suppressed_node_span == element_span
+            || f.comments().has_trailing_suppression_comment(element_span.end)
+        {
+            write_suppressed_expression(
+                element_span,
+                element_span.start,
+                element.needs_parentheses(f),
+                f,
+            );
         } else if should_hug {
             write!(f, [element]);
         } else {

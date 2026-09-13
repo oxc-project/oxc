@@ -699,12 +699,9 @@ impl<'a> PeepholeOptimizations {
             ctx,
         ) {
             if !matches!(expr, Expression::ChainExpression(_)) {
-                let new_expr = Expression::new_chain_expression(
-                    expr.span(),
-                    expr.take_in(ctx).into_chain_element().unwrap(),
-                    ctx,
-                );
-                ctx.replace_expression(expr, new_expr);
+                ctx.replace_expression_with(expr, |e, ctx| {
+                    Expression::new_chain_expression(e.span(), e.into_chain_element().unwrap(), ctx)
+                });
             }
             true
         } else {

@@ -1492,37 +1492,21 @@ impl<'a> PeepholeOptimizations {
         expr: &mut ChainExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        match &mut expr.expression {
-            ChainElement::StaticMemberExpression(member) => {
-                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
-                {
-                    let new_value = Expression::from(chain.expression.take_in(ctx));
-                    ctx.replace_expression(&mut member.object, new_value);
-                }
-            }
-            ChainElement::ComputedMemberExpression(member) => {
-                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
-                {
-                    let new_value = Expression::from(chain.expression.take_in(ctx));
-                    ctx.replace_expression(&mut member.object, new_value);
-                }
-            }
-            ChainElement::PrivateFieldExpression(member) => {
-                if let Expression::ChainExpression(chain) = member.object.without_parentheses_mut()
-                {
-                    let new_value = Expression::from(chain.expression.take_in(ctx));
-                    ctx.replace_expression(&mut member.object, new_value);
-                }
-            }
-            ChainElement::CallExpression(call) => {
-                if let Expression::ChainExpression(chain) = call.callee.without_parentheses_mut() {
-                    let new_value = Expression::from(chain.expression.take_in(ctx));
-                    ctx.replace_expression(&mut call.callee, new_value);
-                }
-            }
+        let object = match &mut expr.expression {
+            ChainElement::StaticMemberExpression(member) => &mut member.object,
+            ChainElement::ComputedMemberExpression(member) => &mut member.object,
+            ChainElement::PrivateFieldExpression(member) => &mut member.object,
+            ChainElement::CallExpression(call) => &mut call.callee,
             ChainElement::TSNonNullExpression(_) => {
-                // noop
+                return; // noop
             }
+        };
+
+        if matches!(object, Expression::ChainExpression(_)) {
+            ctx.replace_expression_with(object, |e, _ctx| {
+                let Expression::ChainExpression(expr) = e else { unreachable!() };
+                Expression::from(expr.unbox().expression)
+            });
         }
     }
 

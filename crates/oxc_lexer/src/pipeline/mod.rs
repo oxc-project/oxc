@@ -16,10 +16,9 @@ mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
+mod disambiguate;
 mod find;
 mod misc;
-mod regex_div;
-mod replay;
 mod scan;
 
 use oxc_span::Span;
@@ -58,7 +57,7 @@ pub(crate) const PRIV_IDENT_ESC: u8 = TokenKind::PrivateIdentEscaped as u8;
 pub(crate) const EOF: u8 = TokenKind::Eof as u8;
 
 // JSX coarse kinds, written only by `carve_jsx`. `JEND`/`JSX_LT` read as
-// values in `prev_is_regex` (after a completed element, `/` is division).
+// values in `not_operator_position` (after a completed element, `/` is division).
 pub(crate) const JTEXT: u8 = TokenKind::JsxText as u8;
 pub(crate) const JEND: u8 = TokenKind::JsxTagEnd as u8;
 pub(crate) const JSX_LT: u8 = TokenKind::JsxLt as u8;
@@ -180,7 +179,7 @@ impl Lexer {
         self.ensure(n);
         self.lanes.clear();
         self.lanes.module = module;
-        regex_div::memo_new_lex();
+        disambiguate::memo_new_lex();
         if n == 0 {
             write_sentinels(0, out_spans, out_kinds);
             self.sig_len = 0;

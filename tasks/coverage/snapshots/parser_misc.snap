@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 107/107 (100.00%)
-Positive Passed: 107/107 (100.00%)
-Negative Passed: 215/215 (100.00%)
+AST Parsed     : 108/108 (100.00%)
+Positive Passed: 108/108 (100.00%)
+Negative Passed: 218/218 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -703,6 +703,27 @@ Negative Passed: 215/215 (100.00%)
    ·       │                      ╰── `)` expected
    ·       ╰── Opened here
  3 │ }
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x = 0;;);
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-in-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x in {});
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-of-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x of []);
+   ·               ┬
+   ·               ╰── `;` expected
    ╰────
 
   × The left-hand side of a for...in statement cannot be an using declaration.

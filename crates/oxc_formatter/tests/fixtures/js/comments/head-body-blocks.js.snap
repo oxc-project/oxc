@@ -182,7 +182,7 @@ if (a) {
 
 // A trailing suppression comment keeps the consequent's original text
 if (a)
-  ugly(  1  ) // prettier-ignore
+  ugly(  1  ); // prettier-ignore
 else b();
 
 // No `else`: every consequent shape stays inline in both formatters
@@ -285,7 +285,7 @@ if (a) {
 
 // A trailing suppression comment keeps the consequent's original text
 if (a)
-  ugly(  1  ) // prettier-ignore
+  ugly(  1  ); // prettier-ignore
 else b();
 
 // No `else`: every consequent shape stays inline in both formatters

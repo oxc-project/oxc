@@ -87,8 +87,10 @@ impl<'a> PeepholeOptimizations {
                 if has_optional {
                     ctx.notice_change();
                 } else {
-                    let new_expr = Expression::from(e.expression.take_in(ctx));
-                    ctx.replace_expression(expr, new_expr);
+                    ctx.replace_expression_with(expr, |e, _ctx| {
+                        let Expression::ChainExpression(e) = e else { unreachable!() };
+                        Expression::from(e.unbox().expression)
+                    });
                 }
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
