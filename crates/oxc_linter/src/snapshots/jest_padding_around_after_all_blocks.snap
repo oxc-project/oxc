@@ -10,6 +10,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Make sure there is an empty new line before the afterAll block
 
+  ⚠ jest(padding-around-after-all-blocks): Missing padding after afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:1:19]
+ 1 │ afterAll(() => {});
+   ·                   ▲
+ 2 │ const thing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the afterAll block
+
+  ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
+   ╭─[padding_around_after_all_blocks.tsx:2:1]
+ 1 │ afterAll(() => {});
+ 2 │ afterAll(() => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the afterAll block
+
   ⚠ jest(padding-around-after-all-blocks): Missing padding before afterAll block
    ╭─[padding_around_after_all_blocks.tsx:4:1]
  3 │ /* two */

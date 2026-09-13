@@ -2,6 +2,14 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ vitest(padding-around-test-blocks): Missing padding after test block
+   ╭─[padding_around_test_blocks.tsx:1:22]
+ 1 │ test('foo', () => {});
+   ·                      ▲
+ 2 │ const thing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the test block
+
   ⚠ vitest(padding-around-test-blocks): Missing padding before test block
    ╭─[padding_around_test_blocks.tsx:1:23]
  1 │ test('foo', () => {});test('bar', () => {});
