@@ -1,19 +1,18 @@
 # Coding agent guides for `crates/oxc_formatter_graphql`
 
+Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the GraphQL-specific rules and translations.
+Known divergences live in DIVERGENCES.md.
+
 ## Overview
 
 Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
-- Two entry points:
+- Entry points:
   - `format()`: standalone files (returns a printable `Formatted`)
-  - `format_to_ir()`: embedded use via the dispatcher (e.g. graphql-in-js);
-    allocates from the shared `EmbeddedContext` arena, emits no BOM / trailing newline,
-    and leaves `propagate_expand()` to the parent document
-- The canonical reference is Prettier's OUTPUT (the conformance snapshots); its source is an analysis aid, not a porting target
-  - match its layout decisions, do not invent new ones
-  - never mirror its internal logic 1:1: pin behavior with fixtures, and keep implementation details of Prettier's code out of comments
+  - `format_to_ir()`: embedded use via the dispatcher (e.g. graphql-in-js)
+  - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 
 ### Forked parser
 
@@ -31,42 +30,26 @@ The fork aligns with graphql-js v17.x, which Prettier 3.9 targets:
 
 ### Error semantics
 
-`format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
+The shared policy applies; GraphQL specifics:
 
-- `oxc-graphql-parser` is error-tolerant (returns an AST even for invalid input), but any parse error bails out; never format a broken AST.
+- `oxc-graphql-parser` is error-tolerant (returns an AST even for invalid input), but any parse error still bails out
   - Several printer shortcuts (e.g. `close_delim_start`) are sound only under this guarantee
-- The caller (oxfmt) decides what happens next
-  - Diagnostics for standalone files, template-as-is for embedded
 
 ### Comments
 
 `graphql-js` does not attach comments to the AST;
 Prettier collects them from the token stream and attaches leading/trailing/dangling per node.
 
-This crate instead collects comment spans into a positional cursor, drained in source order by claim points spread through the printers
-(the `flush_*` helpers in `src/comments.rs`; behavior pinned by `tests/fixtures/graphql/comments-inside-node-spans.graphql`).
+This crate instead collects comment spans into a positional cursor, drained in source order by claim points spread through the printers, like the other `oxc_formatter_*` crates.
 
-Placement invariant (same as `oxc_formatter`'s): a comment stays between the source tokens it sat between, and a same-line trailing comment stays on its line.
-
-Two bounded exceptions:
-
-- an own-line comment claimed right after a printed literal (`type`, `:`, `=`) inlines on that literal's line
-  - `type` + break + `# c` + break + `A` prints as `type # c` + break + `A`
-  - identical to Prettier and to `oxc_formatter`'s `const // c` + break + `a = 1`; keeping it own-line would need a column-conditional break the IR does not have
-- positions no printer claims fall back to an own-line trailing comment after the node, which may cross remaining in-span tokens (e.g. a type's `!`)
-  - `flush_overlooked_inside_comments`
-
-Where Prettier relocates a comment across tokens instead, we diverge, see "Known divergences".
-
-Two constraints the code cannot show:
-
-- the cursor is monotonic: every claim point must drain everything inside the span it just printed
-  - or a later flush point's gap range inverts and panics (issue #24927)
-- trailing claims are bounded at the literal's SOURCE position
-  - or re-formatting is not idempotent (`g: # c` must not become `g # c` + `:`)
-
-Node spans are significant-token spans (trivia is never included), so layout decisions use them directly.
-All span bridging (conversion, closing-delimiter derivation, the bare-token source scan) lives in `src/print/span.rs`.
+- The policy's opener exception needs no code: nothing claims a comment right after `{` / `(` / `[`, so `write_sequence`'s leading flush takes it
+  - Prettier's attachment differs for some openers, see DIVERGENCES.md
+- Two known invariant violations, kept deliberately (details live on the helpers' doc comments):
+  - an own-line comment claimed right after a printed literal inlines on that literal's line (`write_leading_comments`)
+  - positions no printer claims fall back to a trailing comment after the node, which may cross remaining in-span tokens (`flush_overlooked_inside_comments`)
+- Two constraints the code cannot show:
+  - the cursor is monotonic: every claim point must drain everything inside the span it just printed, or a later flush point's gap range inverts and panics (issue #24927)
+  - trailing claims are bounded at the literal's SOURCE position, or re-formatting is not idempotent (`g: # c` must not become `g # c` + `:`)
 
 ### Strings
 
@@ -87,78 +70,19 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
 - A cooked `\r` escape in a string value is re-emitted as `\r`
   (Prettier emits a raw CR byte, which the core `text()` builder forbids; the string VALUE is identical).
 
-## Known divergences
-
-Deliberate divergences from Prettier, all one class: Prettier relocates a comment (an attachment artifact of `graphql-js` node boundaries, not a layout rule),
-we keep it between its source tokens on its source line.
-
-- `"desc" type # c`: Prettier pulls the comment backwards across the keyword onto the description's line
-- `"""d"""` + break + `# c` + break + `type A`: Prettier pushes the comment forward across the keyword (`type # c` + break + `A`)
-- `type A # c` + break + `implements B`: Prettier scatters it to the line end (`type A implements B { # c`);
-  - same class: `f(x) # c` + break + `: T` is pulled inside the parens
-- `{ # c` after an opening delimiter: Prettier moves it own-line as the first child's leading (asymmetric: `test # c` / `} # c` stay inline)
-
 ## Verification
 
-```sh
-cargo c -p oxc_formatter_graphql
-```
-
-Run `clippy` and resolve all warnings.
-
-### Fixtures tests
-
-Snapshot tests driven by fixture files under `tests/fixtures/graphql/`,
-covering what the Prettier conformance suite does not (suppression, string re-encoding, comment positions, extensions, ... — see the file names).
-`build.rs` auto-generates a test case from every `.graphql` file using the core `test_support` harness.
-
-Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics and BOM preservation.
-
-```sh
-cargo test -p oxc_formatter_graphql
-# Review / accept snapshots after intentional changes
-cargo insta review -p oxc_formatter_graphql
-```
-
-Add a case by dropping a new `.graphql` file into the directory, the build script picks it up.
-
-### Prettier conformance
-
-Compares output against Prettier's snapshots and tracks failures (not passes);
-results live in `tasks/prettier_conformance/snapshots/prettier.graphql.snap.md`.
-The `graphql` language is part of the shared conformance binary.
-
-```sh
-cargo run -p oxc_prettier_conformance
-# Debug a specific test
-cargo run -p oxc_prettier_conformance -- --filter graphql/<dir>/<file>
-```
-
-### Embedded conformance (`apps/oxfmt`)
-
-The embedded-language features (gql-in-js) are validated end-to-end through the Oxfmt.
-
-Requires a dev build first.
-
-```sh
-pnpm --dir apps/oxfmt build-dev
-pnpm --dir apps/oxfmt conformance
-```
-
-### Manual checks
+Manual checks:
 
 ```sh
 cargo run -p oxc_formatter_graphql --example graphql_formatter [filename]
-# Compare with Prettier
-npx prettier --parser=graphql [filename]
 ```
 
 A good large real-world stress input is GitHub's public GraphQL schema (~72k lines).
-It is too large and third-party to commit as a fixture,
-bug-catching shapes are distilled into `tests/fixtures/graphql/implements-width.graphql`):
+It is too large and third-party to commit as a fixture, bug-catching shapes are distilled into `tests/fixtures/graphql/implements-width.graphql`):
 
 ```sh
 curl -sL https://docs.github.com/public/fpt/schema.docs.graphql -o /tmp/github-schema.graphql
-diff <(npx prettier --parser=graphql /tmp/github-schema.graphql) \
+diff <(node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser=graphql /tmp/github-schema.graphql) \
   <(cargo run -q -p oxc_formatter_graphql --example graphql_formatter /tmp/github-schema.graphql)
 ```

@@ -33,6 +33,12 @@ pub struct TestRunnerOptions {
     pub r#override: bool,
 }
 
+impl TestRunnerOptions {
+    fn should_update_snapshots(&self) -> bool {
+        self.filter.is_none()
+    }
+}
+
 /// The test runner which walks the babel repository and searches for transformation tests.
 pub struct TestRunner {
     options: TestRunnerOptions,
@@ -184,7 +190,7 @@ impl TestRunner {
             }
         }
 
-        if self.options.filter.is_none() {
+        if self.options.should_update_snapshots() {
             let all_passed =
                 all_passed.into_iter().map(|s| format!("* {s}")).collect::<Vec<_>>().join("\n");
             let snapshot = format!(

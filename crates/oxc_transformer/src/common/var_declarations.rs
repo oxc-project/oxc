@@ -146,15 +146,7 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ast: &AstBuilder<'a>,
     ) {
-        let declarator = VariableDeclarator::new(
-            SPAN,
-            VariableDeclarationKind::Var,
-            ident,
-            None,
-            init,
-            false,
-            ast,
-        );
+        let declarator = VariableDeclarator::new(SPAN, ident, None, init, false, ast);
         self.insert_var_declarator(declarator, ast);
     }
 
@@ -166,15 +158,7 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ast: &AstBuilder<'a>,
     ) {
-        let declarator = VariableDeclarator::new(
-            SPAN,
-            VariableDeclarationKind::Let,
-            ident,
-            None,
-            init,
-            false,
-            ast,
-        );
+        let declarator = VariableDeclarator::new(SPAN, ident, None, init, false, ast);
         self.insert_let_declarator(declarator, ast);
     }
 

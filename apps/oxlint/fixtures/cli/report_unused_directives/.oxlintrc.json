@@ -1,6 +1,7 @@
 {
     "rules": {
         "no-console": "warn",
-        "no-debugger": "warn"
+        "no-debugger": "warn",
+        "no-irregular-whitespace": "warn"
     }
 }

@@ -17,6 +17,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
@@ -583,7 +584,7 @@ fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool
     let AstKind::VariableDeclarator(declarator) = ctx.symbol_declaration(symbol_id).kind() else {
         return false;
     };
-    if declarator.kind != VariableDeclarationKind::Const {
+    if variable_declaration_kind(declarator, ctx) != VariableDeclarationKind::Const {
         return false;
     }
     declarator

@@ -42,17 +42,16 @@ impl<'a> PeepholeOptimizations {
         let mut b = b;
         // "a op (b op c)" => "(a op b) op c"
         // "a op (b op (c op d))" => "((a op b) op c) op d"
-        loop {
-            if let Expression::LogicalExpression(logical_expr) = &mut b
-                && logical_expr.operator == op
-            {
-                let right = logical_expr.left.take_in(ctx);
-                a = Self::join_with_left_associative_op(span, op, a, right, ctx);
-                b = logical_expr.right.take_in(ctx);
-                continue;
+        let b = loop {
+            match b {
+                Expression::LogicalExpression(logical_expr) if logical_expr.operator == op => {
+                    let LogicalExpression { left, right, .. } = logical_expr.unbox();
+                    a = Self::join_with_left_associative_op(span, op, a, left, ctx);
+                    b = right;
+                }
+                b => break b,
             }
-            break;
-        }
+        };
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
         let mut logic_expr = Expression::new_logical_expression(span, a, op, b, ctx);

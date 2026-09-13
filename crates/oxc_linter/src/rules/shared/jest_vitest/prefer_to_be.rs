@@ -109,7 +109,7 @@ impl PreferToBe {
         };
 
         let has_not_modifier =
-            jest_expect_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+            jest_expect_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
         if has_not_modifier {
             if matcher.is_name_equal("toBeUndefined") {
@@ -223,11 +223,11 @@ impl PreferToBe {
     /// Returns (source_start, suggestion_string).
     fn build_suggestion_with_not_modifier(
         matcher_name: &str,
-        not_modifier: Option<&&KnownMemberExpressionProperty>,
+        not_modifier: Option<&KnownMemberExpressionProperty>,
         is_cmp_mem_expr: bool,
         span_start: u32,
     ) -> (u32, String) {
-        if let Some(&not_modifier) = not_modifier {
+        if let Some(not_modifier) = not_modifier {
             let not_is_computed =
                 matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
 
@@ -277,8 +277,8 @@ impl PreferToBe {
             _ => return,
         };
 
-        let modifiers = jest_expect_fn_call.modifiers();
-        let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
+        let maybe_not_modifier =
+            jest_expect_fn_call.modifiers().find(|modifier| modifier.is_name_equal("not"));
 
         if kind == &PreferToBeKind::Undefined {
             let replacement_span = if let Some(not_modifier) = maybe_not_modifier {
@@ -296,7 +296,7 @@ impl PreferToBe {
             );
         } else if kind == &PreferToBeKind::Defined {
             let start = if is_cmp_mem_expr {
-                modifiers.first().unwrap().span.end
+                jest_expect_fn_call.modifiers().next().unwrap().span.end
             } else {
                 maybe_not_modifier.unwrap().span.start
             };

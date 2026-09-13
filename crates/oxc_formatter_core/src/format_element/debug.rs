@@ -22,12 +22,11 @@ use crate::{
     FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
     VecBuffer,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
-    format::write,
     format_element::{
         LineMode, TextWidth,
         tag::{self, DedentMode, GroupMode, Tag},
     },
-    write as w,
+    write, write as w,
 };
 
 impl<'a> Document<'a> {
@@ -92,9 +91,10 @@ where
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         w!(f, [ContentArrayStart]);
@@ -166,6 +166,9 @@ where
                     }
                     LineMode::Hard => {
                         w!(f, [token("hard_line_break")]);
+                    }
+                    LineMode::HardWithoutExpand => {
+                        w!(f, [token("hard_line_break_without_expand_parent")]);
                     }
                     LineMode::Empty => {
                         w!(f, [token("empty_line")]);
@@ -320,6 +323,18 @@ where
                             );
                         }
 
+                        StartPrefix(prefix) => {
+                            w!(
+                                f,
+                                [
+                                    token("prefix_align("),
+                                    text(f.allocator().alloc_str(&format!("{:?}", prefix.0))),
+                                    token(","),
+                                    space(),
+                                ]
+                            );
+                        }
+
                         StartLineSuffix => {
                             w!(f, [token("line_suffix(")]);
                         }
@@ -421,6 +436,7 @@ where
                         | EndConditionalContent
                         | EndIndentIfGroupBreaks(_)
                         | EndAlign
+                        | EndPrefix
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix

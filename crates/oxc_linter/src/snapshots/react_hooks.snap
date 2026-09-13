@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(hooks): Hooks must always be called in a consistent order and may not be called conditionally
+   ╭─[hooks.tsx:4:5]
+ 3 │   if (cond) {
+ 4 │     useConditionalHook();
+   ·     ─────────┬────────
+   ·              ╰── This Hook is called conditionally
+ 5 │   }
+   ╰────
+  help: Call Hooks unconditionally at the top level of the component or custom Hook
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/rules-of-hooks

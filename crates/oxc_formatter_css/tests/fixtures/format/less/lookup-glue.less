@@ -1,0 +1,11 @@
+// A lookup glues to what it reads from (see DIVERGENCES.md "less-lookup-glue")
+@prop-name: my-prop;
+.a {
+  value: #namespace[$@prop-name];
+  width: .add(10px, 10px)[];
+}
+@media #ns.breakpoint(.valToGet[])[@max] {
+  a {
+    b: c;
+  }
+}

@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(immutability): This value cannot be modified
+   ╭─[immutability.tsx:7:11]
+ 6 │           const [state, setState] = useState({a: 0});
+ 7 │           state.a = 1;
+   ·           ──┬──
+   ·             ╰── value cannot be modified
+ 8 │           return <div>{props.foo}</div>;
+   ╰────
+  help: Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability
+
+  ⚠ react(immutability): Cannot access variable while it is being initialized
+   ╭─[immutability.tsx:6:15]
+ 5 │             setTimeout(() => {
+ 6 │               applyFilter();
+   ·               ─────┬─────
+   ·                    ╰── `applyFilter` is read during its own initialization
+ 7 │             });
+   ╰────
+  help: `applyFilter` is read while its declaration is still being initialized. Move the access after initialization. For a recursive callback, use a named function expression or restructure the callback so it does not capture itself during initialization
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability
+
+  ⚠ react(immutability): This value cannot be modified
+   ╭─[immutability.tsx:3:11]
+ 2 │         function Component({model}) {
+ 3 │           model.value = 'next';
+   ·           ──┬──
+   ·             ╰── value cannot be modified
+ 4 │           return <div>{model.value}</div>;
+   ╰────
+  help: Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability

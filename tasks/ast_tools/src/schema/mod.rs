@@ -32,6 +32,7 @@ pub mod extensions {
 define_index_type! {
     /// ID of type in the AST
     pub struct TypeId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 impl TypeId {
@@ -41,11 +42,13 @@ impl TypeId {
 define_index_type! {
     /// ID of source file
     pub struct FileId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 define_index_type! {
     /// ID of meta type
     pub struct MetaId = u32;
+    MAX_INDEX = u32::MAX as usize;
 }
 
 /// Schema of all AST types.

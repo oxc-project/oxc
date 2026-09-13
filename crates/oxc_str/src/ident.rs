@@ -542,6 +542,10 @@ pub type ArenaIdentHashMap<'alloc, V> =
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
 
+/// Arena-allocated hash set of [`Ident`], using precomputed ident hash.
+pub type ArenaIdentHashSet<'alloc> =
+    oxc_allocator::ArenaHashSet<'alloc, Ident<'alloc>, IdentBuildHasher>;
+
 /// Creates an [`Ident<'static>`] for a string literal, evaluated at compile time.
 ///
 /// ```
@@ -851,5 +855,21 @@ mod test {
         map.insert(key, 42);
         assert_eq!(map.get("hello"), Some(&42));
         assert_eq!(map.get(&Ident::from("hello")), Some(&42));
+    }
+
+    #[test]
+    fn arena_ident_hashset() {
+        let allocator = Allocator::new();
+        let mut set = ArenaIdentHashSet::new_in(&allocator);
+        set.insert(Ident::from_in("hello", &allocator));
+        assert!(set.contains("hello"));
+        assert!(set.contains(&Ident::from("hello")));
+        assert!(!set.contains("world"));
+
+        let set =
+            ArenaIdentHashSet::from_iter_in([Ident::from("foo"), Ident::from("bar")], &allocator);
+        assert_eq!(set.len(), 2);
+        assert!(set.contains("foo"));
+        assert!(set.contains("bar"));
     }
 }

@@ -19,8 +19,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -34,8 +34,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -56,8 +56,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -83,8 +83,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -99,8 +99,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -129,8 +129,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -166,8 +166,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};
@@ -195,8 +195,8 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${stringifyOptions(context.options)}\n` +
-            `isDeepFrozen: ${isDeepFrozen(context.options)}`,
+            `\noptions: ${stringifyOptions(context.options)}\n`
+            + `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
         return {};

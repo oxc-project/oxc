@@ -22,12 +22,12 @@ const rule: Rule = {
         const scope = sourceCode.getScope(node);
         context.report({
           message:
-            `getScope(${node.id?.name}):\n` +
-            `type: ${scope.type}\n` +
-            `isStrict: ${scope.isStrict}\n` +
-            `variables: [${scope.variables.map((v) => v.name).join(", ")}]\n` +
-            `through: [${scope.through.map((r) => r.identifier.name).join(", ")}]\n` +
-            `upper type: ${scope.upper?.type}`,
+            `getScope(${node.id?.name}):\n`
+            + `type: ${scope.type}\n`
+            + `isStrict: ${scope.isStrict}\n`
+            + `variables: [${scope.variables.map((v) => v.name).join(", ")}]\n`
+            + `through: [${scope.through.map((r) => r.identifier.name).join(", ")}]\n`
+            + `upper type: ${scope.upper?.type}`,
           node,
         });
       },

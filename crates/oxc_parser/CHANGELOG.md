@@ -4,6 +4,97 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 66744f0 parser: [**BREAKING**] Rename `panicked` to `fatal_error` in `ParserReturn` (#26382) (overlookmotel)
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- 1400a0f parser: Require a string source after `export ... from` (#26389) (camc314)
+- 9a02337 parser: Correctly round large nondecimal literals (#26379) (camc314)
+- c966aca parser: Do not omit `<` token opening type argument list (#26328) (overlookmotel)
+- 3ab9bd1 parser: Do not re-lex template substitution tail after fatal error (#26230) (overlookmotel)
+- 07851b9 parser: Fix debug assert failure when lexer error with tokens enabled (#26229) (overlookmotel)
+
+### ⚡ Performance
+
+- 356def6 parser: Shrink annotation comment ranges (#26356) (overlookmotel)
+- a5be474 parser: Shave instruction off `parse_jsx_element_name` (#26355) (overlookmotel)
+- 9780663 parser: Remove fatal error guard from `parse_jsx_element_name` (#26354) (overlookmotel)
+- 766e12f parser: Remove `token` field from `LexerCheckpoint` (#26350) (overlookmotel)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 5672585 parser: Attach all comments to nodes (#25944) (camc314)
+
+### 🐛 Bug Fixes
+
+- dc09a3a parser: Avoid panic on escaped string export names (#26146) (camc314)
+- d5163d0 parser: Correctly classify unapplied pure annotations (#26084) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2dad1e0 parser: Track irregular line terminators in trivia (#25947) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- ae9be8f parser: Forbid type parameters on quoted constructors (#25696) (Boshen)
+- 23a7ad0 parser: Stop delimited lists at end of file (#25542) (Boshen)
+- 73acba9 parser: Preserve fatal errors during await reparse (#25541) (Boshen)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- c49f4ce parser: Preserve terminal license comments (#25400) (camc314)
+- 12937b3 parser: Reject comma expressions in class fields (#25385) (Cameron)
+- 9e93ba6 parser: Reset auto-accessor initializer context (#25384) (camc314)
+- cc2e28d parser: Reject trailing tokens in `Parser::parse_expression` (#25371) (camc314)
+- 4d723ca parser: Report TS1035 for quoted module names (#25305) (camc314)
+
+### ⚡ Performance
+
+- e420816 parser: Optimize trailing comma tracking (#25376) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a70035d parser: Report export imports in namespaces (#25086) (camc314)
+
+### ⚡ Performance
+
+- 8b80f8b parser: Avoid large types on stack (#25034) (overlookmotel)
+
 ## [0.142.0] - 2026-07-27
 
 ### 🚀 Features

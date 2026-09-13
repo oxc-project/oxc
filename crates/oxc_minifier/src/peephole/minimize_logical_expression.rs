@@ -248,20 +248,20 @@ impl<'a> PeepholeOptimizations {
             }
 
             let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
-            let Some(Expression::AssignmentExpression(mut assignment_expr)) =
+            let Some(Expression::AssignmentExpression(assignment_expr)) =
                 sequence_expr.expressions.pop()
             else {
                 unreachable!()
             };
 
-            Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+            let AssignmentExpression { left, right, .. } = assignment_expr.unbox();
+            Self::mark_assignment_target_as_read(&left, ctx);
 
-            let assign_value = assignment_expr.right.take_in(ctx);
-            sequence_expr.expressions.push(assign_value);
+            sequence_expr.expressions.push(right);
             let new_expr = Expression::new_assignment_expression(
                 e.span,
                 e.operator.to_assignment_operator(),
-                assignment_expr.left.take_in(ctx),
+                left,
                 e.right.take_in(ctx),
                 ctx,
             );

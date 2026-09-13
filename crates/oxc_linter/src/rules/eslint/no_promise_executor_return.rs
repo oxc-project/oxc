@@ -123,7 +123,7 @@ declare_oxc_lint!(
 
 impl Rule for NoPromiseExecutorReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -261,6 +261,7 @@ fn test() {
         // globals are not supported in tests.
         // ("/* globals Promise:off */ new Promise(function (resolve, reject) { return 1; });", None)
         // ("new Promise((resolve, reject) => { return 1; });", None), // { "globals": { "Promise": "off" } }
+        ("Promise.resolve(); function f(Promise) { new Promise((resolve, reject) => 1); }", None),
         ("let Promise; new Promise(function (resolve, reject) { return 1; });", None),
         ("function f() { new Promise((resolve, reject) => { return 1; }); var Promise; }", None),
         ("function f(Promise) { new Promise((resolve, reject) => 1); }", None),

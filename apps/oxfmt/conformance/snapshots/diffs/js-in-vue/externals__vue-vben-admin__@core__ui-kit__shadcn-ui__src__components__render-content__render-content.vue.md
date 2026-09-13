@@ -1,5 +1,7 @@
 # externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue
 
+> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+
 ## Option 1
 
 `````json

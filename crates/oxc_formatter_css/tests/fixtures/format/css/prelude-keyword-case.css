@@ -1,0 +1,17 @@
+/* prelude keywords lowercase (see DIVERGENCES.md "prelude-keyword-case"); values and case-sensitive names keep theirs */
+@MEDIA ONLY SCREEN AND (MAX-WIDTH: 1PX), PRINT {
+  a {
+    b: c;
+  }
+}
+@media (MIN-WIDTH: 700PX) AND (ORIENTATION: LANDSCAPE) {
+  a {
+    b: c;
+  }
+}
+@import url("a.css") layer(FOO) supports(DISPLAY: FLEX) SCREEN AND (MAX-WIDTH: 1px), PRINT;
+@supports (DISPLAY: FLEX) AND (NOT (DISPLAY: GRID)) {
+  a {
+    b: c;
+  }
+}

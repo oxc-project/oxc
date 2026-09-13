@@ -646,10 +646,10 @@ describe("compile visitor", () => {
         } else if (typeName.endsWith("Pattern")) {
           classNames.push("pattern");
         } else if (
-          typeName.endsWith("Expression") ||
-          typeName.endsWith("Literal") ||
-          typeName === "Identifier" ||
-          typeName === "MetaProperty"
+          typeName.endsWith("Expression")
+          || typeName.endsWith("Literal")
+          || typeName === "Identifier"
+          || typeName === "MetaProperty"
         ) {
           // Expressions are also patterns
           classNames.push("expression", "pattern");
@@ -674,9 +674,9 @@ describe("compile visitor", () => {
         // Check the compiler visitor for this type is what it should be.
         // Check that visit fns have/have not been wrapped/merged, depending on the class.
         if (
-          classNames.length === 1 && // Type is only matched by 1 class
-          typeId >= LEAF_NODE_TYPES_COUNT && // Non leaf node
-          !classes.get(classNames[0])!.isComplex // Class is not complex
+          classNames.length === 1 // Type is only matched by 1 class
+          && typeId >= LEAF_NODE_TYPES_COUNT // Non leaf node
+          && !classes.get(classNames[0])!.isComplex // Class is not complex
         ) {
           const enterExit = visit as EnterExit;
           const { enter, exit } = classes.get(classNames[0])!;

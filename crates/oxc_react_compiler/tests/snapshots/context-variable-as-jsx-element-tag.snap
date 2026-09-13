@@ -8,18 +8,18 @@ import { useMemo } from "react";
 import { Stringify } from "shared-runtime";
 function Component(props) {
 	const $ = _c(3);
-	let Component;
+	let _Component;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
-		Component = Stringify;
-		Component;
-		Component = Component;
-		$[0] = Component;
+		_Component = Stringify;
+		_Component;
+		_Component = _Component;
+		$[0] = _Component;
 	} else {
-		Component = $[0];
+		_Component = $[0];
 	}
 	let t0;
 	if ($[1] !== props) {
-		t0 = <Component {...props} />;
+		t0 = <_Component {...props} />;
 		$[1] = props;
 		$[2] = t0;
 	} else {

@@ -1,5 +1,5 @@
 // `isSCSSMapItemNode` (Prettier#18530/#19091, released in 3.9) with our
-// semantic-safety extension (see "Known divergences" in AGENTS.md):
+// semantic-safety extension (DIVERGENCES.md "map-item-break-comma-lists-only"):
 // a paren group breaks one-element-per-line with a trailing comma ONLY when
 // - it is a keyword argument's direct value and the call's FIRST argument is a
 //   key-value pair (Prettier checks `groups[0]` alone), or a map item value, AND

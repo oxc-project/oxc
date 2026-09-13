@@ -1,0 +1,7 @@
+// Same as css/custom-property-raw-verbatim.css: an unreadable custom property
+// value is text in every variant.
+:root {
+  --z: */;
+  --x:   1px   !foo;
+  --typed:   1px   !important;
+}

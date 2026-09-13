@@ -54,10 +54,9 @@ declare_oxc_lint!(
     ///
     /// ::: warning
     /// Caveat: This lint rule will report on constructors whose sole purpose
-    /// is to change the visibility of a parent constructor, or to expose parameter
-    /// properties with modifiers. This is because the rule does not have type
-    /// information to determine if the parent constructor is `public`, `protected`,
-    /// or `private`.
+    /// is to change the visibility of a parent constructor. This is because the
+    /// rule does not have type information to determine if the parent constructor
+    /// is `public`, `protected`, or `private`.
     /// :::
     ///
     /// ### Examples
@@ -128,7 +127,7 @@ impl Rule for NoUselessConstructor {
             Some(TSAccessibility::Private | TSAccessibility::Protected) => {
                 return;
             }
-            Some(TSAccessibility::Public) if class.super_class.is_some() => {
+            Some(TSAccessibility::Public) if class.heritage.is_some() => {
                 return;
             }
             _ => {}
@@ -138,7 +137,7 @@ impl Rule for NoUselessConstructor {
             return;
         }
 
-        if class.super_class.is_none() {
+        if class.heritage.is_none() {
             lint_empty_constructor(ctx, constructor, body);
         } else {
             lint_redundant_super_call(ctx, constructor, body);
@@ -156,15 +155,8 @@ fn lint_empty_constructor<'a>(
         return;
     }
 
-    // allow constructors with parameter properties since they actually declare
-    // class members
-    if constructor
-        .value
-        .params
-        .items
-        .iter()
-        .any(|param| param.has_modifier() || !param.decorators.is_empty())
-    {
+    // Allow constructors with parameter properties since they actually declare class members.
+    if has_parameter_property_or_decorator(&constructor.value.params) {
         return;
     }
 
@@ -186,8 +178,7 @@ fn lint_redundant_super_call<'a>(
     let super_args = &super_call.arguments;
 
     if is_only_simple_params(params)
-        && !is_overriding(params)
-        && !has_decorated_params(params)
+        && !has_parameter_property_or_decorator(params)
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
         ctx.diagnostic_with_suggestion(
@@ -197,12 +188,8 @@ fn lint_redundant_super_call<'a>(
     }
 }
 
-fn is_overriding(params: &FormalParameters) -> bool {
-    params.items.iter().any(|param| param.r#override)
-}
-
-fn has_decorated_params(params: &FormalParameters) -> bool {
-    params.items.iter().any(|param| !param.decorators.is_empty())
+fn has_parameter_property_or_decorator(params: &FormalParameters) -> bool {
+    params.items.iter().any(|param| param.has_modifier() || !param.decorators.is_empty())
 }
 
 /// Check if a function body only contains a single `super()` call. Ignores directives.
@@ -313,6 +300,11 @@ fn test() {
         "class A { constructor(readonly x: number) {} }",
         "class A { constructor(private readonly x: number) {} }",
         "class A extends B { constructor(override x: number) { super(x); } }",
+        "class A extends B { constructor(private x: number) { super(x); } }",
+        "class A extends B { constructor(public x: number) { super(x); } }",
+        "class A extends B { constructor(protected x: number) { super(x); } }",
+        "class A extends B { constructor(readonly x: number) { super(x); } }",
+        "class A extends B { constructor(private readonly x: object) { super(x); } }",
         "
         class A {
             protected foo: number | undefined;

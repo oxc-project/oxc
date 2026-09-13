@@ -1,9 +1,9 @@
-commit: 637d5746
+commit: b465fdbf
 
 parser_typescript Summary:
-AST Parsed     : 9779/9779 (100.00%)
-Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1644/2640 (62.27%)
+AST Parsed     : 9783/9783 (100.00%)
+Positive Passed: 9783/9783 (100.00%)
+Negative Passed: 1649/2636 (62.56%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -173,8 +173,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTy
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypingOfObjectLiterals2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypingWithFixedTypeParameters1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashDeclareGlobalTypeofExport.ts
 
@@ -776,8 +774,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/qualifiedMod
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/quickinfoTypeAtReturnPositionsInaccurate.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reboundIdentifierOnImportAlias.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveBaseCheck3.ts
@@ -823,8 +819,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferenc
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithReturn.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyUndefined.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationLabeled.ts
 
@@ -947,8 +941,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/voidAsNonAmb
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/widenedTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts
 
@@ -1081,12 +1073,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod11.ts
 
@@ -1744,8 +1730,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.d.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.d.ts
@@ -1757,8 +1741,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserES5ForOfStatement20.ts
 
@@ -5202,6 +5184,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
+  × Jump target cannot cross function boundary.
+   ╭─[typescript/tests/cases/compiler/continueNotInIterationStatement4.ts:4:14]
+ 3 │   var x = () => {
+ 4 │     continue TWO;
+   ·              ───
+ 5 │   }
+   ╰────
+
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[typescript/tests/cases/compiler/continueTarget1.ts:1:1]
  1 │ target:
@@ -7570,20 +7560,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  15 │ }
     ╰────
 
-  × Expected `,` or `)` but found `var`
-   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:2:11]
+  × Expected `=>` but found `)`
+   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:2:17]
  1 │ // Error (no '=>')
  2 │ function f(x: ()) {
-   ·           ┬
-   ·           ╰── Opened here
+   ·                 ┬
+   ·                 ╰── `=>` expected
  3 │ }
-   ╰────
-   ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:6:1]
- 5 │ // Error (no '=>')
- 6 │ var g: (param);
-   · ─┬─
-   ·  ╰── `,` or `)` expected
- 7 │ 
    ╰────
 
   × Identifier `total` has already been declared
@@ -9335,7 +9318,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ 
    ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1234): An ambient module declaration is only allowed at the top level in a file.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -9353,23 +9336,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-   ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
- 1 │ function blah () {
- 2 │     namespace M { }
-   ·     ───────────────
- 3 │     export namespace N {
-   ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-   ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
- 2 │         namespace M { }
- 3 │ ╭─▶     export namespace N {
- 4 │ │           export interface I { }
- 5 │ ╰─▶     }
- 6 │     
-   ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
  2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
@@ -9386,24 +9352,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  8 │ 
    ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-   ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:7:5]
- 6 │ 
- 7 │     namespace Q.K { }
-   ·     ─────────────────
- 8 │ 
-   ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
-  8 │     
-  9 │ ╭─▶     declare module "ambient" {
- 10 │ │   
- 11 │ ╰─▶     }
- 12 │     
-    ╰────
-
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1234): An ambient module declaration is only allowed at the top level in a file.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
   9 │ ╭─▶     declare module "ambient" {
@@ -9437,7 +9386,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  9 │ 
    ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
+  × TS(1234): An ambient module declaration is only allowed at the top level in a file.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:10:9]
   9 │     
  10 │ ╭─▶         declare module "ambient" {
@@ -11011,6 +10960,48 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  150 │     }
      ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:22:12]
+ 21 │     
+ 22 │ ╭─▶     export declare module "m1_M3_public" {
+ 23 │ │           export function f1();
+ 24 │ │           export class c1 {
+ 25 │ │           }
+ 26 │ │           export var v1: { new (): c1; };
+ 27 │ │           export var v2: c1;
+ 28 │ ╰─▶     }
+ 29 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:30:5]
+ 29 │     
+ 30 │ ╭─▶     declare module "m1_M4_private" {
+ 31 │ │           export function f1();
+ 32 │ │           export class c1 {
+ 33 │ │           }
+ 34 │ │           export var v1: { new (): c1; };
+ 35 │ │           export var v2: c1;
+ 36 │ ╰─▶     }
+ 37 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:133:9]
+ 132 │         namespace m2 {
+ 133 │ ╭─▶         declare module "abc" {
+ 134 │ ╰─▶         }
+ 135 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:138:9]
+ 137 │         namespace m2 {
+ 138 │ ╭─▶         module "abc2" {
+ 139 │ ╰─▶         }
+ 140 │         }
+     ╰────
+
   × TS(1147): Import declarations in a namespace cannot reference a module.
     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:59:5]
  58 │ 
@@ -11172,6 +11163,106 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  354 │     }
      ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:22:12]
+ 21 │     
+ 22 │ ╭─▶     export declare module "m1_M3_public" {
+ 23 │ │           export function f1();
+ 24 │ │           export class c1 {
+ 25 │ │           }
+ 26 │ │           export var v1: { new (): c1; };
+ 27 │ │           export var v2: c1;
+ 28 │ ╰─▶     }
+ 29 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:30:5]
+ 29 │     
+ 30 │ ╭─▶     declare module "m1_M4_private" {
+ 31 │ │           export function f1();
+ 32 │ │           export class c1 {
+ 33 │ │           }
+ 34 │ │           export var v1: { new (): c1; };
+ 35 │ │           export var v2: c1;
+ 36 │ ╰─▶     }
+ 37 │     
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:106:12]
+ 105 │     
+ 106 │ ╭─▶     export declare module "m2_M3_public" {
+ 107 │ │           export function f1();
+ 108 │ │           export class c1 {
+ 109 │ │           }
+ 110 │ │           export var v1: { new (): c1; };
+ 111 │ │           export var v2: c1;
+ 112 │ ╰─▶     }
+ 113 │     
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:114:5]
+ 113 │     
+ 114 │ ╭─▶     declare module "m2_M4_private" {
+ 115 │ │           export function f1();
+ 116 │ │           export class c1 {
+ 117 │ │           }
+ 118 │ │           export var v1: { new (): c1; };
+ 119 │ │           export var v2: c1;
+ 120 │ ╰─▶     }
+ 121 │     
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:314:9]
+ 313 │         namespace m2 {
+ 314 │ ╭─▶         declare module "abc" {
+ 315 │ ╰─▶         }
+ 316 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:319:9]
+ 318 │         namespace m2 {
+ 319 │ ╭─▶         module "abc2" {
+ 320 │ ╰─▶         }
+ 321 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:322:5]
+ 321 │         }
+ 322 │ ╭─▶     module "abc3" {
+ 323 │ ╰─▶     }
+ 324 │     }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:328:9]
+ 327 │         namespace m2 {
+ 328 │ ╭─▶         declare module "abc" {
+ 329 │ ╰─▶         }
+ 330 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:333:9]
+ 332 │         namespace m2 {
+ 333 │ ╭─▶         module "abc2" {
+ 334 │ ╰─▶         }
+ 335 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:336:5]
+ 335 │         }
+ 336 │ ╭─▶     module "abc3" {
+ 337 │ ╰─▶     }
+ 338 │     }
+     ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/privateNameJsx.tsx:4:22]
  3 │     render() {
@@ -11187,6 +11278,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ┬
    ·         ╰── `;` expected
  4 │ 
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts:1:8]
+ 1 │ module 'M' {}
+   ·        ───
+ 2 │ 
    ╰────
 
   × Expected `,` or `)` but found `!`
@@ -13238,13 +13336,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ f `123qdawdrqw${
    ╰────
 
-  × Unterminated string
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:20]
- 4 │ // Incomplete call, enough parameters.
- 5 │ f `123qdawdrqw${ }${
-   ·                    ─
-   ╰────
-
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions2.ts:5:18]
  4 │ // Incomplete call, enough parameters.
@@ -13256,13 +13347,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions3.ts:5:23]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${ 1 }${
-   ╰────
-
-  × Unterminated string
-   ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions4.ts:5:27]
- 4 │ // Incomplete call, but too many parameters.
- 5 │ f `123qdawdrqw${ 1 }${ }${ 
-   ·                           ─
    ╰────
 
   × Unexpected token
@@ -13830,14 +13914,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  85 │ }
     ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/unreachableDeclarations.ts:84:2]
- 83 │ 
- 84 │     namespace Baz { export const value = 1234 }
-    ·     ───────────────────────────────────────────
- 85 │ }
-    ╰────
-
   × Unterminated regular expression
    ╭─[typescript/tests/cases/compiler/unterminatedRegexAtEndOfSource1.ts:1:9]
  1 │ var a = /
@@ -14079,14 +14155,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  16 │         
     ╰────
 
-  × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
-    ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
- 14 │     
- 15 │     namespace M {} // error
-    ·     ──────────────
- 16 │         
-    ╰────
-
   × 'with' statements are not allowed
    ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:3:1]
  2 │ 
@@ -14184,6 +14252,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  42 │     }
     ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:47:5]
+ 46 │ namespace M2 {
+ 47 │     declare module 'nope' { }
+    ·     ─────────────────────────
+ 48 │ }
+    ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
  56 │     export var q;
@@ -14192,6 +14268,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  58 │ }
     ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts:2:12]
+ 1 │ namespace M {
+ 2 │     export declare module "M" { }
+   ·            ──────────────────────
+ 3 │ }
+   ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]
@@ -25259,10 +25343,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × TS(1093): Type annotation cannot appear on a constructor declaration.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts:2:16]
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts:2:18]
  1 │ class C {
  2 │   constructor(): number { }
-   ·                ────────
+   ·                  ──────
  3 │ }
    ╰────
 
@@ -25623,9 +25707,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ }
    ╰────
 
-  × Expected `{` but found `EOF`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause6.ts:1:24]
+  × TS(1097): 'extends' list cannot be empty.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ExtendsOrImplementsClauses/parserErrorRecovery_ExtendsOrImplementsClause6.ts:1:13]
  1 │ interface I extends { }
+   ·             ───────
    ╰────
 
   × Unexpected token
@@ -26708,6 +26793,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    · ────
    ╰────
 
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts:1:8]
+ 1 │ module "Foo" {
+   ·        ─────
+ 2 │ }
+   ╰────
+
   × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts:2:3]
  1 │ declare namespace M {
@@ -26954,11 +27046,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ }
    ╰────
 
-  × Empty parenthesized expression
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509669.ts:2:9]
+  × Expected `=>` but found `{`
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509669.ts:2:17]
  1 │ function foo():any {
  2 │  return ():void {};
-   ·         ──
+   ·                 ┬
+   ·                 ╰── `=>` expected
  3 │ }
    ╰────
 
@@ -27344,6 +27437,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ }
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts:4:14]
+ 3 │   var x = () => {
+ 4 │     continue TWO;
+   ·              ───
+ 5 │   }
+   ╰────
 
   × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget1.ts:1:1]
@@ -28622,13 +28723,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
-  × 'using' declarations are not allowed at the top level of a script
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts:1:1]
- 1 │ await using x = null;
-   · ─────────────────────
- 2 │ 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts:4:5]
+ 3 │ function f() {
+ 4 │     await using x = null;
+   ·     ─────
+ 5 │ }
    ╰────
-  help: Wrap this code in a block or use a module
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Cannot use 'await using' in class static initialization block
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts:3:9]
@@ -28646,6 +28748,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │         }
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:5]
+ 1 │ declare namespace N {
+ 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+   ·     ─────
+ 3 │     await using y: null;
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
@@ -28653,6 +28764,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─
  3 │     await using y: null;
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:5]
+ 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+ 3 │     await using y: null;
+   ·     ─────
+ 4 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
@@ -28662,6 +28782,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  4 │ }
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:5]
+ 5 │ declare module 'M' {
+ 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+   ·     ─────
+ 7 │     await using y: null;
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
  5 │ declare module 'M' {
@@ -28669,6 +28798,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ─
  7 │     await using y: null;
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:5]
+ 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
+ 7 │     await using y: null;
+   ·     ─────
+ 8 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × TS(1546): 'await using' declarations are not allowed in ambient contexts.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
@@ -28723,14 +28861,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:10]
+  × Cannot assign to this expression
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
  1 │ {
  2 │     await using [a] = null;
-   ·          ▲
+   ·     ───────────────
  3 │ }
    ╰────
-  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts:3:17]
@@ -28741,10 +28878,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:10]
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:16]
  1 │ {
  2 │     await using {a} = null;
-   ·          ▲
+   ·                ▲
  3 │ }
    ╰────
   help: Try inserting a semicolon here
@@ -28775,15 +28912,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  6 │ 
    ╰────
 
-  × `for await` loops are only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
- 4 │ 
- 5 │ for await (await using of x);
-   ·     ─────
- 6 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
   × The left-hand side of a for...in statement cannot be an await using declaration.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts:2:10]
  1 │ async function main() {
@@ -28793,11 +28921,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
   help: Did you mean to use a for...of statement?
 
-  × Using declarations may not have binding patterns.
+  × Expected `;` but found `{`
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
  1 │ async function main() {
  2 │     for (await using {} of []) {
-   ·                      ──
+   ·                      ┬
+   ·                      ╰── `;` expected
  3 │     }
    ╰────
 
@@ -28993,6 +29122,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:14:15]
+ 13 │     var x = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:21:15]
  20 │     var fn = function () {
  21 │         break THREE;
@@ -29032,6 +29169,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·               ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForBreakStatements.ts:14:15]
+ 13 │     var x = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForBreakStatements.ts:21:15]
@@ -29075,6 +29220,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForInBreakStatements.ts:14:15]
+ 13 │     var fn = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidForInBreakStatements.ts:21:15]
  20 │     var fn = function () {
  21 │         break THREE;
@@ -29114,6 +29267,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                    ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidWhileBreakStatements.ts:14:15]
+ 13 │     var x = () => {
+ 14 │         break TWO;
+    ·               ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidWhileBreakStatements.ts:21:15]
@@ -29157,6 +29318,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:14:18]
+ 13 │     var x = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidDoWhileContinueStatements.ts:21:18]
  20 │     var fn = function () {
  21 │         continue THREE;
@@ -29198,6 +29367,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForContinueStatements.ts:14:18]
+ 13 │     var x = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
+
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForContinueStatements.ts:21:18]
  20 │     var fn = function () {
  21 │         continue THREE;
@@ -29237,6 +29414,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                            ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForInContinueStatements.ts:14:18]
+ 13 │     var fn = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidForInContinueStatements.ts:21:18]
@@ -29287,6 +29472,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                       ───
  9 │ 
    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidWhileContinueStatements.ts:14:18]
+ 13 │     var x = () => {
+ 14 │         continue TWO;
+    ·                  ───
+ 15 │     }
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/statements/continueStatements/invalidWhileContinueStatements.ts:21:18]

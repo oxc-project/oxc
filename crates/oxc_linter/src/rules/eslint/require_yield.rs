@@ -1,7 +1,12 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{ArrowFunctionExpression, Function, YieldExpression},
+};
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -41,14 +46,36 @@ declare_oxc_lint!(
 impl Rule for RequireYield {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::Function(func) = node.kind()
-            && !ctx.nodes().flags(node.id()).has_yield()
             && func.generator
-            && func.body.as_ref().is_some_and(|body| !body.statements.is_empty())
+            && let Some(body) = func.body.as_ref()
+            && !body.statements.is_empty()
         {
-            let span = func.id.as_ref().map_or_else(|| func.span, |ident| ident.span);
-            ctx.diagnostic(require_yield_diagnostic(span));
+            let mut finder = YieldFinder::default();
+            if ctx.source_range(body.span).contains("yield") {
+                finder.visit_function_body(body);
+            }
+
+            if !finder.found {
+                let span = func.id.as_ref().map_or_else(|| func.span, |ident| ident.span);
+                ctx.diagnostic(require_yield_diagnostic(span));
+            }
         }
     }
+}
+
+#[derive(Default)]
+struct YieldFinder {
+    found: bool,
+}
+
+impl<'a> VisitJs<'a> for YieldFinder {
+    fn visit_yield_expression(&mut self, _expr: &YieldExpression<'a>) {
+        self.found = true;
+    }
+
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]
@@ -58,6 +85,9 @@ fn test() {
     let pass = vec![
         "function foo() { return 0; }",
         "function* foo() { yield 0; }",
+        "function* foo() { yield* foo; }",
+        "function* foo() { return; yield 0; }",
+        "function* foo() { class Bar { [yield 0]() {} } }",
         "function* foo() { }",
         "(function* foo() { yield 0; })();",
         "(function* foo() { })();",

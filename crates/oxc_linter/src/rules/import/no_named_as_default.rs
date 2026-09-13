@@ -4,9 +4,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    module_record::{
-        ExportEntry, ExportExportName, ExportImportName, ImportImportName, ModuleRecord,
-    },
+    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
     rule::Rule,
 };
 
@@ -79,6 +77,10 @@ impl Rule for NoNamedAsDefault {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
         for import_entry in &module_record.import_entries {
+            if import_entry.is_type {
+                continue;
+            }
+
             let ImportImportName::Default(import_span) = &import_entry.import_name else {
                 continue;
             };
@@ -93,7 +95,7 @@ impl Rule for NoNamedAsDefault {
                 continue;
             }
 
-            if default_and_named_are_same_export(&remote_module_record, import_name) {
+            if default_and_named_are_same_reexport(&remote_module_record, import_name) {
                 continue;
             }
 
@@ -104,47 +106,6 @@ impl Rule for NoNamedAsDefault {
             ));
         }
     }
-}
-
-fn export_name_is(export_entry: &ExportEntry, name: &str) -> bool {
-    match &export_entry.export_name {
-        ExportExportName::Name(n) => n.name() == name,
-        ExportExportName::Default(_) => name == "default",
-        ExportExportName::Null => false,
-    }
-}
-
-fn default_and_named_are_same_export(remote_module_record: &ModuleRecord, name: &str) -> bool {
-    default_and_named_are_same_local_export(remote_module_record, name)
-        || default_and_named_are_same_reexport(remote_module_record, name)
-}
-
-/// Check if the remote module exports both default and the given named export from the same local
-/// binding.
-fn default_and_named_are_same_local_export(
-    remote_module_record: &ModuleRecord,
-    name: &str,
-) -> bool {
-    let Some(default_entry) = remote_module_record
-        .local_export_entries
-        .iter()
-        .find(|entry| export_name_is(entry, "default"))
-    else {
-        return false;
-    };
-
-    let Some(named_entry) =
-        remote_module_record.local_export_entries.iter().find(|entry| export_name_is(entry, name))
-    else {
-        return false;
-    };
-
-    default_entry.local_name.name().is_some_and(|default_local_name| {
-        named_entry
-            .local_name
-            .name()
-            .is_some_and(|named_local_name| default_local_name == named_local_name)
-    })
 }
 
 /// Check if the remote module re-exports both the default and the given named export
@@ -158,11 +119,9 @@ fn default_and_named_are_same_local_export(
 fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
     // Find the default re-export entry.
     // Only re-exports like `export { foo as default }` are found here.
-    let Some(default_entry) = remote_module_record
-        .indirect_export_entries
-        .iter()
-        .find(|entry| export_name_is(entry, "default"))
-    else {
+    let Some(default_entry) = remote_module_record.indirect_export_entries.iter().find(
+        |entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == "default"),
+    ) else {
         return false;
     };
 
@@ -170,7 +129,7 @@ fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name
     let Some(named_entry) = remote_module_record
         .indirect_export_entries
         .iter()
-        .find(|entry| export_name_is(entry, name))
+        .find(|entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == name))
     else {
         return false;
     };
@@ -233,9 +192,8 @@ fn test() {
         // Import-then-export of the same named binding as both default and named.
         // Both refer to the same source binding, so this is allowed.
         r#"import userEvent from "./re-export-default-and-named-import-then-export""#,
-        // Bundled packages can export the same local binding as both default and named.
-        r#"import Hls, { CMCDController } from "hls-default-class""#,
-        r#"import LocalHls from "./local-default-class-and-named""#,
+        // A disable directive for a conflicting local export is used, not unused.
+        "// eslint-disable-next-line import/no-named-as-default\nimport PortalPaywall from './portal-paywall'",
     ];
 
     let fail = vec![
@@ -255,6 +213,11 @@ fn test() {
         // When default and named exports are re-exported from the same source
         // but refer to different bindings, it should still report.
         r#"import userEvent from "./re-export-default-and-named-different-binding""#,
+        // Local exports are reported even when the default and named exports refer to the same
+        // binding, matching eslint-plugin-import.
+        r#"import PortalPaywall from "./portal-paywall""#,
+        r#"import Hls, { CMCDController } from "hls-default-class""#,
+        r#"import LocalHls from "./local-default-class-and-named""#,
     ];
 
     Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::PLUGIN, pass, fail)

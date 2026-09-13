@@ -1,0 +1,68 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+map:
+  key: value
+  block: |
+    text
+  seq:
+    - a
+    - b
+  flow: { alpha: 1, beta: 2, gamma: 3, delta: 4, epsilon: 5, zeta: 6, eta: 7, theta: 8, iota: 9, kappa: 10, lambda: 11 }
+
+==================== Output ====================
+-------------------------------
+{ printWidth: 80, tabWidth: 0 }
+-------------------------------
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+map:
+ key: value
+ block: |
+  text
+ seq:
+  - a
+  - b
+ flow:
+  {
+   alpha: 1,
+   beta: 2,
+   gamma: 3,
+   delta: 4,
+   epsilon: 5,
+   zeta: 6,
+   eta: 7,
+   theta: 8,
+   iota: 9,
+   kappa: 10,
+   lambda: 11,
+  }
+
+--------------------------------
+{ printWidth: 100, tabWidth: 0 }
+--------------------------------
+# DIVERGES from Prettier: `tabWidth: 0` is clamped to 1 (Prettier flattens every nesting).
+map:
+ key: value
+ block: |
+  text
+ seq:
+  - a
+  - b
+ flow:
+  {
+   alpha: 1,
+   beta: 2,
+   gamma: 3,
+   delta: 4,
+   epsilon: 5,
+   zeta: 6,
+   eta: 7,
+   theta: 8,
+   iota: 9,
+   kappa: 10,
+   lambda: 11,
+  }
+
+===================== End =====================

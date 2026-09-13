@@ -150,7 +150,7 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[array_callback_return.tsx:3:22]
   2 │     
   3 │     const _test = fruits.map((fruit) => {
-    ·                          ─┬─
+    ·                          ─┬─         ──
     ·                           ╰── "Array.prototype.map" is called here.
   4 │ ╭─▶   switch (fruit.name) {
   5 │ │       case "apple": {
@@ -160,11 +160,27 @@ source: crates/oxc_linter/src/tester.rs
   9 │ │       case "banana": {
  10 │ │         return "b"
  11 │ │       }
- 12 │ ╰─▶   }
+ 12 │ ├─▶   }
+    · ╰──── This path may reach the end of the callback.
  13 │     });
     ╰────
   help: This `switch` has no `default` case, so the callback may reach the end without a `return`. Add a `default` that returns/throws, or add a final `return` after the `switch`.
         Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" may fall through a `switch` without returning
+   ╭─[array_callback_return.tsx:1:19]
+ 1 │     const out = parts.map(p => {
+   ·                       ─┬─   ──
+   ·                        ╰── "Array.prototype.map" is called here.
+ 2 │ ╭─▶   switch (p.type) {
+ 3 │ │       case "a":
+ 4 │ │         return p.value;
+ 5 │ ├─▶   }
+   · ╰──── This path may reach the end of the callback.
+ 6 │     });
+   ╰────
+  help: This `switch` has no `default` case, so the callback may reach the end without a `return`. Add a `default` that returns/throws, or add a final `return` after the `switch`.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
   ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduce" does not return on all code paths
    ╭─[array_callback_return.tsx:1:23]
@@ -305,7 +321,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
    ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function() { if (a) return true; })
-   ·     ──┬──              ───────────────────
+   ·     ──┬── ────────     ─────────┬─────────
+   ·       │       │                 ╰── This path may reach the end of the callback.
    ·       ╰── "Array.prototype.every" is called here.
    ╰────
   help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
@@ -314,7 +331,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
    ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function cb() { if (a) return true; })
-   ·     ──┬──                 ───────────────────
+   ·     ──┬── ───────────     ─────────┬─────────
+   ·       │        │                   ╰── This path may reach the end of the callback.
    ·       ╰── "Array.prototype.every" is called here.
    ╰────
   help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
@@ -379,7 +397,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
    ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function() { if (a) return; })
-   ·     ──┬──              ──────────────
+   ·     ──┬── ────────     ───────┬──────
+   ·       │       │               ╰── This path may reach the end of the callback.
    ·       ╰── "Array.prototype.every" is called here.
    ╰────
   help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
@@ -388,7 +407,8 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
    ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function foo() { if (a) return; })
-   ·     ──┬──                  ──────────────
+   ·     ──┬── ────────────     ───────┬──────
+   ·       │         │                 ╰── This path may reach the end of the callback.
    ·       ╰── "Array.prototype.every" is called here.
    ╰────
   help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.

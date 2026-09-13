@@ -4,10 +4,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_required_regex_option,
 };
 
 fn comment(ts_comment_name: &str, span: Span) -> OxcDiagnostic {
@@ -45,10 +47,10 @@ fn comment_description_not_match_pattern(
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct BanTsComment(Box<BanTsCommentConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 /// This rule allows you to specify how different TypeScript directive comments
 /// should be handled.
@@ -122,10 +124,7 @@ pub enum DirectiveConfig {
 enum DirectiveConfigSchema {
     Boolean(bool),
     RequireDescription(RequireDescription),
-    DescriptionFormat {
-        #[serde(rename = "descriptionFormat")]
-        description_format: Option<Regex>,
-    },
+    DescriptionFormat(DescriptionFormatConfig),
 }
 
 #[derive(Debug, JsonSchema)]
@@ -135,25 +134,35 @@ enum RequireDescription {
     AllowWithDescription,
 }
 
-impl DirectiveConfig {
-    fn from_json(value: &serde_json::Value) -> Option<Self> {
-        match value {
-            serde_json::Value::Bool(b) => Some(Self::Boolean(*b)),
-            serde_json::Value::String(s) => {
-                if s == "allow-with-description" {
-                    Some(Self::RequireDescription)
-                } else {
-                    None
-                }
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct DescriptionFormatConfig {
+    #[serde(
+        default,
+        rename = "descriptionFormat",
+        deserialize_with = "deserialize_required_regex_option"
+    )]
+    description_format: Option<Regex>,
+}
+
+impl<'de> Deserialize<'de> for DirectiveConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        match serde_json::Value::deserialize(deserializer)? {
+            serde_json::Value::Bool(value) => Ok(Self::Boolean(value)),
+            serde_json::Value::String(value) if value == "allow-with-description" => {
+                Ok(Self::RequireDescription)
             }
-            serde_json::Value::Object(o) => {
-                let re = o
-                    .get("descriptionFormat")
-                    .and_then(serde_json::Value::as_str)
-                    .and_then(|pattern| Regex::new(pattern).ok());
-                Some(Self::DescriptionFormat(re))
-            }
-            _ => None,
+            value @ serde_json::Value::Object(_) => DescriptionFormatConfig::deserialize(value)
+                .map(|config| Self::DescriptionFormat(config.description_format))
+                .map_err(D::Error::custom),
+            _ => Err(D::Error::custom(
+                "expected a boolean, `allow-with-description`, or a descriptionFormat object",
+            )),
         }
     }
 }
@@ -188,30 +197,7 @@ declare_oxc_lint!(
 
 impl Rule for BanTsComment {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0).unwrap_or_default();
-
-        Ok(Self(Box::new(BanTsCommentConfig {
-            ts_expect_error: config
-                .get("ts-expect-error")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::RequireDescription),
-            ts_ignore: config
-                .get("ts-ignore")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::Boolean(true)),
-            ts_nocheck: config
-                .get("ts-nocheck")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::Boolean(true)),
-            ts_check: config
-                .get("ts-check")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::Boolean(false)),
-            minimum_description_length: config
-                .get("minimumDescriptionLength")
-                .and_then(serde_json::Value::as_u64)
-                .unwrap_or(3),
-        })))
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -302,15 +288,11 @@ impl BanTsComment {
 pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, &str)> {
     let prefix = "@ts-";
 
-    let mut last_line_start = None;
-    let mut char_indices = raw.char_indices().peekable();
-    while let Some((_, c)) = char_indices.next() {
-        if c == '\n' {
-            last_line_start = char_indices.peek().map(|(i, _)| *i);
-        }
+    if !raw.contains(prefix) {
+        return None;
     }
 
-    let multi_len = last_line_start.unwrap_or(0);
+    let multi_len = if single_line { 0 } else { raw.rfind('\n').map_or(0, |i| i + 1) };
     let line = &raw[multi_len..];
 
     // Check the content before the prefix
@@ -1050,4 +1032,16 @@ if (false) {
     Tester::new(BanTsComment::NAME, BanTsComment::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_description_format_is_rejected() {
+    let result = BanTsComment::from_configuration(serde_json::json!([{
+        "ts-expect-error": {
+            "descriptionFormat": "^(unclosed",
+        },
+    }]));
+
+    let error = result.expect_err("invalid descriptionFormat should be rejected");
+    assert!(error.to_string().contains("regex parse error"), "unexpected error: {error}");
 }

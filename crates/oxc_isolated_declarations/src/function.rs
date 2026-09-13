@@ -84,23 +84,35 @@ impl<'a> IsolatedDeclarations<'a> {
                     new_type
                 })
                 .map(|ts_type| {
-                    // jf next param is not optional and current param is assignment pattern
-                    // we need to add undefined to it's type
-                    if is_remaining_params_have_required || (param.optional && param.has_modifier())
+                    // If a defaulted parameter is followed by a required parameter, declaration
+                    // emit may need to add `undefined` to its type because the parameter cannot be
+                    // marked optional. Preserve annotations whose resolved type is unknown: unlike
+                    // TypeScript, isolated declaration emit does not have a type checker available
+                    // to determine whether they already include `undefined`.
+                    if (is_remaining_params_have_required
+                        || (param.optional && param.has_modifier()))
+                        && !has_explicit_undefined_union_member(&ts_type)
                     {
-                        if matches!(ts_type, TSType::TSTypeReference(_)) {
-                            self.error(implicitly_adding_undefined_to_type(param.span));
-                        } else if !ts_type.is_maybe_undefined() {
-                            // union with `undefined`
-                            return TSTypeAnnotation::boxed(
-                                SPAN,
-                                TSType::new_ts_union_type(
-                                    SPAN,
-                                    [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
-                                    self,
-                                ),
-                                self,
-                            );
+                        let presence = undefined_presence(&ts_type);
+                        let can_add = can_add_undefined(&ts_type);
+                        match (presence, can_add) {
+                            (UndefinedPresence::Present, _)
+                            | (UndefinedPresence::Unresolved, false) => {}
+                            (_, true) => {
+                                // Adding `undefined` is either required or redundant after
+                                // TypeScript resolves the type.
+                                let undefined = TSType::new_ts_undefined_keyword(SPAN, self);
+                                let ts_type = if let TSType::TSUnionType(mut union) = ts_type {
+                                    union.types.push(undefined);
+                                    TSType::TSUnionType(union)
+                                } else {
+                                    TSType::new_ts_union_type(SPAN, [ts_type, undefined], self)
+                                };
+                                return TSTypeAnnotation::boxed(SPAN, ts_type, self);
+                            }
+                            (_, false) => {
+                                self.error(implicitly_adding_undefined_to_type(param.span));
+                            }
                         }
                     }
 
@@ -187,4 +199,149 @@ impl<'a> IsolatedDeclarations<'a> {
 
 pub fn get_function_span(func: &Function<'_>) -> Span {
     func.id.as_ref().map_or_else(|| Span::empty(func.params.span.start), |id| id.span)
+}
+
+/// Syntax-only categories that remain distinct while folding unions and intersections.
+#[derive(Clone, Copy)]
+enum UndefinedPresence {
+    Present,
+    Absent,
+    /// `any` accepts `undefined` on its own but makes an intersection checker-dependent.
+    Any,
+    /// `never` excludes `undefined` and absorbs every other intersection operand.
+    Never,
+    /// `unknown` behaves like `Absent` for declaration emit but is the identity element of an
+    /// intersection.
+    UnknownKeyword,
+    /// `void` excludes `undefined` on its own but retains it when intersected with `undefined`.
+    Void,
+    /// Resolving this annotation requires checker information.
+    Unresolved,
+}
+
+impl UndefinedPresence {
+    /// Combine the classifications of two union members.
+    fn union(self, other: Self) -> Self {
+        use UndefinedPresence::{Absent, Any, Never, Present, UnknownKeyword, Unresolved, Void};
+        match (self, other) {
+            (Unresolved, _) | (_, Unresolved) => Unresolved,
+            (Any, _) | (_, Any) => Any,
+            (UnknownKeyword, _) | (_, UnknownKeyword) => UnknownKeyword,
+            (Present, _) | (_, Present) => Present,
+            (Void, _) | (_, Void) => Void,
+            (Absent, _) | (_, Absent) => Absent,
+            (Never, Never) => Never,
+        }
+    }
+
+    /// Combine the classifications of two intersection members.
+    fn intersection(self, other: Self) -> Self {
+        use UndefinedPresence::{Absent, Any, Never, Present, UnknownKeyword, Unresolved, Void};
+        match (self, other) {
+            (Never, _) | (_, Never) => Never,
+            (Unresolved | Any, _) | (_, Unresolved | Any) => Unresolved,
+            (Absent, _) | (_, Absent) => Absent,
+            (Present, _) | (_, Present) => Present,
+            (Void, _) | (_, Void) => Void,
+            (UnknownKeyword, UnknownKeyword) => UnknownKeyword,
+        }
+    }
+}
+
+/// Classify whether annotation syntax proves that the parameter type includes `undefined`.
+fn undefined_presence(ts_type: &TSType<'_>) -> UndefinedPresence {
+    match ts_type {
+        TSType::TSUndefinedKeyword(_) => UndefinedPresence::Present,
+        TSType::TSAnyKeyword(_) => UndefinedPresence::Any,
+        TSType::TSUnknownKeyword(_) => UndefinedPresence::UnknownKeyword,
+        TSType::TSBigIntKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSIntrinsicKeyword(_)
+        | TSType::TSNullKeyword(_)
+        | TSType::TSNumberKeyword(_)
+        | TSType::TSObjectKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSSymbolKeyword(_)
+        | TSType::TSLiteralType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_)
+        | TSType::TSArrayType(_)
+        | TSType::TSTupleType(_)
+        | TSType::TSMappedType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSTypeOperatorType(_)
+        | TSType::TSTemplateLiteralType(_)
+        | TSType::TSThisType(_) => UndefinedPresence::Absent,
+        TSType::TSNeverKeyword(_) => UndefinedPresence::Never,
+        TSType::TSVoidKeyword(_) => UndefinedPresence::Void,
+        TSType::TSParenthesizedType(parenthesized) => {
+            undefined_presence(&parenthesized.type_annotation)
+        }
+        TSType::TSUnionType(union) => union
+            .types
+            .iter()
+            .map(undefined_presence)
+            .fold(UndefinedPresence::Never, UndefinedPresence::union),
+        // Resolving these types requires type information. Treat them as unknown so declaration
+        // emit does not report a false-positive TS9025 for a type that already contains
+        // `undefined`. Some variants cannot occur directly as a parameter annotation, but listing
+        // them keeps this classification exhaustive as new `TSType` variants are added.
+        TSType::TSConditionalType(_)
+        | TSType::TSImportType(_)
+        | TSType::TSIndexedAccessType(_)
+        | TSType::TSInferType(_)
+        | TSType::TSNamedTupleMember(_)
+        | TSType::TSTypePredicate(_)
+        | TSType::TSTypeQuery(_)
+        | TSType::TSTypeReference(_)
+        | TSType::JSDocNullableType(_)
+        | TSType::JSDocNonNullableType(_)
+        | TSType::JSDocUnknownType(_) => UndefinedPresence::Unresolved,
+        TSType::TSIntersectionType(intersection) => intersection
+            .types
+            .iter()
+            .map(undefined_presence)
+            .fold(UndefinedPresence::UnknownKeyword, UndefinedPresence::intersection),
+    }
+}
+
+/// Whether the annotation itself already has an explicit `undefined` union member.
+///
+/// Do not descend through intersections: `undefined & string` excludes `undefined`, whereas a
+/// parenthesized or nested union member still spells it explicitly.
+fn has_explicit_undefined_union_member(ts_type: &TSType<'_>) -> bool {
+    match ts_type {
+        TSType::TSUndefinedKeyword(_) => true,
+        TSType::TSParenthesizedType(parenthesized) => {
+            has_explicit_undefined_union_member(&parenthesized.type_annotation)
+        }
+        TSType::TSUnionType(union) => union.types.iter().any(has_explicit_undefined_union_member),
+        _ => false,
+    }
+}
+
+/// Whether TypeScript can syntactically add `undefined` without using type information.
+fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
+    if ts_type.is_keyword() {
+        return true;
+    }
+
+    match ts_type {
+        TSType::TSLiteralType(_)
+        | TSType::TSFunctionType(_)
+        | TSType::TSConstructorType(_)
+        | TSType::TSArrayType(_)
+        | TSType::TSTupleType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSTemplateLiteralType(_)
+        | TSType::TSThisType(_) => true,
+        TSType::TSParenthesizedType(parenthesized) => {
+            can_add_undefined(&parenthesized.type_annotation)
+        }
+        TSType::TSUnionType(union) => union.types.iter().all(can_add_undefined),
+        TSType::TSIntersectionType(intersection) => {
+            intersection.types.iter().all(can_add_undefined)
+        }
+        _ => false,
+    }
 }

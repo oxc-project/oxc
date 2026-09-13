@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGES from Prettier: it prints an extra newline here (value "\n" -> "\n\n";
+# its own --debug-check flags it). The space-only EOF line holds no line break,
+# so it adds nothing to the kept tail.
+key: |+
+
+  
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGES from Prettier: it prints an extra newline here (value "\n" -> "\n\n";
+# its own --debug-check flags it). The space-only EOF line holds no line break,
+# so it adds nothing to the kept tail.
+key: |+
+
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGES from Prettier: it prints an extra newline here (value "\n" -> "\n\n";
+# its own --debug-check flags it). The space-only EOF line holds no line break,
+# so it adds nothing to the kept tail.
+key: |+
+
+
+===================== End =====================

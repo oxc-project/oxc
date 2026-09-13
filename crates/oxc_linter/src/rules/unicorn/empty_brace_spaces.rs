@@ -62,7 +62,8 @@ impl Rule for EmptyBraceSpaces {
                 if static_block.body.is_empty() && !ctx.has_comments_between(span) {
                     // Skip the first 6 chars (static block prefix)
                     let static_block_src = &span.source_text(ctx.source_text())[6..];
-                    let left_curly_brace = static_block_src.find('{').unwrap();
+                    let left_curly_brace =
+                        ctx.find_next_token_within(span.start + 6, span.end, "{").unwrap() as usize;
                     let static_block_body = &static_block_src[left_curly_brace..];
 
                     let whitespace_count =

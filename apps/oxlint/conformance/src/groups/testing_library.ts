@@ -30,20 +30,20 @@ const group: TestGroup = {
   shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
     // Test case defines an option as `undefined`. We can't support that as `undefined` is not JSON-serializable.
     if (
-      ruleName === "no-debugging-utils" &&
-      code.trim().replace(/\n\s+/g, "\n") ===
-        "import { screen } from '@testing-library/dom'\nscreen.logTestingPlaygroundURL()" &&
-      err.message.startsWith("Should have no errors but had 1:")
+      ruleName === "no-debugging-utils"
+      && code.trim().replace(/\n\s+/g, "\n")
+        === "import { screen } from '@testing-library/dom'\nscreen.logTestingPlaygroundURL()"
+      && err.message.startsWith("Should have no errors but had 1:")
     ) {
       const { options } = test;
       if (options != null && options.length === 1) {
         const firstOption = options[0];
         if (
-          typeof firstOption === "object" &&
-          firstOption !== null &&
-          !Array.isArray(firstOption) &&
-          Object.hasOwn(firstOption, "utilsToCheckFor") &&
-          firstOption.utilsToCheckFor === undefined
+          typeof firstOption === "object"
+          && firstOption !== null
+          && !Array.isArray(firstOption)
+          && Object.hasOwn(firstOption, "utilsToCheckFor")
+          && firstOption.utilsToCheckFor === undefined
         ) {
           return true;
         }

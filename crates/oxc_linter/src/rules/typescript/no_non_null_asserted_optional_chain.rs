@@ -68,40 +68,16 @@ impl Rule for NoNonNullAssertedOptionalChain {
             return;
         };
 
-        let chain_span = match non_null_expr.expression.get_inner_expression() {
-            Expression::ChainExpression(chain) => match &chain.expression {
-                ChainElement::ComputedMemberExpression(member) if member.optional => {
-                    Some(member.object.span())
-                }
-                ChainElement::StaticMemberExpression(member) if member.optional => {
-                    Some(member.object.span())
-                }
-                ChainElement::PrivateFieldExpression(member) if member.optional => {
-                    Some(member.object.span())
-                }
-                ChainElement::CallExpression(call) if call.optional => Some(call.callee.span()),
-                _ => None,
-            },
-            Expression::CallExpression(call) => {
-                if call.optional && !is_parent_member_or_call(node, ctx) {
-                    Some(call.callee.span())
-                } else if let Some(member) = call.callee.as_member_expression() {
-                    if member.optional() && !is_parent_member_or_call(node, ctx) {
-                        Some(member.object().span())
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-            expr @ match_member_expression!(Expression) => {
-                let member_expr = expr.to_member_expression();
-                if member_expr.optional() && !is_parent_member_or_call(node, ctx) {
-                    Some(member_expr.object().span())
-                } else {
-                    None
-                }
+        let expression = non_null_expr.expression.get_inner_expression();
+        let chain_span = match expression {
+            Expression::ChainExpression(chain) => find_optional_chain_span(&chain.expression),
+            Expression::CallExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
+                if !is_parent_member_or_call(node, ctx) =>
+            {
+                find_optional_chain_span_in_expression(expression)
             }
             _ => None,
         };
@@ -121,6 +97,66 @@ impl Rule for NoNonNullAssertedOptionalChain {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+    }
+}
+
+fn find_optional_chain_span(chain: &ChainElement<'_>) -> Option<Span> {
+    let expression = match chain {
+        ChainElement::CallExpression(call) => {
+            if call.optional {
+                return Some(call.callee.span());
+            }
+            &call.callee
+        }
+        ChainElement::TSNonNullExpression(non_null) => &non_null.expression,
+        ChainElement::ComputedMemberExpression(member) => {
+            if member.optional {
+                return Some(member.object.span());
+            }
+            &member.object
+        }
+        ChainElement::StaticMemberExpression(member) => {
+            if member.optional {
+                return Some(member.object.span());
+            }
+            &member.object
+        }
+        ChainElement::PrivateFieldExpression(member) => {
+            if member.optional {
+                return Some(member.object.span());
+            }
+            &member.object
+        }
+    };
+
+    find_optional_chain_span_in_expression(expression)
+}
+
+fn find_optional_chain_span_in_expression(mut expression: &Expression<'_>) -> Option<Span> {
+    loop {
+        if matches!(expression, Expression::ParenthesizedExpression(_)) {
+            return None;
+        }
+
+        match expression.get_inner_expression() {
+            Expression::ChainExpression(chain) => {
+                return find_optional_chain_span(&chain.expression);
+            }
+            Expression::CallExpression(call) => {
+                if call.optional {
+                    return Some(call.callee.span());
+                }
+                expression = &call.callee;
+            }
+            expr @ match_member_expression!(Expression) => {
+                let member = expr.to_member_expression();
+                if member.optional() {
+                    return Some(member.object().span());
+                }
+                expression = member.object();
+            }
+            _ => return None,
+        }
     }
 }
 
@@ -154,7 +190,10 @@ fn test() {
         "foo?.bar!;",
         "foo?.['bar']!;",
         "foo?.bar()!;",
+        "foo?.bar().baz()!;",
+        "foo?.bar.baz!;",
         "foo.bar?.()!;",
+        "foo.bar?.().baz!;",
         "(foo?.bar)!.baz",
         "(foo?.bar)!().baz",
         "(foo?.bar)!",
@@ -167,6 +206,9 @@ fn test() {
         ("foo?.bar!", "foo?.bar"),
         ("foo?.['bar']!", "foo?.['bar']"),
         ("foo?.bar()!", "foo?.bar()"),
+        ("foo?.bar().baz()!", "foo?.bar().baz()"),
+        ("foo?.bar.baz!", "foo?.bar.baz"),
+        ("foo.bar?.().baz!", "foo.bar?.().baz"),
         ("(foo?.bar)!.baz", "(foo?.bar).baz"),
         ("(foo?.bar)!().baz", "(foo?.bar)().baz"),
         ("(foo?.bar)!", "(foo?.bar)"),

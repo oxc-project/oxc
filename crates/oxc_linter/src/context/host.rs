@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    cell::{Cell, RefCell},
+    cell::{Cell, OnceCell, RefCell},
     ffi::OsStr,
     path::Path,
     rc::Rc,
@@ -15,19 +15,23 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
+    config::{
+        LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings,
+        plugins::plugin_display_name,
+    },
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
+    utils::ReactCompilerResults,
 };
 
 #[cfg(not(test))]
 use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
-use super::{LintContext, plugin_display_name};
+use super::LintContext;
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
@@ -103,6 +107,12 @@ impl<'a> ContextSubHost<'a> {
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
     }
+
+    /// Source text of this script block.
+    #[inline]
+    pub fn source_text(&self) -> &'a str {
+        self.semantic.source_text()
+    }
 }
 
 #[non_exhaustive]
@@ -171,6 +181,10 @@ pub struct ContextHost<'a> {
     pub(super) frameworks: FrameworkFlags,
     /// If true, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// Lazily-computed shared result of the React Compiler lint run, reused by
+    /// every rule in the React Compiler family (`react/hooks`, `react/refs`, …).
+    /// Stays empty until the first such rule runs on this file.
+    pub(super) react_compiler_results: OnceCell<ReactCompilerResults>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -210,6 +224,7 @@ impl<'a> ContextHost<'a> {
             config,
             frameworks: options.framework_hints,
             with_ignore_fixes: options.with_ignore_fixes,
+            react_compiler_results: OnceCell::new(),
         }
         .sniff_for_frameworks()
     }
@@ -310,12 +325,17 @@ impl<'a> ContextHost<'a> {
         &self.config.env
     }
 
+    #[inline]
+    pub fn source_text(&self) -> &'a str {
+        self.current_sub_host().source_text()
+    }
+
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
         if self.with_ignore_fixes {
-            let source_text = self.semantic().source_text();
+            let source_text = self.source_text();
             diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
         }
         if self.current_sub_host().source_text_offset != 0 {
@@ -327,7 +347,7 @@ impl<'a> ContextHost<'a> {
     // Append a list of diagnostics. Only used in report_unused_directives.
     fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
         if self.with_ignore_fixes {
-            let source_text = self.semantic().source_text();
+            let source_text = self.source_text();
             for diagnostic in &mut diagnostics {
                 diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
             }
@@ -339,6 +359,11 @@ impl<'a> ContextHost<'a> {
             }
         }
         self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    // move the context back to the first sub host, so they can be iterated over again
+    pub fn rewind_sub_hosts(&self) {
+        self.current_sub_host_index.set(0);
     }
 
     // move the context to the next sub host
@@ -358,7 +383,7 @@ impl<'a> ContextHost<'a> {
         // relate to lint result, check after linter run finish
         let unused_disable_comments = self.disable_directives().collect_unused_disable_comments();
         let fix_message = "remove unused disable directive";
-        let source_text = self.semantic().source_text();
+        let source_text = self.source_text();
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;

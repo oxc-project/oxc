@@ -11,7 +11,7 @@ struct ArrowFunctionHead<'a> {
     params: ArenaBox<'a, FormalParameters<'a>>,
     return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
-    span: u32,
+    start: u32,
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
@@ -35,7 +35,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         if self.at(Kind::Async) && self.is_un_parenthesized_async_arrow_function_worker() {
-            let span = self.start_span();
+            let start = self.cur_start();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
             let Expression::Identifier(ident) = &expr else {
@@ -46,7 +46,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::identifier_async("await", ident.span));
             }
             return Some(self.parse_simple_arrow_function_expression(
-                span,
+                start,
                 ident,
                 /* async */ true,
                 allow_return_type_in_arrow_function,
@@ -75,7 +75,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        if self.eat(Kind::Async) {
+        let is_async = self.eat(Kind::Async);
+        if is_async {
             if self.cur_token().is_on_new_line() {
                 return Tristate::False;
             }
@@ -100,7 +101,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.bump_any();
                         let third = self.cur_kind();
                         match third {
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
+                            // `async()` can be a call on the true side of a conditional.
+                            Kind::Colon if self.is_ts && is_async => Tristate::Maybe,
+                            // Bare `()` cannot be a parenthesized expression, so the colon
+                            // must start a return type, even inside a conditional expression.
+                            Kind::Colon if self.is_ts => Tristate::True,
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
                         }
@@ -227,7 +232,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
-        span: u32,
+        start: u32,
         ident: &IdentifierReference<'a>,
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
@@ -249,13 +254,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Arrow);
 
         self.parse_arrow_function_expression_body(
-            ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, span },
+            ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, start },
             allow_return_type_in_arrow_function,
         )
     }
 
     fn parse_parenthesized_arrow_function_head(&mut self) -> ArrowFunctionHead<'a> {
-        let span = self.start_span();
+        let start = self.cur_start();
         let r#async = self.eat(Kind::Async);
 
         let has_await = self.ctx.has_await();
@@ -293,7 +298,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.expect(Kind::Arrow);
 
-        ArrowFunctionHead { type_parameters, params, return_type, r#async, span }
+        ArrowFunctionHead { type_parameters, params, return_type, r#async, start }
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -306,14 +311,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         arrow_function_head: ArrowFunctionHead<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let ArrowFunctionHead { type_parameters, params, return_type, r#async, span } =
+        let ArrowFunctionHead { type_parameters, params, return_type, r#async, start } =
             arrow_function_head;
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
 
         let body = if self.at(Kind::LCurly) {
-            ArrowFunctionBody::FunctionBody(self.parse_function_body())
+            ArrowFunctionBody::FunctionBody(
+                self.context_add(Context::In, Self::parse_function_body),
+            )
         } else {
             // Remove TopLevel context for arrow function expression body
             let expr = self.context_remove(Context::TopLevel, |p| {
@@ -325,7 +332,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         Expression::new_arrow_function_expression(
-            self.end_span(span),
+            self.end_span(start),
             r#async,
             type_parameters,
             params,

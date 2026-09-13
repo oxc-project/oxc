@@ -35,5 +35,5 @@ fn alloc_slice_fill_zero() {
 fn alloc_slice_overflow() {
     let b = Arena::new();
 
-    b.alloc_slice_fill_default::<u64>(usize::max_value());
+    b.alloc_slice_fill_default::<u64>(usize::MAX);
 }

@@ -35,9 +35,9 @@ const plugin: Plugin = {
         return {
           CallExpression(node) {
             if (
-              node.callee.type === "MemberExpression" &&
-              node.callee.object.type === "Identifier" &&
-              node.callee.object.name === "console"
+              node.callee.type === "MemberExpression"
+              && node.callee.object.type === "Identifier"
+              && node.callee.object.name === "console"
             ) {
               context.report({
                 message: "Console with fixable: false",

@@ -328,6 +328,10 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    quoted_module_name_only_allowed_in_ambient_module(span: Span) => {
+        ts_error("1035", "Only ambient modules can use quoted names.").with_label(span)
+    };
+
     declaration_single_statement(span: Span) => {
         OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
             .with_help("Wrap this declaration in a block statement")
@@ -745,6 +749,19 @@ parser_diagnostics! {
         )
         .with_label(span)
         .with_help("Did you mean to use a for...of statement?")
+    };
+
+    multiple_declarations_in_for_loop_head(is_for_in: bool, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "Only a single declaration is allowed in a `for...{}` statement",
+            if is_for_in { "in" } else { "of" },
+        ))
+        .with_label(span)
+    };
+
+    initializer_in_for_in_lexical_declaration(span: Span) => {
+        OxcDiagnostic::error("for-in loop variable declaration may not have an initializer")
+            .with_label(span)
     };
 
     using_declarations_must_be_initialized(span: Span) => {
@@ -1208,6 +1225,14 @@ parser_diagnostics! {
             "An interface can only extend an identifier/qualified-name with optional type arguments.",
         )
         .with_label(span)
+    };
+
+    empty_extends_clause(span: Span) => {
+        ts_error("1097", "'extends' list cannot be empty.").with_label(span)
+    };
+
+    trailing_comma_not_allowed(span: Span) => {
+        ts_error("1009", "Trailing comma not allowed.").with_label(span)
     };
 
     reg_exp_flag_u_and_v(span: Span) => {

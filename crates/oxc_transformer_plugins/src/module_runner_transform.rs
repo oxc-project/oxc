@@ -763,7 +763,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let init = Expression::new_await_expression(SPAN, call, ctx);
 
         let kind = VariableDeclarationKind::Const;
-        let declarator = VariableDeclarator::new(SPAN, kind, pattern, None, Some(init), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(init), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
@@ -888,8 +888,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         );
         let pattern = binding.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Const;
-        let declarator =
-            VariableDeclarator::new(SPAN, kind, pattern, None, Some(right), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(right), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)

@@ -71,14 +71,14 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
         return Some(FileKind::OxcFormatterYaml { path });
     }
 
-    // External formatter files are only supported with the `napi` feature
+    // Prettier-delegated files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
     {
-        if let Some(parser_name) = get_external_parser_name(file_name, extension) {
+        if let Some(parser_name) = get_prettier_parser_name(file_name, extension) {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
             let supports_svelte = SVELTE_PARSERS.contains(parser_name);
-            return Some(FileKind::ExternalFormatter {
+            return Some(FileKind::Prettier {
                 path,
                 parser_name,
                 supports_tailwind,
@@ -115,14 +115,14 @@ pub enum FileKind {
     OxcFormatterYamlRc { path: Arc<Path> },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
-    /// Files formatted by external formatter (Prettier).
+    /// Files formatted by delegating to Prettier (Tier 3/4).
     ///
     /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability
     /// flags that say "this file kind CAN use the corresponding plugin".
     /// Whether the plugin is actually activated is decided at the format step by resolved config.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
-    ExternalFormatter {
+    Prettier {
         path: Arc<Path>,
         parser_name: &'static str,
         supports_tailwind: bool,
@@ -143,7 +143,7 @@ impl FileKind {
             | Self::OxcFormatterYamlRc { path }
             | Self::OxfmtToml { path } => path,
             #[cfg(feature = "napi")]
-            Self::ExternalFormatter { path, .. } => path,
+            Self::Prettier { path, .. } => path,
         }
     }
 
@@ -156,7 +156,7 @@ impl FileKind {
     /// [`super::ResolveOutcome::MissingPlugin`] in that case.
     #[cfg(feature = "napi")]
     pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
-        if let Self::ExternalFormatter { parser_name: "svelte", .. } = self
+        if let Self::Prettier { parser_name: "svelte", .. } = self
             && !config.is_svelte_enabled()
         {
             return Some("svelte");
@@ -414,10 +414,10 @@ static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
 
 // ---
 
-/// Returns parser name for external formatter, if supported.
+/// Returns the Prettier parser name for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
-fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
+fn get_prettier_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // Markdown and variants
     if MARKDOWN_FILENAMES.contains(file_name) {
         return Some("markdown");
@@ -625,11 +625,11 @@ mod tests {
 
     #[test]
     #[cfg(feature = "napi")]
-    fn test_get_external_parser_name() {
+    fn test_get_prettier_parser_name() {
         fn get_parser_name(file_name: &str) -> Option<&'static str> {
             let path = Path::new(file_name);
             let extension = path.extension().and_then(|ext| ext.to_str());
-            get_external_parser_name(file_name, extension)
+            get_prettier_parser_name(file_name, extension)
         }
 
         let test_cases = vec![

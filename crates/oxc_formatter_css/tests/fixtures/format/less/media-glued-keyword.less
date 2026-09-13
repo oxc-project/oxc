@@ -1,0 +1,20 @@
+// `and(` / `not(` glued to the parens stay glued (CSS reads a function token there)
+@media screen and(max-width: 1280px) {
+  a {
+    b: c;
+  }
+}
+@media not(color) {
+  a {
+    b: c;
+  }
+}
+@import url("a.css") screen and(max-width: 1280px);
+// the glued run is one word: inside printed as written, the rest of the query as usual
+@media screen and(MAX-WIDTH:1280px) and (min-width:100px) {
+  a {
+    b: c;
+  }
+}
+// in a value-parsed `@import` the glued run is a call: keyword glued, inside printed as usual
+@import url("a.css") screen and(max-width:1280px) and (color);

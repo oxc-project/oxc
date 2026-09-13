@@ -1,0 +1,15 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/infer-forwardref-does-not-mark-nested-function-as-component.jsx
+---
+// @compilationMode:"infer"
+import { forwardRef } from "react";
+const Grid = forwardRef(({ label }, ref) => {
+	const renderGridComponent = () => <div ref={ref}>{label}</div>;
+	return renderGridComponent();
+});
+const List = forwardRef(function({ items }, ref) {
+	const renderListComponent = () => <ul ref={ref}>{items}</ul>;
+	return renderListComponent();
+});
+export { Grid, List };

@@ -113,7 +113,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicates {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'a>) {
@@ -461,7 +461,7 @@ fn merge_imports_fix<'a>(
     let mut fixes = fixer.new_fix_with_capacity(decls.len() + 1);
 
     if should_add_specifiers && should_inline_type_imports && first.import_kind.is_type() {
-        if let Some(offset) = ctx.find_next_token_from(first.span.start, "type") {
+        if let Some(offset) = ctx.find_next_token_within(first.span.start, first.span.end, "type") {
             let type_start = first.span.start + offset;
             let mut type_end = type_start + u32::try_from("type".len()).unwrap();
             if ctx.semantic().source_text().as_bytes().get(type_end as usize) == Some(&b' ') {

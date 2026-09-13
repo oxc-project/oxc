@@ -42,11 +42,21 @@ impl<'a> SourceLine<'a> {
         // (e.g. formatted JSDoc, which splits a single comment into a mix of `Token`/`Text` elements.)
         let mut has_import = false;
         let mut source = None;
-        let mut is_side_effect = true;
         let mut is_type_import = false;
         let mut has_default_specifier = false;
         let mut has_namespace_specifier = false;
         let mut has_named_specifier = false;
+
+        // One-way scan state, bounded by `range`.
+        // No look-ahead: looking ahead past `range` would inherit the NEXT import's specifiers.
+        // Seen the `import` keyword; specifier detection is active from here.
+        let mut seen_import_keyword = false;
+        // Only the token right after `import` can be the `type` keyword
+        // (`type` inside `{ ... }` is an inline type specifier, not a type import).
+        let mut expect_type_keyword = false;
+        // Seen the `from` keyword; everything after is the source and import attributes
+        // (`with { type: "json" }` must not count as named specifiers).
+        let mut seen_from_keyword = false;
 
         let import_label = LabelId::of(JsLabels::ImportDeclaration);
         for idx in range.clone() {
@@ -63,51 +73,66 @@ impl<'a> SourceLine<'a> {
                 continue;
             }
 
-            match element {
-                FormatElement::Token { text } => match *text {
-                    "import" => {
-                        // Look ahead to determine import type (skip spaces)
-                        // Continue scanning to find all specifier types (default, namespace, named)
-                        let mut offset = 1;
-                        let mut first_token = true; // Track if this is the first token after "import"
-                        while idx + offset < elements.len() {
-                            if matches!(elements[idx + offset], FormatElement::Space) {
-                                offset += 1;
-                                continue;
-                            }
+            // Everything before the `import` keyword (e.g. leading comments) is not the head.
+            if !seen_import_keyword {
+                if matches!(element, FormatElement::Token { text: "import" }) {
+                    seen_import_keyword = true;
+                    expect_type_keyword = true;
+                }
+                continue;
+            }
 
-                            match &elements[idx + offset] {
-                                FormatElement::Token { text } => match *text {
-                                    "type" if first_token => is_type_import = true,
-                                    "*" => has_namespace_specifier = true,
-                                    "{" => has_named_specifier = true,
-                                    "from" => break, // Stop when we reach "from"
-                                    _ => {}
-                                },
-                                FormatElement::Text { .. } => {
-                                    has_default_specifier = true;
-                                }
-                                _ => {}
+            match element {
+                FormatElement::Token { text } => {
+                    if !seen_from_keyword {
+                        match *text {
+                            "type" if expect_type_keyword => is_type_import = true,
+                            "*" => has_namespace_specifier = true,
+                            "{" => has_named_specifier = true,
+                            "from" => {
+                                seen_from_keyword = true;
+                                source = None;
                             }
-                            first_token = false;
-                            offset += 1;
+                            _ => {}
                         }
                     }
-                    "from" => {
-                        is_side_effect = false;
-                        source = None;
-                    }
-                    _ => {}
-                },
-                FormatElement::Text { text, .. } if source.is_none() => {
-                    source = Some(text);
+                    expect_type_keyword = false;
                 }
+                FormatElement::Text { text, .. } => {
+                    if source.is_none() {
+                        source = Some(text);
+                        // The first `Text` after `from` is the source;
+                        // nothing after it (import attributes, trailing comments) affects the metadata.
+                        if seen_from_keyword {
+                            break;
+                        }
+                    }
+                    // A bare identifier in the head before `{` / `*` is the default binding.
+                    // For a side-effect import this same position holds the module source;
+                    // that artifact is cleared below once no `from` shows up.
+                    if !has_namespace_specifier && !has_named_specifier {
+                        has_default_specifier = true;
+                    }
+                    expect_type_keyword = false;
+                }
+                // Spaces (and line breaks inside a multiline import) separate head tokens
+                // without closing the `type` keyword window.
                 _ => {}
             }
         }
 
         if !has_import {
             return SourceLine::CommentOnly(range, line_mode);
+        }
+
+        // No `from` means a genuine side-effect import, which has no bindings at all:
+        // whatever the head scan collected (its own source `Text` as a default binding,
+        // attribute braces as named specifiers) is an artifact.
+        let is_side_effect = !seen_from_keyword;
+        if is_side_effect {
+            has_default_specifier = false;
+            has_namespace_specifier = false;
+            has_named_specifier = false;
         }
 
         SourceLine::Import(

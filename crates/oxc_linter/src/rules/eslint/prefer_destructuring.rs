@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     context::LintContext,
     rule::{Rule, TupleRuleConfig},
 };
@@ -255,7 +256,7 @@ impl Rule for PreferDestructuring {
 
                 // Skip `using` and `await using` declarations - destructuring doesn't apply to them
                 if matches!(
-                    declarator.kind,
+                    variable_declaration_kind(declarator, ctx),
                     VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
                 ) {
                     return;

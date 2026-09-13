@@ -354,7 +354,7 @@ impl Oxlintrc {
             )));
         }
 
-        let mut config = Self::deserialize(&json).map_err(|err| {
+        let mut config = Self::from_json_value(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
@@ -389,9 +389,26 @@ impl Oxlintrc {
             ));
         }
 
-        Self::deserialize(&json).map_err(|err| {
+        Self::from_json_value(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })
+    }
+
+    /// Deserialize a configuration from an already parsed JSON value.
+    ///
+    /// This is the single entry point for turning JSON into an [`Oxlintrc`]; every caller
+    /// (config files, JS configs in `oxlint`, ...) should go through it rather than calling
+    /// `Oxlintrc::deserialize` with a deserializer of their own. `Deserialize::deserialize` is
+    /// generic, so each crate that calls it compiles its own copy of the whole configuration
+    /// type tree; this non-generic function is compiled once and shared. It is `#[inline(never)]`
+    /// so that it is not inlined across crates, which would re-instantiate the tree in the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns the deserialization error if `json` does not describe a valid configuration.
+    #[inline(never)]
+    pub fn from_json_value(json: &serde_json::Value) -> Result<Self, serde_json::Error> {
+        Self::deserialize(json)
     }
 
     /// Merges two [Oxlintrc] files together.

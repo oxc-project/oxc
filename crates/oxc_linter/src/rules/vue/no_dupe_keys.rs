@@ -84,11 +84,12 @@ declare_oxc_lint!(
     correctness,
     version = "1.70.0",
     config = NoDupeKeys,
+    short_description = "Disallow duplication of field names.",
 );
 
 impl Rule for NoDupeKeys {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

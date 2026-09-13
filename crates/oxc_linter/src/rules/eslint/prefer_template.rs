@@ -95,7 +95,9 @@ fn build_template_for_binary(
     let right = &binary.right;
 
     // Find the + operator between left and right
-    let plus_offset = fixer.find_next_token_from(left.span().end, "+").unwrap_or(0);
+    let plus_offset = fixer
+        .find_next_token_within(left.span().end, right.span().start, "+")
+        .expect("binary expression gap must contain the `+` operator");
     let plus_pos = left.span().end + plus_offset;
     let text_before_plus = &source_text[left.span().end as usize..plus_pos as usize];
     let text_after_plus = &source_text[plus_pos as usize + 1..right.span().start as usize];

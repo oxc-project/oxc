@@ -115,8 +115,7 @@ impl Rule for MaxDependencies {
         {
             Ok(Self(Box::new(MaxDependenciesConfig { max, ignore_type_imports: false })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
         }
     }
 

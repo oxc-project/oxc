@@ -1,0 +1,49 @@
+// Comments around a union's leading `|`: whenever no leading comment ends its
+// source line, they all normalize to behind the `|` (`| /* c */ A`) — one
+// canonical form regardless of the source shape.
+
+type MidLine = /* c */ "A" | AmemberLongEnoughToMakeTheUnionBreakIntoMultipleLines;
+type ExplicitPipe = | /* c */ "A" | AmemberLongEnoughToMakeTheUnionBreakIntoMultipleLines;
+type LineStart =
+  /* c */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+type LineStartExplicitPipe =
+  /* c */ | A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+type CommentGroup =
+  /* 1 */ /* 2 */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+
+// NOTE: Known divergence — for the two sources below (nested single-member
+// parens; multiline block comment starting its line), Prettier keeps the
+// comment before the `|`, yet reformats the first shape's own output into the
+// canonical form (not idempotent); we normalize directly
+// (see DIVERGENCES.md "union-leading-pipe-comment-normalization").
+type NestedParens = | (
+  /* c */ | (
+    | (
+      | A
+      // A comment to force break
+      | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
+    )
+  )
+);
+type MultilineBlock =
+  /**
+  comment
+  */ A
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+
+// A comment that ENDS its source line stays before the `|`:
+// moving it behind would force a break between the `|` and its member.
+type LineEnd = /* c */
+  A | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLinesForThisCase;
+
+// The same kept-before-`|` rule when the union actually BREAKS
+// (the leading `|` is printed and the comment group stays above it):
+type LineEndBreak = | (
+  /* c1 */ /* c2 */
+  | A
+  // force break
+  | AmemberLongEnoughToMakeTheUnionTypeBreakIntoMultipleLines
+);

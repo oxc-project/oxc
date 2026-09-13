@@ -340,7 +340,9 @@ impl UnstableAddress for TSInterfaceHeritage<'_> {}
 
 impl UnstableAddress for TSTypePredicate<'_> {}
 
-impl UnstableAddress for TSModuleDeclaration<'_> {}
+impl UnstableAddress for TSExternalModuleDeclaration<'_> {}
+
+impl UnstableAddress for TSNamespaceDeclaration<'_> {}
 
 impl UnstableAddress for TSGlobalDeclaration<'_> {}
 

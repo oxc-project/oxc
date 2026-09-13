@@ -112,9 +112,9 @@ enum A { a, 'b' }
 ----------
 enum A{a,"b"}
 ########## 26
-module 'a'
+module a {}
 ----------
-module "a";
+module a{}
 ########## 27
 declare module 'a'
 ----------

@@ -1,8 +1,13 @@
+use oxc_ast::{
+    AstKind,
+    ast::{ImportDeclarationSpecifier, ImportOrExportKind},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::AstNode;
+use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_named_default_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Replace default import with named import.")
@@ -44,15 +49,21 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNamedDefault {
-    fn run_once(&self, ctx: &LintContext) {
-        ctx.module_record().import_entries.iter().for_each(|entry| {
-            let ImportImportName::Name(import_name) = &entry.import_name else {
-                return;
-            };
-            if import_name.name() == "default" && !entry.is_type {
-                ctx.diagnostic(no_named_default_diagnostic(import_name.span));
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::ImportDeclaration(import_decl) = node.kind()
+            && let Some(specifiers) = &import_decl.specifiers
+        {
+            for specifier in specifiers {
+                let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier else {
+                    continue;
+                };
+                if matches!(specifier.import_kind, ImportOrExportKind::Value)
+                    && specifier.imported.name() == "default"
+                {
+                    ctx.diagnostic(no_named_default_diagnostic(specifier.imported.span()));
+                }
             }
-        });
+        }
     }
 }
 
@@ -64,6 +75,8 @@ fn test() {
         r#"import bar from "./bar";"#,
         r#"import bar, { foo } from "./bar";"#,
         r#"import { type default as Foo } from "./bar";"#,
+        r#"// oxlint-disable-next-line import/no-named-default
+import type { default as Foo } from "./bar";"#,
     ];
 
     let unicorn_pass = vec![
@@ -78,6 +91,8 @@ fn test() {
         r#"import { default as bar } from "./bar";"#,
         r#"import { foo, default as bar } from "./bar";"#,
         r#"import { "default" as bar } from "./bar";"#,
+        r#"import type { default as Quill, Delta } from "quill";
+export type T = Quill | Delta;"#,
     ];
 
     let unicorn_fail = vec![

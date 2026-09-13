@@ -11,8 +11,8 @@ use oxc_yaml_parser::ast::{FlowMapping, FlowSequence, FlowSequenceEntry};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, gap_upper_bound, is_suppressed_last_before,
-        write_single_comment, write_suppressed_node, write_trailing_same_line_comment,
+        FormatCommentBeforeContent, Gap, classify_gap, flush_leading_comments, gap_upper_bound,
+        is_suppressed_last_before, write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{YamlFormatter, format_with, mapping_item, write_node},
 };
@@ -149,8 +149,10 @@ fn write_trailing_comma_and_end_comments(close_end: u32, f: &mut YamlFormatter<'
     // Comments inside the brackets after the last entry
     let close_start = close_end.saturating_sub(1);
     let comments = f.context().comments().take_before(close_start);
-    for comment in comments {
+    if !comments.is_empty() {
         write!(f, hard_line_break());
-        write_single_comment(comment.span, f);
+    }
+    for comment in comments {
+        write!(f, FormatCommentBeforeContent::new(comment.span));
     }
 }

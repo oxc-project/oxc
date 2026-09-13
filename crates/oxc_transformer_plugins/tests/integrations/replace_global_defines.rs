@@ -116,6 +116,17 @@ fn typeof_define() {
     );
 }
 
+// https://github.com/rolldown/rolldown/issues/10779
+#[test]
+fn typeof_define_in_default_parameter_is_not_shadowed_by_function_body_var() {
+    let config = config(&[("typeof window", "'undefined'")]);
+    test_define_only(
+        "export function load(value = typeof window !== 'undefined' ? import('browser') : null) { var window; return value; }",
+        "export function load(value = 'undefined' !== 'undefined' ? import('browser') : null) { var window; return value; }",
+        &config,
+    );
+}
+
 #[test]
 fn typeof_define_is_exact() {
     let config = config(&[("typeof window", "'undefined'"), ("typeof process.env", "'object'")]);
@@ -196,6 +207,13 @@ fn typeof_define_takes_precedence_over_identifier_define() {
 fn invalid_typeof_define_key() {
     for key in ["typeof ", "typeof  window", "typeof window.*", "typeof window[0]"] {
         assert!(ReplaceGlobalDefinesConfig::new(&[(key, "'undefined'")]).is_err(), "{key}");
+    }
+}
+
+#[test]
+fn invalid_define_value() {
+    for value in ["console.log foo", "1 2", "foo;"] {
+        assert!(ReplaceGlobalDefinesConfig::new(&[("foo", value)]).is_err(), "{value}");
     }
 }
 

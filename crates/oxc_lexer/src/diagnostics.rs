@@ -415,6 +415,25 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
         Code::HTML_COMMENT_IN_MODULE => {
             diag(sev, "HTML comments are not allowed in modules").with_label(span)
         }
+        Code::UNTERMINATED_JSX_ELEMENT => {
+            diag(sev, "JSX element has no corresponding closing tag")
+                .with_label(span)
+                .with_help("In a `.tsx` file `<T>(...) =>` opens a JSX element; write `<T,>(...) =>` for a generic arrow function")
+        }
+        Code::JSX_TEXT_INVALID_CHARACTER => {
+            let (ch, entity) = if lexeme(source, d) == "}" { ('}', "rbrace") } else { ('>', "gt") };
+            diag(sev, format!("Unexpected token. Did you mean `{{'{ch}'}}` or `&{entity};`?"))
+                .with_label(span)
+        }
+        Code::UNTERMINATED_JSX_TAG => diag(sev, "Unterminated JSX tag").with_label(span),
+        Code::UNTERMINATED_JSX_CONTAINER => {
+            diag(sev, "Unterminated JSX expression container").with_label(span)
+        }
+        Code::JSX_CLOSING_TAG_MISMATCH => diag(
+            sev,
+            format!("Expected corresponding JSX closing tag, found `{}`", lexeme(source, d)),
+        )
+        .with_label(span),
         Code::ORACLE_DEPTH_EXCEEDED => diag(sev, "Nesting depth limit exceeded").with_label(span),
         Code::ALLOCATION_LIMIT_EXCEEDED => diag(sev, "Source length exceeds 4 GiB limit"),
 

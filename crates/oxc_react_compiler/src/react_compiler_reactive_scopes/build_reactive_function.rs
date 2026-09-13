@@ -12,7 +12,7 @@ use std::mem::discriminant;
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, EvaluationOrder, GotoVariant, HirFunction, InstructionId,
@@ -39,7 +39,10 @@ pub fn build_reactive_function<'a>(
 
     Ok(ReactiveFunction {
         span: hir.span,
+        body_span: hir.body_span,
         id: hir.id,
+        id_span: hir.id_span,
+        self_binding: hir.self_binding,
         name_hint: hir.name_hint,
         params: hir.params.iter().copied().collect(),
         generator: hir.generator,
@@ -144,8 +147,7 @@ impl<'a, 'h> Context<'a, 'h> {
         let id = self.next_schedule_id;
         self.next_schedule_id += 1;
         if self.scheduled.contains(&block) {
-            return Err(ErrorCategory::Invariant
-                .diagnostic(format!("Break block is already scheduled: bb{}", block.index())));
+            return Err(diagnostics::break_block_already_scheduled(block.index()));
         }
         self.scheduled.insert(block);
         let target = match target_type {
@@ -153,8 +155,7 @@ impl<'a, 'h> Context<'a, 'h> {
             "switch" => ControlFlowTarget::Switch { block, id },
             "case" => ControlFlowTarget::Case { block, id },
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic(format!("Unknown target type: {}", target_type)));
+                return Err(diagnostics::unknown_target_type(target_type));
             }
         };
         self.control_flow_stack.push(target);
@@ -171,10 +172,7 @@ impl<'a, 'h> Context<'a, 'h> {
         self.next_schedule_id += 1;
         self.scheduled.insert(fallthrough_block);
         if self.scheduled.contains(&continue_block) {
-            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Continue block is already scheduled: bb{}",
-                continue_block.index()
-            )));
+            return Err(diagnostics::continue_block_already_scheduled(continue_block.index()));
         }
         self.scheduled.insert(continue_block);
         let mut owns_loop = false;
@@ -196,7 +194,7 @@ impl<'a, 'h> Context<'a, 'h> {
     fn unschedule(&mut self, schedule_id: u32) -> Result<(), OxcDiagnostic> {
         let last = self.control_flow_stack.pop().expect("Can only unschedule the last target");
         if last.id() != schedule_id {
-            return Err(ErrorCategory::Invariant.diagnostic("Can only unschedule the last target"));
+            return Err(diagnostics::invariant_can_only_unschedule_last_target());
         }
         match &last {
             ControlFlowTarget::Loop { block, continue_block, loop_block, owns_loop, .. } => {
@@ -249,8 +247,7 @@ impl<'a, 'h> Context<'a, 'h> {
             }
             has_preceding_loop = has_preceding_loop || target.is_loop();
         }
-        Err(ErrorCategory::Invariant
-            .diagnostic(format!("Expected a break target for bb{}", block.index())))
+        Err(diagnostics::expected_break_target(block.index()))
     }
 
     fn get_continue_target(&self, block: BlockId) -> Option<(BlockId, ReactiveTerminalTargetKind)> {
@@ -312,10 +309,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             let block_id_val = block.id;
             let instructions: Vec<_> = block.instructions.iter().copied().collect();
             let terminal = block.terminal.clone_in(self.env.allocator);
+            let terminal_source_span = terminal.span().copied().unwrap_or_default();
 
             if !self.cx.emitted.insert(block_id_val) {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic(format!("Block bb{} was already emitted", block_id_val.index())));
+                return Err(diagnostics::block_already_emitted(block_id_val.index()));
             }
 
             // Emit instructions
@@ -334,7 +331,16 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             let mut next_block: Option<BlockId> = None;
 
             match &terminal {
-                Terminal::If { test, consequent, alternate, fallthrough, id, .. } => {
+                Terminal::If {
+                    test,
+                    consequent,
+                    consequent_span,
+                    alternate,
+                    alternate_span,
+                    fallthrough,
+                    id,
+                    ..
+                } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -351,20 +357,16 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
-                        return Err(ErrorCategory::Invariant.diagnostic(format!(
-                            "Unexpected 'if' where consequent is already scheduled (bb{})",
-                            consequent.index()
-                        )));
+                        return Err(diagnostics::if_consequent_already_scheduled(
+                            consequent.index(),
+                        ));
                     } else {
                         self.traverse_block(*consequent)?
                     };
 
                     let alternate_block = if let Some(alt) = alternate_id {
                         if self.cx.is_scheduled(alt) {
-                            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                                "Unexpected 'if' where the alternate is already scheduled (bb{})",
-                                alt.index()
-                            )));
+                            return Err(diagnostics::if_alternate_already_scheduled(alt.index()));
                         } else {
                             Some(self.traverse_block(alt)?)
                         }
@@ -378,11 +380,14 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             terminal: ReactiveTerminal::If {
                                 test: *test,
                                 consequent: consequent_block,
+                                consequent_span: *consequent_span,
                                 alternate: alternate_block,
+                                alternate_span: *alternate_span,
                                 id: *id,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
@@ -411,7 +416,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         if self.cx.is_scheduled(case_block_id) {
                             // TS: asserts case.block === fallthrough, then skips (return)
                             if case_block_id != *fallthrough {
-                                return Err(ErrorCategory::Invariant.diagnostic("Unexpected 'switch' where a case is already scheduled and block is not the fallthrough"));
+                                return Err(diagnostics::invariant_unexpected_switch_where_case_already_scheduled_and_block_not_fallthrough());
                             }
                             continue;
                         }
@@ -420,8 +425,11 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         let case_schedule_id = self.cx.schedule(case_block_id, "case")?;
                         schedule_ids.push(case_schedule_id);
 
-                        reactive_cases
-                            .push(ReactiveSwitchCase { test: case.test, block: Some(consequent) });
+                        reactive_cases.push(ReactiveSwitchCase {
+                            test: case.test,
+                            block: Some(consequent),
+                            span: case.span,
+                        });
                     }
                     reactive_cases.reverse();
 
@@ -435,13 +443,14 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::DoWhile { loop_block, test, fallthrough, id, span } => {
+                Terminal::DoWhile { loop_block, loop_block_span, test, fallthrough, id, span } => {
                     let fallthrough_id =
                         if !self.cx.is_scheduled(*fallthrough) { Some(*fallthrough) } else { None };
                     let loop_id =
@@ -460,9 +469,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'do-while' where the loop is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_do_while_where_loop_already_scheduled(
+                            ),
+                        );
                     };
                     let test_result = self.visit_value_block(*test, *span, None)?;
 
@@ -471,18 +481,20 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::DoWhile {
                                 loop_block: loop_body,
+                                loop_block_span: *loop_block_span,
                                 test: test_result.value,
                                 id: *id,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::While { test, loop_block, fallthrough, id, span } => {
+                Terminal::While { test, loop_block, loop_block_span, fallthrough, id, span } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -508,8 +520,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Unexpected 'while' where the loop is already scheduled"));
+                        return Err(
+                            diagnostics::invariant_unexpected_while_where_loop_already_scheduled(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -518,17 +531,28 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             terminal: ReactiveTerminal::While {
                                 test: test_result.value,
                                 loop_block: loop_body,
+                                loop_block_span: *loop_block_span,
                                 id: *id,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::For { init, test, update, loop_block, fallthrough, id, span } => {
+                Terminal::For {
+                    init,
+                    test,
+                    update,
+                    loop_block,
+                    loop_block_span,
+                    fallthrough,
+                    id,
+                    span,
+                } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -560,8 +584,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Unexpected 'for' where the loop is already scheduled"));
+                        return Err(
+                            diagnostics::invariant_unexpected_where_loop_already_scheduled(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -572,17 +597,28 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 test: test_result.value,
                                 update: update_result.map(|r| r.value),
                                 loop_block: loop_body,
+                                loop_block_span: *loop_block_span,
                                 id: *id,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::ForOf { init, test, loop_block, fallthrough, id, span } => {
+                Terminal::ForOf {
+                    init,
+                    test,
+                    loop_block,
+                    loop_block_span,
+                    left_span,
+                    fallthrough,
+                    id,
+                    span,
+                } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -609,9 +645,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'for-of' where the loop is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_where_loop_already_scheduled_2(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -621,18 +657,29 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 init: init_value,
                                 test: test_value,
                                 loop_block: loop_body,
+                                loop_block_span: *loop_block_span,
+                                left_span: *left_span,
                                 id: *id,
                                 span: *span,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::ForIn { init, loop_block, fallthrough, id, span } => {
+                Terminal::ForIn {
+                    init,
+                    loop_block,
+                    loop_block_span,
+                    left_span,
+                    fallthrough,
+                    id,
+                    span,
+                } => {
                     let loop_id =
                         if !self.cx.is_scheduled(*loop_block) && *loop_block != *fallthrough {
                             Some(*loop_block)
@@ -655,9 +702,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     let loop_body = if let Some(lid) = loop_id {
                         self.traverse_block(lid)?
                     } else {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'for-in' where the loop is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_where_loop_already_scheduled_3(),
+                        );
                     };
 
                     self.cx.unschedule_all(&schedule_ids)?;
@@ -666,18 +713,21 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                             terminal: ReactiveTerminal::ForIn {
                                 init: init_value,
                                 loop_block: loop_body,
+                                loop_block_span: *loop_block_span,
+                                left_span: *left_span,
                                 id: *id,
                                 span: *span,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
                     next_block = fallthrough_id;
                 }
 
-                Terminal::Label { block: label_block, fallthrough, id, .. } => {
+                Terminal::Label { block: label_block, block_span, fallthrough, id, .. } => {
                     // TS: reachable(fallthrough) && !isScheduled(fallthrough)
                     let fallthrough_id =
                         if self.cx.reachable(*fallthrough) && !self.cx.is_scheduled(*fallthrough) {
@@ -690,18 +740,23 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*label_block) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'label' where the block is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_label_where_block_already_scheduled(),
+                        );
                     }
                     let label_body = self.traverse_block(*label_block)?;
 
                     self.cx.unschedule_all(&schedule_ids)?;
                     block_value.push(ReactiveStatement::Terminal(self.box_in(
                         ReactiveTerminalStatement {
-                            terminal: ReactiveTerminal::Label { block: label_body, id: *id },
+                            terminal: ReactiveTerminal::Label {
+                                block: label_body,
+                                block_span: *block_span,
+                                id: *id,
+                            },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
@@ -740,12 +795,15 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 Terminal::Goto { block: goto_block, variant, id, .. } => {
                     match variant {
                         GotoVariant::Break => {
-                            if let Some(stmt) = self.visit_break(*goto_block, *id)? {
+                            if let Some(stmt) =
+                                self.visit_break(*goto_block, *id, terminal_source_span)?
+                            {
                                 block_value.push(stmt);
                             }
                         }
                         GotoVariant::Continue => {
-                            let stmt = self.visit_continue(*goto_block, *id)?;
+                            let stmt =
+                                self.visit_continue(*goto_block, *id, terminal_source_span)?;
                             block_value.push(stmt);
                         }
                         GotoVariant::Try => {
@@ -762,8 +820,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
 
                 Terminal::Try {
                     block: try_block,
+                    block_span,
                     handler_binding,
                     handler,
+                    handler_span,
                     fallthrough,
                     id,
                     ..
@@ -787,12 +847,15 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Try {
                                 block: try_body,
+                                block_span: *block_span,
                                 handler_binding: *handler_binding,
                                 handler: handler_body,
+                                handler_span: *handler_span,
                                 id: *id,
                             },
                             label:
                                 fallthrough_id.map(|ft| ReactiveLabel { id: ft, implicit: false }),
+                            span: terminal_source_span,
                         },
                     )));
 
@@ -808,9 +871,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*scope_block) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'scope' where the block is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_scope_where_block_already_scheduled(),
+                        );
                     }
                     let scope_body = self.traverse_block(*scope_block)?;
 
@@ -832,9 +895,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     }
 
                     if self.cx.is_scheduled(*scope_block) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'scope' where the block is already scheduled",
-                        ));
+                        return Err(
+                            diagnostics::invariant_unexpected_scope_where_block_already_scheduled_2(
+                            ),
+                        );
                     }
                     let scope_body = self.traverse_block(*scope_block)?;
 
@@ -852,6 +916,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Return { value: *value, id: *id },
                             label: None,
+                            span: terminal_source_span,
                         },
                     )));
                 }
@@ -861,6 +926,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                         ReactiveTerminalStatement {
                             terminal: ReactiveTerminal::Throw { value: *value, id: *id },
                             label: None,
+                            span: terminal_source_span,
                         },
                     )));
                 }
@@ -872,7 +938,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 Terminal::Branch { test, consequent, alternate, id, .. } => {
                     let alloc = self.env.allocator;
                     let consequent_block = if self.cx.is_scheduled(*consequent) {
-                        if let Some(stmt) = self.visit_break(*consequent, *id)? {
+                        if let Some(stmt) =
+                            self.visit_break(*consequent, *id, terminal_source_span)?
+                        {
                             ArenaVec::from_iter_in([stmt], &alloc)
                         } else {
                             ArenaVec::new_in(&alloc)
@@ -882,9 +950,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     };
 
                     if self.cx.is_scheduled(*alternate) {
-                        return Err(ErrorCategory::Invariant.diagnostic(
-                            "Unexpected 'branch' where the alternate is already scheduled",
-                        ));
+                        return Err(diagnostics::invariant_unexpected_branch_where_alternate_already_scheduled());
                     }
                     let alternate_block = self.traverse_block(*alternate)?;
 
@@ -894,9 +960,12 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                                 test: *test,
                                 consequent: consequent_block,
                                 alternate: Some(alternate_block),
+                                consequent_span: None,
+                                alternate_span: None,
                                 id: *id,
                             },
                             label: None,
+                            span: terminal_source_span,
                         },
                     )));
                 }
@@ -927,10 +996,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         if let Some(ft) = fallthrough
             && block_id == ft
         {
-            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Did not expect to reach the fallthrough of a value block (bb{})",
-                block_id.index()
-            )));
+            return Err(diagnostics::unexpected_value_block_fallthrough(block_id.index()));
         }
 
         match &terminal {
@@ -951,12 +1017,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
             }
             Terminal::Goto { .. } => {
                 if instructions.is_empty() {
-                    return Err(ErrorCategory::Invariant
-                        .diagnostic("Unexpected empty block with `goto` terminal")
-                        .with_help(format!("Block bb{} is empty", block_id.index()))
-                        .with_labels(
-                            span.map(|s| s.label("Unexpected empty block with `goto` terminal")),
-                        ));
+                    // There is no source instruction to point at. Let the
+                    // program-level compact function fallback supply the label
+                    // instead of highlighting the enclosing loop/body span.
+                    return Err(diagnostics::empty_goto(block_id.index(), None));
                 }
                 Ok(self.extract_value_block_result(&instructions, block_id_val))
             }
@@ -1040,11 +1104,7 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     branch_span: *branch_span,
                 })
             }
-            other => Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Expected a branch terminal for {} test block, got {:?}",
-                terminal_kind,
-                discriminant(other)
-            ))),
+            other => Err(diagnostics::expected_branch_terminal(terminal_kind, discriminant(other))),
         }
     }
 
@@ -1136,13 +1196,10 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                     id: *id,
                 })
             }
-            Terminal::MaybeThrow { .. } => Err(ErrorCategory::Invariant
-                .diagnostic("Unexpected maybe-throw in visit_value_block_terminal")),
-            Terminal::Label { .. } => Err(ErrorCategory::Todo.diagnostic(
-                "Support labeled statements combined with value blocks is not yet implemented",
-            )),
+            Terminal::MaybeThrow { .. } => Err(diagnostics::invariant_unexpected_maybe_throw_visit_value_block_terminal()),
+            Terminal::Label { .. } => Err(diagnostics::todo_support_labeled_statements_combined_value_blocks_not_yet_implemented()),
             _ => {
-                Err(ErrorCategory::Invariant.diagnostic("Unsupported terminal kind in value block"))
+                Err(diagnostics::invariant_unsupported_terminal_kind_value_block())
             }
         }
     }
@@ -1305,18 +1362,21 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &self,
         block: BlockId,
         id: EvaluationOrder,
+        span: Span,
     ) -> Result<Option<ReactiveStatement<'a>>, OxcDiagnostic> {
         let (target_block, target_kind) = self.cx.get_break_target(block)?;
         if self.cx.scope_fallthroughs.contains(&target_block) {
             if target_kind != ReactiveTerminalTargetKind::Implicit {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Expected reactive scope to implicitly break to fallthrough"));
+                return Err(
+                    diagnostics::invariant_expected_reactive_scope_implicitly_break_fallthrough(),
+                );
             }
             return Ok(None);
         }
         Ok(Some(ReactiveStatement::Terminal(self.box_in(ReactiveTerminalStatement {
             terminal: ReactiveTerminal::Break { target: target_block, id, target_kind },
             label: None,
+            span,
         }))))
     }
 
@@ -1324,20 +1384,19 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
         &self,
         block: BlockId,
         id: EvaluationOrder,
+        span: Span,
     ) -> Result<ReactiveStatement<'a>, OxcDiagnostic> {
         let (target_block, target_kind) = match self.cx.get_continue_target(block) {
             Some(result) => result,
             None => {
-                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                    "Expected continue target to be scheduled for bb{}",
-                    block.index()
-                )));
+                return Err(diagnostics::expected_continue_target(block.index()));
             }
         };
 
         Ok(ReactiveStatement::Terminal(self.box_in(ReactiveTerminalStatement {
             terminal: ReactiveTerminal::Continue { target: target_block, id, target_kind },
             label: None,
+            span,
         })))
     }
 }

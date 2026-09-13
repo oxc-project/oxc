@@ -154,3 +154,48 @@ source: crates/oxc_linter/src/tester.rs
  5 │             }
    ╰────
   help: Calling `setState()` afterwards will replace the mutations you made via `this.state`.
+
+  ⚠ react(no-direct-mutation-state): Never mutate `this.state` directly.
+   ╭─[no_direct_mutation_state.tsx:4:15]
+ 3 │             update(id) {
+ 4 │               this.state.x[id] = 1;
+   ·               ────────────────
+ 5 │               this.state.x[id].y = 1;
+   ╰────
+  help: Calling `setState()` afterwards will replace the mutations you made via `this.state`.
+
+  ⚠ react(no-direct-mutation-state): Never mutate `this.state` directly.
+   ╭─[no_direct_mutation_state.tsx:5:15]
+ 4 │               this.state.x[id] = 1;
+ 5 │               this.state.x[id].y = 1;
+   ·               ──────────────────
+ 6 │               this.state.items[id].prop = {};
+   ╰────
+  help: Calling `setState()` afterwards will replace the mutations you made via `this.state`.
+
+  ⚠ react(no-direct-mutation-state): Never mutate `this.state` directly.
+   ╭─[no_direct_mutation_state.tsx:6:15]
+ 5 │               this.state.x[id].y = 1;
+ 6 │               this.state.items[id].prop = {};
+   ·               ─────────────────────────
+ 7 │               this.state.x[id]++;
+   ╰────
+  help: Calling `setState()` afterwards will replace the mutations you made via `this.state`.
+
+  ⚠ react(no-direct-mutation-state): Never mutate `this.state` directly.
+   ╭─[no_direct_mutation_state.tsx:7:15]
+ 6 │               this.state.items[id].prop = {};
+ 7 │               this.state.x[id]++;
+   ·               ──────────────────
+ 8 │               this.state.items[id].prop++;
+   ╰────
+  help: Calling `setState()` afterwards will replace the mutations you made via `this.state`.
+
+  ⚠ react(no-direct-mutation-state): Never mutate `this.state` directly.
+   ╭─[no_direct_mutation_state.tsx:8:15]
+ 7 │               this.state.x[id]++;
+ 8 │               this.state.items[id].prop++;
+   ·               ───────────────────────────
+ 9 │             }
+   ╰────
+  help: Calling `setState()` afterwards will replace the mutations you made via `this.state`.

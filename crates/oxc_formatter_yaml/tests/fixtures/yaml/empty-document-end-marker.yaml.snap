@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# An explicit `...` after an empty document stays as-is; Prettier prints the empty body as a blank line.
+...
+...
+---
+...
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# An explicit `...` after an empty document stays as-is; Prettier prints the empty body as a blank line.
+...
+...
+---
+...
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# An explicit `...` after an empty document stays as-is; Prettier prints the empty body as a blank line.
+...
+...
+---
+...
+
+===================== End =====================

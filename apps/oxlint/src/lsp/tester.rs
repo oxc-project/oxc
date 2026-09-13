@@ -192,8 +192,9 @@ impl Tester<'_> {
     }
 
     pub fn create_linter(&self) -> ServerLinter {
-        ServerLinterBuilder::default()
-            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
+        let (linter, _client_message) = ServerLinterBuilder::default()
+            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone());
+        linter
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
@@ -225,13 +226,13 @@ impl Tester<'_> {
             let linter = self.create_linter();
             let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
             let reports = FileResult {
-                diagnostic: linter.run_diagnostic(&TextDocument::new(
+                diagnostic: linter.run_diagnostic(TextDocument::new(
                     &uri,
                     oxc_language_server::LanguageId::default(),
                     None,
                 )),
                 actions: linter.get_code_actions_or_commands(
-                    &oxc_language_server::CodeActionParams {
+                    oxc_language_server::CodeActionParams {
                         uri: uri.clone(),
                         range,
                         context: context.clone(),
@@ -239,7 +240,7 @@ impl Tester<'_> {
                     },
                 ),
                 fix_all_action: linter
-                    .get_code_actions_or_commands(&oxc_language_server::CodeActionParams {
+                    .get_code_actions_or_commands(oxc_language_server::CodeActionParams {
                         uri: uri.clone(),
                         range,
                         context: fix_all_context.clone(),

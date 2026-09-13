@@ -23,6 +23,8 @@ fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
     OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)
 }
 
+pub const SHORT_DESCRIPTION: &str = "Enforce valid `expect()` usage.";
+
 pub const DOCUMENTATION: &str = r"### What it does
 
 Checks that `expect()` is called correctly.
@@ -205,7 +207,7 @@ impl ValidExpectConfig {
         let parent = ctx.nodes().parent_node(node.id());
 
         let should_be_awaited =
-            jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_unequal("not"))
+            jest_fn_call.modifiers().any(|modifier| modifier.is_name_unequal("not"))
                 || self.async_matchers.contains(&matcher_name.to_string());
 
         if matches!(parent.kind(), AstKind::Program(_)) || !should_be_awaited {

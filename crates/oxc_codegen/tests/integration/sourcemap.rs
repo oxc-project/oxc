@@ -4,8 +4,11 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Expression, Statement};
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_index::IndexVec;
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
+use oxc_str::CompactStr;
+use rustc_hash::FxHashMap;
 
 use crate::tester::default_options;
 
@@ -468,6 +471,44 @@ fn codegen(code: &str) -> (String, String) {
         })
         .build(&ret.program);
     (ret.code, ret.map.unwrap().to_data_url())
+}
+
+/// Print `source_text` with every private member of the first class renamed as `mappings` says,
+/// and return the names its source map records.
+fn mangled_private_names(source_text: &str, mappings: &[(&str, &str)]) -> Vec<String> {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
+
+    let mut class_mappings = IndexVec::new();
+    class_mappings.push(
+        mappings
+            .iter()
+            .map(|(from, to)| ((*from).to_string(), CompactStr::from(*to)))
+            .collect::<FxHashMap<_, _>>(),
+    );
+
+    Codegen::new()
+        .with_options(default_options())
+        .with_private_member_mappings(Some(class_mappings))
+        .build(&ret.program)
+        .map
+        .expect("sourcemap should be generated")
+        .get_names()
+        .map(ToString::to_string)
+        .collect()
+}
+
+#[test]
+fn private_identifier_is_named_only_when_mangled() {
+    let source_text = "class C { #ab; m() { return this.#ab; } }";
+
+    // Printed as spelled, so nothing to name
+    assert_eq!(mangled_private_names(source_text, &[]), Vec::<String>::new());
+
+    // The token is `#ab`, so that is the name recorded - not `ab`, which would describe a region
+    // of the output which includes the `#`
+    assert_eq!(mangled_private_names(source_text, &[("ab", "a")]), vec!["#ab".to_string()]);
 }
 
 fn execute_with_node(code: &str, sourcemap_url: &str) -> String {

@@ -1,0 +1,14 @@
+# Extra rustflags for building `oxc_lexer`'s SIMD core. Passed via `cargo --config` by the
+# `just test-lexer-simd` / `just conformance-lexer-simd` recipes - see the justfile.
+#
+# `avx2` and `bmi2` are not in the x86_64 baseline on any platform, so they have to be asked for explicitly,
+# even on an x86_64 host. Cargo joins `rustflags` arrays across config sources, so the per-target flags
+# in `config.toml` (`crt-static`, the LLD opt-out) are preserved, not replaced.
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "target-feature=+avx2,+bmi2"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "target-feature=+avx2,+bmi2"]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+avx2,+bmi2"]

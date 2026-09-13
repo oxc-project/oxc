@@ -1,6 +1,5 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 
 use crate::{
     Format,
@@ -11,7 +10,10 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    utils::statement_body::FormatStatementBody,
+    utils::{
+        is_dropped_statement,
+        statement_body::{FormatStatementBody, write_node_with_terminator},
+    },
     write,
 };
 
@@ -59,24 +61,36 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, SwitchCase
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Whether the first statement in the clause is a `BlockStatement`
+        // and there are no other non-empty statements.
+        // Empties may show up when parsing depending on if the input code includes certain newlines.
+        let is_single_block_statement =
+            matches!(self.consequent.first(), Some(Statement::BlockStatement(_)))
+                && self.consequent.iter().skip(1).all(is_dropped_statement);
+
         let is_default = if let Some(test) = self.test() {
-            write!(f, ["case", space(), test, ":"]);
+            write!(f, ["case", space()]);
+            if is_single_block_statement {
+                // For non-block consequents the generic pass's `line_suffix` flush lands
+                // before their line break, keeping the comment on the clause line,
+                // so the bound is only needed before a block's `{`.
+                write_node_with_terminator(test, ":", f);
+            } else {
+                write!(f, [test, ":"]);
+            }
             false
         } else {
             write!(f, ["default", ":"]);
             true
         };
 
-        let consequent = self.consequent();
         // When the case block is empty, the case becomes a fallthrough, so it
-        // is collapsed directly on top of the next case (just a single
-        // hardline).
+        // is collapsed directly on top of the next case (just a single hardline).
         // When the block is a single statement _and_ it's a block statement,
-        // then the opening brace of the block can hug the same line as the
-        // case. But, if there's more than one statement, then the block
-        // _cannot_ hug. This distinction helps clarify that the case continues
-        // past the end of the block statement, despite the braces making it
-        // seem like it might end.
+        // then the opening brace of the block can hug the same line as the case.
+        // But, if there's more than one statement, then the block _cannot_ hug.
+        // This distinction helps clarify that the case continues past the end of the block statement,
+        // despite the braces making it seem like it might end.
         // Lastly, the default case is just to break and indent the body.
         //
         // switch (key) {
@@ -99,35 +113,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         //   default:
         //     break;
         // }
-        if consequent.is_empty() {
+        if self.consequent.is_empty() {
             // Print nothing to ensure that trailing comments on the same line
             // are printed on the same line. The parent list formatter takes
             // care of inserting a hard line break between cases.
             return;
         }
 
-        // Whether the first statement in the clause is a BlockStatement, and
-        // there are no other non-empty statements. Empties may show up when
-        // parsing depending on if the input code includes certain newlines.
-        let first_statement = consequent.first().unwrap();
-        let is_single_block_statement =
-            matches!(first_statement.as_ref(), Statement::BlockStatement(_))
-                && consequent
-                    .iter()
-                    .skip(1)
-                    .all(|statement| matches!(statement.as_ref(), Statement::EmptyStatement(_)));
+        let consequent = self.consequent();
+        if is_single_block_statement {
+            // `unwrap` is safe: the empty consequent returned above.
+            write!(f, FormatStatementBody::new(consequent.first().unwrap()));
+            return;
+        }
 
-        // Format dangling comments before default case body.
         if is_default {
-            let comments = f.context().comments();
-            let comments = if is_single_block_statement {
-                comments.block_comments_before(first_statement.span().start)
-            } else {
-                #[expect(clippy::cast_possible_truncation)]
-                const DEFAULT_LEN: u32 = "default".len() as u32;
-                comments.end_of_line_comments_after(self.span.start + DEFAULT_LEN)
-            };
-
+            // No test node to carry a trailing comment,
+            // so synthesize the head's end from the keyword (escapes are illegal in keywords).
+            // NOTE: relies on `:` being in `end_of_line_comments_after`'s trivia allowlist.
+            #[expect(clippy::cast_possible_truncation)]
+            const DEFAULT_LEN: u32 = "default".len() as u32;
+            let comments =
+                f.context().comments().end_of_line_comments_after(self.span.start + DEFAULT_LEN);
             if !comments.is_empty() {
                 write!(
                     f,
@@ -141,12 +148,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                 );
             }
         }
-
-        if is_single_block_statement {
-            write!(f, [FormatStatementBody::new(first_statement)]);
-        } else {
-            // no line break needed after because it is added by the indent in the switch statement
-            write!(f, indent(&format_args!(hard_line_break(), consequent)));
-        }
+        // No line break needed after because it is added by the indent in the switch statement
+        write!(f, indent(&format_args!(hard_line_break(), consequent)));
     }
 }

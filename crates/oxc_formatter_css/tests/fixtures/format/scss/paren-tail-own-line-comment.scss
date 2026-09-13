@@ -1,0 +1,51 @@
+// An own-line `//` before a closing `)` keeps its own line, in lists and argument parens
+// as in maps (DIVERGENCES.md "own-line-trailing-comment-keeps-line": Prettier pulls it
+// up onto the last item's line, unless the body is hard-broken like `$map-item`).
+// Same-line comments still glue to the last item.
+$list: ("a", "b",
+  // own
+);
+$map-item: (k: (1, 2,
+  // own
+));
+$args: fn(1,
+  // own
+);
+@include mix(1,
+  // own
+);
+@mixin m($a,
+  // own
+) {
+  a: b;
+}
+
+// Same-line before `)`: glued, `//` still forces the parens open.
+$same-block: ("a", "b" /* c */);
+$same-inline: ("a", "b" // c
+);
+$args-same: fn(1 /* c */);
+@include mix-same(1 // c
+);
+
+// An own-line BLOCK comment is a value-level fill item: it joins the line,
+// except in a body that already breaks one item per line (nothing to pin).
+$block: ("a", "b",
+  /* own */
+);
+$args-block: fn(1
+  /* own */
+);
+$map-item-block: (k: (1, 2,
+  /* own */
+));
+
+// Anything after a `//` starts a new line: the `//` would swallow it.
+$after-inline: fn(1,
+  // one
+  /* two */
+);
+$list-after-inline: ("a", "b",
+  // one
+  /* two */
+);

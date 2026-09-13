@@ -14,7 +14,7 @@ use oxc_str::{Ident, IdentHashMap, IdentHashSet, format_ident};
 use oxc_syntax::reference::ReferenceId;
 use oxc_syntax::symbol::SymbolId;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics::{self, ErrorCategory};
 
 use crate::react_compiler_hir::default_module_type_provider::default_module_type_provider;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
@@ -481,12 +481,10 @@ impl<'a> Environment<'a> {
                 if let Some(errors) = self.module_type_errors.remove(module.as_str())
                     && let Some(first_error) = errors.into_iter().next()
                 {
-                    self.record_error(
-                        ErrorCategory::Config
-                            .diagnostic("Invalid type configuration for module")
-                            .with_help(first_error)
-                            .with_labels(span),
-                    )?;
+                    self.record_error(diagnostics::config_invalid_type_configuration_module(
+                        first_error,
+                        span,
+                    ))?;
                 }
 
                 if let Some(module_type) = module_type
@@ -522,12 +520,10 @@ impl<'a> Environment<'a> {
                 if let Some(errors) = self.module_type_errors.remove(module.as_str())
                     && let Some(first_error) = errors.into_iter().next()
                 {
-                    self.record_error(
-                        ErrorCategory::Config
-                            .diagnostic("Invalid type configuration for module")
-                            .with_help(first_error)
-                            .with_labels(span),
-                    )?;
+                    self.record_error(diagnostics::config_invalid_type_configuration_module_2(
+                        first_error,
+                        span,
+                    ))?;
                 }
 
                 if let Some(module_type) = module_type {
@@ -542,16 +538,11 @@ impl<'a> Environment<'a> {
                         let is_hook =
                             self.get_hook_kind_for_type(&imported_type).ok().flatten().is_some();
                         if expect_hook != is_hook {
-                            self.record_error(
-                                ErrorCategory::Config
-                                    .diagnostic("Invalid type configuration for module")
-                                    .with_help(format!(
-                                        "Expected type for `import ... from '{}'` {} based on the module name",
-                                        module,
-                                        if expect_hook { "to be a hook" } else { "not to be a hook" }
-                                    ))
-                                    .with_labels(span),
-                            )?;
+                            self.record_error(diagnostics::invalid_module_type(
+                                module.as_str(),
+                                expect_hook,
+                                span,
+                            ))?;
                         }
                         return Ok(Some(imported_type));
                     }
@@ -600,11 +591,10 @@ impl<'a> Environment<'a> {
             _ => return Ok(None),
         };
         if let Some(shape_id) = shape_id {
-            let shape = self.shapes.get(shape_id).ok_or_else(|| {
-                ErrorCategory::Invariant.diagnostic(format!(
-                    "[HIR] Forget internal error: cannot resolve shape {shape_id}"
-                ))
-            })?;
+            let shape = self
+                .shapes
+                .get(shape_id)
+                .ok_or_else(|| diagnostics::cannot_resolve_shape(shape_id))?;
             return Ok(shape.function_type.as_ref());
         }
         Ok(None)

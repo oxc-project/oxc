@@ -9,7 +9,8 @@ use oxc_ast::{
     ast::{
         BindingPattern, ExportFromDeclaration, ExportSpecifier, ImportAttributeKey,
         ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
-        Statement, VariableDeclarationKind, VariableDeclarator, WithClause, WithClauseKeyword,
+        Program, Statement, VariableDeclarationKind, VariableDeclarator, WithClause,
+        WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -91,7 +92,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferExportFrom {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -104,16 +105,8 @@ impl Rule for PreferExportFrom {
                 return;
             }
 
-            let corresponding_export: Option<&ExportFromDeclaration> =
-                find_corresponding_export(ctx, import_decl);
-
             let symbol_to_specifier_specs = Self::get_symbol_to_specifier(import_decl);
-            self.check_re_export(
-                ctx,
-                &symbol_to_specifier_specs,
-                import_decl,
-                corresponding_export,
-            );
+            self.check_re_export(ctx, &symbol_to_specifier_specs, import_decl);
         }
     }
 }
@@ -144,7 +137,6 @@ impl PreferExportFrom {
         ctx: &LintContext<'a>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
         import_decl: &'a ImportDeclaration<'a>,
-        re_export_decl: Option<&'a ExportFromDeclaration<'a>>,
     ) {
         let (locally_used_specifiers, violations) =
             self.analyze_import_usage(ctx, symbol_to_specifier, import_decl);
@@ -152,6 +144,8 @@ impl PreferExportFrom {
         if violations.is_empty() {
             return;
         }
+
+        let re_export_decl = find_corresponding_export(ctx, import_decl);
 
         let source = import_decl.source.value.as_str();
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
@@ -685,7 +679,7 @@ impl PreferExportFrom {
 
         let mut parent_nodes: Vec<&AstNode> =
             violations.iter().map(|v| ctx.nodes().get_node(v.export_node_id)).collect();
-        parent_nodes.sort_by_key(|node| node.span().start);
+        parent_nodes.sort_unstable_by_key(|node| node.span().start);
 
         let replace_export_spans: Vec<Span> = parent_nodes
             .iter()
@@ -947,7 +941,9 @@ impl PreferExportFrom {
         } else {
             // the new specifiers go just after the `{` of `export {} from '...'`
             let span = re_export.span();
-            let offset = fixer.find_next_token_within(span.start, span.end, "{").unwrap_or(0);
+            let offset = fixer
+                .find_next_token_within(span.start, span.end, "{")
+                .expect("export-from declaration span must contain an opening brace");
             Span::new(span.start, span.start + offset + 1)
         }
     }
@@ -1153,6 +1149,7 @@ fn find_corresponding_export<'a>(
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
     let source = import_decl.source.value.as_str();
+    let program = ctx.nodes().program();
 
     for requested_module in ctx.module_record().requested_modules.get(source)? {
         if requested_module.is_import {
@@ -1160,7 +1157,7 @@ fn find_corresponding_export<'a>(
         }
 
         let Some(export_decl) =
-            find_export_named_declaration_by_span(ctx, requested_module.statement_span)
+            find_export_named_declaration_by_span(program, requested_module.statement_span)
         else {
             continue;
         };
@@ -1180,17 +1177,14 @@ fn find_corresponding_export<'a>(
 }
 
 fn find_export_named_declaration_by_span<'a>(
-    ctx: &LintContext<'a>,
+    program: &'a Program<'a>,
     span: Span,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
-    ctx.nodes().iter().find_map(|node| {
-        if let AstKind::ExportFromDeclaration(export_decl) = node.kind()
-            && export_decl.span() == span
-        {
-            Some(export_decl)
-        } else {
-            None
-        }
+    program.body.iter().find_map(|statement| {
+        let Statement::ExportFromDeclaration(export_decl) = statement else {
+            return None;
+        };
+        (export_decl.span() == span).then_some(export_decl.as_ref())
     })
 }
 
@@ -1414,6 +1408,16 @@ fn test() {
         r#"import { foo } from "foo";
             export { foo };
             export type { bar } from "foo";"#,
+        // Multiple imports find their corresponding direct re-export.
+        r#"import { a } from "a";
+            import { b } from "b";
+            import { c } from "c";
+            export { existingA } from "a";
+            export { existingB } from "b";
+            export { existingC } from "c";
+            export { a };
+            export { b };
+            export { c };"#,
         r#"import { foo } from "foo";
             export { foo };
             export { type bar } from "foo";"#,

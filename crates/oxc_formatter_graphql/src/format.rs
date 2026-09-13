@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -25,49 +25,73 @@ pub fn format<'a>(
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<Formatted<'a, GraphqlFormatContext<'a>>, OxcDiagnostic> {
-    // Checked against the original input: `parse_document` strips the BOM
-    // before copying into the arena, so spans and gap scans never see it.
-    let has_bom = source_text.starts_with('\u{feff}');
-    let (document, source, comments) = parse_document(allocator, source_text)?;
+    let parsed = parse_for_format(allocator, source_text)?;
 
-    let context = GraphqlFormatContext::new(options, source, comments);
+    let context = GraphqlFormatContext::new(options, parsed.source, parsed.comments);
     let mut state = FormatState::new(context, allocator);
-    // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
-    let mut buffer = VecBuffer::new(&mut state);
+    // Pre-allocate: measured on 1,241 real-world files (gitlab operations, github/saleor schemas),
+    // 0.4x source bytes plus a 1024-element floor for small operation documents avoided reallocation for the entire corpus.
+    let capacity = (parsed.source.len() * 2 / 5).max(1024);
+    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
-    write!(&mut buffer, FormatGraphqlRoot { document, has_bom });
+    write!(&mut buffer, FormatGraphqlRoot { document: parsed.document, has_bom: parsed.has_bom });
 
     let elements = buffer.into_vec();
     let context = state.into_context();
 
     let ir = Document::new(elements, Vec::new());
-    ir.propagate_expand();
 
     Ok(Formatted::new(ir, context))
+}
+
+/// [`parse_for_format`] output: the AST, plus the envelope [`format()`] prints around it.
+pub struct ParsedGraphql<'a> {
+    pub document: &'a GraphQLDocument<'a>,
+    /// Sorted comment spans; oxc-graphql-parser keeps them out of the AST.
+    pub comments: &'a [Span],
+    /// Arena source every span indexes into.
+    source: &'a str,
+    has_bom: bool,
+}
+
+/// Parse `source_text` the way the formatter does, for callers that inspect the AST
+/// (e.g. a harness comparing what the source held against the formatted output).
+///
+/// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
+/// Owns the BOM split.
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn parse_for_format<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+) -> Result<ParsedGraphql<'a>, OxcDiagnostic> {
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
+    let (document, source, comments) = parse_document(allocator, source_text)?;
+    Ok(ParsedGraphql { document, comments, source, has_bom })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
 /// formatter's document (dispatcher path, e.g. graphql-in-js).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`,
+/// - allocates from the session's shared arena and `GroupId` space,
 ///   so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline (the parent owns the layout
 ///   around the embedded part, matching Prettier's `textToDoc` + `stripTrailingHardline` behavior)
-/// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
 /// # Errors
 /// Same as [`format()`]: any parse error bails out.
 pub fn format_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    let allocator = ctx.allocator;
+    let allocator = session.allocator();
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
-    let mut state = FormatState::new(context, allocator);
+    let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
 
     write!(&mut buffer, FormatGraphqlEmbedded { document });
@@ -79,15 +103,13 @@ pub fn format_to_ir<'a>(
 /// Parse the source into a direct AST and collect comment trivia,
 /// bailing out on any parse error.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`,
-/// stripping any BOM first so offset-based scans never see it
-/// (the caller re-emits it from `has_bom`).
+/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Entries own the BOM strip; this layer assumes BOM-free (see [`oxc_formatter_core::spec::split_bom`]).
 fn parse_document<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<(&'a GraphQLDocument<'a>, &'a str, &'a [Span]), OxcDiagnostic> {
-    let source: &'a str =
-        allocator.alloc_str(source_text.strip_prefix('\u{feff}').unwrap_or(source_text));
+    let source: &'a str = allocator.alloc_str(source_text);
 
     // Opt-in graphql-js 17 syntax
     let ast = Parser::new(allocator, source).experimental_fragment_arguments(true).parse();

@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 74/74 (100.00%)
-Positive Passed: 74/74 (100.00%)
-Negative Passed: 155/155 (100.00%)
+AST Parsed     : 108/108 (100.00%)
+Positive Passed: 108/108 (100.00%)
+Negative Passed: 218/218 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -136,6 +136,90 @@ Negative Passed: 155/155 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[misc/fail/arrow-block-body-in-context.js:1:6]
+ 1 │ for (var f = () => {}, value = a in b;;);
+   ·      ───────────────────────────
+   ╰────
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/arrow-block-body-in-context.js:1:38]
+ 1 │ for (var f = () => {}, value = a in b;;);
+   ·     ┬                                ┬
+   ·     │                                ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/arrow-expression-body-in.js:1:26]
+ 1 │ for (var f = () => a in b;;);
+   ·     ┬                    ┬
+   ·     │                    ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
+
+  × Illegal break statement
+   ╭─[misc/fail/arrow-function-jumps.js:1:25]
+ 1 │ while (true) { (() => { break; }); }
+   ·                         ──────
+ 2 │ 
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:3:38]
+ 2 │ 
+ 3 │ outer: while (true) { (() => { break outer; }); }
+   ·                                      ─────
+ 4 │ 
+   ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[misc/fail/arrow-function-jumps.js:5:25]
+ 4 │ 
+ 5 │ while (true) { (() => { continue; }); }
+   ·                         ─────────
+ 6 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+   ╭─[misc/fail/arrow-function-jumps.js:7:41]
+ 6 │ 
+ 7 │ outer: while (true) { (() => { continue outer; }); }
+   ·                                         ─────
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[misc/fail/async-field.js:1:11]
+ 1 │ class C { async x; }
+   ·           ─────
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[misc/fail/async-field.ts:1:11]
+ 1 │ class C { async x; }
+   ·           ─────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = await 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[misc/fail/auto-accessor-initializer-yield.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = yield 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
  3 │     {
@@ -143,6 +227,123 @@ Negative Passed: 155/155 (100.00%)
    ·       ─────
  5 │     }
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:2:3]
+ 1 │ function f() {
+ 2 │   await using x = null;
+   ·   ─────
+ 3 │   for (await using y = null; ; ) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:3:8]
+ 2 │   await using x = null;
+ 3 │   for (await using y = null; ; ) {}
+   ·        ─────
+ 4 │   for (await using z of []) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:4:8]
+ 3 │   for (await using y = null; ; ) {}
+ 4 │   for (await using z of []) {}
+   ·        ─────
+ 5 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/await-using-context.js:8:3]
+ 7 │ function* g() {
+ 8 │   await using x = null;
+   ·   ─────
+ 9 │   for (await using y = null; ; ) {}
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/await-using-context.js:9:8]
+  8 │   await using x = null;
+  9 │   for (await using y = null; ; ) {}
+    ·        ─────
+ 10 │   for (await using z of []) {}
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[misc/fail/await-using-context.js:10:8]
+  9 │   for (await using y = null; ; ) {}
+ 10 │   for (await using z of []) {}
+    ·        ─────
+ 11 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × Expected `;` but found `,`
+   ╭─[misc/fail/class-field-comma-expression.js:1:16]
+ 1 │ class C { x = a,b }
+   ·                ┬
+   ·                ╰── `;` expected
+   ╰────
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-left-and.js:1:1]
+ 1 │ a && b ?? (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-left-or.js:1:1]
+ 1 │ a || b ?? (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-right-and.js:1:1]
+ 1 │ a ?? b && (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-final-right-or.js:1:1]
+ 1 │ a ?? b || (c);
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-left-and.js:1:1]
+ 1 │ (a) && b ?? c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-left-or.js:1:1]
+ 1 │ (a) || b ?? c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-right-and.js:1:1]
+ 1 │ a ?? (b) && c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[misc/fail/coalesce-partial-parens-right-or.js:1:1]
+ 1 │ a ?? (b) || c;
+   · ─────────────
+   ╰────
+  help: Wrap either expression by parentheses
 
   × Cannot use export statement outside a module
    ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
@@ -174,6 +375,68 @@ Negative Passed: 155/155 (100.00%)
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × TS(1093): Type annotation cannot appear on a constructor declaration.
+   ╭─[misc/fail/constructor-overload-return-type.ts:2:18]
+ 1 │ class C {
+ 2 │   constructor(): C;
+   ·                  ─
+ 3 │   constructor() {}
+   ╰────
+
+  × Expected `)` but found `:`
+   ╭─[misc/fail/contextual-binding-lookahead-function-reserved.ts:1:15]
+ 1 │ let fn: (break: number) => void;
+   ·               ┬
+   ·               ╰── `)` expected
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:2:18]
+ 1 │ function* generatorInterface() {
+ 2 │   interface I { [yield: string]: unknown }
+   ·                  ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:5:14]
+ 4 │ function* generatorClass() {
+ 5 │   class C { [yield: string]: unknown }
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[misc/fail/contextual-binding-lookahead-index-context.ts:8:14]
+ 7 │ async function asyncClass() {
+ 8 │   class C { [await: string]: unknown }
+   ·              ─────
+ 9 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-modifier.ts:1:23]
+ 1 │ interface I { [public await: string]: unknown }
+   ·                       ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/contextual-binding-lookahead-index-reserved.ts:1:16]
+ 1 │ interface I { [break: string]: unknown }
+   ·                ─────
+   ╰────
+
+  × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+   ╭─[misc/fail/continue-label-chain-non-iteration.js:1:1]
+ 1 │ a: b: {
+   · ┬
+   · ╰── This is an non-iteration statement
+ 2 │     continue a;
+   ·              ┬
+   ·              ╰── for this label
+ 3 │ }
+   ╰────
+
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
@@ -196,12 +459,154 @@ Negative Passed: 155/155 (100.00%)
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
 
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:1:24]
+ 1 │ class DuplicateField { #x; x; #x; }
+   ·                        ─┬     ─┬
+   ·                         │      ╰── It can not be redeclared here
+   ·                         ╰── `#x` has already been declared here
+ 2 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:3:29]
+ 2 │ 
+ 3 │ class DuplicateGetter { get #x() {} set #x(value) {} get #x() {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+ 4 │ 
+   ╰────
+
+  × Identifier `#x` has already been declared
+   ╭─[misc/fail/duplicate-private-declarations.js:5:29]
+ 4 │ 
+ 5 │ class DuplicateSetter { set #x(value) {} get #x() {} set #x(value) {} }
+   ·                             ─┬                           ─┬
+   ·                              │                            ╰── It can not be redeclared here
+   ·                              ╰── `#x` has already been declared here
+   ╰────
+
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[misc/fail/escape-00.js:1:25]
  1 │ export const escape00 = "\00";
    ·                         ─────
    ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:1:8]
+ 1 │ import s\u006furce wasm from "m";
+   ·        ───────────
+ 2 │ import d\u0065fer * as ns from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:2:8]
+ 1 │ import s\u006furce wasm from "m";
+ 2 │ import d\u0065fer * as ns from "m";
+   ·        ──────────
+ 3 │ import source fr\u006fm "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:3:15]
+ 2 │ import d\u0065fer * as ns from "m";
+ 3 │ import source fr\u006fm "m";
+   ·               ─────────
+ 4 │ import s\u006furce from from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-import-phase.js:4:8]
+ 3 │ import source fr\u006fm "m";
+ 4 │ import s\u006furce from from "m";
+   ·        ───────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:1:8]
+ 1 │ import t\u0079pe Foo = require("m");
+   ·        ─────────
+ 2 │ import t\u0079pe { x } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:2:8]
+ 1 │ import t\u0079pe Foo = require("m");
+ 2 │ import t\u0079pe { x } from "m";
+   ·        ─────────
+ 3 │ import t\u0079pe * as ns from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:3:8]
+ 2 │ import t\u0079pe { x } from "m";
+ 3 │ import t\u0079pe * as ns from "m";
+   ·        ─────────
+ 4 │ import { t\u0079pe Bar } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:4:10]
+ 3 │ import t\u0079pe * as ns from "m";
+ 4 │ import { t\u0079pe Bar } from "m";
+   ·          ─────────
+ 5 │ import t\u0079pe fr\u006fm "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-import.ts:5:18]
+ 4 │ import { t\u0079pe Bar } from "m";
+ 5 │ import t\u0079pe fr\u006fm "m";
+   ·                  ─────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:1:10]
+ 1 │ import { t\u0079pe as as x } from "m";
+   ·          ─────────
+ 2 │ export { t\u0079pe Foo };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:2:10]
+ 1 │ import { t\u0079pe as as x } from "m";
+ 2 │ export { t\u0079pe Foo };
+   ·          ─────────
+ 3 │ export { t\u0079pe as };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:3:10]
+ 2 │ export { t\u0079pe Foo };
+ 3 │ export { t\u0079pe as };
+   ·          ─────────
+ 4 │ export { t\u0079pe as as x };
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:4:10]
+ 3 │ export { t\u0079pe as };
+ 4 │ export { t\u0079pe as as x };
+   ·          ─────────
+ 5 │ export { t\u0079pe Foo } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:5:10]
+ 4 │ export { t\u0079pe as as x };
+ 5 │ export { t\u0079pe Foo } from "m";
+   ·          ─────────
+ 6 │ export { t\u0079pe as as x } from "m";
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-type-specifier.ts:6:10]
+ 5 │ export { t\u0079pe Foo } from "m";
+ 6 │ export { t\u0079pe as as x } from "m";
+   ·          ─────────
+   ╰────
 
   × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[misc/fail/exponentiation-left-operands.ts:1:1]
@@ -244,6 +649,131 @@ Negative Passed: 155/155 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-eof.js:2:1]
+ 1 │ export {} from
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-newline.js:2:1]
+ 1 │ export {} from
+ 2 │ foo();
+   · ───
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/export-from-missing-source-semicolon.js:1:15]
+ 1 │ export {} from;
+   ·               ─
+   ╰────
+
+  × Invalid escape sequence
+   ╭─[misc/fail/export-from-prior-lexer-error.js:1:11]
+ 1 │ export { "\xG" as foo } from
+   ·           ──
+   ╰────
+
+  × Unterminated multiline comment
+   ╭─[misc/fail/export-from-unterminated-comment.js:1:16]
+ 1 │ export {} from /*
+   ·                ───
+   ╰────
+
+  × Unterminated string
+   ╭─[misc/fail/export-from-unterminated-source.js:1:16]
+ 1 │ export {} from "
+   ·                ──
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an await using declaration.
+   ╭─[misc/fail/for-await-using-in-initializer.js:2:8]
+ 1 │ async function f() {
+ 2 │   for (await using x = a in b;;);
+   ·        ─────────────────
+ 3 │ }
+   ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/for-await-using-in-initializer.js:2:30]
+ 1 │ async function f() {
+ 2 │   for (await using x = a in b;;);
+   ·       ┬                      ┬
+   ·       │                      ╰── `)` expected
+   ·       ╰── Opened here
+ 3 │ }
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x = 0;;);
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-in-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x in {});
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/for-of-escaped-let-declaration.cjs:1:15]
+ 1 │ for (l\u0065t x of []);
+   ·               ┬
+   ·               ╰── `;` expected
+   ╰────
+
+  × The left-hand side of a for...in statement cannot be an using declaration.
+   ╭─[misc/fail/for-using-in-initializer.js:1:6]
+ 1 │ for (using x = a in b;;);
+   ·      ───────────
+   ╰────
+  help: Did you mean to use a for...of statement?
+
+  × Expected `)` but found `;`
+   ╭─[misc/fail/for-using-in-initializer.js:1:22]
+ 1 │ for (using x = a in b;;);
+   ·     ┬                ┬
+   ·     │                ╰── `)` expected
+   ·     ╰── Opened here
+   ╰────
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:1:16]
+ 1 │ class C { get x(...args) {} }
+   ·                ─────────
+ 2 │ ({ get x(...args) {} });
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:2:9]
+ 1 │ class C { get x(...args) {} }
+ 2 │ ({ get x(...args) {} });
+   ·         ─────────
+ 3 │ interface I { get x(...args: any[]): string }
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:3:20]
+ 2 │ ({ get x(...args) {} });
+ 3 │ interface I { get x(...args: any[]): string }
+   ·                    ────────────────
+ 4 │ type T = { get x(...args: any[]): string };
+   ╰────
+  help: Remove these parameters here
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[misc/fail/getter-rest-parameter.ts:4:17]
+ 3 │ interface I { get x(...args: any[]): string }
+ 4 │ type T = { get x(...args: any[]): string };
+   ·                 ────────────────
+   ╰────
+  help: Remove these parameters here
 
   × HTML comments are not allowed in modules
    ╭─[misc/fail/html-comment-in-module.mjs:1:1]
@@ -503,6 +1033,40 @@ Negative Passed: 155/155 (100.00%)
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:1:5]
+ 1 │ <A>{a, b}</A>;
+   ·     ────
+ 2 │ <A x={a, b} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:2:7]
+ 1 │ <A>{a, b}</A>;
+ 2 │ <A x={a, b} />;
+   ·       ────
+ 3 │ <A>{(a, b), c}</A>;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:3:5]
+ 2 │ <A x={a, b} />;
+ 3 │ <A>{(a, b), c}</A>;
+   ·     ─────────
+ 4 │ <A x={(a, b), c} />;
+   ╰────
+  help: Did you mean to write an array?
+
+  × TS(18007): JSX expressions may not use the comma operator
+   ╭─[misc/fail/jsx-unparenthesized-comma.jsx:4:7]
+ 3 │ <A>{(a, b), c}</A>;
+ 4 │ <A x={(a, b), c} />;
+   ·       ─────────
+   ╰────
+  help: Did you mean to write an array?
+
   × The keyword 'let' is reserved
    ╭─[misc/fail/let-member-expression.js:4:1]
  3 │ 
@@ -600,15 +1164,6 @@ Negative Passed: 155/155 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-10503.ts:4:6]
- 3 │ 
- 4 │ await using
-   ·      ▲
- 5 │ foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]
@@ -3780,6 +4335,18 @@ Negative Passed: 155/155 (100.00%)
    ╰────
   help: Wrap this with parenthesis
 
+  × Expected `]` but found `EOF`
+   ╭─[misc/fail/oxc-23670.ts:2:1]
+ 1 │ <[m?,
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-23681.js:4:7]
+ 3 │ var prefix = 'fas';
+ 4 │ export()s.height = height;
+   ·       ─
+   ╰────
+
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]
  19 │ export type LocalInterface =
@@ -3903,6 +4470,62 @@ Negative Passed: 155/155 (100.00%)
  22 │ }
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-const-initializer.js:1:6]
+ 1 │ for (const a = 1 in b);
+   ·      ───────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-let-initializer.js:1:6]
+ 1 │ for (let a = 1 in b);
+   ·      ─────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-strict-var-initializer.cjs:3:6]
+ 2 │ "use strict";
+ 3 │ for (var a = 1 in b);
+   ·      ─────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-var-array-pattern-initializer.js:1:6]
+ 1 │ for (var [a] = [] in b);
+   ·      ────────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[misc/fail/oxc-25149-var-object-pattern-initializer.js:1:6]
+ 1 │ for (var { a } = {} in b);
+   ·      ──────────────
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[misc/fail/oxc-25692.ts:2:16]
+ 1 │ class A {
+ 2 │   'constructor'<T>() {}
+   ·                ───
+ 3 │ }
+   ╰────
+  help: Instead, add type parameters to the class itself
+
+  × Constructor can't have get/set modifier
+   ╭─[misc/fail/oxc-25692.ts:6:7]
+ 5 │ class B {
+ 6 │   get 'constructor'<T>() {}
+   ·       ─────────────
+ 7 │ }
+   ╰────
+
+  × TS(1094): An accessor cannot have type parameters.
+   ╭─[misc/fail/oxc-25692.ts:6:20]
+ 5 │ class B {
+ 6 │   get 'constructor'<T>() {}
+   ·                    ───
+ 7 │ }
+   ╰────
 
   × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
@@ -4156,6 +4779,22 @@ Negative Passed: 155/155 (100.00%)
    ╰────
   help: Expected an identifier, like `...rest`.
 
+  × await expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:1:26]
+ 1 │ async function f(...[x = await 0]) {}
+   ·                          ───┬───
+   ·                             ╰── await expression not allowed in formal parameter
+ 2 │ function* g(...[x = yield 0]) {}
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[misc/fail/rest-parameter-default-await-yield.js:2:21]
+ 1 │ async function f(...[x = await 0]) {}
+ 2 │ function* g(...[x = yield 0]) {}
+   ·                     ───┬───
+   ·                        ╰── yield expression not allowed in formal parameter
+   ╰────
+
   × 'using' declarations are not allowed at the top level of a script
    ╭─[misc/fail/script-top-level-using.js:2:1]
  1 │ // 'using' is not allowed at top level in scripts
@@ -4182,6 +4821,119 @@ Negative Passed: 155/155 (100.00%)
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
 
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-class-untyped.ts:1:18]
+ 1 │ class C { f(this x: T) {} }
+   ·                  ┬
+   ·                  ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-class.ts:1:21]
+ 1 │ class C { f(this: T x: T) {} }
+   ·                     ┬
+   ·                     ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-function-type.ts:1:19]
+ 1 │ type F = (this: T x: T) => void;
+   ·                   ┬
+   ·                   ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-function.ts:1:20]
+ 1 │ function f(this: T x: T) {}
+   ·                    ┬
+   ·                    ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[misc/fail/this-parameter-missing-comma-interface.ts:1:25]
+ 1 │ interface I { f(this: T x: T): void }
+   ·                         ┬
+   ·                         ╰── `,` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-abstract-constructor-type-colon-separator.ts:1:26]
+ 1 │ type F = abstract new () : number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-abstract-constructor-type-missing-separator.ts:1:27]
+ 1 │ type F = abstract new ()  number;
+   ·                           ───┬──
+   ·                              ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-abstract-constructor-type-plus-separator.ts:1:26]
+ 1 │ type F = abstract new () + number;
+   ·                          ┬
+   ·                          ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-constructor-type-colon-separator.ts:1:17]
+ 1 │ type F = new () : number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `number`
+   ╭─[misc/fail/ts-constructor-type-missing-separator.ts:1:18]
+ 1 │ type F = new ()  number;
+   ·                  ───┬──
+   ·                     ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-constructor-type-plus-separator.ts:1:17]
+ 1 │ type F = new () + number;
+   ·                 ┬
+   ·                 ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `:`
+   ╭─[misc/fail/ts-function-type-colon-separator.ts:1:13]
+ 1 │ type F = () : number;
+   ·             ┬
+   ·             ╰── `=>` expected
+   ╰────
+
+  × Expected `=>` but found `+`
+   ╭─[misc/fail/ts-function-type-plus-separator.ts:1:13]
+ 1 │ type F = () + number;
+   ·             ┬
+   ·             ╰── `=>` expected
+   ╰────
+
+  × TS(1009): Trailing comma not allowed.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]
+ 1 │ interface A extends B, {}
+   ·                      ─
+ 2 │ interface B extends this {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:2:21]
+ 1 │ interface A extends B, {}
+ 2 │ interface B extends this {}
+   ·                     ────
+ 3 │ interface C extends this.D {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:3:21]
+ 2 │ interface B extends this {}
+ 3 │ interface C extends this.D {}
+   ·                     ──────
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]
  3 │ // so the trailing `*` still makes the assertion impossible to erase. Syntax error.
@@ -4205,6 +4957,44 @@ Negative Passed: 155/155 (100.00%)
    ·                                 ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1266): An optional element cannot follow a rest element.
+   ╭─[misc/fail/tuple-named-rest.ts:1:27]
+ 1 │ type OptionalAfterRest = [...a: string[], b?: number];
+   ·                           ───────┬──────  ─────┬────
+   ·                                  │             ╰── Optional element here
+   ·                                  ╰── Rest element seen here
+ 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
+   ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+   ╭─[misc/fail/tuple-named-rest.ts:2:23]
+ 1 │ type OptionalAfterRest = [...a: string[], b?: number];
+ 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
+   ·                       ───────┬──────  ───────┬──────
+   ·                              │               ╰── Second rest element here
+   ·                              ╰── First seen here
+ 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
+   ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+   ╭─[misc/fail/tuple-named-rest.ts:3:35]
+ 2 │ type RestAfterRest = [...a: string[], ...b: number[]];
+ 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
+   ·                                   ─────┬─────  ───────┬──────
+   ·                                        │              ╰── Second rest element here
+   ·                                        ╰── First seen here
+ 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
+   ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+   ╭─[misc/fail/tuple-named-rest.ts:4:35]
+ 3 │ type NamedRestAfterUnnamedRest = [...string[], ...b: number[]];
+ 4 │ type UnnamedRestAfterNamedRest = [...a: string[], ...number[]];
+   ·                                   ───────┬──────  ─────┬─────
+   ·                                          │             ╰── Second rest element here
+   ·                                          ╰── First seen here
+   ╰────
 
   × TS(8011): Type arguments can only be used in TypeScript files.
    ╭─[misc/fail/type-arguments-in-js.js:1:18]

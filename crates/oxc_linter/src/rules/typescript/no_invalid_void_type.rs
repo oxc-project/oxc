@@ -136,7 +136,7 @@ declare_oxc_lint!(
 
 impl Rule for NoInvalidVoidType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -280,14 +280,13 @@ fn get_generic_type_argument_name<'a>(
             Some(ctx.source_range(class_implements.expression.span()))
         }
         AstKind::TSInterfaceHeritage(interface_heritage) => {
-            Some(ctx.source_range(interface_heritage.expression.span()))
+            Some(ctx.source_range(interface_heritage.type_name.span()))
         }
         AstKind::Class(class) => class
-            .super_type_arguments
-            .as_ref()
+            .heritage_type_arguments()
             .filter(|type_arguments| type_arguments.span == type_arguments_span)
             .and_then(|_| {
-                class.super_class.as_ref().map(|super_class| ctx.source_range(super_class.span()))
+                class.heritage_expression().map(|super_class| ctx.source_range(super_class.span()))
             }),
         _ => None,
     }

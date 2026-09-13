@@ -1,14 +1,14 @@
 use oxc_formatter_core::{
     Buffer,
-    builders::{empty_line, hard_line_break, space, text},
+    builders::{hard_line_break, space, text},
     write,
 };
 use oxc_yaml_parser::ast::{Directive, Document, Root};
 
 use crate::{
     comments::{
-        Gap, SourceComment, classify_gap, flush_leading_comments, gap_upper_bound,
-        is_suppressed_last_before, write_blank_preserving_break, write_single_comment,
+        flush_leading_comments, gap_anchor_after_consumed, gap_upper_bound,
+        is_suppressed_last_before, write_blank_preserving_break, write_end_comments,
         write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
@@ -24,7 +24,7 @@ use crate::{
 /// Returns whether the stream ends with a keep-chomped block scalar (computed here anyway),
 /// so `format()` doesn't re-walk the tree for its final newline.
 pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool {
-    let keep_chomped_tail = ends_with_keep_chomped_block(root);
+    let keep_chomped_tail = ends_with_keep_chomped_block(root, f);
     let documents = root.children.as_slice();
 
     for (i, document) in documents.iter().enumerate() {
@@ -66,7 +66,7 @@ pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool
 /// Must be taken BEFORE the end comments themselves are drained,
 /// that take advances the consumed cursor past them, corrupting the clamp.
 fn document_end_comment_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_>) -> u32 {
-    f.context().comments().gap_anchor_after_consumed(document_gap_anchor(document, f))
+    gap_anchor_after_consumed(document_gap_anchor(document, f), f)
 }
 
 /// The gap-measurement anchor after a document: its `...` marker,
@@ -95,31 +95,6 @@ fn write_document_separator<'a>(
     let anchor = document_gap_anchor(prev, f);
     let upper_bound = gap_upper_bound(next.span.start, f);
     write_blank_preserving_break(anchor, upper_bound, f);
-}
-
-/// Writes a document body's end comments, one per line, preserving the source's blank lines (normalized to one).
-/// In front of the first comment (measured from `anchor`) and between consecutive comments alike.
-/// See [`write_document_separator`] for the deliberate non-follow.
-fn write_end_comments(
-    anchor: Option<u32>,
-    comments: &[SourceComment],
-    f: &mut YamlFormatter<'_, '_>,
-) {
-    let source = f.context().source_text();
-    for (i, comment) in comments.iter().enumerate() {
-        let span = comment.span;
-        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].span.end) };
-        let blank = prev_end.is_some_and(|prev_end| {
-            prev_end < span.start
-                && classify_gap(source.bytes_range(prev_end, span.start)) == Gap::Blank
-        });
-        if blank {
-            write!(f, empty_line());
-        } else {
-            write!(f, hard_line_break());
-        }
-        write_single_comment(span, f);
-    }
 }
 
 /// Prettier's `shouldPrintDocumentEndMarker`:

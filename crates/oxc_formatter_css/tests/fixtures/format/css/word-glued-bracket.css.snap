@@ -24,7 +24,7 @@ d {
 }
 /* the glue is kept for ANY typed left neighbor; `var(--x)[0]` DIVERGES from
    Prettier (`var(--x) [0]`, a word-lexing artifact of `[` not extending a word
-   across `)`) — see "Known divergences". `2*[0]` is token-soup math (raw
+   across `)`) — see DIVERGENCES.md "value-glued-bracket". `2*[0]` is token-soup math (raw
    tokens, not a typed bracket) and its spacing matches Prettier */
 e {
   width: var(--x)[0];
@@ -57,7 +57,7 @@ d {
 }
 /* the glue is kept for ANY typed left neighbor; `var(--x)[0]` DIVERGES from
    Prettier (`var(--x) [0]`, a word-lexing artifact of `[` not extending a word
-   across `)`) — see "Known divergences". `2*[0]` is token-soup math (raw
+   across `)`) — see DIVERGENCES.md "value-glued-bracket". `2*[0]` is token-soup math (raw
    tokens, not a typed bracket) and its spacing matches Prettier */
 e {
   width: var(--x)[0];
@@ -89,7 +89,7 @@ d {
 }
 /* the glue is kept for ANY typed left neighbor; `var(--x)[0]` DIVERGES from
    Prettier (`var(--x) [0]`, a word-lexing artifact of `[` not extending a word
-   across `)`) — see "Known divergences". `2*[0]` is token-soup math (raw
+   across `)`) — see DIVERGENCES.md "value-glued-bracket". `2*[0]` is token-soup math (raw
    tokens, not a typed bracket) and its spacing matches Prettier */
 e {
   width: var(--x)[0];

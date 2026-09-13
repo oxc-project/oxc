@@ -1,10 +1,8 @@
-use std::cell::Cell;
-
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format, LINE_TERMINATORS, SourceText, arena_cow_str,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    Buffer, Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
+    builders::{empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text},
     normalize_newlines,
     spec::is_suppression_marker,
     write,
@@ -20,65 +18,21 @@ use crate::{
     print::{JsonFormatter, format_with},
 };
 
-/// Cursor over a sorted comment list that hands out unprinted slices in span order.
+/// Cursor over the sorted comment list.
+pub type Comments<'a> = SpanCursor<'a, Comment>;
+
+/// Emit comment content without its surrounding placement.
+/// Re-aligns interior `*`-prefixed lines with the opening `/*`.
 ///
-/// `cursor` is a [`Cell`] so the API works through `&self`, allowing simultaneous
-/// borrows alongside other context fields. The `Format` trait dispatches via `&self`,
-/// so a `&mut Comments` accessor would force every drain site to go through
-/// `f.context_mut()` and conflict with read-only context accesses.
-pub struct Comments<'a> {
-    inner: &'a [Comment],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [Comment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [Comment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [Comment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor, callers that want to mark these as
-    /// printed must call [`Self::take_before`] instead.
-    ///
-    /// Mirrors `oxc_formatter::formatter::comments::Comments::comments_before_iter`
-    /// so suppression / leading-comment checks can compose `.any(...)` / `.next()` directly and short-circuit.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = &'a Comment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().take_while(move |c| c.span.end <= upper_bound)
-    }
-}
-
-/// Emit a single comment, re-aligning interior `*`-prefixed lines
-/// so the stars line up with the opening `/*` regardless of the source's original indentation.
-///
-/// Mirrors `oxc_formatter`'s `impl Format for Comment` (`formatter/trivia.rs`):
+/// Mirrors `oxc_formatter`'s `FormatCommentText` (`formatter/trivia.rs`):
 /// - Single-line comments (line and one-line block) emit as-is (trim trailing whitespace).
-/// - Multi-line block comments whose interior lines all start with `*` (an
-///   "indentable" / JSDoc-shaped comment) split into lines; the first is emitted
-///   trimmed, and each subsequent line as `[hard_line_break, " ", trimmed]` so
-///   the surrounding indent context re-indents the stars.
-/// - Other multi-line block comments normalize `\r\n` → `\n` but otherwise stay
-///   verbatim; their first line still gets its trailing whitespace trimmed.
-pub fn write_single_comment(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
+/// - Multi-line block comments whose interior lines all start with `*`
+///   (an "indentable" / JSDoc-shaped comment) split into lines;
+///   the first is emitted trimmed, and each subsequent line as `[hard_line_break, " ", trimmed]`
+///   so the surrounding indent context re-indents the stars.
+/// - Other multi-line block comments normalize `\r\n` → `\n` but otherwise stay verbatim;
+///   their first line still gets its trailing whitespace trimmed.
+fn write_comment_text(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
     let content = f.context().source_text().text_for(&comment.span);
 
     if !comment.is_multiline_block() {
@@ -107,6 +61,61 @@ pub fn write_single_comment(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
     }
 }
 
+/// A comment written in place:
+/// a line comment ends its line, a block comment gets nothing after.
+/// Callers today pass block comments only; the line branch keeps the contract uniform.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatCommentBeforeContent(Comment);
+
+impl FormatCommentBeforeContent {
+    pub const fn new(comment: Comment) -> Self {
+        Self(comment)
+    }
+}
+
+impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent {
+    fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
+        write_comment_text(&self.0, f);
+        if self.0.is_line() {
+            write!(f, [expand_parent(), hard_line_break()]);
+        }
+    }
+}
+
+/// A line comment deferred through `line_suffix`:
+/// cannot swallow later tokens, not measured.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatLineCommentSuffix {
+    comment: Comment,
+    leading_space: bool,
+}
+
+impl FormatLineCommentSuffix {
+    pub const fn new(comment: Comment) -> Self {
+        Self { comment, leading_space: false }
+    }
+
+    pub const fn with_leading_space(mut self) -> Self {
+        self.leading_space = true;
+        self
+    }
+}
+
+impl<'a> Format<'a, JsonFormatContext<'a>> for FormatLineCommentSuffix {
+    fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
+        debug_assert!(self.comment.is_line(), "expected a line comment");
+        let comment = self.comment;
+        let leading_space = self.leading_space;
+        let suffix = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
+            write!(f, maybe_space(leading_space));
+            write_comment_text(&comment, f);
+        });
+        write!(f, line_suffix(&suffix));
+    }
+}
+
 /// Returns `true` if every line after the first starts with `*`.
 /// (after stripping leading whitespace)
 /// These comments are "alignable":
@@ -125,7 +134,7 @@ pub fn write_leading_comments(
 ) {
     let source = f.context().source_text();
     for (i, comment) in comments.iter().enumerate() {
-        write_single_comment(comment, f);
+        write_comment_text(comment, f);
         let next_pos = comments.get(i + 1).map_or(value_start, |c| c.span.start);
         write_gap(source.bytes_range(comment.span.end, next_pos), f);
     }
@@ -222,7 +231,7 @@ pub fn write_dangling_comments(comments: &[Comment], f: &mut JsonFormatter<'_, '
         if i > 0 {
             write!(f, hard_line_break());
         }
-        write_single_comment(comment, f);
+        write_comment_text(comment, f);
     }
 }
 
@@ -250,12 +259,12 @@ pub fn write_trailing_inside_comments(
             // so `[a, // comment -> ]` doesn't collapse.
             let content = format_with(move |f: &mut JsonFormatter<'_, '_>| {
                 write_gap(gap, f);
-                write_single_comment(comment, f);
+                write_comment_text(comment, f);
             });
             write!(f, [line_suffix(&content), expand_parent()]);
         } else {
             write_gap(gap, f);
-            write_single_comment(comment, f);
+            write_comment_text(comment, f);
         }
         prev_end = comment.span.end;
     }
@@ -300,7 +309,7 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool
 /// `before` is typically the next AST node's `span.start`.
 pub fn is_suppressed_before(f: &JsonFormatter<'_, '_>, before: u32) -> bool {
     let source = f.context().source_text();
-    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, c))
+    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, &c))
 }
 
 /// `Format` adapter that emits a node's leading comments, then the node's source

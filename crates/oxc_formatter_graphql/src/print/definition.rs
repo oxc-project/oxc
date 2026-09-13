@@ -14,10 +14,7 @@ use oxc_graphql_parser::ast::{
     RootOperationTypeDefinition, SchemaDefinition, SchemaExtension, StringValue,
 };
 
-use crate::comments::{
-    flush_trailing_comment_before, flush_trailing_comment_before_break,
-    flush_trailing_inside_comments,
-};
+use crate::comments::{flush_trailing_comment_before, flush_trailing_inside_comments};
 
 use super::{
     GraphqlFormatter, SeparatorKind, common,
@@ -316,8 +313,8 @@ fn write_braced_body<'a, T, F>(
     T: Spanned,
     F: Fn(usize, &mut GraphqlFormatter<'_, 'a>),
 {
-    // `{ # c`: keep the comment on the `{` line; the block indent breaks after it
-    flush_trailing_comment_before_break(items[0].span().start, f);
+    // `{ # c`: the comment leads the first item (own line), as after every opener
+    // (DIVERGENCES.md "fields-block-opener-comment": Prettier keeps it on the `{` line here).
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, items, SeparatorKind::Hard, true, &write_item);
         if let Some(last_end) = last_end {

@@ -25,6 +25,10 @@ impl TestRunner {
         let content = if output.stderr.is_empty() { output.stdout } else { output.stderr };
         let output = String::from_utf8(content).unwrap();
         let output = version + &output;
-        self.snapshot.save(dest, &output);
+        if self.options.should_update_snapshots() {
+            self.snapshot.save(dest, &output);
+        } else {
+            print!("{output}");
+        }
     }
 }

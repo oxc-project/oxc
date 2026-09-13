@@ -44,7 +44,8 @@ impl<'a> AstKind<'a> {
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_) | Self::TSGlobalDeclaration(_)
+        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSExternalModuleDeclaration(_)
+            | Self::TSNamespaceDeclaration(_) | Self::TSGlobalDeclaration(_)
             | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
             | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
         ) || self.is_module_declaration()
@@ -589,7 +590,10 @@ impl AstKind<'_> {
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
-            Self::TSModuleDeclaration(m) => format!("TSModuleDeclaration({})", m.id).into(),
+            Self::TSExternalModuleDeclaration(m) => {
+                format!("TSExternalModuleDeclaration({})", m.id).into()
+            }
+            Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),

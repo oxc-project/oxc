@@ -13,6 +13,36 @@ use crate::ast::*;
 
 use super::{EmptyArray, Null};
 
+/// Preserve ESTree's nullable `superClass` field while the Rust AST groups class heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "Expression | null",
+    raw_deser = "DESER[Option<Expression>](POS_OFFSET.heritage)"
+)]
+pub struct ClassSuperClass<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperClass<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_expression().serialize(serializer);
+    }
+}
+
+/// Preserve TS-ESTree's nullable `superTypeArguments` field while the Rust AST groups class
+/// heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameterInstantiation | null",
+    raw_deser = "THIS.superClass === null ? null : DESER[Option<Box<TSTypeParameterInstantiation>>](POS_OFFSET.heritage + (POS_OFFSET<ClassHeritage>.type_arguments - pos))"
+)]
+#[ts]
+pub struct ClassSuperTypeArguments<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperTypeArguments<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_type_arguments().serialize(serializer);
+    }
+}
+
 // ----------------------------------------
 // Meta properties
 // ----------------------------------------
@@ -251,6 +281,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     raw_deser = "
         const pattern = DESER[BindingPattern](POS_OFFSET.id);
         if (IS_TS) {
+            let start, end;
             const previousParent = parent;
             if (PARENT) parent = pattern;
             const typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
@@ -331,9 +362,9 @@ impl ESTree for CatchParameterConverter<'_, '_> {
         if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
             pos = int32[restFieldPos32];
 
-            let start, end;
-            const previousParent = parent;
-            const rest = parent = {
+            let start, end,
+                previousParent = parent,
+                rest = parent = {
                 type: 'RestElement',
                 ...(IS_TS && { decorators: [] }),
                 argument: null,
@@ -349,14 +380,19 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             };
             rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
+                rest.decorators = DESER[Vec<Decorator>](POS_OFFSET<FormalParameterRest>.decorators);
+                if (rest.decorators.length !== 0) {
+                    start = rest.decorators[0].start;
+                }
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<FormalParameterRest>.type_annotation
                 );
                 if (rest.typeAnnotation !== null) {
                     end = rest.typeAnnotation.end;
-                    rest.end = end;
-                    if (RANGE) rest.range[1] = end;
                 }
+                rest.start = start;
+                rest.end = end;
+                if (RANGE) rest.range = [start, end];
             }
             params.push(rest);
             if (PARENT) parent = previousParent;
@@ -388,16 +424,12 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);
         state.serialize_ts_field("value", &Null(()));
-        state.serialize_span(
-            rest.type_annotation
-                .as_ref()
-                .map_or(rest.rest.span, |ta| rest.rest.span.merge(ta.span)),
-        );
+        state.serialize_span(rest.span);
         state.end();
     }
 }

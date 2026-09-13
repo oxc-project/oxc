@@ -24,14 +24,17 @@ fn fix_content_to_code_action(
     is_preferred: bool,
 ) -> CodeAction {
     CodeAction {
-        title: fixed_content.message,
+        title: fixed_content.message.into_owned(),
         kind: Some(CodeActionKind::QUICKFIX),
         is_preferred: Some(is_preferred),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
             changes: Some(std::collections::HashMap::from([(
                 uri,
-                vec![TextEdit { range: fixed_content.range, new_text: fixed_content.code }],
+                vec![TextEdit {
+                    range: fixed_content.range,
+                    new_text: fixed_content.code.into_owned(),
+                }],
             )])),
             ..WorkspaceEdit::default()
         }),
@@ -167,7 +170,10 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             continue;
         }
 
-        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
+        text_edits.push(TextEdit {
+            range: fixed_content.range,
+            new_text: fixed_content.code.into_owned(),
+        });
     }
 
     remove_overlapping_edits(text_edits)
@@ -187,7 +193,10 @@ fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) 
             continue;
         }
 
-        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
+        text_edits.push(TextEdit {
+            range: fixed_content.range,
+            new_text: fixed_content.code.into_owned(),
+        });
     }
 
     remove_overlapping_edits(text_edits)
@@ -241,8 +250,8 @@ mod tests {
         LinterCodeAction {
             range,
             fixed_content: vec![FixedContent {
-                message: "fix".to_string(),
-                code: String::new(),
+                message: "fix".into(),
+                code: "".into(),
                 range,
                 kind: FixKind::SafeFix,
                 lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),
@@ -284,8 +293,8 @@ mod tests {
         LinterCodeAction {
             range: Range::default(),
             fixed_content: vec![FixedContent {
-                message: "remove unused import".to_string(),
-                code: String::new(),
+                message: "remove unused import".into(),
+                code: "".into(),
                 range: Range::new(Position::new(0, 0), Position::new(0, 10)),
                 kind,
                 lsp_kind: FixedContentKind::LintRule(OxcCode { scope: None, number: None }),

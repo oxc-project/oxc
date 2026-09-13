@@ -7,7 +7,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "quoted": 2,
   "needs-quote": 3,
   "1.5": 4,
-  42: 5
+  42: 5,
+  nested: { inner: 6, "needs-quote": 7 }
 }
 
 ==================== Output ====================
@@ -20,6 +21,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "needs-quote": 3,
   "1.5": 4,
   42: 5,
+  nested: { inner: 6, "needs-quote": 7 },
 }
 
 -------------------------------------
@@ -31,6 +33,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "needs-quote": 3,
   "1.5": 4,
   42: 5,
+  nested: { inner: 6, "needs-quote": 7 },
 }
 
 ------------------------------------------------------------
@@ -42,6 +45,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "needs-quote": 3,
   "1.5": 4,
   42: 5,
+  nested: { inner: 6, "needs-quote": 7 },
 }
 
 -------------------------------------------------------------
@@ -53,6 +57,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "needs-quote": 3,
   "1.5": 4,
   42: 5,
+  nested: { inner: 6, "needs-quote": 7 },
 }
 
 --------------------------------------------------------------
@@ -64,6 +69,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "needs-quote": 3,
   "1.5": 4,
   "42": 5,
+  "nested": { "inner": 6, "needs-quote": 7 },
 }
 
 ---------------------------------------------------------------
@@ -75,6 +81,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "needs-quote": 3,
   "1.5": 4,
   "42": 5,
+  "nested": { "inner": 6, "needs-quote": 7 },
 }
 
 ===================== End =====================

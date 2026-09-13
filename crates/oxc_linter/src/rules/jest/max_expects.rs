@@ -20,7 +20,7 @@ declare_oxc_lint!(
 
 impl Rule for MaxExpects {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = serde_json::from_value::<DefaultRuleConfig<MaxExpectsConfig>>(value)?;
+        let config = DefaultRuleConfig::<MaxExpectsConfig>::from_value(value)?;
         Ok(Self(Box::new(config.into_inner())))
     }
 

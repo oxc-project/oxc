@@ -47,7 +47,12 @@ export function getDisableDirectives(): { problems: Problem[]; directives: Direc
   for (; i < comments.length; i++) {
     const comment = comments[i];
 
-    const match = LABEL_PATTERN.exec(comment.value);
+    const sepMatch = JUSTIFICATION_SEP_PATTERN.exec(comment.value);
+    const directivePart = (
+      sepMatch === null ? comment.value : comment.value.slice(0, sepMatch.index)
+    ).trim();
+
+    const match = LABEL_PATTERN.exec(directivePart);
     if (match === null) continue;
 
     const label = match[1];
@@ -63,16 +68,9 @@ export function getDisableDirectives(): { problems: Problem[]; directives: Direc
       continue;
     }
 
-    // Split text after the directive into rule list and justification (`rules -- justification`)
-    const rest = comment.value.slice(match[0].length).trim();
-    const sepMatch = JUSTIFICATION_SEP_PATTERN.exec(rest);
-
-    let value = rest;
-    let justification = "";
-    if (sepMatch !== null) {
-      value = rest.slice(0, sepMatch.index).trim();
-      justification = rest.slice(sepMatch.index + sepMatch[0].length).trim();
-    }
+    const value = directivePart.slice(match[0].length).trim();
+    const justification =
+      sepMatch === null ? "" : comment.value.slice(sepMatch.index + sepMatch[0].length).trim();
 
     directives.push({ type, node: comment, value, justification });
   }

@@ -123,7 +123,7 @@ fn check_and_fix<'a>(
         let param_text = build_expect_argument(expect_argument_mem_expr, fixer);
 
         let modifier_text =
-            parsed_expect_call.modifiers().iter().fold(String::new(), |mut acc, modifier| {
+            parsed_expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
                 use std::fmt::Write;
                 write!(&mut acc, ".{}", fixer.source_range(modifier.span)).unwrap();
                 acc

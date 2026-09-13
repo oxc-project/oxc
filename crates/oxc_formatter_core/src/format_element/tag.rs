@@ -21,6 +21,11 @@ pub enum Tag {
     StartAlign(Align),
     EndAlign,
 
+    /// Prints a string after the indention on every line break inside the content
+    /// (Prettier's `align("> ", doc)`), see [crate::builders::prefix_align].
+    StartPrefix(Prefix),
+    EndPrefix,
+
     /// Reduces the indention of the specified content either by one level or to the root, depending on the mode.
     /// Reverse operation of `Indent` and can be used to *undo* an `Align` for nested content.
     StartDedent(DedentMode),
@@ -79,6 +84,7 @@ impl Tag {
             self,
             Tag::StartIndent
                 | Tag::StartAlign(_)
+                | Tag::StartPrefix(_)
                 | Tag::StartDedent(_)
                 | Tag::StartGroup { .. }
                 | Tag::StartConditionalContent(_)
@@ -99,14 +105,16 @@ impl Tag {
     pub const fn kind(&self) -> TagKind {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         match self {
             StartIndent | EndIndent => TagKind::Indent,
             StartAlign(_) | EndAlign => TagKind::Align,
+            StartPrefix(_) | EndPrefix => TagKind::Prefix,
             StartDedent(_) | EndDedent(_) => TagKind::Dedent,
             StartGroup(_) | EndGroup => TagKind::Group,
             StartConditionalContent(_) | EndConditionalContent => TagKind::ConditionalContent,
@@ -127,6 +135,7 @@ impl Tag {
 pub enum TagKind {
     Indent,
     Align,
+    Prefix,
     Dedent,
     Group,
     ConditionalContent,
@@ -245,6 +254,23 @@ impl Align {
     }
 
     pub fn count(&self) -> NonZeroU8 {
+        self.0
+    }
+}
+
+/// The string a [Tag::StartPrefix] prints after the indention on every new line.
+///
+/// Prefixes are syntax tokens (`"> "`, `" * "`), so `'static`;
+/// the double reference keeps the payload one pointer wide (see the size assertion in `format_element/mod.rs`).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Prefix(pub(crate) &'static &'static str);
+
+impl Prefix {
+    pub fn new(text: &'static &'static str) -> Self {
+        Self(text)
+    }
+
+    pub fn text(self) -> &'static str {
         self.0
     }
 }

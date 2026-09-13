@@ -1,7 +1,5 @@
-use std::cell::Cell;
-
 use oxc_formatter_core::{
-    Buffer, LINE_TERMINATORS, SourceText, arena_cow_str,
+    Buffer, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
     builders::{
         empty_line, expand_parent, hard_line_break, line_suffix, line_suffix_boundary, space, text,
     },
@@ -18,52 +16,9 @@ use crate::print::{GraphqlFormatter, format_with};
 /// so an insignificant comma-only line still counts as content (`a\n,\nb` has no blank line).
 pub use oxc_formatter_core::spec::{Gap, classify_gap};
 
-/// Cursor over a sorted comment-span list that hands out unprinted slices in span order.
-///
+/// Cursor over the sorted comment-span list.
 /// GraphQL comments are always single-line (`# ...` to end of line).
-///
-/// `cursor` is a [`Cell`] so the API works through `&self` (mirrors `oxc_formatter_json`'s `Comments`).
-pub struct Comments<'a> {
-    inner: &'a [Span],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [Span]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<Span> {
-        self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [Span] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [Span] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = Span> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.end <= upper_bound)
-    }
-}
+pub type Comments<'a> = SpanCursor<'a, Span>;
 
 /// Emit a single comment verbatim (trailing whitespace trimmed).
 /// Mirrors Prettier's `printComment`: `"#" + comment.value.trimEnd()`.
@@ -84,6 +39,24 @@ fn write_gap(gap: &[u8], f: &mut GraphqlFormatter<'_, '_>) {
 
 /// Emit comments that precede a node,
 /// preserving the source's vertical spacing (0/1/blank) between each comment and the next position.
+///
+/// NOTE: Known FORMATTER_POLICY violation ("own-line comments stay own-line"):
+/// the line break BEFORE the first comment is never reproduced,
+/// so an own-line comment claimed mid-line (right after `type`, `:`, `=`) inlines onto that line
+/// ```graphql
+/// type
+/// # c
+/// A { f: Int }
+///
+/// # ->
+///
+/// type # c
+/// A {
+///   f: Int
+/// }
+/// ```
+/// Kept for now: Prettier byte-compat outweighs the invariant
+/// (fixable in the existing IR: hardline before flushing at the claim points).
 fn write_leading_comments(comments: &[Span], value_start: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let source = f.context().source_text();
     for (i, &span) in comments.iter().enumerate() {
@@ -244,6 +217,9 @@ fn write_trailing_inside_comments<'a>(
 /// positions no printer claims (e.g. between a type and its `!`, or after the last argument's directives).
 /// Draining them here keeps the positional cursor monotonic,
 /// a later flush point would sit AFTER these comments in the source, making its gap range inverted (start > end).
+///
+/// The cost: the comments land after the node, possibly crossing remaining in-span tokens (e.g. a type's `!`).
+/// Known "never crosses user content" violation, accepted for monotonicity.
 pub fn flush_overlooked_inside_comments(upper_bound: u32, f: &mut GraphqlFormatter<'_, '_>) {
     let leftover = f.context().comments().take_before(upper_bound);
     write_trailing_inside_comments(leftover, None, f);

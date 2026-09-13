@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, TSSignature, TSType},
+    ast::{
+        CallExpression, ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression,
+        TSSignature, TSType,
+    },
 };
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -86,14 +89,22 @@ declare_oxc_lint!(
 
 impl Rule for MaxProps {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
-            self.run_on_setup(node, ctx);
-        } else {
-            self.run_on_options(node, ctx);
+        match node.kind() {
+            AstKind::CallExpression(call_expr)
+                if ctx.frameworks_options() == FrameworkOptions::VueSetup =>
+            {
+                self.run_on_setup(call_expr, ctx);
+            }
+            AstKind::ExportDefaultDeclaration(export_default_decl)
+                if ctx.frameworks_options() != FrameworkOptions::VueSetup =>
+            {
+                self.run_on_options(export_default_decl, ctx);
+            }
+            _ => {}
         }
     }
 
@@ -104,10 +115,7 @@ impl Rule for MaxProps {
 
 impl MaxProps {
     #[expect(clippy::cast_possible_truncation)] // the length of properties/arrays can't be over u32::MAX, because the source code is already limited by u32::MAX.
-    fn run_on_setup<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
+    fn run_on_setup<'a>(&self, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(ident) = call_expr.callee.get_identifier_reference() else {
             return;
         };
@@ -153,10 +161,11 @@ impl MaxProps {
     }
 
     #[expect(clippy::cast_possible_truncation)] // the length of properties can't be over u32::MAX, because the source code is already limited by u32::MAX.
-    fn run_on_options<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ExportDefaultDeclaration(export_default_decl) = node.kind() else {
-            return;
-        };
+    fn run_on_options<'a>(
+        &self,
+        export_default_decl: &ExportDefaultDeclaration<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
             &export_default_decl.declaration
         else {

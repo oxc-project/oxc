@@ -107,6 +107,12 @@ impl<'a, T> AstNode<'a, T> {
         &self.parent
     }
 
+    /// The start of the following sibling node (0 if none), the bound of this node's trailing comments.
+    #[inline]
+    pub fn following_span_start(&self) -> u32 {
+        self.following_span_start
+    }
+
     /// Returns the grandparent node (parent's parent).
     ///
     /// This is a convenience method equivalent to `self.parent().parent()`.

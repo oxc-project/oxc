@@ -157,8 +157,7 @@ impl Rule for Complexity {
         {
             Ok(Self(Box::new(ComplexityConfig { max, variant: Variant::Classic })))
         } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
         }
     }
 

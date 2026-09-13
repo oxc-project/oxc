@@ -5,7 +5,7 @@ use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{external_formatter::ExternalCallbacks, options::JsFormatOptions};
+use crate::{options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout};
 
 use super::Comments;
 
@@ -90,6 +90,11 @@ pub struct JsFormatContext<'ast> {
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
 
+    /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
+    /// keyed by the arrow's span so no other node can consume it.
+    /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
+    arrow_assignment_layout: Option<(Span, AssignmentLikeLayout)>,
+
     /// Tracks whether quotes are needed for properties in the current object-like node.
     ///
     /// When [`JsFormatOptions::quote_properties`] is [`crate::QuoteProperties::Consistent`], each entry indicates
@@ -104,8 +109,6 @@ pub struct JsFormatContext<'ast> {
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
-
-    external_callbacks: ExternalCallbacks,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -123,7 +126,7 @@ impl std::fmt::Debug for JsFormatContext<'_> {
 }
 
 /// Lets embedded children's classes merge into this context's index space
-/// (`DispatchResult::remap_tailwind_into` at each embed site).
+/// (`DispatchPayload::into_doc` at each embed site).
 impl oxc_formatter_core::TailwindCollector for JsFormatContext<'_> {
     fn add_class(&mut self, class: String) -> usize {
         self.add_tailwind_class(class)
@@ -152,7 +155,6 @@ impl<'ast> JsFormatContext<'ast> {
         source_type: SourceType,
         comments: &'ast [Comment],
         options: JsFormatOptions,
-        external_callbacks: Option<ExternalCallbacks>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
         Self {
@@ -161,10 +163,10 @@ impl<'ast> JsFormatContext<'ast> {
             source_type,
             comments: Comments::new(source_text, comments),
             cached_elements: FxHashMap::default(),
+            arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
-            external_callbacks: external_callbacks.unwrap_or_default(),
         }
     }
 
@@ -196,6 +198,36 @@ impl<'ast> JsFormatContext<'ast> {
     /// Caches the formatted element for the given key.
     pub(crate) fn cache_element<T: GetSpan>(&mut self, key: &T, formatted: FormatElement<'ast>) {
         self.cached_elements.insert(key.span(), formatted);
+    }
+
+    /// See the [`Self::arrow_assignment_layout`] field.
+    pub(crate) fn set_arrow_assignment_layout(&mut self, span: Span, layout: AssignmentLikeLayout) {
+        debug_assert!(
+            self.arrow_assignment_layout.is_none(),
+            "a previous arrow assignment layout was neither taken nor cleared"
+        );
+        self.arrow_assignment_layout = Some((span, layout));
+    }
+
+    /// See the [`Self::arrow_assignment_layout`] field.
+    pub(crate) fn take_arrow_assignment_layout(
+        &mut self,
+        span: Span,
+    ) -> Option<AssignmentLikeLayout> {
+        match self.arrow_assignment_layout {
+            Some((key, layout)) if key == span => {
+                self.arrow_assignment_layout = None;
+                Some(layout)
+            }
+            _ => None,
+        }
+    }
+
+    /// See the [`Self::arrow_assignment_layout`] field.
+    /// Clears a layout left behind when the arrow was printed without running
+    /// `write` (a suppressed arrow prints its source verbatim instead).
+    pub(crate) fn clear_arrow_assignment_layout(&mut self) {
+        self.arrow_assignment_layout = None;
     }
 
     /// Pushes a new quote needed state onto the stack.
@@ -259,10 +291,5 @@ impl<'ast> JsFormatContext<'ast> {
     /// Get a mutable reference to the current Tailwind context, if any.
     pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
         self.tailwind_context_stack.last_mut()
-    }
-
-    /// Get the external callbacks if set
-    pub fn external_callbacks(&self) -> &ExternalCallbacks {
-        &self.external_callbacks
     }
 }

@@ -1,0 +1,11 @@
+commit: b465fdbf
+
+lexer_typescript Summary:
+AST Parsed     : 12419/12419 (100.00%)
+Positive Passed: 12416/12419 (99.98%)
+Tokens: tasks/coverage/typescript/tests/cases/compiler/slashBeforeVariableDeclaration1.ts
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx
+
+Tokens: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens19.ts
+

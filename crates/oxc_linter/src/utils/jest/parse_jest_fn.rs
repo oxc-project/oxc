@@ -465,8 +465,9 @@ impl<'a> ParsedExpectFnCall<'a> {
         self.members.get(matcher_index)
     }
 
-    pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
-        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
+    /// The modifiers (`.not`, `.resolves`, `.rejects`) in the chain, in source order.
+    pub fn modifiers(&self) -> impl Iterator<Item = &KnownMemberExpressionProperty<'a>> {
+        self.modifier_indices.iter().filter_map(|i| self.members.get(*i))
     }
 }
 

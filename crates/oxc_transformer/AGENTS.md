@@ -1,5 +1,16 @@
 # Coding agent guides for `crates/oxc_transformer`
 
+## Supported output target
+
+Oxc Transformer lowers modern JavaScript to ES2015 (ES6) syntax. It does not
+generate complete ES5 output, and `es5` is rejected as a target.
+
+A target for an older runtime may still enable the transforms Oxc implements,
+but the result is not guaranteed to run in a pre-ES2015 environment. Before
+treating target-dependent behavior as a regression, verify that public target
+selection can produce the transform combination. Conformance fixtures that
+enable plugins directly may create unsupported combinations.
+
 ## Testing transformer behavior
 
 Most transformer behavior regressions should be tested through transform conformance fixtures, not Rust integration tests in this crate.

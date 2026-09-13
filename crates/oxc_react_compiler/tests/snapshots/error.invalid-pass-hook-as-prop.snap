@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-pass-hook-as-prop.j
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Hooks: Hooks may not be referenced as normal values, they must be called. See https://react.dev/reference/rules/react-calls-components-and-hooks#never-pass-around-hooks-as-regular-values", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(49), length: 6 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Hooks may not be referenced as normal values; they must be called", labels: [LabeledSpan { label: Some("This Hook is used as a value"), span: Span { start: 49, end: 55 }, primary: true }], help: Some("Call the Hook directly instead of passing or storing it as a value"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Hooks") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/rules-of-hooks") } }
 
 No changes.

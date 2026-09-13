@@ -45,8 +45,12 @@ similar = { workspace = true }
 walkdir = { workspace = true }
 
 [features]
-# Differential lexer conformance. `oxc_lexer`'s SIMD core only exists on x86_64
-# with static AVX2/BMI2 (it compiles to an empty stub otherwise), so the harness
-# is opt-in and its cfg sites mirror the lexer's crate gate:
-#   RUSTFLAGS="-C target-feature=+avx2,+bmi2" cargo coverage --features lexer -- lexer
+# Differential lexer conformance, opt-in because it is slow and `oxc_lexer` is still incubating.
+# The harness runs against whichever of the lexer's two implementations the build selects:
+#
+# * SIMD core (x86_64 only): RUSTFLAGS="-C target-feature=+avx2,+bmi2" cargo coverage --features lexer -- lexer
+# * Scalar fallback:         cargo coverage --features lexer -- lexer
+#
+# `avx2`/`bmi2` are not in the x86_64 baseline on any platform, so the rustflags are required
+# to reach the SIMD core even on an x86_64 host.
 lexer = ["dep:oxc_lexer", "oxc_lexer/oxc_diagnostics"]

@@ -70,7 +70,7 @@ impl Rule for PreferGlobalThis {
 
         if !matches!(ident.name.as_str(), "window" | "self" | "global")
             || is_computed_member_expression_object(node, ctx)
-            || !ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            || !ctx.is_reference_to_global_variable(ident)
         {
             return;
         }
@@ -303,6 +303,7 @@ fn test() {
         "window[foo]",
         "window[title]",
         r#"window["foo"]"#,
+        "function f(fake) { const window = fake; return window.foo }; window[key]",
     ];
 
     let fail = vec![

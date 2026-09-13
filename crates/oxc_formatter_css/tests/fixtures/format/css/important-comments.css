@@ -1,0 +1,13 @@
+/* A comment between `!` and `important` stays there, printed once.
+   The keyword is still normalized: `y` and `v` DIVERGE from Prettier,
+   which keeps such a run verbatim (DIVERGENCES.md "important-comment-run"). */
+a {
+  color: red ! /* typed declaration */ important;
+  x: .foo > bar ! /* raw declaration */ important;
+  y: red ! /* a */ /* b */ IMPORTANT;
+  v: red !/* glued */important;
+  z: red /* before */ ! /* inside */ important /* after */;
+  w: red   !   important;
+}
+
+$var: red ! /* postcss-simple-vars */ important;

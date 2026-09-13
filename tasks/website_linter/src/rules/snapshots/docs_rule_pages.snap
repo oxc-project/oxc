@@ -225,10 +225,10 @@ type: `string`
 Specifies exceptions to this rule for unused arguments. Arguments whose
 names match this pattern will be ignored.
 
-By default, this pattern is `^_` unless options are configured with an
-object. In this case it will default to [`None`]. Note that this
-behavior deviates from both ESLint and TypeScript-ESLint, which never
-provide a default pattern.
+By default, names starting with `_` are ignored, except for the bare `_`
+parameter. If options are configured with an object, this will default
+to [`None`]. Note that this behavior deviates from both ESLint and
+TypeScript-ESLint, which never provide a default pattern.
 
 #### Example
 

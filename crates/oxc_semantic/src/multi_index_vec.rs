@@ -326,6 +326,7 @@ pub(crate) use multi_index_vec;
 mod tests {
     oxc_index::define_index_type! {
         struct TestId = usize;
+        MAX_INDEX = usize::MAX;
     }
 
     multi_index_vec! {
@@ -347,6 +348,7 @@ mod tests {
 
     oxc_index::define_index_type! {
         struct StringId = usize;
+        MAX_INDEX = usize::MAX;
     }
 
     multi_index_vec! {

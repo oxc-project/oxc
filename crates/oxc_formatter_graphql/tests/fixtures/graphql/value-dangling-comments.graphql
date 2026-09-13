@@ -1,4 +1,5 @@
 {
+  base(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
   a(x: {
     # only
   })

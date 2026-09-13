@@ -825,7 +825,8 @@ impl ESTree for Statement<'_> {
             | Self::TSTypeAliasDeclaration(_)
             | Self::TSInterfaceDeclaration(_)
             | Self::TSEnumDeclaration(_)
-            | Self::TSModuleDeclaration(_)
+            | Self::TSExternalModuleDeclaration(_)
+            | Self::TSNamespaceDeclaration(_)
             | Self::TSGlobalDeclaration(_)
             | Self::TSImportEqualsDeclaration(_) => self.to_declaration().serialize(serializer),
             Self::ImportDeclaration(_)
@@ -882,7 +883,8 @@ impl ESTree for Declaration<'_> {
             Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
             Self::TSEnumDeclaration(it) => it.serialize(serializer),
-            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSExternalModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSNamespaceDeclaration(it) => it.serialize(serializer),
             Self::TSGlobalDeclaration(it) => it.serialize(serializer),
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
@@ -1462,13 +1464,25 @@ impl ESTree for Class<'_> {
         state.serialize_field("decorators", &self.decorators);
         state.serialize_field("id", &self.id);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_field("superClass", &self.super_class);
-        state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
+        state.serialize_field("superClass", &crate::serialize::js::ClassSuperClass(self));
+        state.serialize_ts_field(
+            "superTypeArguments",
+            &crate::serialize::js::ClassSuperTypeArguments(self),
+        );
         state.serialize_ts_field("implements", &self.implements);
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ClassHeritage<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("expression", &self.expression);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2971,7 +2985,10 @@ impl ESTree for TSInterfaceHeritage<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
-        state.serialize_field("expression", &self.expression);
+        state.serialize_field(
+            "expression",
+            &crate::serialize::ts::TSInterfaceHeritageExpression(self),
+        );
         state.serialize_field("typeArguments", &self.type_arguments);
         state.serialize_span(self.span);
         state.end();
@@ -2999,13 +3016,19 @@ impl ESTree for TSTypePredicateName<'_> {
     }
 }
 
-impl ESTree for TSModuleDeclaration<'_> {
+impl ESTree for TSExternalModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::ts::TSModuleDeclarationConverter(self).serialize(serializer)
+        crate::serialize::ts::TSExternalModuleDeclarationConverter(self).serialize(serializer)
     }
 }
 
-impl ESTree for TSModuleDeclarationKind {
+impl ESTree for TSNamespaceDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ts::TSNamespaceDeclarationConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for TSNamespaceDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Module => JsonSafeString("module").serialize(serializer),
@@ -3014,19 +3037,10 @@ impl ESTree for TSModuleDeclarationKind {
     }
 }
 
-impl ESTree for TSModuleDeclarationName<'_> {
+impl ESTree for TSNamespaceDeclarationBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl ESTree for TSModuleDeclarationBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSNamespaceDeclaration(it) => it.serialize(serializer),
             Self::TSModuleBlock(it) => it.serialize(serializer),
         }
     }

@@ -3,12 +3,64 @@ use oxc_parser::ParseOptions;
 use oxc_span::SourceType;
 
 use crate::{
-    snapshot, snapshot_options,
+    snapshot, snapshot_options, test_ts,
     tester::{
-        default_options, test_idempotency, test_options_with_source_type, test_same, test_tsx,
-        test_with_parse_options,
+        default_options, test, test_idempotency, test_idempotency_options,
+        test_options_with_source_type, test_same, test_tsx, test_with_parse_options,
     },
 };
+
+#[test]
+fn abstract_accessor_modifiers() {
+    test_ts(
+        "abstract class C { public abstract accessor x: number; protected abstract accessor y: string; }",
+        "abstract class C {\n\tpublic abstract accessor x: number;\n\tprotected abstract accessor y: string;\n}\n",
+    );
+}
+
+#[test]
+fn minify_abstract_accessor_modifiers() {
+    test_options_with_source_type(
+        "abstract class C { public abstract accessor x: number; protected abstract accessor y: string; }",
+        "abstract class C{public abstract accessor x:number;protected abstract accessor y:string}",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}
+
+#[test]
+fn accessor_modifier_combinations() {
+    let check = |source: &str, minified: &str| {
+        test_ts(source, source);
+        test_idempotency(source);
+        test_options_with_source_type(source, minified, SourceType::ts(), CodegenOptions::minify());
+        test_idempotency_options(source, &CodegenOptions::minify());
+    };
+    check(
+        "abstract class C {\n\tabstract accessor x: number;\n}\n",
+        "abstract class C{abstract accessor x:number}",
+    );
+    check(
+        "abstract class C extends B {\n\tpublic abstract override accessor x: number;\n}\n",
+        "abstract class C extends B{public abstract override accessor x:number}",
+    );
+    check(
+        "abstract class C extends B {\n\tprotected abstract override accessor x: number;\n}\n",
+        "abstract class C extends B{protected abstract override accessor x:number}",
+    );
+    check("class C {\n\tpublic static accessor x = 1;\n}\n", "class C{public static accessor x=1}");
+    check(
+        "class C {\n\tprotected static accessor x = 1;\n}\n",
+        "class C{protected static accessor x=1}",
+    );
+    check("class C {\n\tprivate accessor x = 1;\n}\n", "class C{private accessor x=1}");
+    check(
+        "class C extends B {\n\tpublic override accessor x = 1;\n}\n",
+        "class C extends B{public override accessor x=1}",
+    );
+    check("class C {\n\taccessor #x = 1;\n}\n", "class C{accessor#x=1}");
+    check("class C {\n\tpublic accessor x!: number;\n}\n", "class C{public accessor x!:number}");
+}
 
 #[test]
 fn cases() {
@@ -53,6 +105,31 @@ fn cases() {
     test_same("import type from = require(\"./a\");\n");
     test_same("try {} catch (e: unknown) {} finally {}\n");
     test_same("const Bar = class<T,> {};\n");
+}
+
+#[test]
+fn quoted_type_import_names() {
+    test(r#"import type { "foo" as foo } from "m";"#, "import type { foo } from \"m\";\n");
+    test(r#"import { type "foo" as foo } from "m";"#, "import { type foo } from \"m\";\n");
+    test(r#"import type { "a\u0062" as ab } from "m";"#, "import type { ab } from \"m\";\n");
+    test(r#"import { type "a\u0062" as ab } from "m";"#, "import { type ab } from \"m\";\n");
+    test(r#"import type { foo as foo } from "m";"#, "import type { foo } from \"m\";\n");
+    test(r#"import { type foo as foo } from "m";"#, "import { type foo } from \"m\";\n");
+
+    let min = |source: &str, expected: &str| {
+        test_options_with_source_type(source, expected, SourceType::ts(), CodegenOptions::minify());
+    };
+    min(r#"import type { "foo" as foo } from "m";"#, r#"import type{foo}from"m";"#);
+    min(r#"import { type "foo" as foo } from "m";"#, r#"import{type foo}from"m";"#);
+    min(r#"import type { "a\u0062" as ab } from "m";"#, r#"import type{ab}from"m";"#);
+    min(r#"import { type "a\u0062" as ab } from "m";"#, r#"import{type ab}from"m";"#);
+    min(r#"import type { foo as foo } from "m";"#, r#"import type{foo}from"m";"#);
+    min(r#"import { type foo as foo } from "m";"#, r#"import{type foo}from"m";"#);
+}
+
+#[test]
+fn export_default_interface() {
+    test_same("export default interface X {}\nconst y = 1;\n");
 }
 
 #[test]
@@ -101,7 +178,7 @@ fn ts() {
         "class A {private static readonly prop: string}",
         "interface A { a: string, 'b': number, 'c'(): void }",
         "enum A { a, 'b' }",
-        "module 'a'",
+        "module a {}",
         "declare module 'a'",
         "a = x!;",
         "b = (x as y);",
@@ -359,6 +436,12 @@ fn ts_as_expression_in_binary_expr() {
 }
 
 #[test]
+fn ts_cast_expression_in_conditional_test() {
+    test_same("let a = typeof ((\"a\" as unknown) ? /a/ : false);\n");
+    test_same("let a = typeof ((\"a\" satisfies foo) ? /a/ : false);\n");
+}
+
+#[test]
 fn ts_type_assertion() {
     // `<T>x` (TS angle-bracket assertion) is only valid in non-tsx source.
     let test_ts =
@@ -404,7 +487,28 @@ fn ts_instantiation_expression() {
 }
 
 #[test]
+fn ts_instantiation_expression_precedence() {
+    for source in
+        ["(f<T>).x", "(f<T>)[x]", "(f<T>)()", "new (f<T>)()", "(f<T>)`text`", "((a ?? b)<T>).x"]
+    {
+        test_ts(source, &format!("{source};\n"));
+        test_idempotency(source);
+        test_idempotency_options(source, &CodegenOptions::minify());
+    }
+    for source in ["(f<T>).x", "(f<T>)[x]"] {
+        test_options_with_source_type(
+            source,
+            &format!("{source};"),
+            SourceType::ts(),
+            CodegenOptions::minify(),
+        );
+    }
+}
+
+#[test]
 fn ts_satisfies_expression() {
+    test_same("(foo satisfies null) | ~\"\";\n");
+    test_same("(foo satisfies null) & ~\"\";\n");
     test_idempotency("d = x satisfies y");
     test_idempotency("const Foo = (() => {})() satisfies X");
     test_idempotency("const Bar = (x as Y) satisfies Z");

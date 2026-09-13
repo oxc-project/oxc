@@ -20,6 +20,11 @@ pub mod diag_code {
     pub const UNEXPECTED_CHARACTER: u16 = 18;
     pub const LINE_TERMINATOR_IN_STRING: u16 = 19;
     pub const HTML_COMMENT_IN_MODULE: u16 = 20;
+    pub const UNTERMINATED_JSX_ELEMENT: u16 = 21;
+    pub const UNTERMINATED_JSX_TAG: u16 = 22;
+    pub const UNTERMINATED_JSX_CONTAINER: u16 = 23;
+    pub const JSX_CLOSING_TAG_MISMATCH: u16 = 24;
+    pub const JSX_TEXT_INVALID_CHARACTER: u16 = 25;
 }
 
 pub mod diag_severity {

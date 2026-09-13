@@ -177,7 +177,7 @@ impl<'a> TypeScriptModule {
                 )
             }
         };
-        let decl = VariableDeclarator::new(SPAN, kind, binding, None, Some(init), false, ctx);
+        let decl = VariableDeclarator::new(SPAN, binding, None, Some(init), false, ctx);
 
         Some(Declaration::new_variable_declaration(SPAN, kind, [decl], false, ctx))
     }

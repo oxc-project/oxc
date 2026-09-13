@@ -1,0 +1,84 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/*
+ * Css-mode token-soup math spacing is preserved per token: never invented,
+ * never removed. Both cases distill conformance `css/parens/parens.css`
+ * (adjacent props prop34 / prop44), where Prettier treats them as one class.
+ */
+/*
+ * A source-spaced `+ 20px` argument keeps its space.
+ * DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"),
+ * which glues it to `+20px`.
+ */
+a {
+  prop34: func(+20px, + 20px);
+}
+/*
+ * A source-glued `-(` stays glued in every position.
+ * DIVERGES from Prettier (DIVERGENCES.md "css-glued-minus-paren"),
+ * which splits only the binary-looking `3px -(4px)` into `3px - (4px)`
+ * while keeping the bare `-(4px)` glued.
+ */
+a {
+  prop: 3px -(4px);
+  prop44: -(4px);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/*
+ * Css-mode token-soup math spacing is preserved per token: never invented,
+ * never removed. Both cases distill conformance `css/parens/parens.css`
+ * (adjacent props prop34 / prop44), where Prettier treats them as one class.
+ */
+/*
+ * A source-spaced `+ 20px` argument keeps its space.
+ * DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"),
+ * which glues it to `+20px`.
+ */
+a {
+  prop34: func(+20px, + 20px);
+}
+/*
+ * A source-glued `-(` stays glued in every position.
+ * DIVERGES from Prettier (DIVERGENCES.md "css-glued-minus-paren"),
+ * which splits only the binary-looking `3px -(4px)` into `3px - (4px)`
+ * while keeping the bare `-(4px)` glued.
+ */
+a {
+  prop: 3px -(4px);
+  prop44: -(4px);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/*
+ * Css-mode token-soup math spacing is preserved per token: never invented,
+ * never removed. Both cases distill conformance `css/parens/parens.css`
+ * (adjacent props prop34 / prop44), where Prettier treats them as one class.
+ */
+/*
+ * A source-spaced `+ 20px` argument keeps its space.
+ * DIVERGES from Prettier (DIVERGENCES.md "unary-plus-glue"),
+ * which glues it to `+20px`.
+ */
+a {
+  prop34: func(+20px, + 20px);
+}
+/*
+ * A source-glued `-(` stays glued in every position.
+ * DIVERGES from Prettier (DIVERGENCES.md "css-glued-minus-paren"),
+ * which splits only the binary-looking `3px -(4px)` into `3px - (4px)`
+ * while keeping the bare `-(4px)` glued.
+ */
+a {
+  prop: 3px -(4px);
+  prop44: -(4px);
+}
+
+===================== End =====================

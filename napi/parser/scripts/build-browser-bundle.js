@@ -6,6 +6,7 @@ import { rolldown } from "rolldown";
 // Rollup-compatible bundlers reserve `\0`-prefixed IDs for plugin virtual modules,
 // so Rolldown will not try to resolve these generated `?url` asset modules as files.
 const NEW_URL_ASSET_PREFIX = "\0new-url-asset:";
+const WASI_BROWSER_BINDING = path.resolve("./src-js/parser.wasi-browser.js");
 
 async function main() {
   const args = parseArgs({
@@ -23,7 +24,7 @@ async function main() {
     platform: "browser",
     resolve: {
       alias: {
-        "@oxc-parser/binding-wasm32-wasi": path.resolve("./src-js/parser.wasi-browser.js"),
+        "@oxc-parser/binding-wasm32-wasi": WASI_BROWSER_BINDING,
       },
     },
     plugins: [

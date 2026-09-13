@@ -263,176 +263,144 @@ pub(super) fn is_known_global_constructor(name: &str) -> bool {
 /// It includes browser/host-specific APIs (e.g. `document`, `window`, DOM classes) intentionally,
 /// matching Rollup's behavior of assuming these globals exist in the target environment.
 /// `NaN`, `Infinity`, `undefined` are excluded since they are already handled as special cases.
-#[rustfmt::skip]
 pub(super) fn is_known_global_identifier(name: &str) -> bool {
-    matches!(name,
-        // Core JS globals
-        "Array" | "Boolean" | "Function" | "Math" | "Number" | "Object" | "RegExp" | "String"
-        // Other globals present in both the browser and node
-        | "AbortController" | "AbortSignal" | "AggregateError" | "ArrayBuffer" | "BigInt"
-        | "DataView" | "Date" | "Error" | "EvalError" | "Event" | "EventTarget"
-        | "Float32Array" | "Float64Array" | "Int16Array" | "Int32Array" | "Int8Array" | "Intl"
-        | "JSON" | "Map" | "MessageChannel" | "MessageEvent" | "MessagePort" | "Promise"
-        | "Proxy" | "RangeError" | "ReferenceError" | "Reflect" | "Set" | "Symbol"
-        | "SyntaxError" | "TextDecoder" | "TextEncoder" | "TypeError" | "URIError" | "URL"
-        | "URLSearchParams" | "Uint16Array" | "Uint32Array" | "Uint8Array"
-        | "Uint8ClampedArray" | "WeakMap" | "WeakSet" | "WebAssembly"
-        | "clearInterval" | "clearTimeout" | "console" | "decodeURI" | "decodeURIComponent"
-        | "encodeURI" | "encodeURIComponent" | "escape" | "globalThis" | "isFinite" | "isNaN"
-        | "parseFloat" | "parseInt" | "queueMicrotask" | "setInterval" | "setTimeout"
-        | "unescape"
-        // CSSOM APIs
-        | "CSSAnimation" | "CSSFontFaceRule" | "CSSImportRule" | "CSSKeyframeRule"
-        | "CSSKeyframesRule" | "CSSMediaRule" | "CSSNamespaceRule" | "CSSPageRule" | "CSSRule"
-        | "CSSRuleList" | "CSSStyleDeclaration" | "CSSStyleRule" | "CSSStyleSheet"
-        | "CSSSupportsRule" | "CSSTransition"
-        // SVG DOM
-        | "SVGAElement" | "SVGAngle" | "SVGAnimateElement" | "SVGAnimateMotionElement"
-        | "SVGAnimateTransformElement" | "SVGAnimatedAngle" | "SVGAnimatedBoolean"
-        | "SVGAnimatedEnumeration" | "SVGAnimatedInteger" | "SVGAnimatedLength"
-        | "SVGAnimatedLengthList" | "SVGAnimatedNumber" | "SVGAnimatedNumberList"
-        | "SVGAnimatedPreserveAspectRatio" | "SVGAnimatedRect" | "SVGAnimatedString"
-        | "SVGAnimatedTransformList" | "SVGAnimationElement" | "SVGCircleElement"
-        | "SVGClipPathElement" | "SVGComponentTransferFunctionElement" | "SVGDefsElement"
-        | "SVGDescElement" | "SVGElement" | "SVGEllipseElement" | "SVGFEBlendElement"
-        | "SVGFEColorMatrixElement" | "SVGFEComponentTransferElement"
-        | "SVGFECompositeElement" | "SVGFEConvolveMatrixElement"
-        | "SVGFEDiffuseLightingElement" | "SVGFEDisplacementMapElement"
-        | "SVGFEDistantLightElement" | "SVGFEDropShadowElement" | "SVGFEFloodElement"
-        | "SVGFEFuncAElement" | "SVGFEFuncBElement" | "SVGFEFuncGElement"
-        | "SVGFEFuncRElement" | "SVGFEGaussianBlurElement" | "SVGFEImageElement"
-        | "SVGFEMergeElement" | "SVGFEMergeNodeElement" | "SVGFEMorphologyElement"
-        | "SVGFEOffsetElement" | "SVGFEPointLightElement" | "SVGFESpecularLightingElement"
-        | "SVGFESpotLightElement" | "SVGFETileElement" | "SVGFETurbulenceElement"
-        | "SVGFilterElement" | "SVGForeignObjectElement" | "SVGGElement"
-        | "SVGGeometryElement" | "SVGGradientElement" | "SVGGraphicsElement"
-        | "SVGImageElement" | "SVGLength" | "SVGLengthList" | "SVGLineElement"
-        | "SVGLinearGradientElement" | "SVGMPathElement" | "SVGMarkerElement"
-        | "SVGMaskElement" | "SVGMatrix" | "SVGMetadataElement" | "SVGNumber"
-        | "SVGNumberList" | "SVGPathElement" | "SVGPatternElement" | "SVGPoint"
-        | "SVGPointList" | "SVGPolygonElement" | "SVGPolylineElement"
-        | "SVGPreserveAspectRatio" | "SVGRadialGradientElement" | "SVGRect"
-        | "SVGRectElement" | "SVGSVGElement" | "SVGScriptElement" | "SVGSetElement"
-        | "SVGStopElement" | "SVGStringList" | "SVGStyleElement" | "SVGSwitchElement"
-        | "SVGSymbolElement" | "SVGTSpanElement" | "SVGTextContentElement"
-        | "SVGTextElement" | "SVGTextPathElement" | "SVGTextPositioningElement"
-        | "SVGTitleElement" | "SVGTransform" | "SVGTransformList" | "SVGUnitTypes"
-        | "SVGUseElement" | "SVGViewElement"
-        // Other browser APIs
-        | "AnalyserNode" | "Animation" | "AnimationEffect" | "AnimationEvent"
-        | "AnimationPlaybackEvent" | "AnimationTimeline" | "Attr" | "Audio" | "AudioBuffer"
-        | "AudioBufferSourceNode" | "AudioDestinationNode" | "AudioListener" | "AudioNode"
-        | "AudioParam" | "AudioProcessingEvent" | "AudioScheduledSourceNode" | "BarProp"
-        | "BeforeUnloadEvent" | "BiquadFilterNode" | "Blob" | "BlobEvent"
-        | "ByteLengthQueuingStrategy" | "CDATASection" | "CSS" | "CanvasGradient"
-        | "CanvasPattern" | "CanvasRenderingContext2D" | "ChannelMergerNode"
-        | "ChannelSplitterNode" | "CharacterData" | "ClipboardEvent" | "CloseEvent"
-        | "Comment" | "CompositionEvent" | "ConvolverNode" | "CountQueuingStrategy"
-        | "Crypto" | "CustomElementRegistry" | "CustomEvent" | "DOMException"
-        | "DOMImplementation" | "DOMMatrix" | "DOMMatrixReadOnly" | "DOMParser" | "DOMPoint"
-        | "DOMPointReadOnly" | "DOMQuad" | "DOMRect" | "DOMRectList" | "DOMRectReadOnly"
-        | "DOMStringList" | "DOMStringMap" | "DOMTokenList" | "DataTransfer"
-        | "DataTransferItem" | "DataTransferItemList" | "DelayNode" | "Document"
-        | "DocumentFragment" | "DocumentTimeline" | "DocumentType" | "DragEvent"
-        | "DynamicsCompressorNode" | "Element" | "ErrorEvent" | "EventSource" | "File"
-        | "FileList" | "FileReader" | "FocusEvent" | "FontFace" | "FormData" | "GainNode"
-        | "Gamepad" | "GamepadButton" | "GamepadEvent" | "Geolocation"
-        | "GeolocationPositionError" | "HTMLAllCollection" | "HTMLAnchorElement"
-        | "HTMLAreaElement" | "HTMLAudioElement" | "HTMLBRElement" | "HTMLBaseElement"
-        | "HTMLBodyElement" | "HTMLButtonElement" | "HTMLCanvasElement" | "HTMLCollection"
-        | "HTMLDListElement" | "HTMLDataElement" | "HTMLDataListElement"
-        | "HTMLDetailsElement" | "HTMLDirectoryElement" | "HTMLDivElement" | "HTMLDocument"
-        | "HTMLElement" | "HTMLEmbedElement" | "HTMLFieldSetElement" | "HTMLFontElement"
-        | "HTMLFormControlsCollection" | "HTMLFormElement" | "HTMLFrameElement"
-        | "HTMLFrameSetElement" | "HTMLHRElement" | "HTMLHeadElement"
-        | "HTMLHeadingElement" | "HTMLHtmlElement" | "HTMLIFrameElement"
-        | "HTMLImageElement" | "HTMLInputElement" | "HTMLLIElement" | "HTMLLabelElement"
-        | "HTMLLegendElement" | "HTMLLinkElement" | "HTMLMapElement" | "HTMLMarqueeElement"
-        | "HTMLMediaElement" | "HTMLMenuElement" | "HTMLMetaElement" | "HTMLMeterElement"
-        | "HTMLModElement" | "HTMLOListElement" | "HTMLObjectElement"
-        | "HTMLOptGroupElement" | "HTMLOptionElement" | "HTMLOptionsCollection"
-        | "HTMLOutputElement" | "HTMLParagraphElement" | "HTMLParamElement"
-        | "HTMLPictureElement" | "HTMLPreElement" | "HTMLProgressElement"
-        | "HTMLQuoteElement" | "HTMLScriptElement" | "HTMLSelectElement"
-        | "HTMLSlotElement" | "HTMLSourceElement" | "HTMLSpanElement" | "HTMLStyleElement"
-        | "HTMLTableCaptionElement" | "HTMLTableCellElement" | "HTMLTableColElement"
-        | "HTMLTableElement" | "HTMLTableRowElement" | "HTMLTableSectionElement"
-        | "HTMLTemplateElement" | "HTMLTextAreaElement" | "HTMLTimeElement"
-        | "HTMLTitleElement" | "HTMLTrackElement" | "HTMLUListElement"
-        | "HTMLUnknownElement" | "HTMLVideoElement" | "HashChangeEvent" | "Headers"
-        | "History" | "IDBCursor" | "IDBCursorWithValue" | "IDBDatabase" | "IDBFactory"
-        | "IDBIndex" | "IDBKeyRange" | "IDBObjectStore" | "IDBOpenDBRequest" | "IDBRequest"
-        | "IDBTransaction" | "IDBVersionChangeEvent" | "Image" | "ImageData" | "InputEvent"
-        | "IntersectionObserver" | "IntersectionObserverEntry" | "KeyboardEvent"
-        | "KeyframeEffect" | "Location" | "MediaCapabilities"
-        | "MediaElementAudioSourceNode" | "MediaEncryptedEvent" | "MediaError"
-        | "MediaList" | "MediaQueryList" | "MediaQueryListEvent" | "MediaRecorder"
-        | "MediaSource" | "MediaStream" | "MediaStreamAudioDestinationNode"
-        | "MediaStreamAudioSourceNode" | "MediaStreamTrack" | "MediaStreamTrackEvent"
-        | "MimeType" | "MimeTypeArray" | "MouseEvent" | "MutationEvent"
-        | "MutationObserver" | "MutationRecord" | "NamedNodeMap" | "Navigator" | "Node"
-        | "NodeFilter" | "NodeIterator" | "NodeList" | "Notification"
-        | "OfflineAudioCompletionEvent" | "Option" | "OscillatorNode"
-        | "PageTransitionEvent" | "Path2D" | "Performance" | "PerformanceEntry"
-        | "PerformanceMark" | "PerformanceMeasure" | "PerformanceNavigation"
-        | "PerformanceObserver" | "PerformanceObserverEntryList"
-        | "PerformanceResourceTiming" | "PerformanceTiming" | "PeriodicWave" | "Plugin"
-        | "PluginArray" | "PointerEvent" | "PopStateEvent" | "ProcessingInstruction"
-        | "ProgressEvent" | "PromiseRejectionEvent" | "RTCCertificate" | "RTCDTMFSender"
-        | "RTCDTMFToneChangeEvent" | "RTCDataChannel" | "RTCDataChannelEvent"
-        | "RTCIceCandidate" | "RTCPeerConnection" | "RTCPeerConnectionIceEvent"
-        | "RTCRtpReceiver" | "RTCRtpSender" | "RTCRtpTransceiver"
-        | "RTCSessionDescription" | "RTCStatsReport" | "RTCTrackEvent" | "RadioNodeList"
-        | "Range" | "ReadableStream" | "Request" | "ResizeObserver"
-        | "ResizeObserverEntry" | "Response" | "Screen" | "ScriptProcessorNode"
-        | "SecurityPolicyViolationEvent" | "Selection" | "ShadowRoot" | "SourceBuffer"
-        | "SourceBufferList" | "SpeechSynthesisEvent" | "SpeechSynthesisUtterance"
-        | "StaticRange" | "Storage" | "StorageEvent" | "StyleSheet" | "StyleSheetList"
-        | "Text" | "TextMetrics" | "TextTrack" | "TextTrackCue" | "TextTrackCueList"
-        | "TextTrackList" | "TimeRanges" | "TrackEvent" | "TransitionEvent" | "TreeWalker"
-        | "UIEvent" | "VTTCue" | "ValidityState" | "VisualViewport" | "WaveShaperNode"
-        | "WebGLActiveInfo" | "WebGLBuffer" | "WebGLContextEvent" | "WebGLFramebuffer"
-        | "WebGLProgram" | "WebGLQuery" | "WebGLRenderbuffer" | "WebGLRenderingContext"
-        | "WebGLSampler" | "WebGLShader" | "WebGLShaderPrecisionFormat" | "WebGLSync"
-        | "WebGLTexture" | "WebGLUniformLocation" | "WebKitCSSMatrix" | "WebSocket"
-        | "WheelEvent" | "Window" | "Worker" | "XMLDocument" | "XMLHttpRequest"
-        | "XMLHttpRequestEventTarget" | "XMLHttpRequestUpload" | "XMLSerializer"
-        | "XPathEvaluator" | "XPathExpression" | "XPathResult" | "XSLTProcessor"
-        | "alert" | "atob" | "blur" | "btoa" | "cancelAnimationFrame" | "captureEvents"
-        | "close" | "closed" | "confirm" | "customElements" | "devicePixelRatio"
-        | "document" | "event" | "fetch" | "find" | "focus" | "frameElement" | "frames"
-        | "getComputedStyle" | "getSelection" | "history" | "indexedDB" | "isSecureContext"
-        | "length" | "location" | "locationbar" | "matchMedia" | "menubar" | "moveBy"
-        | "moveTo" | "name" | "navigator"
-        | "onabort" | "onafterprint" | "onanimationend" | "onanimationiteration"
-        | "onanimationstart" | "onbeforeprint" | "onbeforeunload" | "onblur" | "oncanplay"
-        | "oncanplaythrough" | "onchange" | "onclick" | "oncontextmenu" | "oncuechange"
-        | "ondblclick" | "ondrag" | "ondragend" | "ondragenter" | "ondragleave"
-        | "ondragover" | "ondragstart" | "ondrop" | "ondurationchange" | "onemptied"
-        | "onended" | "onerror" | "onfocus" | "ongotpointercapture" | "onhashchange"
-        | "oninput" | "oninvalid" | "onkeydown" | "onkeypress" | "onkeyup"
-        | "onlanguagechange" | "onload" | "onloadeddata" | "onloadedmetadata"
-        | "onloadstart" | "onlostpointercapture" | "onmessage" | "onmousedown"
-        | "onmouseenter" | "onmouseleave" | "onmousemove" | "onmouseout" | "onmouseover"
-        | "onmouseup" | "onoffline" | "ononline" | "onpagehide" | "onpageshow" | "onpause"
-        | "onplay" | "onplaying" | "onpointercancel" | "onpointerdown" | "onpointerenter"
-        | "onpointerleave" | "onpointermove" | "onpointerout" | "onpointerover"
-        | "onpointerup" | "onpopstate" | "onprogress" | "onratechange"
-        | "onrejectionhandled" | "onreset" | "onresize" | "onscroll" | "onseeked"
-        | "onseeking" | "onselect" | "onstalled" | "onstorage" | "onsubmit" | "onsuspend"
-        | "ontimeupdate" | "ontoggle" | "ontransitioncancel" | "ontransitionend"
-        | "ontransitionrun" | "ontransitionstart" | "onunhandledrejection" | "onunload"
-        | "onvolumechange" | "onwaiting" | "onwebkitanimationend"
-        | "onwebkitanimationiteration" | "onwebkitanimationstart"
-        | "onwebkittransitionend" | "onwheel"
-        | "open" | "opener" | "origin" | "outerHeight" | "outerWidth" | "parent"
-        | "performance" | "personalbar" | "postMessage" | "print" | "prompt"
-        | "releaseEvents" | "requestAnimationFrame" | "resizeBy" | "resizeTo" | "screen"
-        | "screenLeft" | "screenTop" | "screenX" | "screenY" | "scroll" | "scrollBy"
-        | "scrollTo" | "scrollbars" | "self" | "speechSynthesis" | "status" | "statusbar"
-        | "stop" | "toolbar" | "top" | "webkitURL" | "window"
-    )
+    KNOWN_GLOBAL_IDENTIFIERS.binary_search(&name).is_ok()
 }
+
+/// Sorted table backing [`is_known_global_identifier`].
+///
+/// A binary search over a static table compiles to a fraction of the code a `matches!` over
+/// hundreds of string literals expands to while keeping lookups logarithmic. Keep the entries
+/// sorted (byte order) and unique; the table is checked in a test.
+#[rustfmt::skip]
+static KNOWN_GLOBAL_IDENTIFIERS: &[&str] = &[
+    "AbortController", "AbortSignal", "AggregateError", "AnalyserNode", "Animation",
+    "AnimationEffect", "AnimationEvent", "AnimationPlaybackEvent", "AnimationTimeline", "Array",
+    "ArrayBuffer", "Attr", "Audio", "AudioBuffer", "AudioBufferSourceNode", "AudioDestinationNode",
+    "AudioListener", "AudioNode", "AudioParam", "AudioProcessingEvent", "AudioScheduledSourceNode",
+    "BarProp", "BeforeUnloadEvent", "BigInt", "BiquadFilterNode", "Blob", "BlobEvent", "Boolean",
+    "ByteLengthQueuingStrategy", "CDATASection", "CSS", "CSSAnimation", "CSSFontFaceRule",
+    "CSSImportRule", "CSSKeyframeRule", "CSSKeyframesRule", "CSSMediaRule", "CSSNamespaceRule",
+    "CSSPageRule", "CSSRule", "CSSRuleList", "CSSStyleDeclaration", "CSSStyleRule",
+    "CSSStyleSheet", "CSSSupportsRule", "CSSTransition", "CanvasGradient", "CanvasPattern",
+    "CanvasRenderingContext2D", "ChannelMergerNode", "ChannelSplitterNode", "CharacterData",
+    "ClipboardEvent", "CloseEvent", "Comment", "CompositionEvent", "ConvolverNode",
+    "CountQueuingStrategy", "Crypto", "CustomElementRegistry", "CustomEvent", "DOMException",
+    "DOMImplementation", "DOMMatrix", "DOMMatrixReadOnly", "DOMParser", "DOMPoint",
+    "DOMPointReadOnly", "DOMQuad", "DOMRect", "DOMRectList", "DOMRectReadOnly", "DOMStringList",
+    "DOMStringMap", "DOMTokenList", "DataTransfer", "DataTransferItem", "DataTransferItemList",
+    "DataView", "Date", "DelayNode", "Document", "DocumentFragment", "DocumentTimeline",
+    "DocumentType", "DragEvent", "DynamicsCompressorNode", "Element", "Error", "ErrorEvent",
+    "EvalError", "Event", "EventSource", "EventTarget", "File", "FileList", "FileReader",
+    "Float32Array", "Float64Array", "FocusEvent", "FontFace", "FormData", "Function", "GainNode",
+    "Gamepad", "GamepadButton", "GamepadEvent", "Geolocation", "GeolocationPositionError",
+    "HTMLAllCollection", "HTMLAnchorElement", "HTMLAreaElement", "HTMLAudioElement",
+    "HTMLBRElement", "HTMLBaseElement", "HTMLBodyElement", "HTMLButtonElement",
+    "HTMLCanvasElement", "HTMLCollection", "HTMLDListElement", "HTMLDataElement",
+    "HTMLDataListElement", "HTMLDetailsElement", "HTMLDirectoryElement", "HTMLDivElement",
+    "HTMLDocument", "HTMLElement", "HTMLEmbedElement", "HTMLFieldSetElement", "HTMLFontElement",
+    "HTMLFormControlsCollection", "HTMLFormElement", "HTMLFrameElement", "HTMLFrameSetElement",
+    "HTMLHRElement", "HTMLHeadElement", "HTMLHeadingElement", "HTMLHtmlElement",
+    "HTMLIFrameElement", "HTMLImageElement", "HTMLInputElement", "HTMLLIElement",
+    "HTMLLabelElement", "HTMLLegendElement", "HTMLLinkElement", "HTMLMapElement",
+    "HTMLMarqueeElement", "HTMLMediaElement", "HTMLMenuElement", "HTMLMetaElement",
+    "HTMLMeterElement", "HTMLModElement", "HTMLOListElement", "HTMLObjectElement",
+    "HTMLOptGroupElement", "HTMLOptionElement", "HTMLOptionsCollection", "HTMLOutputElement",
+    "HTMLParagraphElement", "HTMLParamElement", "HTMLPictureElement", "HTMLPreElement",
+    "HTMLProgressElement", "HTMLQuoteElement", "HTMLScriptElement", "HTMLSelectElement",
+    "HTMLSlotElement", "HTMLSourceElement", "HTMLSpanElement", "HTMLStyleElement",
+    "HTMLTableCaptionElement", "HTMLTableCellElement", "HTMLTableColElement", "HTMLTableElement",
+    "HTMLTableRowElement", "HTMLTableSectionElement", "HTMLTemplateElement", "HTMLTextAreaElement",
+    "HTMLTimeElement", "HTMLTitleElement", "HTMLTrackElement", "HTMLUListElement",
+    "HTMLUnknownElement", "HTMLVideoElement", "HashChangeEvent", "Headers", "History", "IDBCursor",
+    "IDBCursorWithValue", "IDBDatabase", "IDBFactory", "IDBIndex", "IDBKeyRange", "IDBObjectStore",
+    "IDBOpenDBRequest", "IDBRequest", "IDBTransaction", "IDBVersionChangeEvent", "Image",
+    "ImageData", "InputEvent", "Int16Array", "Int32Array", "Int8Array", "IntersectionObserver",
+    "IntersectionObserverEntry", "Intl", "JSON", "KeyboardEvent", "KeyframeEffect", "Location",
+    "Map", "Math", "MediaCapabilities", "MediaElementAudioSourceNode", "MediaEncryptedEvent",
+    "MediaError", "MediaList", "MediaQueryList", "MediaQueryListEvent", "MediaRecorder",
+    "MediaSource", "MediaStream", "MediaStreamAudioDestinationNode", "MediaStreamAudioSourceNode",
+    "MediaStreamTrack", "MediaStreamTrackEvent", "MessageChannel", "MessageEvent", "MessagePort",
+    "MimeType", "MimeTypeArray", "MouseEvent", "MutationEvent", "MutationObserver",
+    "MutationRecord", "NamedNodeMap", "Navigator", "Node", "NodeFilter", "NodeIterator",
+    "NodeList", "Notification", "Number", "Object", "OfflineAudioCompletionEvent", "Option",
+    "OscillatorNode", "PageTransitionEvent", "Path2D", "Performance", "PerformanceEntry",
+    "PerformanceMark", "PerformanceMeasure", "PerformanceNavigation", "PerformanceObserver",
+    "PerformanceObserverEntryList", "PerformanceResourceTiming", "PerformanceTiming",
+    "PeriodicWave", "Plugin", "PluginArray", "PointerEvent", "PopStateEvent",
+    "ProcessingInstruction", "ProgressEvent", "Promise", "PromiseRejectionEvent", "Proxy",
+    "RTCCertificate", "RTCDTMFSender", "RTCDTMFToneChangeEvent", "RTCDataChannel",
+    "RTCDataChannelEvent", "RTCIceCandidate", "RTCPeerConnection", "RTCPeerConnectionIceEvent",
+    "RTCRtpReceiver", "RTCRtpSender", "RTCRtpTransceiver", "RTCSessionDescription",
+    "RTCStatsReport", "RTCTrackEvent", "RadioNodeList", "Range", "RangeError", "ReadableStream",
+    "ReferenceError", "Reflect", "RegExp", "Request", "ResizeObserver", "ResizeObserverEntry",
+    "Response", "SVGAElement", "SVGAngle", "SVGAnimateElement", "SVGAnimateMotionElement",
+    "SVGAnimateTransformElement", "SVGAnimatedAngle", "SVGAnimatedBoolean",
+    "SVGAnimatedEnumeration", "SVGAnimatedInteger", "SVGAnimatedLength", "SVGAnimatedLengthList",
+    "SVGAnimatedNumber", "SVGAnimatedNumberList", "SVGAnimatedPreserveAspectRatio",
+    "SVGAnimatedRect", "SVGAnimatedString", "SVGAnimatedTransformList", "SVGAnimationElement",
+    "SVGCircleElement", "SVGClipPathElement", "SVGComponentTransferFunctionElement",
+    "SVGDefsElement", "SVGDescElement", "SVGElement", "SVGEllipseElement", "SVGFEBlendElement",
+    "SVGFEColorMatrixElement", "SVGFEComponentTransferElement", "SVGFECompositeElement",
+    "SVGFEConvolveMatrixElement", "SVGFEDiffuseLightingElement", "SVGFEDisplacementMapElement",
+    "SVGFEDistantLightElement", "SVGFEDropShadowElement", "SVGFEFloodElement", "SVGFEFuncAElement",
+    "SVGFEFuncBElement", "SVGFEFuncGElement", "SVGFEFuncRElement", "SVGFEGaussianBlurElement",
+    "SVGFEImageElement", "SVGFEMergeElement", "SVGFEMergeNodeElement", "SVGFEMorphologyElement",
+    "SVGFEOffsetElement", "SVGFEPointLightElement", "SVGFESpecularLightingElement",
+    "SVGFESpotLightElement", "SVGFETileElement", "SVGFETurbulenceElement", "SVGFilterElement",
+    "SVGForeignObjectElement", "SVGGElement", "SVGGeometryElement", "SVGGradientElement",
+    "SVGGraphicsElement", "SVGImageElement", "SVGLength", "SVGLengthList", "SVGLineElement",
+    "SVGLinearGradientElement", "SVGMPathElement", "SVGMarkerElement", "SVGMaskElement",
+    "SVGMatrix", "SVGMetadataElement", "SVGNumber", "SVGNumberList", "SVGPathElement",
+    "SVGPatternElement", "SVGPoint", "SVGPointList", "SVGPolygonElement", "SVGPolylineElement",
+    "SVGPreserveAspectRatio", "SVGRadialGradientElement", "SVGRect", "SVGRectElement",
+    "SVGSVGElement", "SVGScriptElement", "SVGSetElement", "SVGStopElement", "SVGStringList",
+    "SVGStyleElement", "SVGSwitchElement", "SVGSymbolElement", "SVGTSpanElement",
+    "SVGTextContentElement", "SVGTextElement", "SVGTextPathElement", "SVGTextPositioningElement",
+    "SVGTitleElement", "SVGTransform", "SVGTransformList", "SVGUnitTypes", "SVGUseElement",
+    "SVGViewElement", "Screen", "ScriptProcessorNode", "SecurityPolicyViolationEvent", "Selection",
+    "Set", "ShadowRoot", "SourceBuffer", "SourceBufferList", "SpeechSynthesisEvent",
+    "SpeechSynthesisUtterance", "StaticRange", "Storage", "StorageEvent", "String", "StyleSheet",
+    "StyleSheetList", "Symbol", "SyntaxError", "Text", "TextDecoder", "TextEncoder", "TextMetrics",
+    "TextTrack", "TextTrackCue", "TextTrackCueList", "TextTrackList", "TimeRanges", "TrackEvent",
+    "TransitionEvent", "TreeWalker", "TypeError", "UIEvent", "URIError", "URL", "URLSearchParams",
+    "Uint16Array", "Uint32Array", "Uint8Array", "Uint8ClampedArray", "VTTCue", "ValidityState",
+    "VisualViewport", "WaveShaperNode", "WeakMap", "WeakSet", "WebAssembly", "WebGLActiveInfo",
+    "WebGLBuffer", "WebGLContextEvent", "WebGLFramebuffer", "WebGLProgram", "WebGLQuery",
+    "WebGLRenderbuffer", "WebGLRenderingContext", "WebGLSampler", "WebGLShader",
+    "WebGLShaderPrecisionFormat", "WebGLSync", "WebGLTexture", "WebGLUniformLocation",
+    "WebKitCSSMatrix", "WebSocket", "WheelEvent", "Window", "Worker", "XMLDocument",
+    "XMLHttpRequest", "XMLHttpRequestEventTarget", "XMLHttpRequestUpload", "XMLSerializer",
+    "XPathEvaluator", "XPathExpression", "XPathResult", "XSLTProcessor", "alert", "atob", "blur",
+    "btoa", "cancelAnimationFrame", "captureEvents", "clearInterval", "clearTimeout", "close",
+    "closed", "confirm", "console", "customElements", "decodeURI", "decodeURIComponent",
+    "devicePixelRatio", "document", "encodeURI", "encodeURIComponent", "escape", "event", "fetch",
+    "find", "focus", "frameElement", "frames", "getComputedStyle", "getSelection", "globalThis",
+    "history", "indexedDB", "isFinite", "isNaN", "isSecureContext", "length", "location",
+    "locationbar", "matchMedia", "menubar", "moveBy", "moveTo", "name", "navigator", "onabort",
+    "onafterprint", "onanimationend", "onanimationiteration", "onanimationstart", "onbeforeprint",
+    "onbeforeunload", "onblur", "oncanplay", "oncanplaythrough", "onchange", "onclick",
+    "oncontextmenu", "oncuechange", "ondblclick", "ondrag", "ondragend", "ondragenter",
+    "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied",
+    "onended", "onerror", "onfocus", "ongotpointercapture", "onhashchange", "oninput", "oninvalid",
+    "onkeydown", "onkeypress", "onkeyup", "onlanguagechange", "onload", "onloadeddata",
+    "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmessage", "onmousedown",
+    "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup",
+    "onoffline", "ononline", "onpagehide", "onpageshow", "onpause", "onplay", "onplaying",
+    "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove",
+    "onpointerout", "onpointerover", "onpointerup", "onpopstate", "onprogress", "onratechange",
+    "onrejectionhandled", "onreset", "onresize", "onscroll", "onseeked", "onseeking", "onselect",
+    "onstalled", "onstorage", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle",
+    "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart",
+    "onunhandledrejection", "onunload", "onvolumechange", "onwaiting", "onwebkitanimationend",
+    "onwebkitanimationiteration", "onwebkitanimationstart", "onwebkittransitionend", "onwheel",
+    "open", "opener", "origin", "outerHeight", "outerWidth", "parent", "parseFloat", "parseInt",
+    "performance", "personalbar", "postMessage", "print", "prompt", "queueMicrotask",
+    "releaseEvents", "requestAnimationFrame", "resizeBy", "resizeTo", "screen", "screenLeft",
+    "screenTop", "screenX", "screenY", "scroll", "scrollBy", "scrollTo", "scrollbars", "self",
+    "setInterval", "setTimeout", "speechSynthesis", "status", "statusbar", "stop", "toolbar",
+    "top", "unescape", "webkitURL", "window",
+];
 
 #[rustfmt::skip]
 fn is_pure_math_method(method: &str) -> bool {
@@ -527,4 +495,28 @@ pub(super) fn is_known_global_property_deep(global: &str, middle: &str, property
         | "hasOwnProperty" | "isPrototypeOf" | "propertyIsEnumerable" | "toLocaleString"
         | "toString" | "unwatch" | "valueOf" | "watch"
     )
+}
+
+#[cfg(test)]
+mod test {
+    use super::{KNOWN_GLOBAL_IDENTIFIERS, is_known_global_identifier};
+
+    #[test]
+    fn known_global_identifiers_table_is_sorted_and_unique() {
+        // `binary_search` relies on byte-order sorting and duplicates are pointless.
+        for pair in KNOWN_GLOBAL_IDENTIFIERS.windows(2) {
+            assert!(pair[0] < pair[1], "`{}` must sort before `{}`", pair[0], pair[1]);
+        }
+    }
+
+    #[test]
+    fn known_global_identifiers_lookup() {
+        assert!(is_known_global_identifier("Array"));
+        assert!(is_known_global_identifier("window"));
+        assert!(is_known_global_identifier("AbortController"));
+        assert!(is_known_global_identifier("webkitURL"));
+        assert!(!is_known_global_identifier("NaN"));
+        assert!(!is_known_global_identifier("foo"));
+        assert!(!is_known_global_identifier(""));
+    }
 }

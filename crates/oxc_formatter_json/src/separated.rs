@@ -7,16 +7,14 @@
 
 use oxc_formatter_core::{
     Buffer,
-    builders::{
-        empty_line, hard_line_break, if_group_breaks, line_suffix, soft_line_break_or_space, space,
-    },
+    builders::{empty_line, hard_line_break, if_group_breaks, soft_line_break_or_space, space},
     write,
 };
 use oxc_span::Span;
 
 use crate::{
-    comments::{count_newlines, write_single_comment},
-    print::{JsonFormatter, format_with},
+    comments::{FormatCommentBeforeContent, FormatLineCommentSuffix, count_newlines},
+    print::JsonFormatter,
 };
 
 /// Whether a trailing `,` should follow the last entry.
@@ -97,8 +95,7 @@ fn write_trailing_separator(upper_bound: u32, f: &mut JsonFormatter<'_, '_>) {
 
     if let Some(block_end) = block_end {
         for c in f.context().comments().take_before(block_end) {
-            write!(f, space());
-            write_single_comment(c, f);
+            write!(f, [space(), FormatCommentBeforeContent::new(*c)]);
         }
     }
 
@@ -145,8 +142,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
     };
 
     for c in block_comments {
-        write!(f, space());
-        write_single_comment(c, f);
+        write!(f, [space(), FormatCommentBeforeContent::new(*c)]);
     }
     write!(f, ",");
 
@@ -156,11 +152,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
         // Without this, `"k": [a, b], // long...`
         // would force the array to expand even when it fits on its own.
         let lc = *lc;
-        let suffix = format_with(move |f: &mut JsonFormatter<'_, '_>| {
-            write!(f, space());
-            write_single_comment(&lc, f);
-        });
-        write!(f, line_suffix(&suffix));
+        write!(f, FormatLineCommentSuffix::new(lc).with_leading_space());
         // Promote to `empty_line` when the source preserves a blank line after the trailing comment;
         // otherwise a hard break (also flushes the line_suffix).
         if has_blank_line(lc.span.end, curr.start, f) {

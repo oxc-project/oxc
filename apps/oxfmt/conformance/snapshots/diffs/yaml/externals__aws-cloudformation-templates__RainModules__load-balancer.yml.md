@@ -1,6 +1,6 @@
 # externals/aws-cloudformation-templates/RainModules/load-balancer.yml
 
-> Allowed: over-indented comment after `key: value` (Prettier breaks the pair onto two lines because of comment indentation). See crates/oxc_formatter_yaml/AGENTS.md
+> over-indented comment after `key: value` never rewrites the pair. See crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
 
 ## Option 1
 

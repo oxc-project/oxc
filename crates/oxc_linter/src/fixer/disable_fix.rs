@@ -19,6 +19,17 @@ impl Message {
             return;
         }
 
+        let start = self.span.start as usize;
+        let end = self.span.end as usize;
+
+        if start > end
+            || end > section_source_text.len()
+            || !section_source_text.is_char_boundary(start)
+            || !section_source_text.is_char_boundary(end)
+        {
+            return;
+        }
+
         let Some(rule_name) = oxc_code_short_canonical_name(&self.error.code) else { return };
 
         self.fixes.extend_fix(vec![
@@ -359,7 +370,37 @@ fn find_description_start_offset(text: &[u8]) -> Option<usize> {
 #[cfg(test)]
 #[expect(clippy::cast_possible_truncation)]
 mod tests {
+    use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
+
+    use crate::{Message, PossibleFixes};
+
+    fn message_with_span(span: Span) -> Message {
+        Message::new(
+            OxcDiagnostic::error("test diagnostic")
+                .with_label(span)
+                .with_error_code("test-plugin", "test-rule"),
+            PossibleFixes::None,
+        )
+    }
+
+    #[test]
+    fn ignore_fix_is_not_created_for_out_of_bounds_span() {
+        let mut message = message_with_span(Span::new(1, 2));
+
+        message.add_ignore_fix(0, "");
+
+        assert!(message.fixes.is_empty());
+    }
+
+    #[test]
+    fn ignore_fix_is_not_created_for_non_utf8_boundary_span() {
+        let mut message = message_with_span(Span::new(1, 2));
+
+        message.add_ignore_fix(0, "\u{e9}");
+
+        assert!(message.fixes.is_empty());
+    }
 
     #[test]
     fn disable_for_section_js_file() {

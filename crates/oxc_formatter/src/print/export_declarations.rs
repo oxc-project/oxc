@@ -14,8 +14,12 @@ use crate::{
     },
     print::{
         import_declaration::format_source_with_clause_and_semicolon,
-        semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
+        semicolon::{
+            FormatContentWithSemicolon, OptionalSemicolon,
+            semicolon_terminated_expression_content_end,
+        },
     },
+    utils::decorators_before_export_start,
     write,
 };
 
@@ -30,8 +34,10 @@ fn format_export_keyword_with_class_decorators<'a>(
     // `@decorator export class Cls {}`
     //            ^ print leading comments here
     let format_leading_comments = format_with(|f| {
+        // This IS the statement's leading pass (the generated one is skipped for the decorator interleaving),
+        // so deferred comments need the node bound.
         let comments = f.context().comments().comments_before(span.start);
-        FormatLeadingComments::Comments(comments).fmt(f);
+        FormatLeadingComments::CommentsOfNode(comments, span.start).fmt(f);
     });
 
     if let AstNodes::Class(class) = declaration
@@ -40,7 +46,7 @@ fn format_export_keyword_with_class_decorators<'a>(
     {
         // `@decorator export class Cls {}`
         // decorators are placed before the export keyword
-        if class.decorators[0].span.end < span.start {
+        if decorators_before_export_start(&class.decorators, span).is_some() {
             write!(
                 f,
                 [class.decorators(), hard_line_break(), format_leading_comments, keyword, space()]
@@ -124,10 +130,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
         );
 
         if declaration.is_expression() {
-            write!(
+            let content_end = semicolon_terminated_expression_content_end(
                 f,
-                FormatContentWithSemicolon::new(declaration, declaration.span().end, self.span.end)
+                declaration.as_ref().to_expression(),
+                declaration.span().end,
+                self.span.end,
+                false,
             );
+            write!(f, FormatContentWithSemicolon::new(declaration, content_end, self.span.end));
         } else {
             write!(f, declaration);
         }

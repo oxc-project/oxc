@@ -1,0 +1,93 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments in a variable's value stay where they are, like in a declaration.
+// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"): Prettier DROPS the
+// block comments of `@a`, `@e`, `@b`, `@g` and glues `@c`'s as `1/* c */ ;`.
+@a: /* c */ 1;
+@e: /* c */ 1 2;
+@b: 1 /* c */ 2;
+@c: 1 /* c */;
+// The gap before `;` is the formatter's: normalized away, as in a declaration.
+@c2: 1 /* c */ ;
+// A `//` after the colon: the value continues one level under the name,
+// a detached ruleset keeps its `{` under the name.
+@d: // c
+  1;
+@d2: // c
+  1 2;
+@r: // c
+{
+  a: b;
+};
+.x {
+  @f: // c
+    1;
+  @g: /* c */ 1;
+  color: /* c */ red;
+}
+@h: 1; /* after */
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments in a variable's value stay where they are, like in a declaration.
+// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"): Prettier DROPS the
+// block comments of `@a`, `@e`, `@b`, `@g` and glues `@c`'s as `1/* c */ ;`.
+@a: /* c */ 1;
+@e: /* c */ 1 2;
+@b: 1 /* c */ 2;
+@c: 1 /* c */;
+// The gap before `;` is the formatter's: normalized away, as in a declaration.
+@c2: 1 /* c */;
+// A `//` after the colon: the value continues one level under the name,
+// a detached ruleset keeps its `{` under the name.
+@d: // c
+  1;
+@d2: // c
+  1 2;
+@r: // c
+{
+  a: b;
+};
+.x {
+  @f: // c
+    1;
+  @g: /* c */ 1;
+  color: /* c */ red;
+}
+@h: 1; /* after */
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments in a variable's value stay where they are, like in a declaration.
+// DIVERGENCE (DIVERGENCES.md "less-variable-value-comments"): Prettier DROPS the
+// block comments of `@a`, `@e`, `@b`, `@g` and glues `@c`'s as `1/* c */ ;`.
+@a: /* c */ 1;
+@e: /* c */ 1 2;
+@b: 1 /* c */ 2;
+@c: 1 /* c */;
+// The gap before `;` is the formatter's: normalized away, as in a declaration.
+@c2: 1 /* c */;
+// A `//` after the colon: the value continues one level under the name,
+// a detached ruleset keeps its `{` under the name.
+@d: // c
+  1;
+@d2: // c
+  1 2;
+@r: // c
+{
+  a: b;
+};
+.x {
+  @f: // c
+    1;
+  @g: /* c */ 1;
+  color: /* c */ red;
+}
+@h: 1; /* after */
+
+===================== End =====================

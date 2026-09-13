@@ -13,7 +13,7 @@ use oxc::{
 };
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_str::{Str, format_str};
+use oxc_str::Str;
 
 /// The main struct containing all deserializable data in raw transfer.
 #[ast]
@@ -101,8 +101,8 @@ impl<'a> Error<'a> {
         let message = Str::from_in(diagnostic.message.as_ref(), allocator);
         let help_message =
             diagnostic.help.as_ref().map(|help| Str::from_in(help.as_ref(), allocator));
-        let report = diagnostic.with_source_code(Arc::clone(named_source));
-        let codeframe = format_str!(allocator, "{report:?}");
+        let rendered = diagnostic.render_with_source_code(Arc::clone(named_source));
+        let codeframe = Str::from_in(rendered.as_str(), allocator);
 
         #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields
         Self { severity, message, labels, help_message, codeframe }

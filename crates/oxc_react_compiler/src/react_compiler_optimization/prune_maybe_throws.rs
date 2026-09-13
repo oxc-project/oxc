@@ -5,8 +5,8 @@
 
 //! Prunes `MaybeThrow` terminals for blocks that can provably never throw.
 //!
-//! Currently very conservative: only affects blocks with primitives or
-//! array/object literals. Even a variable reference could throw due to TDZ.
+//! Currently conservative: only removes handlers when every instruction is known not to throw.
+//! Even a variable reference could throw due to TDZ.
 //!
 //! Analogous to TS `Optimization/PruneMaybeThrows.ts`.
 
@@ -15,9 +15,11 @@ use oxc_index::{IndexSlice, IndexVec};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::{
-    BlockId, FunctionId, HirFunction, Instruction, InstructionValue, Terminal,
+    ArrayElement, BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue,
+    ObjectPropertyKey, ObjectPropertyOrSpread, Terminal, assert_consistent_identifiers,
+    assert_terminal_successors_exist,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
@@ -30,6 +32,7 @@ use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecut
 pub fn prune_maybe_throws<'a>(
     func: &mut HirFunction<'a>,
     functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
     alloc: &'a Allocator,
 ) -> Result<(), OxcDiagnostic> {
     let terminal_mapping = prune_maybe_throws_impl(func);
@@ -53,14 +56,14 @@ pub fn prune_maybe_throws<'a>(
                 for (predecessor, _) in &phi.operands {
                     if !preds.contains(predecessor) {
                         let mapped_terminal =
-                            terminal_mapping.get(*predecessor).copied().flatten().ok_or_else(|| {
-                                ErrorCategory::Invariant
-                                    .diagnostic("Expected non-existing phi operand's predecessor to have been mapped to a new terminal")
-                                    .with_help(format!(
-                                        "Could not find mapping for predecessor bb{} in block bb{}",
-                                        predecessor.index(), block.id.index(),
-                                    ))
-                            })?;
+                            terminal_mapping.get(*predecessor).copied().flatten().ok_or_else(
+                                || {
+                                    diagnostics::missing_phi_predecessor_mapping(
+                                        predecessor.index(),
+                                        block.id.index(),
+                                    )
+                                },
+                            )?;
                         updates.push((*predecessor, mapped_terminal));
                     }
                 }
@@ -76,6 +79,9 @@ pub fn prune_maybe_throws<'a>(
                 }
             }
         }
+
+        assert_consistent_identifiers(func, identifiers)?;
+        assert_terminal_successors_exist(func)?;
     }
     Ok(())
 }
@@ -98,7 +104,7 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<IndexVec<BlockId, O
         let can_throw = block
             .instructions
             .iter()
-            .any(|instr_id| instruction_may_throw(&instructions[instr_id.index()]));
+            .any(|instr_id| value_may_throw_when_pruning(&instructions[instr_id.index()].value));
 
         if !can_throw {
             let source = terminal_mapping[block.id].unwrap_or(block.id);
@@ -117,11 +123,50 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<IndexVec<BlockId, O
     if mapped_any { Some(terminal_mapping) } else { None }
 }
 
-fn instruction_may_throw(instr: &Instruction) -> bool {
-    !matches!(
-        &instr.value,
-        InstructionValue::Primitive { .. }
-            | InstructionValue::ArrayExpression { .. }
-            | InstructionValue::ObjectExpression { .. }
-    )
+/// Returns whether a `MaybeThrow` edge must be retained during CFG pruning.
+///
+/// Local stores cannot throw by themselves, but value blocks end with a store.
+/// Removing that final handler edge can reorder the catch block ahead of the
+/// successful fallthrough, causing reactive scopes to span both paths.
+fn value_may_throw_when_pruning(value: &InstructionValue) -> bool {
+    matches!(value, InstructionValue::StoreLocal { .. } | InstructionValue::StoreContext { .. })
+        || value_may_throw(value)
+}
+
+/// Returns whether evaluating an instruction value can throw.
+///
+/// Operand evaluation is represented by separate HIR instructions, so plain array/object
+/// construction is safe once its operands exist. Spreads and computed object keys remain part of
+/// the construction operation and can invoke user code.
+pub(crate) fn value_may_throw(value: &InstructionValue) -> bool {
+    match value {
+        InstructionValue::DeclareLocal { .. }
+        | InstructionValue::DeclareContext { .. }
+        | InstructionValue::Primitive { .. }
+        | InstructionValue::JSXText { .. }
+        | InstructionValue::TypeCastExpression { .. }
+        | InstructionValue::ObjectMethod { .. }
+        | InstructionValue::FunctionExpression { .. }
+        | InstructionValue::RegExpLiteral { .. }
+        | InstructionValue::MetaProperty { .. }
+        | InstructionValue::Debugger { .. }
+        | InstructionValue::StartMemoize { .. }
+        | InstructionValue::FinishMemoize { .. } => false,
+        InstructionValue::StoreLocal { lvalue, .. }
+        | InstructionValue::StoreContext { lvalue, .. } => {
+            lvalue.kind == crate::react_compiler_hir::InstructionKind::Reassign
+        }
+        InstructionValue::ArrayExpression { elements, .. } => {
+            elements.iter().any(|element| matches!(element, ArrayElement::Spread(_)))
+        }
+        InstructionValue::ObjectExpression { properties, .. } => {
+            properties.iter().any(|property| match property {
+                ObjectPropertyOrSpread::Property(property) => {
+                    matches!(property.key, ObjectPropertyKey::Computed { .. })
+                }
+                ObjectPropertyOrSpread::Spread(_) => true,
+            })
+        }
+        _ => true,
+    }
 }

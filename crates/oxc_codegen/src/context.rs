@@ -26,6 +26,8 @@ bitflags! {
         ///
         /// When set, TypeScript syntax features are enabled in the output.
         const TYPESCRIPT  = 1 << 2;
+        /// The current template literal is tagged, so preserve its raw quasis.
+        const TAGGED_TEMPLATE = 1 << 3;
     }
 }
 

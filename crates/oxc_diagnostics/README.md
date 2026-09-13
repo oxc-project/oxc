@@ -4,14 +4,14 @@ Error reporting and diagnostic utilities for JavaScript and TypeScript tooling.
 
 ## Overview
 
-This crate provides comprehensive error handling and diagnostic reporting capabilities. It implements the [miette] diagnostic trait, making it compatible with other Rust diagnostic tooling while providing specialized features for JavaScript/TypeScript errors.
+This crate provides comprehensive error handling and diagnostic reporting capabilities for JavaScript and TypeScript tooling.
 
 ## Key Features
 
 - **Rich diagnostics**: Detailed error messages with source context
 - **Source highlighting**: Syntax-highlighted error locations
 - **Multiple error support**: Collect and report multiple errors at once
-- **Miette integration**: Compatible with the miette diagnostic ecosystem
+- **Built-in renderers**: Graphical terminal and machine-readable JSON output
 - **Severity levels**: Support for errors, warnings, and informational messages
 
 ## Architecture

@@ -1,5 +1,7 @@
 # externals/prettier/js/multiparser-comments/comment-inside.js
 
+> broken `${}` holding comments indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#broken-template-comment-indent
+
 ## Option 1
 
 `````json

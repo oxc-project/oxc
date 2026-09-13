@@ -216,8 +216,8 @@ export function commentsExistBetween(
   // Check if its end is before `nodeOrToken2` starts.
   // Read `end` from buffer: u32 at offset 1 of the entry.
   return (
-    firstCommentBetween < commentsLen &&
-    commentsInt32[(firstCommentBetween << 2) + 1] <= nodeOrToken2.range[0]
+    firstCommentBetween < commentsLen
+    && commentsInt32[(firstCommentBetween << 2) + 1] <= nodeOrToken2.range[0]
   );
 }
 

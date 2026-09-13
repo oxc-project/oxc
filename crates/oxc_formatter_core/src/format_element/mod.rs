@@ -1,5 +1,7 @@
 pub mod debug;
 pub mod document;
+pub(crate) mod formatted;
+pub(crate) mod group_id;
 pub mod tag;
 
 // #[cfg(target_pointer_width = "64")]
@@ -116,6 +118,8 @@ pub enum LineMode {
     Soft,
     /// See [crate::builders::hard_line_break] for documentation.
     Hard,
+    /// See [crate::builders::Line::without_expand_parent] for documentation.
+    HardWithoutExpand,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
     /// See [crate::builders::exact_line_breaks] for documentation.
@@ -125,15 +129,29 @@ pub enum LineMode {
 }
 
 impl LineMode {
+    /// Exactly [Self::Hard], excludes [Self::HardWithoutExpand];
+    /// ask [Self::will_break] for "does this always print a newline".
     pub const fn is_hard(self) -> bool {
         matches!(self, LineMode::Hard)
     }
 
+    /// The line always prints as a line break, regardless of print mode.
     pub const fn will_break(self) -> bool {
         matches!(
             self,
-            LineMode::Hard | LineMode::Empty | LineMode::ExactLineBreaks(_) | LineMode::Literal
+            LineMode::Hard
+                | LineMode::HardWithoutExpand
+                | LineMode::Empty
+                | LineMode::ExactLineBreaks(_)
+                | LineMode::Literal
         )
+    }
+
+    /// The line forces enclosing groups to expand at build time.
+    /// See `Document::propagate_expand`:
+    /// every always-breaking mode except [Self::HardWithoutExpand].
+    pub const fn propagates_expand(self) -> bool {
+        self.will_break() && !matches!(self, LineMode::HardWithoutExpand)
     }
 }
 
@@ -148,10 +166,6 @@ pub enum PrintMode {
 impl PrintMode {
     pub const fn is_flat(self) -> bool {
         matches!(self, PrintMode::Flat)
-    }
-
-    pub const fn is_expanded(self) -> bool {
-        matches!(self, PrintMode::Expanded)
     }
 }
 
@@ -227,19 +241,6 @@ pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) ->
 }
 
 impl FormatElement<'_> {
-    /// Returns `true` if self is a [FormatElement::Tag]
-    pub const fn is_tag(&self) -> bool {
-        matches!(self, FormatElement::Tag(_))
-    }
-
-    /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_start] is `true`.
-    pub const fn is_start_tag(&self) -> bool {
-        match self {
-            FormatElement::Tag(tag) => tag.is_start(),
-            _ => false,
-        }
-    }
-
     /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_end] is `true`.
     pub const fn is_end_tag(&self) -> bool {
         match self {
@@ -255,10 +256,6 @@ impl FormatElement<'_> {
     pub const fn is_space(&self) -> bool {
         matches!(self, FormatElement::Space)
     }
-
-    pub const fn is_line(&self) -> bool {
-        matches!(self, FormatElement::Line(_))
-    }
 }
 
 impl FormatElements for FormatElement<'_> {
@@ -267,6 +264,9 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
+            // NOTE: intentionally `propagates_expand`, not a will-break analogue:
+            // a `without_expand_parent` text's embedded newlines don't count as breaking here,
+            // while a `HardWithoutExpand` LINE does (the line above)
             FormatElement::Text { text: _, width } => width.propagates_expand(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even

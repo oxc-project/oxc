@@ -9,7 +9,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, ast_util::variable_declaration_kind, context::LintContext,
+    frameworks::FrameworkOptions, rule::Rule,
+};
 
 fn multiple_arguments_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected multiple arguments.")
@@ -165,7 +168,7 @@ fn get_identifier_resolved_reference<'a>(
     };
 
     // `const` variable can not be overridden
-    if declarator.kind == VariableDeclarationKind::Const {
+    if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Const {
         return declarator.init.as_ref();
     }
 

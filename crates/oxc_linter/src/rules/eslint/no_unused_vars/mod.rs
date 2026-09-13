@@ -14,7 +14,7 @@ use std::ops::Deref;
 use allowed::FunctionParameterKind;
 use ignored::IgnoreReason;
 use options::{IgnorePattern, NoUnusedVarsFixMode, NoUnusedVarsOptions};
-use oxc_ast::{AstKind, ast::CatchParameter};
+use oxc_ast::{AstKind, AstType, ast::CatchParameter};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
@@ -302,7 +302,7 @@ impl NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
@@ -366,7 +366,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
@@ -465,16 +465,18 @@ fn remove_unused_catch_parameter<'a>(
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
     let Span { start, end, .. } = catch.span();
+    let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_node(catch.node_id()).kind() else {
+        return fixer.noop();
+    };
 
-    #[expect(clippy::cast_possible_truncation)]
-    let source_end = ctx.source_text().len() as u32;
-    let (Some(paren_start), Some(paren_end_offset)) = (
-        ctx.find_prev_token_within(0, start, "("),
-        ctx.find_next_token_within(end, source_end, ")"),
+    let (Some(paren_start_offset), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(catch_clause.span.start, start, "("),
+        ctx.find_next_token_within(end, catch_clause.span.end, ")"),
     ) else {
         return fixer.noop();
     };
 
+    let paren_start = catch_clause.span.start + paren_start_offset;
     let paren_end = end + paren_end_offset;
     let delete_span = Span::new(paren_start, paren_end + 1);
     fixer.delete_range(delete_span)
@@ -488,6 +490,10 @@ impl Symbol<'_, '_> {
     }
 
     fn is_in_declare_global(&self) -> bool {
+        if !self.nodes().contains(AstType::TSGlobalDeclaration) {
+            return false;
+        }
+
         self.scoping()
             .scope_ancestors(self.scope_id())
             .filter(|&scope_id| {
@@ -496,9 +502,7 @@ impl Symbol<'_, '_> {
             })
             .any(|ambient_module_scope_id| {
                 matches!(
-                    self.nodes()
-                        .get_node(self.scoping().get_node_id(ambient_module_scope_id))
-                        .kind(),
+                    self.nodes().kind(self.scoping().get_node_id(ambient_module_scope_id)),
                     AstKind::TSGlobalDeclaration(_)
                 )
             })

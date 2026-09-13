@@ -1,0 +1,5 @@
+# DIVERGES from Prettier (and yaml@2's reading): a space-only EOF line alone
+# materializes no kept break -- the value is "" (psych/PyYAML agree), so the
+# scalar has no verbatim tail and the file gets the standard final newline.
+key: |+
+  

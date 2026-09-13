@@ -439,8 +439,8 @@ impl Baseline {
         let source = Arc::new(NamedSource::new(&self.name, self.original.clone()));
         self.oxc_diagnostics
             .iter()
-            .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .fold(String::new(), |s, error| s + &format!("{error:?}"))
+            .map(|d| d.clone().render_with_source_code(Arc::clone(&source)))
+            .join("")
     }
 }
 

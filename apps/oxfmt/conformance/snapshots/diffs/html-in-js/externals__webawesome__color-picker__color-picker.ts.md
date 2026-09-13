@@ -1,5 +1,8 @@
 # externals/webawesome/color-picker/color-picker.ts
 
+> union out of its `:`/`as` position expands to leading-`|` right away. See crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+> embedded `${expr}` re-indents to the placeholder. See apps/oxfmt/DIVERGENCES.md#template-expression-indent
+
 ## Option 1
 
 `````json

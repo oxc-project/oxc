@@ -1,5 +1,7 @@
 # externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss
 
+> fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+
 ## Option 1
 
 `````json

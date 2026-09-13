@@ -123,7 +123,7 @@ declare_oxc_lint!(
 
 impl Rule for CatchErrorName {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<CatchErrorNameConfig>>(value)
+        DefaultRuleConfig::<CatchErrorNameConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(|config| Self(Box::new(config)))
     }

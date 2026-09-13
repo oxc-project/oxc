@@ -217,7 +217,7 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
                 let ret = Parser::new(&allocator, &unit.content, unit.source_type)
                     .with_config(TokensParserConfig)
                     .parse();
-                if ret.panicked {
+                if ret.fatal_error {
                     Vec::new()
                 } else {
                     let token_ends: Vec<u32> =
@@ -241,7 +241,7 @@ fn generate_for_file(f: &TypeScriptFile, header: &str, kind: BaselineKind) -> St
             }
             BaselineKind::Types => {
                 let ret = Parser::new(&allocator, &unit.content, unit.source_type).parse();
-                if ret.panicked {
+                if ret.fatal_error {
                     Vec::new()
                 } else {
                     let mut walker = SymbolWalker {

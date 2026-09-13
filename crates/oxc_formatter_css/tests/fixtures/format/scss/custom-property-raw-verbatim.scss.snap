@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Same as css/custom-property-raw-verbatim.css: an unreadable custom property
+// value is text in every variant.
+:root {
+  --z: */;
+  --x:   1px   !foo;
+  --typed:   1px   !important;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Same as css/custom-property-raw-verbatim.css: an unreadable custom property
+// value is text in every variant.
+:root {
+  --z: */;
+  --x: 1px   !foo;
+  --typed: 1px !important;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Same as css/custom-property-raw-verbatim.css: an unreadable custom property
+// value is text in every variant.
+:root {
+  --z: */;
+  --x: 1px   !foo;
+  --typed: 1px !important;
+}
+
+===================== End =====================

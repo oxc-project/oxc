@@ -597,7 +597,6 @@ mod tests {
     #[test]
     fn from_empty_iterator() {
         let arr: [u64; 0] = [];
-        #[expect(clippy::from_iter_instead_of_collect)]
         let stack = Stack::from_iter(arr.iter());
         assert_len_cap_last!(stack, 0, 0, None);
     }

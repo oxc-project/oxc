@@ -18,6 +18,8 @@ fn test_string_index_of() {
     test("x = 'abcdefbe'.indexOf('b', 2)", "x = 6");
     test("x = 'abcdef'.indexOf('bcd')", "x = 1");
     test("x = 'abcdefsdfasdfbcdassd'.indexOf('bcd', 4)", "x = 13");
+    test("x = 'undefined'.indexOf()", "x = 0");
+    test("x = 'abcdef'.indexOf()", "x = -1");
     test_same("x = 'abcdef'.indexOf(...a, 1)");
     test_same("x = 'abcdef'.indexOf('b', ...a)");
     test_same("x = 'abcdef'.indexOf(a, 1)");
@@ -26,6 +28,8 @@ fn test_string_index_of() {
     test("x = 'abcdef'.lastIndexOf('b')", "x = 1");
     test("x = 'abcdefbe'.lastIndexOf('b')", "x = 6");
     test("x = 'abcdefbe'.lastIndexOf('b', 5)", "x = 1");
+    test("x = 'undefined'.lastIndexOf()", "x = 0");
+    test("x = 'abcdef'.lastIndexOf()", "x = -1");
 
     test("x = 'abc1def'.indexOf(1)", "x = 3");
     test("x = 'abcNaNdef'.indexOf(NaN)", "x = 3");
@@ -238,6 +242,8 @@ fn test_fold_string_char_at() {
     test("x = 'abcde'.charAt(3)", "x = 'd'");
     test("x = 'abcde'.charAt(4)", "x = 'e'");
     test("x = 'abcde'.charAt(5)", "x = ''");
+    test("x = 'abcde'.charAt(4294967295)", "x = ''");
+    test("x = 'abcde'.charAt(4294967296)", "x = ''");
     test("x = 'abcde'.charAt(-1)", "x = ''");
     test("x = 'abcde'.charAt()", "x = 'a'");
     test_same("x = 'abcde'.charAt(...foo)");
@@ -519,6 +525,9 @@ fn test_fold_math_functions_round() {
     test_same_value("Math.round(Math.random())");
     test_value("Math.round(NaN)", "NaN");
     test_value("Math.round(3)", "3");
+    test_value("Math.round(0.49999999999999994)", "0");
+    test_value("Math.round(0.5)", "1");
+    test_value("Math.round(-0.5)", "-0");
     test_value("Math.round(3.5)", "4");
     test_value("Math.round(-3.5)", "-3");
 }
@@ -606,15 +615,54 @@ fn test_fold_math_functions_min() {
 }
 
 #[test]
-#[ignore = "TODO: Math.pow optimization not yet implemented"]
 fn test_fold_math_functions_pow() {
-    test("Math.pow(1, 2)", "1");
-    test("Math.pow(2, 0)", "1");
-    test("Math.pow(2, 2)", "4");
-    test("Math.pow(2, 32)", "4294967296");
-    test("Math.pow(Infinity, 0)", "1");
-    test("Math.pow(Infinity, 1)", "Infinity");
-    test("Math.pow('a', 33)", "NaN");
+    test_value("Math.pow(1, 2)", "1");
+    test_value("Math.pow(2, 0)", "1");
+    test_value("Math.pow(2, 2)", "4");
+    test_value("Math.pow(2, 32)", "2 ** 32");
+    test_value("Math.pow(Infinity, 0)", "1");
+    test_value("Math.pow(Infinity, 1)", "Infinity");
+    test_value("Math.pow('a', 33)", "NaN");
+    test_value("Math.pow(2, 3)", "8");
+    test_value("Math.pow(a, 3)", "a ** 3");
+    test_value("Math.pow(2, b)", "2 ** b");
+    test_value("Math.pow(a, b)", "a ** +b");
+    test_value("Math.pow(2n, 3n)", "2n ** +3n"); // errors both before and after
+    test_value("Math.pow(a + b, c)", "(a + b) ** +c");
+    test_same_value("Math.pow()");
+    test_same_value("Math.pow(1)");
+    test_same_value("Math.pow(...a, 1)");
+    test_same_value("Math.pow(1, ...a)");
+    test_same_value("Math.pow(1, 2, 3)");
+    test_target("v = Math.pow(2, 3)", "v = Math.pow(2, 3)", "chrome51");
+    test_same_value(" Unknown.pow(1, 2)");
+}
+
+#[test]
+fn test_fold_math_functions_sqrt() {
+    test_same_value("Math.sqrt()");
+    test_same_value("Math.sqrt(1, 2)");
+    test_same_value("Math.sqrt(...a)");
+    test_same_value("Math.sqrt(a)"); // a maybe -0
+    test_same_value("Math.sqrt(2n)");
+    test_value("Math.sqrt(Infinity)", "Infinity");
+    test_value("Math.sqrt(NaN)", "NaN");
+    test_value("Math.sqrt(0)", "0");
+    test_value("Math.sqrt(-0)", "-0");
+    test_value("Math.sqrt(-1)", "NaN");
+    test_value("Math.sqrt(-Infinity)", "NaN");
+    test_value("Math.sqrt(1)", "1");
+    test_value("Math.sqrt(4)", "2");
+    test_same_value("Math.sqrt(2)");
+    test_same_value("Unknown.sqrt(1)");
+}
+
+#[test]
+fn test_fold_math_functions_cbrt() {
+    test_value("Math.cbrt(1)", "1");
+    test_value("Math.cbrt(8)", "2");
+    test_same_value("Math.cbrt(2)");
+    test_same_value("Unknown.cbrt(1)");
 }
 
 #[test]
@@ -873,6 +921,7 @@ fn test_array_of_no_change() {
     test_same("x = Array.of.apply(window, ['a', 'b', 'c'])");
     test_same("x = ['a', 'b', 'c']");
     test_same("x = [Array.of, 'a', 'b', 'c']");
+    test_same("function f(Array) { return Array.of(1, 2) }");
 }
 
 #[test]
@@ -986,46 +1035,6 @@ fn test_to_string() {
 }
 
 #[test]
-fn test_fold_pow() {
-    test("v = Math.pow(2, 3)", "v = 8");
-    test("v = Math.pow(a, 3)", "v = a ** 3");
-    test("v = Math.pow(2, b)", "v = 2 ** b");
-    test("v = Math.pow(a, b)", "v = a ** +b");
-    test("v = Math.pow(2n, 3n)", "v = 2n ** +3n"); // errors both before and after
-    test("v = Math.pow(a + b, c)", "v = (a + b) ** +c");
-    test_same("v = Math.pow()");
-    test_same("v = Math.pow(1)");
-    test_same("v = Math.pow(...a, 1)");
-    test_same("v = Math.pow(1, ...a)");
-    test_same("v = Math.pow(1, 2, 3)");
-    test_target("v = Math.pow(2, 3)", "v = Math.pow(2, 3)", "chrome51");
-    test_same("v = Unknown.pow(1, 2)");
-}
-
-#[test]
-fn test_fold_roots() {
-    test_same("v = Math.sqrt()");
-    test_same("v = Math.sqrt(1, 2)");
-    test_same("v = Math.sqrt(...a)");
-    test_same("v = Math.sqrt(a)"); // a maybe -0
-    test_same("v = Math.sqrt(2n)");
-    test("v = Math.sqrt(Infinity)", "v = Infinity");
-    test("v = Math.sqrt(NaN)", "v = NaN");
-    test("v = Math.sqrt(0)", "v = 0");
-    test("v = Math.sqrt(-0)", "v = -0");
-    test("v = Math.sqrt(-1)", "v = NaN");
-    test("v = Math.sqrt(-Infinity)", "v = NaN");
-    test("v = Math.sqrt(1)", "v = 1");
-    test("v = Math.sqrt(4)", "v = 2");
-    test_same("v = Math.sqrt(2)");
-    test("v = Math.cbrt(1)", "v = 1");
-    test("v = Math.cbrt(8)", "v = 2");
-    test_same("v = Math.cbrt(2)");
-    test_same("Unknown.sqrt(1)");
-    test_same("Unknown.cbrt(1)");
-}
-
-#[test]
 fn test_number_constants() {
     test("v = Number.POSITIVE_INFINITY", "v = Infinity");
     test("v = Number.NEGATIVE_INFINITY", "v = -Infinity");
@@ -1067,12 +1076,17 @@ fn test_fold_integer_index_access() {
     test_same("v = [1][1]");
     test("v = [,][0]", "v = void 0");
     // test("v = [...'a'][0]", "v = 'a'");
-    // test_same("v = [...'a'][1]");
+    test_same("v = [...'a'][1]");
     // test("v = [...'😀'][0]", "v = '😀'");
     // test_same("v = [...'😀'][1]");
     test_same("v = [...a, 1][1]");
     test_same("v = [1, ...a][0]");
     test("v = [1, ...[1,2]][0]", "v = 1");
+
+    test_value("'abc'[1n]", "'b'");
+    test_value("['a', 'b'][1n]", "'b'");
+    test_same_value("'abc'[-1n]");
+    test_same_value("'abc'[9007199254740992n]");
 
     // property access should be kept to keep `this` value
     test_same(

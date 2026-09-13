@@ -15,10 +15,10 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
-use oxc_str::{Ident, Str};
+use oxc_str::Ident;
 
 use crate::react_compiler_hir::{
-    BlockId, EvaluationOrder, InstructionValue, ParamPattern, Place, ScopeId,
+    BlockId, EvaluationOrder, FunctionDirective, InstructionValue, ParamPattern, Place, ScopeId,
 };
 use oxc_allocator::{Allocator, Box as ArenaBox, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::LogicalOperator;
@@ -33,13 +33,16 @@ use oxc_span::Span;
 #[derive(Debug)]
 pub struct ReactiveFunction<'a> {
     pub span: Option<Span>,
+    pub body_span: Option<Span>,
     pub id: Option<Ident<'a>>,
+    pub id_span: Option<Span>,
+    pub self_binding: Option<Place>,
     pub name_hint: Option<Ident<'a>>,
     pub params: Vec<ParamPattern>,
     pub generator: bool,
     pub is_async: bool,
     pub body: ReactiveBlock<'a>,
-    pub directives: Vec<Str<'a>>,
+    pub directives: Vec<FunctionDirective<'a>>,
     // No env field — passed separately per established Rust convention
 }
 
@@ -113,6 +116,7 @@ pub enum ReactiveValue<'a> {
 pub struct ReactiveTerminalStatement<'a> {
     pub terminal: ReactiveTerminal<'a>,
     pub label: Option<ReactiveLabel>,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -165,12 +169,14 @@ pub enum ReactiveTerminal<'a> {
     },
     DoWhile {
         loop_block: ReactiveBlock<'a>,
+        loop_block_span: Option<Span>,
         test: ReactiveValue<'a>,
         id: EvaluationOrder,
     },
     While {
         test: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
+        loop_block_span: Option<Span>,
         id: EvaluationOrder,
     },
     For {
@@ -178,35 +184,45 @@ pub enum ReactiveTerminal<'a> {
         test: ReactiveValue<'a>,
         update: Option<ReactiveValue<'a>>,
         loop_block: ReactiveBlock<'a>,
+        loop_block_span: Option<Span>,
         id: EvaluationOrder,
     },
     ForOf {
         init: ReactiveValue<'a>,
         test: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
+        loop_block_span: Option<Span>,
+        left_span: Option<Span>,
         id: EvaluationOrder,
         span: Option<Span>,
     },
     ForIn {
         init: ReactiveValue<'a>,
         loop_block: ReactiveBlock<'a>,
+        loop_block_span: Option<Span>,
+        left_span: Option<Span>,
         id: EvaluationOrder,
         span: Option<Span>,
     },
     If {
         test: Place,
         consequent: ReactiveBlock<'a>,
+        consequent_span: Option<Span>,
         alternate: Option<ReactiveBlock<'a>>,
+        alternate_span: Option<Span>,
         id: EvaluationOrder,
     },
     Label {
         block: ReactiveBlock<'a>,
+        block_span: Option<Span>,
         id: EvaluationOrder,
     },
     Try {
         block: ReactiveBlock<'a>,
+        block_span: Option<Span>,
         handler_binding: Option<Place>,
         handler: ReactiveBlock<'a>,
+        handler_span: Option<Span>,
         id: EvaluationOrder,
     },
 }
@@ -215,6 +231,7 @@ pub enum ReactiveTerminal<'a> {
 pub struct ReactiveSwitchCase<'a> {
     pub test: Option<Place>,
     pub block: Option<ReactiveBlock<'a>>,
+    pub span: Option<Span>,
 }
 
 // =============================================================================
@@ -264,7 +281,10 @@ impl<'a> CloneIn<'a> for ReactiveFunction<'a> {
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
         ReactiveFunction {
             span: self.span,
+            body_span: self.body_span,
             id: self.id,
+            id_span: self.id_span,
+            self_binding: self.self_binding,
             name_hint: self.name_hint,
             params: self.params.clone(),
             generator: self.generator,
@@ -358,6 +378,7 @@ impl<'a> CloneIn<'a> for ReactiveTerminalStatement<'a> {
         ReactiveTerminalStatement {
             terminal: self.terminal.clone_in_impl(sem, alloc),
             label: self.label.clone(),
+            span: self.span,
         }
     }
 }
@@ -390,58 +411,96 @@ impl<'a> CloneIn<'a> for ReactiveTerminal<'a> {
                 ),
                 id: *id,
             },
-            ReactiveTerminal::DoWhile { loop_block, test, id } => ReactiveTerminal::DoWhile {
-                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
-                test: test.clone_in_impl(sem, alloc),
-                id: *id,
-            },
-            ReactiveTerminal::While { test, loop_block, id } => ReactiveTerminal::While {
-                test: test.clone_in_impl(sem, alloc),
-                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
-                id: *id,
-            },
-            ReactiveTerminal::For { init, test, update, loop_block, id } => ReactiveTerminal::For {
-                init: init.clone_in_impl(sem, alloc),
-                test: test.clone_in_impl(sem, alloc),
-                update: update.as_ref().map(|value| value.clone_in_impl(sem, alloc)),
-                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
-                id: *id,
-            },
-            ReactiveTerminal::ForOf { init, test, loop_block, id, span } => {
-                ReactiveTerminal::ForOf {
-                    init: init.clone_in_impl(sem, alloc),
+            ReactiveTerminal::DoWhile { loop_block, loop_block_span, test, id } => {
+                ReactiveTerminal::DoWhile {
+                    loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                    loop_block_span: *loop_block_span,
+                    test: test.clone_in_impl(sem, alloc),
+                    id: *id,
+                }
+            }
+            ReactiveTerminal::While { test, loop_block, loop_block_span, id } => {
+                ReactiveTerminal::While {
                     test: test.clone_in_impl(sem, alloc),
                     loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                    loop_block_span: *loop_block_span,
+                    id: *id,
+                }
+            }
+            ReactiveTerminal::For { init, test, update, loop_block, loop_block_span, id } => {
+                ReactiveTerminal::For {
+                    init: init.clone_in_impl(sem, alloc),
+                    test: test.clone_in_impl(sem, alloc),
+                    update: update.as_ref().map(|value| value.clone_in_impl(sem, alloc)),
+                    loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                    loop_block_span: *loop_block_span,
+                    id: *id,
+                }
+            }
+            ReactiveTerminal::ForOf {
+                init,
+                test,
+                loop_block,
+                loop_block_span,
+                left_span,
+                id,
+                span,
+            } => ReactiveTerminal::ForOf {
+                init: init.clone_in_impl(sem, alloc),
+                test: test.clone_in_impl(sem, alloc),
+                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                loop_block_span: *loop_block_span,
+                left_span: *left_span,
+                id: *id,
+                span: *span,
+            },
+            ReactiveTerminal::ForIn { init, loop_block, loop_block_span, left_span, id, span } => {
+                ReactiveTerminal::ForIn {
+                    init: init.clone_in_impl(sem, alloc),
+                    loop_block: clone_reactive_block_in(loop_block, sem, alloc),
+                    loop_block_span: *loop_block_span,
+                    left_span: *left_span,
                     id: *id,
                     span: *span,
                 }
             }
-            ReactiveTerminal::ForIn { init, loop_block, id, span } => ReactiveTerminal::ForIn {
-                init: init.clone_in_impl(sem, alloc),
-                loop_block: clone_reactive_block_in(loop_block, sem, alloc),
-                id: *id,
-                span: *span,
-            },
-            ReactiveTerminal::If { test, consequent, alternate, id } => ReactiveTerminal::If {
+            ReactiveTerminal::If {
+                test,
+                consequent,
+                consequent_span,
+                alternate,
+                alternate_span,
+                id,
+            } => ReactiveTerminal::If {
                 test: *test,
                 consequent: clone_reactive_block_in(consequent, sem, alloc),
+                consequent_span: *consequent_span,
                 alternate: alternate
                     .as_ref()
                     .map(|block| clone_reactive_block_in(block, sem, alloc)),
+                alternate_span: *alternate_span,
                 id: *id,
             },
-            ReactiveTerminal::Label { block, id } => ReactiveTerminal::Label {
+            ReactiveTerminal::Label { block, block_span, id } => ReactiveTerminal::Label {
                 block: clone_reactive_block_in(block, sem, alloc),
+                block_span: *block_span,
                 id: *id,
             },
-            ReactiveTerminal::Try { block, handler_binding, handler, id } => {
-                ReactiveTerminal::Try {
-                    block: clone_reactive_block_in(block, sem, alloc),
-                    handler_binding: *handler_binding,
-                    handler: clone_reactive_block_in(handler, sem, alloc),
-                    id: *id,
-                }
-            }
+            ReactiveTerminal::Try {
+                block,
+                block_span,
+                handler_binding,
+                handler,
+                handler_span,
+                id,
+            } => ReactiveTerminal::Try {
+                block: clone_reactive_block_in(block, sem, alloc),
+                block_span: *block_span,
+                handler_binding: *handler_binding,
+                handler: clone_reactive_block_in(handler, sem, alloc),
+                handler_span: *handler_span,
+                id: *id,
+            },
         }
     }
 }
@@ -452,6 +511,7 @@ impl<'a> CloneIn<'a> for ReactiveSwitchCase<'a> {
         ReactiveSwitchCase {
             test: self.test,
             block: self.block.as_ref().map(|block| clone_reactive_block_in(block, sem, alloc)),
+            span: self.span,
         }
     }
 }

@@ -10,7 +10,7 @@ use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 enum NoMagicNumberReportReason {
     MustUseConst,
@@ -325,7 +325,7 @@ impl Rule for NoMagicNumbers {
         let parent_kind = nodes.parent_kind(config.node.id());
         let span = config.node.kind().span();
 
-        let Some(reason) = self.get_report_reason(&parent_kind) else {
+        let Some(reason) = self.get_report_reason(&parent_kind, ctx) else {
             return;
         };
 
@@ -517,11 +517,14 @@ impl NoMagicNumbers {
 
     fn get_report_reason<'a>(
         &self,
-        parent_kind: &'a AstKind<'a>,
+        parent_kind: &AstKind<'a>,
+        ctx: &LintContext<'a>,
     ) -> Option<NoMagicNumberReportReason> {
         match parent_kind {
             AstKind::VariableDeclarator(declarator) => {
-                if self.enforce_const && declarator.kind != VariableDeclarationKind::Const {
+                if self.enforce_const
+                    && variable_declaration_kind(declarator, ctx) != VariableDeclarationKind::Const
+                {
                     return Some(NoMagicNumberReportReason::MustUseConst);
                 }
 

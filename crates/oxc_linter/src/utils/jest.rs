@@ -1,5 +1,6 @@
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
+use smallvec::SmallVec;
 use std::borrow::Cow;
 
 use oxc_allocator::GetAddress;
@@ -235,11 +236,9 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                     "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
                 ) {
                     let original = find_original_name(import_decl, name);
-                    let ret = reference_ids
-                        .iter()
-                        .map(|&reference_id| (reference_id, original))
-                        .collect::<Vec<_>>();
-                    return Some(ret);
+                    return Some(
+                        reference_ids.iter().map(move |&reference_id| (reference_id, original)),
+                    );
                 }
             }
 
@@ -280,8 +279,8 @@ pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> CompactStr {
     chain.join(".").into()
 }
 
-pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> Vec<Cow<'a, str>> {
-    let mut chain: Vec<Cow<'a, str>> = Vec::new();
+pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>; 4]> {
+    let mut chain: SmallVec<[Cow<'a, str>; 4]> = SmallVec::new();
 
     match expr {
         Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),

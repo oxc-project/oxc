@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
@@ -8,7 +8,7 @@ use crate::{
     formatter::{
         JsFormatter,
         prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{FormatLeadingComments, FormatTrailingComments, format_trailing_comments},
     },
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::call_expression::{is_angular_test_wrapper, is_test_call_expression},
@@ -17,6 +17,12 @@ use crate::{
 
 use super::FormatWrite;
 
+/// NOTE: In the AST, `this_param` is a sibling field of `FormalParameters`,
+/// but the `FormalParameters` span covers the whole parens INCLUDING `this`.
+///
+/// Span windows assuming source-ordered, non-overlapping fields are inverted here:
+/// the generated `following_span_start` for `this_param` (= params span start) points before it,
+/// so the generated trailing-comment pass never captures anything (see [`Parameter::This`]).
 pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThisParameter<'a>>> {
     match parent {
         AstNodes::Function(func) => func.this_param(),
@@ -167,7 +173,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
 }
 
 enum Parameter<'a, 'b> {
-    This(&'b AstNode<'a, TSThisParameter<'a>>),
+    This {
+        param: &'b AstNode<'a, TSThisParameter<'a>>,
+        list: &'b AstNode<'a, FormalParameters<'a>>,
+    },
     Formal(&'b AstNode<'a, FormalParameter<'a>>),
     Rest(&'b AstNode<'a, FormalParameterRest<'a>>),
 }
@@ -175,7 +184,7 @@ enum Parameter<'a, 'b> {
 impl GetSpan for Parameter<'_, '_> {
     fn span(&self) -> Span {
         match self {
-            Self::This(param) => param.span(),
+            Self::This { param, .. } => param.span(),
             Self::Formal(param) => param.span(),
             Self::Rest(e) => e.span(),
         }
@@ -185,7 +194,19 @@ impl GetSpan for Parameter<'_, '_> {
 impl<'a> Format<'a, JsFormatContext<'a>> for Parameter<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
-            Self::This(param) => param.fmt(f),
+            Self::This { param, list } => {
+                param.fmt(f);
+                // The generated trailing pass captures nothing here (inverted window, see `get_this_param`).
+                // Capture like any other parameter: up to the next one, or dangling inside the parens when `this` is last
+                // (`AST_NODE_WITHOUT_FOLLOWING_NODE_LIST` rule in `ast_nodes.rs` generator gives the list's own last child).
+                let following_span_start = list
+                    .items
+                    .first()
+                    .map(|p| p.span.start)
+                    .or_else(|| list.rest.as_deref().map(|r| r.span.start))
+                    .unwrap_or(0);
+                format_trailing_comments(list.span(), param.span(), following_span_start).fmt(f);
+            }
             Self::Formal(param) => param.fmt(f),
             Self::Rest(e) => e.fmt(f),
         }
@@ -193,14 +214,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Parameter<'a, '_> {
 }
 
 struct FormalParametersIter<'a, 'b> {
-    this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
+    this: Option<Parameter<'a, 'b>>,
     params: AstNodeIterator<'a, FormalParameter<'a>>,
     rest: Option<&'b AstNode<'a, FormalParameterRest<'a>>>,
 }
 
 impl<'a, 'b> From<&'b ParameterList<'a, 'b>> for FormalParametersIter<'a, 'b> {
     fn from(value: &'b ParameterList<'a, 'b>) -> Self {
-        Self { this: value.this, params: value.list.items().iter(), rest: value.list.rest() }
+        Self {
+            this: value.this.map(|param| Parameter::This { param, list: value.list }),
+            params: value.list.items().iter(),
+            rest: value.list.rest(),
+        }
     }
 }
 
@@ -208,7 +233,7 @@ impl<'a, 'b> Iterator for FormalParametersIter<'a, 'b> {
     type Item = Parameter<'a, 'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.this.take().map(Parameter::This).or_else(|| {
+        self.this.take().or_else(|| {
             self.params
                 .next()
                 .map(Parameter::Formal)
@@ -331,9 +356,13 @@ pub fn can_avoid_parentheses(arrow: &ArrowFunctionExpression<'_>, f: &JsFormatte
                 && param.initializer.is_none()
                 && param.pattern.is_binding_identifier()
         }
-        && !f.comments().has_comment_in_span(arrow.params.span)
+        // Position-based: queried again inside `FormalParameter::write`, after its leading comments are printed
+        && !f.comments().has_any_comment_in_range(arrow.params.span.start, arrow.params.span.end)
 }
 
+/// Queried from three print phases for the same list
+/// (`FormalParameters` before printing, `FormalParameter` after its leading comments, the type literal while printing),
+/// so every comment check here must be position-based to give all of them the same answer.
 pub fn should_hug_function_parameters<'a>(
     parameters: &AstNode<'a, FormalParameters<'a>>,
     this_param: Option<&AstNode<'a, TSThisParameter<'a>>>,
@@ -346,21 +375,19 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
+    // `(/* comment before */ only_parameter /* comment after */)`
+    let has_comment_around = |span: Span| {
+        f.comments().has_any_comment_in_range(parameters.span.start, span.start)
+            || f.comments().has_any_comment_in_range(span.end, parameters.span.end)
+    };
+
     if let Some(this_param) = this_param {
-        // `(/* comment before */ this /* comment after */)`
-        // Checker whether there are comments around the only parameter.
-
-        if f.comments().has_comment_in_range(parameters.span.start, this_param.span.start)
-            || f.comments().has_comment_in_range(this_param.span.end, parameters.span.end)
-        {
-            return false;
-        }
-
         return list.is_empty()
             && this_param
                 .type_annotation
                 .as_ref()
-                .is_none_or(|ty| matches!(ty.type_annotation, TSType::TSTypeLiteral(_)));
+                .is_none_or(|ty| matches!(ty.type_annotation, TSType::TSTypeLiteral(_)))
+            && !has_comment_around(this_param.span);
     }
 
     // Safe because of the length check above
@@ -370,15 +397,7 @@ pub fn should_hug_function_parameters<'a>(
         return false;
     }
 
-    // `(/* comment before */ only_parameter /* comment after */)`
-    // Checker whether there are comments around the only parameter.
-    if f.comments().has_comment_in_range(parameters.span.start, only_parameter.span.start)
-        || f.comments().has_comment_in_range(only_parameter.span.end, parameters.span.end)
-    {
-        return false;
-    }
-
-    match &only_parameter.pattern {
+    let shape_allows_hug = match &only_parameter.pattern {
         BindingPattern::AssignmentPattern(assignment) => {
             // AssignmentPattern in catch clauses or other contexts
             assignment.left.is_destructuring_pattern() && is_huggable_expression(&assignment.right)
@@ -396,19 +415,24 @@ pub fn should_hug_function_parameters<'a>(
                         )
                     }))
         }
-    }
+    };
+
+    shape_allows_hug && !has_comment_around(only_parameter.span)
 }
 
-/// Tests if all of the parameters of `expression` are simple enough to allow
-/// a function to group.
+/// Tests if all of the parameters of `expression` and also `this_param` are
+/// simple enough to allow a function to group.
 pub fn has_only_simple_parameters(
     parameters: &FormalParameters<'_>,
+    this_param: Option<&TSThisParameter<'_>>,
     allow_type_annotations: bool,
 ) -> bool {
     // NOTE: A rest parameter is never considered simple.
     // Prettier only checks `param.type` is `Identifier` or not.
     // https://github.com/prettier/prettier/blob/7848357af654883e21ed05c0bbbedf89ee88750e/src/language-js/print/function.js#L72-L74
     parameters.rest.is_none()
+        // `allow_type_annotations` is an arrow-only rule, and arrows never have `this`.
+        && this_param.is_none_or(|this_param| this_param.type_annotation.is_none())
         && parameters
             .items
             .iter()

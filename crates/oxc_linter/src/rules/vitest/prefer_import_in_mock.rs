@@ -77,7 +77,7 @@ declare_oxc_lint!(
 impl Rule for PreferImportInMock {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         Ok(Self(Box::new(
-            serde_json::from_value::<DefaultRuleConfig<PreferImportInMockConfig>>(value)
+            DefaultRuleConfig::<PreferImportInMockConfig>::from_value(value)
                 .unwrap_or_default()
                 .into_inner(),
         )))

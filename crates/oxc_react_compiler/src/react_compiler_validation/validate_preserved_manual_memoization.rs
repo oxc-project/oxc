@@ -12,11 +12,11 @@
 use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
-    PrunedReactiveScopeBlock, ReactiveTerminalStatement,
+    PrunedReactiveScopeBlock, ReactiveScopeDependency, ReactiveTerminalStatement,
 };
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
@@ -33,6 +33,10 @@ struct ManualMemoBlockState<'h> {
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
     /// Source location of the StartMemoize instruction.
     span: Option<Span>,
+    /// Source location of the useMemo/useCallback callee.
+    callee_span: Option<Span>,
+    /// Source location of the manual dependency array, when one was provided.
+    deps_span: Option<Span>,
     /// Declarations produced within this manual memo block.
     decls: FxHashSet<DeclarationId>,
     /// Normalized deps from source (useMemo/useCallback dep array).
@@ -146,19 +150,20 @@ fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorStat
         let scope = &state.env.scopes[scope_block.scope];
         let deps = scope.dependencies.clone_in(alloc);
         let memo_span = memo_state.span;
+        let deps_span = memo_state.deps_span;
         let decls = memo_state.decls.clone();
         let deps_from_source = deps_from_source.clone_in(alloc);
         let temporaries: FxHashMap<IdentifierId, ManualMemoDependency> =
             state.temporaries.iter().map(|(k, v)| (*k, v.clone_in(alloc))).collect();
         for dep in &deps {
             validate_inferred_dep(
-                dep.identifier,
-                &dep.path,
+                dep,
                 &temporaries,
                 &decls,
                 &deps_from_source,
                 state.env,
                 memo_span,
+                deps_span,
             );
         }
     }
@@ -185,6 +190,8 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
         ReactiveValue::Instruction(InstructionValue::StartMemoize {
             manual_memo_id,
             deps,
+            deps_span,
+            callee_span,
             has_invalid_deps,
             ..
         }) => {
@@ -202,6 +209,8 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
 
             state.manual_memo_state = Some(ManualMemoBlockState {
                 span: instr.span,
+                callee_span: *callee_span,
+                deps_span: deps_span.flatten(),
                 decls: FxHashSet::default(),
                 deps_from_source,
                 manual_memo_id: *manual_memo_id,
@@ -217,17 +226,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
                     && !state.scopes.contains(&scope_id)
                     && !state.pruned_scopes.contains(&scope_id)
                 {
-                    let diag = ErrorCategory::PreserveManualMemo
-                            .diagnostic("Existing memoization could not be preserved")
-                            .with_help(
-                                "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. \
-                                 This dependency may be mutated later, which could cause the value to change unexpectedly",
-                            )
-                            .with_labels(
-                                place
-                                    .span
-                                    .map(|s| s.label("This dependency may be modified later")),
-                            );
+                    let diag = diagnostics::preserve_memo_mutated_dependency(place.span);
                     state.env.record_diagnostic(diag);
                 }
             }
@@ -251,6 +250,13 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
             }
 
             let memo_state = state.manual_memo_state.take().unwrap();
+            let unmemoized_span =
+                memo_state.callee_span.or(memo_state.deps_span).or(memo_state.span).or(decl.span);
+            // A full callback span can cover dozens of lines. The first source token is enough to
+            // connect the hook callee to its callback without expanding the diagnostic codeframe.
+            let callback_start_span = memo_state.span.and_then(|span| {
+                (span.start < span.end).then(|| Span::new(span.start, span.start + 1))
+            });
 
             if !pruned {
                 // Check if the declared value is unmemoized
@@ -266,13 +272,17 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
 
                     for id in decls_to_check {
                         if is_unmemoized(id, &state.scopes, &state.env.identifiers) {
-                            record_unmemoized_error(decl.span, state.env);
+                            record_unmemoized_error(
+                                unmemoized_span,
+                                callback_start_span,
+                                state.env,
+                            );
                         }
                     }
                 } else {
                     // Single identifier with scope
                     if is_unmemoized(decl.identifier, &state.scopes, &state.env.identifiers) {
-                        record_unmemoized_error(decl.span, state.env);
+                        record_unmemoized_error(unmemoized_span, callback_start_span, state.env);
                     }
                 }
             }
@@ -305,13 +315,12 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
     }
 }
 
-fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
-    let diag = ErrorCategory::PreserveManualMemo
-        .diagnostic("Existing memoization could not be preserved")
-        .with_help(
-            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output",
-        )
-        .with_labels(span.map(|s| s.label("Could not preserve existing memoization")));
+fn record_unmemoized_error(
+    span: Option<Span>,
+    callback_start_span: Option<Span>,
+    env: &mut Environment,
+) {
+    let diag = diagnostics::preserve_memo_unmemoized(span, callback_start_span);
     env.record_diagnostic(diag);
 }
 
@@ -619,14 +628,16 @@ fn get_compare_dependency_result_description(result: CompareDependencyResult) ->
 /// Validate that an inferred dependency matches a source dependency or was produced
 /// within the manual memo block.
 fn validate_inferred_dep<'h>(
-    dep_id: IdentifierId,
-    dep_path: &[DependencyPathEntry<'h>],
+    dep: &ReactiveScopeDependency<'h>,
     temporaries: &FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
     decls_within_memo_block: &FxHashSet<DeclarationId>,
     valid_deps_in_memo_block: &[ManualMemoDependency<'h>],
     env: &mut Environment<'h>,
     memo_location: Option<Span>,
+    deps_location: Option<Span>,
 ) {
+    let dep_id = dep.identifier;
+    let dep_path = &dep.path;
     let alloc = env.allocator;
     // Normalize the dependency through temporaries
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
@@ -702,11 +713,11 @@ fn validate_inferred_dep<'h>(
         extra.as_deref().unwrap_or_default()
     );
 
-    let diag = ErrorCategory::PreserveManualMemo
-        .diagnostic("Existing memoization could not be preserved")
-        .with_help(description.trim().to_string())
-        .with_labels(
-            memo_location.map(|s| s.label("Could not preserve existing manual memoization")),
-        );
+    let diag = diagnostics::preserve_memo_inferred_dependencies(
+        description.trim().to_string(),
+        deps_location,
+        dep.span.or(normalized_dep.span),
+        memo_location,
+    );
     env.record_diagnostic(diag);
 }

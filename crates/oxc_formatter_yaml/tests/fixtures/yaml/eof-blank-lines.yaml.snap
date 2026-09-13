@@ -1,0 +1,26 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE: the file always ends with exactly one newline (`|+` verbatim
+# tails excepted); Prettier YAML alone keeps EOF blank lines verbatim.
+last: value
+
+
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE: the file always ends with exactly one newline (`|+` verbatim
+# tails excepted); Prettier YAML alone keeps EOF blank lines verbatim.
+last: value
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE: the file always ends with exactly one newline (`|+` verbatim
+# tails excepted); Prettier YAML alone keeps EOF blank lines verbatim.
+last: value
+
+===================== End =====================

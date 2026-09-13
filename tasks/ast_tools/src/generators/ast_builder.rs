@@ -246,18 +246,21 @@ fn generate_builder_methods_for_struct_impl(
     if let Some(boxed_fn_name) = &boxed_fn_name {
         let fn_doc2 = format!(" use [`{struct_name}::{boxed_fn_name}`] instead.");
         fn_docs.extend(quote! {
-            #[doc = ""]
-            #[doc = " If you want the built node to be allocated in the memory arena,"]
+            ///
+            /// If you want the built node to be allocated in the memory arena,
             #[doc = #fn_doc2]
         });
     }
 
     let params_docs = generate_doc_comment_for_params(params);
+    let unused_builder_attr =
+        (!fields.to_string().contains("builder")).then(|| quote!(#[expect(unused_variables)]));
 
     let new_method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
+        #unused_builder_attr
         #[inline]
         pub fn #new_fn_name #lifetime_param (#fn_params, builder: &impl GetAstBuilder<'a>) -> Self {
             let builder = builder.builder();
@@ -280,8 +283,8 @@ fn generate_builder_methods_for_struct_impl(
 
         ///@@line_break
         #[doc = #boxed_doc1]
-        #[doc = ""]
-        #[doc = " Returns a [`Box`](ArenaBox) containing the newly-allocated node."]
+        ///
+        /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
         #[doc = #boxed_doc2]
         #params_docs
         #[inline]
@@ -543,7 +546,10 @@ fn generate_builder_method_for_enum_variant_impl(
         let fn_doc2 = format!(
             " This node contains {article_variant} [`{variant_type_name}`] that will be stored in the memory arena."
         );
-        fn_docs.extend(quote!( #[doc = ""] #[doc = #fn_doc2] ));
+        fn_docs.extend(quote! {
+            ///
+            #[doc = #fn_doc2]
+        });
     }
     let params_docs = generate_doc_comment_for_params(params);
 

@@ -1,0 +1,174 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// `[a, b]` prints like `(a, b)`: same construct, same output.
+// Prettier treats the brackets as words of the OUTER comma list, so every
+// bracket list below that has a comment, a sibling token, or a comma list
+// longer than the line diverges (DIVERGENCES.md "bracket-list-layout").
+$basic: [1, 2];
+$space: [1 2];
+$empty: [];
+$names: [top-start] auto [content-start] 1fr [content-end];
+// Grid values never break: a line name stays flat however long the declaration.
+a {
+  grid-template-columns: [full-start] minmax(1em, 1fr) [main-start] minmax(0, 40em) [main-end] minmax(1em, 1fr) [full-end];
+  grid-template-rows: [top-start // c
+  ];
+}
+// A comma list that does not fit breaks one element per line, like a paren list.
+$long: [aaaa, bbbb, cccc, dddd, eeee, ffff, gggg, hhhh, iiii, jjjj, kkkk, llll, mmmm, nnnn];
+$long-then-token: [aaaa, bbbb, cccc, dddd, eeee, ffff, gggg, hhhh, iiii, jjjj, kkkk, llll, mmmm] 1;
+$sibling: [1, 2] 3;
+$in-list: foo, [1, 2];
+$in-map: (k: [1, 2]);
+// `[1,]` is a comma list and `[1]` a space list (dart-sass `list.separator`):
+// the source comma stays. A multi-element list drops it (comma either way).
+$single-comma: [1,];
+$single: [1];
+$multi-comma: [1, 2,];
+// Comments stay inside the brackets, before the element they lead.
+$lead-first: [/* c */ 1, 2];
+$lead-later: [1, /* c */ 2];
+$before-comma: [1 /* c */, 2];
+$tail: [1, 2 /* c */];
+$after: [1, 2] /* c */;
+$line: [
+  1,
+  // c
+  2
+];
+$only-block: [ /* c */ ];
+$only-line: [ // c
+];
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// `[a, b]` prints like `(a, b)`: same construct, same output.
+// Prettier treats the brackets as words of the OUTER comma list, so every
+// bracket list below that has a comment, a sibling token, or a comma list
+// longer than the line diverges (DIVERGENCES.md "bracket-list-layout").
+$basic: [1, 2];
+$space: [1 2];
+$empty: [];
+$names: [top-start] auto [content-start] 1fr [content-end];
+// Grid values never break: a line name stays flat however long the declaration.
+a {
+  grid-template-columns: [full-start] minmax(1em, 1fr) [main-start] minmax(
+      0,
+      40em
+    ) [main-end] minmax(1em, 1fr) [full-end];
+  grid-template-rows: [top-start // c
+  ];
+}
+// A comma list that does not fit breaks one element per line, like a paren list.
+$long: [
+  aaaa,
+  bbbb,
+  cccc,
+  dddd,
+  eeee,
+  ffff,
+  gggg,
+  hhhh,
+  iiii,
+  jjjj,
+  kkkk,
+  llll,
+  mmmm,
+  nnnn
+];
+$long-then-token: [
+    aaaa,
+    bbbb,
+    cccc,
+    dddd,
+    eeee,
+    ffff,
+    gggg,
+    hhhh,
+    iiii,
+    jjjj,
+    kkkk,
+    llll,
+    mmmm
+  ]
+  1;
+$sibling: [1, 2] 3;
+$in-list: foo, [1, 2];
+$in-map: (
+  k: [1, 2],
+);
+// `[1,]` is a comma list and `[1]` a space list (dart-sass `list.separator`):
+// the source comma stays. A multi-element list drops it (comma either way).
+$single-comma: [1,];
+$single: [1];
+$multi-comma: [1, 2];
+// Comments stay inside the brackets, before the element they lead.
+$lead-first: [/* c */ 1, 2];
+$lead-later: [1, /* c */ 2];
+$before-comma: [1 /* c */, 2];
+$tail: [1, 2 /* c */];
+$after: [1, 2] /* c */;
+$line: [
+  1,
+  // c
+  2
+];
+$only-block: [/* c */];
+$only-line: [
+  // c
+];
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// `[a, b]` prints like `(a, b)`: same construct, same output.
+// Prettier treats the brackets as words of the OUTER comma list, so every
+// bracket list below that has a comment, a sibling token, or a comma list
+// longer than the line diverges (DIVERGENCES.md "bracket-list-layout").
+$basic: [1, 2];
+$space: [1 2];
+$empty: [];
+$names: [top-start] auto [content-start] 1fr [content-end];
+// Grid values never break: a line name stays flat however long the declaration.
+a {
+  grid-template-columns: [full-start] minmax(1em, 1fr) [main-start] minmax(
+      0,
+      40em
+    ) [main-end] minmax(1em, 1fr) [full-end];
+  grid-template-rows: [top-start // c
+  ];
+}
+// A comma list that does not fit breaks one element per line, like a paren list.
+$long: [aaaa, bbbb, cccc, dddd, eeee, ffff, gggg, hhhh, iiii, jjjj, kkkk, llll, mmmm, nnnn];
+$long-then-token: [aaaa, bbbb, cccc, dddd, eeee, ffff, gggg, hhhh, iiii, jjjj, kkkk, llll, mmmm] 1;
+$sibling: [1, 2] 3;
+$in-list: foo, [1, 2];
+$in-map: (
+  k: [1, 2],
+);
+// `[1,]` is a comma list and `[1]` a space list (dart-sass `list.separator`):
+// the source comma stays. A multi-element list drops it (comma either way).
+$single-comma: [1,];
+$single: [1];
+$multi-comma: [1, 2];
+// Comments stay inside the brackets, before the element they lead.
+$lead-first: [/* c */ 1, 2];
+$lead-later: [1, /* c */ 2];
+$before-comma: [1 /* c */, 2];
+$tail: [1, 2 /* c */];
+$after: [1, 2] /* c */;
+$line: [
+  1,
+  // c
+  2
+];
+$only-block: [/* c */];
+$only-line: [
+  // c
+];
+
+===================== End =====================

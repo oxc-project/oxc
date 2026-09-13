@@ -7,7 +7,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    AstNode, ast_util::variable_declaration_kind, context::LintContext,
+    frameworks::FrameworkOptions, rule::Rule,
+};
 
 fn referencing_locally_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`defineOptions` is referencing locally declared variables.")
@@ -205,7 +208,7 @@ fn is_non_local_reference(
         | AstKind::ImportNamespaceSpecifier(_) => true,
         AstKind::VariableDeclarator(declarator) => {
             // `const x = <literal>` is statically resolvable, so allowed
-            declarator.kind.is_const()
+            variable_declaration_kind(declarator, ctx).is_const()
                 && declarator.init.as_ref().is_some_and(is_literal_expression)
         }
         _ => false,

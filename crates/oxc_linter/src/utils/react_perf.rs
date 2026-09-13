@@ -74,7 +74,7 @@ pub fn react_perf_from_configuration<T>(value: serde_json::Value) -> Result<T, s
 where
     T: Default + serde::de::DeserializeOwned,
 {
-    serde_json::from_value::<DefaultRuleConfig<T>>(value).map(DefaultRuleConfig::into_inner)
+    DefaultRuleConfig::<T>::from_value(value).map(DefaultRuleConfig::into_inner)
 }
 
 pub fn run_react_perf_rule<'a>(

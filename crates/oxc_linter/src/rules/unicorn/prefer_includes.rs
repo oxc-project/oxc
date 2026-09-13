@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{ChainElement, Expression},
@@ -143,21 +145,16 @@ impl Rule for PreferIncludes {
             return;
         };
 
-        let object_text = ctx.source_range(member_expr.object().span()).to_string();
+        let object_text = ctx.source_range(member_expr.object().span());
         let member_operator = if member_expr.optional() { "?." } else { "." };
         let call_operator = if left_call_expr.optional { "?.(" } else { "(" };
         let has_optional_chain = left_call_expr.optional || member_expr.optional();
 
-        // Get arguments text
-        let args_text = left_call_expr
-            .arguments
-            .iter()
-            .map(|arg| ctx.source_range(arg.span()))
-            .collect::<Vec<_>>()
-            .join(", ");
-
         let fix_span = bin_expr.span;
         ctx.diagnostic_with_suggestion(prefer_includes_diagnostic(callee_span), |fixer| {
+            let args_text =
+                left_call_expr.arguments.iter().map(|arg| ctx.source_range(arg.span())).join(", ");
+
             let includes_call =
                 format!("{object_text}{member_operator}includes{call_operator}{args_text})");
 

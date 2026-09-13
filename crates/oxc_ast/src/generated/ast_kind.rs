@@ -8,7 +8,7 @@ use oxc_syntax::node::NodeId;
 use crate::ast::*;
 
 /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
-pub const AST_TYPE_MAX: u8 = 190;
+pub const AST_TYPE_MAX: u8 = 191;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -179,31 +179,32 @@ pub enum AstType {
     TSIndexSignatureName = 163,
     TSInterfaceHeritage = 164,
     TSTypePredicate = 165,
-    TSModuleDeclaration = 166,
-    TSGlobalDeclaration = 167,
-    TSModuleBlock = 168,
-    TSTypeLiteral = 169,
-    TSInferType = 170,
-    TSTypeQuery = 171,
-    TSImportType = 172,
-    TSImportTypeQualifiedName = 173,
-    TSFunctionType = 174,
-    TSConstructorType = 175,
-    TSMappedType = 176,
-    TSTemplateLiteralType = 177,
-    TSAsExpression = 178,
-    TSSatisfiesExpression = 179,
-    TSTypeAssertion = 180,
-    TSImportEqualsDeclaration = 181,
-    TSExternalModuleReference = 182,
-    TSNonNullExpression = 183,
-    Decorator = 184,
-    TSExportAssignment = 185,
-    TSNamespaceExportDeclaration = 186,
-    TSInstantiationExpression = 187,
-    JSDocNullableType = 188,
-    JSDocNonNullableType = 189,
-    JSDocUnknownType = 190,
+    TSExternalModuleDeclaration = 166,
+    TSNamespaceDeclaration = 167,
+    TSGlobalDeclaration = 168,
+    TSModuleBlock = 169,
+    TSTypeLiteral = 170,
+    TSInferType = 171,
+    TSTypeQuery = 172,
+    TSImportType = 173,
+    TSImportTypeQualifiedName = 174,
+    TSFunctionType = 175,
+    TSConstructorType = 176,
+    TSMappedType = 177,
+    TSTemplateLiteralType = 178,
+    TSAsExpression = 179,
+    TSSatisfiesExpression = 180,
+    TSTypeAssertion = 181,
+    TSImportEqualsDeclaration = 182,
+    TSExternalModuleReference = 183,
+    TSNonNullExpression = 184,
+    Decorator = 185,
+    TSExportAssignment = 186,
+    TSNamespaceExportDeclaration = 187,
+    TSInstantiationExpression = 188,
+    JSDocNullableType = 189,
+    JSDocNonNullableType = 190,
+    JSDocUnknownType = 191,
 }
 
 /// Untyped AST Node Kind
@@ -389,7 +390,9 @@ pub enum AstKind<'a> {
     TSIndexSignatureName(&'a TSIndexSignatureName<'a>) = AstType::TSIndexSignatureName as u8,
     TSInterfaceHeritage(&'a TSInterfaceHeritage<'a>) = AstType::TSInterfaceHeritage as u8,
     TSTypePredicate(&'a TSTypePredicate<'a>) = AstType::TSTypePredicate as u8,
-    TSModuleDeclaration(&'a TSModuleDeclaration<'a>) = AstType::TSModuleDeclaration as u8,
+    TSExternalModuleDeclaration(&'a TSExternalModuleDeclaration<'a>) =
+        AstType::TSExternalModuleDeclaration as u8,
+    TSNamespaceDeclaration(&'a TSNamespaceDeclaration<'a>) = AstType::TSNamespaceDeclaration as u8,
     TSGlobalDeclaration(&'a TSGlobalDeclaration<'a>) = AstType::TSGlobalDeclaration as u8,
     TSModuleBlock(&'a TSModuleBlock<'a>) = AstType::TSModuleBlock as u8,
     TSTypeLiteral(&'a TSTypeLiteral<'a>) = AstType::TSTypeLiteral as u8,
@@ -593,7 +596,8 @@ impl AstKind<'_> {
             Self::TSIndexSignatureName(it) => it.node_id(),
             Self::TSInterfaceHeritage(it) => it.node_id(),
             Self::TSTypePredicate(it) => it.node_id(),
-            Self::TSModuleDeclaration(it) => it.node_id(),
+            Self::TSExternalModuleDeclaration(it) => it.node_id(),
+            Self::TSNamespaceDeclaration(it) => it.node_id(),
             Self::TSGlobalDeclaration(it) => it.node_id(),
             Self::TSModuleBlock(it) => it.node_id(),
             Self::TSTypeLiteral(it) => it.node_id(),
@@ -792,7 +796,8 @@ impl AstKind<'_> {
             Self::TSIndexSignatureName(it) => it.set_node_id(node_id),
             Self::TSInterfaceHeritage(it) => it.set_node_id(node_id),
             Self::TSTypePredicate(it) => it.set_node_id(node_id),
-            Self::TSModuleDeclaration(it) => it.set_node_id(node_id),
+            Self::TSExternalModuleDeclaration(it) => it.set_node_id(node_id),
+            Self::TSNamespaceDeclaration(it) => it.set_node_id(node_id),
             Self::TSGlobalDeclaration(it) => it.set_node_id(node_id),
             Self::TSModuleBlock(it) => it.set_node_id(node_id),
             Self::TSTypeLiteral(it) => it.set_node_id(node_id),
@@ -993,7 +998,8 @@ impl GetSpan for AstKind<'_> {
             Self::TSIndexSignatureName(it) => it.span(),
             Self::TSInterfaceHeritage(it) => it.span(),
             Self::TSTypePredicate(it) => it.span(),
-            Self::TSModuleDeclaration(it) => it.span(),
+            Self::TSExternalModuleDeclaration(it) => it.span(),
+            Self::TSNamespaceDeclaration(it) => it.span(),
             Self::TSGlobalDeclaration(it) => it.span(),
             Self::TSModuleBlock(it) => it.span(),
             Self::TSTypeLiteral(it) => it.span(),
@@ -1195,7 +1201,8 @@ impl GetAddress for AstKind<'_> {
             Self::TSIndexSignatureName(it) => it.unstable_address(),
             Self::TSInterfaceHeritage(it) => it.unstable_address(),
             Self::TSTypePredicate(it) => it.unstable_address(),
-            Self::TSModuleDeclaration(it) => it.unstable_address(),
+            Self::TSExternalModuleDeclaration(it) => it.unstable_address(),
+            Self::TSNamespaceDeclaration(it) => it.unstable_address(),
             Self::TSGlobalDeclaration(it) => it.unstable_address(),
             Self::TSModuleBlock(it) => it.unstable_address(),
             Self::TSTypeLiteral(it) => it.unstable_address(),
@@ -2064,8 +2071,13 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_ts_module_declaration(self) -> Option<&'a TSModuleDeclaration<'a>> {
-        if let Self::TSModuleDeclaration(v) = self { Some(v) } else { None }
+    pub fn as_ts_external_module_declaration(self) -> Option<&'a TSExternalModuleDeclaration<'a>> {
+        if let Self::TSExternalModuleDeclaration(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_namespace_declaration(self) -> Option<&'a TSNamespaceDeclaration<'a>> {
+        if let Self::TSNamespaceDeclaration(v) = self { Some(v) } else { None }
     }
 
     #[inline]

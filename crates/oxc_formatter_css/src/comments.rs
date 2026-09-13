@@ -1,14 +1,15 @@
-use std::cell::Cell;
-
 use oxc_formatter_core::{
-    Buffer, SourceText,
-    builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
+    Buffer, Format, SourceText, SpanCursor,
+    builders::{empty_line, expand_parent, hard_line_break, line_suffix, maybe_space, space, text},
     spec::is_suppression_marker,
     write,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
-use crate::print::{CssFormatter, format_with};
+use crate::{
+    context::CssFormatContext,
+    print::{CssFormatter, format_with},
+};
 
 /// A source comment.
 ///
@@ -21,63 +22,101 @@ pub struct CssComment {
     pub inline: bool,
 }
 
-/// Cursor over a sorted comment list that hands out unprinted comments in span order.
-///
-/// `cursor` is a [`Cell`] so the API works through `&self`
-/// (mirrors `oxc_formatter_graphql`'s `Comments`).
-pub struct Comments<'a> {
-    inner: &'a [CssComment],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [CssComment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<CssComment> {
-        self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [CssComment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [CssComment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = CssComment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.span.end <= upper_bound)
+impl GetSpan for CssComment {
+    fn span(&self) -> Span {
+        self.span
     }
 }
+
+/// Cursor over the sorted comment list.
+pub type Comments<'a> = SpanCursor<'a, CssComment>;
 
 pub use oxc_formatter_core::spec::{Gap, classify_gap};
 
-/// Emit a single comment verbatim.
-/// Mirrors Prettier's `css-comment` case: the original text slice,
-/// with trailing whitespace trimmed for inline (`//`) comments.
-pub fn write_single_comment(comment: CssComment, f: &mut CssFormatter<'_, '_>) {
+/// Emit raw comment text, trimming trailing whitespace from `//`.
+/// Private because it does not emit the line boundary `//` requires.
+fn write_comment_text(comment: CssComment, f: &mut CssFormatter<'_, '_>) {
     let content = f.context().source_text().text_for(&comment.span);
     if comment.inline {
         write!(f, text(content.trim_end()));
     } else {
         write!(f, text(content));
+    }
+}
+
+/// Spacing after a block comment. A `//` comment always hard-breaks instead.
+#[derive(Clone, Copy, Debug)]
+pub enum BlockCommentAfter {
+    None,
+    Space,
+    HardLine,
+}
+
+/// A comment written in place: a `//` ends its line, a block comment is followed by `block_after`.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatCommentBeforeContent {
+    comment: CssComment,
+    block_after: BlockCommentAfter,
+}
+
+impl FormatCommentBeforeContent {
+    pub const fn new(comment: CssComment, block_after: BlockCommentAfter) -> Self {
+        Self { comment, block_after }
+    }
+}
+
+impl<'a> Format<'a, CssFormatContext<'a>> for FormatCommentBeforeContent {
+    fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
+        write_comment_text(self.comment, f);
+        if self.comment.inline {
+            write!(f, hard_line_break());
+            return;
+        }
+        match self.block_after {
+            BlockCommentAfter::None => {}
+            BlockCommentAfter::Space => write!(f, space()),
+            BlockCommentAfter::HardLine => write!(f, hard_line_break()),
+        }
+    }
+}
+
+/// A `//` comment deferred through `line_suffix`: cannot swallow later tokens, not measured.
+#[must_use = "formatted comments must be written to the formatter"]
+#[derive(Clone, Copy, Debug)]
+pub struct FormatLineCommentSuffix {
+    comment: CssComment,
+    leading_space: bool,
+    expand_parent: bool,
+}
+
+impl FormatLineCommentSuffix {
+    pub const fn new(comment: CssComment) -> Self {
+        Self { comment, leading_space: false, expand_parent: false }
+    }
+
+    pub const fn with_leading_space(mut self) -> Self {
+        self.leading_space = true;
+        self
+    }
+
+    /// A `line_suffix` alone never breaks the enclosing group.
+    pub const fn with_expand_parent(mut self) -> Self {
+        self.expand_parent = true;
+        self
+    }
+}
+
+impl<'a> Format<'a, CssFormatContext<'a>> for FormatLineCommentSuffix {
+    fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
+        debug_assert!(self.comment.inline, "expected a line comment");
+        let comment = self.comment;
+        let leading_space = self.leading_space;
+        let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write!(f, maybe_space(leading_space));
+            write_comment_text(comment, f);
+        });
+        write!(f, [line_suffix(&content), self.expand_parent.then_some(expand_parent())]);
     }
 }
 
@@ -100,7 +139,7 @@ pub fn write_leading_comments(
 ) {
     let source = f.context().source_text();
     for (i, &comment) in comments.iter().enumerate() {
-        write_single_comment(comment, f);
+        write_comment_text(comment, f);
         match comments.get(i + 1) {
             // Comment followed by another comment: keep same-line pairs
             // (`*/ /*!`) together.
@@ -128,6 +167,7 @@ pub fn flush_leading_comments(value_start: u32, f: &mut CssFormatter<'_, '_>) {
 /// as `prev_end` as trailing comments (`red; /* x */ /* y */`); a `//` comment ends the run.
 /// Look-alike of `scss::write_same_line_trailing_comments`, which deliberately differs:
 /// no `expand_parent` there (its map/config bodies already hard-break).
+/// For the run on a list comma's line, see `value::flush_line_comment_after_comma`.
 pub fn write_trailing_same_line_comments(
     mut prev_end: u32,
     upper: u32,
@@ -142,19 +182,18 @@ pub fn write_trailing_same_line_comments(
         }
 
         f.context().comments().take_before(comment.span.end);
-        let content = format_with(move |f: &mut CssFormatter<'_, '_>| {
-            write!(f, space());
-            write_single_comment(comment, f);
-        });
 
         // NOTE: Prettier does not distinguish between `// c` and `/* c */` at EOL only for CSS/SCSS/Less.
         // All other formatters treat EOL-line comments as line suffixes, so we are consistent with them.
         if comment.inline {
-            write!(f, [line_suffix(&content), expand_parent()]);
+            write!(
+                f,
+                FormatLineCommentSuffix::new(comment).with_leading_space().with_expand_parent()
+            );
             return;
         }
 
-        write!(f, [content]);
+        write!(f, [space(), FormatCommentBeforeContent::new(comment, BlockCommentAfter::None)]);
         prev_end = comment.span.end;
     }
 }
@@ -172,7 +211,7 @@ pub fn write_trailing_inside_comments<'a>(
         let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
             let gap = source.bytes_range(gap_start, comment.span.start);
             write_gap(gap, f);
-            write_single_comment(comment, f);
+            write_comment_text(comment, f);
         });
         write!(f, [line_suffix(&content), expand_parent()]);
         prev_end = comment.span.end;

@@ -1,6 +1,6 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
@@ -23,13 +23,13 @@ impl<'a> Dummy<'a> for JSXClosing<'a> {
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
-        let span = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `<`
         let kind = self.cur_kind();
         let expr = if kind == Kind::RAngle {
-            Expression::JSXFragment(self.parse_jsx_fragment(span, false))
+            Expression::JSXFragment(self.parse_jsx_fragment(start, false))
         } else if kind.is_identifier_or_keyword() {
-            Expression::JSXElement(self.parse_jsx_element(span, false))
+            Expression::JSXElement(self.parse_jsx_element(start, false))
         } else {
             return self.unexpected();
         };
@@ -48,11 +48,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   < > `JSXChildren_opt` < / >
     fn parse_jsx_fragment(
         &mut self,
-        span: u32,
+        start: u32,
         in_jsx_child: bool,
     ) -> ArenaBox<'a, JSXFragment<'a>> {
         self.expect_jsx_child(Kind::RAngle);
-        let opening_fragment = JSXOpeningFragment::new(self.end_span(span), self);
+        let opening_fragment = JSXOpeningFragment::new(self.end_span(start), self);
         let (children, closing) = self.parse_jsx_children_and_closing(in_jsx_child);
         let closing_fragment = match closing {
             JSXClosing::Fragment(f) => f,
@@ -65,7 +65,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 JSXClosingFragment::new(e.span, self)
             }
         };
-        JSXFragment::boxed(self.end_span(span), opening_fragment, children, closing_fragment, self)
+        JSXFragment::boxed(self.end_span(start), opening_fragment, children, closing_fragment, self)
     }
 
     /// `JSXElement` :
@@ -74,8 +74,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `in_jsx_child`:
     ///     used for telling `JSXClosingElement` to parse the next jsx child or not
     ///     true when inside jsx element, false when at top level expression
-    fn parse_jsx_element(&mut self, span: u32, in_jsx_child: bool) -> ArenaBox<'a, JSXElement<'a>> {
-        let (opening_element, self_closing) = self.parse_jsx_opening_element(span, in_jsx_child);
+    fn parse_jsx_element(
+        &mut self,
+        start: u32,
+        in_jsx_child: bool,
+    ) -> ArenaBox<'a, JSXElement<'a>> {
+        let (opening_element, self_closing) = self.parse_jsx_opening_element(start, in_jsx_child);
         let (children, closing_element) = if self_closing {
             (ArenaVec::new_in(self), None)
         } else {
@@ -102,14 +106,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
             (children, Some(closing_element))
         };
-        JSXElement::boxed(self.end_span(span), opening_element, children, closing_element, self)
+        JSXElement::boxed(self.end_span(start), opening_element, children, closing_element, self)
     }
 
     /// `JSXOpeningElement` :
     /// < `JSXElementName` `JSXAttributes_opt` >
     fn parse_jsx_opening_element(
         &mut self,
-        span: u32,
+        start: u32,
         in_jsx_child: bool,
     ) -> (
         ArenaBox<'a, JSXOpeningElement<'a>>,
@@ -126,7 +130,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.expect(Kind::RAngle);
         }
         let elem =
-            JSXOpeningElement::boxed(self.end_span(span), name, type_arguments, attributes, self);
+            JSXOpeningElement::boxed(self.end_span(start), name, type_arguments, attributes, self);
         (elem, self_closing)
     }
 
@@ -135,14 +139,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXNamespacedName`
     ///   `JSXMemberExpression`
     fn parse_jsx_element_name(&mut self) -> JSXElementName<'a> {
-        let span = self.start_span();
+        let start = self.cur_start();
         let (identifier, contains_dash) = self.parse_jsx_identifier();
 
         // <namespace:property />
         if self.eat(Kind::Colon) {
             let (property, _) = self.parse_jsx_identifier();
             return JSXElementName::new_namespaced_name(
-                self.end_span(span),
+                self.end_span(start),
                 identifier,
                 property,
                 self,
@@ -152,12 +156,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // <member.foo.bar />
         if self.at(Kind::Dot) {
             return JSXElementName::MemberExpression(
-                self.parse_jsx_member_expression(span, &identifier),
+                self.parse_jsx_member_expression(start, &identifier),
             );
-        }
-
-        if self.fatal_error.is_some() {
-            return JSXElementName::dummy(self.allocator());
         }
 
         // Determine if this JSX element name is a reference (component) or an intrinsic element.
@@ -167,14 +167,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // - Names without hyphens (hyphenated names like `<my-element>` are custom elements)
         // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
         //
-        // The identifier has already been validated by the parser, so for ASCII characters
-        // we know it can only be `a-z`, `A-Z`, `_` or `$`.
-        // Use a fast path for ASCII to avoid expensive Unicode operations in the common case.
+        // In case of a fatal error in `parse_jsx_identifier`, `name` is an empty string,
+        // so `!contains_dash` check must be first to avoid a panic in `name.as_bytes()[0]`.
+        //
+        // The identifier has already been validated by `parse_jsx_identifier`,
+        // so for ASCII characters we know it can only be `a-z`, `A-Z`, `_` or `$`.
+        // The 3-arm match below compiles down to a single `cmp` instruction.
+        // https://godbolt.org/z/jq3Gd7YrP
         let name = identifier.name.as_str();
         let is_reference = !contains_dash // Exclude hyphenated custom elements
             && match name.as_bytes()[0] {
-                b if b.is_ascii() => !b.is_ascii_lowercase(), // Matches A-Z, _, $
-                _ => true, // Non-ASCII characters are always treated as references
+                // Non-ASCII characters are always treated as references
+                b if !b.is_ascii() => true,
+                // Matches A-Z, _, $
+                b if b < b'a' => true,
+                // Matches a-z
+                _ => false
             };
 
         if is_reference {
@@ -195,7 +203,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `JSXMemberExpression` . `JSXIdentifier`
     fn parse_jsx_member_expression(
         &mut self,
-        span: u32,
+        start: u32,
         object: &JSXIdentifier<'a>,
     ) -> ArenaBox<'a, JSXMemberExpression<'a>> {
         let mut object = if object.name == "this" {
@@ -208,7 +216,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             )
         };
 
-        let mut span = Span::new(span, 0);
+        let mut span = Span::new(start, 0);
         let mut property = None;
 
         while self.eat(Kind::Dot) && self.fatal_error.is_none() {
@@ -264,20 +272,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             match self.cur_kind() {
                 Kind::LAngle => {
-                    let span = self.start_span();
+                    let start = self.cur_start();
                     self.bump_any(); // bump `<`
                     let kind = self.cur_kind();
 
                     // <> open nested fragment
                     if kind == Kind::RAngle {
-                        let child = JSXChild::Fragment(self.parse_jsx_fragment(span, true));
+                        let child = JSXChild::Fragment(self.parse_jsx_fragment(start, true));
                         children.push(child);
                         continue;
                     }
 
                     // <ident open nested element
                     if kind == Kind::Ident || kind.is_any_keyword() {
-                        let child = JSXChild::Element(self.parse_jsx_element(span, true));
+                        let child = JSXChild::Element(self.parse_jsx_element(start, true));
                         children.push(child);
                         continue;
                     }
@@ -285,27 +293,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     // </ closing tag - parse it inline and return
                     if kind == Kind::Slash {
                         self.bump_any(); // bump `/`
-                        return self.parse_jsx_closing_inline(span, in_jsx_child);
+                        return self.parse_jsx_closing_inline(start, in_jsx_child);
                     }
 
                     // Unexpected token after `<`
                     return self.unexpected();
                 }
                 Kind::LCurly => {
-                    let span_start = self.start_span();
+                    let start = self.cur_start();
                     self.bump_any(); // bump `{`
 
                     // {...expr}
                     if self.eat(Kind::Dot3) {
-                        let child = JSXChild::Spread(self.parse_jsx_spread_child(span_start));
+                        let child = JSXChild::Spread(self.parse_jsx_spread_child(start));
                         children.push(child);
                         continue;
                     }
                     // {expr}
-                    let child =
-                        JSXChild::ExpressionContainer(self.parse_jsx_expression_container(
-                            span_start, /* in_jsx_child */ true,
-                        ));
+                    let child = JSXChild::ExpressionContainer(
+                        self.parse_jsx_expression_container(start, /* in_jsx_child */ true),
+                    );
                     children.push(child);
                 }
                 // text
@@ -324,7 +331,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parses the closing element or fragment after `</` has been consumed.
     fn parse_jsx_closing_inline(
         &mut self,
-        open_angle_span: u32,
+        open_angle_start: u32,
         in_jsx_child: bool,
     ) -> JSXClosing<'a> {
         if self.at(Kind::RAngle) {
@@ -334,7 +341,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 self.expect(Kind::RAngle);
             }
-            JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_span), self))
+            JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_start), self))
         } else {
             // Closing element: </name>
             let name = self.parse_jsx_element_name();
@@ -344,7 +351,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::RAngle);
             }
             JSXClosing::Element(JSXClosingElement::boxed(
-                self.end_span(open_angle_span),
+                self.end_span(open_angle_start),
                 name,
                 self,
             ))
@@ -354,7 +361,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   { `JSXChildExpression_opt` }
     fn parse_jsx_expression_container(
         &mut self,
-        span_start: u32,
+        start: u32,
         in_jsx_child: bool,
     ) -> ArenaBox<'a, JSXExpressionContainer<'a>> {
         let expr = if self.at(Kind::RCurly) {
@@ -363,7 +370,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 self.expect(Kind::RCurly);
             }
-            let span = self.end_span(span_start);
+            let span = self.end_span(start);
 
             // Empty expression is not allowed in JSX attribute value
             // e.g. `<C attr={} />`
@@ -375,9 +382,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             //                                            ^^^^^^^^^^^^^ span
             JSXExpression::new_empty_expression(Span::new(span.start + 1, span.end - 1), self)
         } else {
+            let expr_start = self.cur_start();
             let expr = JSXExpression::from(self.parse_expr());
-            // JSX expressions may not use the comma operator.
-            if matches!(expr, JSXExpression::SequenceExpression(_)) {
+            // JSX expressions may not use an unparenthesized comma operator.
+            if matches!(&expr, JSXExpression::SequenceExpression(sequence) if sequence.span.start == expr_start)
+            {
                 self.error(diagnostics::jsx_expressions_may_not_use_the_comma_operator(
                     expr.span(),
                 ));
@@ -390,15 +399,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             expr
         };
 
-        JSXExpressionContainer::boxed(self.end_span(span_start), expr, self)
+        JSXExpressionContainer::boxed(self.end_span(start), expr, self)
     }
 
     /// `JSXChildExpression` :
     ///   { ... `AssignmentExpression` }
-    fn parse_jsx_spread_child(&mut self, span_start: u32) -> ArenaBox<'a, JSXSpreadChild<'a>> {
+    fn parse_jsx_spread_child(&mut self, start: u32) -> ArenaBox<'a, JSXSpreadChild<'a>> {
         let expr = self.parse_expr();
         self.expect_jsx_child(Kind::RCurly);
-        JSXSpreadChild::boxed(self.end_span(span_start), expr, self)
+        JSXSpreadChild::boxed(self.end_span(start), expr, self)
     }
 
     /// `JSXAttributes` :
@@ -427,7 +436,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `JSXAttribute` :
     ///   `JSXAttributeName` `JSXAttributeInitializer_opt`
     fn parse_jsx_attribute(&mut self) -> ArenaBox<'a, JSXAttribute<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
         let name = self.parse_jsx_attribute_name();
         let value = if self.at(Kind::Eq) {
             self.advance_for_jsx_attribute_value();
@@ -435,31 +444,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
-        JSXAttribute::boxed(self.end_span(span), name, value, self)
+        JSXAttribute::boxed(self.end_span(start), name, value, self)
     }
 
     /// `JSXSpreadAttribute` :
     ///   { ... `AssignmentExpression` }
     fn parse_jsx_spread_attribute(&mut self) -> ArenaBox<'a, JSXSpreadAttribute<'a>> {
-        let span = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3);
         let argument = self.parse_expr();
         self.expect(Kind::RCurly);
-        JSXSpreadAttribute::boxed(self.end_span(span), argument, self)
+        JSXSpreadAttribute::boxed(self.end_span(start), argument, self)
     }
 
     /// `JSXAttributeName` :
     ///   `JSXIdentifier`
     ///   `JSXNamespacedName`
     fn parse_jsx_attribute_name(&mut self) -> JSXAttributeName<'a> {
-        let span = self.start_span();
+        let start = self.cur_start();
         let (identifier, _) = self.parse_jsx_identifier();
 
         if self.eat(Kind::Colon) {
             let (property, _) = self.parse_jsx_identifier();
             return JSXAttributeName::new_namespaced_name(
-                self.end_span(span),
+                self.end_span(start),
                 identifier,
                 property,
                 self,
@@ -476,11 +485,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {
-                let span_start = self.start_span();
+                let start = self.cur_start();
                 self.bump_any(); // bump `{`
 
                 let expr =
-                    self.parse_jsx_expression_container(span_start, /* in_jsx_child */ false);
+                    self.parse_jsx_expression_container(start, /* in_jsx_child */ false);
                 JSXAttributeValue::ExpressionContainer(expr)
             }
             Kind::LAngle => match self.parse_jsx_expression() {
@@ -500,17 +509,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
     ) -> (
         JSXIdentifier<'a>, // JSX identifier
-        bool,              // `true` if contains `-`
+        bool,              // `true` if contains `-`, or if parsing failed (see below)
     ) {
-        let span = self.start_span();
+        let start = self.cur_start();
         let kind = self.cur_kind();
         if kind != Kind::Ident && !kind.is_any_keyword() {
-            return (self.unexpected(), false);
+            // Return `contains_dash = true`, so that `parse_jsx_element_name` does not read the first byte
+            // of the dummy identifier's empty name. `parse_jsx_member_expression` treats a dash as an error,
+            // but on this path its `fatal_error` call is a no-op, because a fatal error has already been recorded.
+            return (self.unexpected(), true);
         }
         // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
         let contains_dash = self.continue_lex_jsx_identifier();
         self.bump_any();
-        let span = self.end_span(span);
+        let span = self.end_span(start);
         let name = span.source_text(self.source_text);
         let identifier = JSXIdentifier::new(span, name, self);
         (identifier, contains_dash)

@@ -78,7 +78,7 @@ impl<'a> PeepholeOptimizations {
                         found_constructor_method = true;
                     }
                     Ancestor::ClassBody(class) if found_constructor_method => {
-                        return class.super_class().is_some().then_some(scope_id);
+                        return class.heritage().is_some().then_some(scope_id);
                     }
                     _ => {}
                 }
@@ -92,16 +92,14 @@ impl<'a> PeepholeOptimizations {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
-                let new_expr = unary_expr.argument.take_in(ctx);
-                ctx.replace_expression(e, new_expr);
+                ctx.replace_expression_with(e, Self::unwrap_unary);
                 Self::remove_unused_expression(e, ctx)
             }
             UnaryOperator::Typeof => {
                 if unary_expr.argument.is_identifier_reference() {
                     true
                 } else {
-                    let new_expr = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(e, new_expr);
+                    ctx.replace_expression_with(e, Self::unwrap_unary);
                     Self::remove_unused_expression(e, ctx)
                 }
             }
@@ -613,6 +611,9 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             BinaryOperator::Addition => {
+                if !e.may_have_side_effects(ctx) {
+                    return true;
+                }
                 Self::fold_string_addition_chain(e, ctx);
                 matches!(e, Expression::StringLiteral(_))
             }
@@ -1035,10 +1036,10 @@ impl<'a> PeepholeOptimizations {
                 // when an `Extracts` class is actually removed.
                 let mut exprs = ArenaVec::new_in(ctx);
 
-                if let Some(e) = &mut c.super_class
-                    && e.may_have_side_effects(ctx)
+                if c.heritage_expression()
+                    .is_some_and(|expression| expression.may_have_side_effects(ctx))
                 {
-                    exprs.push(c.super_class.take().unwrap());
+                    exprs.push(c.heritage.take().unwrap().expression);
                 }
 
                 for e in &mut c.body.body {
@@ -1092,7 +1093,7 @@ impl<'a> PeepholeOptimizations {
         if !c.decorators.is_empty() {
             return ClassRemovability::Keep;
         }
-        if let Some(super_class) = &c.super_class {
+        if let Some(super_class) = c.heritage_expression() {
             // Unwrap parens and sequence tails — `(0, x)` — so the
             // classification does not change when a later fold surfaces
             // the inner expression.
@@ -1142,7 +1143,7 @@ impl<'a> PeepholeOptimizations {
                 extracts = true;
             }
         }
-        if c.super_class.as_ref().is_some_and(|e| e.may_have_side_effects(ctx)) {
+        if c.heritage_expression().is_some_and(|e| e.may_have_side_effects(ctx)) {
             extracts = true;
         }
         if extracts { ClassRemovability::Extracts } else { ClassRemovability::RemovesClean }

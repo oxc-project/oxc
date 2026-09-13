@@ -17,11 +17,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexSlice;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
-use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
+use crate::react_compiler_hir::dominator::compute_post_dominator_frontiers;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, PlaceOrSpread,
@@ -100,6 +100,7 @@ pub fn validate_no_set_state_in_effects(
                         push_error(
                             &mut errors,
                             info,
+                            property.span,
                             env.config.enable_verbose_no_set_state_in_effect,
                         );
                     }
@@ -121,6 +122,7 @@ pub fn validate_no_set_state_in_effects(
                         push_error(
                             &mut errors,
                             info,
+                            callee.span,
                             env.config.enable_verbose_no_set_state_in_effect,
                         );
                     }
@@ -148,52 +150,16 @@ fn is_set_state_type_by_id(
     is_set_state_type(ty)
 }
 
-fn push_error(errors: &mut Diagnostics, info: &SetStateInfo, enable_verbose: bool) {
+fn push_error(
+    errors: &mut Diagnostics,
+    info: &SetStateInfo,
+    effect_span: Option<Span>,
+    enable_verbose: bool,
+) {
     if enable_verbose {
-        errors.push(
-            ErrorCategory::EffectSetState
-                .diagnostic(
-                    "Calling setState synchronously within an effect can trigger cascading renders",
-                )
-                .with_help(
-                    "Effects are intended to synchronize state between React and external systems. \
-                     Calling setState synchronously causes cascading renders that hurt performance.\n\n\
-                     This pattern may indicate one of several issues:\n\n\
-                     **1. Non-local derived data**: If the value being set could be computed from props/state \
-                     but requires data from a parent component, consider restructuring state ownership so the \
-                     derivation can happen during render in the component that owns the relevant state.\n\n\
-                     **2. Derived event pattern**: If you're detecting when a prop changes (e.g., `isPlaying` \
-                     transitioning from false to true), this often indicates the parent should provide an event \
-                     callback (like `onPlay`) instead of just the current state. Request access to the original event.\n\n\
-                     **3. Force update / external sync**: If you're forcing a re-render to sync with an external \
-                     data source (mutable values outside React), use `useSyncExternalStore` to properly subscribe \
-                     to external state changes.\n\n\
-                     See: https://react.dev/learn/you-might-not-need-an-effect",
-                )
-                .with_labels(
-                    info.span
-                        .map(|s| s.label("Avoid calling setState() directly within an effect")),
-                ),
-        );
+        errors.push(diagnostics::set_state_in_effect(info.span, effect_span, true));
     } else {
-        errors.push(
-            ErrorCategory::EffectSetState
-                .diagnostic(
-                    "Calling setState synchronously within an effect can trigger cascading renders",
-                )
-                .with_help(
-                    "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. \
-                     In general, the body of an effect should do one or both of the following:\n\
-                     * Update external systems with the latest state from React.\n\
-                     * Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\n\
-                     Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. \
-                     (https://react.dev/learn/you-might-not-need-an-effect)",
-                )
-                .with_labels(
-                    info.span
-                        .map(|s| s.label("Avoid calling setState() directly within an effect")),
-                ),
-        );
+        errors.push(diagnostics::set_state_in_effect(info.span, effect_span, false));
     }
 }
 
@@ -264,15 +230,14 @@ fn create_ref_controlled_block_checker(
     identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     types: &IndexSlice<TypeId, [Type]>,
 ) -> Result<FxHashMap<BlockId, bool>, OxcDiagnostic> {
-    let post_dominators = compute_post_dominator_tree(func, next_block_id_counter, false)?;
+    let frontiers = compute_post_dominator_frontiers(func, next_block_id_counter, false)?;
     let mut cache: FxHashMap<BlockId, bool> = FxHashMap::default();
 
     for (block_id, _block) in &func.body.blocks {
-        let frontier = post_dominator_frontier(func, &post_dominators, *block_id);
         let mut is_controlled = false;
 
-        for frontier_block_id in &frontier {
-            let control_block = &func.body.blocks[frontier_block_id];
+        for frontier_block_id in frontiers.iter(*block_id) {
+            let control_block = &func.body.blocks[&frontier_block_id];
             match &control_block.terminal {
                 Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
                     if is_derived_from_ref(test.identifier, ref_derived_values, identifiers, types)

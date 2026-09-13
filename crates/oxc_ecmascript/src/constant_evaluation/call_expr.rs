@@ -472,8 +472,7 @@ fn try_fold_math_unary<'a>(
             // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
             // So we need to handle it manually.
             let frac_part = arg_val.fract();
-            let epsilon = 2f64.powi(-52);
-            if (frac_part.abs() - 0.5).abs() < epsilon {
+            if frac_part.abs() == 0.5 {
                 // We should ceil it.
                 arg_val.ceil()
             } else {

@@ -673,7 +673,7 @@ export type FunctionType =
 export interface FormalParameterRest extends Span {
   type: "RestElement";
   argument: BindingPattern;
-  decorators?: [];
+  decorators?: Array<Decorator>;
   optional?: boolean;
   typeAnnotation?: TSTypeAnnotation | null;
   value?: null;
@@ -1484,6 +1484,8 @@ export interface TSTypePredicate extends Span {
 
 export type TSTypePredicateName = IdentifierName | TSThisType;
 
+export type TSModuleDeclarationKind = "module" | "namespace";
+
 export interface TSModuleDeclaration extends Span {
   type: "TSModuleDeclaration";
   id: BindingIdentifier | StringLiteral | TSQualifiedName;
@@ -1493,8 +1495,6 @@ export interface TSModuleDeclaration extends Span {
   global: false;
   parent: Node;
 }
-
-export type TSModuleDeclarationKind = "module" | "namespace";
 
 export interface TSGlobalDeclaration extends Span {
   type: "TSModuleDeclaration";

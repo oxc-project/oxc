@@ -164,7 +164,7 @@ fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
 
 impl Rule for NoUselessUndefined {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,10 +227,11 @@ impl Rule for NoUselessUndefined {
                     AstKind::VariableDeclarator(variable_declarator) => {
                         let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
+                        let AstKind::VariableDeclaration(declaration) = grand_parent_node_kind
+                        else {
                             return;
                         };
-                        if variable_declarator.kind == VariableDeclarationKind::Const {
+                        if declaration.kind == VariableDeclarationKind::Const {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {
@@ -306,11 +307,14 @@ impl Rule for NoUselessUndefined {
                     return;
                 }
 
-                if should_ignore(&call_expr.callee) {
+                let arguments = &call_expr.arguments;
+                if !arguments.last().is_some_and(is_undefined) {
                     return;
                 }
 
-                let arguments = &call_expr.arguments;
+                if should_ignore(&call_expr.callee) {
+                    return;
+                }
 
                 // Ignore arguments in `Function#bind()`, but not `this` argument
                 if is_function_bind_call(call_expr) && arguments.len() != 1 {
@@ -321,7 +325,7 @@ impl Rule for NoUselessUndefined {
                     let arg = &arguments[i];
                     if is_undefined(arg) {
                         let span = arg.span();
-                        undefined_args_spans.insert(0, span);
+                        undefined_args_spans.push(span);
                     } else {
                         break;
                     }
@@ -330,6 +334,7 @@ impl Rule for NoUselessUndefined {
                 if undefined_args_spans.is_empty() {
                     return;
                 }
+                undefined_args_spans.reverse();
                 let first_undefined_span = undefined_args_spans[0];
                 let last_undefined_span = undefined_args_spans[undefined_args_spans.len() - 1];
                 let mut start = first_undefined_span.start;
@@ -778,6 +783,28 @@ fn test_issue_14368() {
         Some(serde_json::json!([{ "checkArguments": true }])),
     )];
 
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_trailing_arguments() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "call(undefined, ...values);",
+        "call(...values);",
+        "call?.(value);",
+        "call.bind(receiver);",
+        "call.bind(receiver, undefined);",
+    ];
+    let fail =
+        vec!["call(...values, undefined, undefined);", "call?.(value, undefined, undefined);"];
+    let fix = vec![
+        ("call(...values, undefined, undefined);", "call(...values);", None),
+        ("call?.(value, undefined, undefined);", "call?.(value);", None),
+    ];
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test();

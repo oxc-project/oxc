@@ -149,6 +149,40 @@ export default {
     expect(result.errors).toStrictEqual([]);
   });
 
+  it('should fill JSX text in <script lang="tsx"> blocks, not all-or-nothing', async () => {
+    const input = `
+<script setup lang="tsx">
+const short = (
+  <div>
+    <label for="d" class={[c]}>
+      Please enter the scheduled payment date below
+    </label>
+  </div>
+);
+const long = <div>Please enter the scheduled payment date below aaa bbb ccc ddd eee fff ggg hhh</div>;
+</script>
+`;
+    const result = await format("a.vue", input, { printWidth: 80 });
+
+    expect(result.code).toBe(`<script setup lang="tsx">
+const short = (
+  <div>
+    <label for="d" class={[c]}>
+      Please enter the scheduled payment date below
+    </label>
+  </div>
+);
+const long = (
+  <div>
+    Please enter the scheduled payment date below aaa bbb ccc ddd eee fff ggg
+    hhh
+  </div>
+);
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it('should format generic arrows in <script lang="ts"> blocks', async () => {
     const input = `
 <script lang="ts">
@@ -214,6 +248,86 @@ const pick = <U = T,>(x: U) => x;
     const result = await format("a.vue", input);
 
     expect(result.code).toContain("const pick = <U = T,>(x: U) => x;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/25568
+  it("should not add a blank line after a dangling comment in an empty object", async () => {
+    // The IR's hardline (comment terminator) + softline (before `}`) must print as a single break,
+    // like the Rust printer's newline suppression at a line start.
+    const input = `
+<script setup>
+const a = {
+  // x
+}
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toBe(`<script setup>
+const a = {
+  // x
+};
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/25569
+  it("should dedent template literal interpolation to root inside a function", async () => {
+    // The IR's dedent-to-root must survive the Doc conversion
+    // (JSON cannot represent the `-Infinity` Prettier expects; it is restored JS-side).
+    const input = `
+<script setup>
+const f = () => {
+  s.value = \`
+\${items ? Object.entries(items).map(([k, v]) => k + v).join("") : ""}
+\`
+}
+</script>
+`;
+    const result = await format("a.vue", input, { printWidth: 80 });
+
+    // Format again to verify idempotency
+    const result2 = await format("a.vue", result.code, { printWidth: 80 });
+
+    expect(result.code).toBe(`<script setup>
+const f = () => {
+  s.value = \`
+\${
+  items
+    ? Object.entries(items)
+        .map(([k, v]) => k + v)
+        .join("")
+    : ""
+}
+\`;
+};
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+    expect(result2.code).toBe(result.code);
+    expect(result2.errors).toStrictEqual([]);
+  });
+
+  it("should not indent a comment-only script block", async () => {
+    // The comment's leading IR `Space` must be dropped at the line start,
+    // like the Rust printer does, or `/**` gains a spurious leading space.
+    const input = `
+<script lang="ts">
+/**
+ * Docs.
+ */
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toBe(`<script lang="ts">
+/**
+ * Docs.
+ */
+</script>
+`);
     expect(result.errors).toStrictEqual([]);
   });
 });

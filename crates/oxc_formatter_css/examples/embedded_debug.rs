@@ -12,7 +12,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{Document, EmbeddedContext, FormatOptions, Printer, UniqueGroupIdBuilder};
+use oxc_formatter_core::{Document, FormatOptions, FormatSession, InputKind};
 use oxc_formatter_css::{CssFormatOptions, CssVariant, format_to_ir};
 
 fn main() {
@@ -30,32 +30,22 @@ fn main() {
         CssFormatOptions { variant: CssVariant::Scss, line_width, ..CssFormatOptions::default() };
 
     let allocator = Allocator::new();
-    let group_id_builder = UniqueGroupIdBuilder::default();
-    let ctx = EmbeddedContext {
-        allocator: &allocator,
-        group_id_builder: &group_id_builder,
-        dispatcher: None,
-    };
+    let session = FormatSession::new(&allocator, InputKind::Fragment);
 
-    match format_to_ir(&ctx, &source_text, options) {
+    match format_to_ir(&session, &source_text, options, /* template_placeholders */ true) {
         Ok(embedded) => {
             let document = Document::new(embedded.ir, Vec::new());
-            document.propagate_expand();
-            if std::env::var("DUMP_IR").is_ok() {
-                for el in document.elements() {
-                    eprintln!("{el:?}");
-                }
-            }
-            let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
-            match Printer::with_capacity(
-                source_text.len(),
-                options.as_print_options(),
-                &tailwind_classes,
-            )
-            .print(elements)
-            {
+            // `elements` borrows the arena (not the document) and group modes are `Cell`s,
+            // so after `print` finalizes, the slice shows the finalized IR.
+            let elements = std::env::var("DUMP_IR").is_ok().then(|| document.elements());
+            match document.print(source_text.len(), options.as_print_options()) {
                 Ok(printed) => println!("{}", printed.into_code()),
                 Err(err) => eprintln!("Print error: {err:?}"),
+            }
+            if let Some(elements) = elements {
+                for el in elements {
+                    eprintln!("{el:?}");
+                }
             }
         }
         Err(diagnostic) => eprintln!("Parse error: {diagnostic:?}"),

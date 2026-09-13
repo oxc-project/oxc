@@ -35,6 +35,10 @@ default: `{{default}}`
 {{/each}}
 ";
 
+fn heading(depth: usize) -> String {
+    "#".repeat(depth.min(6))
+}
+
 /// Data passed to [`ROOT`] hbs template
 #[derive(Serialize)]
 struct Root {
@@ -353,7 +357,7 @@ impl Renderer {
                 };
 
                 return vec![Section {
-                    level: "#".repeat(depth),
+                    level: heading(depth),
                     title: key.into(),
                     instance_type: union_type,
                     default: Self::render_default(schema),
@@ -370,7 +374,7 @@ impl Renderer {
             if !primitive_types.is_empty() {
                 let union_type = primitive_types.join(" | ");
                 return vec![Section {
-                    level: "#".repeat(depth),
+                    level: heading(depth),
                     title: key.into(),
                     instance_type: Some(union_type),
                     default: Self::render_default(schema),
@@ -436,7 +440,7 @@ impl Renderer {
                     let sections: Vec<Section> = enum_variants
                         .into_iter()
                         .map(|(value, description)| Section {
-                            level: "#".repeat(depth + 1),
+                            level: heading(depth + 1),
                             title: format!(r#"`"{value}"`"#),
                             instance_type: None,
                             default: None,
@@ -446,7 +450,7 @@ impl Renderer {
                         .collect();
 
                     return Section {
-                        level: "#".repeat(depth),
+                        level: heading(depth),
                         title: key.into(),
                         instance_type,
                         default: Self::render_default(ref_schema)
@@ -521,7 +525,7 @@ impl Renderer {
         };
 
         Section {
-            level: "#".repeat(depth),
+            level: heading(depth),
             title: key.into(),
             instance_type,
             default: Self::render_default(ref_schema).or_else(|| Self::render_default(schema)),

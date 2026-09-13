@@ -12,7 +12,7 @@
 //! Ported from TypeScript `src/Optimization/DeadCodeElimination.ts`.
 
 use oxc_allocator::Vec as ArenaVec;
-use oxc_index::IndexSlice;
+use oxc_index::{IndexSlice, IndexVec};
 use oxc_str::IdentHashSet;
 use rustc_hash::FxHashSet;
 
@@ -21,8 +21,9 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     ArrayPatternElement, BlockId, BlockKind, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern,
+    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern, Terminal,
 };
+use crate::react_compiler_optimization::prune_maybe_throws::value_may_throw;
 
 /// Implements dead-code elimination, eliminating instructions whose values are unused.
 ///
@@ -31,11 +32,11 @@ use crate::react_compiler_hir::{
 /// Corresponds to TS `deadCodeElimination(fn: HIRFunction): void`.
 pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'a>) {
     // Phase 1: Find/mark all referenced identifiers
-    let state = find_referenced_identifiers(func, env);
+    let state = find_referenced_identifiers(func, env, true);
 
     // Phase 2: Prune / sweep unreferenced identifiers and instructions
     // Collect instructions to rewrite (two-phase: collect then apply to avoid borrow conflicts)
-    let mut instructions_to_rewrite: Vec<InstructionId> = Vec::new();
+    let mut instructions_to_rewrite: Vec<(InstructionId, bool)> = Vec::new();
 
     for (_block_id, block) in &mut func.body.blocks {
         // Remove unused phi nodes
@@ -52,14 +53,21 @@ pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'
         for i in 0..retained_count {
             let is_block_value = block.kind != BlockKind::Block && i == retained_count - 1;
             if !is_block_value {
-                instructions_to_rewrite.push(block.instructions[i]);
+                let instr_id = block.instructions[i];
+                let preserve_destructure =
+                    matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. })
+                        && matches!(
+                            func.instructions[instr_id.index()].value,
+                            InstructionValue::Destructure { .. }
+                        );
+                instructions_to_rewrite.push((instr_id, preserve_destructure));
             }
         }
     }
 
     // Apply rewrites
-    for instr_id in instructions_to_rewrite {
-        rewrite_instruction(func, instr_id, &state, env);
+    for (instr_id, preserve_destructure) in instructions_to_rewrite {
+        rewrite_instruction(func, instr_id, preserve_destructure, &state, env);
     }
 
     // Remove unused context variables
@@ -117,7 +125,11 @@ fn is_id_used(state: &State, identifier_id: IdentifierId) -> bool {
 }
 
 /// Phase 1: Find all referenced identifiers via fixed-point iteration.
-fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>) -> State<'a> {
+fn find_referenced_identifiers<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+    preserve_caught_throws: bool,
+) -> State<'a> {
     let has_loop = has_back_edge(func);
     // Collect block ids in reverse order (postorder - successors before predecessors)
     let reversed_block_ids: Vec<BlockId> = func.body.blocks.keys().rev().copied().collect();
@@ -151,6 +163,14 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
                         reference(&mut state, &env.identifiers, place.identifier);
                     }
                 } else if is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier)
+                    // Throwing is observable inside try/catch even when the produced value is
+                    // unused. Keep the instruction until its MaybeThrow edge is proven dead.
+                    || (preserve_caught_throws
+                        && matches!(
+                            block.terminal,
+                            Terminal::MaybeThrow { handler: Some(_), .. }
+                        )
+                        && value_may_throw(&instr.value))
                     || !pruneable_value(&instr.value, &state, env)
                 {
                     reference(&mut state, &env.identifiers, instr.lvalue.identifier);
@@ -189,17 +209,56 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
     state
 }
 
+/// Finds caught instructions retained only because their throw is observable.
+///
+/// Re-running the mark phase without catch preservation distinguishes dead operations from
+/// ordinary used values. Dependency inference uses this to add safe root dependencies only for
+/// the former, leaving normal dependencies precise.
+pub(crate) fn find_semantic_only_caught_instructions(
+    func: &HirFunction,
+    env: &Environment,
+) -> Option<IndexVec<InstructionId, bool>> {
+    let mut candidates = Vec::new();
+    for block in func.body.blocks.values() {
+        if !matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }) {
+            continue;
+        }
+        for &instr_id in &block.instructions {
+            let instr = &func.instructions[instr_id.index()];
+            if value_may_throw(&instr.value) {
+                candidates.push(instr_id);
+            }
+        }
+    }
+
+    if candidates.is_empty() {
+        return None;
+    }
+
+    let state = find_referenced_identifiers(func, env, false);
+    let mut semantic_only = IndexVec::from_vec(vec![false; func.instructions.len()]);
+    for instr_id in candidates {
+        let instr = &func.instructions[instr_id.index()];
+        if !is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier) {
+            semantic_only[instr_id] = true;
+        }
+    }
+
+    Some(semantic_only)
+}
+
 /// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
 fn rewrite_instruction<'a>(
     func: &mut HirFunction<'a>,
     instr_id: InstructionId,
+    preserve_destructure: bool,
     state: &State,
     env: &Environment<'a>,
 ) {
     let instr = &mut func.instructions[instr_id.index()];
 
     match &mut instr.value {
-        InstructionValue::Destructure { lvalue, .. } => {
+        InstructionValue::Destructure { lvalue, .. } if !preserve_destructure => {
             match &mut lvalue.pattern {
                 Pattern::Array(arr) => {
                     // For arrays, replace unused items with holes, truncate trailing holes
@@ -306,6 +365,10 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         }
         InstructionValue::Debugger { .. } => {
             // explicitly retain debugger statements
+            false
+        }
+        InstructionValue::TSEnumDeclaration { .. } => {
+            // Enum initializers can have arbitrary runtime side effects.
             false
         }
         InstructionValue::CallExpression { callee, .. } => {

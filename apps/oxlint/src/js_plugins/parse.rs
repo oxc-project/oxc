@@ -10,7 +10,7 @@ use napi_derive::napi;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{Comment, CommentContent, CommentKind};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_estree_tokens::update_tokens_as_js;
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
 use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
@@ -204,11 +204,12 @@ unsafe fn parse_raw_impl(
             })
             .with_config(RuntimeParserConfig::new(true))
             .parse();
-        let ParserReturn { program: parsed_program, diagnostics, mut tokens, panicked, .. } =
+        let ParserReturn { program: parsed_program, diagnostics, mut tokens, fatal_error, .. } =
             parser_ret;
         let program = allocator.alloc(parsed_program);
 
-        let mut parsing_failed = panicked || (!diagnostics.is_empty() && !ignore_non_fatal_errors);
+        let mut parsing_failed =
+            fatal_error || (!diagnostics.is_empty() && !ignore_non_fatal_errors);
 
         // Check for semantic errors.
         // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
@@ -252,7 +253,7 @@ unsafe fn parse_raw_impl(
             };
 
             // Convert token spans to UTF-16 and update token kinds
-            update_tokens(&mut tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            update_tokens_as_js(&mut tokens, program, &span_converter);
 
             // Convert AST spans to UTF-16
             span_converter.convert_program(program);

@@ -1129,14 +1129,10 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    Some(ident)
-                } else {
-                    None
-                }
-            }
-            Declaration::TSGlobalDeclaration(_) | Declaration::VariableDeclaration(_) => None,
+            Declaration::TSNamespaceDeclaration(decl) => Some(&decl.id),
+            Declaration::TSExternalModuleDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1148,7 +1144,8 @@ impl<'a> Declaration<'a> {
             Declaration::ClassDeclaration(decl) => decl.declare,
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
-            Declaration::TSModuleDeclaration(decl) => decl.declare,
+            Declaration::TSExternalModuleDeclaration(decl) => decl.declare,
+            Declaration::TSNamespaceDeclaration(decl) => decl.declare,
             Declaration::TSGlobalDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
             Declaration::TSImportEqualsDeclaration(_) => false,
@@ -1654,6 +1651,28 @@ impl<'a> ArrowFunctionExpression<'a> {
 }
 
 impl<'a> Class<'a> {
+    /// Returns the expression in this class's heritage clause, when present.
+    ///
+    /// ```ts
+    /// class Foo extends Bar<Baz> {}
+    /// //                ^^^
+    /// ```
+    #[inline]
+    pub fn heritage_expression(&self) -> Option<&Expression<'a>> {
+        self.heritage.as_ref().map(|heritage| &heritage.expression)
+    }
+
+    /// Returns the type arguments in this class's heritage clause, when present.
+    ///
+    /// ```ts
+    /// class Foo extends Bar<Baz> {}
+    /// //                   ^^^^^
+    /// ```
+    #[inline]
+    pub fn heritage_type_arguments(&self) -> Option<&TSTypeParameterInstantiation<'a>> {
+        self.heritage.as_ref()?.type_arguments.as_deref()
+    }
+
     /// Returns this [`Class`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Ident<'a>> {
@@ -1685,6 +1704,16 @@ impl<'a> Class<'a> {
     /// Returns `true` if this class uses `declare class` or `abstract class` syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
+    }
+}
+
+impl GetSpan for ClassHeritage<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        let expression_span = self.expression.span();
+        self.type_arguments
+            .as_ref()
+            .map_or(expression_span, |type_arguments| expression_span.merge(type_arguments.span))
     }
 }
 

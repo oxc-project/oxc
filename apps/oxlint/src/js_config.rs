@@ -100,8 +100,8 @@ fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagno
         Vec::new()
     };
 
-    let mut oxlintrc: Oxlintrc =
-        serde_json::from_value(value).map_err(|err| OxcDiagnostic::error(err.to_string()))?;
+    let mut oxlintrc =
+        Oxlintrc::from_json_value(&value).map_err(|err| OxcDiagnostic::error(err.to_string()))?;
     oxlintrc.extends_configs = extends_configs;
     Ok(oxlintrc)
 }

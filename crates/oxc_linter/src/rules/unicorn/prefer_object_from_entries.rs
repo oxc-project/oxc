@@ -97,7 +97,7 @@ impl Rule for PreferObjectFromEntries {
             && call_expr.arguments[0].is_expression()
             && does_expr_match_any_path(
                 &call_expr.callee,
-                self.functions.iter().map(|fun| fun.split('.').collect::<Vec<_>>()),
+                self.functions.iter().map(|fun| fun.split('.')),
             )
         {
             ctx.diagnostic(prefer_object_from_entries_diagnostic(call_expr.callee.span()));
@@ -229,7 +229,7 @@ impl Rule for PreferObjectFromEntries {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<PreferObjectFromEntriesConfig>>(value)
+        DefaultRuleConfig::<PreferObjectFromEntriesConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(|config| Self(Box::new(config)))
     }
@@ -341,6 +341,13 @@ fn test() {
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
+        ("foo(pairs)", Some(serde_json::json!([{"functions": ["", ".foo", "foo."]}]))),
+        (
+            "utils.foo(pairs)",
+            Some(serde_json::json!([{"functions": ["utils..foo", "utils.foo.extra"]}])),
+        ),
+        ("utils.foo.extra(pairs)", Some(serde_json::json!([{"functions": ["utils.foo"]}]))),
+        ("utils['foo'](pairs)", Some(serde_json::json!([{"functions": ["utils.foo"]}]))),
     ];
 
     let fail = vec![
@@ -421,6 +428,10 @@ fn test() {
             Some(serde_json::json!([{"functions": ["myFromPairsFunction"]}])),
         ),
         ("utils.object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
+        (
+            "utils.foo(pairs)",
+            Some(serde_json::json!([{"functions": ["utils", "utils.foo", "utils.foo.extra"]}])),
+        ),
     ];
 
     Tester::new(PreferObjectFromEntries::NAME, PreferObjectFromEntries::PLUGIN, pass, fail)

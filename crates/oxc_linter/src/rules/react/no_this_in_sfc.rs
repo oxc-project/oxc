@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -77,11 +77,7 @@ impl Rule for NoThisInSfc {
             return;
         }
 
-        let Some(component_node) = get_parent_function(node, ctx) else { return };
-
-        if !is_potential_react_component(component_node, ctx) {
-            return;
-        }
+        let Some(component_node) = get_parent_component(node, ctx) else { return };
 
         if ctx
             .nodes()
@@ -103,13 +99,26 @@ impl Rule for NoThisInSfc {
     }
 }
 
-fn get_parent_function<'a, 'b>(
+fn get_parent_component<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    ctx.nodes().ancestors(node.id()).find(|ancestor| {
-        matches!(ancestor.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-    })
+    for ancestor in ctx.nodes().ancestors(node.id()) {
+        match ancestor.kind() {
+            AstKind::ArrowFunctionExpression(_) => {
+                // Arrow functions inherit `this`, so look through non-component callbacks.
+                if is_potential_react_component(ancestor, ctx) {
+                    return Some(ancestor);
+                }
+            }
+            AstKind::StaticBlock(_) => return None,
+            AstKind::Function(_) => {
+                return is_potential_react_component(ancestor, ctx).then_some(ancestor);
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 fn is_in_nested_this_context<'a>(
@@ -124,10 +133,10 @@ fn is_in_nested_this_context<'a>(
             AstKind::Function(_)
             | AstKind::MethodDefinition(_)
             | AstKind::PropertyDefinition(_) => true,
-            AstKind::ObjectProperty(_) => {
-                matches!(ctx.nodes().parent_kind(ancestor.id()), AstKind::ObjectExpression(_))
-            }
-
+            AstKind::AccessorProperty(property) => property
+                .value
+                .as_ref()
+                .is_some_and(|value| value.span().contains_inclusive(this_node.span())),
             _ => false,
         })
 }
@@ -350,6 +359,63 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+                    function Foo() {
+                      function callback() {
+                        this.itemRef = null;
+                      }
+                      return <div ref={callback} />;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Foo() {
+                      class C {
+                        static {
+                          const callback = () => this.value;
+                        }
+                      }
+                      return <div />;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Foo() {
+                      class C {
+                        accessor handler = () => this.value;
+                      }
+                      return <div />;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    class ItemAdapter {
+                      constructor() {
+                        const ElementWrapper = () => (
+                          <div ref={ref => {
+                            // eslint-disable-next-line react/no-this-in-sfc
+                            this.itemRef = ref;
+                          }} />
+                        );
+                        this.el = ElementWrapper;
+                      }
+                    }
+                  ",
+            None,
+            Some(serde_json::json!({
+                "options": { "reportUnusedDisableDirectives": "error" }
+            })),
+        ),
     ];
 
     let fail = vec![
@@ -442,6 +508,51 @@ fn test() {
                         this.props.onClick();
                       }
                       return <div onClick={onClick}>{this.props.foo}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Foo() {
+                      const handlers = {
+                        click: () => this.props.click(),
+                      };
+                      return <button onClick={handlers.click} />;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Foo() {
+                      class C {
+                        accessor [this.props.name] = 0;
+                      }
+                      return <div />;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    class ItemAdapter {
+                      constructor() {
+                        const ElementWrapper = (props) => (
+                          <div
+                            ref={ref => {
+                              this.itemRef = ref;
+                            }}
+                            {...this.getBasicProps()}
+                          >
+                            {props.label}
+                          </div>
+                        );
+                        this.el = ElementWrapper;
+                      }
                     }
                   ",
             None,

@@ -67,10 +67,12 @@ impl StylishReporter {
             grouped.entry(info.filename.clone()).or_default().push((info, diagnostic));
         }
 
+        let cwd = std::env::current_dir().ok();
+
         for diagnostics in grouped.values() {
             let filename = &diagnostics[0].0.filename;
             let filename = if let Some(path) =
-                std::env::current_dir().ok().and_then(|d| d.join(filename).canonicalize().ok())
+                cwd.as_ref().and_then(|d| d.join(filename).canonicalize().ok())
             {
                 path.display().to_string()
             } else {

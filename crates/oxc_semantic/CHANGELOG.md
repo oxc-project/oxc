@@ -4,6 +4,67 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 8b35abd semantic: Detect duplicate private class elements (#26361) (camc314)
+- 457ed57 semantic: Reject await and yield in rest parameter defaults (#26359) (camc314)
+- 4b89c7b semantic: Reject jumps across arrow functions (#26357) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- 4adfb4c semantic: Validate chained continue labels (#26157) (camc314)
+- c3dedc9 semantic: Skip function body bindings in parameters (#26099) (Dunqing)
+- 8531b9b linter/plugins: Alter method for obtaining mutable `Program` when sending AST to JS plugins (#26077) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- fca2e0c parser: Reject initialized lexical declarations in for-in (#25700) (Boshen)
+- 059784d semantic: Respect shadowed `Infinity` and `NaN` in enum evaluation (#25604) (camc314)
+- 509931b semantic: Classify global references per identifier (#25608) (camc314)
+- cdf1846 semantic: Allow legacy escapes in JSX attributes (#25576) (Boshen)
+
+### ⚡ Performance
+
+- 757f3d4 mangler: Share allocated names across reused slots (#25605) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0c9b980 semantic: Report module declaration diagnostics (#25285) (camc314)
+
+### ⚡ Performance
+
+- dd1430b semantic: Avoid allocation in class overload check (#25440) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 4120da0 semantic: [**BREAKING**] Return borrowed JSDoc so the parse cache works (#25186) (Connor Shea)
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
 ## [0.141.0] - 2026-07-20
 
 ### ⚡ Performance

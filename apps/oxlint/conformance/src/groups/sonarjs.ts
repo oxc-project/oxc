@@ -103,10 +103,10 @@ const group: TestGroup = {
 
     // Only valid code in ES3, and Oxc parser does not support ES3
     if (
-      ruleName === "S1527" &&
-      code.includes("var implements;") &&
-      (test.languageOptions?.parserOptions as any)?.ecmaVersion === 3 &&
-      err.message === "Parsing failed"
+      ruleName === "S1527"
+      && code.includes("var implements;")
+      && (test.languageOptions?.parserOptions as any)?.ecmaVersion === 3
+      && err.message === "Parsing failed"
     ) {
       return true;
     }
@@ -119,10 +119,10 @@ const group: TestGroup = {
 
     // Unit tests which don't use `RuleTester` - not relevant
     if (
-      err.message === "Test case was not run with `RuleTester`" &&
-      ((ruleName === "S1116" && code === "S1116 handles null nodes") ||
-        (ruleName === "S1172" && code === "should handle incomplete AST") ||
-        (ruleName === "S6647" && code === "should crash with decorated rule"))
+      err.message === "Test case was not run with `RuleTester`"
+      && ((ruleName === "S1116" && code === "S1116 handles null nodes")
+        || (ruleName === "S1172" && code === "should handle incomplete AST")
+        || (ruleName === "S6647" && code === "should crash with decorated rule"))
     ) {
       return true;
     }

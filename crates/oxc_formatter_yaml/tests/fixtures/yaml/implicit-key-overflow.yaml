@@ -1,0 +1,18 @@
+# An implicit key must stay on one line: when the block-collection value pins
+# the hardline separator, a key that overflows the width flips to the explicit
+# form (Prettier's `ifBreak(explicit, implicit, {groupId})` on the grouped key),
+# while a fitting key (the last item) stays implicit.
+[AlphaLongTableName, BravoLongTableName, CharlieLongTableName, DeltaLongTableName, EchoLongTableName]:
+  scrubber: undefinedScrubber
+{AlphaLongTableName: 1, BravoLongTableName: 2, CharlieLongTableName: 3, DeltaLongTableName: 4}:
+  scrubber: undefinedScrubber
+[a, b]:
+  x: 1
+# A forced break inside the key (comment-pinned flow collection) also flips to
+# the explicit form, regardless of width — width trials cannot see it
+? [aaa, # pinned
+   bbb]
+: x: 1
+? [ccc, # pinned
+   ddd]
+: value

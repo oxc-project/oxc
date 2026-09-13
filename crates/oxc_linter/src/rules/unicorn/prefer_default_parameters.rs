@@ -61,7 +61,7 @@ declare_oxc_lint!(
     PreferDefaultParameters,
     unicorn,
     style,
-    fix,
+    suggestion,
     version = "1.33.0",
     short_description = "Prefer default parameters over reassignment.",
 );
@@ -236,13 +236,16 @@ fn check_expression<'a>(
 
     let delete_span = expand_statement_delete_span(ctx.source_text(), statement_span);
 
-    ctx.diagnostic_with_fix(prefer_default_parameters_diagnostic(stmt_span, param_name), |fixer| {
-        let fixer = fixer.for_multifix();
-        let mut fix = fixer.new_fix_with_capacity(2);
-        fix.push(fixer.replace(replace_span, new_param_text));
-        fix.push(fixer.delete_range(delete_span));
-        fix.with_message("Prefer default parameters over reassignment.")
-    });
+    ctx.diagnostic_with_suggestion(
+        prefer_default_parameters_diagnostic(stmt_span, param_name),
+        |fixer| {
+            let fixer = fixer.for_multifix();
+            let mut fix = fixer.new_fix_with_capacity(2);
+            fix.push(fixer.replace(replace_span, new_param_text));
+            fix.push(fixer.delete_range(delete_span));
+            fix.with_message("Prefer default parameters over reassignment.")
+        },
+    );
 }
 
 #[expect(clippy::cast_possible_truncation)]
@@ -403,14 +406,11 @@ fn check_no_extra_references<'a>(
 
     let symbol_id = binding_ident.symbol_id();
 
-    let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
-
-    if references.len() != 1 {
+    let [reference_id] = ctx.scoping().get_resolved_reference_ids(symbol_id) else {
         return false;
-    }
+    };
 
-    let reference = &references[0];
-    ctx.semantic().reference_span(reference) == param_ident_span
+    ctx.semantic().reference_span(ctx.scoping().get_reference(*reference_id)) == param_ident_span
 }
 
 fn check_no_extra_references_assignment<'a>(

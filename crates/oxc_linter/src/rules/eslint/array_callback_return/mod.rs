@@ -45,14 +45,27 @@ fn guess_missing_return_hint(
     }
 }
 
+fn get_function_head_span(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Span {
+    match node.kind() {
+        AstKind::ArrowFunctionExpression(arrow) => ctx
+            .find_prev_token_within(arrow.span.start, arrow.body.span().start, "=>")
+            .map_or(arrow.span, |offset| Span::sized(arrow.span.start + offset, 2)),
+        AstKind::Function(function) => Span::new(function.span.start, function.params.span.start),
+        _ => unreachable!(),
+    }
+}
+
 fn expect_return(
     method_name: &str,
     array_method_span: Span,
+    function_node: &AstNode<'_>,
     function_body: &FunctionBody<'_>,
     allow_implicit: bool,
+    ctx: &LintContext<'_>,
 ) -> OxcDiagnostic {
-    let (span, hint) = guess_missing_return_hint(function_body)
-        .map_or((function_body.span, None), |(span, hint)| (span, Some(hint)));
+    let hint = guess_missing_return_hint(function_body);
+    let diagnostic_span =
+        hint.map_or(function_body.span, |_| get_function_head_span(function_node, ctx));
 
     let value_requirement = if allow_implicit {
         ""
@@ -60,7 +73,7 @@ fn expect_return(
         "\nReturn a value on each path (or enable `allowImplicit` to allow `return;`)."
     };
 
-    let (message, help) = match hint {
+    let (message, help) = match hint.map(|(_, hint)| hint) {
         Some(MissingReturnHint::SwitchWithoutDefault) => (
             format!(
                 "Callback for array method {method_name:?} may fall through a `switch` without returning"
@@ -85,12 +98,13 @@ fn expect_return(
         ),
     };
 
-    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(span);
+    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(diagnostic_span);
     if allow_implicit {
         diagnostic = diagnostic.with_note("With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.");
     }
-    if hint.is_some() {
+    if let Some((hint_span, _)) = hint {
         diagnostic = diagnostic
+            .and_label(hint_span.label("This path may reach the end of the callback."))
             .and_label(array_method_span.label(format!("{method_name:?} is called here.")));
     }
 
@@ -171,7 +185,7 @@ declare_oxc_lint!(
 
 impl Rule for ArrayCallbackReturn {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -277,8 +291,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
+                            node,
                             function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -287,8 +303,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
+                            node,
                             function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -297,8 +315,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
+                            node,
                             function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -650,6 +670,17 @@ fn test() {
 }",
             None,
         ),
+        (
+            r#"const out = parts
+  // eslint-disable-next-line array-callback-return
+  .map(p => {
+    switch (p.type) {
+      case "a":
+        return p.value;
+    }
+  });"#,
+            Some(serde_json::json!([{"allowImplicit": true}])),
+        ),
     ];
 
     let fail = vec![
@@ -688,6 +719,15 @@ const _test = fruits.map((fruit) => {
   }
 });"#,
             None,
+        ),
+        (
+            r#"const out = parts.map(p => {
+  switch (p.type) {
+    case "a":
+      return p.value;
+  }
+});"#,
+            Some(serde_json::json!([{"allowImplicit": true}])),
         ),
         ("foo.reduce(function() {})", None),
         ("foo.reduce(function foo() {})", None),

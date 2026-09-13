@@ -120,21 +120,20 @@ impl PreferExpectTypeOf {
             return;
         }
 
-        let modifier_text =
-            expect_call.modifiers().iter().fold(String::new(), |mut acc, modifier| {
-                use std::fmt::Write;
-                match modifier.element {
-                    // `.not`
-                    MemberExpressionElement::IdentName(_) => {
-                        write!(&mut acc, ".{}", ctx.source_range(modifier.span)).unwrap();
-                    }
-                    // `["not"]`, `[not]`, `[`not`]`, etc.
-                    MemberExpressionElement::Expression(_) => {
-                        write!(&mut acc, "[{}]", ctx.source_range(modifier.span)).unwrap();
-                    }
+        let modifier_text = expect_call.modifiers().fold(String::new(), |mut acc, modifier| {
+            use std::fmt::Write;
+            match modifier.element {
+                // `.not`
+                MemberExpressionElement::IdentName(_) => {
+                    write!(&mut acc, ".{}", ctx.source_range(modifier.span)).unwrap();
                 }
-                acc
-            });
+                // `["not"]`, `[not]`, `[`not`]`, etc.
+                MemberExpressionElement::Expression(_) => {
+                    write!(&mut acc, "[{}]", ctx.source_range(modifier.span)).unwrap();
+                }
+            }
+            acc
+        });
 
         let param = ctx.source_range(GetSpan::span(&typeof_expression.argument));
         let type_text = ctx.source_range(type_expected.span());

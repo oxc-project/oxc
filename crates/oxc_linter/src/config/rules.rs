@@ -226,8 +226,9 @@ impl OxlintRules {
         }
 
         if !errors.is_empty() {
-            // Sort by the error message so output is stable
-            errors.sort_by_key(std::string::ToString::to_string);
+            // Sort by the error message so output is stable. The key is computed once per error
+            // rather than once per comparison, which also keeps the `Display` impl out of the sort.
+            errors.sort_by_cached_key(std::string::ToString::to_string);
             return Err(errors);
         }
 
@@ -444,12 +445,11 @@ impl JsonSchema for OxlintRules {
                                 array.items.is_none() || array.additional_items.is_none(),
                                 "Expected rule to not contain items and additionalItems at the same time"
                             );
-                            if let Some(ref additional_items) = array.additional_items {
+                            if array.additional_items.is_some() {
                                 array.items = Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
-                                    *additional_items.clone(),
                                 ]));
-                                array.min_items = Some(2);
+                                array.min_items = Some(1);
                                 array.max_items = None;
                                 return Schema::Object(obj);
                             }
@@ -659,28 +659,32 @@ fn parse_rule_key(name: &str) -> (String, String) {
     unalias_plugin_name(plugin_name, rule_name)
 }
 
-pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
-    // First normalize the plugin name by stripping eslint-plugin- prefix/suffix
-    let normalized = super::plugins::normalize_plugin_name(plugin_name);
-    let plugin_name = normalized.as_ref();
+/// Normalize a rule name to the canonical name used by diagnostics.
+///
+/// This removes the plugin prefix from ESLint rules and resolves plugin aliases such as
+/// `@typescript-eslint` to `typescript`.
+pub fn normalize_rule_name(name: &str) -> String {
+    let (plugin_name, rule_name) = parse_rule_key(name);
+    let plugin_name = super::plugins::plugin_display_name(&plugin_name);
+    if plugin_name == "eslint" { rule_name } else { format!("{plugin_name}/{rule_name}") }
+}
 
-    let (oxlint_plugin_name, rule_name) = match plugin_name {
-        "@typescript-eslint" => ("typescript", rule_name),
-        // import-x has the same rules but better performance
-        "import-x" => ("import", rule_name),
-        // jsx-a11y-x has the same rules but better maintained
-        "jsx-a11y" | "jsx-a11y-x" | "jsx_a11y-x" => ("jsx_a11y", rule_name),
-        "react-perf" => ("react_perf", rule_name),
+pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
+    let normalized = super::plugins::normalize_plugin_name(plugin_name);
+    let plugin_name = match normalized.as_ref() {
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
-        "@next" | "@next/next" => ("nextjs", rule_name),
-        // For backwards compatibility, react hook rules reside in the react plugin.
-        "react-hooks" => ("react", rule_name),
-        // For backwards compatibility, deepscan rules reside in the oxc plugin.
-        "deepscan" => ("oxc", rule_name),
-        _ => (plugin_name, rule_name),
+        "@next" | "@next/next" => "nextjs".to_string(),
+        plugin_name => match LintPlugins::try_from(plugin_name) {
+            Ok(LintPlugins::ESLINT) => "eslint".to_string(),
+            Ok(plugin) => {
+                let plugin_name: &str = plugin.into();
+                plugin_name.cow_replace('-', "_").into_owned()
+            }
+            Err(()) => normalized.into_owned(),
+        },
     };
 
-    (oxlint_plugin_name.to_string(), rule_name.to_string())
+    (plugin_name, rule_name.to_string())
 }
 
 fn parse_rule_value(
@@ -1004,6 +1008,25 @@ mod test {
         assert_eq!(r3.rule_name, "no-cycle");
         assert_eq!(r3.plugin_name, "import");
         assert!(r3.severity.is_warn_deny());
+    }
+
+    #[test]
+    fn test_normalize_rule_name() {
+        assert_eq!(super::normalize_rule_name("eslint/curly"), "curly");
+        assert_eq!(
+            super::normalize_rule_name("@typescript-eslint/no-unused-vars"),
+            "typescript/no-unused-vars"
+        );
+        assert_eq!(
+            super::normalize_rule_name("eslint-plugin-react/jsx-uses-vars"),
+            "react/jsx-uses-vars"
+        );
+        assert_eq!(super::normalize_rule_name("jsx-a11y/alt-text"), "jsx-a11y/alt-text");
+        assert_eq!(
+            super::normalize_rule_name("react-perf/jsx-no-new-object-as-prop"),
+            "react-perf/jsx-no-new-object-as-prop"
+        );
+        assert_eq!(super::normalize_rule_name("@next/next/no-img-element"), "next/no-img-element");
     }
 
     #[test]

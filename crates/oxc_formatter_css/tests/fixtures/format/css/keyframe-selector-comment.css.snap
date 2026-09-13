@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-/* KNOWN DIVERGENCE (see AGENTS.md): every output block below deviates from Prettier.
+/* KNOWN DIVERGENCE (DIVERGENCES.md "keyframe-selector-comment-list"): every output block below deviates from Prettier.
    Prettier keeps a COMMENTED keyframe selector list verbatim on one line
    (`60% /+ mid +/, 70%, 80% /+ late +/ {`, interior spacing included — a postcss
    raws artifact); we format it structurally, same layout as uncommented lists:
@@ -30,7 +30,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-/* KNOWN DIVERGENCE (see AGENTS.md): every output block below deviates from Prettier.
+/* KNOWN DIVERGENCE (DIVERGENCES.md "keyframe-selector-comment-list"): every output block below deviates from Prettier.
    Prettier keeps a COMMENTED keyframe selector list verbatim on one line
    (`60% /+ mid +/, 70%, 80% /+ late +/ {`, interior spacing included — a postcss
    raws artifact); we format it structurally, same layout as uncommented lists:
@@ -63,7 +63,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-/* KNOWN DIVERGENCE (see AGENTS.md): every output block below deviates from Prettier.
+/* KNOWN DIVERGENCE (DIVERGENCES.md "keyframe-selector-comment-list"): every output block below deviates from Prettier.
    Prettier keeps a COMMENTED keyframe selector list verbatim on one line
    (`60% /+ mid +/, 70%, 80% /+ late +/ {`, interior spacing included — a postcss
    raws artifact); we format it structurally, same layout as uncommented lists:

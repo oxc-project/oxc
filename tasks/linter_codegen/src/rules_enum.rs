@@ -149,13 +149,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let name_arms: Vec<TokenStream> = rule_entries
+    let rule_names: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::NAME }
+            quote! { #enum_name::NAME }
         })
         .collect();
+    let rule_count = rule_entries.len();
 
     let category_arms: Vec<TokenStream> = rule_entries
         .iter()
@@ -200,6 +201,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
     let from_configuration_arms: Vec<TokenStream> = rule_entries
         .iter()
+        .filter(|rule| rule.has_custom_from_configuration)
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(_) => Ok(Self::#enum_name(#enum_name::from_configuration(value)?)) }
@@ -208,6 +210,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
     let to_configuration_arms: Vec<TokenStream> = rule_entries
         .iter()
+        .filter(|rule| rule.has_custom_to_configuration)
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(rule) => rule.to_configuration() }
@@ -297,6 +300,8 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
     // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
+        static RULE_NAMES: [&str; #rule_count] = [#(#rule_names),*];
+
         impl RuleEnum {
             pub fn id(&self) -> usize {
                 match self {
@@ -305,9 +310,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             }
 
             pub fn name(&self) -> &'static str {
-                match self {
-                    #(#name_arms),*
-                }
+                RULE_NAMES[self.id()]
             }
 
             pub fn category(&self) -> RuleCategory {
@@ -345,13 +348,15 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             pub fn from_configuration(&self, value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
                 match self {
-                    #(#from_configuration_arms),*
+                    #(#from_configuration_arms,)*
+                    _ => Ok(RULES[self.id()].clone()),
                 }
             }
 
             pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
                 match self {
-                    #(#to_configuration_arms),*
+                    #(#to_configuration_arms,)*
+                    _ => None,
                 }
             }
 

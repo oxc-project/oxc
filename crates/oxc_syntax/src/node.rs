@@ -53,14 +53,20 @@ impl<'alloc> CloneIn<'alloc> for NodeId {
 
 impl SemanticId for NodeId {}
 
+/// Get the [`NodeId`] of given AST node.
+///
+/// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+pub trait GetNodeId {
+    /// Get the [`NodeId`] for an AST node.
+    fn node_id(&self) -> NodeId;
+}
+
 bitflags! {
     /// Contains additional information about an AST node.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct NodeFlags: u8 {
         /// Set if the Node has a JSDoc comment attached
         const JSDoc     = 1 << 0;
-        /// Set functions containing yield statements
-        const HasYield  = 1 << 2;
     }
 }
 
@@ -69,11 +75,5 @@ impl NodeFlags {
     #[inline]
     pub fn has_jsdoc(self) -> bool {
         self.contains(Self::JSDoc)
-    }
-
-    /// Returns `true` if this function has a yield statement.
-    #[inline]
-    pub fn has_yield(self) -> bool {
-        self.contains(Self::HasYield)
     }
 }

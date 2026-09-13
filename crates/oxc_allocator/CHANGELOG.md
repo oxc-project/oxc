@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 32bdc5b allocator: Construct `ArenaHashSet` with any `Default` hasher (#26372) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 00dea7a allocator: Gate `Allocator::data_end_ptr` behind fixed_size feature (#26248) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 💥 BREAKING CHANGES
+
+- a31567a allocator: [**BREAKING**] Make `Allocator::cursor_ptr` and `data_end_ptr` private (#26081) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 2cde1f6 rust: Address nightly deprecations (#25998) (Boshen)
+
+## [0.144.0] - 2026-08-10
+
+### 🚀 Features
+
+- b3c1b30 allocator: Add `ArenaVec::push_mut` (#25338) (overlookmotel)
+
+### 📚 Documentation
+
+- fe111eb allocator: Improve doc comments for `Arena` methods (#24922) (overlookmotel)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- f0a41c8 allocator: [**BREAKING**] Remove `ArenaBox::dangling` method (#25236) (overlookmotel)
+
+### 🚀 Features
+
+- 3c8312e allocator: Make `Box` `Send` + `Sync` when the type it contains is (#25242) (overlookmotel)
+
 ## [0.141.0] - 2026-07-20
 
 ### 🚀 Features

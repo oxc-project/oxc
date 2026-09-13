@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* A word glued to a paren group stays glued: the value writer never inserts
+   a space between source-glued tokens.
+   DIVERGES from Prettier (DIVERGENCES.md "paren-group-glued-word"), whose
+   postcss-values-parser re-splits `$(style)color` into a paren node and a word
+   and prints a space between them. */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+  color: @@(style) color123;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* A word glued to a paren group stays glued: the value writer never inserts
+   a space between source-glued tokens.
+   DIVERGES from Prettier (DIVERGENCES.md "paren-group-glued-word"), whose
+   postcss-values-parser re-splits `$(style)color` into a paren node and a word
+   and prints a space between them. */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+  color: @@(style) color123;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* A word glued to a paren group stays glued: the value writer never inserts
+   a space between source-glued tokens.
+   DIVERGES from Prettier (DIVERGENCES.md "paren-group-glued-word"), whose
+   postcss-values-parser re-splits `$(style)color` into a paren node and a word
+   and prints a space between them. */
+a {
+  color: $(style)color;
+  color: @@(style)color123;
+  color: @@(style) color123;
+}
+
+===================== End =====================

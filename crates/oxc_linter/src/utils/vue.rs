@@ -11,7 +11,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode, ContextSubHost, LintContext, ast_util::get_declaration_from_reference_id,
-    frameworks::FrameworkOptions, module_record::ImportImportName,
+    frameworks::FrameworkOptions, module_record::ImportImportName, utils::is_import_symbol,
 };
 
 // These sets mirror eslint-plugin-vue's `vue/no-reserved-component-names`.
@@ -333,25 +333,7 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
 
 /// Check whether the identifier is imported as `nextTick` or aliased from `'vue'`.
 pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    let scoping = ctx.scoping();
-    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
-        return false;
-    };
-    for entry in &ctx.module_record().import_entries {
-        if entry.module_request.name() != "vue" {
-            continue;
-        }
-        let ImportImportName::Name(name_span) = &entry.import_name else {
-            continue;
-        };
-        if name_span.name() != "nextTick" {
-            continue;
-        }
-        if scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id) {
-            return true;
-        }
-    }
-    false
+    is_import_symbol(ident, "vue", "nextTick", ctx)
 }
 
 /// Finds the first `ObjectProperty` whose static key matches `name` in the given object.

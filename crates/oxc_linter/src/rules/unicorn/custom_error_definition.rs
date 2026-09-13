@@ -337,7 +337,7 @@ fn is_valid_super_class_name(name: &str) -> bool {
 }
 
 fn has_valid_super_class(class: &Class) -> bool {
-    let Some(super_class) = &class.super_class else {
+    let Some(super_class) = class.heritage_expression() else {
         return false;
     };
     let name = match super_class.get_inner_expression() {

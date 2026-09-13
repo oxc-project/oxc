@@ -1,0 +1,38 @@
+// Comments inside an at-rule prelude are never lost: the structural printers
+// (`@import` parts and modifiers, `@layer`, `@custom-selector`, `@namespace`) place them,
+// and whatever a prelude printer leaves pending is written before the `;` / `{`.
+// A `//` breaks the prelude; the continuation is one level in.
+// Prettier differs on three lines: `supports(x), // c` moves below (DIVERGENCES.md "line-comment-after-comma"),
+// `:--x a, /* c */ b` keeps the source break before `b` (ours: a block comment is a plain fill item),
+// `@charset "utf-8" // c;` puts the `;` inside the comment (a Prettier bug; ours rides it past the `;`).
+@import // c
+  "a";
+@import url(a) // c
+  screen;
+@import "a" // c
+  screen;
+@import "a" supports(x), // c
+  "b";
+@import /* c */ "a";
+@layer // c
+  a;
+@layer a, // c
+  b;
+@layer a, /* c */ b;
+@custom-selector :--x a, // c
+  b;
+@custom-selector :--x a, /* c */
+  b;
+@namespace svg // c
+  url(http://www.w3.org/2000/svg);
+@charset "utf-8" // c
+;
+// A comment before a comma stays before it (`write_group_comma`).
+@layer a /* c */, b;
+// A verbatim prelude prints its comments as part of its text, exactly once.
+@container card // c
+  (width > 400px) {
+  a {
+    b: c;
+  }
+}

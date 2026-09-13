@@ -1,0 +1,170 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments between a variable's colon and its value keep their line:
+// a same-line `//` stays on the colon's line, an own-line comment stays own-line,
+// and the value continues one level under the name.
+// A hard-broken comma list indents itself instead (one entry per line).
+$s1: // c
+  1;
+$s2: /* c */ 1;
+$s3:
+  // c
+  1;
+$s4:
+  /* c */
+  1;
+$p1: // c
+  1 2;
+$p3:
+  // c
+  1 2;
+$f1: // c
+  a, b;
+$f2: /* c */ a, b;
+$f3:
+  // c
+  a, b;
+$f4:
+  /* c */
+  a, b;
+$h1: // c
+  a b, c d;
+$h3:
+  // c
+  a b, c d;
+$h5: // c
+  a,
+  // d
+  b;
+$z: // c
+  1 !default;
+.a {
+  $n: // c
+    1;
+}
+// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the map keeps its
+// shape under the continuation indent; Prettier dedents it to `(\n  k: v,\n);`.
+$m1: // c
+  (k: v);
+$m3:
+  // c
+  (k: v);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments between a variable's colon and its value keep their line:
+// a same-line `//` stays on the colon's line, an own-line comment stays own-line,
+// and the value continues one level under the name.
+// A hard-broken comma list indents itself instead (one entry per line).
+$s1: // c
+  1;
+$s2: /* c */ 1;
+$s3:
+  // c
+  1;
+$s4:
+  /* c */ 1;
+$p1: // c
+  1 2;
+$p3:
+  // c
+  1 2;
+$f1: // c
+  a, b;
+$f2: /* c */ a, b;
+$f3:
+  // c
+  a, b;
+$f4:
+  /* c */ a, b;
+$h1: // c
+  a b,
+  c d;
+$h3:
+  // c
+  a b,
+  c d;
+$h5: // c
+  a,
+  // d
+  b;
+$z: // c
+  1 !default;
+.a {
+  $n: // c
+    1;
+}
+// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the map keeps its
+// shape under the continuation indent; Prettier dedents it to `(\n  k: v,\n);`.
+$m1: // c
+  (
+    k: v,
+  );
+$m3:
+  // c
+  (
+    k: v,
+  );
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments between a variable's colon and its value keep their line:
+// a same-line `//` stays on the colon's line, an own-line comment stays own-line,
+// and the value continues one level under the name.
+// A hard-broken comma list indents itself instead (one entry per line).
+$s1: // c
+  1;
+$s2: /* c */ 1;
+$s3:
+  // c
+  1;
+$s4:
+  /* c */ 1;
+$p1: // c
+  1 2;
+$p3:
+  // c
+  1 2;
+$f1: // c
+  a, b;
+$f2: /* c */ a, b;
+$f3:
+  // c
+  a, b;
+$f4:
+  /* c */ a, b;
+$h1: // c
+  a b,
+  c d;
+$h3:
+  // c
+  a b,
+  c d;
+$h5: // c
+  a,
+  // d
+  b;
+$z: // c
+  1 !default;
+.a {
+  $n: // c
+    1;
+}
+// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the map keeps its
+// shape under the continuation indent; Prettier dedents it to `(\n  k: v,\n);`.
+$m1: // c
+  (
+    k: v,
+  );
+$m3:
+  // c
+  (
+    k: v,
+  );
+
+===================== End =====================

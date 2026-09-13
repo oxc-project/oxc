@@ -1,0 +1,64 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* An own-line block comment inside a space-separated value is a plain fill item:
+   it joins the line when it fits and wraps independently when it does not
+   (gluing it to the next value would freeze a previously wrapped layout = not idempotent).
+   Conformance's css/comments/17479.css covers only the all-inline source;
+   these pin the own-line sources.
+ */
+.a {
+  b:
+    1px
+    /* c */
+    2px;
+}
+.b {
+  box-shadow:
+    1000px
+      /* long long long long long long long long long long long long comment */
+      1000px 2px gray,
+    1px 1px red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* An own-line block comment inside a space-separated value is a plain fill item:
+   it joins the line when it fits and wraps independently when it does not
+   (gluing it to the next value would freeze a previously wrapped layout = not idempotent).
+   Conformance's css/comments/17479.css covers only the all-inline source;
+   these pin the own-line sources.
+ */
+.a {
+  b: 1px /* c */ 2px;
+}
+.b {
+  box-shadow:
+    1000px
+      /* long long long long long long long long long long long long comment */
+      1000px 2px gray,
+    1px 1px red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* An own-line block comment inside a space-separated value is a plain fill item:
+   it joins the line when it fits and wraps independently when it does not
+   (gluing it to the next value would freeze a previously wrapped layout = not idempotent).
+   Conformance's css/comments/17479.css covers only the all-inline source;
+   these pin the own-line sources.
+ */
+.a {
+  b: 1px /* c */ 2px;
+}
+.b {
+  box-shadow:
+    1000px /* long long long long long long long long long long long long comment */ 1000px 2px gray,
+    1px 1px red;
+}
+
+===================== End =====================

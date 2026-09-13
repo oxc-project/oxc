@@ -261,14 +261,6 @@ pub fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic 
 }
 
 #[cold]
-pub fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "Only a single declaration is allowed in a `for...{x0}` statement"
-    ))
-    .with_label(span1)
-}
-
-#[cold]
 pub fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{x0} loop variable declaration may not have an initializer"))
         .with_label(span1)
@@ -359,6 +351,18 @@ pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
         "A namespace declaration is only allowed at the top level of a namespace or module.",
     )
     .with_label(span)
+}
+
+#[cold]
+pub fn not_allowed_ambient_module_declaration(span: Span) -> OxcDiagnostic {
+    ts_error("1234", "An ambient module declaration is only allowed at the top level in a file.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn nested_ambient_module_declaration(span: Span) -> OxcDiagnostic {
+    ts_error("2435", "Ambient modules cannot be nested in other modules or namespaces.")
+        .with_label(span)
 }
 
 #[cold]
