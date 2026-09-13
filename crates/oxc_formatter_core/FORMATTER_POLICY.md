@@ -7,6 +7,7 @@ Shared policy for every formatter crate in the oxc ecosystem:
 - `oxc_formatter_css`
 - `oxc_formatter_graphql`
 - `oxc_formatter_yaml`
+- `oxc_formatter_markdown`
 
 using `oxc_formatter_core`, integrated by `apps/oxfmt`.
 

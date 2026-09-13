@@ -1,0 +1,47 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[paren](https://example.com/()foo->bar)
+[angle](<https://example.com/a b>)
+[backslash](https://example.com/a\b)
+[backslash-before-punct](https://example.com/a\\*b)
+[backslash-last](https://example.com/a\\)
+[entity](https://example.com/?a&amp;b)
+[title](https://example.com "a &amp; b")
+
+[def]: https://example.com/()balanced
+[def-unbalanced]: https://example.com/(unbalanced
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+[paren](<https://example.com/()foo-\>bar>)
+[angle](<https://example.com/a b>)
+[backslash](https://example.com/a\b)
+[backslash-before-punct](https://example.com/a\\*b)
+[backslash-last](https://example.com/a\\)
+[entity](https://example.com/?a&b)
+[title](https://example.com "a & b")
+
+[def]: https://example.com/()balanced
+
+[def-unbalanced]: https://example.com/(unbalanced
+
+-------------------
+{ printWidth: 100 }
+-------------------
+[paren](<https://example.com/()foo-\>bar>)
+[angle](<https://example.com/a b>)
+[backslash](https://example.com/a\b)
+[backslash-before-punct](https://example.com/a\\*b)
+[backslash-last](https://example.com/a\\)
+[entity](https://example.com/?a&b)
+[title](https://example.com "a & b")
+
+[def]: https://example.com/()balanced
+
+[def-unbalanced]: https://example.com/(unbalanced
+
+===================== End =====================
