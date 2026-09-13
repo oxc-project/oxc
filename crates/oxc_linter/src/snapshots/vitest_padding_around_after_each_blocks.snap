@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const something = 123;
+ 2 │ afterEach(() => {
+   · ▲
+ 3 │ //  // more stuff
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:4:3]
+ 3 │ //  // more stuff
+ 4 │ });
+   ·   ▲
+ 5 │ describe('foo', () => {});
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding after afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:5:3]
+ 4 │ //  // more stuff
+ 5 │ });
+   ·   ▲
+ 6 │ describe('foo', () => {});
+   ╰────
+  help: Make sure there is an empty new line after the afterEach block
+
+  ⚠ vitest(padding-around-after-each-blocks): Missing padding before afterEach block
+   ╭─[padding_around_after_each_blocks.tsx:2:1]
+ 1 │ const something = 123;
+ 2 │ afterEach(() => {
+   · ▲
+ 3 │ //  // more stuff
+   ╰────
+  help: Make sure there is an empty new line before the afterEach block

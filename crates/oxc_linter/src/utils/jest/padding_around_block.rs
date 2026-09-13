@@ -107,6 +107,8 @@ pub fn report_missing_padding_after_jest_block<'a>(
         return;
     };
 
+    // Fix the padding based on the next node to circumvent having to
+    // handle semicolon that is not included in the AstNode's span.
     let next_node = ctx.nodes().iter().find(|node| {
         node.span().start == next_statement_span.start && node.span().end == next_statement_span.end
     });
