@@ -26,6 +26,10 @@ pub struct LintRunner {
     /// Current working directory
     cwd: PathBuf,
     type_check_only: bool,
+    /// Type-aware (tsgolint) rules that would be run if type-aware mode was enabled.
+    /// This is used to mark these rules as skipped when type-aware mode is not enabled,
+    /// so that their disable directives are not flagged as unused.
+    tsgolint_rules: Vec<String>,
 }
 
 /// Manages disable directives across all linting engines.
@@ -135,6 +139,33 @@ impl DirectivesStore {
     pub fn take(&self, path: &Path) -> Option<DisableDirectives> {
         self.map.lock().expect("DirectivesStore mutex poisoned in take").remove(path)
     }
+
+    /// Mark a rule as skipped (not run) for all files.
+    /// This is used when type-aware linting is disabled to prevent
+    /// flagging directives for type-aware rules as unused.
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
+    pub fn mark_rule_skipped(&self, rule_name: &str) {
+        let mut map = self.map.lock().expect("DirectivesStore mutex poisoned in mark_rule_skipped");
+        for directives in map.values() {
+            directives.mark_rule_skipped(rule_name);
+        }
+    }
+
+    /// Mark all type-aware (tsgolint) rules as skipped for all files.
+    /// This is called when type-aware linting is disabled.
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
+    pub fn mark_all_tsgolint_rules_skipped(&self, tsgolint_rules: &[String]) {
+        let mut map = self.map.lock().expect("DirectivesStore mutex poisoned in mark_all_tsgolint_rules_skipped");
+        for directives in map.values() {
+            for rule_name in tsgolint_rules {
+                directives.mark_rule_skipped(rule_name);
+            }
+        }
+    }
 }
 
 impl Default for DirectivesStore {
@@ -237,6 +268,14 @@ impl LintRunnerBuilder {
             None
         };
 
+        // When type-aware linting is not enabled, capture the tsgolint rules
+        // so we can mark their directives as skipped (not unused).
+        let tsgolint_rules = if !self.type_aware_enabled {
+            self.regular_linter.tsgolint_rules()
+        } else {
+            vec![]
+        };
+
         let cwd = self.lint_service_options.cwd().to_path_buf();
         let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
         lint_service.set_disable_directives_map(directives_coordinator.map());
@@ -247,6 +286,7 @@ impl LintRunnerBuilder {
             directives_store: directives_coordinator,
             cwd,
             type_check_only: self.type_check_only,
+            tsgolint_rules,
         })
     }
 }
@@ -291,6 +331,10 @@ impl LintRunner {
                 rule_timing_store,
             )?;
         } else {
+            // Mark all tsgolint rules as skipped so their disable directives
+            // are not flagged as unused. We can't know if these directives
+            // would have been used or not since the rules were not run.
+            self.directives_store.mark_all_tsgolint_rules_skipped(&self.tsgolint_rules);
             drop(tx_error);
         }
 

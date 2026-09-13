@@ -355,6 +355,30 @@ impl ConfigStore {
         Some(builtin_rules.len() + external_rules.len())
     }
 
+    /// Returns all tsgolint (type-aware) rule names that are configured.
+    /// This includes rules from both the base config and overrides.
+    pub fn tsgolint_rules(&self) -> Vec<String> {
+        let mut tsgolint_rules = Vec::new();
+
+        // Collect tsgolint rules from base rules
+        for (rule, _) in &self.base.base.rules {
+            if rule.is_tsgolint_rule() {
+                tsgolint_rules.push(rule.name().to_string());
+            }
+        }
+
+        // Collect tsgolint rules from overrides
+        for override_config in &self.base.overrides {
+            for (rule, severity) in &override_config.rules.builtin_rules {
+                if severity.is_warn_deny() && rule.is_tsgolint_rule() {
+                    tsgolint_rules.push(rule.name().to_string());
+                }
+            }
+        }
+
+        tsgolint_rules
+    }
+
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.base.rules
     }
