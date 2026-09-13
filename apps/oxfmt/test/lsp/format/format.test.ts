@@ -106,6 +106,15 @@ describe("LSP formatting", () => {
     });
   });
 
+  describe("error handling on format", () => {
+    it.each([["config-invalid-override/test.ts", "typescript"]])(
+      "should handle %s",
+      async (path, languageId) => {
+        expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+      },
+    );
+  });
+
   describe("initializationOptions", () => {
     it("should use custom config path from fmt.configPath", async () => {
       expect(

@@ -164,19 +164,36 @@ export async function formatFixtureContent(
   }
   await clientOrConfig.didOpen(fileUri, languageId, content);
 
-  const edits = await clientOrConfig.format(fileUri);
+  try {
+    const edits = await clientOrConfig.format(fileUri);
 
-  if (innerClient) {
-    await innerClient[Symbol.asyncDispose]();
-  }
+    if (innerClient) {
+      await innerClient[Symbol.asyncDispose]();
+    }
 
-  return `${uriSnapshotHeader(fileUri, fixturesDir)}
+    return `${uriSnapshotHeader(fileUri, fixturesDir)}
 --- BEFORE ---------
 ${content}
 --- AFTER ----------
 ${applyEdits(content, edits, languageId)}
 --------------------
 `.trim();
+  } catch (error) {
+    const msg =
+      error instanceof Error ? sanitizeMessage(error.message) : sanitizeMessage(error as string);
+
+    if (innerClient) {
+      await innerClient[Symbol.asyncDispose]();
+    }
+
+    return `${uriSnapshotHeader(fileUri, fixturesDir)}
+--- BEFORE ---------
+${content}
+--- ERROR ----------
+${msg}
+--------------------
+`.trim();
+  }
 }
 
 export async function formatMultipleFixtures(
@@ -292,4 +309,8 @@ function uriSnapshotHeader(fileUri: string, fixtureDir: string): string {
   return `
   --- URI -----------
 ${safeUri}`;
+}
+
+function sanitizeMessage(message: string): string {
+  return message.replaceAll(process.cwd(), "<cwd>");
 }
