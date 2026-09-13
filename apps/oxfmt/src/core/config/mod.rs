@@ -35,6 +35,7 @@ use self::{
 };
 #[cfg(feature = "napi")]
 use super::options::to_oxc_formatter;
+use super::plugins::PluginRequest;
 use super::{
     FormatStrategy,
     options::{ValidatedOptions, validate},
@@ -235,6 +236,10 @@ pub struct ConfigResolver {
     ignore_glob: Option<Gitignore>,
     /// Parsed `.editorconfig`, if any.
     editorconfig: Option<EditorConfig>,
+    /// Prettier plugins this config declares, with the directory they resolve from.
+    /// `None` when none are declared, or when the config did not come from a file
+    /// and so has no directory to resolve against.
+    plugin_request: Option<PluginRequest>,
 }
 
 impl ConfigResolver {
@@ -253,6 +258,7 @@ impl ConfigResolver {
             oxfmtrc_overrides: None,
             ignore_glob: None,
             editorconfig,
+            plugin_request: None,
         }
     }
 
@@ -444,7 +450,14 @@ impl ConfigResolver {
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
         self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
 
+        self.plugin_request = build_plugin_request(self.config_dir.as_deref(), oxfmtrc.plugins);
+
         Ok(())
+    }
+
+    /// Prettier plugins this config declares, if any.
+    pub fn plugin_request(&self) -> Option<&PluginRequest> {
+        self.plugin_request.as_ref()
     }
 
     /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
@@ -571,6 +584,22 @@ fn load_js_config(
     })?;
 
     Ok(if value.is_null() { None } else { Some(value) })
+}
+
+/// Pair the declared plugins with the directory they resolve from.
+///
+/// Specifiers are resolved relative to the config file, like Prettier does, so a
+/// config that did not come from a file cannot declare plugins.
+fn build_plugin_request(
+    config_dir: Option<&Path>,
+    plugins: Option<Vec<String>>,
+) -> Option<PluginRequest> {
+    let specifiers = plugins?;
+    if specifiers.is_empty() {
+        return None;
+    }
+    let base = config_dir?.to_str()?.to_string();
+    Some(PluginRequest { base, specifiers })
 }
 
 /// Build an ignore glob from config `ignorePatterns`.

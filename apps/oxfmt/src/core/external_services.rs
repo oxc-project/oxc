@@ -21,6 +21,7 @@ use crate::core::embed::{
     FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
     TailwindWithConfigCallback,
 };
+use crate::core::plugins::{PluginRequest, ResolvedPlugins};
 
 /// Callback function type for formatting whole files (Tier 3/4 delegation).
 /// Takes (options, code) and returns formatted code or an error.
@@ -29,14 +30,15 @@ pub type FormatFileWithConfigCallback =
     Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
 
 /// Type alias for the init external services callback function signature.
-/// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.
+/// Takes num_threads and the plugins to load; signals JS to perform any one-time setup
+/// before formatting, and returns the languages those plugins declare.
 pub type JsInitExternalServicesCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(u32,)>, // (num_threads,)
+    FnArgs<(u32, Value)>, // (num_threads, plugins)
     // Return type (what JS function returns)
-    Promise<()>,
+    Promise<Value>,
     // Arguments (repeated)
-    FnArgs<(u32,)>,
+    FnArgs<(u32, Value)>,
     // Error status
     Status,
     // CalleeHandled
@@ -129,8 +131,9 @@ impl TsfnHandles {
 }
 
 /// Callback function type for init external services.
-/// Takes num_threads.
-type InitExternalServicesCallback = Arc<dyn Fn(usize) -> Result<(), String> + Send + Sync>;
+/// Takes num_threads and the plugins to load, and reports what they declare.
+type InitExternalServicesCallback =
+    Arc<dyn Fn(usize, Option<&PluginRequest>) -> Result<ResolvedPlugins, String> + Send + Sync>;
 
 /// Transport handle to the JS-side services (Prettier formatting, Tailwind sorting),
 /// each wrapped as a plain Rust callback.
@@ -138,6 +141,11 @@ type InitExternalServicesCallback = Arc<dyn Fn(usize) -> Result<(), String> + Se
 pub struct ExternalServices {
     /// Handles to raw ThreadsafeFunctions for explicit cleanup
     handles: TsfnHandles,
+    /// Plugins the session was initialized with, injected into every whole-file
+    /// Prettier delegation so the JS side loads them alongside the bundled ones.
+    /// Held pre-serialized because it is constant for the session and the
+    /// injection sits on the per-file path.
+    plugins: Arc<RwLock<Option<Value>>>,
     pub init: InitExternalServicesCallback,
     pub format_file: FormatFileWithConfigCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
@@ -192,6 +200,7 @@ impl ExternalServices {
         let rust_tailwind = wrap_sort_tailwind_classes(sort_tailwind_handle);
         Self {
             handles,
+            plugins: Arc::new(RwLock::new(None)),
             init: rust_init,
             format_file: rust_format_file,
             format_embedded: rust_format_embedded,
@@ -217,14 +226,39 @@ impl ExternalServices {
     }
 
     /// Initialize the JS-side services (worker pool) using the JS callback.
-    pub fn init(&self, num_threads: usize) -> Result<(), String> {
-        debug_span!("oxfmt::external::init", num_threads = num_threads)
-            .in_scope(|| (self.init)(num_threads))
+    ///
+    /// A request is retained so later delegations carry the same plugins.
+    ///
+    /// Passing `None` leaves any existing registration alone rather than clearing
+    /// it. LSP shares one transport across workspace folders and initializes each
+    /// of them, so a folder without plugins must not disable another folder's.
+    /// Two folders declaring different plugins is not supported; the last wins.
+    pub fn init(
+        &self,
+        num_threads: usize,
+        plugins: Option<PluginRequest>,
+    ) -> Result<ResolvedPlugins, String> {
+        let resolved = debug_span!("oxfmt::external::init", num_threads = num_threads)
+            .in_scope(|| (self.init)(num_threads, plugins.as_ref()))?;
+        if let Some(plugins) = plugins {
+            *self.plugins.write().unwrap() =
+                Some(serde_json::to_value(plugins).map_err(|err| err.to_string())?);
+        }
+        Ok(resolved)
     }
 
     /// Format non-js file using the JS callback.
     /// The `options` Value should already have `parser` and `filepath` set by the caller.
-    pub fn format_file(&self, options: Value, code: &str) -> Result<String, String> {
+    ///
+    /// The session's plugins are attached here rather than at each call site, so
+    /// every whole-file delegation sees them. Prettier applies configured plugins
+    /// to every parser, not only to the ones the plugins introduced.
+    pub fn format_file(&self, mut options: Value, code: &str) -> Result<String, String> {
+        if let Some(plugins) = self.plugins.read().unwrap().as_ref()
+            && let Some(object) = options.as_object_mut()
+        {
+            object.insert("_userPlugins".to_string(), plugins.clone());
+        }
         (self.format_file)(options, code)
     }
 
@@ -240,7 +274,8 @@ impl ExternalServices {
                 format_embedded_doc: Arc::new(RwLock::new(None)),
                 sort_tailwind: Arc::new(RwLock::new(None)),
             },
-            init: Arc::new(|_| Err("Dummy init called".to_string())),
+            plugins: Arc::new(RwLock::new(None)),
+            init: Arc::new(|_, _| Err("Dummy init called".to_string())),
             format_file: Arc::new(|_, _| Err("Dummy format_file called".to_string())),
             format_embedded: Arc::new(|_, _| Err("Dummy format_embedded called".to_string())),
             format_embedded_doc: Arc::new(|_, _: &str| {
@@ -269,17 +304,22 @@ impl ExternalServices {
 fn wrap_init_external_services(
     cb_handle: Arc<RwLock<Option<JsInitExternalServicesCb>>>,
 ) -> InitExternalServicesCallback {
-    Arc::new(move |num_threads: usize| {
+    Arc::new(move |num_threads: usize, plugins: Option<&PluginRequest>| {
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             return Err("JS callback unavailable (environment shutting down)".to_string());
         };
+        let plugins = match plugins {
+            Some(plugins) => serde_json::to_value(plugins).map_err(|err| err.to_string())?,
+            None => Value::Null,
+        };
         #[expect(clippy::cast_possible_truncation)]
         let result = block_on(async {
-            let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
+            let status = cb.call_async(FnArgs::from((num_threads as u32, plugins))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(()) => Ok(()),
+                    Ok(resolved) => serde_json::from_value::<ResolvedPlugins>(resolved)
+                        .map_err(|err| err.to_string()),
                     Err(err) => Err(err.reason),
                 },
                 Err(err) => Err(err.reason),

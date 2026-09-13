@@ -12,6 +12,10 @@
  * and avoiding redundant dynamic imports within the same process.
  */
 
+import { createRequire } from "node:module";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { installPluginResolution } from "./plugin-resolution";
 import type { Options, Plugin } from "prettier";
 
 const CACHES = {
@@ -85,6 +89,9 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   const prettier = CACHES.prettier ?? (await loadPrettier());
 
   // NOTE: Plugins order matters here!
+  // User plugins go first: like the bundled Svelte plugin they contribute parsers,
+  // which later plugins may transform.
+  if ("_userPlugins" in options) await setupUserPlugins(options);
   // This plugin add `svelte` parser to support for `.svelte` files, and is also needed for `svelte-in-md` to work
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
   // Enable Tailwind CSS plugin, this plugin transforms `parsers` already installed by prior plugins
@@ -301,4 +308,149 @@ async function setupOxfmtPlugin(options: Options): Promise<void> {
   );
   options.plugins ??= [];
   options.plugins.push(CACHES.oxfmtPlugin);
+}
+
+// ---
+// User-configured Prettier plugin support
+// ---
+
+/**
+ * Plugins named by the `plugins` config field.
+ *
+ * `base` is the directory the specifiers resolve from, which is the directory
+ * of the config file that declared them, matching how Prettier resolves its own
+ * `plugins` entries.
+ */
+export type UserPluginsParam = {
+  base: string;
+  specifiers: string[];
+};
+
+/** One entry of a plugin's `languages` declaration, narrowed to what routing needs. */
+export type PluginLanguage = {
+  parsers: string[];
+  extensions: string[];
+  filenames: string[];
+};
+
+export type ResolvePluginsResult = {
+  languages: PluginLanguage[];
+  /** Specifiers that could not be loaded, so the caller can report them once. */
+  failures: { specifier: string; message: string }[];
+  /**
+   * Specifiers that loaded but declared no file type.
+   *
+   * Such a plugin only overrides parsers oxfmt already owns, so nothing routes
+   * to it. Reported so the caller can say it will have no effect.
+   */
+  withoutLanguages: string[];
+};
+
+// Keyed by base and specifier together: the same name can resolve to different
+// packages under different config files.
+const USER_PLUGINS = new Map<string, Promise<Plugin>>();
+
+/**
+ * Callers must await these one at a time.
+ *
+ * A CommonJS plugin reaches Prettier through `require()` of an ES module, which
+ * fails outright while that module is still being instantiated by a concurrent
+ * `import()` from another plugin. Loading in parallel makes a mixed set of
+ * plugins fail depending on which won the race.
+ */
+function loadUserPlugin(base: string, specifier: string): Promise<Plugin> {
+  const key = `${base}\u0000${specifier}`;
+  let cached = USER_PLUGINS.get(key);
+  if (cached === undefined) {
+    cached = importUserPlugin(base, specifier);
+    USER_PLUGINS.set(key, cached);
+  }
+  return cached;
+}
+
+async function importUserPlugin(base: string, specifier: string): Promise<Plugin> {
+  // Must precede the import: the plugin resolves `prettier` while it loads.
+  installPluginResolution();
+
+  // Resolve from the config's directory rather than from oxfmt's own location,
+  // so a plugin in the user's `node_modules` is found. The anchor names a file
+  // that need not exist; only its directory matters.
+  const requireFromBase = createRequire(join(base, "__oxfmt_config__"));
+  let resolved;
+  try {
+    resolved = requireFromBase.resolve(specifier);
+  } catch {
+    // Node's own message names the anchor, which would expose a path the user
+    // never wrote. Report the directory they configured instead.
+    throw new Error(`Cannot find module "${specifier}" from "${base}"`);
+  }
+  const mod = (await import(pathToFileURL(resolved).href)) as { default?: Plugin } & Plugin;
+  // A CJS plugin's exports land on `default` once interop has run.
+  return mod.default ?? mod;
+}
+
+async function setupUserPlugins(options: Options): Promise<void> {
+  const { base, specifiers } = options._userPlugins as UserPluginsParam;
+
+  options.plugins ??= [];
+  for (const specifier of specifiers) {
+    try {
+      // Sequential on purpose, see `loadUserPlugin`.
+      // oxlint-disable-next-line no-await-in-loop
+      options.plugins.push(await loadUserPlugin(base, specifier));
+    } catch {
+      // One unloadable plugin must not stop the others. `resolvePlugins()` already
+      // reported the failure during init, and a file that needed the missing plugin
+      // has no parser and fails on its own terms.
+    }
+  }
+}
+
+/**
+ * Load the configured plugins and report the languages they declare, so the Rust
+ * side can route their file extensions to Prettier.
+ *
+ * A plugin that fails to load is reported rather than thrown, so one broken
+ * entry does not stop the rest of the run.
+ */
+export async function resolvePlugins({
+  base,
+  specifiers,
+}: UserPluginsParam): Promise<ResolvePluginsResult> {
+  const languages: PluginLanguage[] = [];
+  const failures: ResolvePluginsResult["failures"] = [];
+  const withoutLanguages: string[] = [];
+
+  for (const specifier of specifiers) {
+    let plugin;
+    try {
+      // Sequential on purpose, see `loadUserPlugin`.
+      // oxlint-disable-next-line no-await-in-loop
+      plugin = await loadUserPlugin(base, specifier);
+    } catch (error) {
+      failures.push({
+        specifier,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      continue;
+    }
+    const before = languages.length;
+    for (const language of plugin.languages ?? []) {
+      const parsers = language.parsers ?? [];
+      if (parsers.length === 0) continue;
+      languages.push({
+        parsers,
+        // Prettier stores extensions with the leading dot; routing compares bare ones.
+        extensions: (language.extensions ?? []).map((ext) =>
+          ext.startsWith(".") ? ext.slice(1) : ext,
+        ),
+        filenames: language.filenames ?? [],
+      });
+    }
+    if (languages.length === before) {
+      withoutLanguages.push(specifier);
+    }
+  }
+
+  return { languages, failures, withoutLanguages };
 }

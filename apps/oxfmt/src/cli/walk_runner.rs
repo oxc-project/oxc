@@ -3,7 +3,7 @@ use std::{
     fmt::Write as _,
     io::BufWriter,
     path::PathBuf,
-    sync::mpsc,
+    sync::{Arc, mpsc},
     time::{Duration, Instant},
 };
 
@@ -20,7 +20,8 @@ use super::{
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
 use crate::core::{
-    ConfigResolver, FormatStrategy, SourceFormatter, resolve_editorconfig_path, utils,
+    ConfigResolver, FormatStrategy, SourceFormatter, plugins::PluginLanguages,
+    resolve_editorconfig_path, utils,
 };
 
 pub struct WalkRunner {
@@ -110,15 +111,53 @@ impl WalkRunner {
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
-        if let Err(err) = tokio::task::block_in_place(|| {
-            self.external_services
-                .as_ref()
-                .expect("External services must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
-            utils::print_and_flush(stderr, &format!("Failed to setup external services.\n{err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
+        let plugin_languages = {
+            let request = root_config_resolver.plugin_request().cloned();
+            match tokio::task::block_in_place(|| {
+                self.external_services
+                    .as_ref()
+                    .expect("External services must be set when `napi` feature is enabled")
+                    .init(num_of_threads, request)
+            }) {
+                Ok(resolved) => {
+                    // A plugin that cannot load is a configuration error, as it is for
+                    // Prettier. Continuing would silently drop that plugin's file types
+                    // from the walk and still exit zero, which turns a CI format gate
+                    // into a no-op.
+                    if !resolved.failures.is_empty() {
+                        for failure in &resolved.failures {
+                            utils::print_and_flush(
+                                stderr,
+                                &format!(
+                                    "Failed to load plugin `{}`.\n{}\n",
+                                    failure.specifier, failure.message
+                                ),
+                            );
+                        }
+                        return CliRunResult::InvalidOptionConfig;
+                    }
+                    // Not fatal: the plugin loaded, it simply has nothing to format.
+                    for specifier in &resolved.without_languages {
+                        utils::print_and_flush(
+                            stderr,
+                            &format!(
+                                "Plugin `{specifier}` declares no file types, so it has no effect.\nPlugins that only override built-in parsers, such as import sorters, cannot apply: JS/TS is formatted by `oxc_formatter`, not Prettier.\n"
+                            ),
+                        );
+                    }
+                    PluginLanguages::new(resolved.languages)
+                }
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!("Failed to setup external services.\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
+            }
+        };
+        #[cfg(not(feature = "napi"))]
+        let plugin_languages = PluginLanguages::default();
 
         // Resolve ignore paths early to validate before walk starts
         let resolved_ignore_paths = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
@@ -174,6 +213,7 @@ impl WalkRunner {
         };
         let any_config_found = match walker.run(
             root_config_resolver,
+            Arc::new(plugin_languages),
             &resolved_ignore_paths,
             ignore_options.with_node_modules,
             config_options.config.is_none() && !config_options.disable_nested_config,

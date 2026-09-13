@@ -1,18 +1,24 @@
 import Tinypool from "tinypool";
 import { toFormatFileResult, toNullable } from "../libs/napi-callbacks";
 import type { FormatFileResult } from "../libs/napi-callbacks";
+import { resolvePlugins } from "../libs/apis";
 import type {
   FormatFileParam,
   FormatEmbeddedCodeParam,
   FormatEmbeddedDocParam,
+  ResolvePluginsResult,
   SortTailwindClassesArgs,
+  UserPluginsParam,
 } from "../libs/apis";
 
 // Worker pool for parallel Prettier formatting
 let pool: Tinypool | null = null;
 let poolSize: number | null = null;
 
-export async function initExternalServices(numThreads: number): Promise<void> {
+export async function initExternalServices(
+  numThreads: number,
+  plugins: UserPluginsParam | null,
+): Promise<ResolvePluginsResult> {
   // In LSP mode, this can be called repeatedly for the lifetime of the process.
   // e.g. on every workspace folder build, config-triggered rebuild, etc
   // The process-wide pool must never be recreated or destroyed on re-init:
@@ -20,6 +26,14 @@ export async function initExternalServices(numThreads: number): Promise<void> {
   // (https://github.com/oxc-project/oxc/issues/24147)
   // NOTE: `numThreads` never changes within a single session, so the first value wins.
   poolSize ??= numThreads;
+
+  // Plugins load here in the main process, not in a worker: the languages they
+  // declare decide which files the walk collects, which is settled before any
+  // formatting happens. Each worker loads its own copy later, on first use.
+  if (plugins === null || plugins.specifiers.length === 0) {
+    return { languages: [], failures: [], withoutLanguages: [] };
+  }
+  return resolvePlugins(plugins);
 }
 
 // Create the pool lazily on first use,
