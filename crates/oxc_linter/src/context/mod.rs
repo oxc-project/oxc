@@ -23,7 +23,9 @@ use crate::{
 };
 
 mod host;
+mod imports;
 pub use host::{ContextHost, ContextSubHost, ContextSubHostOptions};
+pub use imports::{ImportContext, ImportKind, PackageJsonError};
 
 /// Contains all of the state and context specific to this lint rule.
 ///
@@ -155,6 +157,11 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn file_path(&self) -> &Path {
         &self.parent.file_path
+    }
+
+    /// Resolution and manifest caches shared by import rules across files.
+    pub(crate) fn imports(&self) -> Option<&ImportContext> {
+        self.parent.imports.as_deref()
     }
 
     /// Extension of the file currently being linted, without the leading dot.

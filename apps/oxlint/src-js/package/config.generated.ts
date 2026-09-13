@@ -104,6 +104,8 @@ export type ImportExtensionsObject =
 export type PathGroupAction = "enforce" | "ignore";
 export type AbsoluteFirst = "absolute-first" | "disable-absolute-first";
 export type MaxDependenciesConfigJson = number | MaxDependenciesConfig;
+export type DependencyAllowance = boolean | string[];
+export type PackageDirectories = string | string[];
 export type Target = "single" | "any";
 export type TestCaseName = "it" | "test";
 export type JestFnType = "hook" | "describe" | "test" | "expect" | "jest" | "unknown";
@@ -946,6 +948,7 @@ export interface DummyRuleMap {
   "import/no-duplicates"?: RuleNoConfig | [AllowWarnDeny, NoDuplicates];
   "import/no-dynamic-require"?: RuleNoConfig | [AllowWarnDeny, NoDynamicRequire];
   "import/no-empty-named-blocks"?: RuleNoConfig;
+  "import/no-extraneous-dependencies"?: RuleNoConfig | [AllowWarnDeny, NoExtraneousDependenciesConfig];
   "import/no-mutable-exports"?: RuleNoConfig;
   "import/no-named-as-default"?: RuleNoConfig;
   "import/no-named-as-default-member"?: RuleNoConfig;
@@ -1842,6 +1845,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, NoCycle]
     | [AllowWarnDeny, NoDuplicates]
     | [AllowWarnDeny, NoDynamicRequire]
+    | [AllowWarnDeny, NoExtraneousDependenciesConfig]
     | [AllowWarnDeny, NoNamespaceConfig]
     | [AllowWarnDeny, NoNodejsModulesConfig]
     | [AllowWarnDeny, NoUnassignedImportConfig]
@@ -2607,6 +2611,37 @@ export interface NoDynamicRequire {
    * When `true`, also check `import()` expressions for dynamic module specifiers.
    */
   esmodule?: boolean;
+}
+export interface NoExtraneousDependenciesConfig {
+  /**
+   * Allow bundled dependencies. A glob array allows them only in matching files.
+   */
+  bundledDependencies?: DependencyAllowance;
+  /**
+   * Allow development dependencies. A glob array allows them only in matching files.
+   */
+  devDependencies?: DependencyAllowance;
+  /**
+   * Also check imports resolved to internal modules. Relative imports are still ignored.
+   */
+  includeInternal?: boolean;
+  /**
+   * Also check type-only imports and exports.
+   */
+  includeTypes?: boolean;
+  /**
+   * Allow optional dependencies. A glob array allows them only in matching files.
+   */
+  optionalDependencies?: DependencyAllowance;
+  /**
+   * Directories containing package.json files. Relative paths are resolved from the working directory.
+   * By default, use the closest package.json above the linted file.
+   */
+  packageDir?: PackageDirectories;
+  /**
+   * Allow peer dependencies. A glob array allows them only in matching files.
+   */
+  peerDependencies?: DependencyAllowance;
 }
 export interface NoNamespaceConfig {
   /**
