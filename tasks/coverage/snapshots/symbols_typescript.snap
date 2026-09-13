@@ -1,8 +1,8 @@
-commit: 7539c04d
+commit: b465fdbf
 
 symbols_typescript Summary:
 AST Parsed     : 8364/8364 (100.00%)
-Positive Passed: 1765/8364 (21.10%)
+Positive Passed: 1769/8364 (21.15%)
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration2.ts
@@ -44,8 +44,6 @@ Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasAssignments
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasBug.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasDoesNotDuplicateSignatures.ts
-
-Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
 
@@ -2419,8 +2417,6 @@ Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_subModule.ts
 
-Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateVarAndImport.ts
-
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateVariablesByScope.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/duplicateVarsAcrossFileBoundaries.ts
@@ -3600,8 +3596,6 @@ Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/importDeclFromTy
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/importDeclRefereingExternalModuleWithNoResolve.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/importDeclTypes.ts
-
-Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifier.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
 
@@ -6342,8 +6336,6 @@ Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/requiredInitiali
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/requiredInitializedParameter3.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/requiredInitializedParameter4.ts
-
-Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/reservedNameOnModuleImport.ts
 
 Symbol Mismatch: tasks/coverage/typescript/tests/cases/compiler/reservedWords.ts
 
