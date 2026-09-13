@@ -79,3 +79,82 @@ fn get_statement_span_before_node(node: &AstNode, statements: &[Statement]) -> O
         })
         .next_back()
 }
+
+pub fn report_missing_padding_after_jest_block<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    name: &str,
+) {
+    let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
+    let next_statement_span = match scope_node.kind() {
+        AstKind::Program(program) => get_statement_span_after_node(node, program.body.as_slice()),
+        AstKind::ArrowFunctionExpression(arrow_func_expr) => {
+            let Some(body) = arrow_func_expr.get_function_body() else { return };
+            get_statement_span_after_node(node, body.statements.as_slice())
+        }
+        AstKind::Function(function) => {
+            let Some(body) = &function.body else {
+                return;
+            };
+            get_statement_span_after_node(node, body.statements.as_slice())
+        }
+        _ => None,
+    };
+    let Some(next_statement_span) = next_statement_span else {
+        return;
+    };
+    println!("{:?}", next_statement_span);
+
+    let comments_range = ctx.comments_range(node.span().start..next_statement_span.end);
+    let mut span_between_start = node.span().end;
+
+    // node span does not account the semicolon.
+    // Thus, explicit check for semicolon.
+    if ctx.source_range(Span::new(span_between_start, span_between_start + 1)) == ";" {
+        span_between_start += 1;
+    }
+
+    let mut span_between_end = next_statement_span.start;
+    let mut next_attached_start = next_statement_span.start;
+    for comment in comments_range.rev() {
+        let comment_span = comment.span;
+        let space_after = ctx.source_range(Span::new(comment_span.end, next_attached_start));
+        if space_after.matches('\n').count() > 1 {
+            break;
+        }
+        let space_before = ctx.source_range(Span::new(next_statement_span.end, comment_span.start));
+        if space_before.matches('\n').count() == 0 {
+            span_between_start = comment_span.end;
+            break;
+        }
+        span_between_end = comment_span.start;
+        next_attached_start = comment_span.start;
+    }
+
+    let span_between = Span::new(span_between_start, span_between_end);
+    let content = ctx.source_range(span_between);
+    println!("{:?}", node);
+    println!("{:?}", content);
+    if content.matches('\n').count() < 2 {
+        ctx.diagnostic_with_fix(
+            padding_around_jest_block_diagnostic(
+                Span::new(node.span().start, node.span().start),
+                name,
+            ),
+            |fixer| {
+                let whitespace_after_last_line =
+                    content.rfind('\n').map_or("", |index| content.split_at(index + 1).1);
+                fixer.replace(span_between, format!("\n\n{whitespace_after_last_line}"))
+            },
+        );
+    }
+}
+
+fn get_statement_span_after_node(node: &AstNode, statements: &[Statement]) -> Option<Span> {
+    statements
+        .iter()
+        .filter_map(|statement| {
+            if statement.span().start >= node.span().end { Some(statement.span()) } else { None }
+        })
+        .next_back()
+}

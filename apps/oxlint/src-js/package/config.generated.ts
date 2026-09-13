@@ -990,6 +990,7 @@ export interface DummyRuleMap {
   "jest/no-unneeded-async-expect-function"?: RuleNoConfig;
   "jest/no-untyped-mock-factory"?: RuleNoConfig;
   "jest/padding-around-after-all-blocks"?: RuleNoConfig;
+  "jest/padding-around-after-each-blocks"?: RuleNoConfig;
   "jest/padding-around-test-blocks"?: RuleNoConfig;
   "jest/prefer-called-with"?: RuleNoConfig;
   "jest/prefer-comparison-matcher"?: RuleNoConfig;
