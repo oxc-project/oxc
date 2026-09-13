@@ -1,14 +1,18 @@
 use oxc_macros::declare_oxc_lint;
 
 use crate::rules::shared::padding_around_after_each_blocks::{DOCUMENTATION, run};
-use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+};
+use crate::rules::PossibleJestNode;
 
 #[derive(Debug, Default, Clone)]
 pub struct PaddingAroundAfterEachBlocks;
 
 declare_oxc_lint!(
     PaddingAroundAfterEachBlocks,
-    jest,
+    vitest,
     style,
     fix,
     docs = DOCUMENTATION,
@@ -23,8 +27,7 @@ impl Rule for PaddingAroundAfterEachBlocks {
         ctx: &'c LintContext<'a>,
     ) {
         run(possible_jest_node, ctx);
-    }
-}
+    }}
 
 #[test]
 fn test() {
@@ -108,7 +111,7 @@ fn test() {
         pass,
         fail,
     )
-    .with_jest_plugin(true)
-    .expect_fix(fix)
+        .with_vitest_plugin(true)
+        .expect_fix(fix)
     .test_and_snapshot();
 }

@@ -792,6 +792,7 @@ pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPr
 pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
+pub use crate::rules::vitest::padding_around_after_each_blocks::PaddingAroundAfterEachBlocks as VitestPaddingAroundAfterEachBlocks;
 pub use crate::rules::vitest::padding_around_test_blocks::PaddingAroundTestBlocks as VitestPaddingAroundTestBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
@@ -1638,6 +1639,7 @@ pub enum RuleEnum {
     PromisePreferCatch(PromisePreferCatch),
     PromiseSpecOnly(PromiseSpecOnly),
     PromiseValidParams(PromiseValidParams),
+    VitestPaddingAroundAfterEachBlocks(VitestPaddingAroundAfterEachBlocks),
     VitestConsistentEachFor(VitestConsistentEachFor),
     VitestConsistentTestFilename(VitestConsistentTestFilename),
     VitestConsistentTestIt(VitestConsistentTestIt),
@@ -2606,7 +2608,8 @@ const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = PROMISE_PREFER_AWAIT_TO_CALLBACKS
 const PROMISE_PREFER_CATCH_ID: usize = PROMISE_PREFER_AWAIT_TO_THEN_ID + 1usize;
 const PROMISE_SPEC_ONLY_ID: usize = PROMISE_PREFER_CATCH_ID + 1usize;
 const PROMISE_VALID_PARAMS_ID: usize = PROMISE_SPEC_ONLY_ID + 1usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
+const VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID + 1usize;
 const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = VITEST_CONSISTENT_EACH_FOR_ID + 1usize;
 const VITEST_CONSISTENT_TEST_IT_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID + 1usize;
 const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_IT_ID + 1usize;
@@ -2752,7 +2755,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 871usize] = [
+static RULE_NAMES: [&str; 872usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3494,6 +3497,7 @@ static RULE_NAMES: [&str; 871usize] = [
     PromisePreferCatch::NAME,
     PromiseSpecOnly::NAME,
     PromiseValidParams::NAME,
+    VitestPaddingAroundAfterEachBlocks::NAME,
     VitestConsistentEachFor::NAME,
     VitestConsistentTestFilename::NAME,
     VitestConsistentTestIt::NAME,
@@ -4487,6 +4491,9 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PROMISE_PREFER_CATCH_ID,
             Self::PromiseSpecOnly(_) => PROMISE_SPEC_ONLY_ID,
             Self::PromiseValidParams(_) => PROMISE_VALID_PARAMS_ID,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID
+            }
             Self::VitestConsistentEachFor(_) => VITEST_CONSISTENT_EACH_FOR_ID,
             Self::VitestConsistentTestFilename(_) => VITEST_CONSISTENT_TEST_FILENAME_ID,
             Self::VitestConsistentTestIt(_) => VITEST_CONSISTENT_TEST_IT_ID,
@@ -5529,6 +5536,9 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::CATEGORY,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::CATEGORY,
             Self::PromiseValidParams(_) => PromiseValidParams::CATEGORY,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::CATEGORY
+            }
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::CATEGORY,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::CATEGORY,
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::CATEGORY,
@@ -6533,6 +6543,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::FIX,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::FIX,
             Self::PromiseValidParams(_) => PromiseValidParams::FIX,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => VitestPaddingAroundAfterEachBlocks::FIX,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::FIX,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::FIX,
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::FIX,
@@ -7753,6 +7764,9 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::documentation(),
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::documentation(),
             Self::PromiseValidParams(_) => PromiseValidParams::documentation(),
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::documentation()
+            }
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::documentation(),
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::documentation(),
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::documentation(),
@@ -10070,6 +10084,10 @@ impl RuleEnum {
                 .or_else(|| PromiseSpecOnly::schema(generator)),
             Self::PromiseValidParams(_) => PromiseValidParams::config_schema(generator)
                 .or_else(|| PromiseValidParams::schema(generator)),
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::config_schema(generator)
+                    .or_else(|| VitestPaddingAroundAfterEachBlocks::schema(generator))
+            }
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::config_schema(generator)
                 .or_else(|| VitestConsistentEachFor::schema(generator)),
             Self::VitestConsistentTestFilename(_) => {
@@ -11185,6 +11203,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => "promise",
             Self::PromiseSpecOnly(_) => "promise",
             Self::PromiseValidParams(_) => "promise",
+            Self::VitestPaddingAroundAfterEachBlocks(_) => "vitest",
             Self::VitestConsistentEachFor(_) => "vitest",
             Self::VitestConsistentTestFilename(_) => "vitest",
             Self::VitestConsistentTestIt(_) => "vitest",
@@ -13194,6 +13213,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run(node, ctx),
             Self::PromiseSpecOnly(rule) => rule.run(node, ctx),
             Self::PromiseValidParams(rule) => rule.run(node, ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run(node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run(node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run(node, ctx),
             Self::VitestConsistentTestIt(rule) => rule.run(node, ctx),
@@ -14082,6 +14102,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_once(ctx),
             Self::PromiseSpecOnly(rule) => rule.run_once(ctx),
             Self::PromiseValidParams(rule) => rule.run_once(ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run_once(ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_once(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_once(ctx),
             Self::VitestConsistentTestIt(rule) => rule.run_once(ctx),
@@ -15079,6 +15100,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseSpecOnly(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseValidParams(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentTestIt(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15976,6 +15998,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.should_run(ctx),
             Self::PromiseSpecOnly(rule) => rule.should_run(ctx),
             Self::PromiseValidParams(rule) => rule.should_run(ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.should_run(ctx),
             Self::VitestConsistentEachFor(rule) => rule.should_run(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.should_run(ctx),
             Self::VitestConsistentTestIt(rule) => rule.should_run(ctx),
@@ -17187,6 +17210,9 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::IS_TSGOLINT_RULE,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::IS_TSGOLINT_RULE,
             Self::PromiseValidParams(_) => PromiseValidParams::IS_TSGOLINT_RULE,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::IS_TSGOLINT_RULE
+            }
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::IS_TSGOLINT_RULE,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::IS_TSGOLINT_RULE,
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::IS_TSGOLINT_RULE,
@@ -18270,6 +18296,9 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::VERSION,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::VERSION,
             Self::PromiseValidParams(_) => PromiseValidParams::VERSION,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::VERSION
+            }
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::VERSION,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::VERSION,
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::VERSION,
@@ -19354,6 +19383,9 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::HAS_CONFIG,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::HAS_CONFIG,
             Self::PromiseValidParams(_) => PromiseValidParams::HAS_CONFIG,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::HAS_CONFIG
+            }
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::HAS_CONFIG,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::HAS_CONFIG,
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::HAS_CONFIG,
@@ -20367,6 +20399,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::INFO,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::INFO,
             Self::PromiseValidParams(_) => PromiseValidParams::INFO,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => VitestPaddingAroundAfterEachBlocks::INFO,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::INFO,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::INFO,
             Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::INFO,
@@ -21255,6 +21288,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.types_info(),
             Self::PromiseSpecOnly(rule) => rule.types_info(),
             Self::PromiseValidParams(rule) => rule.types_info(),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.types_info(),
             Self::VitestConsistentEachFor(rule) => rule.types_info(),
             Self::VitestConsistentTestFilename(rule) => rule.types_info(),
             Self::VitestConsistentTestIt(rule) => rule.types_info(),
@@ -22130,6 +22164,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_info(),
             Self::PromiseSpecOnly(rule) => rule.run_info(),
             Self::PromiseValidParams(rule) => rule.run_info(),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run_info(),
             Self::VitestConsistentEachFor(rule) => rule.run_info(),
             Self::VitestConsistentTestFilename(rule) => rule.run_info(),
             Self::VitestConsistentTestIt(rule) => rule.run_info(),
@@ -23133,6 +23168,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::PromisePreferCatch(PromisePreferCatch::default()),
         RuleEnum::PromiseSpecOnly(PromiseSpecOnly::default()),
         RuleEnum::PromiseValidParams(PromiseValidParams::default()),
+        RuleEnum::VitestPaddingAroundAfterEachBlocks(VitestPaddingAroundAfterEachBlocks::default()),
         RuleEnum::VitestConsistentEachFor(VitestConsistentEachFor::default()),
         RuleEnum::VitestConsistentTestFilename(VitestConsistentTestFilename::default()),
         RuleEnum::VitestConsistentTestIt(VitestConsistentTestIt::default()),
