@@ -10,8 +10,8 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_span::Span;
 
 use crate::{
-    AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, RuleTimingStore, TsGoLintState, suppression::DiffManager,
+    AllowWarnDeny, ConfigStore, DisableDirectives, FixKind, LintService, LintServiceOptions,
+    Linter, Message, OsFileSystem, RuleTimingStore, TsGoLintState, suppression::DiffManager,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -26,6 +26,11 @@ pub struct LintRunner {
     /// Current working directory
     cwd: PathBuf,
     type_check_only: bool,
+    /// Config store, used to resolve per-file options such as `reportUnusedDisableDirectives`
+    config_store: ConfigStore,
+    /// Explicit `reportUnusedDisableDirectives` severity coming from the CLI or the editor.
+    /// `Some(AllowWarnDeny::Allow)` means "explicitly turned off"; `None` falls back to the config.
+    report_unused_directive_override: Option<AllowWarnDeny>,
 }
 
 /// Manages disable directives across all linting engines.
@@ -86,13 +91,27 @@ impl DirectivesStore {
 
     /// Report unused disable directives
     ///
+    /// `severity_for` resolves the severity to use for a given file, so that configs nested in a
+    /// monorepo can set `reportUnusedDisableDirectives` per package. Returning `None` (or
+    /// [`AllowWarnDeny::Allow`]) skips the file.
+    ///
     /// # Panics
     /// Panics if the mutex is poisoned or if sending to the error channel fails.
-    pub fn report_unused(&self, severity: AllowWarnDeny, cwd: &Path, tx_error: &DiagnosticSender) {
+    pub fn report_unused(
+        &self,
+        severity_for: impl Fn(&Path) -> Option<AllowWarnDeny>,
+        cwd: &Path,
+        tx_error: &DiagnosticSender,
+    ) {
         use crate::create_unused_directives_diagnostics;
 
         let map = self.map.lock().expect("DirectivesStore mutex poisoned in report_unused");
         for (path, directives) in map.iter() {
+            let Some(severity) =
+                severity_for(path.as_path()).filter(|severity| severity.is_warn_deny())
+            else {
+                continue;
+            };
             let diagnostics = create_unused_directives_diagnostics(directives, severity);
 
             if !diagnostics.is_empty() {
@@ -147,6 +166,7 @@ impl Default for DirectivesStore {
 pub struct LintRunnerBuilder {
     regular_linter: Linter,
     type_aware_enabled: bool,
+    type_aware_forced: bool,
     type_check: bool,
     lint_service_options: LintServiceOptions,
     silent: bool,
@@ -161,6 +181,7 @@ impl LintRunnerBuilder {
         Self {
             regular_linter: linter,
             type_aware_enabled: false,
+            type_aware_forced: false,
             type_check: false,
             lint_service_options,
             silent: false,
@@ -174,6 +195,15 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_type_aware(mut self, enabled: bool) -> Self {
         self.type_aware_enabled = enabled;
+        self
+    }
+
+    /// Mark type-aware linting as explicitly requested (`--type-aware`, `--type-check-only`, or
+    /// the editor's `typeAware` setting), which applies it to every file instead of only the files
+    /// whose config enables `options.typeAware`.
+    #[must_use]
+    pub fn with_type_aware_forced(mut self, forced: bool) -> Self {
+        self.type_aware_forced = forced;
         self
     }
 
@@ -229,7 +259,8 @@ impl LintRunnerBuilder {
                         .with_silent(self.silent)
                         .with_type_check(self.type_check)
                         .with_timings(self.timings)
-                        .with_ignore_fixes(self.with_ignore_fixes),
+                        .with_ignore_fixes(self.with_ignore_fixes)
+                        .with_type_aware_forced(self.type_aware_forced),
                 ),
                 Err(e) => return Err(e),
             }
@@ -238,6 +269,9 @@ impl LintRunnerBuilder {
         };
 
         let cwd = self.lint_service_options.cwd().to_path_buf();
+        let config_store = self.regular_linter.config.clone();
+        let report_unused_directive_override =
+            self.regular_linter.options().report_unused_directive;
         let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
         lint_service.set_disable_directives_map(directives_coordinator.map());
 
@@ -247,6 +281,8 @@ impl LintRunnerBuilder {
             directives_store: directives_coordinator,
             cwd,
             type_check_only: self.type_check_only,
+            config_store,
+            report_unused_directive_override,
         })
     }
 }
@@ -316,15 +352,28 @@ impl LintRunner {
         Ok(messages)
     }
 
-    /// Report unused disable directives
-    pub fn report_unused_directives(
-        &self,
-        severity: Option<AllowWarnDeny>,
-        tx_error: &DiagnosticSender,
-    ) {
-        if let Some(severity) = severity {
-            self.directives_store.report_unused(severity, &self.cwd, tx_error);
-        }
+    /// Report unused disable directives.
+    ///
+    /// The severity is resolved per file: the explicit CLI/editor setting wins, otherwise the
+    /// config which governs the file (root or nested) decides.
+    pub fn report_unused_directives(&self, tx_error: &DiagnosticSender) {
+        self.directives_store.report_unused(
+            |path| self.report_unused_directive_for(path),
+            &self.cwd,
+            tx_error,
+        );
+    }
+
+    /// The `reportUnusedDisableDirectives` severity that applies to `path`.
+    pub fn report_unused_directive_for(&self, path: &Path) -> Option<AllowWarnDeny> {
+        self.report_unused_directive_override
+            .or_else(|| self.config_store.report_unused_disable_directives_for(path))
+    }
+
+    /// Whether any config in this run reports unused disable directives.
+    pub fn reports_unused_directives(&self) -> bool {
+        self.report_unused_directive_override.is_some_and(AllowWarnDeny::is_warn_deny)
+            || self.config_store.reports_unused_disable_directives()
     }
 
     /// Get the directives coordinator for external use
