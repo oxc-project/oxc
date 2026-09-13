@@ -1,7 +1,37 @@
 parser_misc Summary:
-AST Parsed     : 107/107 (100.00%)
-Positive Passed: 107/107 (100.00%)
-Negative Passed: 215/215 (100.00%)
+AST Parsed     : 108/108 (100.00%)
+Positive Passed: 108/108 (100.00%)
+Negative Passed: 216/216 (100.00%)
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:1:31]
+ 1 │ declare module "*.css" with { readonly type: "css" } {
+   ·                               ────────
+ 2 │   const stylesheet: CSSStyleSheet;
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:6:32]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {}
+   ·                                ────────
+ 7 │ 
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:6:55]
+ 5 │ 
+ 6 │ declare module "*.json" with { readonly type: "json", readonly kind: "data" } {}
+   ·                                                       ────────
+ 7 │ 
+   ╰────
+
+  × TS(1558): An import attributes property cannot have a 'readonly' modifier.
+   ╭─[misc/fail/ambient-module-import-attributes-readonly.ts:8:34]
+ 7 │ 
+ 8 │ declare module "*.config" with { readonly "mode": `strict` };
+   ·                                  ────────
+   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]

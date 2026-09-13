@@ -1072,6 +1072,27 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_module_declaration_attribute_clause(
+        &mut self,
+        it: &mut TSModuleDeclarationAttributeClause<'a>,
+    ) {
+        walk_ts_module_declaration_attribute_clause(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_attribute(&mut self, it: &mut TSModuleDeclarationAttribute<'a>) {
+        walk_ts_module_declaration_attribute(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_attribute_value(
+        &mut self,
+        it: &mut TSModuleDeclarationAttributeValue<'a>,
+    ) {
+        walk_ts_module_declaration_attribute_value(self, it);
+    }
+
+    #[inline]
     fn visit_ts_namespace_declaration(&mut self, it: &mut TSNamespaceDeclaration<'a>) {
         walk_ts_namespace_declaration(self, it);
     }
@@ -1358,6 +1379,14 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_ts_signatures(&mut self, it: &mut ArenaVec<'a, TSSignature<'a>>) {
         walk_ts_signatures(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_attributes(
+        &mut self,
+        it: &mut ArenaVec<'a, TSModuleDeclarationAttribute<'a>>,
+    ) {
+        walk_ts_module_declaration_attributes(self, it);
     }
 
     #[inline]
@@ -4139,6 +4168,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_string_literal(&mut it.id);
+        if let Some(attributes) = &mut it.attributes {
+            visitor.visit_ts_module_declaration_attribute_clause(attributes);
+        }
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
@@ -4154,6 +4186,47 @@ pub mod walk_mut {
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_module_declaration_attribute_clause<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSModuleDeclarationAttributeClause<'a>,
+    ) {
+        let kind = AstType::TSModuleDeclarationAttributeClause;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_module_declaration_attributes(&mut it.entries);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_module_declaration_attribute<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSModuleDeclarationAttribute<'a>,
+    ) {
+        let kind = AstType::TSModuleDeclarationAttribute;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_import_attribute_key(&mut it.key);
+        visitor.visit_ts_module_declaration_attribute_value(&mut it.value);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_module_declaration_attribute_value<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSModuleDeclarationAttributeValue<'a>,
+    ) {
+        // No `AstType` for this type
+        match it {
+            TSModuleDeclarationAttributeValue::StringLiteral(it) => {
+                visitor.visit_string_literal(it)
+            }
+            TSModuleDeclarationAttributeValue::TemplateLiteral(it) => {
+                visitor.visit_template_literal(it)
+            }
+        }
     }
 
     #[inline]
@@ -4816,6 +4889,16 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_ts_signature(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_ts_module_declaration_attributes<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ArenaVec<'a, TSModuleDeclarationAttribute<'a>>,
+    ) {
+        for el in it {
+            visitor.visit_ts_module_declaration_attribute(el);
         }
     }
 

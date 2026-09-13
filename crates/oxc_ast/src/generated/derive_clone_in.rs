@@ -5105,11 +5105,65 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSExternalModuleDeclaration<'_> {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
+            attributes: CloneIn::clone_in_impl(&self.attributes, with_semantic_ids, allocator),
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
             scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
                 &self.scope_id,
                 with_semantic_ids,
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationAttributeClause<'_> {
+    type Cloned = TSModuleDeclarationAttributeClause<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        TSModuleDeclarationAttributeClause {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            entries: CloneIn::clone_in_impl(&self.entries, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationAttribute<'_> {
+    type Cloned = TSModuleDeclarationAttribute<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        TSModuleDeclarationAttribute {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            readonly: CloneIn::clone_in_impl(&self.readonly, with_semantic_ids, allocator),
+            key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
+            value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationAttributeValue<'_> {
+    type Cloned = TSModuleDeclarationAttributeValue<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        match self {
+            Self::StringLiteral(it) => TSModuleDeclarationAttributeValue::StringLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TemplateLiteral(it) => TSModuleDeclarationAttributeValue::TemplateLiteral(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
         }
     }

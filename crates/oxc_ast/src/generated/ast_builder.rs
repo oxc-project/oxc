@@ -8832,12 +8832,14 @@ impl<'a> Statement<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn new_ts_external_module_declaration(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
@@ -8845,6 +8847,7 @@ impl<'a> Statement<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed(
             span,
             id,
+            attributes,
             body,
             declare,
             builder.builder(),
@@ -8858,6 +8861,7 @@ impl<'a> Statement<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -8865,6 +8869,7 @@ impl<'a> Statement<'a> {
     pub fn new_ts_external_module_declaration_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -8873,6 +8878,7 @@ impl<'a> Statement<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed_with_scope_id(
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id,
@@ -9721,12 +9727,14 @@ impl<'a> Declaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn new_ts_external_module_declaration(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
@@ -9734,6 +9742,7 @@ impl<'a> Declaration<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed(
             span,
             id,
+            attributes,
             body,
             declare,
             builder.builder(),
@@ -9747,6 +9756,7 @@ impl<'a> Declaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -9754,6 +9764,7 @@ impl<'a> Declaration<'a> {
     pub fn new_ts_external_module_declaration_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -9762,6 +9773,7 @@ impl<'a> Declaration<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed_with_scope_id(
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id,
@@ -25429,12 +25441,14 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn new(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
@@ -25444,6 +25458,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id: Default::default(),
@@ -25458,18 +25473,23 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn boxed(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, id, body, declare, builder), &builder.allocator())
+        ArenaBox::new_in(
+            Self::new(span, id, attributes, body, declare, builder),
+            &builder.allocator(),
+        )
     }
 
     /// Build a [`TSExternalModuleDeclaration`] with `scope_id`.
@@ -25480,6 +25500,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -25487,6 +25508,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     pub fn new_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -25497,6 +25519,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -25511,6 +25534,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -25518,6 +25542,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     pub fn boxed_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -25525,9 +25550,142 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new_with_scope_id(span, id, body, declare, scope_id, builder),
+            Self::new_with_scope_id(span, id, attributes, body, declare, scope_id, builder),
             &builder.allocator(),
         )
+    }
+}
+
+impl<'a> TSModuleDeclarationAttributeClause<'a> {
+    /// Build a [`TSModuleDeclarationAttributeClause`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`TSModuleDeclarationAttributeClause::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `entries`
+    #[inline]
+    pub fn new(
+        span: Span,
+        entries: impl IntoIn<'a, ArenaVec<'a, TSModuleDeclarationAttribute<'a>>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        TSModuleDeclarationAttributeClause {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            entries: entries.into_in(builder.allocator()),
+        }
+    }
+
+    /// Build a [`TSModuleDeclarationAttributeClause`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`TSModuleDeclarationAttributeClause::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `entries`
+    #[inline]
+    pub fn boxed(
+        span: Span,
+        entries: impl IntoIn<'a, ArenaVec<'a, TSModuleDeclarationAttribute<'a>>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, entries, builder), &builder.allocator())
+    }
+}
+
+impl<'a> TSModuleDeclarationAttribute<'a> {
+    /// Build a [`TSModuleDeclarationAttribute`].
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `readonly`
+    /// * `key`
+    /// * `value`
+    #[inline]
+    pub fn new(
+        span: Span,
+        readonly: bool,
+        key: ImportAttributeKey<'a>,
+        value: TSModuleDeclarationAttributeValue<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        TSModuleDeclarationAttribute {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            readonly,
+            key,
+            value,
+        }
+    }
+}
+
+impl<'a> TSModuleDeclarationAttributeValue<'a> {
+    /// Build a [`TSModuleDeclarationAttributeValue::StringLiteral`].
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn new_string_literal(
+        span: Span,
+        value: impl Into<Str<'a>>,
+        raw: Option<Str<'a>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed(span, value, raw, builder.builder()))
+    }
+
+    /// Build a [`TSModuleDeclarationAttributeValue::StringLiteral`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn new_string_literal_with_lone_surrogates(
+        span: Span,
+        value: impl Into<Str<'a>>,
+        raw: Option<Str<'a>>,
+        lone_surrogates: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::StringLiteral(StringLiteral::boxed_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`TSModuleDeclarationAttributeValue::TemplateLiteral`].
+    ///
+    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `quasis`
+    /// * `expressions`
+    #[inline]
+    pub fn new_template_literal(
+        span: Span,
+        quasis: impl IntoIn<'a, ArenaVec<'a, TemplateElement<'a>>>,
+        expressions: impl IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TemplateLiteral(TemplateLiteral::boxed(span, quasis, expressions, builder.builder()))
     }
 }
 

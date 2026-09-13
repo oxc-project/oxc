@@ -279,52 +279,56 @@ pub(crate) enum AncestorType {
     TSTypePredicateParameterName = 255,
     TSTypePredicateTypeAnnotation = 256,
     TSExternalModuleDeclarationId = 257,
-    TSExternalModuleDeclarationBody = 258,
-    TSNamespaceDeclarationId = 259,
-    TSNamespaceDeclarationBody = 260,
-    TSGlobalDeclarationBody = 261,
-    TSModuleBlockDirectives = 262,
-    TSModuleBlockBody = 263,
-    TSTypeLiteralMembers = 264,
-    TSInferTypeTypeParameter = 265,
-    TSTypeQueryExprName = 266,
-    TSTypeQueryTypeArguments = 267,
-    TSImportTypeSource = 268,
-    TSImportTypeOptions = 269,
-    TSImportTypeQualifier = 270,
-    TSImportTypeTypeArguments = 271,
-    TSImportTypeQualifiedNameLeft = 272,
-    TSImportTypeQualifiedNameRight = 273,
-    TSFunctionTypeTypeParameters = 274,
-    TSFunctionTypeThisParam = 275,
-    TSFunctionTypeParams = 276,
-    TSFunctionTypeReturnType = 277,
-    TSConstructorTypeTypeParameters = 278,
-    TSConstructorTypeParams = 279,
-    TSConstructorTypeReturnType = 280,
-    TSMappedTypeKey = 281,
-    TSMappedTypeConstraint = 282,
-    TSMappedTypeNameType = 283,
-    TSMappedTypeTypeAnnotation = 284,
-    TSTemplateLiteralTypeQuasis = 285,
-    TSTemplateLiteralTypeTypes = 286,
-    TSAsExpressionExpression = 287,
-    TSAsExpressionTypeAnnotation = 288,
-    TSSatisfiesExpressionExpression = 289,
-    TSSatisfiesExpressionTypeAnnotation = 290,
-    TSTypeAssertionTypeAnnotation = 291,
-    TSTypeAssertionExpression = 292,
-    TSImportEqualsDeclarationId = 293,
-    TSImportEqualsDeclarationModuleReference = 294,
-    TSExternalModuleReferenceExpression = 295,
-    TSNonNullExpressionExpression = 296,
-    DecoratorExpression = 297,
-    TSExportAssignmentExpression = 298,
-    TSNamespaceExportDeclarationId = 299,
-    TSInstantiationExpressionExpression = 300,
-    TSInstantiationExpressionTypeArguments = 301,
-    JSDocNullableTypeTypeAnnotation = 302,
-    JSDocNonNullableTypeTypeAnnotation = 303,
+    TSExternalModuleDeclarationAttributes = 258,
+    TSExternalModuleDeclarationBody = 259,
+    TSModuleDeclarationAttributeClauseEntries = 260,
+    TSModuleDeclarationAttributeKey = 261,
+    TSModuleDeclarationAttributeValue = 262,
+    TSNamespaceDeclarationId = 263,
+    TSNamespaceDeclarationBody = 264,
+    TSGlobalDeclarationBody = 265,
+    TSModuleBlockDirectives = 266,
+    TSModuleBlockBody = 267,
+    TSTypeLiteralMembers = 268,
+    TSInferTypeTypeParameter = 269,
+    TSTypeQueryExprName = 270,
+    TSTypeQueryTypeArguments = 271,
+    TSImportTypeSource = 272,
+    TSImportTypeOptions = 273,
+    TSImportTypeQualifier = 274,
+    TSImportTypeTypeArguments = 275,
+    TSImportTypeQualifiedNameLeft = 276,
+    TSImportTypeQualifiedNameRight = 277,
+    TSFunctionTypeTypeParameters = 278,
+    TSFunctionTypeThisParam = 279,
+    TSFunctionTypeParams = 280,
+    TSFunctionTypeReturnType = 281,
+    TSConstructorTypeTypeParameters = 282,
+    TSConstructorTypeParams = 283,
+    TSConstructorTypeReturnType = 284,
+    TSMappedTypeKey = 285,
+    TSMappedTypeConstraint = 286,
+    TSMappedTypeNameType = 287,
+    TSMappedTypeTypeAnnotation = 288,
+    TSTemplateLiteralTypeQuasis = 289,
+    TSTemplateLiteralTypeTypes = 290,
+    TSAsExpressionExpression = 291,
+    TSAsExpressionTypeAnnotation = 292,
+    TSSatisfiesExpressionExpression = 293,
+    TSSatisfiesExpressionTypeAnnotation = 294,
+    TSTypeAssertionTypeAnnotation = 295,
+    TSTypeAssertionExpression = 296,
+    TSImportEqualsDeclarationId = 297,
+    TSImportEqualsDeclarationModuleReference = 298,
+    TSExternalModuleReferenceExpression = 299,
+    TSNonNullExpressionExpression = 300,
+    DecoratorExpression = 301,
+    TSExportAssignmentExpression = 302,
+    TSNamespaceExportDeclarationId = 303,
+    TSInstantiationExpressionExpression = 304,
+    TSInstantiationExpressionTypeArguments = 305,
+    JSDocNullableTypeTypeAnnotation = 306,
+    JSDocNonNullableTypeTypeAnnotation = 307,
 }
 
 /// Ancestor type used in AST traversal.
@@ -824,8 +828,17 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSTypePredicateTypeAnnotation as u16,
     TSExternalModuleDeclarationId(TSExternalModuleDeclarationWithoutId<'a, 't>) =
         AncestorType::TSExternalModuleDeclarationId as u16,
+    TSExternalModuleDeclarationAttributes(TSExternalModuleDeclarationWithoutAttributes<'a, 't>) =
+        AncestorType::TSExternalModuleDeclarationAttributes as u16,
     TSExternalModuleDeclarationBody(TSExternalModuleDeclarationWithoutBody<'a, 't>) =
         AncestorType::TSExternalModuleDeclarationBody as u16,
+    TSModuleDeclarationAttributeClauseEntries(
+        TSModuleDeclarationAttributeClauseWithoutEntries<'a, 't>,
+    ) = AncestorType::TSModuleDeclarationAttributeClauseEntries as u16,
+    TSModuleDeclarationAttributeKey(TSModuleDeclarationAttributeWithoutKey<'a, 't>) =
+        AncestorType::TSModuleDeclarationAttributeKey as u16,
+    TSModuleDeclarationAttributeValue(TSModuleDeclarationAttributeWithoutValue<'a, 't>) =
+        AncestorType::TSModuleDeclarationAttributeValue as u16,
     TSNamespaceDeclarationId(TSNamespaceDeclarationWithoutId<'a, 't>) =
         AncestorType::TSNamespaceDeclarationId as u16,
     TSNamespaceDeclarationBody(TSNamespaceDeclarationWithoutBody<'a, 't>) =
@@ -1764,7 +1777,22 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_external_module_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSExternalModuleDeclarationId(_) | Self::TSExternalModuleDeclarationBody(_)
+            Self::TSExternalModuleDeclarationId(_)
+                | Self::TSExternalModuleDeclarationAttributes(_)
+                | Self::TSExternalModuleDeclarationBody(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ts_module_declaration_attribute_clause(self) -> bool {
+        matches!(self, Self::TSModuleDeclarationAttributeClauseEntries(_))
+    }
+
+    #[inline]
+    pub fn is_ts_module_declaration_attribute(self) -> bool {
+        matches!(
+            self,
+            Self::TSModuleDeclarationAttributeKey(_) | Self::TSModuleDeclarationAttributeValue(_)
         )
     }
 
@@ -2132,7 +2160,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_parent_of_import_attribute_key(self) -> bool {
-        matches!(self, Self::ImportAttributeKey(_))
+        matches!(self, Self::ImportAttributeKey(_) | Self::TSModuleDeclarationAttributeKey(_))
     }
 
     #[inline]
@@ -2248,6 +2276,11 @@ impl<'a, 't> Ancestor<'a, 't> {
     #[inline]
     pub fn is_parent_of_ts_type_predicate_name(self) -> bool {
         matches!(self, Self::TSTypePredicateParameterName(_))
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_module_declaration_attribute_value(self) -> bool {
+        matches!(self, Self::TSModuleDeclarationAttributeValue(_))
     }
 
     #[inline]
@@ -2535,7 +2568,11 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSTypePredicateParameterName(a) => a.address(),
             Self::TSTypePredicateTypeAnnotation(a) => a.address(),
             Self::TSExternalModuleDeclarationId(a) => a.address(),
+            Self::TSExternalModuleDeclarationAttributes(a) => a.address(),
             Self::TSExternalModuleDeclarationBody(a) => a.address(),
+            Self::TSModuleDeclarationAttributeClauseEntries(a) => a.address(),
+            Self::TSModuleDeclarationAttributeKey(a) => a.address(),
+            Self::TSModuleDeclarationAttributeValue(a) => a.address(),
             Self::TSNamespaceDeclarationId(a) => a.address(),
             Self::TSNamespaceDeclarationBody(a) => a.address(),
             Self::TSGlobalDeclarationBody(a) => a.address(),
@@ -16142,6 +16179,8 @@ pub(crate) const OFFSET_TS_EXTERNAL_MODULE_DECLARATION_SPAN: usize =
     offset_of!(TSExternalModuleDeclaration, span);
 pub(crate) const OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ID: usize =
     offset_of!(TSExternalModuleDeclaration, id);
+pub(crate) const OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ATTRIBUTES: usize =
+    offset_of!(TSExternalModuleDeclaration, attributes);
 pub(crate) const OFFSET_TS_EXTERNAL_MODULE_DECLARATION_BODY: usize =
     offset_of!(TSExternalModuleDeclaration, body);
 pub(crate) const OFFSET_TS_EXTERNAL_MODULE_DECLARATION_DECLARE: usize =
@@ -16173,6 +16212,14 @@ impl<'a, 't> TSExternalModuleDeclarationWithoutId<'a, 't> {
     }
 
     #[inline]
+    pub fn attributes(self) -> &'t Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ATTRIBUTES)
+                as *const Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn body(self) -> &'t Option<ArenaBox<'a, TSModuleBlock<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_BODY)
@@ -16198,6 +16245,69 @@ impl<'a, 't> TSExternalModuleDeclarationWithoutId<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSExternalModuleDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSExternalModuleDeclarationWithoutAttributes<'a, 't>(
+    pub(crate) *const TSExternalModuleDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSExternalModuleDeclarationWithoutAttributes<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t StringLiteral<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ID)
+                as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t Option<ArenaBox<'a, TSModuleBlock<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_BODY)
+                as *const Option<ArenaBox<'a, TSModuleBlock<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_DECLARE)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSExternalModuleDeclarationWithoutAttributes<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }
@@ -16236,6 +16346,14 @@ impl<'a, 't> TSExternalModuleDeclarationWithoutBody<'a, 't> {
     }
 
     #[inline]
+    pub fn attributes(self) -> &'t Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ATTRIBUTES)
+                as *const Option<ArenaBox<'a, TSModuleDeclarationAttributeClause<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_EXTERNAL_MODULE_DECLARATION_DECLARE)
@@ -16253,6 +16371,152 @@ impl<'a, 't> TSExternalModuleDeclarationWithoutBody<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for TSExternalModuleDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_CLAUSE_NODE_ID: usize =
+    offset_of!(TSModuleDeclarationAttributeClause, node_id);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_CLAUSE_SPAN: usize =
+    offset_of!(TSModuleDeclarationAttributeClause, span);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_CLAUSE_ENTRIES: usize =
+    offset_of!(TSModuleDeclarationAttributeClause, entries);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleDeclarationAttributeClauseWithoutEntries<'a, 't>(
+    pub(crate) *const TSModuleDeclarationAttributeClause<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleDeclarationAttributeClauseWithoutEntries<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_CLAUSE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_CLAUSE_SPAN)
+                as *const Span)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleDeclarationAttributeClauseWithoutEntries<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_NODE_ID: usize =
+    offset_of!(TSModuleDeclarationAttribute, node_id);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_SPAN: usize =
+    offset_of!(TSModuleDeclarationAttribute, span);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_READONLY: usize =
+    offset_of!(TSModuleDeclarationAttribute, readonly);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_KEY: usize =
+    offset_of!(TSModuleDeclarationAttribute, key);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_VALUE: usize =
+    offset_of!(TSModuleDeclarationAttribute, value);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleDeclarationAttributeWithoutKey<'a, 't>(
+    pub(crate) *const TSModuleDeclarationAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleDeclarationAttributeWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_READONLY)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn value(self) -> &'t TSModuleDeclarationAttributeValue<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_VALUE)
+                as *const TSModuleDeclarationAttributeValue<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleDeclarationAttributeWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSModuleDeclarationAttributeWithoutValue<'a, 't>(
+    pub(crate) *const TSModuleDeclarationAttribute<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSModuleDeclarationAttributeWithoutValue<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_READONLY)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t ImportAttributeKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ATTRIBUTE_KEY)
+                as *const ImportAttributeKey<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSModuleDeclarationAttributeWithoutValue<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }

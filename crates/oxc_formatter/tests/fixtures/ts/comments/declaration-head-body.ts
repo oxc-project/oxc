@@ -36,4 +36,16 @@ declare module "m1" /* c */ {}
 declare module "m2" // c
 {}
 
+declare module "*.a" /* name */ with /* with */ { type: "css" } /* attributes */ {}
+declare module "*.b" // name
+with { type: "css" } {}
+declare module "*.c" with // with
+{ type: "css" } {}
+declare module "*.d" with { type: "css" } // attributes
+{}
+declare module "*.e" // name
+with { type: "css" };
+declare module "*.f" with // with
+{ type: "css" };
+
 declare global /* c */ {}
