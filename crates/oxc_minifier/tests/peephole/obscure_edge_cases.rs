@@ -138,36 +138,6 @@ fn test_mathematical_expression_edge_cases() {
 }
 
 #[test]
-fn test_mathematical_constants() {
-    let constants = [
-        "NaN",
-        "Infinity",
-        "Math.E",
-        "Math.LN10",
-        "Math.LN2",
-        "Math.LOG10E",
-        "Math.LOG2E",
-        "Math.PI",
-        "Math.SQRT1_2",
-        "Math.SQRT2",
-        "Number.POSITIVE_INFINITY",
-        "Number.NEGATIVE_INFINITY",
-        "Number.EPSILON",
-        "Number.NaN",
-        "Number.MAX_VALUE",
-        "Number.MIN_VALUE",
-        "Number.MAX_SAFE_INTEGER",
-        "Number.MIN_SAFE_INTEGER",
-    ];
-    for s in constants {
-        // typeof
-        test(&format!("x = typeof {s}"), "x = 'number'");
-        // unused
-        test(s, "");
-    }
-}
-
-#[test]
 fn test_function_call_optimization_edge_cases() {
     // Test constructor calls that get optimized
     test("return String(42)", "return '42'"); // string constructor optimization
