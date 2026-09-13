@@ -68,6 +68,8 @@ pub const FAKE_COMMAND: &str = "fake.command";
 
 const WORKSPACE: &str = "file:///path/to/workspace";
 
+const NESTED_WORKSPACE: &str = "file:///path/to/workspace/nested";
+
 const WORKSPACE_2: &str = "file:///path/to/another_workspace";
 
 impl Tool for FakeTool {
@@ -645,8 +647,8 @@ mod test_suite {
         ClientMessage, DiagnosticMode,
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
-            WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
+            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, NESTED_WORKSPACE, TestServer,
+            WORKSPACE, WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
             acknowledge_unregistrations, code_action, create_workspace_manager,
             create_workspace_manager_with_builder, diagnostic, did_change,
             did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
@@ -906,6 +908,54 @@ mod test_suite {
 
         assert!(shutdown_result.is_ok());
         assert_eq!(shutdown_result.id(), &Id::Number(2));
+    }
+
+    #[tokio::test]
+    async fn test_workspace_configuration_runs_push_diagnostics_for_open_files() {
+        let init_options = InitializeRequestOptions {
+            workspace_configuration: true,
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: NESTED_WORKSPACE.parse().unwrap(),
+                    name: "nested".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(
+                client,
+                server_info(),
+                create_workspace_manager_with_builder(FakeToolBuilder::new(DiagnosticMode::Push)),
+            )
+        });
+
+        server.send_request(initialize_request(init_options)).await;
+        assert!(server.recv_response().await.is_ok());
+
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        let content = "initialized content";
+        server.send_request(did_open(&uri, content)).await;
+
+        // Send initialized notification
+        server.send_request(initialized_notification()).await;
+
+        // workspace configuration request expected
+        response_to_configuration(&mut server, vec![json!(null)]).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, uri.parse().unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+        assert_eq!(
+            params.diagnostics[0].message,
+            format!("Fake diagnostic for content: {content}")
+        );
+
+        server.shutdown_with_diagnostic_clear(2, vec![uri.parse().unwrap()]).await;
     }
 
     #[tokio::test]
