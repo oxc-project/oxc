@@ -1,6 +1,7 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
 use oxc_ast::{AstKind, ast::*};
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, Semantic};
 
 use super::{NoUnusedVars, Symbol, options::ArgsOption};
@@ -320,10 +321,14 @@ impl NoUnusedVars {
             // A rest parameter, if present, is always the last parameter.
             // If it has a used binding, parameters before it are allowed under
             // `after-used` (they occur before the last used argument).
-            || params
-                .rest
-                .as_ref()
-                .is_some_and(|rest| rest.rest.argument.has_any_used_binding(ctx))
+            || params.rest.as_ref().is_some_and(|rest| {
+                let mut used = false;
+                rest.rest.argument.bound_names(&mut |ident| {
+                    // Ignored destructured bindings alone do not make a rest parameter used.
+                    used = used || ctx.has_usages(ident.symbol_id(), module_record);
+                });
+                used
+            })
     }
 
     /// The following allowed conditions are handled:
