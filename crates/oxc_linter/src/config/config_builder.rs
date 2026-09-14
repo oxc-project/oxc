@@ -312,7 +312,7 @@ impl ConfigStoreBuilder {
         };
 
         for filter in oxlintrc.categories.filters() {
-            builder = builder.with_filter(&filter);
+            builder = builder.with_filter(&filter, external_plugin_store);
         }
 
         {
@@ -394,33 +394,23 @@ impl ConfigStoreBuilder {
         self
     }
 
-    pub fn with_filters<'a, I: IntoIterator<Item = &'a LintFilter>>(mut self, filters: I) -> Self {
-        for filter in filters {
-            self = self.with_filter(filter);
-        }
-        self
-    }
-
-    pub fn with_filters_and_external_rules<'a, I: IntoIterator<Item = &'a LintFilter>>(
+    /// Apply CLI-style severity filters (`-A`/`-W`/`-D`) to both built-in rules and rules from
+    /// the JS plugins registered in `external_plugin_store`.
+    pub fn with_filters<'a, I: IntoIterator<Item = &'a LintFilter>>(
         mut self,
         filters: I,
         external_plugin_store: &ExternalPluginStore,
     ) -> Self {
         for filter in filters {
-            self = self.with_filter_inner(filter, Some(external_plugin_store));
+            self = self.with_filter(filter, external_plugin_store);
         }
         self
     }
 
-    pub fn with_filter(mut self, filter: &LintFilter) -> Self {
-        self = self.with_filter_inner(filter, None);
-        self
-    }
-
-    fn with_filter_inner(
+    pub fn with_filter(
         mut self,
         filter: &LintFilter,
-        external_plugin_store: Option<&ExternalPluginStore>,
+        external_plugin_store: &ExternalPluginStore,
     ) -> Self {
         let (severity, filter) = filter.into();
 
@@ -430,14 +420,16 @@ impl ConfigStoreBuilder {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
+                    // JS plugin rules are keyed by the plugin name as written, like `override_rules`.
+                    if let Ok(external_rule_id) = external_plugin_store.lookup_rule_id(plugin, rule)
+                    {
+                        self.external_rules
+                            .entry(external_rule_id)
+                            .and_modify(|(_, existing_severity)| *existing_severity = severity)
+                            .or_insert((ExternalOptionsId::NONE, severity));
+                    }
                     let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
                     self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
-                    self.upsert_external_rule_filter(
-                        severity,
-                        &plugin,
-                        &rule,
-                        external_plugin_store,
-                    );
                 }
                 LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
                 LintFilterKind::All => {
@@ -449,9 +441,12 @@ impl ConfigStoreBuilder {
                     self.rules.retain(|rule, _| rule.category() != *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
+                    if let Ok(external_rule_id) = external_plugin_store.lookup_rule_id(plugin, rule)
+                    {
+                        self.external_rules.remove(&external_rule_id);
+                    }
                     let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
                     self.rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule);
-                    self.remove_external_rule_filter(&plugin, &rule, external_plugin_store);
                 }
                 LintFilterKind::Generic(name) => self.rules.retain(|rule, _| rule.name() != name),
                 LintFilterKind::All => self.rules.clear(),
@@ -459,42 +454,6 @@ impl ConfigStoreBuilder {
         }
 
         self
-    }
-
-    fn upsert_external_rule_filter(
-        &mut self,
-        severity: AllowWarnDeny,
-        plugin: &str,
-        rule: &str,
-        external_plugin_store: Option<&ExternalPluginStore>,
-    ) {
-        let Some(external_plugin_store) = external_plugin_store else { return };
-        if !external_plugin_store.is_enabled() {
-            return;
-        }
-
-        if let Ok(external_rule_id) = external_plugin_store.lookup_rule_id(plugin, rule) {
-            self.external_rules
-                .entry(external_rule_id)
-                .and_modify(|(_, existing_severity)| *existing_severity = severity)
-                .or_insert((ExternalOptionsId::NONE, severity));
-        }
-    }
-
-    fn remove_external_rule_filter(
-        &mut self,
-        plugin: &str,
-        rule: &str,
-        external_plugin_store: Option<&ExternalPluginStore>,
-    ) {
-        let Some(external_plugin_store) = external_plugin_store else { return };
-        if !external_plugin_store.is_enabled() {
-            return;
-        }
-
-        if let Ok(external_rule_id) = external_plugin_store.lookup_rule_id(plugin, rule) {
-            self.external_rules.remove(&external_rule_id);
-        }
     }
 
     /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
@@ -1018,7 +977,10 @@ mod test {
         let builder = ConfigStoreBuilder::default();
         let initial_rule_count = builder.rules.len();
 
-        let builder = builder.with_filter(&LintFilter::deny(RuleCategory::Correctness));
+        let builder = builder.with_filter(
+            &LintFilter::deny(RuleCategory::Correctness),
+            &ExternalPluginStore::default(),
+        );
         let rule_count_after_deny = builder.rules.len();
 
         // By default, all correctness rules are set to warn. the above filter should only
@@ -1047,8 +1009,10 @@ mod test {
             let builder = ConfigStoreBuilder::default();
             let initial_rule_count = builder.rules.len();
 
-            let builder =
-                builder.with_filter(&LintFilter::new(AllowWarnDeny::Deny, filter_string).unwrap());
+            let builder = builder.with_filter(
+                &LintFilter::new(AllowWarnDeny::Deny, filter_string).unwrap(),
+                &ExternalPluginStore::default(),
+            );
             let rule_count_after_deny = builder.rules.len();
             assert_eq!(
                 initial_rule_count, rule_count_after_deny,
@@ -1073,7 +1037,7 @@ mod test {
             let builder = ConfigStoreBuilder::default();
             // sanity check: not already turned on
             assert!(!builder.rules.iter().any(|(r, _)| r.name() == "no-console"));
-            let builder = builder.with_filter(&filter);
+            let builder = builder.with_filter(&filter, &ExternalPluginStore::default());
             let (_, severity) = builder
                 .rules
                 .iter()
@@ -1091,45 +1055,59 @@ mod test {
             PathBuf::from("path/to/custom-plugin"),
             "custom".to_string(),
             0,
-            vec!["my-rule".to_string()],
+            vec!["my-rule".to_string(), "other-rule".to_string()],
         );
-
-        let external_rule_id = external_plugin_store.lookup_rule_id("custom", "my-rule").unwrap();
+        let my_rule = external_plugin_store.lookup_rule_id("custom", "my-rule").unwrap();
+        let other_rule = external_plugin_store.lookup_rule_id("custom", "other-rule").unwrap();
         let options = smallvec::smallvec![serde_json::json!({ "foo": true })];
-        let options_id = external_plugin_store.add_options(external_rule_id, &options);
+        let options_id = external_plugin_store.add_options(my_rule, &options);
 
-        let mut builder = ConfigStoreBuilder::empty();
-        builder.external_rules.insert(external_rule_id, (options_id, AllowWarnDeny::Warn));
-
-        let builder = builder.with_filters_and_external_rules(
-            [&LintFilter::new(AllowWarnDeny::Deny, "custom/my-rule").unwrap()],
+        // `-D custom/other-rule` enables a rule the config never mentioned.
+        let builder = ConfigStoreBuilder::empty().with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "custom/other-rule").unwrap(),
             &external_plugin_store,
         );
-
         assert_eq!(
-            builder.external_rules.get(&external_rule_id),
-            Some(&(options_id, AllowWarnDeny::Deny)),
-            "CLI severity filters should preserve JS plugin rule options"
+            builder.external_rules.get(&other_rule),
+            Some(&(ExternalOptionsId::NONE, AllowWarnDeny::Deny))
         );
 
-        let builder = builder.with_filters_and_external_rules(
-            [&LintFilter::new(AllowWarnDeny::Allow, "custom/my-rule").unwrap()],
+        // `-D custom/my-rule` changes severity and keeps the options from the config file.
+        let mut builder = ConfigStoreBuilder::empty();
+        builder.external_rules.insert(my_rule, (options_id, AllowWarnDeny::Warn));
+        let builder = builder.with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "custom/my-rule").unwrap(),
             &external_plugin_store,
         );
+        assert_eq!(builder.external_rules.get(&my_rule), Some(&(options_id, AllowWarnDeny::Deny)));
 
-        assert!(
-            !builder.external_rules.contains_key(&external_rule_id),
-            "Allowing a JS plugin rule should remove it from configured external rules"
+        // `-A custom/my-rule` removes it.
+        let builder = builder.with_filter(
+            &LintFilter::new(AllowWarnDeny::Allow, "custom/my-rule").unwrap(),
+            &external_plugin_store,
         );
+        assert!(!builder.external_rules.contains_key(&my_rule));
+
+        // Names that resolve to nothing are ignored, as for built-in rules.
+        let builder = builder.with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "custom/missing").unwrap(),
+            &external_plugin_store,
+        );
+        assert!(builder.external_rules.is_empty());
     }
 
     #[test]
     fn test_filter_allow_all_then_warn() {
-        let builder = ConfigStoreBuilder::default()
-            .with_filter(&LintFilter::new(AllowWarnDeny::Allow, "all").unwrap());
+        let builder = ConfigStoreBuilder::default().with_filter(
+            &LintFilter::new(AllowWarnDeny::Allow, "all").unwrap(),
+            &ExternalPluginStore::default(),
+        );
         assert!(builder.rules.is_empty(), "Allowing all rules should empty out the rules list");
 
-        let builder = builder.with_filter(&LintFilter::warn(RuleCategory::Correctness));
+        let builder = builder.with_filter(
+            &LintFilter::warn(RuleCategory::Correctness),
+            &ExternalPluginStore::default(),
+        );
         assert!(
             !builder.rules.is_empty(),
             "warning on categories after allowing all rules should populate the rules set"
@@ -1245,6 +1223,7 @@ mod test {
 
         let builder = builder.with_filter(
             &LintFilter::new(AllowWarnDeny::Deny, "react-hooks/exhaustive-deps").unwrap(),
+            &ExternalPluginStore::default(),
         );
 
         let (rule, sev) = builder
@@ -1259,6 +1238,7 @@ mod test {
 
         let builder = builder.with_filter(
             &LintFilter::new(AllowWarnDeny::Allow, "react-hooks/exhaustive-deps").unwrap(),
+            &ExternalPluginStore::default(),
         );
 
         // Allowing the rule removes it from rules "overlay"

@@ -479,7 +479,7 @@ impl<'a> ConfigLoader<'a> {
             let extended_paths = builder.extended_paths.clone();
 
             match builder
-                .with_filters_and_external_rules(self.filters, self.external_plugin_store)
+                .with_filters(self.filters, self.external_plugin_store)
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build { path: path.clone(), error: e.to_string() })
             {
