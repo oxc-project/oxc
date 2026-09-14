@@ -2099,8 +2099,10 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
         }
     }
 
-    // Named components/hooks and directive opt-ins. Over-approximate by name
-    // and directives; the JSX/hook body scan is left to discovery.
+    // Named hooks, directive opt-ins, and (in JSX files) PascalCase components.
+    // PascalCase in a non-JSX file cannot classify without a hook/JSX body, so
+    // skip those here and leave the body scan to discovery only when needed.
+    let jsx = semantic.source_type().is_jsx();
     for scope_id in scoping.scope_descendants_from_root() {
         if !scoping.scope_flags(scope_id).is_function() {
             continue;
@@ -2114,7 +2116,7 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
                     }
                     _ => declarator_name_for(nodes, node.id()),
                 };
-                if name.is_some_and(|n| is_component_name(n) || is_hook_name(n))
+                if name.is_some_and(|n| is_hook_name(n) || (jsx && is_component_name(n)))
                     || func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
                 {
                     return true;
@@ -2122,7 +2124,7 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 let name = declarator_name_for(nodes, node.id());
-                if name.is_some_and(|n| is_component_name(n) || is_hook_name(n))
+                if name.is_some_and(|n| is_hook_name(n) || (jsx && is_component_name(n)))
                     || arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
                 {
                     return true;
@@ -3160,10 +3162,10 @@ pub fn compile_program<'a, const EMIT: bool>(
     let ast = AstBuilder::new(allocator);
     let scope = ScopeResolver::new(semantic, allocator);
 
-    // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(&scope);
-
     if EMIT {
+        // Seed UID collision detection with every binding in the file. Lint
+        // does not generate identifiers, so skip the walk.
+        context.init_from_scope(&scope);
         // Pre-register instrumentation imports to get stable local names.
         // These are needed before compilation so codegen can use the correct names.
         let (instrument_fn_name, instrument_gating_name) = if let Some(ref instrument_config) =

@@ -16,8 +16,9 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
-    InstructionValue, ReactFunctionType, assert_consistent_identifiers,
-    assert_terminal_preds_exist, assert_terminal_successors_exist, assert_valid_block_nesting,
+    HirFunction, InstructionValue, NonLocalBinding, PropertyLiteral, ReactFunctionType,
+    assert_consistent_identifiers, assert_terminal_preds_exist, assert_terminal_successors_exist,
+    assert_valid_block_nesting,
 };
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
@@ -221,6 +222,30 @@ pub fn compile_fn<'a, const EMIT: bool>(
         validate_no_freezing_known_mutable_functions(&hir, &mut env);
     }
 
+    // Lint does not emit a rewrite. Inferring reactive places / exhaustive
+    // deps is only needed when the function (or a nested one) mentions a hook
+    // that takes a dependency array, and the memoization reconstruction after
+    // that is only needed to preserve useMemo/useCallback.
+    if !EMIT && env.output_mode == OutputMode::Lint {
+        let has_manual_memo = hir_has_start_memoize(&hir);
+        if !has_manual_memo {
+            if env.enable_validations() && env.config.validate_static_components {
+                let errors = validate_static_components(&hir, &env.functions);
+                log_errors_as_events(&errors, context);
+            }
+            if mentions_deps_hooks(&hir, &env)
+                && env.enable_validations()
+                && (env.config.validate_exhaustive_memoization_dependencies
+                    || env.config.validate_exhaustive_effect_dependencies
+                        != ExhaustiveEffectDepsMode::Off)
+            {
+                infer_reactive_places(&mut hir, &mut env)?;
+                validate_exhaustive_dependencies(&mut hir, &mut env)?;
+            }
+            return finish_lint_fn(&mut env, context);
+        }
+    }
+
     infer_reactive_places(&mut hir, &mut env)?;
 
     if env.enable_validations()
@@ -238,31 +263,6 @@ pub fn compile_fn<'a, const EMIT: bool>(
     {
         let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
-    }
-
-    // Lint does not emit a rewrite. Passes after this reconstruct reactive
-    // scopes so `validate_preserved_manual_memoization` can run. Skip them
-    // when the function has no useMemo/useCallback to preserve.
-    if !EMIT
-        && env.output_mode == OutputMode::Lint
-        && !hir
-            .instructions
-            .iter()
-            .any(|instruction| matches!(instruction.value, InstructionValue::StartMemoize { .. }))
-    {
-        if env.config.throw_unknown_exception_testonly {
-            return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
-        }
-        if env.has_errors() {
-            if let Some(uid_names) = env.take_uid_known_names() {
-                context.merge_uid_known_names(&uid_names);
-            }
-            return Err(env.take_errors());
-        }
-        if let Some(uid_names) = env.take_uid_known_names() {
-            context.merge_uid_known_names(&uid_names);
-        }
-        return Ok(None);
     }
 
     if env.enable_memoization() {
@@ -398,4 +398,61 @@ pub fn compile_fn<'a, const EMIT: bool>(
 /// matching TS `env.logErrors()`. No enclosing-function fallback label.
 fn log_errors_as_events(errors: &Diagnostics, context: &mut ProgramContext) {
     context.diagnostics.extend(errors.iter().cloned());
+}
+
+fn hir_has_start_memoize(hir: &HirFunction<'_>) -> bool {
+    hir.instructions
+        .iter()
+        .any(|instruction| matches!(instruction.value, InstructionValue::StartMemoize { .. }))
+}
+
+fn is_deps_hook_name(name: &str) -> bool {
+    matches!(
+        name,
+        "useEffect"
+            | "useLayoutEffect"
+            | "useInsertionEffect"
+            | "useMemo"
+            | "useCallback"
+            | "useImperativeHandle"
+    )
+}
+
+fn mentions_deps_hooks(hir: &HirFunction<'_>, env: &Environment<'_>) -> bool {
+    fn scan(hir: &HirFunction<'_>) -> bool {
+        hir.instructions.iter().any(|instruction| match &instruction.value {
+            InstructionValue::StartMemoize { .. } => true,
+            InstructionValue::LoadGlobal { binding, .. } => {
+                let name = match binding {
+                    NonLocalBinding::ImportSpecifier { imported, .. } => imported.as_str(),
+                    other => other.name().as_str(),
+                };
+                is_deps_hook_name(name)
+            }
+            InstructionValue::PropertyLoad { property: PropertyLiteral::String(name), .. } => {
+                is_deps_hook_name(name.as_str())
+            }
+            _ => false,
+        })
+    }
+    scan(hir) || env.functions.iter().any(scan)
+}
+
+fn finish_lint_fn<'a>(
+    env: &mut Environment<'a>,
+    context: &mut ProgramContext<'a>,
+) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
+    if env.config.throw_unknown_exception_testonly {
+        return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
+    }
+    if env.has_errors() {
+        if let Some(uid_names) = env.take_uid_known_names() {
+            context.merge_uid_known_names(&uid_names);
+        }
+        return Err(env.take_errors());
+    }
+    if let Some(uid_names) = env.take_uid_known_names() {
+        context.merge_uid_known_names(&uid_names);
+    }
+    Ok(None)
 }
