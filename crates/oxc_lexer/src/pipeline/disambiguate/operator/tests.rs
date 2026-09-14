@@ -746,7 +746,7 @@ fn function_expression_return_type_then_body_is_a_value() {
     let ks = kinds_of("x = [function (): T {}\n< y];", FileType::ScriptTSX);
     assert!(!ks.contains(&TokenKind::JsxLt), "{ks:?}");
     assert!(ks.contains(&TokenKind::Lt), "{ks:?}");
-    let codes = diag_codes_of("x = [function (): T {}\n< y];", true, true);
+    let codes = diag_codes_of("x = [function (): T {}\n< y];", FileType::ScriptTSX);
     assert!(codes.is_empty(), "{codes:?}");
 }
 
@@ -964,6 +964,6 @@ fn adjacent_type_atoms_end_an_annotation() {
     }
     let ks = kinds_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", FileType::ScriptTSX);
     assert!(ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::JsxLt), "{ks:?}");
-    let codes = diag_codes_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", true, true);
+    let codes = diag_codes_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", FileType::ScriptTSX);
     assert!(codes.is_empty(), "{codes:?}");
 }

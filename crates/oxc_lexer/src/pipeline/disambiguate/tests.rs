@@ -297,13 +297,14 @@ fn jsx_self_close_allows_whitespace() {
     assert!(!ks.contains(&TokenKind::JsxTagEnd), "lone slash: kinds {ks:?}");
 }
 
-pub(super) fn diag_codes_of(code: &str, ts: bool, jsx: bool) -> Vec<u16> {
+pub(super) fn diag_codes_of(code: &str, file_type: FileType) -> Vec<u16> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut opts = default_options();
-    opts.ts = ts;
-    opts.jsx = jsx;
+    opts.ts = file_type.is_ts();
+    opts.jsx = file_type.is_jsx();
+    opts.source_type_module = file_type.is_module();
     let mut lx = Lexer::new();
     lx.lex(&buf, n, opts);
     lx.lanes.diags.iter().map(|d| d.code).collect()
@@ -545,7 +546,7 @@ fn tsx_generic_function_type_is_decided_by_its_arrow() {
 #[test]
 fn tsx_generic_arrow_in_expression_position_is_diagnosed() {
     let diagnosed = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(
             codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
             "{code:?} must be diagnosed: {codes:?}"
@@ -554,7 +555,7 @@ fn tsx_generic_arrow_in_expression_position_is_diagnosed() {
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?} lexes as type parameters: {ks:?}");
     };
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(
             !codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
             "{code:?} is valid: {codes:?}"
@@ -1297,7 +1298,7 @@ fn relational_heads_before_a_balanced_run() {
 #[test]
 fn constructor_type_parameter_annotations_are_type_regions() {
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(codes.is_empty(), "{code:?}: {codes:?}");
         let ks = kinds_of(code, FileType::ScriptTSX);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?}: {ks:?}");
@@ -1318,13 +1319,13 @@ fn constructor_type_parameter_annotations_are_type_regions() {
 #[test]
 fn optional_markers_are_not_ternaries_for_the_jsx_diagnostic() {
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(codes.is_empty(), "{code:?}: {codes:?}");
         let ks = kinds_of(code, FileType::ScriptTSX);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?}: {ks:?}");
     };
     let diagnosed = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(
             codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
             "{code:?} must be diagnosed: {codes:?}"
@@ -1363,13 +1364,13 @@ fn optional_markers_are_not_ternaries_for_the_jsx_diagnostic() {
 #[test]
 fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
     let silent = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(codes.is_empty(), "{code:?}: {codes:?}");
         let ks = kinds_of(code, FileType::ScriptTSX);
         assert!(!ks.contains(&TokenKind::JsxLt), "{code:?}: {ks:?}");
     };
     let diagnosed = |code: &str| {
-        let codes = diag_codes_of(code, true, true);
+        let codes = diag_codes_of(code, FileType::ScriptTSX);
         assert!(
             codes.contains(&diag_code::UNTERMINATED_JSX_ELEMENT),
             "{code:?} must be diagnosed: {codes:?}"
