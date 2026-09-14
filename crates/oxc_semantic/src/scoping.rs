@@ -305,6 +305,8 @@ pub struct ScopingInner<'cell> {
 struct ParameterScope<'cell> {
     /// Includes references in functions nested inside parameter initializers.
     references: Range<usize>,
+    /// Scopes created inside parameters, used for references added by transforms.
+    nested_scopes: Range<usize>,
     /// Value bindings visible before the body adds declarations to the same scope.
     bindings: ArenaVec<'cell, SymbolId>,
 }
@@ -660,7 +662,10 @@ impl Scoping {
     /// not acquire bindings introduced by the body, even through a nested closure.
     pub(crate) fn record_parameter_scope(&mut self, scope_id: ScopeId, reference_start: usize) {
         let references = reference_start..self.references.len();
-        if !self.references.raw[references.clone()].iter().any(Reference::is_value) {
+        let nested_scopes = scope_id.index() + 1..self.scopes_len();
+        if nested_scopes.is_empty()
+            && !self.references.raw[references.clone()].iter().any(Reference::is_value)
+        {
             return;
         }
         self.cell.with_dependent_mut(|allocator, cell| {
@@ -671,7 +676,8 @@ impl Scoping {
                     .filter(|&id| self.symbol_table.symbol_flags(id).is_value()),
                 &allocator,
             );
-            cell.parameter_scopes.insert(scope_id, ParameterScope { references, bindings });
+            cell.parameter_scopes
+                .insert(scope_id, ParameterScope { references, nested_scopes, bindings });
         });
     }
 
@@ -696,12 +702,14 @@ impl Scoping {
                     // Resume at the erased binding, not the reference's lexical scope.
                     // A parameter default can share a scope with body declarations that
                     // were deliberately skipped during its original resolution.
-                    let mut scope = Some(*self.symbol_table.symbol_scope_ids(symbol_id));
+                    let binding_scope = *self.symbol_table.symbol_scope_ids(symbol_id);
+                    let mut scope = Some(binding_scope);
                     let mut resolved = None;
                     while let Some(scope_id) = scope {
                         if let Some(&id) = cell.bindings[scope_id].get(&name)
                             && !cell.parameter_scopes.get(&scope_id).is_some_and(|parameters| {
-                                parameters.references.contains(&reference_id.index())
+                                (parameters.references.contains(&reference_id.index())
+                                    || parameters.nested_scopes.contains(&binding_scope.index()))
                                     && !parameters.bindings.contains(&id)
                             })
                         {
@@ -1331,7 +1339,10 @@ impl Scoping {
                                 id,
                                 ParameterScope {
                                     references: parameters.references.clone(),
-                                    bindings: parameters.bindings.clone_in_with_semantic_ids(allocator),
+                                    nested_scopes: parameters.nested_scopes.clone(),
+                                    bindings: parameters
+                                        .bindings
+                                        .clone_in_with_semantic_ids(allocator),
                                 },
                             )
                         })

@@ -6,3 +6,6 @@ const y = 0;
   declare const y: number;
   const outer = (a = y) => { let y = 1; };
 }
+function unresolved(a = (() => { declare const x: number; return x; })()) { let x = 1; }
+function resolved(a = (() => { declare const y: number; return y; })()) { let y = 1; }
+function parameter(x, a = (() => { declare const x: number; return x; })()) {}
