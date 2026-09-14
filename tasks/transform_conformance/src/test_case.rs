@@ -101,10 +101,11 @@ impl TestCase {
             Some(s) => panic!("Unexpected source type {s}"),
             None => source_type,
         };
+        let is_definition = source_type.is_typescript_definition();
         source_type = source_type.with_typescript(
             options.plugins.typescript.is_some() || options.plugins.syntax_typescript.is_some(),
         );
-        source_type
+        source_type.with_typescript_definition(is_definition)
     }
 
     fn convert_to_override_path(path: &Path) -> Option<PathBuf> {

@@ -13,10 +13,13 @@ use crate::{
         statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
+    typescript::cleanup::TypeScriptCleanup,
 };
 
 pub struct TransformState<'a> {
     errors: Vec<OxcDiagnostic>,
+
+    pub(crate) typescript_cleanup: TypeScriptCleanup,
 
     /// <https://babeljs.io/docs/options#filename>
     pub filename: String,
@@ -53,6 +56,7 @@ impl Default for TransformState<'_> {
     fn default() -> Self {
         Self {
             errors: vec![],
+            typescript_cleanup: TypeScriptCleanup::default(),
             filename: String::from("unknown"),
             source_path: PathBuf::new(),
             source_type: SourceType::default(),
@@ -77,6 +81,7 @@ impl TransformState<'_> {
 
         Self {
             errors: vec![],
+            typescript_cleanup: TypeScriptCleanup::default(),
             filename,
             source_path: source_path.to_path_buf(),
             source_type: SourceType::default(),

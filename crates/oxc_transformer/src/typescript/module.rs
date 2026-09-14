@@ -1,12 +1,13 @@
 use oxc_allocator::{ArenaBox, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::Traverse;
 
-use super::diagnostics;
+use super::{cleanup::Erase, diagnostics};
 
 use crate::{Module, context::TraverseCtx, state::TransformState};
 
@@ -81,6 +82,13 @@ impl<'a> TypeScriptModule {
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
         let right = export_assignment.expression.take_in(ctx);
+        if let Expression::Identifier(ident) = right.get_inner_expression() {
+            // `export = T` can resolve to a type-only declaration in TypeScript,
+            // but the emitted assignment reads a runtime value. Keep this reference
+            // alive so cleanup can resolve it after erasing the declaration.
+            *ctx.scoping_mut().get_reference_mut(ident.reference_id()).flags_mut() =
+                ReferenceFlags::Read;
+        }
         let assignment_expr = Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
@@ -111,8 +119,7 @@ impl<'a> TypeScriptModule {
             && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
-            let scope_id = ctx.current_scope_id();
-            ctx.scoping_mut().remove_binding(scope_id, decl.id.name);
+            Erase(ctx).visit_ts_import_equals_declaration(decl);
             return None;
         }
 
