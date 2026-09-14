@@ -96,7 +96,7 @@ impl Rule for JsxNoUselessFragment {
 
 impl JsxNoUselessFragment {
     fn check_element(&self, node: &AstNode, elem: &JSXElement, ctx: &LintContext) {
-        if jsx_elem_has_key_attr(elem) {
+        if jsx_elem_has_key_or_ref_attr(elem) {
             return;
         }
 
@@ -279,7 +279,7 @@ fn is_whitespace_only_text(child: &JSXChild) -> bool {
     }
 }
 
-fn jsx_elem_has_key_attr(elem: &JSXElement) -> bool {
+fn jsx_elem_has_key_or_ref_attr(elem: &JSXElement) -> bool {
     elem.opening_element.attributes.iter().any(|attr| {
         let JSXAttributeItem::Attribute(attr) = attr else {
             return false;
@@ -289,7 +289,7 @@ fn jsx_elem_has_key_attr(elem: &JSXElement) -> bool {
             return false;
         };
 
-        ident.name == "key"
+        matches!(ident.name.as_str(), "key" | "ref")
     })
 }
 
@@ -380,6 +380,14 @@ fn test() {
         (r"<Foo><><div /><div /></></Foo>", None),
         (r#"<div p={<>{"a"}{"b"}</>} />"#, None),
         (r"<Fragment key={item.id}>{item.value}</Fragment>", None),
+        (r"<Fragment ref={fragmentRef}><Heading /></Fragment>", None),
+        (r"<React.Fragment ref={fragmentRef}><Heading /></React.Fragment>", None),
+        (r"<div><Fragment ref={fragmentRef}><Heading /></Fragment></div>", None),
+        (r"<Fragment key={item.id} ref={fragmentRef}><Heading /></Fragment>", None),
+        (
+            r"{items.map(item => <Fragment key={item.id} ref={refs[item.id]}>{item.value}</Fragment>)}",
+            None,
+        ),
         (r"<Fooo content={<>eeee ee eeeeeee eeeeeeee</>} />", None),
         (r"<>{foos.map(foo => foo)}</>", None),
         (r"<>{moo}</>", Some(json!([{ "allowExpressions": true }]))),
