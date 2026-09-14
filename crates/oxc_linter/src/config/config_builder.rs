@@ -420,15 +420,17 @@ impl ConfigStoreBuilder {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
-                    // JS plugin rules are keyed by the plugin name as written, like `override_rules`.
-                    if let Ok(external_rule_id) = external_plugin_store.lookup_rule_id(plugin, rule)
+                    // Same normalization as config file keys (`parse_rule_key`), so
+                    // `-D eslint-plugin-foo/rule` reaches the JS plugin registered as `foo`.
+                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
+                    if let Ok(external_rule_id) =
+                        external_plugin_store.lookup_rule_id(&plugin, &rule)
                     {
                         self.external_rules
                             .entry(external_rule_id)
                             .and_modify(|(_, existing_severity)| *existing_severity = severity)
                             .or_insert((ExternalOptionsId::NONE, severity));
                     }
-                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
                     self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
                 }
                 LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
@@ -441,11 +443,12 @@ impl ConfigStoreBuilder {
                     self.rules.retain(|rule, _| rule.category() != *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
-                    if let Ok(external_rule_id) = external_plugin_store.lookup_rule_id(plugin, rule)
+                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
+                    if let Ok(external_rule_id) =
+                        external_plugin_store.lookup_rule_id(&plugin, &rule)
                     {
                         self.external_rules.remove(&external_rule_id);
                     }
-                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
                     self.rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule);
                 }
                 LintFilterKind::Generic(name) => self.rules.retain(|rule, _| rule.name() != name),
@@ -1086,6 +1089,13 @@ mod test {
             builder.external_rules.get(&other_rule),
             Some(&(ExternalOptionsId::NONE, AllowWarnDeny::Deny))
         );
+
+        // The plugin name is normalized like a config file key: `eslint-plugin-custom` -> `custom`.
+        let builder = ConfigStoreBuilder::empty().with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "eslint-plugin-custom/other-rule").unwrap(),
+            &external_plugin_store,
+        );
+        assert!(builder.external_rules.contains_key(&other_rule));
 
         // `-D custom/my-rule` changes severity and keeps the options from the config file.
         let mut builder = ConfigStoreBuilder::empty();
