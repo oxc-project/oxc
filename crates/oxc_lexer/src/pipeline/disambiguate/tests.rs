@@ -48,34 +48,20 @@ pub(super) fn kinds_of(code: &str, file_type: FileType) -> Vec<TokenKind> {
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
-fn first_slash_kind(code: &str, file_type: FileType) -> Option<TokenKind> {
-    let mut buf = code.as_bytes().to_vec();
-    let n = buf.len();
-    buf.resize(n + PAD, 0);
-    let mut lx = Lexer::new();
-    let count = lx.lex(&buf, n, file_type.options());
-    let kinds = &lx.kinds()[..count];
-    assert!(lx.spans.len() >= count);
-
-    for (&kind, span) in kinds.iter().zip(&lx.spans) {
-        if !kind.is_trivia() && buf[span.start as usize] == b'/' {
-            return Some(kind);
-        }
-    }
-
-    None
-}
-
+/// Assert that the token stream for `code` contains at least one `RegExp` token
+/// and does not contain any `Slash` or `SlashEq` tokens.
 #[track_caller]
 pub(super) fn regex(code: &str, file_type: FileType) {
     let ks = kinds_of(code, file_type);
-    assert_eq!(
-        first_slash_kind(code, file_type),
-        Some(TokenKind::RegExp),
-        "expected the first `/` to open a regex in {code:?}: kinds {ks:?}"
+    assert!(
+        !ks.iter().any(|kind| matches!(kind, TokenKind::Slash | TokenKind::SlashEq)),
+        "expected no division in {code:?}: kinds {ks:?}"
     );
+    assert!(ks.contains(&TokenKind::RegExp), "expected a regex in {code:?}: kinds {ks:?}");
 }
 
+/// Assert that the token stream for `code` contains at least one `Slash` token
+/// and does not contain any `RegExp` tokens.
 #[track_caller]
 pub(super) fn division(code: &str, file_type: FileType) {
     let ks = kinds_of(code, file_type);
