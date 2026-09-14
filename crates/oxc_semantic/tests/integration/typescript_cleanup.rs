@@ -1,5 +1,5 @@
 use oxc_semantic::{Reference, SymbolFlags};
-use oxc_syntax::{node::NodeId, reference::ReferenceFlags};
+use oxc_syntax::{node::NodeId, reference::ReferenceFlags, scope::ScopeFlags};
 use rustc_hash::FxHashSet;
 
 use crate::util::SemanticTester;
@@ -123,6 +123,9 @@ fn erased_bindings_preserve_parameter_environments_after_cloning() {
     for source in [
         "function outer(x, a = (() => { declare const x: number; return x; })()) {}",
         "const x = 0; function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; }",
+        "const outer = function x(a = (() => { declare const x: number; return x; })()) {};",
+        "function outer(a = (() => { declare const x: number; return x; })(), ...x) {}",
+        "function enclosing() { const x = 0; function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; } }",
     ] {
         let tester = SemanticTester::ts(source);
         let scoping = tester.build().into_scoping();
@@ -136,7 +139,7 @@ fn erased_bindings_preserve_parameter_environments_after_cloning() {
         for mut scoping in [scoping, cloned] {
             scoping.delete_typescript_bindings();
             let references = scoping.get_resolved_reference_ids(parameter);
-            assert_eq!(references.len(), 1);
+            assert_eq!(references.len(), 1, "{source}");
             assert_eq!(scoping.get_reference(references[0]).symbol_id(), Some(parameter));
             assert!(scoping.root_unresolved_references().is_empty());
         }
@@ -154,7 +157,12 @@ fn generated_references_preserve_enclosing_parameter_environments() {
         .flat_map(|(_, bindings)| bindings.values().copied())
         .find(|&id| scoping.symbol_flags(id).is_ambient())
         .unwrap();
-    // Model a transform adding a runtime reference inside the parameter's closure.
+    // Model a transform inserting an intermediate scope and adding a runtime
+    // reference inside the parameter's closure.
+    let closure_scope = scoping.symbol_scope_id(erased);
+    let parent = scoping.scope_parent_id(closure_scope);
+    let inserted = scoping.add_scope(parent, NodeId::DUMMY, ScopeFlags::empty());
+    scoping.set_scope_parent_id(closure_scope, Some(inserted));
     let reference = scoping.create_reference(Reference::new_with_symbol_id(
         NodeId::DUMMY,
         erased,

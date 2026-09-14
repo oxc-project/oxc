@@ -1,4 +1,4 @@
-use std::{collections::hash_map::Entry, fmt, mem, ops::Range};
+use std::{collections::hash_map::Entry, fmt, mem};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
@@ -47,28 +47,32 @@ impl CloneIn<'_> for Redeclaration {
 multi_index_vec! {
     /// Scope tree stored as struct-of-arrays in a single allocation.
     ///
-    /// Contains parent IDs, node IDs, and flags for all scopes. Using a single
-    /// allocation with one `len`/`cap` instead of 3 separate `IndexVec`s saves
+    /// Contains parent IDs, node IDs, flags, and parameter context for all scopes. Using a single
+    /// allocation with one `len`/`cap` instead of separate `IndexVec`s saves
     /// memory (no redundant len/cap) and CPU (one bounds check, one capacity
     /// check on push).
     struct ScopeTable<ScopeId> {
         parent_ids => parent_ids_mut: Option<ScopeId>,
         node_ids => node_ids_mut: NodeId,
         flags => flags_mut: ScopeFlags,
+        // Parameter environment to use when looking up bindings above this scope.
+        parameter_scope => parameter_scope_mut: Option<ScopeId>,
     }
 }
 
 multi_index_vec! {
     /// Symbol table stored as struct-of-arrays in a single allocation.
     ///
-    /// Contains spans, flags, scope IDs, and declaration node IDs for all symbols.
-    /// Using a single allocation with one `len`/`cap` instead of 4 separate `IndexVec`s
+    /// Contains spans, flags, scope IDs, declaration node IDs, and parameter markers for all symbols.
+    /// Using a single allocation with one `len`/`cap` instead of separate `IndexVec`s
     /// saves memory and CPU.
     struct SymbolTable<SymbolId> {
         symbol_spans => symbol_spans_mut: Span,
         symbol_flags => symbol_flags_mut: SymbolFlags,
         symbol_scope_ids => symbol_scope_ids_mut: ScopeId,
         symbol_declarations => symbol_declarations_mut: NodeId,
+        // Binding visible in the parameter environment, before the body is visited.
+        parameter_binding => parameter_binding_mut: bool,
     }
 }
 
@@ -129,7 +133,6 @@ impl Default for Scoping {
                 resolved_references: ArenaVec::new_in(&allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
-                parameter_scopes: FxHashMap::default(),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
             }),
         }
@@ -296,19 +299,7 @@ pub struct ScopingInner<'cell> {
     /// A binding is a mapping from an identifier name to its [`SymbolId`]
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
 
-    /// Lookup environments for references evaluated before a function or catch body.
-    parameter_scopes: FxHashMap<ScopeId, ParameterScope<'cell>>,
-
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
-}
-
-struct ParameterScope<'cell> {
-    /// Includes references in functions nested inside parameter initializers.
-    references: Range<usize>,
-    /// Scopes created inside parameters, used for references added by transforms.
-    nested_scopes: Range<usize>,
-    /// Value bindings visible before the body adds declarations to the same scope.
-    bindings: ArenaVec<'cell, SymbolId>,
 }
 
 // Symbol Table Methods
@@ -488,7 +479,7 @@ impl Scoping {
             cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
-        self.symbol_table.push(span, flags, scope_id, node_id)
+        self.symbol_table.push(span, flags, scope_id, node_id, false)
     }
 
     /// Create a new symbol, append symbol metadata to the symbol table, and bind it to a scope.
@@ -501,7 +492,7 @@ impl Scoping {
         binding_scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
-        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id);
+        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id, false);
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
             cell.symbol_names.push(name);
@@ -657,28 +648,14 @@ impl Scoping {
         result.0
     }
 
-    /// Preserve the parameter environment for subsequent binding removal. Function
-    /// parameters and bodies currently share a scope, but parameter references must
-    /// not acquire bindings introduced by the body, even through a nested closure.
-    pub(crate) fn record_parameter_scope(&mut self, scope_id: ScopeId, reference_start: usize) {
-        let references = reference_start..self.references.len();
-        let nested_scopes = scope_id.index() + 1..self.scopes_len();
-        if nested_scopes.is_empty()
-            && !self.references.raw[references.clone()].iter().any(Reference::is_value)
-        {
-            return;
-        }
-        self.cell.with_dependent_mut(|allocator, cell| {
-            let bindings = ArenaVec::from_iter_in(
-                cell.bindings[scope_id]
-                    .values()
-                    .copied()
-                    .filter(|&id| self.symbol_table.symbol_flags(id).is_value()),
-                &allocator,
-            );
-            cell.parameter_scopes
-                .insert(scope_id, ParameterScope { references, nested_scopes, bindings });
-        });
+    /// Mark a binding which is visible from parameter initializers.
+    pub(crate) fn mark_parameter_binding(&mut self, symbol_id: SymbolId) {
+        *self.symbol_table.parameter_binding_mut(symbol_id) = true;
+    }
+
+    /// Record the parameter environment enclosing a newly created child scope.
+    pub(crate) fn set_parameter_scope(&mut self, scope_id: ScopeId, parameter_scope: ScopeId) {
+        *self.scope_table.parameter_scope_mut(scope_id) = Some(parameter_scope);
     }
 
     /// Remove bindings for erased symbols, then resolve their remaining references
@@ -702,19 +679,26 @@ impl Scoping {
                     // Resume at the erased binding, not the reference's lexical scope.
                     // A parameter default can share a scope with body declarations that
                     // were deliberately skipped during its original resolution.
-                    let binding_scope = *self.symbol_table.symbol_scope_ids(symbol_id);
-                    let mut scope = Some(binding_scope);
+                    let mut scope = Some(*self.symbol_table.symbol_scope_ids(symbol_id));
+                    let mut parameter_scope = None;
                     let mut resolved = None;
                     while let Some(scope_id) = scope {
                         if let Some(&id) = cell.bindings[scope_id].get(&name)
-                            && !cell.parameter_scopes.get(&scope_id).is_some_and(|parameters| {
-                                (parameters.references.contains(&reference_id.index())
-                                    || parameters.nested_scopes.contains(&binding_scope.index()))
-                                    && !parameters.bindings.contains(&id)
-                            })
+                            && (parameter_scope != Some(scope_id)
+                                || *self.symbol_table.parameter_binding(id))
                         {
                             resolved = Some(id);
                             break;
+                        }
+                        // A child created in a parameter initializer must skip the
+                        // parent's body bindings. Store the scope ID so inserted
+                        // intermediate scopes do not change that boundary.
+                        if let Some(enclosing_parameters) =
+                            *self.scope_table.parameter_scope(scope_id)
+                        {
+                            parameter_scope = Some(enclosing_parameters);
+                        } else if parameter_scope == Some(scope_id) {
+                            parameter_scope = None;
                         }
                         scope = *self.scope_table.parent_ids(scope_id);
                     }
@@ -1146,7 +1130,7 @@ impl Scoping {
         node_id: NodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let scope_id = self.scope_table.push(parent_id, node_id, flags);
+        let scope_id = self.scope_table.push(parent_id, node_id, flags, None);
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.bindings.push(Bindings::new_in(allocator));
         });
@@ -1331,22 +1315,6 @@ impl Scoping {
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);
                 ScopingCell::new(allocator, |allocator| ScopingInner {
-                    parameter_scopes: cell
-                        .parameter_scopes
-                        .iter()
-                        .map(|(&id, parameters)| {
-                            (
-                                id,
-                                ParameterScope {
-                                    references: parameters.references.clone(),
-                                    nested_scopes: parameters.nested_scopes.clone(),
-                                    bindings: parameters
-                                        .bindings
-                                        .clone_in_with_semantic_ids(allocator),
-                                },
-                            )
-                        })
-                        .collect(),
                     symbol_names: cell.symbol_names.clone_in_with_semantic_ids(allocator),
                     resolved_references: cell
                         .resolved_references

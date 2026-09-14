@@ -238,6 +238,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
         self.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
+            builder.scoping.mark_parameter_binding(symbol_id);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -273,6 +274,7 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
 
         self.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
+            builder.scoping.mark_parameter_binding(symbol_id);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -308,6 +310,7 @@ impl<'a> Binder<'a> for FormalParameterRest<'a> {
 
         self.rest.argument.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
+            builder.scoping.mark_parameter_binding(symbol_id);
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -323,6 +326,7 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
             let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
             let symbol_id =
                 builder.declare_shadow_symbol(ident.name, ident.span, current_scope_id, includes);
+            builder.scoping.mark_parameter_binding(symbol_id);
             ident.symbol_id.set(Some(symbol_id));
         } else {
             self.pattern.bound_names(&mut |ident| {
@@ -332,6 +336,7 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
                     SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                     SymbolFlags::BlockScopedVariableExcludes,
                 );
+                builder.scoping.mark_parameter_binding(symbol_id);
                 ident.symbol_id.set(Some(symbol_id));
             });
         }
