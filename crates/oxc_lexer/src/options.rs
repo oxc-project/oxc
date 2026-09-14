@@ -34,7 +34,3 @@ impl Default for LexOptions {
         }
     }
 }
-
-pub fn default_options() -> LexOptions {
-    LexOptions::default()
-}
