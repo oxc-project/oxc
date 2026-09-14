@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticName,
     ast::{
         ClassElement, Declaration, ExportDefaultDeclarationKind, FunctionType, ModuleDeclaration,
         PropertyKey, Statement, TSSignature, match_expression,
@@ -8,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
@@ -113,15 +112,15 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
 }
 
 #[derive(Debug)]
-struct Method {
-    name: CompactStr,
+struct Method<'a> {
+    name: StaticName<'a>,
     r#static: bool,
     call_signature: bool,
     kind: MethodKind,
     span: Span,
 }
 
-impl Method {
+impl Method<'_> {
     fn is_same_method(&self, other: Option<&Self>) -> bool {
         other.is_some_and(|other| {
             self.name == other.name
@@ -132,15 +131,15 @@ impl Method {
     }
 }
 
-trait GetMethod {
-    fn get_method(&self) -> Option<Method>;
+trait GetMethod<'a> {
+    fn get_method(&self) -> Option<Method<'a>>;
 }
 
-impl GetMethod for ClassElement<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for ClassElement<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             ClassElement::MethodDefinition(def) => def.key.static_name().map(|name| Method {
-                name: name.into(),
+                name,
                 r#static: def.r#static,
                 call_signature: false,
                 kind: get_kind_from_key(&def.key),
@@ -151,11 +150,11 @@ impl GetMethod for ClassElement<'_> {
     }
 }
 
-impl GetMethod for TSSignature<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for TSSignature<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             TSSignature::TSMethodSignature(sig) => sig.key.static_name().map(|name| Method {
-                name: name.into(),
+                name,
                 r#static: false,
                 call_signature: false,
                 kind: get_kind_from_key(&sig.key),
@@ -180,8 +179,8 @@ impl GetMethod for TSSignature<'_> {
     }
 }
 
-impl GetMethod for ModuleDeclaration<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for ModuleDeclaration<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             ModuleDeclaration::ExportDefaultDeclaration(default_decl) => {
                 let decl_kind = &default_decl.declaration;
@@ -193,7 +192,7 @@ impl GetMethod for ModuleDeclaration<'_> {
                             FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                         ) {
                             func_decl.id.as_ref().map(|id| Method {
-                                name: id.name.to_compact_str(),
+                                name: id.name.into(),
                                 r#static: false,
                                 call_signature: false,
                                 kind: MethodKind::Normal,
@@ -209,7 +208,7 @@ impl GetMethod for ModuleDeclaration<'_> {
             ModuleDeclaration::ExportDeclaration(export_decl) => {
                 if let Declaration::FunctionDeclaration(func_decl) = &export_decl.declaration {
                     return func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.to_compact_str(),
+                        name: id.name.into(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -223,8 +222,8 @@ impl GetMethod for ModuleDeclaration<'_> {
     }
 }
 
-impl GetMethod for Declaration<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for Declaration<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         match self {
             Declaration::FunctionDeclaration(func_decl) => {
                 if matches!(
@@ -232,7 +231,7 @@ impl GetMethod for Declaration<'_> {
                     FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction
                 ) {
                     func_decl.id.as_ref().map(|id| Method {
-                        name: id.name.to_compact_str(),
+                        name: id.name.into(),
                         r#static: false,
                         call_signature: false,
                         kind: MethodKind::Normal,
@@ -247,8 +246,8 @@ impl GetMethod for Declaration<'_> {
     }
 }
 
-impl GetMethod for Statement<'_> {
-    fn get_method(&self) -> Option<Method> {
+impl<'a> GetMethod<'a> for Statement<'a> {
+    fn get_method(&self) -> Option<Method<'a>> {
         if let Some(decl) = self.as_module_declaration() {
             decl.get_method()
         } else if let Some(decl) = self.as_declaration() {
@@ -259,7 +258,7 @@ impl GetMethod for Statement<'_> {
     }
 }
 
-fn check_and_report<T: GetMethod>(members: &[T], ctx: &LintContext<'_>) {
+fn check_and_report<'a, T: GetMethod<'a>>(members: &[T], ctx: &LintContext<'_>) {
     // A violation needs at least two members, so bail out before doing any work.
     if members.len() < 2 {
         return;

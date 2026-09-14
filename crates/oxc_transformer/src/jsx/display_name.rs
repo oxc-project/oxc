@@ -107,7 +107,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
-                    if let Some(name) = prop.key().static_name() {
+                    if let Some(name) =
+                        prop.key().static_name().and_then(oxc_ast::StaticName::into_utf8)
+                    {
                         break Str::from_str_in(&name, ctx);
                     }
                     return;

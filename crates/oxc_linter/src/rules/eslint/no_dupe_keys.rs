@@ -85,7 +85,7 @@ impl Rule for NoDupeKeys {
             let Some(name) = prop.key.static_name() else {
                 continue;
             };
-            if is_proto_setter_property(prop, &name) {
+            if is_proto_setter_property(prop, name.as_js_str()) {
                 continue;
             }
             if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
@@ -100,7 +100,7 @@ impl Rule for NoDupeKeys {
     }
 }
 
-fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: &str) -> bool {
+fn is_proto_setter_property(prop: &ObjectProperty<'_>, name: oxc_str::JSStr<'_>) -> bool {
     name == "__proto__"
         && prop.kind == PropertyKind::Init
         && !prop.computed

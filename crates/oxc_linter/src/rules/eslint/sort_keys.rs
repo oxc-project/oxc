@@ -156,7 +156,10 @@ fn is_object_sorted(
                 prev_key = None;
             }
             ObjectPropertyKind::ObjectProperty(obj) => {
-                let Some(key) = obj.key.static_name() else { continue };
+                let Some(key) = obj.key.static_name().and_then(oxc_ast::StaticName::into_utf8)
+                else {
+                    continue;
+                };
 
                 if let Some(ref prev) = prev_key {
                     let ordering = compare_keys(prev, &key, options);
@@ -352,7 +355,7 @@ fn collect_fixable_properties<'a>(
                     SpreadPos::End => return None,
                 }
 
-                let key = obj.key.static_name()?;
+                let key = obj.key.static_name().and_then(oxc_ast::StaticName::into_utf8)?;
 
                 props.push(FixableProperty {
                     key,

@@ -19,7 +19,10 @@ use crate::{
     utils::{find_property, is_vue_component_options_object_excluding_instance},
 };
 
-fn require_prop_type_constructor_diagnostic(prop_name: &str, span: Span) -> OxcDiagnostic {
+fn require_prop_type_constructor_diagnostic(
+    prop_name: &impl std::fmt::Display,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("The \"{prop_name}\" property should be a constructor."))
         .with_label(span)
 }
@@ -119,22 +122,26 @@ fn verify_props<'a>(props_obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         let value = prop.value.get_inner_expression();
 
         match value {
-            Expression::ArrayExpression(arr) => check_array_elements(arr, prop_name.as_ref(), ctx),
+            Expression::ArrayExpression(arr) => check_array_elements(arr, &prop_name, ctx),
             Expression::ObjectExpression(obj) => {
                 let Some(type_prop) = find_property(obj, "type") else { continue };
                 let type_value = type_prop.value.get_inner_expression();
                 if let Expression::ArrayExpression(arr) = type_value {
-                    check_array_elements(arr, prop_name.as_ref(), ctx);
+                    check_array_elements(arr, &prop_name, ctx);
                 } else {
-                    check_and_report(type_value, prop_name.as_ref(), ctx);
+                    check_and_report(type_value, &prop_name, ctx);
                 }
             }
-            _ => check_and_report(value, prop_name.as_ref(), ctx),
+            _ => check_and_report(value, &prop_name, ctx),
         }
     }
 }
 
-fn check_array_elements<'a>(arr: &ArrayExpression<'a>, prop_name: &str, ctx: &LintContext<'a>) {
+fn check_array_elements<'a>(
+    arr: &ArrayExpression<'a>,
+    prop_name: &impl std::fmt::Display,
+    ctx: &LintContext<'a>,
+) {
     for elem in &arr.elements {
         if let ArrayExpressionElement::SpreadElement(_) = elem {
             continue;
@@ -145,7 +152,11 @@ fn check_array_elements<'a>(arr: &ArrayExpression<'a>, prop_name: &str, ctx: &Li
     }
 }
 
-fn check_and_report<'a>(expr: &Expression<'a>, prop_name: &str, ctx: &LintContext<'a>) {
+fn check_and_report<'a>(
+    expr: &Expression<'a>,
+    prop_name: &impl std::fmt::Display,
+    ctx: &LintContext<'a>,
+) {
     let expr = expr.get_inner_expression();
     if !is_forbidden_type(expr) {
         return;

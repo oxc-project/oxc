@@ -111,7 +111,7 @@ fn get_emit_validator_name(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<
     let nodes = ctx.nodes();
     let parent = nodes.parent_node(node.id());
     let AstKind::ObjectProperty(prop) = parent.kind() else { return None };
-    let emit_name = prop.key.static_name()?;
+    let emit_name = prop.key.static_name().and_then(oxc_ast::StaticName::into_utf8)?;
 
     let obj_node = nodes.parent_node(parent.id());
     if !matches!(obj_node.kind(), AstKind::ObjectExpression(_)) {

@@ -312,7 +312,7 @@ fn check_deep_namespace_for_object_pattern(
     ctx: &LintContext<'_>,
 ) {
     for property in &pattern.properties {
-        let Some(name) = property.key.name() else {
+        let Some(name) = property.key.name().and_then(oxc_ast::StaticName::into_utf8) else {
             continue;
         };
 

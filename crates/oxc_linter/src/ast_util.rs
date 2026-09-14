@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticName,
     ast::{BindingIdentifier, *},
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -807,36 +807,22 @@ pub fn is_default_this_binding<'a>(
     }
 }
 
-pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
+pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticName<'a>> {
     let (key, computed) = match parent_node.kind() {
         AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(method_definition) => {
-            (&method_definition.key, method_definition.computed)
-        }
+        AstKind::MethodDefinition(definition) => (&definition.key, definition.computed),
         AstKind::ObjectProperty(property) => (&property.key, property.computed),
         _ => return None,
     };
-
     if key.is_identifier() && !computed {
         return key.name();
     }
-
-    if matches!(key, PropertyKey::NullLiteral(_)) {
-        return Some("null".into());
-    }
-
     match key {
-        PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
-        PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && let Some(cooked) = &template.quasis[0].value.cooked
-            {
-                return Some(Cow::Borrowed(cooked.as_str()));
-            }
-
-            None
+        PropertyKey::NullLiteral(_) => Some("null".into()),
+        PropertyKey::RegExpLiteral(regex) => Some(StaticName::Owned(regex.regex.to_string())),
+        PropertyKey::BigIntLiteral(bigint) => Some(bigint.value.as_str().into()),
+        PropertyKey::TemplateLiteral(template) if template.expressions.is_empty() => {
+            template.single_quasi().map(|name| StaticName::from(name.as_str()))
         }
         _ => None,
     }
@@ -909,19 +895,15 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
                 definition.key.name()
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
-            } else if let Some(name) = name {
-                Some(Cow::Borrowed(name.as_str()))
             } else {
-                None
+                name.map(StaticName::from)
             }
         }
         _ => {
             if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
-            } else if let Some(name) = name {
-                Some(Cow::Borrowed(name.as_str()))
             } else {
-                None
+                name.map(StaticName::from)
             }
         }
     };

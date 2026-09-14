@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_dupe_class_members_diagnostic(
-    member_name: &str, /*Class member name */
+    member_name: impl std::fmt::Debug, /*Class member name */
     decl_span: Span,
     re_decl_span: Span,
 ) -> OxcDiagnostic {
