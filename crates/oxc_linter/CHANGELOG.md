@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.83.0] - 2026-09-14
+
+### 🚀 Features
+
+- afe950d linter/react: Update lint rules to accomodate changes in React 19.3 (#26571) (Connor Shea)
+
+### 🐛 Bug Fixes
+
+- fb87ed7 linter/unicorn/prefer-array-flat-map: Report `.filter().flatMap()` chains (#26626) (camc314)
+- 336b654 linter/unicorn/prefer-at: Report single-character substring calls (#26623) (camc314)
+- a5bba6d linter/eslint/no-unused-vars: Respect rest params after-used option (#26579) (Bartok)
+- c1470a2 linter/eslint/no-unused-vars: Preserve ambient implicit exports (#26582) (Dex Hunter)
+- 9a469d2 linter/unicorn/prefer-global-this: Preserve window event method references (#26611) (Dex Hunter)
+- aaff758 linter/unicorn/prefer-default-parameters: Report violation for `??=` and `||=` (#26607) (Bartok)
+- 2bed25a linter/unicorn/prefer-array-flat: Skip plain `concat` normalization (#26604) (im10furry)
+- 1aa5ec1 linter/typescript/prefer-for-of: Handle computed collections (#26584) (camc314)
+- 1e90019 linter/typescript: Mark `no-unnecessary-type-parameters` and `prefer-find` suggestions as implemented (#26586) (Mikhail Baev)
+- 4231536 linter: Compare label text in runtime optimization assertion (#26526) (camc314)
+- 36d5534 linter: Include file path in diagnostic assertion (#26525) (camc314)
+- 31508b1 parser: Reject return types on constructor overloads (#26523) (camc314)
+
+### ⚡ Performance
+
+- 1d681b0 linter/react/jsx-pascal-case: Avoid temporary name segment vector (#26531) (camc314)
+- 2ad7d49 linter/promise/catch-or-return: Avoid temporary formatting vectors (#26505) (camc314)
+- 203235b linter/jsx-a11y/no-static-element-interactions: Avoid role vector (#26504) (camc314)
+- 2e95167 linter/jsx-a11y/anchor-is-valid: Avoid temporary attribute vector (#26501) (camc314)
+- deafdba linter/react/exhaustive-deps: Avoid temporary dependency vector (#26502) (camc314)
+- 4f1627f linter/oxc/branches-sharing-code: Compute deletion spans lazily (#26500) (camc314)
+- c068fd2 linter/react/jsx-curly-brace-presence: Avoid newline position allocation (#26499) (camc314)
+- ed4357c linter/eslint/no-restricted-properties: Skip empty configurations (#26497) (camc314)
+- 92e41b7 linter/oxc/no-barrel-file: Iterate module requests directly (#26498) (camc314)
+- 5255ee3 linter/unicorn/prefer-single-call: Avoid temporary argument vector (#26494) (camc314)
+- 96ef365 linter/unicorn/prefer-includes: Reduce suggestion allocations (#26492) (camc314)
+- a71fd7f linter/unicorn/no-new-buffer: Avoid temporary argument vector (#26491) (camc314)
+- 11085e7 linter/jsdoc/require-yields: Short-circuit JSDoc checks (#26488) (camc314)
+- 9b1aff8 linter/unicorn/no-useless-undefined: Skip calls without trailing undefined (#26481) (camc314)
+- 1e5d5d7 linter/eslint/no-unused-vars: Skip absent global declaration checks (#26457) (camc314)
+- 403f899 linter/eslint/no-undef: Check globals once per unresolved name (#26456) (camc314)
+- 118adb0 linter/eslint/no-restricted-imports: Avoid redundant import scans (#26455) (camc314)
+- ab848f2 linter/eslint/no-useless-assignment: Skip tracking exported symbols (#26449) (camc314)
+- 1b6e409 linter/unicorn/prefer-object-from-entries: Avoid allocating configured paths (#26448) (camc314)
+- 2206875 linter/eslint/new-cap: Avoid unnecessary callee name allocations (#26447) (camc314)
+
+### 📚 Documentation
+
+- b927e0a linter/typescript/await-thenable: Add missing lang for markdown doc comment (#26438) (Ari Perkkiö)
+
 ## [1.82.0] - 2026-09-07
 
 ### 🚀 Features
