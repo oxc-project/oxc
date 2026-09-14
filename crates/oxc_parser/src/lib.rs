@@ -1395,6 +1395,9 @@ mod test {
     fn tokens_after_unambiguous_await_reparse() {
         for source in [
             "await /x/u; export {};",
+            // Reparsing merges `/a/`, but splits `/b/g`, increasing the token count.
+            "await /a/ /b/g; export {};",
+            "before(); await /a/ /b/g; between(); await /x/u; export {}; tail();",
             "before(); await /x/u; after(); export {}; tail();",
             "before(); await /x/u; between(); await /y/g; export {}; tail();",
             "await /x/u\nawait /y/g\nexport {};",
