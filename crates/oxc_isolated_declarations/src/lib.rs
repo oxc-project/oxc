@@ -650,7 +650,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 emitted_function_overload_names.insert(name);
                             }
                         } else if (!is_internal || emitted_function_overload_names.contains(&name))
-                            && (include_unexported || self.scope.has_value_reference(&name))
+                            && (include_unexported || self.scope.has_value_reference(name))
                         {
                             can_expando_function_names.insert(name);
                             namespace_mergeable_function_names.insert(name);
@@ -663,7 +663,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             if declarator.type_annotation.is_none()
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
                                 && let Some(name) = declarator.id.get_identifier_name()
-                                && (include_unexported || self.scope.has_value_reference(&name))
+                                && (include_unexported || self.scope.has_value_reference(name))
                             {
                                 can_expando_function_names.insert(name);
                             }

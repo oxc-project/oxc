@@ -17612,6 +17612,39 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │     accessor i() {}
     ╰────
 
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:10:5]
+  9 │     accessor static h: any;
+ 10 │     accessor i() {}
+    ·     ────────
+ 11 │     accessor get j() { return false; }
+    ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:11:5]
+ 10 │     accessor i() {}
+ 11 │     accessor get j() { return false; }
+    ·     ────────
+ 12 │     accessor set k(v: any) {}
+    ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:12:5]
+ 11 │     accessor get j() { return false; }
+ 12 │     accessor set k(v: any) {}
+    ·     ────────
+ 13 │     accessor constructor() {}
+    ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:13:5]
+ 12 │     accessor set k(v: any) {}
+ 13 │     accessor constructor() {}
+    ·     ────────
+ 14 │     accessor l?: any;
+    ╰────
+
   × TS(1276): An 'accessor' property cannot be declared optional.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:14:15]
  13 │     accessor constructor() {}

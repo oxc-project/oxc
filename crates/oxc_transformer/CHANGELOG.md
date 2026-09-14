@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 75cd919 transformer: Preserve receivers in private optional chains (#26535) (camc314)
+
 ## [0.149.0] - 2026-09-07
 
 ### 💥 BREAKING CHANGES

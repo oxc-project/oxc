@@ -1,7 +1,40 @@
 parser_misc Summary:
-AST Parsed     : 108/108 (100.00%)
-Positive Passed: 108/108 (100.00%)
-Negative Passed: 218/218 (100.00%)
+AST Parsed     : 110/110 (100.00%)
+Positive Passed: 110/110 (100.00%)
+Negative Passed: 227/227 (100.00%)
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
+ 1 │ abstract class C { abstract accessor x(): void; }
+   ·                             ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-async-method.ts:1:11]
+ 1 │ class C { accessor async x() {} }
+   ·           ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-getter.ts:1:18]
+ 1 │ class C { static accessor get x() { return 0; } }
+   ·                  ────────
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-method.ts:1:18]
+ 1 │ class C { static accessor x() {} }
+   ·                  ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-setter.ts:1:18]
+ 1 │ class C { static accessor set x(value: number) {} }
+   ·                  ────────
+   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4763,6 +4796,32 @@ Negative Passed: 218/218 (100.00%)
  1 │ class A {constructor(public constructor){}}
  2 │ class B {constructor(readonly constructor){}}
    ·                               ───────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-ambient.ts:1:19]
+ 1 │ declare class C { readonly constructor(); }
+   ·                   ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-overload.ts:2:3]
+ 1 │ class C {
+ 2 │   readonly constructor(value: number);
+   ·   ────────
+ 3 │   constructor(value: number) {}
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-quoted.ts:1:18]
+ 1 │ class C { public readonly "constructor"() {} }
+   ·                  ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor.ts:1:11]
+ 1 │ class C { readonly constructor() {} }
+   ·           ────────
    ╰────
 
   × Invalid rest element target in destructuring assignment

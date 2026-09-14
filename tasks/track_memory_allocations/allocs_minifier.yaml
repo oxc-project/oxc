@@ -49,7 +49,7 @@ antd.js:
   sys deallocs: 860
   sys alloc bytes: 29976375 # 29.98 MB
   sys peak growth: 19934749 # 19.93 MB
-  arena allocs: 187032
+  arena allocs: 187025
   arena reallocs: 63323
   arena size: 43370040 # 43.37 MB
 
@@ -71,6 +71,6 @@ kitchen-sink.tsx:
   sys deallocs: 1854
   sys alloc bytes: 5304692 # 5.30 MB
   sys peak growth: 3707457 # 3.71 MB
-  arena allocs: 31944
+  arena allocs: 31927
   arena reallocs: 12185
   arena size: 8688104 # 8.69 MB

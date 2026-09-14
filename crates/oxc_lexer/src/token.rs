@@ -460,7 +460,7 @@ impl StringSpan {
 #[cfg(test)]
 mod tests {
     use super::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
-    use crate::{Lexer, PAD, default_options};
+    use crate::{LexOptions, Lexer, PAD};
 
     #[test]
     fn from_u8_round_trips_every_variant() {
@@ -535,9 +535,7 @@ mod tests {
             let n = bytes.len();
             bytes.extend_from_slice(&[0u8; PAD]);
             for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
-                let mut opts = default_options();
-                opts.jsx = jsx;
-                opts.ts = ts;
+                let opts = LexOptions { jsx, ts, ..Default::default() };
                 let mut lexer = Lexer::new();
                 lexer.lex(&bytes, n, opts);
                 for kind in lexer.kinds() {

@@ -1,14 +1,13 @@
 #![cfg(target_endian = "little")]
 #![expect(clippy::cast_possible_truncation, reason = "test helpers: lengths fit u32")]
 
-use oxc_lexer::{Lexer, PAD, TokenKind, default_options, diag_code, lex_utf8};
+use oxc_lexer::{LexOptions, Lexer, PAD, TokenKind, diag_code, lex_utf8};
 
 fn kinds_of(code: &str, module: bool) -> Vec<TokenKind> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
-    let mut opts = default_options();
-    opts.source_type_module = module;
+    let opts = LexOptions { source_type_module: module, ..Default::default() };
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
@@ -18,8 +17,7 @@ fn diag_codes(code: &str, module: bool) -> Vec<u16> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len() as u32;
     buf.resize(buf.len() + PAD, 0);
-    let mut opts = default_options();
-    opts.source_type_module = module;
+    let opts = LexOptions { source_type_module: module, ..Default::default() };
     let (res, _arena) = lex_utf8(&buf, n, opts);
     res.diagnostics().iter().map(|d| d.code).collect()
 }
