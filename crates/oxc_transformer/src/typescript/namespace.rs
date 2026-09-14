@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{
@@ -8,6 +9,8 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
+
+use super::cleanup::Erase;
 
 use crate::{context::TraverseCtx, state::TransformState};
 
@@ -61,6 +64,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
                     continue;
                 }
                 Statement::TSGlobalDeclaration(decl) => {
+                    Erase(ctx).visit_ts_global_declaration(&decl);
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
@@ -110,6 +114,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 
 impl<'a> TypeScriptNamespace {
     fn handle_external(decl: &TSExternalModuleDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        Erase(ctx).visit_ts_external_module_declaration(decl);
         if !decl.declare {
             ctx.state.error(ambient_module_nested(decl.span));
         }
@@ -125,6 +130,7 @@ impl<'a> TypeScriptNamespace {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if decl.declare {
+            Erase(ctx).visit_ts_namespace_declaration(&decl);
             return;
         }
 
@@ -135,14 +141,17 @@ impl<'a> TypeScriptNamespace {
         //
         // Lowering a declaration updates the symbol flags right away, so for a symbol
         // with several declarations the live flags may already describe the emitted
-        // `let` binding by the time a later declaration gets here. Use the immutable
-        // per-declaration flags from the redeclaration list instead. A symbol without
+        // `let` binding by the time a later declaration gets here. Use the
+        // per-declaration flags from the redeclaration list instead; declarations
+        // not yet visited still have their original flags. A symbol without
         // redeclarations has a single declaration, which is visited only once, so its
         // live flags are still what the semantic builder produced.
         let symbol_id = ident.symbol_id();
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
         if redeclarations.is_empty() {
             if ctx.scoping().symbol_flags(symbol_id).is_namespace_module() {
+                Erase(ctx).visit_binding_identifier(&ident);
+                Erase(ctx).visit_ts_namespace_declaration_body(&body);
                 return;
             }
         } else {
@@ -171,6 +180,8 @@ impl<'a> TypeScriptNamespace {
             let current_declaration_flags =
                 redeclarations.iter().find(|rd| rd.span == ident.span).unwrap().flags;
             if current_declaration_flags.is_namespace_module() {
+                Erase(ctx).visit_binding_identifier(&ident);
+                Erase(ctx).visit_ts_namespace_declaration_body(&body);
                 return;
             }
         }
@@ -209,7 +220,8 @@ impl<'a> TypeScriptNamespace {
                 Statement::TSNamespaceDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
-                Statement::TSGlobalDeclaration(_) => {
+                Statement::TSGlobalDeclaration(decl) => {
+                    Erase(ctx).visit_ts_global_declaration(&decl);
                     // Remove it.
                     // Note: It is legal to have a `TSGlobalDeclaration` nested within an external
                     // module: `declare module 'foo' { global {} }`.
@@ -217,6 +229,7 @@ impl<'a> TypeScriptNamespace {
                 Statement::ExportDeclaration(export_decl) => {
                     let decl = export_decl.unbox().declaration;
                     if decl.declare() {
+                        Erase(ctx).visit_declaration(&decl);
                         continue;
                     }
                     match decl {
@@ -239,7 +252,9 @@ impl<'a> TypeScriptNamespace {
                             Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
                         }
                         Declaration::FunctionDeclaration(ref func_decl) => {
-                            if !func_decl.is_typescript_syntax() {
+                            if func_decl.is_typescript_syntax() {
+                                Erase(ctx).visit_declaration(&decl);
+                            } else {
                                 // Function declaration always has a binding
                                 let binding = BoundIdentifier::from_binding_ident(
                                     func_decl.id.as_ref().unwrap(),
@@ -273,7 +288,9 @@ impl<'a> TypeScriptNamespace {
                         }
                         Declaration::TSTypeAliasDeclaration(_)
                         | Declaration::TSInterfaceDeclaration(_)
-                        | Declaration::TSGlobalDeclaration(_) => {}
+                        | Declaration::TSGlobalDeclaration(_) => {
+                            Erase(ctx).visit_declaration(&decl);
+                        }
                     }
                 }
                 _ => new_stmts.push(stmt),
@@ -284,6 +301,7 @@ impl<'a> TypeScriptNamespace {
         // fine — the type-only check above reads per-declaration flags, so later
         // declarations of a merged namespace don't depend on the old flags.
         if Self::is_redeclaration_namespace(&ident, ctx) {
+            Erase(ctx).visit_binding_identifier(&ident);
             // Lowered to an assignment to the existing runtime binding — drop only the
             // module bits and keep the flags describing that binding.
             *ctx.scoping_mut().symbol_flags_mut(symbol_id) -=
@@ -293,6 +311,11 @@ impl<'a> TypeScriptNamespace {
             *ctx.scoping_mut().symbol_flags_mut(binding.symbol_id) =
                 SymbolFlags::BlockScopedVariable;
             ctx.scoping_mut().set_symbol_span(binding.symbol_id, ident.span);
+            ctx.scoping_mut().set_symbol_declaration_flags(
+                binding.symbol_id,
+                ident.span,
+                SymbolFlags::BlockScopedVariable,
+            );
             let declaration = Self::create_variable_declaration(&binding, span, ident.span, ctx);
             if is_export {
                 let export_decl = ExportDeclaration::boxed(span, declaration, ctx);
@@ -313,13 +336,6 @@ impl<'a> TypeScriptNamespace {
             scope_id,
             ctx,
         ));
-
-        let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-        if !redeclarations.iter().any(|redeclaration| redeclaration.flags.is_enum())
-            && redeclarations.last().is_some_and(|redeclaration| redeclaration.span == ident.span)
-        {
-            ctx.scoping_mut().clear_symbol_redeclarations(symbol_id);
-        }
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -547,7 +563,10 @@ impl<'a> TypeScriptNamespace {
         let symbol_id = id.symbol_id();
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
         // Find first value declaration because only value declaration will emit JS code.
-        redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
+        redeclarations
+            .iter()
+            .find(|rd| rd.flags.is_value() && !rd.flags.is_ambient())
+            .is_some_and(|rd| rd.span != id.span)
     }
 }
 

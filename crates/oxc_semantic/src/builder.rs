@@ -739,7 +739,8 @@ impl<'a> SemanticBuilder<'a> {
     /// Resolved references are removed. Unresolved references stay in the flat
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
-    fn resolve_references_for_current_scope(&mut self, unresolved_start: usize) {
+    fn resolve_references_for_current_scope(&mut self, unresolved_start: usize, reference_start: usize) {
+        self.scoping.record_parameter_scope(self.current_scope_id, reference_start);
         if self.unresolved_references.len() == unresolved_start {
             return;
         }
@@ -2084,6 +2085,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         let unresolved_start = self.unresolved_references.len();
+        let reference_start = self.scoping.references_len();
 
         if let Some(type_parameters) = &func.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
@@ -2106,7 +2108,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Param types, return type, type parameter constraints and the `this` type must be
         // resolved after type parameters have been declared.
         // In all cases, need to avoid binding to variables/types declared inside the function body.
-        self.resolve_references_for_current_scope(unresolved_start);
+        self.resolve_references_for_current_scope(unresolved_start, reference_start);
 
         if let Some(body) = &func.body {
             self.visit_function_body(body);
@@ -2166,6 +2168,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         );
 
         let unresolved_start = self.unresolved_references.len();
+        let reference_start = self.scoping.references_len();
 
         if let Some(parameters) = &expr.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
@@ -2195,7 +2198,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Param types, return type and type parameter constraints must be resolved after
         // type parameters have been declared.
         // In all cases, need to avoid binding to variables/types declared inside the function body.
-        self.resolve_references_for_current_scope(unresolved_start);
+        self.resolve_references_for_current_scope(unresolved_start, reference_start);
 
         self.visit_arrow_function_body(&expr.body);
 
@@ -2399,13 +2402,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         param.bind(self);
 
         let unresolved_start = self.unresolved_references.len();
+        let reference_start = self.scoping.references_len();
 
         self.visit_span(&param.span);
         self.visit_binding_pattern(&param.pattern);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
         }
-        self.resolve_references_for_current_scope(unresolved_start);
+        self.resolve_references_for_current_scope(unresolved_start, reference_start);
         self.leave_node(kind);
     }
 

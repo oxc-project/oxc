@@ -2,6 +2,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
+use oxc_ast_visit::Visit;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -16,7 +17,7 @@ use crate::{
     },
 };
 
-use super::TypeScript;
+use super::{TypeScript, cleanup::Erase};
 
 impl<'a> TypeScript<'a> {
     /// Transform class fields, and constructor parameters that includes modifiers into `this` assignments.
@@ -366,7 +367,7 @@ impl<'a> TypeScript<'a> {
         )
     }
 
-    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &TraverseCtx<'a>) {
+    pub(super) fn transform_class_on_exit(&self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.remove_class_fields_without_initializer {
             return;
         }
@@ -376,10 +377,11 @@ impl<'a> TypeScript<'a> {
                 && prop.value.is_none()
                 && !prop.key.is_private_identifier()
             {
-                if let Some(key) = prop.key.as_expression() {
-                    return key_needs_temp_var(key, ctx);
+                let keep = prop.key.as_expression().is_some_and(|key| key_needs_temp_var(key, ctx));
+                if !keep {
+                    Erase(ctx).visit_class_element(element);
                 }
-                return false;
+                return keep;
             }
             true
         });
