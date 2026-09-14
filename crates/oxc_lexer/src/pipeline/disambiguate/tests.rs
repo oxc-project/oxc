@@ -64,11 +64,16 @@ fn first_slash_kind(code: &str, file_type: FileType) -> Option<TokenKind> {
     buf.resize(n + PAD, 0);
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, file_type.options());
-    let kinds = lx.kinds()[..count].to_vec();
-    (0..count)
-        .filter(|&i| !kinds[i].is_trivia() && buf[lx.spans[i].start as usize] == b'/')
-        .map(|i| kinds[i])
-        .next()
+    let kinds = &lx.kinds()[..count];
+    assert!(lx.spans.len() >= count);
+
+    for (&kind, span) in kinds.iter().zip(&lx.spans) {
+        if !kind.is_trivia() && buf[span.start as usize] == b'/' {
+            return Some(kind);
+        }
+    }
+
+    None
 }
 
 #[track_caller]
