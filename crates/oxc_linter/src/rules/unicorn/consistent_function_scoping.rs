@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -165,7 +165,28 @@ impl Rule for ConsistentFunctionScoping {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext) {
+        let mut reference_scopes = FxHashMap::default();
+        for node in ctx.nodes() {
+            if matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
+                self.check_function(node, ctx, &mut reference_scopes);
+            }
+        }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        // .d.ts files are never run, so there are no perf considerations for them.
+        !ctx.source_type().is_typescript_definition()
+    }
+}
+
+impl ConsistentFunctionScoping {
+    fn check_function<'a>(
+        &self,
+        node: &AstNode<'a>,
+        ctx: &LintContext<'a>,
+        reference_scopes: &mut FxHashMap<SymbolId, FxHashSet<ScopeId>>,
+    ) {
         enum FunctionLikeBody<'a, 'b> {
             Function(&'b FunctionBody<'a>),
             Arrow(&'b ArrowFunctionBody<'a>),
@@ -267,7 +288,7 @@ impl Rule for ConsistentFunctionScoping {
             match node.kind() {
                 AstKind::Function(function) => rf.visit_formal_parameters(&function.params),
                 AstKind::ArrowFunctionExpression(arrow) => {
-                    rf.visit_formal_parameters(&arrow.params)
+                    rf.visit_formal_parameters(&arrow.params);
                 }
                 _ => unreachable!(),
             }
@@ -283,7 +304,7 @@ impl Rule for ConsistentFunctionScoping {
         }
 
         let parent_scope_id = ctx.scoping().scope_parent_id(function_scope_id).unwrap();
-        let mut checked_ancestor_symbols = FxHashSet::default();
+        let parent_scope_flags = ctx.scoping().scope_flags(parent_scope_id);
         for reference_id in function_var_references {
             let reference = ctx.scoping().get_reference(reference_id);
             let Some(symbol_id) = reference.symbol_id() else { continue };
@@ -296,18 +317,24 @@ impl Rule for ConsistentFunctionScoping {
             {
                 // References to more distant ancestors do not prevent moving the function out
                 // of its parent function. Preserve the existing handling of block scopes.
-                if ctx.scoping().scope_flags(parent_scope_id).is_function()
+                if parent_scope_flags.is_function()
+                    // Direct eval can introduce parent bindings that static resolution cannot see.
+                    && !parent_scope_flags.contains_direct_eval()
                     && scope_id != parent_scope_id
                     && !matches!(
                         ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind(),
                         AstKind::Function(function) if function.scope_id() == parent_scope_id
                     )
-                    // A symbol that passed this check already has no references in the parent.
-                    // Scan its references only once, even if it occurs repeatedly in this function.
-                    && (!checked_ancestor_symbols.insert(symbol_id)
-                        || !ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
-                            ctx.nodes().get_node(reference.node_id()).scope_id() == parent_scope_id
-                        }))
+                    // Index each ancestor symbol once per file, including across candidate functions.
+                    && !reference_scopes
+                        .entry(symbol_id)
+                        .or_insert_with(|| {
+                            ctx.scoping()
+                                .get_resolved_references(symbol_id)
+                                .map(|reference| ctx.nodes().get_node(reference.node_id()).scope_id())
+                                .collect()
+                        })
+                        .contains(&parent_scope_id)
                 {
                     continue;
                 }
@@ -325,11 +352,6 @@ impl Rule for ConsistentFunctionScoping {
             maybe_parent_scope_type,
             function_name,
         ));
-    }
-
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        // .d.ts files are never run, so there are no perf considerations for them.
-        !ctx.source_type().is_typescript_definition()
     }
 }
 
@@ -1157,8 +1179,53 @@ fn test() {
             }",
             None,
         ),
+        (
+            "const shared = 1;
+            function first() {
+                console.log(shared);
+                function inner() { return shared; }
+                return inner();
+            }
+            function second() {
+                function inner() { return shared; }
+                return inner();
+            }
+            function third() {
+                function inner() { return shared; }
+                return inner();
+            }",
+            None,
+        ),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_direct_eval() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "var shared = 1;
+        function outer() {
+            eval('var shared = 2');
+            function inner() { return shared; }
+            return inner();
+        }",
+        "var shared = 1;
+        function outer() {
+            eval('var shared = 2');
+            const inner = () => shared;
+            return inner();
+        }",
+    ];
+    Tester::new(
+        ConsistentFunctionScoping::NAME,
+        ConsistentFunctionScoping::PLUGIN,
+        pass,
+        Vec::<&str>::new(),
+    )
+    .change_rule_path_extension("cjs")
+    .test();
 }
