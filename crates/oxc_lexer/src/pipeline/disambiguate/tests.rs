@@ -908,10 +908,14 @@ fn spans_of(code: &str, file_type: FileType) -> Vec<(u32, u32)> {
     buf.resize(n + PAD, 0);
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, file_type.options());
-    let kinds = lx.kinds()[..count].to_vec();
-    (0..count)
-        .filter(|&i| !kinds[i].is_trivia())
-        .map(|i| (lx.spans[i].start, lx.spans[i].end))
+    let kinds = &lx.kinds()[..count];
+    assert!(lx.spans.len() >= count);
+
+    kinds
+        .iter()
+        .zip(&lx.spans)
+        .filter(|(kind, _)| !kind.is_trivia())
+        .map(|(_, &span)| (span.start, span.end))
         .collect()
 }
 
