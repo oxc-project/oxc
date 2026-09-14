@@ -9,13 +9,13 @@ fn assert_regex(code: &str) {
 
 #[track_caller]
 fn assert_division(code: &str) {
-    division(code, false);
+    division(code, FileType::ScriptJS);
 }
 
 #[test]
 fn debugger_precedes_regex() {
     regex("debugger\n/re/.test(x);", FileType::ScriptJS);
-    division("x.debugger / 2;", false);
+    division("x.debugger / 2;", FileType::ScriptJS);
 }
 
 #[test]
@@ -26,71 +26,71 @@ fn for_of_head_precedes_regex() {
     regex("for (const x of /re/) ;", FileType::ScriptJS);
     regex("for await (x of /re/) ;", FileType::ScriptJS);
     regex("for ([a, of] of /re/) ;", FileType::ScriptJS);
-    division("var of = 1; of / 2;", false);
-    division("instance/of/g;", false);
-    division("for (of / 2;;) ;", false);
-    division("for (of of of / 2) ;", false);
-    division("f(x, of / 2);", false);
+    division("var of = 1; of / 2;", FileType::ScriptJS);
+    division("instance/of/g;", FileType::ScriptJS);
+    division("for (of / 2;;) ;", FileType::ScriptJS);
+    division("for (of of of / 2) ;", FileType::ScriptJS);
+    division("f(x, of / 2);", FileType::ScriptJS);
 }
 
 #[test]
 fn unicode_ident_postfix_is_division() {
-    division("\u{53d8}\u{91cf}++ / b;", false);
-    division("\u{53d8}\u{91cf} ++ / b;", false);
+    division("\u{53d8}\u{91cf}++ / b;", FileType::ScriptJS);
+    division("\u{53d8}\u{91cf} ++ / b;", FileType::ScriptJS);
     regex("a\u{2028}++/re/.lastIndex;", FileType::ScriptJS);
     regex("a\u{2029}++/re/.lastIndex;", FileType::ScriptJS);
-    division("a\u{00a0}++ / b;", false);
-    division("a\u{200a}++ / b;", false);
-    division("a\u{feff}++ / b;", false);
-    division("a\u{200d}b++ / 2;", false);
+    division("a\u{00a0}++ / b;", FileType::ScriptJS);
+    division("a\u{200a}++ / b;", FileType::ScriptJS);
+    division("a\u{feff}++ / b;", FileType::ScriptJS);
+    division("a\u{200d}b++ / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn operand_keywords_before_value_braces() {
-    division("x = typeof {} / 2;", false);
-    division("x = void {} / 2;", false);
-    division("f(new class {} / 2);", false);
-    division("return function(){} / 2;", false);
-    division("throw {} / 2;", false);
-    division("if (k in {} / 2) ;", false);
-    division("switch (x) { case class {} / 2: break; }", false);
+    division("x = typeof {} / 2;", FileType::ScriptJS);
+    division("x = void {} / 2;", FileType::ScriptJS);
+    division("f(new class {} / 2);", FileType::ScriptJS);
+    division("return function(){} / 2;", FileType::ScriptJS);
+    division("throw {} / 2;", FileType::ScriptJS);
+    division("if (k in {} / 2) ;", FileType::ScriptJS);
+    division("switch (x) { case class {} / 2: break; }", FileType::ScriptJS);
     regex("return\nclass C {} /re/.test(x);", FileType::ScriptJS);
     regex("export default class C {} /re/.test(x);", FileType::ScriptJS);
 }
 
 #[test]
 fn object_literal_heritage() {
-    division("(class C extends {valueOf(){}} {} / 2);", false);
-    division("(class extends {a:1}.constructor {} / 2);", false);
+    division("(class C extends {valueOf(){}} {} / 2);", FileType::ScriptJS);
+    division("(class extends {a:1}.constructor {} / 2);", FileType::ScriptJS);
     regex("x = class {}\n{} /re/.test(s);", FileType::ScriptJS);
     regex("x = class C extends {a:1} {}\n{} /re/.test(s);", FileType::ScriptJS);
 }
 
 #[test]
 fn ts_implements_heritage() {
-    division("(class C implements I, J {} / 2);", true);
-    division("(class C extends B implements I, J {} / 2);", true);
+    division("(class C implements I, J {} / 2);", FileType::ScriptTS);
+    division("(class C extends B implements I, J {} / 2);", FileType::ScriptTS);
     regex("class C implements I, J {} /re/.test(x);", FileType::ScriptTS);
     regex("x = class A {}, y\n{} /re/.test(s);", FileType::ScriptTS);
 }
 
 #[test]
 fn decorated_class_expression() {
-    division("x = @dec class {} / 2;", true);
-    division("x = @ns.dec() class {} / 2;", true);
-    division("f(@a @b(1) class {} / 2);", true);
+    division("x = @dec class {} / 2;", FileType::ScriptTS);
+    division("x = @ns.dec() class {} / 2;", FileType::ScriptTS);
+    division("f(@a @b(1) class {} / 2);", FileType::ScriptTS);
     regex("@dec class C {} /re/.test(x);", FileType::ScriptTS);
 }
 
 #[test]
 fn ts_angle_before_brace() {
-    division("(class C<T> {} / 2);", true);
-    division("(class C extends B<T> {} / 2);", true);
-    division("(class C<T extends {a: 1}> {} / 2);", true);
-    division("(class C<T = X> {} / 2);", true);
-    division("x = f < T > {} / re / g;", true);
-    division("x = a < b + c > {} / 2;", true);
-    division("(a > {} / 2);", true);
+    division("(class C<T> {} / 2);", FileType::ScriptTS);
+    division("(class C extends B<T> {} / 2);", FileType::ScriptTS);
+    division("(class C<T extends {a: 1}> {} / 2);", FileType::ScriptTS);
+    division("(class C<T = X> {} / 2);", FileType::ScriptTS);
+    division("x = f < T > {} / re / g;", FileType::ScriptTS);
+    division("x = a < b + c > {} / 2;", FileType::ScriptTS);
+    division("(a > {} / 2);", FileType::ScriptTS);
     regex("class C<T> {} /re/.test(x);", FileType::ScriptTS);
     regex("interface I<T> {} /re/.test(x);", FileType::ScriptTS);
     regex("declare class C<T> {} /re/.test(x);", FileType::ScriptTS);
@@ -99,47 +99,47 @@ fn ts_angle_before_brace() {
 
 #[test]
 fn brace_tail_before_as() {
-    division("let v = {a: 1} as T / y;", true);
-    division("let v = {} as A<B> / y;", true);
-    division("let v = {} satisfies T / y;", true);
-    division("let v = ({} as T) / y;", true);
+    division("let v = {a: 1} as T / y;", FileType::ScriptTS);
+    division("let v = {} as A<B> / y;", FileType::ScriptTS);
+    division("let v = {} satisfies T / y;", FileType::ScriptTS);
+    division("let v = ({} as T) / y;", FileType::ScriptTS);
 }
 
 #[test]
 fn template_literal_types_cross() {
-    division("(class C<T extends `a${X}`> {} / 2);", true);
-    division("(class C<T extends `a${`b${Y}`}`> {} / 2);", true);
-    division("let v = x as A<`a${B}`> / y;", true);
+    division("(class C<T extends `a${X}`> {} / 2);", FileType::ScriptTS);
+    division("(class C<T extends `a${`b${Y}`}`> {} / 2);", FileType::ScriptTS);
+    division("let v = x as A<`a${B}`> / y;", FileType::ScriptTS);
     regex("class C<T extends `a${X}`> {} /re/.test(x);", FileType::ScriptTS);
 }
 
 #[test]
 fn hidden_trivia_segments() {
-    division("a\u{00a0}++ / b;", false);
-    division("a\u{200a}++ / b;", false);
-    division("a\u{feff}++ / b;", false);
-    division("x = a \u{00a0}++ / b;", false);
+    division("a\u{00a0}++ / b;", FileType::ScriptJS);
+    division("a\u{200a}++ / b;", FileType::ScriptJS);
+    division("a\u{feff}++ / b;", FileType::ScriptJS);
+    division("x = a \u{00a0}++ / b;", FileType::ScriptJS);
     regex("return\u{00a0}++/re/.lastIndex;", FileType::ScriptJS);
-    division("x.\u{00a0}return++ / 2;", false);
+    division("x.\u{00a0}return++ / 2;", FileType::ScriptJS);
     regex("a\u{2028}++/re/.lastIndex;", FileType::ScriptJS);
     regex("f(a,\u{00a0}++/re/.lastIndex);", FileType::ScriptJS);
 }
 
 #[test]
 fn ts_as_type_brace() {
-    division("let v = x as {} / y;", true);
-    division("let v = x as {a: 1} / y;", true);
-    division("let v = f() as {} / y;", true);
-    division("let v = x satisfies {} / y;", true);
+    division("let v = x as {} / y;", FileType::ScriptTS);
+    division("let v = x as {a: 1} / y;", FileType::ScriptTS);
+    division("let v = f() as {} / y;", FileType::ScriptTS);
+    division("let v = x satisfies {} / y;", FileType::ScriptTS);
     regex("f();\nas: {} /re/.test(s);", FileType::ScriptTS);
 }
 
 #[test]
 fn ts_as_angle_form() {
-    division("let v = x as A<B> / y;", true);
-    division("let v = x as a.b.C<D> / y;", true);
-    division("let v = f() as A<B<C>> / y;", true);
-    division("let v = x satisfies A<B> / y;", true);
+    division("let v = x as A<B> / y;", FileType::ScriptTS);
+    division("let v = x as a.b.C<D> / y;", FileType::ScriptTS);
+    division("let v = f() as A<B<C>> / y;", FileType::ScriptTS);
+    division("let v = x satisfies A<B> / y;", FileType::ScriptTS);
     regex("let q = a > /re/.source.length;", FileType::ScriptTS);
     regex("let q = (x < y) > /re/.source;", FileType::ScriptTS);
     regex("g(x => /re/.test(x));", FileType::ScriptTS);
@@ -147,10 +147,10 @@ fn ts_as_angle_form() {
 
 #[test]
 fn ts_return_type_function_expr() {
-    division("x = function(): T {} / 2;", true);
-    division("x = function(): a.b.T {} / 2;", true);
-    division("x = function(): Map<A, B> {} / 2;", true);
-    division("x = async function(): T {} / 2;", true);
+    division("x = function(): T {} / 2;", FileType::ScriptTS);
+    division("x = function(): a.b.T {} / 2;", FileType::ScriptTS);
+    division("x = function(): Map<A, B> {} / 2;", FileType::ScriptTS);
+    division("x = async function(): T {} / 2;", FileType::ScriptTS);
     regex("function f(): T {} /re/.test(x);", FileType::ScriptTS);
     regex("function f(): Map<A, B> {} /re/.test(x);", FileType::ScriptTS);
     regex("L: {} /re/.test(x);", FileType::ScriptTS);
@@ -159,7 +159,7 @@ fn ts_return_type_function_expr() {
 
 #[test]
 fn async_function_expression_value() {
-    division("x = async function(){} / 2;", false);
+    division("x = async function(){} / 2;", FileType::ScriptJS);
     regex("async function f(){} /re/.test(x);", FileType::ScriptJS);
 }
 
@@ -186,12 +186,12 @@ fn slash_dense_chains() {
 
 #[test]
 fn colon_member_and_ternary_values() {
-    division("({a: function(){} / 2, b: 1});", false);
-    division("({a: {} / 2});", false);
-    division("({a: {b: {} / 2}});", false);
-    division("({a: class {} / 2});", false);
-    division("x = c ? y : {} / 2;", false);
-    division("x = c ? d ? a : b : {} / 2;", false);
+    division("({a: function(){} / 2, b: 1});", FileType::ScriptJS);
+    division("({a: {} / 2});", FileType::ScriptJS);
+    division("({a: {b: {} / 2}});", FileType::ScriptJS);
+    division("({a: class {} / 2});", FileType::ScriptJS);
+    division("x = c ? y : {} / 2;", FileType::ScriptJS);
+    division("x = c ? d ? a : b : {} / 2;", FileType::ScriptJS);
     regex("L: {} /re/.test(x);", FileType::ScriptJS);
     regex("{ L: function f(){} /re/ }", FileType::ScriptJS);
     regex("switch (x) { case a: function f(){} /re/ }", FileType::ScriptJS);
@@ -400,11 +400,11 @@ fn ts_declarator_type_annotation_already_resolved() {
 
 #[test]
 fn ts_initialised_declarator_stays_division() {
-    division("let x= T\n/re/g.exec(s);", true);
-    division("let x: number = 1\n/re/g.exec(s);", true);
-    division("let x: T = y\n/re/g.exec(s);", true);
-    division("let a = b\n/hi/g.exec(c);", false);
-    division("let a = b, c = d\n/hi/g.exec(e);", false);
+    division("let x= T\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: number = 1\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: T = y\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let a = b\n/hi/g.exec(c);", FileType::ScriptJS);
+    division("let a = b, c = d\n/hi/g.exec(e);", FileType::ScriptJS);
 }
 
 #[test]
@@ -429,25 +429,25 @@ fn module_specifier_forces_asi() {
     regex("import 'y'\n/re/.exec(s);", FileType::ScriptJS);
     regex("export * from 'y'\n/re/.exec(s);", FileType::ScriptJS);
     regex("export {a} from 'y'\n/re/.exec(s);", FileType::ScriptJS);
-    division("x = 'y' / 2;", false);
-    division("x = f('y') / 2;", false);
+    division("x = 'y' / 2;", FileType::ScriptJS);
+    division("x = f('y') / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn restricted_production_keywords_precede_regex() {
     regex("for(;;){ break\n/re/.test(b); }", FileType::ScriptJS);
     regex("for(;;){ continue\n/re/.test(b); }", FileType::ScriptJS);
-    division("x.break / 2;", false);
-    division("x.continue / 2;", false);
+    division("x.break / 2;", FileType::ScriptJS);
+    division("x.continue / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn ts_return_type_keyword_name_is_not_operand() {
     regex("function f(): void {}\n/re/.test(x);", FileType::ScriptTS);
     regex("function f(): void {} /re/.test(x);", FileType::ScriptTS);
-    division("x = function(): void {} / 2;", true);
-    division("x = void {} / 2;", false);
-    division("x = typeof {} / 2;", false);
+    division("x = function(): void {} / 2;", FileType::ScriptTS);
+    division("x = void {} / 2;", FileType::ScriptJS);
+    division("x = typeof {} / 2;", FileType::ScriptJS);
 }
 
 #[test]
@@ -489,7 +489,7 @@ fn ts_pathological_type_annotation_forces_asi() {
   readonly [K in keyof T as `get${Capitalize<K & string>}`]-?: T[K]
 } & (abstract new () => void) & T
 /re/g.exec(s)"#,
-        true,
+        FileType::ScriptTS,
     );
 }
 
@@ -505,36 +505,36 @@ fn ts_type_literal_brace_forces_asi() {
     regex("let x: A extends B ? C : { a: T }\n/re/g.exec(s);", FileType::ScriptTS);
     regex("let x: A extends B ? { a: T } : C\n/re/g.exec(s);", FileType::ScriptTS);
     regex("declare function f(): A | { a: T }\n/re/g.exec(s);", FileType::ScriptTS);
-    division("x = {a: 1}\n/re/g.exec(s);", true);
-    division("let x = {a: 1}\n/re/g.exec(s);", true);
-    division("let x: T = {a: 1}\n/re/g.exec(s);", true);
-    division("x = class {}\n/re/g.exec(s);", true);
-    division("let v = {} as T\n/re/g.exec(s);", true);
-    division("f({} / 2);", true);
+    division("x = {a: 1}\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = {a: 1}\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: T = {a: 1}\n/re/g.exec(s);", FileType::ScriptTS);
+    division("x = class {}\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let v = {} as T\n/re/g.exec(s);", FileType::ScriptTS);
+    division("f({} / 2);", FileType::ScriptTS);
 }
 
 #[test]
 fn ts_as_void_is_division() {
-    division("let x = y as void\n/re/g.exec(s);", true);
-    division("let x = y as void / 2;", true);
-    division("let x = y satisfies void\n/re/g.exec(s);", true);
-    division("let x: T = y as void\n/re/g.exec(s);", true);
+    division("let x = y as void\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y as void / 2;", FileType::ScriptTS);
+    division("let x = y satisfies void\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: T = y as void\n/re/g.exec(s);", FileType::ScriptTS);
     regex("x = void /re/.source;", FileType::ScriptTS);
     regex("let x: void\n/re/g.exec(s);", FileType::ScriptTS);
     regex("function f(): void {}\n/re/.test(x);", FileType::ScriptTS);
-    division("x.as / 2;", true);
+    division("x.as / 2;", FileType::ScriptTS);
 }
 
 #[test]
 fn unicode_line_separator_after_token() {
-    division("a++\u{2028}/re/g.exec(s);", false);
-    division("a++\u{2029}/re/g.exec(s);", false);
-    division("a--\u{2028}/re/g.exec(s);", false);
-    division("a++\u{00a0}/re/g.exec(s);", false);
-    division("let x = y as void\u{2028}/re/g.exec(s);", true);
-    division("let x = y as void\u{2029}/re/g.exec(s);", true);
-    division("let x = y as void\u{00a0}/re/g.exec(s);", true);
-    division("let x = y! as void\u{2028}/re/g.exec(s);", true);
+    division("a++\u{2028}/re/g.exec(s);", FileType::ScriptJS);
+    division("a++\u{2029}/re/g.exec(s);", FileType::ScriptJS);
+    division("a--\u{2028}/re/g.exec(s);", FileType::ScriptJS);
+    division("a++\u{00a0}/re/g.exec(s);", FileType::ScriptJS);
+    division("let x = y as void\u{2028}/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y as void\u{2029}/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y as void\u{00a0}/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y! as void\u{2028}/re/g.exec(s);", FileType::ScriptTS);
     regex("a\u{2028}++/re/.lastIndex;", FileType::ScriptJS);
     regex("a\u{2029}++/re/.lastIndex;", FileType::ScriptJS);
     regex("return\u{00a0}++/re/.lastIndex;", FileType::ScriptJS);
@@ -544,36 +544,36 @@ fn unicode_line_separator_after_token() {
 
 #[test]
 fn ts_non_null_before_as_is_division() {
-    division("let x = y! as {a: T}\n/re/g.exec(s);", true);
-    division("let x = y! as {}\n/re/g.exec(s);", true);
-    division("let x = y! as Array<T>\n/re/g.exec(s);", true);
-    division("let x = y! as a.b.C<D>\n/re/g.exec(s);", true);
-    division("let x = y! as import('m').T<U>\n/re/g.exec(s);", true);
-    division("let x = y!! as {a: T} / 2;", true);
-    division("let x = f(y)! as {a: T} / 2;", true);
-    division("let x = y! satisfies {a: T} / 2;", true);
-    division("let x = !y\n/re/g.test(s);", true);
+    division("let x = y! as {a: T}\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y! as {}\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y! as Array<T>\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y! as a.b.C<D>\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y! as import('m').T<U>\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y!! as {a: T} / 2;", FileType::ScriptTS);
+    division("let x = f(y)! as {a: T} / 2;", FileType::ScriptTS);
+    division("let x = y! satisfies {a: T} / 2;", FileType::ScriptTS);
+    division("let x = !y\n/re/g.test(s);", FileType::ScriptTS);
     regex("x = !/re/.test(s);", FileType::ScriptTS);
     regex("if (!a) /re/.test(s);", FileType::ScriptTS);
 }
 
 #[test]
 fn ts_import_type_chain_head() {
-    division("let x = y as import('m').T<U>\n/re/g.exec(s);", true);
-    division("let x = y as import('m').T<U> / 2;", true);
-    division("let x = y satisfies import('m').T<U>\n/re/g.exec(s);", true);
-    division("let x = y as import('m').a.b.T<U>\n/re/g.exec(s);", true);
+    division("let x = y as import('m').T<U>\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y as import('m').T<U> / 2;", FileType::ScriptTS);
+    division("let x = y satisfies import('m').T<U>\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = y as import('m').a.b.T<U>\n/re/g.exec(s);", FileType::ScriptTS);
     regex("let x: import('m').T<U>\n/re/g.exec(s);", FileType::ScriptTS);
     regex("let x: typeof import('./m').default\n/re/g.exec(s);", FileType::ScriptTS);
 }
 
 #[test]
 fn value_ternary_and_arrow_stay_division() {
-    division("let x = c ? a : b\n/re/.exec(s);", true);
-    division("let x = c ? a : b\n/re/.exec(s);", false);
-    division("let f = (a) => b\n/re/.exec(s);", false);
-    division("let x: T = c ? a : b\n/re/.exec(s);", true);
-    division("export const x: T = 1\n/re/g.exec(s);", true);
+    division("let x = c ? a : b\n/re/.exec(s);", FileType::ScriptTS);
+    division("let x = c ? a : b\n/re/.exec(s);", FileType::ScriptJS);
+    division("let f = (a) => b\n/re/.exec(s);", FileType::ScriptJS);
+    division("let x: T = c ? a : b\n/re/.exec(s);", FileType::ScriptTS);
+    division("export const x: T = 1\n/re/g.exec(s);", FileType::ScriptTS);
 }
 
 #[test]
@@ -604,13 +604,13 @@ fn ts_numeric_literal_type_forces_asi() {
 
 #[test]
 fn numeric_value_stays_division() {
-    division("let x = 1\n/re/g.exec(s);", true);
-    division("let x: number = 1\n/re/g.exec(s);", true);
-    division("x = a - 1\n/re/g.exec(s);", true);
-    division("let x: T = a - 1\n/re/g.exec(s);", true);
-    division("x = 1\n/re/g.exec(s);", false);
-    division("x = 1n\n/re/g.exec(s);", false);
-    division("x = 0x1f\n/re/g.exec(s);", false);
+    division("let x = 1\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: number = 1\n/re/g.exec(s);", FileType::ScriptTS);
+    division("x = a - 1\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: T = a - 1\n/re/g.exec(s);", FileType::ScriptTS);
+    division("x = 1\n/re/g.exec(s);", FileType::ScriptJS);
+    division("x = 1n\n/re/g.exec(s);", FileType::ScriptJS);
+    division("x = 0x1f\n/re/g.exec(s);", FileType::ScriptJS);
 }
 
 #[test]
@@ -624,11 +624,11 @@ fn ts_template_literal_type_forces_asi() {
 
 #[test]
 fn template_value_stays_division() {
-    division("let x = `lit`\n/re/g.exec(s);", true);
-    division("let x = `p${y}s`\n/re/g.exec(s);", true);
-    division("let x: T = `lit`\n/re/g.exec(s);", true);
-    division("x = `lit`\n/re/g.exec(s);", false);
-    division("x = `p${y}s`\n/re/g.exec(s);", false);
+    division("let x = `lit`\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x = `p${y}s`\n/re/g.exec(s);", FileType::ScriptTS);
+    division("let x: T = `lit`\n/re/g.exec(s);", FileType::ScriptTS);
+    division("x = `lit`\n/re/g.exec(s);", FileType::ScriptJS);
+    division("x = `p${y}s`\n/re/g.exec(s);", FileType::ScriptJS);
 }
 
 #[test]
@@ -637,8 +637,8 @@ fn ts_definite_assignment_forces_asi() {
     regex("let x!: T[]\n/re/.exec(s);", FileType::ScriptTS);
     regex("let x!: 1\n/re/.exec(s);", FileType::ScriptTS);
     regex("let a = 1, b!: T\n/re/.exec(s);", FileType::ScriptTS);
-    division("x! / 2;", true);
-    division("x!\n/re/g.exec(s);", true);
+    division("x! / 2;", FileType::ScriptTS);
+    division("x!\n/re/g.exec(s);", FileType::ScriptTS);
 }
 
 #[test]
@@ -646,9 +646,9 @@ fn restricted_production_label_precedes_regex() {
     regex("outer: for(;;){ break outer\n/re/.test(b); }", FileType::ScriptJS);
     regex("outer: for(;;){ continue outer\n/re/.test(b); }", FileType::ScriptJS);
     regex("outer: for(;;){ break outer\n/re/.test(b); }", FileType::ScriptTS);
-    division("outer: for(;;){ break\nouter\n/re/g.test(b); }", false);
-    division("x.break / 2;", false);
-    division("x.continue / 2;", false);
+    division("outer: for(;;){ break\nouter\n/re/g.test(b); }", FileType::ScriptJS);
+    division("x.break / 2;", FileType::ScriptJS);
+    division("x.continue / 2;", FileType::ScriptJS);
 }
 
 #[test]
@@ -673,12 +673,12 @@ fn tsx_literal_type_asi_then_jsx_element() {
 
 #[test]
 fn named_function_expression_body_then_slash_is_division() {
-    division("const x = function foo() {} /42/i", false);
-    division("(function foo() {} /42/i)", false);
-    division("!function fn() {} /42/i;", false);
-    division("x = function* generation() {} /42/i;", false);
-    division("void async function fn() {}\n/foo/g", false);
-    division("x = async function* g() {}\n/foo/g", false);
+    division("const x = function foo() {} /42/i", FileType::ScriptJS);
+    division("(function foo() {} /42/i)", FileType::ScriptJS);
+    division("!function fn() {} /42/i;", FileType::ScriptJS);
+    division("x = function* generation() {} /42/i;", FileType::ScriptJS);
+    division("void async function fn() {}\n/foo/g", FileType::ScriptJS);
+    division("x = async function* g() {}\n/foo/g", FileType::ScriptJS);
     regex("function foo() {}\n/42/i", FileType::ScriptJS);
     regex("function* generation() {}\n/42/i", FileType::ScriptJS);
     regex("async function fn() {}\n/42/i", FileType::ScriptJS);
@@ -689,7 +689,7 @@ fn postfix_increment_then_block_then_regex() {
     regex("x++\n{}\n/foo/", FileType::ScriptJS);
     regex("x--\n{}\n/foo/", FileType::ScriptJS);
     regex("a[0]++\n{}\n/foo/", FileType::ScriptJS);
-    division("x = y++ / 2", false);
+    division("x = y++ / 2", FileType::ScriptJS);
 }
 
 #[test]
@@ -702,8 +702,8 @@ fn class_body_after_a_heritage_list_with_type_arguments_precedes_regex() {
     ] {
         regex(code, FileType::ScriptTS);
     }
-    division("x = class implements A, V<T> {} / 2;", true);
-    division("x = class extends A implements B, V<T<U>> {} / 2;", true);
+    division("x = class implements A, V<T> {} / 2;", FileType::ScriptTS);
+    division("x = class extends A implements B, V<T<U>> {} / 2;", FileType::ScriptTS);
 }
 
 #[test]
@@ -719,9 +719,9 @@ fn function_or_class_expression_after_arrow_or_shift_is_a_value() {
         "x = a > function(){} / 2;",
         "x = a => class {}\n/re/.test(s);",
     ] {
-        division(code, false);
+        division(code, FileType::ScriptJS);
     }
-    division("x = <T>function(){} / 2;", true);
+    division("x = <T>function(){} / 2;", FileType::ScriptTS);
     regex("x = a => {}\n/re/.test(s);", FileType::ScriptJS);
     regex("x = () => {}\n/re/.test(s);", FileType::ScriptJS);
 }
@@ -741,7 +741,7 @@ fn function_expression_return_type_then_body_is_a_value() {
         "x = [function f(): T {}\n/ 2 / 3];",
         "x = function(): T {}\n/ 2 / 3;",
     ] {
-        division(code, true);
+        division(code, FileType::ScriptTS);
     }
     regex("function f(): T {}\n/re/.test(x);", FileType::ScriptTS);
     regex("function f(): { a: T } {}\n/re/.test(x);", FileType::ScriptTS);
@@ -783,9 +783,9 @@ fn label_colon_inside_a_function_expression_body_is_a_statement() {
     ] {
         stream(code, FileType::ScriptJS, want);
     }
-    division("x = function(){ return {a: {} / 2} };", false);
-    division("x = function(){ a = c ? d : {} / 2 };", false);
-    division("x = { a: {} / 2 };", false);
+    division("x = function(){ return {a: {} / 2} };", FileType::ScriptJS);
+    division("x = function(){ a = c ? d : {} / 2 };", FileType::ScriptJS);
+    division("x = { a: {} / 2 };", FileType::ScriptJS);
 }
 
 #[test]
@@ -813,10 +813,10 @@ fn bodiless_function_signature_before_a_line_break_ends_the_statement() {
     }
     let ks = kinds_of("declare function y()\n<div/>;", FileType::ScriptTSX);
     assert!(ks.contains(&TokenKind::JsxLt), "{ks:?}");
-    division("x = f()\n/ 2 / 3;", true);
-    division("f<T>()\n/ 2 / 3;", true);
-    division("new Foo()\n/ 2 / 3;", true);
-    division("x = function(){}\n/ 2 / 3;", true);
+    division("x = f()\n/ 2 / 3;", FileType::ScriptTS);
+    division("f<T>()\n/ 2 / 3;", FileType::ScriptTS);
+    division("new Foo()\n/ 2 / 3;", FileType::ScriptTS);
+    division("x = function(){}\n/ 2 / 3;", FileType::ScriptTS);
 }
 
 #[test]
@@ -842,29 +842,29 @@ fn operand_heads_before_a_value_brace() {
     ] {
         stream(code, FileType::ScriptJSX, want);
     }
-    division("f(...{a: 1} / 2);", false);
-    division("x = [...function(){} / 2];", false);
-    division("f(...class {} / 2);", false);
-    division("for (const k of {a: 1} / 2) ;", false);
-    division("for (x of {} / 2) ;", false);
-    division("x = a, void {} / 2;", false);
-    division("f(a, void {} / 2);", false);
+    division("f(...{a: 1} / 2);", FileType::ScriptJS);
+    division("x = [...function(){} / 2];", FileType::ScriptJS);
+    division("f(...class {} / 2);", FileType::ScriptJS);
+    division("for (const k of {a: 1} / 2) ;", FileType::ScriptJS);
+    division("for (x of {} / 2) ;", FileType::ScriptJS);
+    division("x = a, void {} / 2;", FileType::ScriptJS);
+    division("f(a, void {} / 2);", FileType::ScriptJS);
 }
 
 #[test]
 fn unicode_whitespace_before_a_glued_number() {
-    division("{\u{2028}5. // c\n/\u{a0}b / c; }", false);
-    division("x = \u{a0}5.\n/ 2 / 3;", false);
-    division("x = \u{2028}5\n/ 2 / 3;", false);
+    division("{\u{2028}5. // c\n/\u{a0}b / c; }", FileType::ScriptJS);
+    division("x = \u{a0}5.\n/ 2 / 3;", FileType::ScriptJS);
+    division("x = \u{2028}5\n/ 2 / 3;", FileType::ScriptJS);
 }
 
 #[test]
 fn function_head_walks_cross_every_return_type_shape() {
     division(
         "const P = function a(x: A): abstract new () => abstract new () => keyof any {}\n/ 2 / 3;",
-        true,
+        FileType::ScriptTS,
     );
-    division("x = [function (): _ is Record<Promise<V>> {}\n/ 2 / 3];", true);
+    division("x = [function (): _ is Record<Promise<V>> {}\n/ 2 / 3];", FileType::ScriptTS);
     regex(
         "function y(): x is abstract new () => typeof import('m') extends boolean ? K<A, B<unique symbol>> : void[] {}\n/[a-z]+/v.x;",
         FileType::ScriptTS,
@@ -921,8 +921,8 @@ fn brace_after_a_generic_return_type_is_a_body() {
             "{code:?}: {ks:?}"
         );
     }
-    division("x = f < T > {} / 2;", true);
-    division("x = c ? function* (...a): Pick<E<F<G>>>[][] {} / 2 : null;", true);
+    division("x = f < T > {} / 2;", FileType::ScriptTS);
+    division("x = c ? function* (...a): Pick<E<F<G>>>[][] {} / 2 : null;", FileType::ScriptTS);
 }
 
 #[test]
@@ -930,17 +930,17 @@ fn ts_postfix_bang_before_a_block_brace() {
     regex("[typeof ab]!\n{\n}\n/x/.test(s);", FileType::ScriptTS);
     regex("x!\n{}\n/x/.test(s);", FileType::ScriptTS);
     regex("f(x)!\n{}\n/x/.test(s);", FileType::ScriptTS);
-    division("x = !{} / 2;", true);
-    division("x = a && !{}.b / 2;", true);
-    division("x!\n/re/g.exec(s);", true);
+    division("x = !{} / 2;", FileType::ScriptTS);
+    division("x = a && !{}.b / 2;", FileType::ScriptTS);
+    division("x!\n/re/g.exec(s);", FileType::ScriptTS);
 }
 
 #[test]
 fn adjacent_type_atoms_end_an_annotation() {
-    division("let x: Foo<T>\nf(y)\n/re/.test(s);", true);
-    division("let x: T\nf(y)\n/re/.test(s);", true);
-    division("let x: T[]\nf(y)\n/re/.test(s);", true);
-    division("let x: `lit`\nf(y)\n/re/.test(s);", true);
+    division("let x: Foo<T>\nf(y)\n/re/.test(s);", FileType::ScriptTS);
+    division("let x: T\nf(y)\n/re/.test(s);", FileType::ScriptTS);
+    division("let x: T[]\nf(y)\n/re/.test(s);", FileType::ScriptTS);
+    division("let x: `lit`\nf(y)\n/re/.test(s);", FileType::ScriptTS);
     regex("let x: typeof import('m').default\n/re/.test(s);", FileType::ScriptTS);
     regex("let x: asserts y is T\n/re/.test(s);", FileType::ScriptTS);
     regex("let x: abstract new () => T\n/re/.test(s);", FileType::ScriptTS);
