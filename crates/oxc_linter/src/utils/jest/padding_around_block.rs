@@ -5,35 +5,27 @@ use oxc_span::{GetSpan, Span};
 
 use crate::context::LintContext;
 
-fn padding_around_jest_block_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Missing padding before {name} block"))
-        .with_help(format!("Make sure there is an empty new line before the {name} block"))
+fn padding_around_jest_block_diagnostic(span: Span, name: &str, position: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Missing padding {position} {name} block"))
+        .with_help(format!("Make sure there is an empty new line {position} the {name} block"))
         .with_label(span)
 }
 
-pub fn report_missing_padding_before_jest_block<'a>(
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
-    name: &str,
-) {
+fn get_span_between<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<Span> {
     let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
     let prev_statement_span = match scope_node.kind() {
         AstKind::Program(program) => get_statement_span_before_node(node, program.body.as_slice()),
         AstKind::ArrowFunctionExpression(arrow_func_expr) => {
-            let Some(body) = arrow_func_expr.get_function_body() else { return };
+            let Some(body) = arrow_func_expr.get_function_body() else { return None };
             get_statement_span_before_node(node, body.statements.as_slice())
         }
         AstKind::Function(function) => {
-            let Some(body) = &function.body else {
-                return;
-            };
+            let Some(body) = &function.body else { return None };
             get_statement_span_before_node(node, body.statements.as_slice())
         }
         _ => None,
     };
-    let Some(prev_statement_span) = prev_statement_span else {
-        return;
-    };
+    let Some(prev_statement_span) = prev_statement_span else { return None };
 
     let comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
     let mut span_between_start = prev_statement_span.end;
@@ -54,13 +46,24 @@ pub fn report_missing_padding_before_jest_block<'a>(
         next_attached_start = comment_span.start;
     }
 
-    let span_between = Span::new(span_between_start, span_between_end);
+    Some(Span::new(span_between_start, span_between_end))
+}
+
+pub fn report_missing_padding_before_jest_block<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    name: &str,
+) {
+    let Some(span_between) = get_span_between(node, ctx) else {
+        return;
+    };
     let content = ctx.source_range(span_between);
     if content.matches('\n').count() < 2 {
         ctx.diagnostic_with_fix(
             padding_around_jest_block_diagnostic(
                 Span::new(node.span().start, node.span().start),
                 name,
+                "before",
             ),
             |fixer| {
                 let whitespace_after_last_line =
@@ -78,4 +81,66 @@ fn get_statement_span_before_node(node: &AstNode, statements: &[Statement]) -> O
             if statement.span().end <= node.span().start { Some(statement.span()) } else { None }
         })
         .next_back()
+}
+
+pub fn report_missing_padding_after_jest_block<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+    name: &str,
+) {
+    let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
+    let next_statement_span = match scope_node.kind() {
+        AstKind::Program(program) => get_statement_span_after_node(node, program.body.as_slice()),
+        AstKind::ArrowFunctionExpression(arrow_func_expr) => {
+            let Some(body) = arrow_func_expr.get_function_body() else { return };
+            get_statement_span_after_node(node, body.statements.as_slice())
+        }
+        AstKind::Function(function) => {
+            let Some(body) = &function.body else {
+                return;
+            };
+            get_statement_span_after_node(node, body.statements.as_slice())
+        }
+        _ => None,
+    };
+    let Some(next_statement_span) = next_statement_span else {
+        return;
+    };
+
+    // Fix the padding based on the next node to circumvent having to
+    // handle semicolon that is not included in the AstNode's span.
+    let next_node = ctx.nodes().iter().find(|node| {
+        node.span().start == next_statement_span.start && node.span().end == next_statement_span.end
+    });
+    let Some(next_node) = next_node else {
+        return;
+    };
+
+    let Some(span_between) = get_span_between(next_node, ctx) else {
+        return;
+    };
+    let content = ctx.source_range(span_between);
+    if content.matches('\n').count() < 2 {
+        ctx.diagnostic_with_fix(
+            padding_around_jest_block_diagnostic(
+                Span::new(node.span().end, node.span().end),
+                name,
+                "after",
+            ),
+            |fixer| {
+                let whitespace_after_last_line =
+                    content.rfind('\n').map_or("", |index| content.split_at(index + 1).1);
+                fixer.replace(span_between, format!("\n\n{whitespace_after_last_line}"))
+            },
+        );
+    }
+}
+
+fn get_statement_span_after_node(node: &AstNode, statements: &[Statement]) -> Option<Span> {
+    let Some(statement) =
+        statements.iter().find(|statement| statement.span().start >= node.span().end)
+    else {
+        return None;
+    };
+    Some(statement.span())
 }

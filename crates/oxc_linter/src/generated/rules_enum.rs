@@ -259,6 +259,7 @@ pub use crate::rules::jest::no_test_return_statement::NoTestReturnStatement as J
 pub use crate::rules::jest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as JestNoUnneededAsyncExpectFunction;
 pub use crate::rules::jest::no_untyped_mock_factory::NoUntypedMockFactory as JestNoUntypedMockFactory;
 pub use crate::rules::jest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as JestPaddingAroundAfterAllBlocks;
+pub use crate::rules::jest::padding_around_after_each_blocks::PaddingAroundAfterEachBlocks as JestPaddingAroundAfterEachBlocks;
 pub use crate::rules::jest::padding_around_test_blocks::PaddingAroundTestBlocks as JestPaddingAroundTestBlocks;
 pub use crate::rules::jest::prefer_called_with::PreferCalledWith as JestPreferCalledWith;
 pub use crate::rules::jest::prefer_comparison_matcher::PreferComparisonMatcher as JestPreferComparisonMatcher;
@@ -791,6 +792,7 @@ pub use crate::rules::vitest::no_test_prefixes::NoTestPrefixes as VitestNoTestPr
 pub use crate::rules::vitest::no_test_return_statement::NoTestReturnStatement as VitestNoTestReturnStatement;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::padding_around_after_all_blocks::PaddingAroundAfterAllBlocks as VitestPaddingAroundAfterAllBlocks;
+pub use crate::rules::vitest::padding_around_after_each_blocks::PaddingAroundAfterEachBlocks as VitestPaddingAroundAfterEachBlocks;
 pub use crate::rules::vitest::padding_around_test_blocks::PaddingAroundTestBlocks as VitestPaddingAroundTestBlocks;
 pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
@@ -1251,6 +1253,7 @@ pub enum RuleEnum {
     JestNoUnneededAsyncExpectFunction(JestNoUnneededAsyncExpectFunction),
     JestNoUntypedMockFactory(JestNoUntypedMockFactory),
     JestPaddingAroundAfterAllBlocks(JestPaddingAroundAfterAllBlocks),
+    JestPaddingAroundAfterEachBlocks(JestPaddingAroundAfterEachBlocks),
     JestPaddingAroundTestBlocks(JestPaddingAroundTestBlocks),
     JestPreferCalledWith(JestPreferCalledWith),
     JestPreferComparisonMatcher(JestPreferComparisonMatcher),
@@ -1666,6 +1669,7 @@ pub enum RuleEnum {
     VitestNoTestReturnStatement(VitestNoTestReturnStatement),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks),
+    VitestPaddingAroundAfterEachBlocks(VitestPaddingAroundAfterEachBlocks),
     VitestPaddingAroundTestBlocks(VitestPaddingAroundTestBlocks),
     VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
@@ -2176,7 +2180,9 @@ const JEST_NO_TEST_RETURN_STATEMENT_ID: usize = JEST_NO_TEST_PREFIXES_ID + 1usiz
 const JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = JEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
 const JEST_NO_UNTYPED_MOCK_FACTORY_ID: usize = JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
 const JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = JEST_NO_UNTYPED_MOCK_FACTORY_ID + 1usize;
-const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
+const JEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID: usize =
+    JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
+const JEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = JEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID + 1usize;
 const JEST_PREFER_CALLED_WITH_ID: usize = JEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
 const JEST_PREFER_COMPARISON_MATCHER_ID: usize = JEST_PREFER_CALLED_WITH_ID + 1usize;
 const JEST_PREFER_EACH_ID: usize = JEST_PREFER_COMPARISON_MATCHER_ID + 1usize;
@@ -2635,8 +2641,10 @@ const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize =
     VITEST_NO_TEST_RETURN_STATEMENT_ID + 1usize;
 const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize =
     VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID + 1usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize =
+const VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID: usize =
     VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID + 1usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize =
+    VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID + 1usize;
 const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize =
     VITEST_PADDING_AROUND_TEST_BLOCKS_ID + 1usize;
 const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID + 1usize;
@@ -2748,7 +2756,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 872usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3108,6 +3116,7 @@ static RULE_NAMES: [&str; 870usize] = [
     JestNoUnneededAsyncExpectFunction::NAME,
     JestNoUntypedMockFactory::NAME,
     JestPaddingAroundAfterAllBlocks::NAME,
+    JestPaddingAroundAfterEachBlocks::NAME,
     JestPaddingAroundTestBlocks::NAME,
     JestPreferCalledWith::NAME,
     JestPreferComparisonMatcher::NAME,
@@ -3519,6 +3528,7 @@ static RULE_NAMES: [&str; 870usize] = [
     VitestNoTestReturnStatement::NAME,
     VitestNoUnneededAsyncExpectFunction::NAME,
     VitestPaddingAroundAfterAllBlocks::NAME,
+    VitestPaddingAroundAfterEachBlocks::NAME,
     VitestPaddingAroundTestBlocks::NAME,
     VitestPreferCalledExactlyOnceWith::NAME,
     VitestPreferCalledOnce::NAME,
@@ -4052,6 +4062,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => JEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID,
             Self::JestNoUntypedMockFactory(_) => JEST_NO_UNTYPED_MOCK_FACTORY_ID,
             Self::JestPaddingAroundAfterAllBlocks(_) => JEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
+            Self::JestPaddingAroundAfterEachBlocks(_) => JEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID,
             Self::JestPaddingAroundTestBlocks(_) => JEST_PADDING_AROUND_TEST_BLOCKS_ID,
             Self::JestPreferCalledWith(_) => JEST_PREFER_CALLED_WITH_ID,
             Self::JestPreferComparisonMatcher(_) => JEST_PREFER_COMPARISON_MATCHER_ID,
@@ -4513,6 +4524,9 @@ impl RuleEnum {
                 VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VITEST_PADDING_AROUND_AFTER_EACH_BLOCKS_ID
+            }
             Self::VitestPaddingAroundTestBlocks(_) => VITEST_PADDING_AROUND_TEST_BLOCKS_ID,
             Self::VitestPreferCalledExactlyOnceWith(_) => VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
@@ -5079,6 +5093,7 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::CATEGORY,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::CATEGORY,
+            Self::JestPaddingAroundAfterEachBlocks(_) => JestPaddingAroundAfterEachBlocks::CATEGORY,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::CATEGORY,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::CATEGORY,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::CATEGORY,
@@ -5555,6 +5570,9 @@ impl RuleEnum {
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::CATEGORY
+            }
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::CATEGORY
             }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::CATEGORY,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
@@ -6104,6 +6122,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::FIX,
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::FIX,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::FIX,
+            Self::JestPaddingAroundAfterEachBlocks(_) => JestPaddingAroundAfterEachBlocks::FIX,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::FIX,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::FIX,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::FIX,
@@ -6557,6 +6576,7 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FIX,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => VitestPaddingAroundAfterEachBlocks::FIX,
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::FIX,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
@@ -7191,6 +7211,9 @@ impl RuleEnum {
             Self::JestPaddingAroundAfterAllBlocks(_) => {
                 JestPaddingAroundAfterAllBlocks::documentation()
             }
+            Self::JestPaddingAroundAfterEachBlocks(_) => {
+                JestPaddingAroundAfterEachBlocks::documentation()
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::documentation(),
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::documentation(),
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::documentation(),
@@ -7779,6 +7802,9 @@ impl RuleEnum {
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::documentation()
+            }
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::documentation()
             }
             Self::VitestPaddingAroundTestBlocks(_) => {
                 VitestPaddingAroundTestBlocks::documentation()
@@ -8955,6 +8981,10 @@ impl RuleEnum {
             Self::JestPaddingAroundAfterAllBlocks(_) => {
                 JestPaddingAroundAfterAllBlocks::config_schema(generator)
                     .or_else(|| JestPaddingAroundAfterAllBlocks::schema(generator))
+            }
+            Self::JestPaddingAroundAfterEachBlocks(_) => {
+                JestPaddingAroundAfterEachBlocks::config_schema(generator)
+                    .or_else(|| JestPaddingAroundAfterEachBlocks::schema(generator))
             }
             Self::JestPaddingAroundTestBlocks(_) => {
                 JestPaddingAroundTestBlocks::config_schema(generator)
@@ -10138,6 +10168,10 @@ impl RuleEnum {
                 VitestPaddingAroundAfterAllBlocks::config_schema(generator)
                     .or_else(|| VitestPaddingAroundAfterAllBlocks::schema(generator))
             }
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::config_schema(generator)
+                    .or_else(|| VitestPaddingAroundAfterEachBlocks::schema(generator))
+            }
             Self::VitestPaddingAroundTestBlocks(_) => {
                 VitestPaddingAroundTestBlocks::config_schema(generator)
                     .or_else(|| VitestPaddingAroundTestBlocks::schema(generator))
@@ -10788,6 +10822,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => "jest",
             Self::JestNoUntypedMockFactory(_) => "jest",
             Self::JestPaddingAroundAfterAllBlocks(_) => "jest",
+            Self::JestPaddingAroundAfterEachBlocks(_) => "jest",
             Self::JestPaddingAroundTestBlocks(_) => "jest",
             Self::JestPreferCalledWith(_) => "jest",
             Self::JestPreferComparisonMatcher(_) => "jest",
@@ -11199,6 +11234,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPaddingAroundAfterAllBlocks(_) => "vitest",
+            Self::VitestPaddingAroundAfterEachBlocks(_) => "vitest",
             Self::VitestPaddingAroundTestBlocks(_) => "vitest",
             Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
@@ -12796,6 +12832,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run(node, ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
+            Self::JestPaddingAroundAfterEachBlocks(rule) => rule.run(node, ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run(node, ctx),
             Self::JestPreferCalledWith(rule) => rule.run(node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run(node, ctx),
@@ -13207,6 +13244,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run(node, ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run(node, ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run(node, ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
@@ -13683,6 +13721,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run_once(ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
+            Self::JestPaddingAroundAfterEachBlocks(rule) => rule.run_once(ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_once(ctx),
             Self::JestPreferCalledWith(rule) => rule.run_once(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_once(ctx),
@@ -14094,6 +14133,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run_once(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_once(ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run_once(ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
@@ -14639,6 +14679,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPaddingAroundAfterEachBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferCalledWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15092,6 +15133,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15575,6 +15617,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::JestNoUntypedMockFactory(rule) => rule.should_run(ctx),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
+            Self::JestPaddingAroundAfterEachBlocks(rule) => rule.should_run(ctx),
             Self::JestPaddingAroundTestBlocks(rule) => rule.should_run(ctx),
             Self::JestPreferCalledWith(rule) => rule.should_run(ctx),
             Self::JestPreferComparisonMatcher(rule) => rule.should_run(ctx),
@@ -15986,6 +16029,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.should_run(ctx),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.should_run(ctx),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
@@ -16613,6 +16657,9 @@ impl RuleEnum {
             Self::JestPaddingAroundAfterAllBlocks(_) => {
                 JestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
             }
+            Self::JestPaddingAroundAfterEachBlocks(_) => {
+                JestPaddingAroundAfterEachBlocks::IS_TSGOLINT_RULE
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::IS_TSGOLINT_RULE,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::IS_TSGOLINT_RULE,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::IS_TSGOLINT_RULE,
@@ -17201,6 +17248,9 @@ impl RuleEnum {
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
+            }
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::IS_TSGOLINT_RULE
             }
             Self::VitestPaddingAroundTestBlocks(_) => {
                 VitestPaddingAroundTestBlocks::IS_TSGOLINT_RULE
@@ -17803,6 +17853,7 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::VERSION,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::VERSION,
+            Self::JestPaddingAroundAfterEachBlocks(_) => JestPaddingAroundAfterEachBlocks::VERSION,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::VERSION,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::VERSION,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::VERSION,
@@ -18279,6 +18330,9 @@ impl RuleEnum {
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::VERSION
+            }
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::VERSION
             }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::VERSION,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
@@ -18868,6 +18922,9 @@ impl RuleEnum {
             }
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::HAS_CONFIG,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::HAS_CONFIG,
+            Self::JestPaddingAroundAfterEachBlocks(_) => {
+                JestPaddingAroundAfterEachBlocks::HAS_CONFIG
+            }
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::HAS_CONFIG,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::HAS_CONFIG,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::HAS_CONFIG,
@@ -19362,6 +19419,9 @@ impl RuleEnum {
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => {
                 VitestPaddingAroundAfterAllBlocks::HAS_CONFIG
+            }
+            Self::VitestPaddingAroundAfterEachBlocks(_) => {
+                VitestPaddingAroundAfterEachBlocks::HAS_CONFIG
             }
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::HAS_CONFIG,
             Self::VitestPreferCalledExactlyOnceWith(_) => {
@@ -19918,6 +19978,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::INFO,
             Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::INFO,
             Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::INFO,
+            Self::JestPaddingAroundAfterEachBlocks(_) => JestPaddingAroundAfterEachBlocks::INFO,
             Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::INFO,
             Self::JestPreferCalledWith(_) => JestPreferCalledWith::INFO,
             Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::INFO,
@@ -20371,6 +20432,7 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::INFO
             }
             Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::INFO,
+            Self::VitestPaddingAroundAfterEachBlocks(_) => VitestPaddingAroundAfterEachBlocks::INFO,
             Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::INFO,
             Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::INFO,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::INFO,
@@ -20845,6 +20907,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::JestNoUntypedMockFactory(rule) => rule.types_info(),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
+            Self::JestPaddingAroundAfterEachBlocks(rule) => rule.types_info(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.types_info(),
             Self::JestPreferCalledWith(rule) => rule.types_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.types_info(),
@@ -21256,6 +21319,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.types_info(),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.types_info(),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.types_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
@@ -21719,6 +21783,7 @@ impl RuleEnum {
             Self::JestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::JestNoUntypedMockFactory(rule) => rule.run_info(),
             Self::JestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
+            Self::JestPaddingAroundAfterEachBlocks(rule) => rule.run_info(),
             Self::JestPaddingAroundTestBlocks(rule) => rule.run_info(),
             Self::JestPreferCalledWith(rule) => rule.run_info(),
             Self::JestPreferComparisonMatcher(rule) => rule.run_info(),
@@ -22130,6 +22195,7 @@ impl RuleEnum {
             Self::VitestNoTestReturnStatement(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPaddingAroundAfterAllBlocks(rule) => rule.run_info(),
+            Self::VitestPaddingAroundAfterEachBlocks(rule) => rule.run_info(),
             Self::VitestPaddingAroundTestBlocks(rule) => rule.run_info(),
             Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
@@ -22681,6 +22747,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestNoUnneededAsyncExpectFunction(JestNoUnneededAsyncExpectFunction::default()),
         RuleEnum::JestNoUntypedMockFactory(JestNoUntypedMockFactory::default()),
         RuleEnum::JestPaddingAroundAfterAllBlocks(JestPaddingAroundAfterAllBlocks::default()),
+        RuleEnum::JestPaddingAroundAfterEachBlocks(JestPaddingAroundAfterEachBlocks::default()),
         RuleEnum::JestPaddingAroundTestBlocks(JestPaddingAroundTestBlocks::default()),
         RuleEnum::JestPreferCalledWith(JestPreferCalledWith::default()),
         RuleEnum::JestPreferComparisonMatcher(JestPreferComparisonMatcher::default()),
@@ -23134,6 +23201,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
         RuleEnum::VitestPaddingAroundAfterAllBlocks(VitestPaddingAroundAfterAllBlocks::default()),
+        RuleEnum::VitestPaddingAroundAfterEachBlocks(VitestPaddingAroundAfterEachBlocks::default()),
         RuleEnum::VitestPaddingAroundTestBlocks(VitestPaddingAroundTestBlocks::default()),
         RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
