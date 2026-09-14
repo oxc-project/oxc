@@ -1,3 +1,7 @@
 lexer_misc Summary:
 AST Parsed     : 337/337 (100.00%)
-Positive Passed: 337/337 (100.00%)
+Positive Passed: 335/337 (99.41%)
+Tokens: tasks/coverage/misc/pass/babel-16776-m.js
+
+Tokens: tasks/coverage/misc/pass/unambiguous-await-regex.js
+
