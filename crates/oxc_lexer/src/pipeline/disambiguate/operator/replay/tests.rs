@@ -1,12 +1,6 @@
 use crate::token::TokenKind;
 
-use super::super::super::tests::{FileType, kinds_of};
-
-#[track_caller]
-fn regex(code: &str) {
-    let ks = kinds_of(code, FileType::ScriptJS);
-    assert!(ks.contains(&TokenKind::RegExp), "expected regex in {code:?}: kinds {ks:?}");
-}
+use super::super::super::tests::{FileType, kinds_of, regex};
 
 #[track_caller]
 fn division(code: &str) {
@@ -26,21 +20,21 @@ fn yield_identifier_divides() {
 
 #[test]
 fn yield_keyword_stays_regex() {
-    regex("function* g() { yield /re/; }");
-    regex("function* g() { if (x) { while (y) { yield /re/; } } }");
-    regex("function* g() { const o = { a: yield /re/ }; }");
-    regex("class C { *m() { yield /re/; } }");
-    regex("({ *m() { yield /re/ } });");
-    regex("async function* ag() { yield /re/; }");
-    regex("function* g() { const c = class { [yield /re/](){} }; }");
+    regex("function* g() { yield /re/; }", FileType::ScriptJS);
+    regex("function* g() { if (x) { while (y) { yield /re/; } } }", FileType::ScriptJS);
+    regex("function* g() { const o = { a: yield /re/ }; }", FileType::ScriptJS);
+    regex("class C { *m() { yield /re/; } }", FileType::ScriptJS);
+    regex("({ *m() { yield /re/ } });", FileType::ScriptJS);
+    regex("async function* ag() { yield /re/; }", FileType::ScriptJS);
+    regex("function* g() { const c = class { [yield /re/](){} }; }", FileType::ScriptJS);
 }
 
 #[test]
 fn strict_yield_stays_regex() {
-    regex("\"use strict\"; var r = yield /2/g;");
-    regex("'use strict'\nvar r = yield /2/g;");
-    regex("function f() { \"use strict\"; return yield /2/g; }");
-    regex("class C { m() { return yield /2/g; } }");
+    regex("\"use strict\"; var r = yield /2/g;", FileType::ScriptJS);
+    regex("'use strict'\nvar r = yield /2/g;", FileType::ScriptJS);
+    regex("function f() { \"use strict\"; return yield /2/g; }", FileType::ScriptJS);
+    regex("class C { m() { return yield /2/g; } }", FileType::ScriptJS);
     division("var s = \"use strict\"; var yield = 1; var r = yield /2/g;");
 }
 
@@ -55,15 +49,15 @@ fn await_identifier_divides() {
 
 #[test]
 fn await_keyword_stays_regex() {
-    regex("async function f() { await /re/; }");
-    regex("async function f() { if (x) { await /re/; } }");
-    regex("({ async m() { await /re/ } });");
-    regex("class C { async m() { await /re/ } }");
-    regex("const f = async () => { await /re/ };");
-    regex("const f = async x => { await /re/ };");
-    regex("x = async () => await /re/.test(s);");
-    regex("f(1, async () => await /re/.test(s), 2);");
-    regex("class C { static { await /re/ } }");
+    regex("async function f() { await /re/; }", FileType::ScriptJS);
+    regex("async function f() { if (x) { await /re/; } }", FileType::ScriptJS);
+    regex("({ async m() { await /re/ } });", FileType::ScriptJS);
+    regex("class C { async m() { await /re/ } }", FileType::ScriptJS);
+    regex("const f = async () => { await /re/ };", FileType::ScriptJS);
+    regex("const f = async x => { await /re/ };", FileType::ScriptJS);
+    regex("x = async () => await /re/.test(s);", FileType::ScriptJS);
+    regex("f(1, async () => await /re/.test(s), 2);", FileType::ScriptJS);
+    regex("class C { static { await /re/ } }", FileType::ScriptJS);
 }
 
 #[test]
@@ -111,17 +105,17 @@ fn concise_body_ends_by_asi() {
 
 #[test]
 fn concise_body_asi_generator_side() {
-    regex("function* gen() { const f = () => 0\nyield /re/ }");
+    regex("function* gen() { const f = () => 0\nyield /re/ }", FileType::ScriptJS);
 }
 
 #[test]
 fn concise_body_ternary_colon_does_not_pop() {
-    regex("var await = 1; x = async () => c ? a : await /re/;");
+    regex("var await = 1; x = async () => c ? a : await /re/;", FileType::ScriptJS);
 }
 
 #[test]
 fn no_asi_pop_after_operator() {
-    regex("var f = async () => x +\nawait /2/g;");
+    regex("var f = async () => x +\nawait /2/g;", FileType::ScriptJS);
 }
 
 #[test]
@@ -131,15 +125,15 @@ fn template_substitution_pops_concise() {
 
 #[test]
 fn template_substitution_generator_side() {
-    regex("function* g() { var x = `${() => 1}${yield /re/}`; }");
-    regex("var f = async () => `${await 1}` + await /re/;");
+    regex("function* g() { var x = `${() => 1}${yield /re/}`; }", FileType::ScriptJS);
+    regex("var f = async () => `${await 1}` + await /re/;", FileType::ScriptJS);
 }
 
 #[test]
 fn asi_pop_after_brace_tail() {
     division("var await = 1; var f = async () => y = {a: 1}\nvar r = await /2/g;");
     division("var await = 1; var f = async () => y = function(){}\nvar r = await /2/g;");
-    regex("function* gen() { const f = () => o = {a: 1}\nyield /re/ }");
+    regex("function* gen() { const f = () => o = {a: 1}\nyield /re/ }", FileType::ScriptJS);
 }
 
 #[test]
@@ -153,6 +147,7 @@ fn asi_pop_postfix_only() {
     regex(
         "function* g() { const f = () => o = {a: 1}
 yield /re/ }",
+        FileType::ScriptJS,
     );
     division(
         "function* g() { const f = () => ++
@@ -172,16 +167,16 @@ fn asi_pop_spaced_prefix_pair() {
 
 #[test]
 fn method_named_function_keeps_modifiers() {
-    regex("var o = { *function() { yield /re/ } };");
-    regex("var o = { async function() { await /re/ } };");
+    regex("var o = { *function() { yield /re/ } };", FileType::ScriptJS);
+    regex("var o = { async function() { await /re/ } };", FileType::ScriptJS);
 }
 
 #[test]
 fn computed_method_modifiers() {
-    regex("var o = { *['m']() { yield /re/ } };");
-    regex("var await = 1; var o = { async ['m']() { await /re/ } };");
-    regex("var await = 1; class C { async ['m']() { await /re/ } }");
-    regex("var await = 1; class C { static async ['m']() { await /re/ } }");
+    regex("var o = { *['m']() { yield /re/ } };", FileType::ScriptJS);
+    regex("var await = 1; var o = { async ['m']() { await /re/ } };", FileType::ScriptJS);
+    regex("var await = 1; class C { async ['m']() { await /re/ } }", FileType::ScriptJS);
+    regex("var await = 1; class C { static async ['m']() { await /re/ } }", FileType::ScriptJS);
 }
 
 #[test]
@@ -205,13 +200,14 @@ fn method_header_matrix() {
         "class C { async [k]() { await /re/ } }",
         "class C { async #p() { await /re/ } }",
     ] {
-        regex(code);
+        regex(code, FileType::ScriptJS);
     }
-    regex("({ *\\u0066oo() { yield /re/ } });");
-    regex("class C { async *#\\u0066() { await /re/ } }");
+    regex("({ *\\u0066oo() { yield /re/ } });", FileType::ScriptJS);
+    regex("class C { async *#\\u0066() { await /re/ } }", FileType::ScriptJS);
     regex(
         "class C { x = 1
 async *m() { await /re/ } }",
+        FileType::ScriptJS,
     );
     division("({ a: b * function() { var yield = 1; return yield /2/g; } });");
     division("({ a: b * async function() { var yield = 1; return yield /2/g; } });");
@@ -219,7 +215,7 @@ async *m() { await /re/ } }",
     division("({ ['m']() { var yield = 1; return yield /2/g; } });");
     division("class C { ['m']() { var await = 1; return await /2/g; } }");
     division("({ a: function() { var yield = 1; return yield /2/g; } });");
-    regex("({ a: async function() { await /re/ } });");
+    regex("({ a: async function() { await /re/ } });", FileType::ScriptJS);
 }
 
 #[test]
@@ -230,6 +226,6 @@ fn mult_star_is_not_a_modifier() {
 
 #[test]
 fn bigint_and_escaped_method_names() {
-    regex("var o = { *1n() { yield /re/ } };");
-    regex("var o = { *\\u0066oo() { yield /re/ } };");
+    regex("var o = { *1n() { yield /re/ } };", FileType::ScriptJS);
+    regex("var o = { *\\u0066oo() { yield /re/ } };", FileType::ScriptJS);
 }
