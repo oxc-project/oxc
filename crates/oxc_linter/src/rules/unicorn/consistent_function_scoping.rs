@@ -1,3 +1,5 @@
+use std::cell::OnceCell;
+
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -166,32 +168,12 @@ impl Rule for ConsistentFunctionScoping {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        // Private references use a separate semantic table from ordinary identifier references.
-        let mut private_definitions = FxHashMap::default();
-        for (class_id, &node_id) in ctx.classes().iter_enumerated() {
-            let AstKind::Class(class) = ctx.nodes().kind(node_id) else { continue };
-            for element in &ctx.classes().elements[class_id] {
-                if element.is_private {
-                    private_definitions.insert((class_id, element.name.as_ref()), class.scope_id());
-                }
-            }
-        }
-        let mut private_reference_scopes = FxHashMap::default();
-        for (class_id, _) in ctx.classes().iter_enumerated() {
-            for reference in ctx.classes().iter_private_identifiers(class_id) {
-                if let Some(&scope_id) = ctx
-                    .classes()
-                    .ancestors(class_id)
-                    .find_map(|id| private_definitions.get(&(id, reference.name.as_str())))
-                {
-                    private_reference_scopes.insert(reference.id, scope_id);
-                }
-            }
-        }
-        let mut reference_scopes = FxHashMap::default();
-        for node in ctx.nodes() {
-            if matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
-                self.check_function(node, ctx, &mut reference_scopes, &private_reference_scopes);
+        let mut captures = CaptureCache::default();
+        // The semantic scope table is much smaller than the AST. Each function owns one scope.
+        for scope_id in ctx.scoping().scope_descendants_from_root() {
+            if ctx.scoping().scope_flags(scope_id).is_function() {
+                let node = ctx.nodes().get_node(ctx.scoping().get_node_id(scope_id));
+                self.check_function(node, ctx, &mut captures);
             }
         }
     }
@@ -207,8 +189,7 @@ impl ConsistentFunctionScoping {
         &self,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
-        reference_scopes: &mut FxHashMap<SymbolId, FxHashSet<ScopeId>>,
-        private_reference_scopes: &FxHashMap<NodeId, ScopeId>,
+        captures: &mut CaptureCache,
     ) {
         enum FunctionLikeBody<'a, 'b> {
             Function(&'b FunctionBody<'a>),
@@ -327,28 +308,13 @@ impl ConsistentFunctionScoping {
         }
 
         let parent_scope_id = ctx.scoping().scope_parent_id(function_scope_id).unwrap();
-        if !private_references.is_empty() {
-            // A declaration must move past class bodies to reach an outer statement scope.
-            let destination_scope_id = ctx
-                .scoping()
-                .scope_ancestors(parent_scope_id)
-                .skip(1)
-                .find(|&id| {
-                    !matches!(ctx.nodes().kind(ctx.scoping().get_node_id(id)), AstKind::Class(_))
-                })
-                .unwrap_or_else(|| ctx.scoping().root_scope_id());
-            for reference_id in private_references {
-                let Some(&class_scope_id) = private_reference_scopes.get(&reference_id) else {
-                    continue;
-                };
-                // Classes declared inside the candidate move together with it.
-                if !ctx.scoping().scope_is_descendant_of(class_scope_id, function_scope_id)
-                    && destination_scope_id != class_scope_id
-                    && !ctx.scoping().scope_is_descendant_of(destination_scope_id, class_scope_id)
-                {
-                    return;
-                }
-            }
+        if captures.has_private_capture(
+            &private_references,
+            function_scope_id,
+            parent_scope_id,
+            ctx,
+        ) {
+            return;
         }
         let parent_scope_flags = ctx.scoping().scope_flags(parent_scope_id);
         for reference_id in function_var_references {
@@ -383,15 +349,7 @@ impl ConsistentFunctionScoping {
                         AstKind::Function(function) if function.scope_id() == parent_scope_id
                     )
                     // Index each ancestor symbol once per file, including across candidate functions.
-                    && !reference_scopes
-                        .entry(symbol_id)
-                        .or_insert_with(|| {
-                            ctx.scoping()
-                                .get_resolved_references(symbol_id)
-                                .map(|reference| ctx.nodes().get_node(reference.node_id()).scope_id())
-                                .collect()
-                        })
-                        .contains(&parent_scope_id)
+                    && !captures.is_referenced_in(symbol_id, parent_scope_id, ctx)
                 {
                     continue;
                 }
@@ -410,6 +368,93 @@ impl ConsistentFunctionScoping {
             function_name,
         ));
     }
+}
+
+#[derive(Default)]
+struct CaptureCache {
+    reference_scopes: FxHashMap<SymbolId, FxHashSet<ScopeId>>,
+    private_scopes: OnceCell<FxHashMap<NodeId, ScopeId>>,
+}
+
+impl CaptureCache {
+    fn has_private_capture(
+        &self,
+        references: &[NodeId],
+        function_scope_id: ScopeId,
+        parent_scope_id: ScopeId,
+        ctx: &LintContext,
+    ) -> bool {
+        if references.is_empty() {
+            return false;
+        }
+        let private_scopes = self.private_scopes.get_or_init(|| private_reference_scopes(ctx));
+        // A declaration must move past class bodies to reach an outer statement scope.
+        let destination_scope_id = ctx
+            .scoping()
+            .scope_ancestors(parent_scope_id)
+            .skip(1)
+            .find(|&id| {
+                !matches!(ctx.nodes().kind(ctx.scoping().get_node_id(id)), AstKind::Class(_))
+            })
+            .unwrap_or_else(|| ctx.scoping().root_scope_id());
+        for reference_id in references {
+            let Some(&class_scope_id) = private_scopes.get(reference_id) else {
+                continue;
+            };
+            // Classes declared inside the candidate move together with it.
+            if !ctx.scoping().scope_is_descendant_of(class_scope_id, function_scope_id)
+                && destination_scope_id != class_scope_id
+                && !ctx.scoping().scope_is_descendant_of(destination_scope_id, class_scope_id)
+            {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn is_referenced_in(
+        &mut self,
+        symbol_id: SymbolId,
+        scope_id: ScopeId,
+        ctx: &LintContext,
+    ) -> bool {
+        self.reference_scopes
+            .entry(symbol_id)
+            .or_insert_with(|| {
+                ctx.scoping()
+                    .get_resolved_references(symbol_id)
+                    .map(|reference| ctx.nodes().get_node(reference.node_id()).scope_id())
+                    .collect()
+            })
+            .contains(&scope_id)
+    }
+}
+
+// Only needed for a candidate containing private names; most files never build this index.
+fn private_reference_scopes(ctx: &LintContext) -> FxHashMap<NodeId, ScopeId> {
+    // Private references use a separate semantic table from ordinary identifier references.
+    let mut private_definitions = FxHashMap::default();
+    for (class_id, &node_id) in ctx.classes().iter_enumerated() {
+        let AstKind::Class(class) = ctx.nodes().kind(node_id) else { continue };
+        for element in &ctx.classes().elements[class_id] {
+            if element.is_private {
+                private_definitions.insert((class_id, element.name.as_ref()), class.scope_id());
+            }
+        }
+    }
+    let mut private_reference_scopes = FxHashMap::default();
+    for (class_id, _) in ctx.classes().iter_enumerated() {
+        for reference in ctx.classes().iter_private_identifiers(class_id) {
+            if let Some(&scope_id) = ctx
+                .classes()
+                .ancestors(class_id)
+                .find_map(|id| private_definitions.get(&(id, reference.name.as_str())))
+            {
+                private_reference_scopes.insert(reference.id, scope_id);
+            }
+        }
+    }
+    private_reference_scopes
 }
 
 #[derive(Default)]
