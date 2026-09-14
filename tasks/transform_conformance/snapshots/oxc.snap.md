@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 361/424
+Passed: 362/425
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (70/78)
+# babel-plugin-transform-typescript (71/79)
 * computed-constant-value/input.ts
 Unresolved references mismatch:
 after transform: ["Infinity", "NaN"]

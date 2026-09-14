@@ -47,7 +47,7 @@ impl CloneIn<'_> for Redeclaration {
 multi_index_vec! {
     /// Scope tree stored as struct-of-arrays in a single allocation.
     ///
-    /// Contains parent IDs, node IDs, flags, and parameter context for all scopes. Using a single
+    /// Contains parent IDs, node IDs, and flags for all scopes. Using a single
     /// allocation with one `len`/`cap` instead of separate `IndexVec`s saves
     /// memory (no redundant len/cap) and CPU (one bounds check, one capacity
     /// check on push).
@@ -55,15 +55,13 @@ multi_index_vec! {
         parent_ids => parent_ids_mut: Option<ScopeId>,
         node_ids => node_ids_mut: NodeId,
         flags => flags_mut: ScopeFlags,
-        // Parameter environment to use when looking up bindings above this scope.
-        parameter_scope => parameter_scope_mut: Option<ScopeId>,
     }
 }
 
 multi_index_vec! {
     /// Symbol table stored as struct-of-arrays in a single allocation.
     ///
-    /// Contains spans, flags, scope IDs, declaration node IDs, and parameter markers for all symbols.
+    /// Contains spans, flags, scope IDs, and declaration node IDs for all symbols.
     /// Using a single allocation with one `len`/`cap` instead of separate `IndexVec`s
     /// saves memory and CPU.
     struct SymbolTable<SymbolId> {
@@ -71,8 +69,6 @@ multi_index_vec! {
         symbol_flags => symbol_flags_mut: SymbolFlags,
         symbol_scope_ids => symbol_scope_ids_mut: ScopeId,
         symbol_declarations => symbol_declarations_mut: NodeId,
-        // Binding visible in the parameter environment, before the body is visited.
-        parameter_binding => parameter_binding_mut: bool,
     }
 }
 
@@ -479,7 +475,7 @@ impl Scoping {
             cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(&allocator));
         });
-        self.symbol_table.push(span, flags, scope_id, node_id, false)
+        self.symbol_table.push(span, flags, scope_id, node_id)
     }
 
     /// Create a new symbol, append symbol metadata to the symbol table, and bind it to a scope.
@@ -492,7 +488,7 @@ impl Scoping {
         binding_scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
-        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id, false);
+        let symbol_id = self.symbol_table.push(span, flags, symbol_scope_id, node_id);
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
             cell.symbol_names.push(name);
@@ -648,19 +644,18 @@ impl Scoping {
         result.0
     }
 
-    /// Mark a binding which is visible from parameter initializers.
-    pub(crate) fn mark_parameter_binding(&mut self, symbol_id: SymbolId) {
-        *self.symbol_table.parameter_binding_mut(symbol_id) = true;
-    }
-
-    /// Record the parameter environment enclosing a newly created child scope.
-    pub(crate) fn set_parameter_scope(&mut self, scope_id: ScopeId, parameter_scope: ScopeId) {
-        *self.scope_table.parameter_scope_mut(scope_id) = Some(parameter_scope);
-    }
-
     /// Remove bindings for erased symbols, then resolve their remaining references
     /// against the surviving scope tree. Symbol and reference IDs stay stable.
     pub fn remove_bindings_and_resolve_references(&mut self, removed: &FxHashSet<SymbolId>) {
+        self.remove_bindings_and_resolve_references_with(removed, |_, _| true);
+    }
+
+    /// Repair references while allowing the caller to exclude inaccessible binding candidates.
+    pub fn remove_bindings_and_resolve_references_with(
+        &mut self,
+        removed: &FxHashSet<SymbolId>,
+        mut can_resolve: impl FnMut(ReferenceId, SymbolId) -> bool,
+    ) {
         if removed.is_empty() {
             return;
         }
@@ -680,25 +675,13 @@ impl Scoping {
                     // A parameter default can share a scope with body declarations that
                     // were deliberately skipped during its original resolution.
                     let mut scope = Some(*self.symbol_table.symbol_scope_ids(symbol_id));
-                    let mut parameter_scope = None;
                     let mut resolved = None;
                     while let Some(scope_id) = scope {
                         if let Some(&id) = cell.bindings[scope_id].get(&name)
-                            && (parameter_scope != Some(scope_id)
-                                || *self.symbol_table.parameter_binding(id))
+                            && can_resolve(reference_id, id)
                         {
                             resolved = Some(id);
                             break;
-                        }
-                        // A child created in a parameter initializer must skip the
-                        // parent's body bindings. Store the scope ID so inserted
-                        // intermediate scopes do not change that boundary.
-                        if let Some(enclosing_parameters) =
-                            *self.scope_table.parameter_scope(scope_id)
-                        {
-                            parameter_scope = Some(enclosing_parameters);
-                        } else if parameter_scope == Some(scope_id) {
-                            parameter_scope = None;
                         }
                         scope = *self.scope_table.parent_ids(scope_id);
                     }
@@ -1130,7 +1113,7 @@ impl Scoping {
         node_id: NodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let scope_id = self.scope_table.push(parent_id, node_id, flags, None);
+        let scope_id = self.scope_table.push(parent_id, node_id, flags);
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.bindings.push(Bindings::new_in(allocator));
         });
@@ -1235,16 +1218,18 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
-        self.delete_typescript_bindings_with(|_, _| false);
+        self.delete_typescript_bindings_with(|_, _| false, |_, _| true);
     }
 
     /// Remove TypeScript bindings and additional declarations erased by a transform.
     ///
     /// `is_erased` identifies declarations by symbol and binding span. All bindings
     /// are removed before any remaining value references are resolved again.
+    /// `can_resolve` excludes binding candidates that are inaccessible to a reference.
     pub fn delete_typescript_bindings_with(
         &mut self,
         mut is_erased: impl FnMut(SymbolId, Span) -> bool,
+        can_resolve: impl FnMut(ReferenceId, SymbolId) -> bool,
     ) {
         #[expect(
             clippy::inline_always,
@@ -1295,7 +1280,7 @@ impl Scoping {
                 removed.insert(symbol_id);
             }
         }
-        self.remove_bindings_and_resolve_references(&removed);
+        self.remove_bindings_and_resolve_references_with(&removed, can_resolve);
     }
 }
 

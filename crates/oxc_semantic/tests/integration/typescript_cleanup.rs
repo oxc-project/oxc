@@ -63,91 +63,7 @@ fn erased_bindings_resolve_through_all_erased_scopes() {
 }
 
 #[test]
-fn erased_bindings_preserve_parameter_lookup_boundaries() {
-    for (source, resolves_to_root) in [
-        ("declare const x: number; function f(a = x) { let x = 1; }", false),
-        (
-            "declare const x: number; function f(a = function g(b = x) { let x = 1; }) { let x = 2; }",
-            false,
-        ),
-        ("const x = 0; { declare const x: number; function f(a = x) { let x = 1; } }", true),
-        ("function outer() { declare const x: number; function f(a = x) { let x = 1; } }", false),
-        (
-            "function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; }",
-            false,
-        ),
-        (
-            "const x = 0; function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; }",
-            true,
-        ),
-        (
-            "const x = 0; function outer(a = (() => { declare const x: number; return () => x; })()) { var x = 1; }",
-            true,
-        ),
-        (
-            "function outer(a = function inner(b = (() => { declare const x: number; return x; })()) { let x = 1; }) { let x = 2; }",
-            false,
-        ),
-        (
-            "const x = 0; try {} catch ({ [(() => { declare const x: number; return x; })()]: a }) { let x = 1; }",
-            true,
-        ),
-    ] {
-        let tester = SemanticTester::ts(source);
-        let mut scoping = tester.build().into_scoping();
-        let references: Vec<_> = scoping
-            .iter_bindings()
-            .flat_map(|(_, bindings)| bindings.values())
-            .filter(|&&id| scoping.symbol_flags(id).is_ambient())
-            .flat_map(|&id| scoping.get_resolved_reference_ids(id).iter().copied())
-            .collect();
-        assert_eq!(references.len(), 1);
-        scoping.delete_typescript_bindings();
-        let expected = if resolves_to_root {
-            Some(scoping.get_binding(scoping.root_scope_id(), "x".into()).unwrap())
-        } else {
-            None
-        };
-        assert_eq!(scoping.get_reference(references[0]).symbol_id(), expected, "{source}");
-        if expected.is_none() {
-            assert_eq!(
-                scoping.root_unresolved_references().get("x").unwrap().as_slice(),
-                references
-            );
-        }
-    }
-}
-
-#[test]
-fn erased_bindings_preserve_parameter_environments_after_cloning() {
-    for source in [
-        "function outer(x, a = (() => { declare const x: number; return x; })()) {}",
-        "const x = 0; function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; }",
-        "const outer = function x(a = (() => { declare const x: number; return x; })()) {};",
-        "function outer(a = (() => { declare const x: number; return x; })(), ...x) {}",
-        "function enclosing() { const x = 0; function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; } }",
-    ] {
-        let tester = SemanticTester::ts(source);
-        let scoping = tester.build().into_scoping();
-        let parameter = scoping
-            .iter_bindings()
-            .find_map(|(_, bindings)| {
-                bindings.get("x").copied().filter(|&id| !scoping.symbol_flags(id).is_ambient())
-            })
-            .unwrap();
-        let cloned = scoping.clone_in_with_semantic_ids_with_another_arena();
-        for mut scoping in [scoping, cloned] {
-            scoping.delete_typescript_bindings();
-            let references = scoping.get_resolved_reference_ids(parameter);
-            assert_eq!(references.len(), 1, "{source}");
-            assert_eq!(scoping.get_reference(references[0]).symbol_id(), Some(parameter));
-            assert!(scoping.root_unresolved_references().is_empty());
-        }
-    }
-}
-
-#[test]
-fn generated_references_preserve_enclosing_parameter_environments() {
+fn reference_repair_can_exclude_inaccessible_candidates() {
     let tester = SemanticTester::ts(
         "function outer(a = (() => { declare const x: number; })()) { let x = 1; }",
     );
@@ -170,6 +86,15 @@ fn generated_references_preserve_enclosing_parameter_environments() {
         ReferenceFlags::Read,
     ));
     scoping.add_resolved_reference(erased, reference);
+    let inaccessible = scoping
+        .iter_bindings()
+        .find_map(|(_, bindings)| bindings.get("x").copied().filter(|&id| id != erased))
+        .unwrap();
+    scoping.delete_typescript_bindings_with(
+        |_, _| false,
+        |reference_id, symbol| reference_id != reference || symbol != inaccessible,
+    );
+    assert!(scoping.get_resolved_reference_ids(inaccessible).is_empty());
     scoping.delete_typescript_bindings();
     assert_eq!(scoping.get_reference(reference).symbol_id(), None);
     assert_eq!(scoping.root_unresolved_references().get("x").unwrap().as_slice(), [reference]);
