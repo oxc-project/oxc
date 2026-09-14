@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
+use oxc_semantic::{NodeId, ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
@@ -166,10 +166,32 @@ impl Rule for ConsistentFunctionScoping {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        // Private references use a separate semantic table from ordinary identifier references.
+        let mut private_definitions = FxHashMap::default();
+        for (class_id, &node_id) in ctx.classes().iter_enumerated() {
+            let AstKind::Class(class) = ctx.nodes().kind(node_id) else { continue };
+            for element in &ctx.classes().elements[class_id] {
+                if element.is_private {
+                    private_definitions.insert((class_id, element.name.as_ref()), class.scope_id());
+                }
+            }
+        }
+        let mut private_reference_scopes = FxHashMap::default();
+        for (class_id, _) in ctx.classes().iter_enumerated() {
+            for reference in ctx.classes().iter_private_identifiers(class_id) {
+                if let Some(&scope_id) = ctx
+                    .classes()
+                    .ancestors(class_id)
+                    .find_map(|id| private_definitions.get(&(id, reference.name.as_str())))
+                {
+                    private_reference_scopes.insert(reference.id, scope_id);
+                }
+            }
+        }
         let mut reference_scopes = FxHashMap::default();
         for node in ctx.nodes() {
             if matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
-                self.check_function(node, ctx, &mut reference_scopes);
+                self.check_function(node, ctx, &mut reference_scopes, &private_reference_scopes);
             }
         }
     }
@@ -186,6 +208,7 @@ impl ConsistentFunctionScoping {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
         reference_scopes: &mut FxHashMap<SymbolId, FxHashSet<ScopeId>>,
+        private_reference_scopes: &FxHashMap<NodeId, ScopeId>,
     ) {
         enum FunctionLikeBody<'a, 'b> {
             Function(&'b FunctionBody<'a>),
@@ -283,7 +306,7 @@ impl ConsistentFunctionScoping {
         }
 
         // Collect parameter defaults as well as body references: either can capture the parent.
-        let (function_var_references, is_parent_this_referenced) = {
+        let (function_var_references, private_references, is_parent_this_referenced) = {
             let mut rf = ReferencesFinder::default();
             match node.kind() {
                 AstKind::Function(function) => rf.visit_formal_parameters(&function.params),
@@ -296,7 +319,7 @@ impl ConsistentFunctionScoping {
                 FunctionLikeBody::Function(body) => rf.visit_function_body(body),
                 FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
             }
-            (rf.references, rf.is_parent_this_referenced)
+            (rf.references, rf.private_references, rf.is_parent_this_referenced)
         };
 
         if is_parent_this_referenced && matches!(node.kind(), AstKind::ArrowFunctionExpression(_)) {
@@ -304,6 +327,29 @@ impl ConsistentFunctionScoping {
         }
 
         let parent_scope_id = ctx.scoping().scope_parent_id(function_scope_id).unwrap();
+        if !private_references.is_empty() {
+            // A declaration must move past class bodies to reach an outer statement scope.
+            let destination_scope_id = ctx
+                .scoping()
+                .scope_ancestors(parent_scope_id)
+                .skip(1)
+                .find(|&id| {
+                    !matches!(ctx.nodes().kind(ctx.scoping().get_node_id(id)), AstKind::Class(_))
+                })
+                .unwrap_or_else(|| ctx.scoping().root_scope_id());
+            for reference_id in private_references {
+                let Some(&class_scope_id) = private_reference_scopes.get(&reference_id) else {
+                    continue;
+                };
+                // Classes declared inside the candidate move together with it.
+                if !ctx.scoping().scope_is_descendant_of(class_scope_id, function_scope_id)
+                    && destination_scope_id != class_scope_id
+                    && !ctx.scoping().scope_is_descendant_of(destination_scope_id, class_scope_id)
+                {
+                    return;
+                }
+            }
+        }
         let parent_scope_flags = ctx.scoping().scope_flags(parent_scope_id);
         for reference_id in function_var_references {
             let reference = ctx.scoping().get_reference(reference_id);
@@ -370,12 +416,17 @@ impl ConsistentFunctionScoping {
 struct ReferencesFinder {
     is_parent_this_referenced: bool,
     references: Vec<ReferenceId>,
+    private_references: Vec<NodeId>,
     in_function: usize,
 }
 
 impl<'a> Visit<'a> for ReferencesFinder {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         self.references.push(it.reference_id());
+    }
+
+    fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
+        self.private_references.push(it.node_id.get());
     }
 
     fn visit_jsx_element_name(&mut self, _it: &JSXElementName<'a>) {
@@ -910,6 +961,44 @@ fn test() {
             });",
             None,
         ),
+        (
+            "const shared = 1;
+            class Box {
+                #value;
+                method() {
+                    function read(box) { return shared + box.#value; }
+                    return read;
+                }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            class Box {
+                #value;
+                method() {
+                    const read = (box) => shared && #value in box;
+                    return read;
+                }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            class Box {
+                #value;
+                method() {
+                    function create() {
+                        class Local {
+                            read(box) { return shared + box.#value; }
+                        }
+                        return Local;
+                    }
+                    return create;
+                }
+            }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1243,6 +1332,45 @@ fn test() {
                     function inner() { return External; }
                     return inner;
                 }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            class Box {
+                #value;
+                method() {
+                    function outer() {
+                        function read(box) { return shared + box.#value; }
+                        return read;
+                    }
+                    return outer;
+                }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            class Box {
+                #value;
+                method() {
+                    function create() {
+                        class Local {
+                            #value;
+                            read(box) { return shared + box.#value; }
+                        }
+                        return Local;
+                    }
+                    return create;
+                }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                { consume(shared); }
+                function inner() { return shared; }
             }",
             None,
         ),
