@@ -12,4 +12,4 @@ type T = string;
 
 // No `TSParenthesizedType`s in AST
 // prettier-ignore
-type U = (((((string)) | ((number)))));
+type U = (((((string)) | ((number));
