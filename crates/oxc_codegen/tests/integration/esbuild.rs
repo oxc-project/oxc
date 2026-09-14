@@ -103,27 +103,27 @@ fn test_number() {
 
     // uint64
     test_minify("x = 0xffff_ffff_ffff_fbff", "x=0xfffffffffffff800;");
-    test_minify("x = 0x1_0000_0000_0000_0000", "x=0x10000000000000000;");
+    test_minify("x = 0x1_0000_0000_0000_0000", "x=0xffffffffffffffff;");
     test_minify("x = 0x1_0000_0000_0000_1000", "x=0x10000000000001000;");
     test_minify("x = -0xffff_ffff_ffff_fbff", "x=-0xfffffffffffff800;");
-    test_minify("x = -0x1_0000_0000_0000_0000", "x=-0x10000000000000000;");
+    test_minify("x = -0x1_0000_0000_0000_0000", "x=-0xffffffffffffffff;");
     test_minify("x = -0x1_0000_0000_0000_1000", "x=-0x10000000000001000;");
 
     // Check the hex vs. decimal decision boundary when minifying
     test("x = 999999999999", "x = 999999999999;\n");
     test("x = 1000000000001", "x = 0xe8d4a51001;\n");
     test("x = 0x0FFF_FFFF_FFFF_FF80", "x = 0xfffffffffffff80;\n");
-    test("x = 0x1000_0000_0000_0000", "x = 0x1000000000000000;\n");
+    test("x = 0x1000_0000_0000_0000", "x = 0xfffffffffffffff;\n");
     test("x = 0xFFFF_FFFF_FFFF_F000", "x = 0xfffffffffffff000;\n");
     test("x = 0xFFFF_FFFF_FFFF_F800", "x = 0xfffffffffffff800;\n");
-    test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0x10000000000000000;\n");
+    test("x = 0xFFFF_FFFF_FFFF_FFFF", "x = 0xffffffffffffffff;\n");
     test_minify("x = 999999999999", "x=999999999999;");
     test_minify("x = 1000000000001", "x=0xe8d4a51001;");
     test_minify("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80;");
-    test_minify("x = 0x1000_0000_0000_0000", "x=0x1000000000000000;");
+    test_minify("x = 0x1000_0000_0000_0000", "x=0xfffffffffffffff;");
     test_minify("x = 0xFFFF_FFFF_FFFF_F000", "x=0xfffffffffffff000;");
     test_minify("x = 0xFFFF_FFFF_FFFF_F800", "x=0xfffffffffffff800;");
-    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=0x10000000000000000;");
+    test_minify("x = 0xFFFF_FFFF_FFFF_FFFF", "x=0xffffffffffffffff;");
 
     // Check printing a space in between a number and a subsequent "."
     test_minify("x = 0.0001 .y", "x=1e-4.y;");
