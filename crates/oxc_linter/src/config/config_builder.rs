@@ -20,7 +20,7 @@ use crate::{
         rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
+    external_plugin_store::{ExternalOptionsId, ExternalPluginId, ExternalRuleId},
     rules::RULES,
 };
 
@@ -34,6 +34,9 @@ use super::{
 pub struct ConfigStoreBuilder {
     pub(super) rules: FxHashMap<RuleEnum, AllowWarnDeny>,
     pub(super) external_rules: FxHashMap<ExternalRuleId, (ExternalOptionsId, AllowWarnDeny)>,
+    /// JS plugins declared by this config (`jsPlugins`, including via `extends`). Filters may
+    /// only enable JS rules from these, just as they only enable built-in rules from `config.plugins`.
+    pub(super) external_plugins: FxHashSet<ExternalPluginId>,
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
@@ -58,11 +61,20 @@ impl ConfigStoreBuilder {
         let config = LintConfig::default();
         let rules = FxHashMap::default();
         let external_rules = FxHashMap::default();
+        let external_plugins = FxHashSet::default();
         let categories: OxlintCategories = OxlintCategories::default();
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            external_plugins,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -75,8 +87,17 @@ impl ConfigStoreBuilder {
         let categories: OxlintCategories = OxlintCategories::default();
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
+        let external_plugins = FxHashSet::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            external_plugins,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -255,6 +276,7 @@ impl ConfigStoreBuilder {
         // i.e., when the external JS linter is available/initialized. If the store is
         // disabled, configs that reference external plugins are accepted but the plugins
         // themselves are not loaded, to avoid failing config parsing.
+        let mut declared_external_plugins = FxHashSet::default();
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
@@ -270,7 +292,7 @@ impl ConfigStoreBuilder {
             });
 
             for entry in external_plugins {
-                Self::load_external_plugin(
+                let plugin_id = Self::load_external_plugin(
                     &entry.config_dir,
                     &entry.specifier,
                     entry.name.as_deref(),
@@ -279,6 +301,11 @@ impl ConfigStoreBuilder {
                     external_plugin_store,
                     workspace_uri,
                 )?;
+                // Plugins declared only in overrides are not enabled for the config as a whole,
+                // like built-in `plugins` in overrides.
+                if oxlintrc.external_plugins.as_ref().is_some_and(|base| base.contains(entry)) {
+                    declared_external_plugins.insert(plugin_id);
+                }
             }
         }
 
@@ -305,6 +332,7 @@ impl ConfigStoreBuilder {
         let mut builder = Self {
             rules,
             external_rules: FxHashMap::default(),
+            external_plugins: declared_external_plugins,
             config,
             categories,
             overrides: oxlintrc.overrides,
@@ -394,8 +422,9 @@ impl ConfigStoreBuilder {
         self
     }
 
-    /// Apply CLI-style severity filters (`-A`/`-W`/`-D`) to both built-in rules and rules from
-    /// the JS plugins registered in `external_plugin_store`.
+    /// Apply CLI-style severity filters (`-A`/`-W`/`-D`) to built-in rules and to rules from the
+    /// JS plugins this config declares. Only fully qualified `plugin/rule` filters reach JS plugin
+    /// rules; categories, `all`, and unqualified names only address built-in rules.
     pub fn with_filters<'a, I: IntoIterator<Item = &'a LintFilter>>(
         mut self,
         filters: I,
@@ -423,8 +452,8 @@ impl ConfigStoreBuilder {
                     // Same normalization as config file keys (`parse_rule_key`), so
                     // `-D eslint-plugin-foo/rule` reaches the JS plugin registered as `foo`.
                     let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
-                    if let Ok(external_rule_id) =
-                        external_plugin_store.lookup_rule_id(&plugin, &rule)
+                    if let Some(external_rule_id) =
+                        self.declared_external_rule(external_plugin_store, &plugin, &rule)
                     {
                         self.external_rules
                             .entry(external_rule_id)
@@ -444,8 +473,8 @@ impl ConfigStoreBuilder {
                 }
                 LintFilterKind::Rule(plugin, rule) => {
                     let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
-                    if let Ok(external_rule_id) =
-                        external_plugin_store.lookup_rule_id(&plugin, &rule)
+                    if let Some(external_rule_id) =
+                        self.declared_external_rule(external_plugin_store, &plugin, &rule)
                     {
                         self.external_rules.remove(&external_rule_id);
                     }
@@ -457,6 +486,21 @@ impl ConfigStoreBuilder {
         }
 
         self
+    }
+
+    /// Resolve `plugin/rule` to a JS plugin rule, but only if this config declares the plugin.
+    /// `external_plugin_store` is shared by every config in the run, so a bare lookup would also
+    /// find plugins that other configs loaded.
+    fn declared_external_rule(
+        &self,
+        external_plugin_store: &ExternalPluginStore,
+        plugin: &str,
+        rule: &str,
+    ) -> Option<ExternalRuleId> {
+        let rule_id = external_plugin_store.lookup_rule_id(plugin, rule).ok()?;
+        self.external_plugins
+            .contains(&external_plugin_store.rule_plugin_id(rule_id))
+            .then_some(rule_id)
     }
 
     /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
@@ -666,7 +710,7 @@ impl ConfigStoreBuilder {
         resolver: &Resolver,
         external_plugin_store: &mut ExternalPluginStore,
         workspace_uri: Option<&str>,
-    ) -> Result<(), ConfigBuilderError> {
+    ) -> Result<ExternalPluginId, ConfigBuilderError> {
         // Resolve the specifier relative to the config directory
         let resolved = resolver.resolve(resolve_dir, plugin_specifier).map_err(|e| {
             ConfigBuilderError::PluginLoadFailed {
@@ -676,8 +720,8 @@ impl ConfigStoreBuilder {
         })?;
         let plugin_path = resolved.full_path();
 
-        if external_plugin_store.is_plugin_registered(&plugin_path) {
-            return Ok(());
+        if let Some(plugin_id) = external_plugin_store.registered_plugin_id(&plugin_path) {
+            return Ok(plugin_id);
         }
 
         // Get plugin name.
@@ -732,13 +776,12 @@ impl ConfigStoreBuilder {
         let plugin_name = result.name;
 
         if LintPlugins::try_from(plugin_name.as_str()).is_err() {
-            external_plugin_store.register_plugin(
+            Ok(external_plugin_store.register_plugin(
                 plugin_path,
                 plugin_name,
                 result.offset,
                 result.rule_names,
-            );
-            Ok(())
+            ))
         } else {
             // TODO: If a plugin with a reserved name reaches this point, it has already been
             // loaded on the JS/NAPI side but is not registered in `ExternalPluginStore` on
@@ -1069,7 +1112,7 @@ mod test {
     #[test]
     fn test_filter_external_rule() {
         let mut external_plugin_store = ExternalPluginStore::new(true);
-        external_plugin_store.register_plugin(
+        let custom = external_plugin_store.register_plugin(
             PathBuf::from("path/to/custom-plugin"),
             "custom".to_string(),
             0,
@@ -1079,9 +1122,15 @@ mod test {
         let other_rule = external_plugin_store.lookup_rule_id("custom", "other-rule").unwrap();
         let options = smallvec::smallvec![serde_json::json!({ "foo": true })];
         let options_id = external_plugin_store.add_options(my_rule, &options);
+        // A config that declares `custom` in `jsPlugins`.
+        let declares_custom = || {
+            let mut builder = ConfigStoreBuilder::empty();
+            builder.external_plugins.insert(custom);
+            builder
+        };
 
         // `-D custom/other-rule` enables a rule the config never mentioned.
-        let builder = ConfigStoreBuilder::empty().with_filter(
+        let builder = declares_custom().with_filter(
             &LintFilter::new(AllowWarnDeny::Deny, "custom/other-rule").unwrap(),
             &external_plugin_store,
         );
@@ -1091,14 +1140,22 @@ mod test {
         );
 
         // The plugin name is normalized like a config file key: `eslint-plugin-custom` -> `custom`.
-        let builder = ConfigStoreBuilder::empty().with_filter(
+        let builder = declares_custom().with_filter(
             &LintFilter::new(AllowWarnDeny::Deny, "eslint-plugin-custom/other-rule").unwrap(),
             &external_plugin_store,
         );
         assert!(builder.external_rules.contains_key(&other_rule));
 
+        // A config that does not declare `custom` is unaffected, even though another config
+        // loaded the plugin into the shared store.
+        let builder = ConfigStoreBuilder::empty().with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "custom/other-rule").unwrap(),
+            &external_plugin_store,
+        );
+        assert!(builder.external_rules.is_empty());
+
         // `-D custom/my-rule` changes severity and keeps the options from the config file.
-        let mut builder = ConfigStoreBuilder::empty();
+        let mut builder = declares_custom();
         builder.external_rules.insert(my_rule, (options_id, AllowWarnDeny::Warn));
         let builder = builder.with_filter(
             &LintFilter::new(AllowWarnDeny::Deny, "custom/my-rule").unwrap(),
@@ -1124,7 +1181,7 @@ mod test {
     #[test]
     fn test_print_config_includes_external_rules() {
         let mut external_plugin_store = ExternalPluginStore::new(true);
-        external_plugin_store.register_plugin(
+        let custom = external_plugin_store.register_plugin(
             PathBuf::from("path/to/custom-plugin"),
             "custom".to_string(),
             0,
@@ -1135,6 +1192,7 @@ mod test {
         let options_id = external_plugin_store.add_options(my_rule, &options);
 
         let mut builder = ConfigStoreBuilder::empty();
+        builder.external_plugins.insert(custom);
         builder.external_rules.insert(my_rule, (options_id, AllowWarnDeny::Warn));
         let builder = builder.with_filter(
             &LintFilter::new(AllowWarnDeny::Deny, "custom/other-rule").unwrap(),
