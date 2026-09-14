@@ -5,7 +5,11 @@ use std::{
     hash::BuildHasherDefault,
     mem::take,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex, mpsc},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
+        mpsc,
+    },
 };
 
 use indexmap::IndexSet;
@@ -418,6 +422,16 @@ impl Runtime {
         // This size is empirical based on AFFiNE@97cc814a.
         let group_size = rayon::current_num_threads() * 4;
 
+        // Lint tasks are spawned, not run inline, so that linting in this group overlaps with
+        // building the module graph of the next group. But the number of tasks which are spawned
+        // but not yet run must be bounded, otherwise the memory they keep alive (the AST, semantic
+        // data and source text of every module in the group) accumulates for the whole run.
+        // With a single thread the module processing loop never yields long enough for the spawned
+        // lint tasks to be picked up, so without this limit memory would grow in proportion to the
+        // number of files linted.
+        let max_outstanding_lint_task_count = group_size;
+        let outstanding_lint_task_count = Arc::new(AtomicUsize::new(0));
+
         // Stores modules that belongs to `self.paths` in current group.
         // They are passed to `on_module_to_lint` at the end of each group.
         let mut modules_to_lint: Vec<ModuleToLint> = Vec::with_capacity(group_size);
@@ -584,8 +598,18 @@ impl Runtime {
             #[expect(clippy::iter_with_drain)]
             for entry in modules_to_lint.drain(..) {
                 let on_entry = on_module_to_lint.clone();
+                // If too many lint tasks are already queued, lint this module inline instead.
+                if outstanding_lint_task_count.load(Ordering::Relaxed)
+                    >= max_outstanding_lint_task_count
+                {
+                    on_entry(me, entry);
+                    continue;
+                }
+                outstanding_lint_task_count.fetch_add(1, Ordering::Relaxed);
+                let outstanding_lint_task_count = Arc::clone(&outstanding_lint_task_count);
                 scope.spawn(move |_| {
                     on_entry(me, entry);
+                    outstanding_lint_task_count.fetch_sub(1, Ordering::Relaxed);
                 });
             }
         }
