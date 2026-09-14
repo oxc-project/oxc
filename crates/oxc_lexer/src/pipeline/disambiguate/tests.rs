@@ -77,8 +77,7 @@ fn first_slash_kind(code: &str, file_type: FileType) -> Option<TokenKind> {
 }
 
 #[track_caller]
-pub(super) fn regex(code: &str, ts: bool) {
-    let file_type = FileType::new_script(ts, false);
+pub(super) fn regex(code: &str, file_type: FileType) {
     let ks = kinds_of(code, file_type);
     assert_eq!(
         first_slash_kind(code, file_type),
@@ -217,12 +216,12 @@ fn bare_brace_in_children_rules_out_jsx() {
 #[test]
 fn long_walks_resolve_exactly() {
     let spine = ["T"; 300].join(" & ");
-    regex(&format!("let x: {spine}\n/re/g.exec(s);"), true);
+    regex(&format!("let x: {spine}\n/re/g.exec(s);"), FileType::ScriptTS);
     let body: String = (0..400).map(|i| format!("  a{i}: T;\n")).collect();
-    regex(&format!("let x: {{\n{body}}} & U\n/re/g.exec(s);"), true);
+    regex(&format!("let x: {{\n{body}}} & U\n/re/g.exec(s);"), FileType::ScriptTS);
     let args: String = (0..3000).map(|i| format!("a{i}, ")).collect();
     division(&format!("f({args}0) / 2"), false);
-    regex(&format!("if ({args}0) /re/.test(s)"), false);
+    regex(&format!("if ({args}0) /re/.test(s)"), FileType::ScriptJS);
     let deep = 2000usize;
     let nested = format!("{}x{}", "[".repeat(deep), "]".repeat(deep));
     division(&format!("y = {nested} / 2"), false);
@@ -1162,13 +1161,13 @@ fn escaped_type_parameter_name_after_lt_lt() {
 
 #[test]
 fn escaped_identifiers_are_identifiers_in_every_walk() {
-    regex("let \\u{62}c\n/re/.x;", false);
-    regex("let \\u{62}c: T\n/re/.x;", true);
-    regex("declare const \\u{62}c: Set<T>\n/re/.x;", true);
-    regex("var a = 1, \\u{62}c\n/re/.x;", false);
-    regex("for (;;) { break \\u{6f}uter\n/re/.test(b); }", false);
-    regex("type \\u{41} = T\n/re/.exec(s);", true);
-    regex("declare function \\u{66}(): T\n/re/.exec(s);", true);
+    regex("let \\u{62}c\n/re/.x;", FileType::ScriptJS);
+    regex("let \\u{62}c: T\n/re/.x;", FileType::ScriptTS);
+    regex("declare const \\u{62}c: Set<T>\n/re/.x;", FileType::ScriptTS);
+    regex("var a = 1, \\u{62}c\n/re/.x;", FileType::ScriptJS);
+    regex("for (;;) { break \\u{6f}uter\n/re/.test(b); }", FileType::ScriptJS);
+    regex("type \\u{41} = T\n/re/.exec(s);", FileType::ScriptTS);
+    regex("declare function \\u{66}(): T\n/re/.exec(s);", FileType::ScriptTS);
     division("x = \\u{62}c\n/re/g.exec(s);", false);
     division("\\u{62}c / 2;", false);
     division("x.\\u{62}c / 2;", false);
@@ -1201,8 +1200,8 @@ fn legacy_octal_literal_ends_before_a_dot() {
 fn type_context_before_a_declaration_keyword() {
     gt_run_split("x = () => {}\n<Map<P>>baz;");
     gt_run_split("x = async () => {}\n<Map<P>>baz;");
-    regex("declare function f(): Foo<T>\nclass C {}\n/re/.test(s);", true);
-    regex("let x: Foo<T>\nfunction f() {}\n/re/.test(s);", true);
+    regex("declare function f(): Foo<T>\nclass C {}\n/re/.test(s);", FileType::ScriptTS);
+    regex("let x: Foo<T>\nfunction f() {}\n/re/.test(s);", FileType::ScriptTS);
     division("x = <T>\nfunction(){} / 2;", true);
     stream(
         "class C<T> extends B implements I, void {}\n/=/.test(s);",
@@ -1262,8 +1261,8 @@ fn gt_run_heads_after_asi_and_this() {
     gt_run_fused("x = a[0].b<c<d>>[0];");
     let ks = kinds_of("x = [f].#p <\n{ _ }| 's'>= b;", FileType::ScriptTS);
     assert!(ks.contains(&TokenKind::Ge), "{ks:?}");
-    regex("type Foo = | {} | bigint\n<import('m').baz<Bar<T<P>>>>/'/.x;", true);
-    regex("let x: T\n<U>/re/.test(s);", true);
+    regex("type Foo = | {} | bigint\n<import('m').baz<Bar<T<P>>>>/'/.x;", FileType::ScriptTS);
+    regex("let x: T\n<U>/re/.test(s);", FileType::ScriptTS);
     division("let x = y\n<T>/re/.source;", true);
 }
 
@@ -1283,18 +1282,18 @@ fn relational_heads_before_a_balanced_run() {
     gt_run_split("class C implements this<Map<\"lit\">>, this {}");
     regex(
         "let c: T = y satisfies A<B<C>> extends infer U ? U : import('m').a<(V<never>)[Set]>\nnamespace Foo { class X {} }\n/foo/.exec(s);",
-        true,
+        FileType::ScriptTS,
     );
     gt_run_fused("x = y satisfies A\n<Set<K>, Partial<U>>ab;");
     gt_run_split("x = y as A<B<C>> as D;");
     gt_run_fused("x = b()!\n<Array<Set<unknown>>>Foo;");
     gt_run_fused("x = c! < 0.5>>> a;");
     division("export default { a: 1 } / obj(x);", false);
-    regex("x = y as Pick | this<U<V<W>>>\n/'/.x;", true);
-    regex("x = y satisfies this<U<V<W>>>\n/'/.x;", true);
+    regex("x = y as Pick | this<U<V<W>>>\n/'/.x;", FileType::ScriptTS);
+    regex("x = y satisfies this<U<V<W>>>\n/'/.x;", FileType::ScriptTS);
     division("x = this<A<B>> / 2;", true);
-    regex("x ? a : [b][c]()\n{}\n/y/.exec(s);", false);
-    regex("f(class { accessor x = y })\n{ }\n/</.test(s);", false);
+    regex("x ? a : [b][c]()\n{}\n/y/.exec(s);", FileType::ScriptJS);
+    regex("f(class { accessor x = y })\n{ }\n/</.test(s);", FileType::ScriptJS);
     let ks = kinds_of("x = a > b<c<d>>>>(e);", FileType::ScriptTS);
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::Gt).count(), 3, "{ks:?}");
     assert!(ks.contains(&TokenKind::RShift), "{ks:?}");
@@ -1458,16 +1457,19 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
 
 #[test]
 fn replay_hops_return_types_and_type_parameters() {
-    regex("x = async (): T => { await /re/; };", true);
-    regex("x = async (): typeof cb => { await /re/; };", true);
-    regex("var $: <baz>() => 1n | T = async (): typeof cb => { await /<div>/ };", true);
+    regex("x = async (): T => { await /re/; };", FileType::ScriptTS);
+    regex("x = async (): typeof cb => { await /re/; };", FileType::ScriptTS);
+    regex(
+        "var $: <baz>() => 1n | T = async (): typeof cb => { await /<div>/ };",
+        FileType::ScriptTS,
+    );
     division("x = (): T => { var await = 1; return await /2/g; };", true);
-    regex("x = async function f(): T { await /re/; };", true);
-    regex("x = async function (): Promise<T> { await /re/; };", true);
-    regex("x = async (): Promise<T> => { await /re/; };", true);
-    regex("x = function* <T>(): Generator<T> { yield /re/; };", true);
-    regex("class C { async m(): Promise<T> { await /re/; } }", true);
-    regex("switch (async function f(): typeof import('m') { await /}/; }) {}", true);
+    regex("x = async function f(): T { await /re/; };", FileType::ScriptTS);
+    regex("x = async function (): Promise<T> { await /re/; };", FileType::ScriptTS);
+    regex("x = async (): Promise<T> => { await /re/; };", FileType::ScriptTS);
+    regex("x = function* <T>(): Generator<T> { yield /re/; };", FileType::ScriptTS);
+    regex("class C { async m(): Promise<T> { await /re/; } }", FileType::ScriptTS);
+    regex("switch (async function f(): typeof import('m') { await /}/; }) {}", FileType::ScriptTS);
     division("x = function (): T { var await = 1; return await /2/g; };", true);
     division("x = (): T => { var await = 1; return await /2/g; };", true);
 }
