@@ -857,15 +857,28 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
     fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        // Token stream is already complete from the first parse.
-        // Reparsing here is only to patch AST nodes, so keep the original token stream.
+        // Preserve tokens outside reparsed ranges, but replace tokens whose interpretation
+        // changes with the AST (for example, division operators becoming a regexp literal).
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
+        let mut remaining_tokens =
+            original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
+        let mut tokens = ArenaVec::with_capacity_in(remaining_tokens.len(), &self.ast);
 
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
             self.rewind(checkpoint);
+
+            if self.lexer.config.tokens() {
+                let prefix_len =
+                    remaining_tokens.partition_point(|token| token.start() < self.token.start());
+                tokens.extend_from_slice(&remaining_tokens[..prefix_len]);
+                remaining_tokens = &remaining_tokens[prefix_len..];
+                // The checkpoint's current token has already been lexed. Include it so
+                // re-lexing and speculative parsing see a complete local token stream.
+                self.lexer.set_tokens(ArenaVec::from_iter_in([self.token], &self.ast));
+            }
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
@@ -876,10 +889,25 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if stmt_index < statements.len() {
                 statements[stmt_index] = stmt;
             }
+
+            if self.lexer.config.tokens() {
+                let mut reparsed_tokens = self.lexer.take_tokens();
+                // The current token belongs to the next statement (or is EOF).
+                reparsed_tokens.pop();
+                // A preceding reparse can consume this checkpoint's statement, as in
+                // `await\nawait /x/u`. Keep each source range only once.
+                let end = tokens.last().map_or(0, Token::end);
+                let overlap_len = reparsed_tokens.partition_point(|token| token.start() < end);
+                tokens.extend_from_slice(&reparsed_tokens[overlap_len..]);
+                let replaced_len =
+                    remaining_tokens.partition_point(|token| token.start() < self.token.start());
+                remaining_tokens = &remaining_tokens[replaced_len..];
+            }
         }
 
-        if let Some(original_tokens) = original_tokens {
-            self.lexer.set_tokens(original_tokens);
+        if self.lexer.config.tokens() {
+            tokens.extend_from_slice(remaining_tokens);
+            self.lexer.set_tokens(tokens);
         }
     }
 
@@ -1322,6 +1350,32 @@ mod test {
                 (Kind::Semicolon, 5, 6),
             ]
         );
+    }
+
+    #[test]
+    fn tokens_after_unambiguous_await_reparse() {
+        for source in [
+            "await /x/u; export {};",
+            "before(); await /x/u; after(); export {}; tail();",
+            "before(); await /x/u; between(); await /y/g; export {}; tail();",
+            "await /x/u\nawait /y/g\nexport {};",
+            "await\nawait /x/u; export {};",
+            "const x = await /x/u; between(); const y = await /y/g; export {};",
+            "/before/.test(await /x/u); /after/.test('after'); export {};",
+            "await /x/u, import.meta;",
+            "#!/usr/bin/env node\n'use strict';\nawait /* regexp */ /x/u; export {};",
+            "export {}; await /x/u;",
+        ] {
+            let allocator = Allocator::default();
+            let parse = |source_type| {
+                Parser::new(&allocator, source, source_type)
+                    .with_config(config::TokensParserConfig)
+                    .parse()
+            };
+            let unambiguous = parse(SourceType::unambiguous());
+            let module = parse(SourceType::mjs());
+            assert_eq!(unambiguous.tokens.as_slice(), module.tokens.as_slice(), "{source}");
+        }
     }
 
     // A fatal error fast-forwards the lexer to end of file. Re-lexing the `}` of a template
