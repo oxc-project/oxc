@@ -9016,6 +9016,9 @@
         "unicorn/no-array-callback-reference": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-array-concat-in-loop": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-array-fill-with-reference-type": {
           "$ref": "#/definitions/RuleNoConfig"
         },
