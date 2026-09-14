@@ -2,16 +2,6 @@ use crate::{Lexer, PAD, token::TokenKind};
 
 use super::super::tests::{FileType, diag_codes_of, division, kinds_of, regex, stream};
 
-#[track_caller]
-fn assert_regex(code: &str) {
-    regex(code, FileType::ScriptJS);
-}
-
-#[track_caller]
-fn assert_division(code: &str) {
-    division(code, FileType::ScriptJS);
-}
-
 #[test]
 fn debugger_precedes_regex() {
     regex("debugger\n/re/.test(x);", FileType::ScriptJS);
@@ -202,118 +192,118 @@ fn colon_member_and_ternary_values() {
 
 #[test]
 fn postfix_incdec_then_slash_is_division() {
-    assert_division("a++ / b;");
-    assert_division("a-- / b;");
-    assert_division("a ++ / b;");
-    assert_division("x[i]++ / n;");
-    assert_division("f(x)++ / n;");
-    assert_division("a.return++ / 2;");
-    assert_division("obj.#f++ / 2;");
-    assert_division("a = b++/c/g;");
-    assert_division("a++\n/ b / c;");
+    division("a++ / b;", FileType::ScriptJS);
+    division("a-- / b;", FileType::ScriptJS);
+    division("a ++ / b;", FileType::ScriptJS);
+    division("x[i]++ / n;", FileType::ScriptJS);
+    division("f(x)++ / n;", FileType::ScriptJS);
+    division("a.return++ / 2;", FileType::ScriptJS);
+    division("obj.#f++ / 2;", FileType::ScriptJS);
+    division("a = b++/c/g;", FileType::ScriptJS);
+    division("a++\n/ b / c;", FileType::ScriptJS);
 }
 
 #[test]
 fn prefix_incdec_then_slash_is_regex() {
-    assert_regex("++/re/.lastIndex;");
-    assert_regex("x = ++/re/.lastIndex;");
-    assert_regex("(a, ++/re/.lastIndex);");
-    assert_regex("f(++/re/.lastIndex);");
-    assert_regex("return++/re/.lastIndex;");
-    assert_regex("a + ++/re/.lastIndex;");
-    assert_regex("a ** ++/re/.lastIndex;");
+    regex("++/re/.lastIndex;", FileType::ScriptJS);
+    regex("x = ++/re/.lastIndex;", FileType::ScriptJS);
+    regex("(a, ++/re/.lastIndex);", FileType::ScriptJS);
+    regex("f(++/re/.lastIndex);", FileType::ScriptJS);
+    regex("return++/re/.lastIndex;", FileType::ScriptJS);
+    regex("a + ++/re/.lastIndex;", FileType::ScriptJS);
+    regex("a ** ++/re/.lastIndex;", FileType::ScriptJS);
 }
 
 #[test]
 fn line_terminator_forces_prefix() {
-    assert_regex("a\n++/re/.lastIndex;");
-    assert_regex("a\r\n++/re/.lastIndex;");
-    assert_regex("a\u{2028}++/re/.lastIndex;");
-    assert_regex("a\u{2029}++/re/.lastIndex;");
-    assert_regex("a /* x\ny */ ++/re/.lastIndex;");
-    assert_division("a /* xy */ ++ / b;");
+    regex("a\n++/re/.lastIndex;", FileType::ScriptJS);
+    regex("a\r\n++/re/.lastIndex;", FileType::ScriptJS);
+    regex("a\u{2028}++/re/.lastIndex;", FileType::ScriptJS);
+    regex("a\u{2029}++/re/.lastIndex;", FileType::ScriptJS);
+    regex("a /* x\ny */ ++/re/.lastIndex;", FileType::ScriptJS);
+    division("a /* xy */ ++ / b;", FileType::ScriptJS);
 }
 
 #[test]
 fn incdec_runs_keep_maximal_munch() {
-    assert_regex("a+++/re/;");
-    assert_regex("a---/re/;");
-    assert_division("a++/b/;");
+    regex("a+++/re/;", FileType::ScriptJS);
+    regex("a---/re/;", FileType::ScriptJS);
+    division("a++/b/;", FileType::ScriptJS);
 }
 
 #[test]
 fn default_and_extends_precede_regex() {
-    assert_regex("export default /^x$/;");
-    assert_regex("export default /re/.source;");
-    assert_regex("class C extends /re/.constructor {}");
-    assert_division("x.default / 2;");
-    assert_division("x.extends / 2;");
+    regex("export default /^x$/;", FileType::ScriptJS);
+    regex("export default /re/.source;", FileType::ScriptJS);
+    regex("class C extends /re/.constructor {}", FileType::ScriptJS);
+    division("x.default / 2;", FileType::ScriptJS);
+    division("x.extends / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn statement_head_paren_then_regex() {
-    assert_regex("if (x) /re/.test(y);");
-    assert_regex("if (f(x)) /re/.test(y);");
-    assert_regex("while (x) /re/.exec(y);");
-    assert_regex("for (;;) /re/.test(x);");
-    assert_regex("with (o) /re/.test(x);");
-    assert_regex("for await (x of y) /re/.test(x);");
-    assert_regex("do x; while (y) /re/.test(z);");
-    assert_regex("if (a) while (b) /re/.test(c);");
+    regex("if (x) /re/.test(y);", FileType::ScriptJS);
+    regex("if (f(x)) /re/.test(y);", FileType::ScriptJS);
+    regex("while (x) /re/.exec(y);", FileType::ScriptJS);
+    regex("for (;;) /re/.test(x);", FileType::ScriptJS);
+    regex("with (o) /re/.test(x);", FileType::ScriptJS);
+    regex("for await (x of y) /re/.test(x);", FileType::ScriptJS);
+    regex("do x; while (y) /re/.test(z);", FileType::ScriptJS);
+    regex("if (a) while (b) /re/.test(c);", FileType::ScriptJS);
 }
 
 #[test]
 fn value_paren_then_slash_stays_division() {
-    assert_division("f(x) / 2;");
-    assert_division("(a + b) / 2;");
-    assert_division("x.if(a) / 2;");
-    assert_division("x?.while(a) / 2;");
-    assert_division("if (a) (b) / c / d;");
-    assert_division("await (x) / 2;");
+    division("f(x) / 2;", FileType::ScriptJS);
+    division("(a + b) / 2;", FileType::ScriptJS);
+    division("x.if(a) / 2;", FileType::ScriptJS);
+    division("x?.while(a) / 2;", FileType::ScriptJS);
+    division("if (a) (b) / c / d;", FileType::ScriptJS);
+    division("await (x) / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn class_expression_brace_then_slash_is_division() {
-    assert_division("(class {} / 2);");
-    assert_division("(class C {} / 2);");
-    assert_division("(class extends B {} / 2);");
-    assert_division("(class C extends B {} / 2);");
-    assert_division("(class C extends f(B) {} / 2);");
-    assert_division("(class C extends a.b[0] {} / 2);");
-    assert_division("x = class {} / 2;");
-    assert_division("f(class {m(){}} / 2);");
-    assert_division("`${class {} / 2}`;");
+    division("(class {} / 2);", FileType::ScriptJS);
+    division("(class C {} / 2);", FileType::ScriptJS);
+    division("(class extends B {} / 2);", FileType::ScriptJS);
+    division("(class C extends B {} / 2);", FileType::ScriptJS);
+    division("(class C extends f(B) {} / 2);", FileType::ScriptJS);
+    division("(class C extends a.b[0] {} / 2);", FileType::ScriptJS);
+    division("x = class {} / 2;", FileType::ScriptJS);
+    division("f(class {m(){}} / 2);", FileType::ScriptJS);
+    division("`${class {} / 2}`;", FileType::ScriptJS);
 }
 
 #[test]
 fn class_declaration_brace_then_slash_is_regex() {
-    assert_regex("class C {} /re/.test(x);");
-    assert_regex("class C extends B {}\n/re/.test(x);");
-    assert_regex("{ class C {} } /re/.test(x);");
+    regex("class C {} /re/.test(x);", FileType::ScriptJS);
+    regex("class C extends B {}\n/re/.test(x);", FileType::ScriptJS);
+    regex("{ class C {} } /re/.test(x);", FileType::ScriptJS);
 }
 
 #[test]
 fn block_braces_keep_the_regex_answer() {
-    assert_regex("{} /re/.test(x);");
-    assert_regex(";{} /re/.test(x);");
-    assert_regex("L: {} /re/.test(x);");
-    assert_regex("if(a){}else{} /'/.test(s);\nconst t='x';");
-    assert_regex("x = () => {}\n/re/.test(s);");
+    regex("{} /re/.test(x);", FileType::ScriptJS);
+    regex(";{} /re/.test(x);", FileType::ScriptJS);
+    regex("L: {} /re/.test(x);", FileType::ScriptJS);
+    regex("if(a){}else{} /'/.test(s);\nconst t='x';", FileType::ScriptJS);
+    regex("x = () => {}\n/re/.test(s);", FileType::ScriptJS);
 }
 
 #[test]
 fn value_braces_keep_the_division_answer() {
-    assert_division("f({} / 2);");
-    assert_division("x = function(){} / 2;");
+    division("f({} / 2);", FileType::ScriptJS);
+    division("x = function(){} / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn plain_contexts_unchanged() {
-    assert_division("a / b;");
-    assert_division("1n / 2;");
-    assert_regex("a + /re/g;");
-    assert_regex("x = /re/;");
-    assert_regex("f(/re/);");
+    division("a / b;", FileType::ScriptJS);
+    division("1n / 2;", FileType::ScriptJS);
+    regex("a + /re/g;", FileType::ScriptJS);
+    regex("x = /re/;", FileType::ScriptJS);
+    regex("f(/re/);", FileType::ScriptJS);
 }
 
 #[test]
@@ -324,18 +314,18 @@ fn ts_postfix_bang_unchanged() {
 
 #[test]
 fn bare_gt_object_rhs_is_division() {
-    assert_division("x = f < T > {} / re / g;");
-    assert_division("x = a > {} / 2;");
-    assert_division("x = a >> {} / 2;");
-    assert_division("x = a >>> {} / 2;");
-    assert_division("x = a-- > {} / 2;");
-    assert_division("x = a >\n{} / 2;");
+    division("x = f < T > {} / re / g;", FileType::ScriptJS);
+    division("x = a > {} / 2;", FileType::ScriptJS);
+    division("x = a >> {} / 2;", FileType::ScriptJS);
+    division("x = a >>> {} / 2;", FileType::ScriptJS);
+    division("x = a-- > {} / 2;", FileType::ScriptJS);
+    division("x = a >\n{} / 2;", FileType::ScriptJS);
 }
 
 #[test]
 fn arrow_block_bodies_still_regex() {
-    assert_regex("x = y => {}\n/re/.test(s);");
-    assert_regex("x = async () => {}\n/re/.test(s);");
+    regex("x = y => {}\n/re/.test(s);", FileType::ScriptJS);
+    regex("x = async () => {}\n/re/.test(s);", FileType::ScriptJS);
 }
 
 #[test]
@@ -348,15 +338,15 @@ fn ts_angle_close_resolved() {
 
 #[test]
 fn unicode_ident_tail_resolved() {
-    assert_division("\u{53d8}\u{91cf}++ / b;");
-    assert_regex("a\u{2028}++/re/.lastIndex;");
+    division("\u{53d8}\u{91cf}++ / b;", FileType::ScriptJS);
+    regex("a\u{2028}++/re/.lastIndex;", FileType::ScriptJS);
 }
 
 #[test]
 fn of_trade_resolved() {
-    assert_regex("for (x of /re/) ;");
-    assert_division("var of = 1; of / 2;");
-    assert_division("instance/of/g;");
+    regex("for (x of /re/) ;", FileType::ScriptJS);
+    division("var of = 1; of / 2;", FileType::ScriptJS);
+    division("instance/of/g;", FileType::ScriptJS);
 }
 
 #[test]
