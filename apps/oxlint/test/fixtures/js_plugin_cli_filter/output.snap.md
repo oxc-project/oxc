@@ -3,7 +3,7 @@
 
 # stdout
 ```
-  x custom(rule): custom rule diagnostic
+  x custom(rule): custom rule diagnostic (from config)
    ,-[files/index.js:1:1]
  1 | ,-> const value = 1;
  2 | `-> console.log(value);
