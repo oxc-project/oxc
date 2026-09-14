@@ -362,6 +362,27 @@ source: crates/oxc_linter/src/tester.rs
   help: Property 'precedence' is only allowed on: link, style
 
   ⚠ react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div credentialless />
+   ·      ──────────────
+   ╰────
+  help: Property 'credentialless' is only allowed on: iframe
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:9]
+ 1 │ <iframe credentialLess src="https://example.com" />
+   ·         ──────────────
+   ╰────
+  help: Remove unknown property
+
+  ⚠ react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:7]
+ 1 │ <mask mask-type="alpha" />
+   ·       ─────────
+   ╰────
+  help: Use 'maskType' instead
+
+  ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:9]
  1 │ <script precedence="high" src="foo.js" />
    ·         ──────────
