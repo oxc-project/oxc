@@ -1,8 +1,17 @@
-use oxc_ast::ast::{
-    Argument, CallExpression, ConditionalExpression, Expression, NewExpression, match_expression,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        Argument, CallExpression, ConditionalExpression, Expression, IdentifierReference,
+        NewExpression, match_expression,
+    },
 };
 
-use crate::ast_util::{is_method_call, is_new_expression};
+use crate::{
+    ast_util::{
+        get_symbol_id_of_variable, is_method_call, is_new_expression, variable_declaration_kind,
+    },
+    context::LintContext,
+};
 
 #[derive(Debug, Clone)]
 pub(super) enum ValueHint {
@@ -116,7 +125,7 @@ impl ConstEval for NewExpression<'_> {
     }
 }
 
-fn is_new_array(new_expr: &NewExpression) -> bool {
+pub(super) fn is_new_array(new_expr: &NewExpression) -> bool {
     is_new_expression(new_expr, &["Array"], None, None)
 }
 
@@ -280,4 +289,74 @@ fn is_array_factory(call_expr: &CallExpression) -> bool {
 /// Matches `Promise.{all,allSettled}(x)`
 fn is_promise_array_method(call_expr: &CallExpression) -> bool {
     is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "allSettled"]), Some(1), Some(1))
+}
+
+/// Matches a call to one of the array methods [`is_functional_array_method`] detects, where the
+/// receiver is known not to be an array, e.g. `str.slice(1)`.
+///
+/// `String#slice` and `String#concat` share their names with the array methods, but they return a
+/// string. Spreading a string produces an array of its characters, so the spread is load-bearing
+/// and cannot be replaced by the call itself.
+///
+/// `eslint-plugin-unicorn` requires the receiver to be *known to be an array*
+/// (`isKnownArrayMethodClone`); bailing out when the receiver is known **not** to be an array is
+/// the equivalent check here, and keeps reporting receivers of unknown type.
+pub(super) fn is_call_on_known_non_array(target: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+    let Expression::CallExpression(call_expr) = target.without_parentheses() else {
+        return false;
+    };
+
+    if !is_functional_array_method(call_expr) {
+        return false;
+    }
+
+    call_expr
+        .callee
+        .get_member_expr()
+        .is_some_and(|member_expr| is_known_non_array(member_expr.object(), ctx))
+}
+
+/// Whether the expression is statically known to evaluate to something that is not an array.
+fn is_known_non_array(expr: &Expression<'_>, ctx: &LintContext<'_>) -> bool {
+    match expr.without_parentheses() {
+        Expression::ObjectExpression(_)
+        | Expression::StringLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ClassExpression(_) => true,
+        Expression::NewExpression(new_expr) => {
+            !is_new_array(new_expr) && !is_new_typed_array(new_expr)
+        }
+        Expression::Identifier(ident) => is_const_initializer_known_non_array(ident, ctx),
+        _ => false,
+    }
+}
+
+/// Whether the identifier is a `const` binding initialized with a known non-array.
+///
+/// A `let`/`var` binding may be reassigned, so it is not known to be a non-array.
+fn is_const_initializer_known_non_array(
+    ident: &IdentifierReference,
+    ctx: &LintContext<'_>,
+) -> bool {
+    let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
+        return false;
+    };
+
+    let node = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    let AstKind::VariableDeclarator(declarator) = node.kind() else {
+        return false;
+    };
+
+    if !variable_declaration_kind(declarator, ctx).is_const() {
+        return false;
+    }
+
+    declarator.init.as_ref().is_some_and(|init| is_known_non_array(init, ctx))
 }
