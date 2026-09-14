@@ -895,6 +895,12 @@ parser_diagnostics! {
             .with_allowed_modifier_help(allowed)
     };
 
+    accessor_only_on_property_declaration(modifier: Modifier, allowed: Option<ModifierKinds>) => {
+        ts_error("1275", "'accessor' modifier can only appear on a property declaration.")
+            .with_label(modifier.span())
+            .with_allowed_modifier_help(allowed)
+    };
+
     modifier_only_on_property_declaration_or_index_signature(modifier: Modifier, allowed: Option<ModifierKinds>) => {
         ts_error(
             "1024",

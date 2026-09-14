@@ -1,7 +1,40 @@
 parser_misc Summary:
-AST Parsed     : 109/109 (100.00%)
-Positive Passed: 109/109 (100.00%)
-Negative Passed: 222/222 (100.00%)
+AST Parsed     : 110/110 (100.00%)
+Positive Passed: 110/110 (100.00%)
+Negative Passed: 227/227 (100.00%)
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
+ 1 │ abstract class C { abstract accessor x(): void; }
+   ·                             ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-async-method.ts:1:11]
+ 1 │ class C { accessor async x() {} }
+   ·           ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-getter.ts:1:18]
+ 1 │ class C { static accessor get x() { return 0; } }
+   ·                  ────────
+   ╰────
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-method.ts:1:18]
+ 1 │ class C { static accessor x() {} }
+   ·                  ────────
+   ╰────
+  help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1275): 'accessor' modifier can only appear on a property declaration.
+   ╭─[misc/fail/accessor-modifier-static-setter.ts:1:18]
+ 1 │ class C { static accessor set x(value: number) {} }
+   ·                  ────────
+   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
