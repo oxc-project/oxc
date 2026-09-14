@@ -306,7 +306,7 @@ impl ConsistentFunctionScoping {
         }
 
         // Collect parameter defaults as well as body references: either can capture the parent.
-        let (function_var_references, private_references, is_parent_this_referenced) = {
+        let (function_var_references, private_references, has_lexical_capture) = {
             let mut rf = ReferencesFinder::default();
             match node.kind() {
                 AstKind::Function(function) => rf.visit_formal_parameters(&function.params),
@@ -319,10 +319,10 @@ impl ConsistentFunctionScoping {
                 FunctionLikeBody::Function(body) => rf.visit_function_body(body),
                 FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
             }
-            (rf.references, rf.private_references, rf.is_parent_this_referenced)
+            (rf.references, rf.private_references, rf.has_lexical_capture)
         };
 
-        if is_parent_this_referenced && matches!(node.kind(), AstKind::ArrowFunctionExpression(_)) {
+        if has_lexical_capture && matches!(node.kind(), AstKind::ArrowFunctionExpression(_)) {
             return;
         }
 
@@ -414,7 +414,7 @@ impl ConsistentFunctionScoping {
 
 #[derive(Default)]
 struct ReferencesFinder {
-    is_parent_this_referenced: bool,
+    has_lexical_capture: bool,
     references: Vec<ReferenceId>,
     private_references: Vec<NodeId>,
     in_function: usize,
@@ -436,7 +436,19 @@ impl<'a> Visit<'a> for ReferencesFinder {
 
     fn visit_this_expression(&mut self, _: &ThisExpression) {
         if self.in_function == 0 {
-            self.is_parent_this_referenced = true;
+            self.has_lexical_capture = true;
+        }
+    }
+
+    fn visit_super(&mut self, _: &Super) {
+        if self.in_function == 0 {
+            self.has_lexical_capture = true;
+        }
+    }
+
+    fn visit_new_target(&mut self, _: &NewTarget) {
+        if self.in_function == 0 {
+            self.has_lexical_capture = true;
         }
     }
 
@@ -999,6 +1011,42 @@ fn test() {
             }",
             None,
         ),
+        (
+            "const shared = 1;
+            class Derived extends Base {
+                method() {
+                    const inner = () => shared + super.value;
+                    return inner;
+                }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = () => shared + new.target;
+                return inner;
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            class Derived extends Base {
+                method() {
+                    const inner = (value = super.value) => shared + value;
+                    return inner;
+                }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = () => () => shared + new.target;
+                return inner;
+            }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1371,6 +1419,30 @@ fn test() {
             function outer() {
                 { consume(shared); }
                 function inner() { return shared; }
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                function inner() { return shared + new.target; }
+                return inner;
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = () => shared + (function () { return new.target; })();
+                return inner;
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = () => shared + ({ method() { return super.value; } }).method();
+                return inner;
             }",
             None,
         ),
