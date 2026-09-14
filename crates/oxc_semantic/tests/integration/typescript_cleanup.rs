@@ -1,4 +1,5 @@
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{Reference, SymbolFlags};
+use oxc_syntax::{node::NodeId, reference::ReferenceFlags};
 use rustc_hash::FxHashSet;
 
 use crate::util::SemanticTester;
@@ -83,6 +84,14 @@ fn erased_bindings_preserve_parameter_lookup_boundaries() {
             "const x = 0; function outer(a = (() => { declare const x: number; return () => x; })()) { var x = 1; }",
             true,
         ),
+        (
+            "function outer(a = function inner(b = (() => { declare const x: number; return x; })()) { let x = 1; }) { let x = 2; }",
+            false,
+        ),
+        (
+            "const x = 0; try {} catch ({ [(() => { declare const x: number; return x; })()]: a }) { let x = 1; }",
+            true,
+        ),
     ] {
         let tester = SemanticTester::ts(source);
         let mut scoping = tester.build().into_scoping();
@@ -107,6 +116,55 @@ fn erased_bindings_preserve_parameter_lookup_boundaries() {
             );
         }
     }
+}
+
+#[test]
+fn erased_bindings_preserve_parameter_environments_after_cloning() {
+    for source in [
+        "function outer(x, a = (() => { declare const x: number; return x; })()) {}",
+        "const x = 0; function outer(a = (() => { declare const x: number; return x; })()) { let x = 1; }",
+    ] {
+        let tester = SemanticTester::ts(source);
+        let scoping = tester.build().into_scoping();
+        let parameter = scoping
+            .iter_bindings()
+            .find_map(|(_, bindings)| {
+                bindings.get("x").copied().filter(|&id| !scoping.symbol_flags(id).is_ambient())
+            })
+            .unwrap();
+        let cloned = scoping.clone_in_with_semantic_ids_with_another_arena();
+        for mut scoping in [scoping, cloned] {
+            scoping.delete_typescript_bindings();
+            let references = scoping.get_resolved_reference_ids(parameter);
+            assert_eq!(references.len(), 1);
+            assert_eq!(scoping.get_reference(references[0]).symbol_id(), Some(parameter));
+            assert!(scoping.root_unresolved_references().is_empty());
+        }
+    }
+}
+
+#[test]
+fn generated_references_preserve_enclosing_parameter_environments() {
+    let tester = SemanticTester::ts(
+        "function outer(a = (() => { declare const x: number; })()) { let x = 1; }",
+    );
+    let mut scoping = tester.build().into_scoping();
+    let erased = scoping
+        .iter_bindings()
+        .flat_map(|(_, bindings)| bindings.values().copied())
+        .find(|&id| scoping.symbol_flags(id).is_ambient())
+        .unwrap();
+    // Model a transform adding a runtime reference inside the parameter's closure.
+    let reference = scoping.create_reference(Reference::new_with_symbol_id(
+        NodeId::DUMMY,
+        erased,
+        scoping.symbol_scope_id(erased),
+        ReferenceFlags::Read,
+    ));
+    scoping.add_resolved_reference(erased, reference);
+    scoping.delete_typescript_bindings();
+    assert_eq!(scoping.get_reference(reference).symbol_id(), None);
+    assert_eq!(scoping.root_unresolved_references().get("x").unwrap().as_slice(), [reference]);
 }
 
 #[test]

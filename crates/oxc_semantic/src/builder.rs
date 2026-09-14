@@ -739,7 +739,11 @@ impl<'a> SemanticBuilder<'a> {
     /// Resolved references are removed. Unresolved references stay in the flat
     /// list for later resolution by `resolve_all_references` (which handles
     /// forward references to declarations not yet visited).
-    fn resolve_references_for_current_scope(&mut self, unresolved_start: usize, reference_start: usize) {
+    fn resolve_references_for_current_scope(
+        &mut self,
+        unresolved_start: usize,
+        reference_start: usize,
+    ) {
         self.scoping.record_parameter_scope(self.current_scope_id, reference_start);
         if self.unresolved_references.len() == unresolved_start {
             return;

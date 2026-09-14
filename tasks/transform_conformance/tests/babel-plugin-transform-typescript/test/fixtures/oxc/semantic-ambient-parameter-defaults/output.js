@@ -12,3 +12,16 @@ const y = 0;
     let y = 1;
   };
 }
+function unresolved(a = (() => {
+  return x;
+})()) {
+  let x = 1;
+}
+function resolved(a = (() => {
+  return y;
+})()) {
+  let y = 1;
+}
+function parameter(x, a = (() => {
+  return x;
+})()) {}
