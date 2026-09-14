@@ -1,6 +1,6 @@
 use crate::{Lexer, PAD, options::default_options, token::TokenKind};
 
-use super::super::tests::{diag_codes_of, division, kinds_of, regex, stream};
+use super::super::tests::{FileType, diag_codes_of, division, kinds_of, regex, stream};
 
 #[track_caller]
 fn assert_regex(code: &str) {
@@ -166,7 +166,7 @@ fn async_function_expression_value() {
 #[test]
 fn slash_dense_chains() {
     let count = |code: &str, want_re: usize, want_slash: usize| {
-        let ks = kinds_of(code, false, false);
+        let ks = kinds_of(code, FileType::ScriptJS);
         let re = ks.iter().filter(|&&kk| kk == TokenKind::RegExp).count();
         let sl = ks.iter().filter(|&&kk| kk == TokenKind::Slash).count();
         assert_eq!((re, sl), (want_re, want_slash), "{code:?}: kinds {ks:?} (regexps, slashes)");
@@ -318,7 +318,7 @@ fn plain_contexts_unchanged() {
 
 #[test]
 fn ts_postfix_bang_unchanged() {
-    let ks = kinds_of("x! / 2;", true, false);
+    let ks = kinds_of("x! / 2;", FileType::ScriptTS);
     assert!(!ks.contains(&TokenKind::RegExp), "x! / 2 must stay division: {ks:?}");
 }
 
@@ -340,9 +340,9 @@ fn arrow_block_bodies_still_regex() {
 
 #[test]
 fn ts_angle_close_resolved() {
-    let ks = kinds_of("class C<T> {} /re/.test(x);", true, false);
+    let ks = kinds_of("class C<T> {} /re/.test(x);", FileType::ScriptTS);
     assert!(ks.contains(&TokenKind::RegExp), "TS class decl with type params: {ks:?}");
-    let ks = kinds_of("x = f < T > {} / re / g;", true, false);
+    let ks = kinds_of("x = f < T > {} / re / g;", FileType::ScriptTS);
     assert!(!ks.contains(&TokenKind::RegExp), "TS relational re-read must divide: {ks:?}");
 }
 
@@ -361,7 +361,7 @@ fn of_trade_resolved() {
 
 #[test]
 fn jsx_operand_positions() {
-    let jsx = |code: &str| kinds_of(code, false, true);
+    let jsx = |code: &str| kinds_of(code, FileType::ScriptJSX);
     let ks = jsx("export default <App/>;");
     assert!(ks.contains(&TokenKind::JsxLt), "export default <App/> must open JSX: {ks:?}");
     let ks = jsx("if (x) <App/>;");
@@ -575,7 +575,7 @@ fn value_ternary_and_arrow_stay_division() {
 
 #[test]
 fn tsx_asi_then_jsx_element() {
-    let tsx = |code: &str| kinds_of(code, true, true);
+    let tsx = |code: &str| kinds_of(code, FileType::ScriptTSX);
     let ks = tsx("let v: T\n<div />;");
     assert!(ks.contains(&TokenKind::JsxLt), "type-annotation ASI must open JSX: {ks:?}");
     let ks = tsx("let v\n<div />;");
@@ -650,7 +650,7 @@ fn restricted_production_label_precedes_regex() {
 
 #[test]
 fn tsx_literal_type_asi_then_jsx_element() {
-    let tsx = |code: &str| kinds_of(code, true, true);
+    let tsx = |code: &str| kinds_of(code, FileType::ScriptTSX);
     for code in [
         "let v: 1\n<div />;",
         "let v: -1\n<div />;",
@@ -662,7 +662,7 @@ fn tsx_literal_type_asi_then_jsx_element() {
         let ks = tsx(code);
         assert!(ks.contains(&TokenKind::JsxLt), "{code:?} must open JSX: {ks:?}");
     }
-    let ks = kinds_of("outer: for(;;){ break outer\n<div />; }", false, true);
+    let ks = kinds_of("outer: for(;;){ break outer\n<div />; }", FileType::ScriptJSX);
     assert!(ks.contains(&TokenKind::JsxLt), "labelled break ASI must open JSX: {ks:?}");
     let ks = tsx("const a = 1, div = 2;\nconst r = a - 1 < div;");
     assert!(!ks.contains(&TokenKind::JsxLt), "a - 1 < div stays a comparison: {ks:?}");
@@ -743,7 +743,7 @@ fn function_expression_return_type_then_body_is_a_value() {
     regex("function f(): T {}\n/re/.test(x);", true);
     regex("function f(): { a: T } {}\n/re/.test(x);", true);
     regex("let x: { a: T }\n/re/.test(x);", true);
-    let ks = kinds_of("x = [function (): T {}\n< y];", true, true);
+    let ks = kinds_of("x = [function (): T {}\n< y];", FileType::ScriptTSX);
     assert!(!ks.contains(&TokenKind::JsxLt), "{ks:?}");
     assert!(ks.contains(&TokenKind::Lt), "{ks:?}");
     let codes = diag_codes_of("x = [function (): T {}\n< y];", true, true);
@@ -808,7 +808,7 @@ fn bodiless_function_signature_before_a_line_break_ends_the_statement() {
     ] {
         stream(code, true, false, want);
     }
-    let ks = kinds_of("declare function y()\n<div/>;", true, true);
+    let ks = kinds_of("declare function y()\n<div/>;", FileType::ScriptTSX);
     assert!(ks.contains(&TokenKind::JsxLt), "{ks:?}");
     division("x = f()\n/ 2 / 3;", true);
     division("f<T>()\n/ 2 / 3;", true);
@@ -874,30 +874,39 @@ fn function_head_walks_cross_every_return_type_shape() {
     );
     let ks = kinds_of(
         "x = [async function $(): _ is Record<Promise<V>>{} < function Bar(arr?: any): K<this>{}];",
-        true,
-        true,
+        FileType::ScriptTSX,
     );
     assert!(ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::JsxLt), "{ks:?}");
 }
 
 #[test]
 fn brace_after_a_generic_return_type_is_a_body() {
-    for (code, ts, jsx) in [
-        ("async function fn($, x): N is <a>() => Array<symbol> {\n}\n/a{1,2}/u.x;", true, false),
-        ("async function fn($, x): N is <a>() => Array<symbol> {\n}\n/a{1,2}/u.x;", true, true),
-        ("function f(): () => Array<symbol> {}\n/re/.x;", true, false),
-        ("function f(): A | B<C> {}\n/re/.x;", true, false),
-        ("x = function* (): P<Q<R>> {}\nwhile (a) { async (p): B => 1\n}\n/re/.x;", true, false),
+    for (code, file_type) in [
+        (
+            "async function fn($, x): N is <a>() => Array<symbol> {\n}\n/a{1,2}/u.x;",
+            FileType::ScriptTS,
+        ),
+        (
+            "async function fn($, x): N is <a>() => Array<symbol> {\n}\n/a{1,2}/u.x;",
+            FileType::ScriptTSX,
+        ),
+        ("function f(): () => Array<symbol> {}\n/re/.x;", FileType::ScriptTS),
+        ("function f(): A | B<C> {}\n/re/.x;", FileType::ScriptTS),
+        (
+            "x = function* (): P<Q<R>> {}\nwhile (a) { async (p): B => 1\n}\n/re/.x;",
+            FileType::ScriptTS,
+        ),
     ] {
-        let ks = kinds_of(code, ts, jsx);
+        let ks = kinds_of(code, file_type);
         assert_eq!(
             {
                 let mut buf = code.as_bytes().to_vec();
                 let n = buf.len();
                 buf.resize(n + PAD, 0);
                 let mut opts = default_options();
-                opts.ts = ts;
-                opts.jsx = jsx;
+                opts.ts = file_type.is_ts();
+                opts.jsx = file_type.is_jsx();
+                opts.source_type_module = file_type.is_module();
                 let mut lx = Lexer::new();
                 let count = lx.lex(&buf, n, opts);
                 let kinds = lx.kinds()[..count].to_vec();
@@ -950,10 +959,10 @@ fn adjacent_type_atoms_end_an_annotation() {
         "type A = <T>(a: T) => T\n<div />;",
         "declare function f(): <T>(a: T) => T\n<div />;",
     ] {
-        let ks = kinds_of(code, true, true);
+        let ks = kinds_of(code, FileType::ScriptTSX);
         assert!(ks.contains(&TokenKind::JsxLt), "{code:?} must open JSX: {ks:?}");
     }
-    let ks = kinds_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", true, true);
+    let ks = kinds_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", FileType::ScriptTSX);
     assert!(ks.contains(&TokenKind::Lt) && !ks.contains(&TokenKind::JsxLt), "{ks:?}");
     let codes = diag_codes_of("let P: Array<bigint, this>\n_(x)\n<(P().foo);", true, true);
     assert!(codes.is_empty(), "{codes:?}");
