@@ -1,4 +1,4 @@
-use crate::{Lexer, PAD, options::default_options, token::TokenKind};
+use crate::{Lexer, PAD, token::TokenKind};
 
 use super::super::tests::{FileType, diag_codes_of, division, kinds_of, regex, stream};
 
@@ -903,12 +903,8 @@ fn brace_after_a_generic_return_type_is_a_body() {
                 let mut buf = code.as_bytes().to_vec();
                 let n = buf.len();
                 buf.resize(n + PAD, 0);
-                let mut opts = default_options();
-                opts.ts = file_type.is_ts();
-                opts.jsx = file_type.is_jsx();
-                opts.source_type_module = file_type.is_module();
                 let mut lx = Lexer::new();
-                let count = lx.lex(&buf, n, opts);
+                let count = lx.lex(&buf, n, file_type.options());
                 let kinds = lx.kinds()[..count].to_vec();
                 (0..count)
                     .filter(|&i| !kinds[i].is_trivia() && buf[lx.spans[i].start as usize] == b'/')
