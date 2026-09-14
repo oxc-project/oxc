@@ -315,6 +315,17 @@ impl ConsistentFunctionScoping {
             if ctx.scoping().scope_is_descendant_of(function_scope_id, scope_id)
                 && symbol_id != function_declaration_symbol_id
             {
+                // A function cannot move into a class body, and moving outside a named class
+                // expression would lose access to its self binding.
+                if ctx.scoping().scope_parent_id(parent_scope_id) == Some(scope_id)
+                    && matches!(
+                        ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind(),
+                        AstKind::Class(class) if class.is_expression()
+                    )
+                {
+                    return;
+                }
+
                 // References to more distant ancestors do not prevent moving the function out
                 // of its parent function. Preserve the existing handling of block scopes.
                 if parent_scope_flags.is_function()
@@ -881,6 +892,24 @@ fn test() {
             }",
             None,
         ),
+        (
+            "consume(class Internal {
+                method() {
+                    function inner() { return Internal; }
+                    return inner;
+                }
+            });",
+            None,
+        ),
+        (
+            "consume(class Internal {
+                method() {
+                    const inner = () => Internal;
+                    return inner;
+                }
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1193,6 +1222,27 @@ fn test() {
             function third() {
                 function inner() { return shared; }
                 return inner();
+            }",
+            None,
+        ),
+        (
+            "consume(class Internal {
+                method() {
+                    function outer() {
+                        function inner() { return Internal; }
+                        return inner;
+                    }
+                    return outer;
+                }
+            });",
+            None,
+        ),
+        (
+            "class External {
+                method() {
+                    function inner() { return External; }
+                    return inner;
+                }
             }",
             None,
         ),
