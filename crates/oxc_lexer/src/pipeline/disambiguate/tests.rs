@@ -878,8 +878,7 @@ fn tsx_element_type_arguments_with_generic_function_type() {
     assert_eq!(ks.iter().filter(|k| **k == TokenKind::JsxLt).count(), 1, "{ks:?}");
 }
 
-fn names_of(code: &str, ts: bool, jsx: bool) -> String {
-    let file_type = FileType::new_script(ts, jsx);
+fn names_of(code: &str, file_type: FileType) -> String {
     kinds_of(code, file_type)
         .iter()
         .map(|k| match k {
@@ -915,7 +914,8 @@ fn spans_of(code: &str, ts: bool, jsx: bool) -> Vec<(u32, u32)> {
 
 #[track_caller]
 pub(super) fn stream(code: &str, ts: bool, jsx: bool, want: &str) {
-    assert_eq!(names_of(code, ts, jsx), want, "{code:?}");
+    let file_type = FileType::new_script(ts, jsx);
+    assert_eq!(names_of(code, file_type), want, "{code:?}");
 }
 
 #[test]
