@@ -4,6 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -260,9 +261,16 @@ impl Rule for ConsistentFunctionScoping {
             return;
         }
 
-        // get all references in the function body
-        let (function_body_var_references, is_parent_this_referenced) = {
+        // Collect parameter defaults as well as body references: either can capture the parent.
+        let (function_var_references, is_parent_this_referenced) = {
             let mut rf = ReferencesFinder::default();
+            match node.kind() {
+                AstKind::Function(function) => rf.visit_formal_parameters(&function.params),
+                AstKind::ArrowFunctionExpression(arrow) => {
+                    rf.visit_formal_parameters(&arrow.params)
+                }
+                _ => unreachable!(),
+            }
             match function_body {
                 FunctionLikeBody::Function(body) => rf.visit_function_body(body),
                 FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
@@ -274,7 +282,9 @@ impl Rule for ConsistentFunctionScoping {
             return;
         }
 
-        for reference_id in function_body_var_references {
+        let parent_scope_id = ctx.scoping().scope_parent_id(function_scope_id).unwrap();
+        let mut checked_ancestor_symbols = FxHashSet::default();
+        for reference_id in function_var_references {
             let reference = ctx.scoping().get_reference(reference_id);
             let Some(symbol_id) = reference.symbol_id() else { continue };
             if ctx.scoping().symbol_flags(symbol_id).is_import() {
@@ -284,6 +294,23 @@ impl Rule for ConsistentFunctionScoping {
             if ctx.scoping().scope_is_descendant_of(function_scope_id, scope_id)
                 && symbol_id != function_declaration_symbol_id
             {
+                // References to more distant ancestors do not prevent moving the function out
+                // of its parent function. Preserve the existing handling of block scopes.
+                if ctx.scoping().scope_flags(parent_scope_id).is_function()
+                    && scope_id != parent_scope_id
+                    && !matches!(
+                        ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind(),
+                        AstKind::Function(function) if function.scope_id() == parent_scope_id
+                    )
+                    // A symbol that passed this check already has no references in the parent.
+                    // Scan its references only once, even if it occurs repeatedly in this function.
+                    && (!checked_ancestor_symbols.insert(symbol_id)
+                        || !ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
+                            ctx.nodes().get_node(reference.node_id()).scope_id() == parent_scope_id
+                        }))
+                {
+                    continue;
+                }
                 return;
             }
         }
@@ -773,6 +800,65 @@ fn test() {
             None,
         ),
         ("function outer() { { let x; var inner = () => x; } return inner; }", None),
+        (
+            "const shared = 1;
+            function outer() {
+                console.log(shared);
+                function inner() { return shared; }
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "function outer(shared) {
+                function inner() {
+                    function nested() { return shared; }
+                    return nested() + shared;
+                }
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer(local) {
+                function inner(value = local) { return shared + value; }
+                return inner();
+            }",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
+        ),
+        (
+            "const shared = 1;
+            function outer(local) {
+                const inner = (value = local) => shared + value;
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer(local) {
+                const inner = function named({ value = local } = {}) { return shared + value; };
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = (value = this) => shared + value;
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer(local) {
+                function inner() { return shared + shared + local; }
+                return inner();
+            }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1025,6 +1111,50 @@ fn test() {
 
                 return usesImport;
             };",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                function inner() {
+                    return shared;
+                }
+                return inner();
+            }",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
+        ),
+        (
+            "function top(shared) {
+                function outer() {
+                    function inner() { return shared; }
+                    return inner();
+                }
+                return outer();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = () => shared;
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                const inner = function named() { return shared; };
+                return inner();
+            }",
+            None,
+        ),
+        (
+            "const shared = 1;
+            function outer() {
+                function inner(value = shared) { return shared + value; }
+                return inner();
+            }",
             None,
         ),
     ];
