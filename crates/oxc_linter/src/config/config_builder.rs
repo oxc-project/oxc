@@ -1135,8 +1135,7 @@ mod test {
         let config: serde_json::Value = serde_json::from_str(&config).unwrap();
         let rules = &config["rules"];
         assert_eq!(rules["custom/other-rule"], "deny");
-        assert_eq!(rules["custom/my-rule"][0], "warn");
-        assert!(rules["custom/my-rule"].to_string().contains(r#"{"foo":true}"#));
+        assert_eq!(rules["custom/my-rule"], serde_json::json!(["warn", { "foo": true }]));
     }
 
     #[test]
