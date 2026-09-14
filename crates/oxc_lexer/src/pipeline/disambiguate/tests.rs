@@ -913,8 +913,7 @@ fn spans_of(code: &str, ts: bool, jsx: bool) -> Vec<(u32, u32)> {
 }
 
 #[track_caller]
-pub(super) fn stream(code: &str, ts: bool, jsx: bool, want: &str) {
-    let file_type = FileType::new_script(ts, jsx);
+pub(super) fn stream(code: &str, file_type: FileType, want: &str) {
     assert_eq!(names_of(code, file_type), want, "{code:?}");
 }
 
@@ -966,12 +965,11 @@ fn jsx_element_as_attribute_value_opens_a_nested_frame() {
             "IDENT = JSX_LT IDENT IDENT = STRING IDENT = { NUMBER < NUMBER } / JSX_TAG_END ;",
         ),
     ] {
-        stream(code, false, true, want);
+        stream(code, FileType::ScriptJSX, want);
     }
     stream(
         "const a = <Foo<T> key=<Bar<U> x=\"1\"/> />;",
-        true,
-        true,
+        FileType::ScriptTSX,
         "const IDENT = JSX_LT IDENT < IDENT > IDENT = JSX_LT IDENT < IDENT > IDENT = STRING / JSX_TAG_END / JSX_TAG_END ;",
     );
 }
@@ -980,8 +978,7 @@ fn jsx_element_as_attribute_value_opens_a_nested_frame() {
 fn jsx_child_element_name_after_trivia() {
     stream(
         "const a = <div>\n  x<br />\n  < br />\n  y\n</div>;",
-        true,
-        true,
+        FileType::ScriptTSX,
         "const IDENT = JSX_LT IDENT > JSX_TEXT JSX_LT IDENT / JSX_TAG_END JSX_TEXT JSX_LT IDENT / JSX_TAG_END JSX_TEXT JSX_LT / IDENT JSX_TAG_END ;",
     );
     for (code, want) in [
@@ -1003,7 +1000,7 @@ fn jsx_child_element_name_after_trivia() {
             "IDENT = JSX_LT IDENT > JSX_TEXT JSX_LT IDENT > JSX_TEXT JSX_LT / IDENT JSX_TAG_END JSX_LT / IDENT JSX_TAG_END ;",
         ),
     ] {
-        stream(code, false, true, want);
+        stream(code, FileType::ScriptJSX, want);
     }
 }
 
@@ -1024,14 +1021,13 @@ fn jsx_names_glue_every_hyphen() {
         ),
         ("x = <a-b:c-d/>;", "IDENT = JSX_LT IDENT : IDENT / JSX_TAG_END ;"),
     ] {
-        stream(code, false, true, want);
+        stream(code, FileType::ScriptJSX, want);
     }
     assert_eq!(spans_of("x = <a--b/>;", false, true)[3], (5, 9));
     assert_eq!(spans_of("y = <a-/>;", false, true)[3], (5, 7));
     stream(
         "<Foo<-1> data-x=\"1\"/>;",
-        true,
-        true,
+        FileType::ScriptTSX,
         "JSX_LT IDENT < - NUMBER > IDENT = STRING / JSX_TAG_END ;",
     );
 }
@@ -1060,7 +1056,7 @@ fn tsx_function_expression_type_parameters_after_star_or_async() {
             "IDENT = IDENT * JSX_LT IDENT > JSX_TEXT JSX_LT / IDENT JSX_TAG_END ;",
         ),
     ] {
-        stream(code, true, true, want);
+        stream(code, FileType::ScriptTSX, want);
     }
 }
 
@@ -1118,7 +1114,7 @@ fn tsx_call_and_construct_signatures_are_type_parameters() {
             "declare function IDENT ( IDENT : { < IDENT > ( IDENT : IDENT ) : IDENT } ) : void ;",
         ),
     ] {
-        stream(code, true, true, want);
+        stream(code, FileType::ScriptTSX, want);
     }
     for code in [
         "if (a) { <T>(x)</T> }",
@@ -1147,14 +1143,12 @@ fn tsx_call_and_construct_signatures_are_type_parameters() {
 fn escaped_type_parameter_name_after_lt_lt() {
     stream(
         "let s: a<<\\u{62}c>(x: T) => T>;",
-        true,
-        false,
+        FileType::ScriptTS,
         "let IDENT : IDENT < < IDENT > ( IDENT : IDENT ) => IDENT > ;",
     );
     stream(
         "const r = f<<\\u{62}c>(a: \\u{62}c) => \\u{62}c>(y);",
-        true,
-        false,
+        FileType::ScriptTS,
         "const IDENT = IDENT < < IDENT > ( IDENT : IDENT ) => IDENT > ( IDENT ) ;",
     );
 }
@@ -1190,7 +1184,7 @@ fn legacy_octal_literal_ends_before_a_dot() {
         ("x = 010n;", "IDENT = NUMBER IDENT ;"),
         ("x = 08n;", "IDENT = NUMBER IDENT ;"),
     ] {
-        stream(code, false, false, want);
+        stream(code, FileType::ScriptJS, want);
     }
     assert_eq!(spans_of("x = 010.5;", false, false)[2], (4, 7));
     assert_eq!(spans_of("x = 010.5;", false, false)[3], (7, 9));
@@ -1205,8 +1199,7 @@ fn type_context_before_a_declaration_keyword() {
     division("x = <T>\nfunction(){} / 2;", true);
     stream(
         "class C<T> extends B implements I, void {}\n/=/.test(s);",
-        true,
-        false,
+        FileType::ScriptTS,
         "class IDENT < IDENT > extends IDENT implements IDENT , void { } REGEXP . IDENT ( IDENT ) ;",
     );
 }
@@ -1228,7 +1221,7 @@ fn keyword_named_generic_members() {
             "type IDENT = { void < IDENT > ( IDENT : IDENT ) : IDENT } ;",
         ),
     ] {
-        stream(code, true, true, want);
+        stream(code, FileType::ScriptTSX, want);
     }
     for code in [
         "{ delete <T>(x)</T> }",

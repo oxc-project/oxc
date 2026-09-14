@@ -778,7 +778,7 @@ fn label_colon_inside_a_function_expression_body_is_a_statement() {
             "IDENT = function ( ) { IDENT : { } REGEXP . IDENT ( IDENT ) ; } ;",
         ),
     ] {
-        stream(code, false, false, want);
+        stream(code, FileType::ScriptJS, want);
     }
     division("x = function(){ return {a: {} / 2} };", false);
     division("x = function(){ a = c ? d : {} / 2 };", false);
@@ -806,7 +806,7 @@ fn bodiless_function_signature_before_a_line_break_ends_the_statement() {
             "function IDENT ( IDENT : IDENT ) REGEXP . IDENT ( IDENT ) ;",
         ),
     ] {
-        stream(code, true, false, want);
+        stream(code, FileType::ScriptTS, want);
     }
     let ks = kinds_of("declare function y()\n<div/>;", FileType::ScriptTSX);
     assert!(ks.contains(&TokenKind::JsxLt), "{ks:?}");
@@ -837,7 +837,7 @@ fn operand_heads_before_a_value_brace() {
         ),
         ("{ {k: v}\n/re/.test(s) }", "{ { IDENT : IDENT } REGEXP . IDENT ( IDENT ) }"),
     ] {
-        stream(code, false, true, want);
+        stream(code, FileType::ScriptJSX, want);
     }
     division("f(...{a: 1} / 2);", false);
     division("x = [...function(){} / 2];", false);
