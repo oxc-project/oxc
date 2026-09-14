@@ -2063,21 +2063,22 @@ fn find_functions_to_compile<'b, 'ast>(
 // -----------------------------------------------------------------------
 
 /// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
-/// discovery walk cannot queue anything, so the compile is a no-op. Built from
-/// data `Semantic` already computed instead of walking function bodies:
+/// discovery walk cannot queue anything, so the compile is a no-op.
 ///
-/// - every discoverable function creates a function scope; a PascalCase /
-///   `useX` name or a non-empty directive list over-approximates
-///   [`try_make_compile_source`] (the body scan for JSX/hooks is left to
-///   discovery);
-/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
-///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
-///   recognizes, so checking the reference shapes of those three names —
-///   bindings and unresolved globals — covers wrapped anonymous functions.
+/// `precise` (compile/emit) runs each function through [`try_make_compile_source`]
+/// so files like `react.development.js` — hook *implementations*, not callers —
+/// do not pay a discovery walk that queues nothing. Lint uses a name-only
+/// over-approximation: a PascalCase / `useX` name or a non-empty directive list
+/// is enough; the JSX/hook body scan is left to discovery.
+///
+/// The forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+/// or `React` in callee position of a call [`get_callee_name_if_react_api`]
+/// recognizes, so checking the reference shapes of those three names —
+/// bindings and unresolved globals — covers wrapped anonymous functions.
 ///
 /// Over-approximation is fine (the walk then finds an empty queue); a missed
 /// witness is not, since a skipped file is never compiled.
-fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions, precise: bool) -> bool {
     // 'all' mode compiles every top-level function; always walk.
     if opts.compilation_mode == CompilationMode::All {
         return true;
@@ -2099,38 +2100,60 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
         }
     }
 
-    // Named hooks, directive opt-ins, and (in JSX files) PascalCase components.
-    // PascalCase in a non-JSX file cannot classify without a hook/JSX body, so
-    // skip those here and leave the body scan to discovery only when needed.
+    // Named components/hooks and directive opt-ins.
+    let mut discarded = FxHashSet::default();
     let jsx = semantic.source_type().is_jsx();
     for scope_id in scoping.scope_descendants_from_root() {
         if !scoping.scope_flags(scope_id).is_function() {
             continue;
         }
         let node = nodes.get_node(scoping.get_node_id(scope_id));
-        match node.kind() {
+        let (fn_node, name, original_kind) = match node.kind() {
             AstKind::Function(func) => {
-                let name = match func.r#type {
-                    FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction => {
-                        get_function_name_from_id(func.id.as_ref())
+                let (name, original_kind) = match func.r#type {
+                    FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction => (
+                        get_function_name_from_id(func.id.as_ref()),
+                        OriginalFnKind::FunctionDeclaration,
+                    ),
+                    _ => {
+                        (declarator_name_for(nodes, node.id()), OriginalFnKind::FunctionExpression)
                     }
-                    _ => declarator_name_for(nodes, node.id()),
                 };
-                if name.is_some_and(|n| is_hook_name(n) || (jsx && is_component_name(n)))
-                    || func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
+                if name.is_none()
+                    && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
                 {
-                    return true;
+                    continue;
                 }
+                (FunctionNode::Function(func), name, original_kind)
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 let name = declarator_name_for(nodes, node.id());
-                if name.is_some_and(|n| is_hook_name(n) || (jsx && is_component_name(n)))
-                    || arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
+                if name.is_none()
+                    && arrow.get_function_body().is_none_or(|body| body.directives.is_empty())
                 {
-                    return true;
+                    continue;
+                }
+                (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
+            }
+            _ => continue,
+        };
+        if precise {
+            if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+                .is_some()
+            {
+                return true;
+            }
+        } else if name.is_some_and(|n| is_hook_name(n) || (jsx && is_component_name(n)))
+            || match fn_node {
+                FunctionNode::Function(func) => {
+                    func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
+                }
+                FunctionNode::Arrow(arrow) => {
+                    arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
                 }
             }
-            _ => {}
+        {
+            return true;
         }
     }
 
@@ -3112,7 +3135,7 @@ pub fn compile_program<'a, const EMIT: bool>(
     // Find all functions to compile. An empty queue means no work, so return
     // before all the setup below, which only compilation needs. The pre-check
     // decides emptiness from semantic data without walking the AST.
-    if !may_have_functions_to_compile(semantic, &options) {
+    if !may_have_functions_to_compile(semantic, &options, EMIT) {
         return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
     let queue = find_functions_to_compile(program, &options);
