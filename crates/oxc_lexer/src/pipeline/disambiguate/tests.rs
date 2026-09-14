@@ -279,21 +279,21 @@ fn unicode_next_line_is_whitespace() {
 
 #[test]
 fn jsx_self_close_allows_whitespace() {
-    let tsx = |code: &str| kinds_of(code, FileType::ScriptJSX);
+    let jsx = |code: &str| kinds_of(code, FileType::ScriptJSX);
     for code in [
         "const a = <N x=\"v\"/>;\nconst b = 1;",
         "const a = <N x=\"v\" / >;\nconst b = 1;",
         "const a = <N x=\"v\" /\n>;\nconst b = 1;",
         "const a = <N x=\"v\"\t/\t>;\nconst b = 1;",
     ] {
-        let ks = tsx(code);
+        let ks = jsx(code);
         assert!(ks.contains(&TokenKind::JsxTagEnd), "{code:?} must self-close: kinds {ks:?}");
         assert!(
             ks.iter().filter(|&&k| k == TokenKind::KwConst).count() == 2,
             "{code:?} must not swallow the next statement: kinds {ks:?}"
         );
     }
-    let ks = tsx("const a = <N x=\"v\" / y>;");
+    let ks = jsx("const a = <N x=\"v\" / y>;");
     assert!(!ks.contains(&TokenKind::JsxTagEnd), "lone slash: kinds {ks:?}");
 }
 
