@@ -1159,6 +1159,22 @@ fn test_arguments() {
             "function foo(a, ...args: unknown[]) { return a } foo()",
             Some(json!([{ "args": "none" }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/26562
+        // `after-used`: params before a used rest parameter are allowed
+        (
+            "function foo(unusedBeforeRest: string, ...usedRest: string[]) { console.log(usedRest); } foo('x', 'y');",
+            Some(json!([{ "args": "after-used" }])),
+        ),
+        (
+            "function foo(a, ...[_used]) { return _used } foo()",
+            Some(json!([{ "args": "after-used", "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "function foo(a, ...{b, ..._ignored}) { return b } foo()",
+            Some(
+                json!([{ "args": "after-used", "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }]),
+            ),
+        ),
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
@@ -1171,6 +1187,16 @@ fn test_arguments() {
         ("function foo(...args) { return 1 } foo()", Some(json!([{ "args": "after-used" }]))),
         ("function foo(...args: unknown[]) { return 1 } foo()", Some(json!([{ "args": "all" }]))),
         ("let count = 0; function foo(c = (count++, 0)) { console.log(c) } foo()", None),
+        (
+            "function foo(a, ...[_ignored]) {} foo()",
+            Some(json!([{ "args": "after-used", "destructuredArrayIgnorePattern": "^_" }])),
+        ),
+        (
+            "function foo(a, ...{b, ..._ignored}) {} foo()",
+            Some(
+                json!([{ "args": "after-used", "ignoreRestSiblings": true, "argsIgnorePattern": "^_" }]),
+            ),
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
