@@ -896,13 +896,14 @@ fn names_of(code: &str, file_type: FileType) -> String {
         .join(" ")
 }
 
-fn spans_of(code: &str, ts: bool, jsx: bool) -> Vec<(u32, u32)> {
+fn spans_of(code: &str, file_type: FileType) -> Vec<(u32, u32)> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut opts = default_options();
-    opts.ts = ts;
-    opts.jsx = jsx;
+    opts.ts = file_type.is_ts();
+    opts.jsx = file_type.is_jsx();
+    opts.source_type_module = file_type.is_module();
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
     let kinds = lx.kinds()[..count].to_vec();
@@ -1023,8 +1024,8 @@ fn jsx_names_glue_every_hyphen() {
     ] {
         stream(code, FileType::ScriptJSX, want);
     }
-    assert_eq!(spans_of("x = <a--b/>;", false, true)[3], (5, 9));
-    assert_eq!(spans_of("y = <a-/>;", false, true)[3], (5, 7));
+    assert_eq!(spans_of("x = <a--b/>;", FileType::ScriptJSX)[3], (5, 9));
+    assert_eq!(spans_of("y = <a-/>;", FileType::ScriptJSX)[3], (5, 7));
     stream(
         "<Foo<-1> data-x=\"1\"/>;",
         FileType::ScriptTSX,
@@ -1186,8 +1187,8 @@ fn legacy_octal_literal_ends_before_a_dot() {
     ] {
         stream(code, FileType::ScriptJS, want);
     }
-    assert_eq!(spans_of("x = 010.5;", false, false)[2], (4, 7));
-    assert_eq!(spans_of("x = 010.5;", false, false)[3], (7, 9));
+    assert_eq!(spans_of("x = 010.5;", FileType::ScriptJS)[2], (4, 7));
+    assert_eq!(spans_of("x = 010.5;", FileType::ScriptJS)[3], (7, 9));
 }
 
 #[test]
