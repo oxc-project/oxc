@@ -253,7 +253,7 @@ fn check_parameter_default<'a>(
         return;
     };
     if logical_assignment {
-        if !check_no_extra_references_logical_assignment(ctx, param) {
+        if !check_logical_assignment_is_first_reference(ctx, read_span, param) {
             return;
         }
     } else if is_assignment {
@@ -510,8 +510,9 @@ fn check_no_extra_references_assignment<'a>(
     writes == 1 && has_matching_read
 }
 
-fn check_no_extra_references_logical_assignment<'a>(
+fn check_logical_assignment_is_first_reference<'a>(
     ctx: &LintContext<'a>,
+    param_ident_span: Span,
     param: &FormalParameter<'a>,
 ) -> bool {
     let BindingPattern::BindingIdentifier(binding_ident) = &param.pattern else {
@@ -519,17 +520,11 @@ fn check_no_extra_references_logical_assignment<'a>(
     };
 
     let symbol_id = binding_ident.symbol_id();
-    let (reads, writes) = ctx.scoping().get_resolved_references(symbol_id).fold(
-        (0usize, 0usize),
-        |(reads, writes), r| {
-            if r.is_write() { (reads, writes + 1) } else { (reads + 1, writes) }
-        },
-    );
+    let Some(reference_id) = ctx.scoping().get_resolved_reference_ids(symbol_id).first() else {
+        return false;
+    };
 
-    // Logical assignment is recorded as a write on the left identifier, with no
-    // separate read span. Extra writes mean another assignment still uses the param.
-    let _ = reads;
-    writes == 1
+    ctx.semantic().reference_span(ctx.scoping().get_reference(*reference_id)) == param_ident_span
 }
 
 #[test]
@@ -701,6 +696,11 @@ fn test() {
                     value = value ?? '';
                 }
             };",
+        r"function example(value) {
+    const before = value;
+    value ||= false;
+    return before;
+}",
     ];
 
     let fail = vec![
@@ -829,6 +829,11 @@ fn test() {
 }",
         r"function example(value) {
     value ||= false;
+    return value;
+}",
+        r"function example(value) {
+    value ||= false;
+    value = true;
     return value;
 }",
     ];
@@ -1109,6 +1114,17 @@ bar(); baz();
     return value;
 }",
             r"function example(value = false) {
+    return value;
+}",
+        ),
+        (
+            r"function example(value) {
+    value ||= false;
+    value = true;
+    return value;
+}",
+            r"function example(value = false) {
+    value = true;
     return value;
 }",
         ),

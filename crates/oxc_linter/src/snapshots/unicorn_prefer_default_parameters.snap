@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 505
 ---
 
   ⚠ unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
@@ -300,5 +299,14 @@ assertion_line: 505
  2 │     value ||= false;
    ·     ───────────────
  3 │     return value;
+   ╰────
+  help: Replace the reassignment with a default parameter.
+
+  ⚠ unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'value'.
+   ╭─[prefer_default_parameters.tsx:2:5]
+ 1 │ function example(value) {
+ 2 │     value ||= false;
+   ·     ───────────────
+ 3 │     value = true;
    ╰────
   help: Replace the reassignment with a default parameter.
