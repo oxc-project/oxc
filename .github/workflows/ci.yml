@@ -582,8 +582,16 @@ jobs:
       - name: Check Conformance
         if: steps.filter.outputs.changed == 'true'
         run: |
+          set -o pipefail
           just update-transformer-fixtures
-          just coverage
+          just coverage | tee "$RUNNER_TEMP/coverage.log"
+          # `just coverage` includes lexer conformance, and this job is what covers `oxc_lexer`'s
+          # scalar fallback - the "Lexer SIMD" job covers the SIMD core. The harness prints which
+          # implementation it was built with (`oxc_lexer::IS_SIMD`). Checking it here is what
+          # guarantees the 2 jobs really do run one implementation each, so their shared snapshots
+          # compare the implementations against each other.
+          grep -qxF "Lexer implementation: scalar" "$RUNNER_TEMP/coverage.log" ||
+            { echo "::error::Expected scalar lexer, but the harness reported otherwise"; exit 1; }
           git diff --exit-code
 
   lexer:
@@ -593,23 +601,17 @@ jobs:
     #
     # Neither feature is in the x86_64 baseline on any platform, so the SIMD core is never built
     # unless asked for explicitly - which means no other job here lints, tests or runs it.
+    # Every other job builds the scalar fallback - "Lint", "Test Linux", "Conformance" jobs.
     #
-    # Both legs regenerate the committed conformance snapshots and fail on any diff,
-    # which ensures the 2 implementations behave identically to each other.
+    # This job and the "Conformance" job regenerate the same committed conformance snapshots
+    # and fail on any diff, which ensures the 2 implementations behave identically to each other.
+    # Both assert which implementation they got, so neither can silently run the other's.
     #
     # See the LEXER section of `justfile` for the flags.
-    name: Lexer (${{ matrix.variant }})
+    name: Lexer SIMD
     runs-on: namespace-profile-linux-x64-default
     env:
       CARGO_BUILD_WARNINGS: deny
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - variant: scalar
-            suffix: ""
-          - variant: SIMD
-            suffix: "-simd"
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -617,8 +619,8 @@ jobs:
         id: filter
         uses: ./.github/actions/check-changes
         with:
-          packages: oxc_lexer,oxc_coverage
-          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          packages: oxc_lexer
+          paths: crates/oxc_lexer/,.cargo/lexer-simd.toml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -639,29 +641,26 @@ jobs:
           tool: just
 
       - run: rustup component add clippy
-        # No need to run on scalar fallback - linting already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        if: steps.filter.outputs.changed == 'true'
 
       - name: Lint
-        # No need to run on scalar fallback - already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        if: steps.filter.outputs.changed == 'true'
         run: just lint-lexer-simd
 
       - name: Test
-        # No need to run on scalar fallback - already covered by "Test Linux" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        if: steps.filter.outputs.changed == 'true'
         run: just test-lexer-simd
 
       - name: Conformance
-        # Run on both SIMD and scalar fallback - neither is run anywhere else.
         # The harness prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
-        # Checking it here is what guarantees this leg exercised the build it asked for.
+        # Checking it here is what guarantees this job exercised the build it asked for -
+        # the "Conformance" job makes the mirror-image check for the scalar fallback.
         if: steps.filter.outputs.changed == 'true'
         run: |
           set -o pipefail
-          just conformance-lexer${{ matrix.suffix }} | tee "$RUNNER_TEMP/lexer.log"
-          grep -qxF "Lexer implementation: ${{ matrix.variant }}" "$RUNNER_TEMP/lexer.log" ||
-            { echo "::error::Expected ${{ matrix.variant }}, but the harness reported otherwise"; exit 1; }
+          just conformance-lexer-simd | tee "$RUNNER_TEMP/lexer.log"
+          grep -qxF "Lexer implementation: SIMD" "$RUNNER_TEMP/lexer.log" ||
+            { echo "::error::Expected SIMD lexer, but the harness reported otherwise"; exit 1; }
           git diff --exit-code
 
   test-codegen:
