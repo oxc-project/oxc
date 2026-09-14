@@ -1,7 +1,14 @@
-use std::{borrow::Cow, sync::Arc};
+use std::{
+    borrow::Cow,
+    hash::Hasher,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicU64, Ordering},
+    },
+};
 
 use futures::future::join_all;
-use rustc_hash::FxBuildHasher;
+use rustc_hash::{FxBuildHasher, FxHasher};
 use serde_json::Value;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp_server::{
@@ -14,14 +21,15 @@ use tower_lsp_server::{
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
-        TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
+        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport,
+        RelatedUnchangedDocumentDiagnosticReport, ServerInfo, TextDocumentContentChangeEvent,
+        TextEdit, UnchangedDocumentDiagnosticReport, Uri, WorkspaceEdit,
     },
 };
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    ClientMessage, ConcurrentHashMap, LanguageId,
+    ClientMessage, ConcurrentHashMap, LanguageId, TextDocument,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
@@ -69,9 +77,25 @@ pub struct Backend {
     // A simple in-memory file system to store the content of open files.
     // The client will send the content of in-memory files on `textDocument/didOpen` and `textDocument/didChange`.
     file_system: Arc<LSPFileSystem>,
+    // Bumped whenever something outside a single document's own text can change its diagnostics,
+    // i.e. a configuration or watched file change. Included in the `resultId` handed to the
+    // client, so a pull carrying a stale `previousResultId` cannot be answered with `unchanged`.
+    diagnostic_generation: AtomicU64,
+    // Per-document state used to decide whether a pull can be answered with `unchanged`.
+    diagnostic_state: ConcurrentHashMap<Uri, DocumentDiagnosticState>,
     // Messages collected during `initialize` that must be deferred until `initialized`,
     // because the LSP spec forbids server-to-client communication before the initialize response is sent.
     pending_initialization_messages: OnceCell<Vec<ClientMessage>>,
+}
+
+/// Tracks whether the diagnostics handed to the client for a document are still the result of the
+/// document's current content.
+#[derive(Debug, Default)]
+struct DocumentDiagnosticState {
+    /// A `didChange` arrived after the last lint. The next pull lints again instead of reusing the
+    /// result the client already has, even when the text happens to be byte-identical — the client
+    /// side code action cache is cleared on every change and is only repopulated by a lint.
+    dirty: AtomicBool,
 }
 
 impl LanguageServer for Backend {
@@ -332,6 +356,10 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeConfiguration>
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
+        // A configuration change can change the diagnostics of every document, including ones whose
+        // text did not change, so no previously handed out `resultId` is valid any more.
+        self.invalidate_diagnostics();
+
         let workers = self.worker_manager.read_workspace_workers().await;
         let mut new_diagnostics = Vec::new();
         let mut removing_registrations = vec![];
@@ -449,6 +477,10 @@ impl LanguageServer for Backend {
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
+
+        // The changed file can be a config or a `tsconfig.json`, which changes the diagnostics of
+        // documents whose text did not change.
+        self.invalidate_diagnostics();
 
         let mut new_diagnostics = Vec::new();
         let mut removing_registrations = vec![];
@@ -624,6 +656,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
+        self.mark_diagnostics_dirty(&uri);
         if let Some(content) = params
             .content_changes
             .into_iter()
@@ -870,6 +903,26 @@ impl LanguageServer for Backend {
         };
 
         let document = self.file_system.get_document(uri);
+        let result_id = self.diagnostic_result_id(&document);
+
+        // The client already holds the diagnostics for exactly this document state, so there is
+        // nothing to recompute. `previous_result_id` is only ever the id we handed out for the
+        // current text and configuration, and a pull is only answered this way when no change
+        // arrived since the lint that produced it.
+        if !self.diagnostics_are_dirty(uri)
+            && let Some(result_id) = result_id.as_deref()
+            && params.previous_result_id.as_deref() == Some(result_id)
+        {
+            return Ok(DocumentDiagnosticReportResult::Report(
+                DocumentDiagnosticReport::Unchanged(RelatedUnchangedDocumentDiagnosticReport {
+                    related_documents: None,
+                    unchanged_document_diagnostic_report: UnchangedDocumentDiagnosticReport {
+                        result_id: result_id.to_string(),
+                    },
+                }),
+            ));
+        }
+
         let diagnostics = worker.run_diagnostic(document).await;
 
         let diagnostics = match diagnostics {
@@ -884,6 +937,8 @@ impl LanguageServer for Backend {
             Ok(diagnostics) => diagnostics,
         };
 
+        self.mark_diagnostics_linted(uri);
+
         let uri_diagnostics = diagnostics
             .iter()
             .filter(|(diag_uri, _)| diag_uri == uri)
@@ -897,7 +952,7 @@ impl LanguageServer for Backend {
             RelatedFullDocumentDiagnosticReport {
                 full_document_diagnostic_report: FullDocumentDiagnosticReport {
                     items: uri_diagnostics,
-                    ..Default::default()
+                    result_id,
                 },
                 related_documents: if related_diagnostics.is_empty() {
                     None
@@ -959,8 +1014,60 @@ impl Backend {
             worker_manager,
             capabilities: OnceCell::new(),
             file_system: Arc::new(LSPFileSystem::default()),
+            diagnostic_generation: AtomicU64::new(0),
+            diagnostic_state: ConcurrentHashMap::default(),
             pending_initialization_messages: OnceCell::new(),
         }
+    }
+
+    /// A result id describing the diagnostics of `document` in its current state, or `None` when
+    /// the document is not open.
+    ///
+    /// Pull diagnostics allow a server to answer a request with `unchanged` when the `resultId` it
+    /// would return matches the `previousResultId` the client sent. The id therefore has to change
+    /// whenever the diagnostics can change: the document text is hashed and combined with
+    /// `diagnostic_generation`, which is bumped on configuration and watched file changes.
+    ///
+    /// An unopened document is read from disk, where it can change without any notification, so no
+    /// id is handed out and every pull for it lints.
+    fn diagnostic_result_id(&self, document: &TextDocument<'_>) -> Option<String> {
+        let text = document.text.as_deref()?;
+        let mut hasher = FxHasher::default();
+        hasher.write(text.as_bytes());
+        hasher.write_u64(self.diagnostic_generation.load(Ordering::Relaxed));
+        Some(format!("{:016x}", hasher.finish()))
+    }
+
+    /// Invalidate every `resultId` handed out so far, because something outside a document's own
+    /// text changed the diagnostics it would produce.
+    fn invalidate_diagnostics(&self) {
+        self.diagnostic_generation.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Record that `uri` changed and its diagnostics have to be recomputed on the next pull.
+    fn mark_diagnostics_dirty(&self, uri: &Uri) {
+        self.diagnostic_state
+            .pin()
+            .get_or_insert_with(uri.clone(), DocumentDiagnosticState::default)
+            .dirty
+            .store(true, Ordering::Relaxed);
+    }
+
+    /// Record that the diagnostics handed out for `uri` were recomputed from its current content.
+    fn mark_diagnostics_linted(&self, uri: &Uri) {
+        self.diagnostic_state
+            .pin()
+            .get_or_insert_with(uri.clone(), DocumentDiagnosticState::default)
+            .dirty
+            .store(false, Ordering::Relaxed);
+    }
+
+    /// Whether a `didChange` for `uri` arrived after its last lint.
+    fn diagnostics_are_dirty(&self, uri: &Uri) -> bool {
+        self.diagnostic_state
+            .pin()
+            .get(uri)
+            .is_some_and(|state| state.dirty.load(Ordering::Relaxed))
     }
 
     /// Ask the client to refresh pull diagnostics, without awaiting its reply

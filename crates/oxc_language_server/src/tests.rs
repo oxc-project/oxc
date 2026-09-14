@@ -605,10 +605,20 @@ fn test_configuration_request(id: i64) -> Request {
 }
 
 fn diagnostic(id: i64, uri: &str) -> Request {
+    diagnostic_with_previous_result_id(id, uri, None)
+}
+
+/// A `textDocument/diagnostic` request, optionally carrying the `resultId` the client got from an
+/// earlier report.
+fn diagnostic_with_previous_result_id(
+    id: i64,
+    uri: &str,
+    previous_result_id: Option<&str>,
+) -> Request {
     let params = DocumentDiagnosticParams {
         text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
         identifier: None,
-        previous_result_id: None,
+        previous_result_id: previous_result_id.map(ToString::to_string),
         work_done_progress_params: WorkDoneProgressParams::default(),
         partial_result_params: PartialResultParams::default(),
     };
@@ -648,11 +658,12 @@ mod test_suite {
             FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
             WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
             acknowledge_unregistrations, code_action, create_workspace_manager,
-            create_workspace_manager_with_builder, diagnostic, did_change,
-            did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
-            execute_command_request, initialize_request, initialize_request_workspace_folders,
-            initialized_notification, response_to_configuration, shutdown_request,
-            test_configuration_request, workspace_folders_changed,
+            create_workspace_manager_with_builder, diagnostic, diagnostic_with_previous_result_id,
+            did_change, did_change_configuration, did_change_watched_files, did_close, did_open,
+            did_save, execute_command_request, initialize_request,
+            initialize_request_workspace_folders, initialized_notification,
+            response_to_configuration, shutdown_request, test_configuration_request,
+            workspace_folders_changed,
         },
     };
 
@@ -2029,6 +2040,80 @@ mod test_suite {
         );
 
         server.shutdown(4).await;
+    }
+
+    /// A full pull report carries a `resultId`, a client that sends it back for unchanged content
+    /// gets `unchanged` instead of another lint, and anything that can change the diagnostics —
+    /// an edit here — invalidates that id again.
+    #[tokio::test]
+    async fn test_diagnostics_pull_mode_result_id_and_unchanged() {
+        let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let content = "pull mode text";
+        server.send_request(did_open(&file, content)).await;
+
+        // A client that has no previous result gets a full report carrying a result id.
+        server.send_request(diagnostic(3, &file)).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        let result_id = report["resultId"].as_str().expect("full report must carry a resultId");
+
+        // Pulling again with that id, for unchanged content, is answered with `unchanged`.
+        server.send_request(diagnostic_with_previous_result_id(4, &file, Some(result_id))).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "unchanged");
+        assert_eq!(report["resultId"].as_str(), Some(result_id));
+
+        // An edit changes the text, so the id no longer matches and the next pull lints again.
+        server.send_request(did_change(&file, "changed text")).await;
+        server.send_request(diagnostic_with_previous_result_id(5, &file, Some(result_id))).await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        assert_ne!(report["resultId"].as_str(), Some(result_id));
+        assert_eq!(report["items"][0]["message"], "Fake diagnostic for content: changed text");
+        let result_id_after_edit = report["resultId"].as_str().unwrap().to_string();
+
+        // A watched file change can change the diagnostics of a document whose text did not change
+        // (a config or a tsconfig), so the id handed out for it must not be reused.
+        server
+            .send_request(did_change_watched_files(format!("{WORKSPACE}/tool.config").as_str()))
+            .await;
+        acknowledge_diagnostic_refresh(&mut server).await;
+        server
+            .send_request(diagnostic_with_previous_result_id(7, &file, Some(&result_id_after_edit)))
+            .await;
+        let response = server.recv_response().await;
+        assert!(response.is_ok());
+        let report: serde_json::Value =
+            serde_json::from_value(response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        assert_ne!(report["resultId"].as_str(), Some(result_id_after_edit.as_str()));
+
+        server.shutdown(8).await;
     }
 
     // ── Single-file mode (no workspace folders / root URI on initialize) ──────
