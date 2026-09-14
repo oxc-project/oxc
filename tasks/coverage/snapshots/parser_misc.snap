@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 108/108 (100.00%)
-Positive Passed: 108/108 (100.00%)
-Negative Passed: 218/218 (100.00%)
+AST Parsed     : 109/109 (100.00%)
+Positive Passed: 109/109 (100.00%)
+Negative Passed: 222/222 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4763,6 +4763,32 @@ Negative Passed: 218/218 (100.00%)
  1 │ class A {constructor(public constructor){}}
  2 │ class B {constructor(readonly constructor){}}
    ·                               ───────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-ambient.ts:1:19]
+ 1 │ declare class C { readonly constructor(); }
+   ·                   ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-overload.ts:2:3]
+ 1 │ class C {
+ 2 │   readonly constructor(value: number);
+   ·   ────────
+ 3 │   constructor(value: number) {}
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor-quoted.ts:1:18]
+ 1 │ class C { public readonly "constructor"() {} }
+   ·                  ────────
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/readonly-constructor.ts:1:11]
+ 1 │ class C { readonly constructor() {} }
+   ·           ────────
    ╰────
 
   × Invalid rest element target in destructuring assignment

@@ -525,6 +525,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(modifier) = modifiers.get(ModifierKind::Declare) {
             self.error(diagnostics::declare_constructor(modifier.span()));
         }
+        self.verify_modifiers(
+            modifiers,
+            ModifierKinds::all_except([ModifierKind::Readonly]),
+            false,
+            diagnostics::modifier_only_on_property_declaration_or_index_signature,
+        );
 
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
