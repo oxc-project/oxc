@@ -52,12 +52,14 @@ pub(super) fn kinds_of(code: &str, file_type: FileType) -> Vec<TokenKind> {
     lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
 }
 
-fn first_slash_kind(code: &str, ts: bool) -> Option<TokenKind> {
+fn first_slash_kind(code: &str, file_type: FileType) -> Option<TokenKind> {
     let mut buf = code.as_bytes().to_vec();
     let n = buf.len();
     buf.resize(n + PAD, 0);
     let mut opts = default_options();
-    opts.ts = ts;
+    opts.ts = file_type.is_ts();
+    opts.jsx = file_type.is_jsx();
+    opts.source_type_module = file_type.is_module();
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
     let kinds = lx.kinds()[..count].to_vec();
@@ -72,7 +74,7 @@ pub(super) fn regex(code: &str, ts: bool) {
     let file_type = FileType::new_script(ts, false);
     let ks = kinds_of(code, file_type);
     assert_eq!(
-        first_slash_kind(code, ts),
+        first_slash_kind(code, file_type),
         Some(TokenKind::RegExp),
         "expected the first `/` to open a regex in {code:?}: kinds {ks:?}"
     );
