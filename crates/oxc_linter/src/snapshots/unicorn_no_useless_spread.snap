@@ -577,6 +577,20 @@ source: crates/oxc_linter/src/tester.rs
   help: `foo.splice` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:22]
+ 1 │ let str = 'abcdef'; [...str.slice(1)]
+   ·                      ───
+   ╰────
+  help: `str.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:27]
+ 1 │ function f(str) { return [...str.slice(1)] }
+   ·                           ───
+   ╰────
+  help: `str.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
  1 │ [...foo.toReversed()]
    ·  ───
