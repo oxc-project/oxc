@@ -16,8 +16,8 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
-    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
-    assert_terminal_successors_exist, assert_valid_block_nesting,
+    InstructionValue, ReactFunctionType, assert_consistent_identifiers,
+    assert_terminal_preds_exist, assert_terminal_successors_exist, assert_valid_block_nesting,
 };
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
@@ -238,6 +238,31 @@ pub fn compile_fn<'a, const EMIT: bool>(
     {
         let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
+    }
+
+    // Lint does not emit a rewrite. Passes after this reconstruct reactive
+    // scopes so `validate_preserved_manual_memoization` can run. Skip them
+    // when the function has no useMemo/useCallback to preserve.
+    if !EMIT
+        && env.output_mode == OutputMode::Lint
+        && !hir
+            .instructions
+            .iter()
+            .any(|instruction| matches!(instruction.value, InstructionValue::StartMemoize { .. }))
+    {
+        if env.config.throw_unknown_exception_testonly {
+            return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
+        }
+        if env.has_errors() {
+            if let Some(uid_names) = env.take_uid_known_names() {
+                context.merge_uid_known_names(&uid_names);
+            }
+            return Err(env.take_errors());
+        }
+        if let Some(uid_names) = env.take_uid_known_names() {
+            context.merge_uid_known_names(&uid_names);
+        }
+        return Ok(None);
     }
 
     if env.enable_memoization() {

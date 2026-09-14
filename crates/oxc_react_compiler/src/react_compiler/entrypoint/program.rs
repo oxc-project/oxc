@@ -2064,15 +2064,12 @@ fn find_functions_to_compile<'b, 'ast>(
 
 /// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
 /// discovery walk cannot queue anything, so the compile is a no-op. Built from
-/// data `Semantic` already computed instead of walking the AST, and delegating
-/// all judgment to discovery's own helpers:
+/// data `Semantic` already computed instead of walking function bodies:
 ///
-/// - every discoverable function creates a function scope, so the node behind
-///   each function scope is run through [`try_make_compile_source`] with the
-///   name discovery would infer — own id for declarations, the directly
-///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
-///   name sources discovery uses outside forwardRef/memo. This covers the
-///   named and directive-opt-in selection paths, nested functions included;
+/// - every discoverable function creates a function scope; a PascalCase /
+///   `useX` name or a non-empty directive list over-approximates
+///   [`try_make_compile_source`] (the body scan for JSX/hooks is left to
+///   discovery);
 /// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
 ///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
 ///   recognizes, so checking the reference shapes of those three names —
@@ -2102,49 +2099,36 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
         }
     }
 
-    // Named components/hooks and directive opt-ins: run the node behind every
-    // function scope through discovery's candidate constructor. parent_callee
-    // is None — wrapper-selected functions are witnessed by reference shapes.
-    let mut discarded = FxHashSet::default();
+    // Named components/hooks and directive opt-ins. Over-approximate by name
+    // and directives; the JSX/hook body scan is left to discovery.
     for scope_id in scoping.scope_descendants_from_root() {
         if !scoping.scope_flags(scope_id).is_function() {
             continue;
         }
         let node = nodes.get_node(scoping.get_node_id(scope_id));
-        let (fn_node, name, original_kind) = match node.kind() {
+        match node.kind() {
             AstKind::Function(func) => {
-                let (name, original_kind) = match func.r#type {
-                    FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction => (
-                        get_function_name_from_id(func.id.as_ref()),
-                        OriginalFnKind::FunctionDeclaration,
-                    ),
-                    _ => {
-                        (declarator_name_for(nodes, node.id()), OriginalFnKind::FunctionExpression)
+                let name = match func.r#type {
+                    FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction => {
+                        get_function_name_from_id(func.id.as_ref())
                     }
+                    _ => declarator_name_for(nodes, node.id()),
                 };
-                // A nameless function without directives can never classify.
-                if name.is_none()
-                    && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
+                if name.is_some_and(|n| is_component_name(n) || is_hook_name(n))
+                    || func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
                 {
-                    continue;
+                    return true;
                 }
-                (FunctionNode::Function(func), name, original_kind)
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 let name = declarator_name_for(nodes, node.id());
-                if name.is_none()
-                    && arrow.get_function_body().is_none_or(|body| body.directives.is_empty())
+                if name.is_some_and(|n| is_component_name(n) || is_hook_name(n))
+                    || arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
                 {
-                    continue;
+                    return true;
                 }
-                (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
             }
-            _ => continue,
-        };
-        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
-            .is_some()
-        {
-            return true;
+            _ => {}
         }
     }
 
