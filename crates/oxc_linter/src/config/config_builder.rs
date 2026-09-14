@@ -605,7 +605,11 @@ impl ConfigStoreBuilder {
 
     /// # Panics
     /// This function will panic if the `oxlintrc` is not valid JSON.
-    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
+    pub fn resolve_final_config_file(
+        &self,
+        oxlintrc: Oxlintrc,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> String {
         let mut oxlintrc = oxlintrc;
         let previous_rules = std::mem::take(&mut oxlintrc.rules);
 
@@ -615,18 +619,29 @@ impl ConfigStoreBuilder {
             .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
             .collect::<rustc_hash::FxHashMap<_, _>>();
 
-        let new_rules = self
-            .rules
-            .iter()
-            .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
-            .map(|(r, severity)| ESLintRule {
-                plugin_name: r.plugin_name().to_string(),
-                rule_name: r.name().to_string(),
+        let builtin_rules = self.rules.iter().map(|(r, severity)| ESLintRule {
+            plugin_name: r.plugin_name().to_string(),
+            rule_name: r.name().to_string(),
+            severity: *severity,
+            config: rule_name_to_rule
+                .get(&get_name(r.plugin_name(), r.name()))
+                .map(|r| r.config.clone())
+                .unwrap_or_default(),
+        });
+        let external_rules = self.external_rules.iter().map(|(rule_id, (options_id, severity))| {
+            let (plugin_name, rule_name) =
+                external_plugin_store.resolve_plugin_rule_names(*rule_id);
+            ESLintRule {
+                plugin_name: plugin_name.to_string(),
+                rule_name: rule_name.to_string(),
                 severity: *severity,
-                config: rule_name_to_rule
-                    .get(&get_name(r.plugin_name(), r.name()))
-                    .map(|r| r.config.clone())
-                    .unwrap_or_default(),
+                config: external_plugin_store.options(*options_id).clone(),
+            }
+        });
+        let new_rules = builtin_rules
+            .chain(external_rules)
+            .sorted_unstable_by(|a, b| {
+                (&a.plugin_name, &a.rule_name).cmp(&(&b.plugin_name, &b.rule_name))
             })
             .collect();
 
@@ -1094,6 +1109,34 @@ mod test {
             &external_plugin_store,
         );
         assert!(builder.external_rules.is_empty());
+    }
+
+    #[test]
+    fn test_print_config_includes_external_rules() {
+        let mut external_plugin_store = ExternalPluginStore::new(true);
+        external_plugin_store.register_plugin(
+            PathBuf::from("path/to/custom-plugin"),
+            "custom".to_string(),
+            0,
+            vec!["my-rule".to_string(), "other-rule".to_string()],
+        );
+        let my_rule = external_plugin_store.lookup_rule_id("custom", "my-rule").unwrap();
+        let options = smallvec::smallvec![serde_json::json!({ "foo": true })];
+        let options_id = external_plugin_store.add_options(my_rule, &options);
+
+        let mut builder = ConfigStoreBuilder::empty();
+        builder.external_rules.insert(my_rule, (options_id, AllowWarnDeny::Warn));
+        let builder = builder.with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "custom/other-rule").unwrap(),
+            &external_plugin_store,
+        );
+
+        let config = builder.resolve_final_config_file(Oxlintrc::default(), &external_plugin_store);
+        let config: serde_json::Value = serde_json::from_str(&config).unwrap();
+        let rules = &config["rules"];
+        assert_eq!(rules["custom/other-rule"], "deny");
+        assert_eq!(rules["custom/my-rule"][0], "warn");
+        assert!(rules["custom/my-rule"].to_string().contains(r#"{"foo":true}"#));
     }
 
     #[test]

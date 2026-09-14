@@ -161,6 +161,12 @@ impl ExternalPluginStore {
         }
     }
 
+    /// Get options previously added with [`add_options`](Self::add_options).
+    /// [`ExternalOptionsId::NONE`] yields empty options.
+    pub fn options(&self, options_id: ExternalOptionsId) -> &SmallVec<[serde_json::Value; 1]> {
+        &self.options[options_id].1
+    }
+
     /// Send options to JS side.
     ///
     /// # Errors
