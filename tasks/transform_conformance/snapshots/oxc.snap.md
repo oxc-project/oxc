@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 362/425
+Passed: 360/425
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (71/79)
+# babel-plugin-transform-typescript (69/79)
 * computed-constant-value/input.ts
 Unresolved references mismatch:
 after transform: ["Infinity", "NaN"]
@@ -118,6 +118,55 @@ rebuilt        : SymbolId(0): [ReferenceId(9)]
 Symbol reference IDs mismatch for "NumberEnum":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
+
+* oxc/semantic-ambient-parameter-defaults/input.ts
+Symbol reference IDs mismatch for "y":
+after transform: SymbolId(10): [ReferenceId(2)]
+rebuilt        : SymbolId(9): [ReferenceId(2), ReferenceId(4)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(18): [ReferenceId(3)]
+rebuilt        : SymbolId(15): []
+Symbol reference IDs mismatch for "y":
+after transform: SymbolId(22): [ReferenceId(4)]
+rebuilt        : SymbolId(18): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(18) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "y":
+after transform: SymbolId(22) "y"
+rebuilt        : SymbolId(9) "y"
+Unresolved reference IDs mismatch for "x":
+after transform: [ReferenceId(0), ReferenceId(1)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+
+* oxc/semantic-parameter-environments/input.ts
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(6): []
+rebuilt        : SymbolId(5): [ReferenceId(1)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(10): [ReferenceId(1)]
+rebuilt        : SymbolId(8): []
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(16): [ReferenceId(2)]
+rebuilt        : SymbolId(13): []
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(32): []
+rebuilt        : SymbolId(26): [ReferenceId(6)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(36): [ReferenceId(6)]
+rebuilt        : SymbolId(29): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(10) "x"
+rebuilt        : SymbolId(5) "x"
+Reference symbol mismatch for "x":
+after transform: SymbolId(16) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(36) "x"
+rebuilt        : SymbolId(26) "x"
+Unresolved reference IDs mismatch for "x":
+after transform: [ReferenceId(0)]
+rebuilt        : [ReferenceId(0), ReferenceId(2)]
 
 * use-define-for-class-fields/input.ts
 Unresolved references mismatch:

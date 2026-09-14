@@ -647,15 +647,6 @@ impl Scoping {
     /// Remove bindings for erased symbols, then resolve their remaining references
     /// against the surviving scope tree. Symbol and reference IDs stay stable.
     pub fn remove_bindings_and_resolve_references(&mut self, removed: &FxHashSet<SymbolId>) {
-        self.remove_bindings_and_resolve_references_with(removed, |_, _| true);
-    }
-
-    /// Repair references while allowing the caller to exclude inaccessible binding candidates.
-    pub fn remove_bindings_and_resolve_references_with(
-        &mut self,
-        removed: &FxHashSet<SymbolId>,
-        mut can_resolve: impl FnMut(ReferenceId, SymbolId) -> bool,
-    ) {
         if removed.is_empty() {
             return;
         }
@@ -674,12 +665,13 @@ impl Scoping {
                     // Resume at the erased binding, not the reference's lexical scope.
                     // A parameter default can share a scope with body declarations that
                     // were deliberately skipped during its original resolution.
+                    // TODO: Nested closures in parameter initializers can still resolve
+                    // to inaccessible body bindings because parameters and the body share
+                    // a scope. Separate parameter/body scopes are needed to model this.
                     let mut scope = Some(*self.symbol_table.symbol_scope_ids(symbol_id));
                     let mut resolved = None;
                     while let Some(scope_id) = scope {
-                        if let Some(&id) = cell.bindings[scope_id].get(&name)
-                            && can_resolve(reference_id, id)
-                        {
+                        if let Some(&id) = cell.bindings[scope_id].get(&name) {
                             resolved = Some(id);
                             break;
                         }
@@ -1218,18 +1210,16 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
-        self.delete_typescript_bindings_with(|_, _| false, |_, _| true);
+        self.delete_typescript_bindings_with(|_, _| false);
     }
 
     /// Remove TypeScript bindings and additional declarations erased by a transform.
     ///
     /// `is_erased` identifies declarations by symbol and binding span. All bindings
     /// are removed before any remaining value references are resolved again.
-    /// `can_resolve` excludes binding candidates that are inaccessible to a reference.
     pub fn delete_typescript_bindings_with(
         &mut self,
         mut is_erased: impl FnMut(SymbolId, Span) -> bool,
-        can_resolve: impl FnMut(ReferenceId, SymbolId) -> bool,
     ) {
         #[expect(
             clippy::inline_always,
@@ -1280,7 +1270,7 @@ impl Scoping {
                 removed.insert(symbol_id);
             }
         }
-        self.remove_bindings_and_resolve_references_with(&removed, can_resolve);
+        self.remove_bindings_and_resolve_references(&removed);
     }
 }
 

@@ -1,5 +1,4 @@
-use oxc_semantic::{Reference, SymbolFlags};
-use oxc_syntax::{node::NodeId, reference::ReferenceFlags, scope::ScopeFlags};
+use oxc_semantic::SymbolFlags;
 use rustc_hash::FxHashSet;
 
 use crate::util::SemanticTester;
@@ -60,44 +59,6 @@ fn erased_bindings_resolve_through_all_erased_scopes() {
     assert_eq!(scoping.symbols_len(), symbols);
     scoping.delete_typescript_bindings();
     assert_eq!(scoping.root_unresolved_references().get("y").unwrap().as_slice(), [y_ref]);
-}
-
-#[test]
-fn reference_repair_can_exclude_inaccessible_candidates() {
-    let tester = SemanticTester::ts(
-        "function outer(a = (() => { declare const x: number; })()) { let x = 1; }",
-    );
-    let mut scoping = tester.build().into_scoping();
-    let erased = scoping
-        .iter_bindings()
-        .flat_map(|(_, bindings)| bindings.values().copied())
-        .find(|&id| scoping.symbol_flags(id).is_ambient())
-        .unwrap();
-    // Model a transform inserting an intermediate scope and adding a runtime
-    // reference inside the parameter's closure.
-    let closure_scope = scoping.symbol_scope_id(erased);
-    let parent = scoping.scope_parent_id(closure_scope);
-    let inserted = scoping.add_scope(parent, NodeId::DUMMY, ScopeFlags::empty());
-    scoping.set_scope_parent_id(closure_scope, Some(inserted));
-    let reference = scoping.create_reference(Reference::new_with_symbol_id(
-        NodeId::DUMMY,
-        erased,
-        scoping.symbol_scope_id(erased),
-        ReferenceFlags::Read,
-    ));
-    scoping.add_resolved_reference(erased, reference);
-    let inaccessible = scoping
-        .iter_bindings()
-        .find_map(|(_, bindings)| bindings.get("x").copied().filter(|&id| id != erased))
-        .unwrap();
-    scoping.delete_typescript_bindings_with(
-        |_, _| false,
-        |reference_id, symbol| reference_id != reference || symbol != inaccessible,
-    );
-    assert!(scoping.get_resolved_reference_ids(inaccessible).is_empty());
-    scoping.delete_typescript_bindings();
-    assert_eq!(scoping.get_reference(reference).symbol_id(), None);
-    assert_eq!(scoping.root_unresolved_references().get("x").unwrap().as_slice(), [reference]);
 }
 
 #[test]
