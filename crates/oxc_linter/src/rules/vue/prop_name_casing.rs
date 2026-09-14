@@ -175,8 +175,12 @@ impl PropNameCasing {
 
     fn check_signature<'a>(&self, signature: &TSSignature<'a>, ctx: &LintContext<'a>) {
         let (key_opt, span) = match signature {
-            TSSignature::TSPropertySignature(sig) => (sig.key.static_name(), sig.key.span()),
-            TSSignature::TSMethodSignature(sig) => (sig.key.static_name(), sig.key.span()),
+            TSSignature::TSPropertySignature(sig) => {
+                (sig.key.static_name().and_then(oxc_ast::StaticName::into_utf8), sig.key.span())
+            }
+            TSSignature::TSMethodSignature(sig) => {
+                (sig.key.static_name().and_then(oxc_ast::StaticName::into_utf8), sig.key.span())
+            }
             _ => return,
         };
         let Some(name) = key_opt else { return };

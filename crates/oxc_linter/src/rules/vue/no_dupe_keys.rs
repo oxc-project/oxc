@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use oxc_ast::StaticName;
 
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
@@ -25,7 +25,7 @@ use crate::{
     utils::{for_each_define_props_type_signature, is_vue_component_options_object},
 };
 
-fn duplicate_key_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
+fn duplicate_key_diagnostic(span: Span, name: impl std::fmt::Display) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Duplicate key '{name}'. May cause name collision in script or template tag."
     ))
@@ -115,12 +115,12 @@ impl NoDupeKeys {
         // dedup: user-supplied group names may overlap with built-in names
         let groups: FxHashSet<&str> =
             GROUP_NAMES.iter().copied().chain(extra_groups.iter().map(String::as_str)).collect();
-        let mut seen: FxHashSet<Cow<'a, str>> = FxHashSet::default();
+        let mut seen: FxHashSet<StaticName<'a>> = FxHashSet::default();
         // Walk all properties in source order so duplicate group names are both visited
         for prop_kind in &obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
             let Some(group_name) = static_key_name(&prop.key) else { continue };
-            if !groups.contains(group_name.as_ref()) {
+            if !group_name.as_str().is_some_and(|name| groups.contains(name)) {
                 continue;
             }
             collect_group_keys(&prop.value, &mut seen, ctx);
@@ -145,12 +145,13 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
     let root_scope_id = ctx.scoping().root_scope_id();
 
     for prop_name in &props {
-        if renamed.contains(prop_name.as_ref()) {
+        if renamed.contains(prop_name) {
             continue;
         }
+        // Lone-surrogate property names cannot be identifiers.
+        let Some(binding_name) = prop_name.as_str() else { continue };
         // Only look in the module (root) scope — nested function/block bindings are invisible
-        let Some(symbol_id) = ctx.scoping().get_binding(root_scope_id, prop_name.as_ref().into())
-        else {
+        let Some(symbol_id) = ctx.scoping().get_binding(root_scope_id, binding_name.into()) else {
             continue;
         };
         if !ctx.scoping().symbol_flags(symbol_id).can_be_referenced_by_value() {
@@ -173,7 +174,7 @@ fn check_define_props<'a>(node: &AstNode<'a>, call: &'a CallExpression<'a>, ctx:
             }
             _ => decl.kind().span(),
         };
-        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name.as_ref()));
+        ctx.diagnostic(duplicate_key_diagnostic(span, prop_name));
     }
 }
 
@@ -206,7 +207,7 @@ fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
 
 fn collect_group_keys<'a>(
     value: &'a Expression<'a>,
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<StaticName<'a>>,
     ctx: &LintContext<'a>,
 ) {
     // Only unwrap parens: espree has no paren nodes, so upstream sees through them,
@@ -217,7 +218,7 @@ fn collect_group_keys<'a>(
                 let Some(expr) = el.as_expression() else { continue };
                 let expr = expr.without_parentheses();
                 if let Some(name) = literal_element_name(expr)
-                    && !name.is_empty()
+                    && !name.as_js_str().is_empty()
                 {
                     report_or_add(name, expr.span(), seen, ctx);
                 }
@@ -252,7 +253,7 @@ fn collect_group_keys<'a>(
 
 fn collect_returned_object_keys<'a>(
     statements: &'a [Statement<'a>],
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<StaticName<'a>>,
     ctx: &LintContext<'a>,
 ) {
     for stmt in statements {
@@ -267,10 +268,10 @@ fn collect_returned_object_keys<'a>(
 
 fn collect_object_keys<'a>(
     obj: &'a ObjectExpression<'a>,
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<StaticName<'a>>,
     ctx: &LintContext<'a>,
 ) {
-    let getter_names: FxHashSet<Cow<'a, str>> = obj
+    let getter_names: FxHashSet<StaticName<'a>> = obj
         .properties
         .iter()
         .filter_map(|p| {
@@ -279,19 +280,19 @@ fn collect_object_keys<'a>(
         })
         .collect();
 
-    let mut used_getters: FxHashSet<Cow<'a, str>> = FxHashSet::default();
+    let mut used_getters: FxHashSet<StaticName<'a>> = FxHashSet::default();
 
     for prop_kind in &obj.properties {
         let ObjectPropertyKind::ObjectProperty(prop) = prop_kind else { continue };
         let Some(name) = static_key_name(&prop.key) else { continue };
         // upstream skips empty names (`if (name)`)
-        if name.is_empty() {
+        if name.as_js_str().is_empty() {
             continue;
         }
 
         if prop.kind == PropertyKind::Set
-            && getter_names.contains(name.as_ref())
-            && !used_getters.contains(name.as_ref())
+            && getter_names.contains(&name)
+            && !used_getters.contains(&name)
         {
             used_getters.insert(name);
             continue;
@@ -302,12 +303,12 @@ fn collect_object_keys<'a>(
 }
 
 fn report_or_add<'a>(
-    name: Cow<'a, str>,
+    name: StaticName<'a>,
     span: Span,
-    seen: &mut FxHashSet<Cow<'a, str>>,
+    seen: &mut FxHashSet<StaticName<'a>>,
     ctx: &LintContext<'a>,
 ) {
-    if seen.contains(name.as_ref()) {
+    if seen.contains(&name) {
         ctx.diagnostic(duplicate_key_diagnostic(span, &name));
     } else {
         seen.insert(name);
@@ -316,16 +317,18 @@ fn report_or_add<'a>(
 
 /// Mirrors upstream `getStringLiteralValue`: the prop-name string of a literal array element.
 /// Non-string literals are stringified like JS `String(value)`; `null` has no name.
-fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
+fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<StaticName<'a>> {
     match expr {
-        Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
-        Expression::TemplateLiteral(t) => t.single_quasi().map(Into::into),
-        Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
-        Expression::BooleanLiteral(b) => {
-            Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
+        Expression::StringLiteral(s) => Some(StaticName::from(s.value.as_str())),
+        Expression::TemplateLiteral(t) => {
+            t.single_quasi().map(|name| StaticName::from(name.as_str()))
         }
-        Expression::BigIntLiteral(b) => Some(Cow::Borrowed(b.value.as_str())),
-        Expression::RegExpLiteral(r) => Some(Cow::Owned(r.regex.to_string())),
+        Expression::NumericLiteral(n) => Some(StaticName::Owned(n.value.to_js_string())),
+        Expression::BooleanLiteral(b) => {
+            Some(StaticName::from(if b.value { "true" } else { "false" }))
+        }
+        Expression::BigIntLiteral(b) => Some(StaticName::from(b.value.as_str())),
+        Expression::RegExpLiteral(r) => Some(StaticName::Owned(r.regex.to_string())),
         _ => None,
     }
 }
@@ -335,11 +338,11 @@ fn literal_element_name<'a>(expr: &Expression<'a>) -> Option<Cow<'a, str>> {
 /// a computed `[true]` key is named "true", and a computed `[null]` key has no name
 /// (upstream's `getStringLiteralValue` bails on `value == null`; a plain `null` key
 /// is an identifier, not this variant).
-fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
+fn static_key_name<'a>(key: &PropertyKey<'a>) -> Option<StaticName<'a>> {
     match key {
-        PropertyKey::NumericLiteral(n) => Some(Cow::Owned(n.value.to_js_string())),
+        PropertyKey::NumericLiteral(n) => Some(StaticName::Owned(n.value.to_js_string())),
         PropertyKey::BooleanLiteral(b) => {
-            Some(Cow::Borrowed(if b.value { "true" } else { "false" }))
+            Some(StaticName::from(if b.value { "true" } else { "false" }))
         }
         PropertyKey::NullLiteral(_) => None,
         _ => key.static_name(),
@@ -356,7 +359,7 @@ fn collect_props_bindings<'a>(
     node: &AstNode<'a>,
     call: &CallExpression<'a>,
     ctx: &LintContext<'a>,
-) -> (Vec<SymbolId>, FxHashSet<Cow<'a, str>>) {
+) -> (Vec<SymbolId>, FxHashSet<StaticName<'a>>) {
     let mut ids = Vec::new();
     let mut renamed = FxHashSet::default();
     let declarator = ctx.nodes().ancestors(node.id()).find_map(|ancestor| {
@@ -373,7 +376,7 @@ fn collect_props_bindings<'a>(
                 && let BindingPattern::BindingIdentifier(val) = &prop.value
                 && key.name != val.name
             {
-                renamed.insert(Cow::Borrowed(key.name.as_str()));
+                renamed.insert(StaticName::from(key.name.as_str()));
             }
         }
     }
@@ -422,8 +425,8 @@ fn is_inside_props_reference(
 fn collect_prop_names_from_call<'a>(
     call: &'a CallExpression<'a>,
     ctx: &LintContext<'a>,
-) -> Vec<Cow<'a, str>> {
-    let mut props: Vec<Cow<'a, str>> = Vec::new();
+) -> Vec<StaticName<'a>> {
+    let mut props: Vec<StaticName<'a>> = Vec::new();
     if let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) {
         match arg.without_parentheses() {
             Expression::ObjectExpression(obj) => {
@@ -454,7 +457,7 @@ fn collect_prop_names_from_call<'a>(
 fn collect_ts_type_prop_names<'a>(
     call: &'a CallExpression<'a>,
     ctx: &LintContext<'a>,
-    out: &mut Vec<Cow<'a, str>>,
+    out: &mut Vec<StaticName<'a>>,
 ) {
     let Some(type_params) = &call.type_arguments else { return };
     let Some(first_type) = type_params.params.first() else { return };

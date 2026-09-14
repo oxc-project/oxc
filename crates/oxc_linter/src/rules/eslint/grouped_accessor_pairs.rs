@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
@@ -402,7 +400,9 @@ fn get_key_name_and_check_literal<'a>(
     let key_name = prop_key
         .name()
         .unwrap_or_else(|| {
-            Cow::Borrowed(prop_key.as_expression().unwrap().span().source_text(ctx.source_text()))
+            oxc_ast::StaticName::from(
+                prop_key.as_expression().unwrap().span().source_text(ctx.source_text()),
+            )
         })
         .to_string();
     let is_literal =

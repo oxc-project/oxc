@@ -183,7 +183,7 @@ impl AccessorPairs {
                 continue;
             }
 
-            if let Some(name) = prop.key.static_name() {
+            if let Some(name) = prop.key.static_name().and_then(oxc_ast::StaticName::into_utf8) {
                 let info = accessors.entry(name.into_owned()).or_default();
                 if kind == PropertyKind::Get {
                     info.getter = Some(prop.key.span());
@@ -223,7 +223,7 @@ impl AccessorPairs {
             let computed =
                 if method.r#static { &mut computed_static } else { &mut computed_instance };
 
-            if let Some(name) = method.key.static_name() {
+            if let Some(name) = method.key.static_name().and_then(oxc_ast::StaticName::into_utf8) {
                 let info = accessors.entry(name.into_owned()).or_default();
                 if kind == MethodDefinitionKind::Get {
                     info.getter = Some(method.key.span());
@@ -384,7 +384,7 @@ impl AccessorPairs {
                 continue;
             };
 
-            let Some(name) = prop.key.static_name() else {
+            let Some(name) = prop.key.static_name().and_then(oxc_ast::StaticName::into_utf8) else {
                 continue;
             };
 
@@ -423,7 +423,7 @@ impl AccessorPairs {
                 continue;
             }
 
-            if let Some(name) = method.key.static_name() {
+            if let Some(name) = method.key.static_name().and_then(oxc_ast::StaticName::into_utf8) {
                 let info = accessors.entry(name.into_owned()).or_default();
                 if kind == TSMethodSignatureKind::Get {
                     info.getter = Some(method.key.span());
@@ -453,7 +453,7 @@ impl AccessorPairs {
                 continue;
             }
 
-            if let Some(name) = method.key.static_name() {
+            if let Some(name) = method.key.static_name().and_then(oxc_ast::StaticName::into_utf8) {
                 let info = accessors.entry(name.into_owned()).or_default();
                 if kind == TSMethodSignatureKind::Get {
                     info.getter = Some(method.key.span());

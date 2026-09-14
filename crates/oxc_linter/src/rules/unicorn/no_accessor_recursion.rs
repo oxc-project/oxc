@@ -136,9 +136,9 @@ impl Rule for NoAccessorRecursion {
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && prop_key_name.as_js_str() == expr_key_name
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                prop_key_name.as_js_str() == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -166,9 +166,9 @@ impl Rule for NoAccessorRecursion {
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && prop_key_name.as_js_str() == expr_key_name
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                prop_key_name.as_js_str() == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -305,10 +305,10 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<String> {
+fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<oxc_ast::StaticName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
-        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => Some(key.name()?.to_string()),
+        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),
         _ => None,
     }
 }
