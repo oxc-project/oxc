@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 use rustc_hash::FxHashMap;
 
@@ -34,9 +34,10 @@ impl DiagnosticReporter for JUnitReporter {
 }
 
 fn format_junit(diagnostics: &[Error]) -> String {
-    // `Info::new` scans the source to resolve the span, so build it exactly once per
-    // diagnostic and group by index rather than re-deriving it inside the render loop.
-    let infos: Vec<Info> = diagnostics.iter().map(Info::new).collect();
+    // `Info::new` scans the source to resolve the span for every diagnostic. Build the batch at
+    // once so diagnostics of the same file share one scan, and group by index rather than
+    // re-deriving it inside the render loop.
+    let infos: Vec<Info> = batch_infos(diagnostics).map(|(_, info)| info).collect();
 
     let mut grouped: FxHashMap<&str, Vec<usize>> = FxHashMap::default();
     for (index, info) in infos.iter().enumerate() {

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 
 use super::default::get_diagnostic_result_output;
@@ -35,17 +35,25 @@ impl DiagnosticReporter for GithubReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        Some(format_github(&error))
+        Some(format_github(&error, &Info::new(&error)))
+    }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        // Resolve line/column for the whole batch at once, so diagnostics of the same file share
+        // one scan of its source instead of rescanning it per diagnostic.
+        for (error, info) in batch_infos(&errors) {
+            emit(&format_github(error, &info));
+        }
     }
 }
 
-fn format_github(diagnostic: &Error) -> String {
-    let Info { start, end, filename, message, severity, rule_id } = Info::new(diagnostic);
+fn format_github(diagnostic: &Error, info: &Info) -> String {
+    let Info { start, end, filename, message, severity, rule_id } = info;
     let severity = match severity {
         Severity::Error => "error",
         Severity::Warning | Severity::Advice => "warning",
     };
-    let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
+    let title = rule_id.as_deref().map_or(Cow::Borrowed("oxlint"), Cow::Borrowed);
 
     if filename.is_empty() {
         let severity = match diagnostic.severity() {
@@ -59,9 +67,9 @@ fn format_github(diagnostic: &Error) -> String {
         // The parameters before `::` only feed the annotations panel, not the log
         // stream, so repeat `file:line:col` in the message text. Same layout as Ruff:
         // https://github.com/astral-sh/ruff/blob/main/crates/ruff_db/src/diagnostic/render/github.rs
-        let escaped_filename = escape_property(&filename);
-        let filename_data = escape_data(&filename);
-        let message = escape_data(&message);
+        let escaped_filename = escape_property(filename);
+        let filename_data = escape_data(filename);
+        let message = escape_data(message);
         let (line, col) = (start.line, start.column);
         let (end_line, end_col) = (end.line, end.column);
         format!(

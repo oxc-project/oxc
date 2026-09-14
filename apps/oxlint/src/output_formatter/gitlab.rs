@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 
 use crate::output_formatter::InternalFormatter;
@@ -112,54 +112,59 @@ impl DiagnosticReporter for GitlabReporter {
 }
 
 fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) -> String {
-    let errors = diagnostics.drain(..).map(|error| {
-        let Info { start, end, filename, message, severity, rule_id } = Info::new(&error);
-        let severity = match severity {
-            Severity::Error => "critical".to_string(),
-            Severity::Warning => "major".to_string(),
-            Severity::Advice => "minor".to_string(),
-        };
+    // Resolve line/column for the whole batch at once, so diagnostics of the same file share one
+    // scan of its source instead of rescanning it per diagnostic.
+    let errors: Vec<GitlabErrorJson> = batch_infos(diagnostics)
+        .map(|(_, info)| {
+            let Info { start, end, filename, message, severity, rule_id } = info;
+            let severity = match severity {
+                Severity::Error => "critical".to_string(),
+                Severity::Warning => "major".to_string(),
+                Severity::Advice => "minor".to_string(),
+            };
 
-        let fingerprint = {
-            let mut hasher = DefaultHasher::new();
-            start.line.hash(&mut hasher);
-            end.line.hash(&mut hasher);
-            filename.hash(&mut hasher);
-            message.hash(&mut hasher);
-            severity.hash(&mut hasher);
+            let fingerprint = {
+                let mut hasher = DefaultHasher::new();
+                start.line.hash(&mut hasher);
+                end.line.hash(&mut hasher);
+                filename.hash(&mut hasher);
+                message.hash(&mut hasher);
+                severity.hash(&mut hasher);
 
-            format!("{:x}", hasher.finish())
-        };
+                format!("{:x}", hasher.finish())
+            };
 
-        GitlabErrorJson {
-            description: message,
-            check_name: rule_id.unwrap_or_default(),
-            location: GitlabErrorLocationJson {
-                // GitLab expects file paths to be relative to the repository
-                // root, so adjust accordingly.
-                path: match repo_path_prefix {
-                    Some(prefix) => {
-                        // only do the path swap on Windows
-                        #[cfg(windows)]
-                        {
-                            let combined = prefix.join(&filename);
-                            combined.to_string_lossy().cow_replace('\\', "/").into_owned()
+            GitlabErrorJson {
+                description: message,
+                check_name: rule_id.unwrap_or_default(),
+                location: GitlabErrorLocationJson {
+                    // GitLab expects file paths to be relative to the repository
+                    // root, so adjust accordingly.
+                    path: match repo_path_prefix {
+                        Some(prefix) => {
+                            // only do the path swap on Windows
+                            #[cfg(windows)]
+                            {
+                                let combined = prefix.join(&filename);
+                                combined.to_string_lossy().cow_replace('\\', "/").into_owned()
+                            }
+                            #[cfg(not(windows))]
+                            {
+                                prefix.join(&filename).to_string_lossy().to_string()
+                            }
                         }
-                        #[cfg(not(windows))]
-                        {
-                            prefix.join(&filename).to_string_lossy().to_string()
-                        }
-                    }
-                    None => filename,
+                        None => filename,
+                    },
+                    lines: GitlabErrorLocationLinesJson { begin: start.line, end: end.line },
                 },
-                lines: GitlabErrorLocationLinesJson { begin: start.line, end: end.line },
-            },
-            fingerprint,
-            severity,
-        }
-    });
+                fingerprint,
+                severity,
+            }
+        })
+        .collect();
+    diagnostics.clear();
 
-    serde_json::to_string_pretty(&errors.collect::<Vec<_>>()).expect("Failed to serialize")
+    serde_json::to_string_pretty(&errors).expect("Failed to serialize")
 }
 
 #[cfg(test)]
