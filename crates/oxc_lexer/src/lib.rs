@@ -16,7 +16,7 @@ pub mod token;
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{Diagnostic, diag_code, diag_severity};
 pub use lanes::Lanes;
-pub use options::{LexOptions, default_options};
+pub use options::LexOptions;
 pub use pipeline::Lexer;
 pub use token::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
