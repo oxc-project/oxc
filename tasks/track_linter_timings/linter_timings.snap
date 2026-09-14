@@ -576,6 +576,7 @@ unicorn/no-await-in-promise-methods                        |  62606
 unicorn/no-confusing-array-with                            |  62606
 unicorn/no-console-spaces                                  |  62606
 unicorn/no-document-cookie                                 |  13005
+unicorn/no-duplicate-if-branches                           |  13190
 unicorn/no-empty-file                                      |      7
 unicorn/no-hex-escape                                      |  63282
 unicorn/no-immediate-mutation                              |  24802
