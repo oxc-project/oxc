@@ -47,7 +47,7 @@ declare_oxc_lint!(
     NoUnreadableIife,
     unicorn,
     pedantic,
-    pending,
+    conditional_suggestion,
     version = "0.0.19",
     short_description = "This rule disallows IIFEs with a parenthesized arrow function body.",
 );
@@ -67,10 +67,34 @@ impl Rule for NoUnreadableIife {
         if !arrow_expr.is_expression() {
             return;
         }
-        let Some(expression) = arrow_expr.get_expression() else { return };
-        if matches!(expression, Expression::ParenthesizedExpression(_)) {
-            ctx.diagnostic(no_unreadable_iife_diagnostic(expression.span()));
-        }
+        let Some(Expression::ParenthesizedExpression(parenthesized)) = arrow_expr.get_expression()
+        else {
+            return;
+        };
+
+        let body = parenthesized.expression.without_parentheses();
+        let parenthesized_span = parenthesized.span;
+        let body_span = body.span();
+
+        ctx.diagnostic_with_suggestion(
+            no_unreadable_iife_diagnostic(parenthesized_span),
+            |fixer| {
+                let has_comments_around_body = ctx
+                    .has_comments_between(Span::new(parenthesized_span.start, body_span.start))
+                    || ctx.has_comments_between(Span::new(body_span.end, parenthesized_span.end));
+
+                if has_comments_around_body {
+                    return fixer.noop();
+                }
+
+                fixer
+                    .replace(
+                        parenthesized_span,
+                        format!("{{ return {}; }}", body_span.source_text(ctx.source_text())),
+                    )
+                    .with_message("Use a block statement body.")
+            },
+        );
     }
 }
 
@@ -95,6 +119,7 @@ fn test() {
                     a ? b : c
                 )
             )();",
+        "const foo = (() => (/* comment */ a ? b : c))();",
         "const foo = (() => (
                 a, b
             ))();",
@@ -111,5 +136,63 @@ fn test() {
         "(async () => (( {bar} )))();",
     ];
 
-    Tester::new(NoUnreadableIife::NAME, NoUnreadableIife::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("const foo = (() => (a ? b : c))();", "const foo = (() => { return a ? b : c; })();"),
+        (
+            "const foo = (() => (
+                a ? b : c
+            ))();",
+            "const foo = (() => { return a ? b : c; })();",
+        ),
+        (
+            "const foo = (
+                () => (
+                    a ? b : c
+                )
+            )();",
+            "const foo = (
+                () => { return a ? b : c; }
+            )();",
+        ),
+        (
+            "const foo = (() => (/* comment */ a ? b : c))();",
+            "const foo = (() => (/* comment */ a ? b : c))();",
+        ),
+        (
+            "const foo = (() => (
+                a, b
+            ))();",
+            "const foo = (() => { return a, b; })();",
+        ),
+        (
+            "const foo = (() => ({
+                a: b,
+            }))();",
+            "const foo = (() => { return {
+                a: b,
+            }; })();",
+        ),
+        ("const foo = (bar => (bar))();", "const foo = (bar => { return bar; })();"),
+        (
+            "(async () => ({
+                bar,
+            }))();",
+            "(async () => { return {
+                bar,
+            }; })();",
+        ),
+        (
+            "const foo = (async (bar) => ({
+                bar: await baz(),
+            }))();",
+            "const foo = (async (bar) => { return {
+                bar: await baz(),
+            }; })();",
+        ),
+        ("(async () => (( {bar} )))();", "(async () => { return {bar}; })();"),
+    ];
+
+    Tester::new(NoUnreadableIife::NAME, NoUnreadableIife::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
