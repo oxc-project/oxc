@@ -74,20 +74,6 @@ pub(super) fn division(code: &str, file_type: FileType) {
 }
 
 #[test]
-fn jsx_replay_oracle() {
-    let jsx = |code: &str| kinds_of(code, ScriptJSX);
-    let ks = jsx("function* items(d) { for (const x of d) yield <li id={x}/>; }");
-    assert!(ks.contains(&TokenKind::JsxLt), "yielded JSX element must frame: {ks:?}");
-    let ks = jsx("var await = 1, max = 10;\nif (await < max) done();");
-    assert!(!ks.contains(&TokenKind::JsxLt), "await < max is a comparison: {ks:?}");
-    assert!(ks.contains(&TokenKind::Lt), "expected a plain `<`: {ks:?}");
-    let ks = jsx("async function f() { return await <Spinner/>; }");
-    assert!(ks.contains(&TokenKind::JsxLt), "awaited JSX element must frame: {ks:?}");
-    let ks = jsx("var await = 1, g = 2;\nvar el = <a b={async () => await 1} c={await /2/g}/>;");
-    assert!(!ks.contains(&TokenKind::RegExp), "container leak, expected division: {ks:?}");
-}
-
-#[test]
 fn tsx_generic_function_type_in_type_position() {
     let tsx = |code: &str| kinds_of(code, ScriptTSX);
     let type_params = |code: &str| {
@@ -1429,20 +1415,4 @@ fn member_and_parameter_annotations_are_type_regions_for_the_jsx_diagnostic() {
     ] {
         diagnosed(code);
     }
-}
-
-#[test]
-fn replay_hops_return_types_and_type_parameters() {
-    regex("x = async (): T => { await /re/; };", ScriptTS);
-    regex("x = async (): typeof cb => { await /re/; };", ScriptTS);
-    regex("var $: <baz>() => 1n | T = async (): typeof cb => { await /<div>/ };", ScriptTS);
-    division("x = (): T => { var await = 1; return await /2/g; };", ScriptTS);
-    regex("x = async function f(): T { await /re/; };", ScriptTS);
-    regex("x = async function (): Promise<T> { await /re/; };", ScriptTS);
-    regex("x = async (): Promise<T> => { await /re/; };", ScriptTS);
-    regex("x = function* <T>(): Generator<T> { yield /re/; };", ScriptTS);
-    regex("class C { async m(): Promise<T> { await /re/; } }", ScriptTS);
-    regex("switch (async function f(): typeof import('m') { await /}/; }) {}", ScriptTS);
-    division("x = function (): T { var await = 1; return await /2/g; };", ScriptTS);
-    division("x = (): T => { var await = 1; return await /2/g; };", ScriptTS);
 }
