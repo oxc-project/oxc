@@ -1,4 +1,4 @@
-use crate::{Lexer, PAD, token::TokenKind};
+use crate::token::TokenKind;
 
 use super::super::tests::{FileType, diag_codes_of, division, kinds_of, regex, stream};
 
@@ -893,23 +893,7 @@ fn brace_after_a_generic_return_type_is_a_body() {
             FileType::ScriptTS,
         ),
     ] {
-        let ks = kinds_of(code, file_type);
-        assert_eq!(
-            {
-                let mut buf = code.as_bytes().to_vec();
-                let n = buf.len();
-                buf.resize(n + PAD, 0);
-                let mut lx = Lexer::new();
-                let count = lx.lex(&buf, n, file_type.options());
-                let kinds = lx.kinds()[..count].to_vec();
-                (0..count)
-                    .filter(|&i| !kinds[i].is_trivia() && buf[lx.spans[i].start as usize] == b'/')
-                    .map(|i| kinds[i])
-                    .next()
-            },
-            Some(TokenKind::RegExp),
-            "{code:?}: {ks:?}"
-        );
+        regex(code, file_type);
     }
     division("x = f < T > {} / 2;", FileType::ScriptTS);
     division("x = c ? function* (...a): Pick<E<F<G>>>[][] {} / 2 : null;", FileType::ScriptTS);
