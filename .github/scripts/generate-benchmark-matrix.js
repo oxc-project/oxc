@@ -21,6 +21,7 @@ const ALL_COMPONENTS = [
   "codegen",
   "formatter",
   "pipeline",
+  "diagnostics",
   "react_compiler",
   "linter",
 ];
@@ -64,6 +65,9 @@ function getFeatureForComponent(component) {
   }
   if (component === "react_compiler") {
     return "react_compiler";
+  }
+  if (component === "diagnostics") {
+    return "diagnostics";
   }
   return "compiler";
 }
