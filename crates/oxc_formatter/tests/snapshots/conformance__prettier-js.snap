@@ -1,9 +1,9 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
-assertion_line: 172
+assertion_line: 171
 expression: report
 ---
-js compatibility: 765/810 (94.44%), 23 files skipped
+js compatibility: 766/811 (94.45%), 23 files skipped
 
 # Failed
 
