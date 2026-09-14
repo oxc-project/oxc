@@ -578,6 +578,104 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...foo.slice(1)]
+   ·  ───
+   ╰────
+  help: `foo.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
+ 1 │ [...foo.slice().slice().slice().slice().slice().slice().slice().slice()]
+   ·  ───
+   ╰────
+  help: This expression returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:27]
+ 1 │ const array = [1, 2, 3]; [...array.slice(1)]
+   ·                           ───
+   ╰────
+  help: `array.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:48]
+ 1 │ const array = [1, 2, 3]; const alias = array; [...alias.slice(1)]
+   ·                                                ───
+   ╰────
+  help: `alias.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:27]
+ 1 │ const array = [1, 2, 3]; [...array.slice(1).slice(1)]
+   ·                           ───
+   ╰────
+  help: `array.slice(1).slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:30]
+ 1 │ function fn(value) { return [...value.slice(1)]; }
+   ·                              ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:21]
+ 1 │ let value = 'abc'; [...value.slice(1)]
+   ·                     ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:33]
+ 1 │ let value = []; value = 'abc'; [...value.slice(1)]
+   ·                                 ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:26]
+ 1 │ const {value} = object; [...value.slice(1)]
+   ·                          ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:27]
+ 1 │ const [value] = ['abc']; [...value.slice(1)]
+   ·                           ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:48]
+ 1 │ const value = []; function fn(value) { return [...value.slice(1)]; }
+   ·                                                ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:28]
+ 1 │ const a = b; const b = a; [...a.slice(1)]
+   ·                            ───
+   ╰────
+  help: `a.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:35]
+ 1 │ const value = flag ? [] : 'abc'; [...value.slice(1)]
+   ·                                   ───
+   ╰────
+  help: `value.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:39]
+ 1 │ const a = flag ? b : b; const b = a; [...a.slice(1)]
+   ·                                       ───
+   ╰────
+  help: `a.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+
+  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
+   ╭─[no_useless_spread.mjs:1:2]
  1 │ [...foo.splice(1)]
    ·  ───
    ╰────

@@ -1,8 +1,113 @@
-use oxc_ast::ast::{
-    Argument, CallExpression, ConditionalExpression, Expression, NewExpression, match_expression,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        Argument, CallExpression, ConditionalExpression, Expression, NewExpression,
+        match_expression,
+    },
 };
 
-use crate::ast_util::{is_method_call, is_new_expression};
+use crate::{
+    ast_util::{
+        get_declaration_of_variable, is_method_call, is_new_expression, variable_declaration_kind,
+    },
+    context::LintContext,
+};
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum ArrayKind {
+    Array,
+    NonArray,
+    Unknown,
+}
+
+/// Classify a method receiver without treating a reference to an existing array
+/// as a new allocation. A bare `[...array]` must still be allowed.
+pub(super) fn array_receiver_kind<'a>(
+    call: &CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> ArrayKind {
+    let Some(member) = call.callee.get_member_expr() else {
+        return ArrayKind::Unknown;
+    };
+    // Bound the total work, including cyclic aliases and branching initializers.
+    array_kind(member.object(), ctx, &mut 32)
+}
+
+fn array_kind<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>, remaining: &mut u8) -> ArrayKind {
+    if *remaining == 0 {
+        return ArrayKind::Unknown;
+    }
+    *remaining -= 1;
+
+    match expr.get_inner_expression() {
+        Expression::Identifier(ident) => {
+            let Some(node) = get_declaration_of_variable(ident, ctx) else {
+                return ArrayKind::Unknown;
+            };
+            let AstKind::VariableDeclarator(declarator) = node.kind() else {
+                return ArrayKind::Unknown;
+            };
+            if !variable_declaration_kind(declarator, ctx).is_const()
+                || declarator.id.get_binding_identifier().is_none()
+            {
+                return ArrayKind::Unknown;
+            }
+            declarator
+                .init
+                .as_ref()
+                .map_or(ArrayKind::Unknown, |init| array_kind(init, ctx, remaining))
+        }
+        Expression::StringLiteral(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::RegExpLiteral(_)
+        | Expression::ObjectExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::ClassExpression(_) => ArrayKind::NonArray,
+        Expression::NewExpression(new) => {
+            if is_new_array(new) {
+                ArrayKind::Array
+            } else {
+                ArrayKind::NonArray
+            }
+        }
+        Expression::CallExpression(call)
+            if is_slice_method(call) || is_functional_array_method(call) =>
+        {
+            let Some(member) = call.callee.get_member_expr() else {
+                return ArrayKind::Unknown;
+            };
+            let kind = array_kind(member.object(), ctx, remaining);
+            if kind == ArrayKind::Unknown
+                && !is_method_call(call, None, Some(&["slice", "concat"]), None, None)
+            {
+                ArrayKind::Array
+            } else {
+                kind
+            }
+        }
+        Expression::SequenceExpression(sequence) => sequence
+            .expressions
+            .last()
+            .map_or(ArrayKind::Unknown, |last| array_kind(last, ctx, remaining)),
+        Expression::ConditionalExpression(conditional) => {
+            let consequent = array_kind(&conditional.consequent, ctx, remaining);
+            let alternate = array_kind(&conditional.alternate, ctx, remaining);
+            if consequent == alternate { consequent } else { ArrayKind::Unknown }
+        }
+        _ => match expr.const_eval() {
+            ValueHint::NewArray => ArrayKind::Array,
+            ValueHint::NewTypedArray | ValueHint::NewIterable | ValueHint::NewObject => {
+                ArrayKind::NonArray
+            }
+            _ => ArrayKind::Unknown,
+        },
+    }
+}
 
 #[derive(Debug, Clone)]
 pub(super) enum ValueHint {
