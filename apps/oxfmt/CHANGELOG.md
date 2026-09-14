@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d35d89f oxfmt: Skip shutdown delay on fixed Node 24 releases (#26518) (Pablo García)
+- aef8b4a formatter_css: Handle less-test-suites failures (#26513) (leaysgur)
+- 876fbe3 oxfmt: Expand `Fill` parts in tsx-in-vue (#26427) (leaysgur)
+
 ## [0.67.0] - 2026-09-07
 
 ### 🐛 Bug Fixes
