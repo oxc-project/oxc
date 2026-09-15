@@ -152,7 +152,7 @@ impl Rule for NoUselessRename {
             AstKind::ImportSpecifier(import_specifier)
                 if !self.ignore_import
                     && import_specifier.imported.span() != import_specifier.local.span
-                    && import_specifier.local.name == import_specifier.imported.name() =>
+                    && import_specifier.local.name.as_str() == import_specifier.imported.name() =>
             {
                 ctx.diagnostic_with_fix(
                     no_useless_rename_diagnostic(import_specifier.local.span),

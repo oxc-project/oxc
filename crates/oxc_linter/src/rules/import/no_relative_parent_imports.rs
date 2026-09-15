@@ -56,26 +56,26 @@ impl Rule for NoRelativeParentImports {
         match node.kind() {
             // ESM import declarations
             AstKind::ImportDeclaration(import_decl)
-                if is_parent_import(import_decl.source.value.as_str()) =>
+                if import_decl.source.value.as_str().is_some_and(is_parent_import) =>
             {
                 ctx.diagnostic(no_relative_parent_imports_diagnostic(import_decl.source.span));
             }
             // ESM export { } from '...'
             AstKind::ExportFromDeclaration(export_decl) => {
-                if is_parent_import(export_decl.source.value.as_str()) {
+                if export_decl.source.value.as_str().is_some_and(is_parent_import) {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
                 }
             }
             // ESM export * from '...'
             AstKind::ExportAllDeclaration(export_decl)
-                if is_parent_import(export_decl.source.value.as_str()) =>
+                if export_decl.source.value.as_str().is_some_and(is_parent_import) =>
             {
                 ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
             }
             // Dynamic import expressions: import('../foo')
             AstKind::ImportExpression(import_expr) => {
                 if let Expression::StringLiteral(str_literal) = &import_expr.source
-                    && is_parent_import(str_literal.value.as_str())
+                    && str_literal.value.as_str().is_some_and(is_parent_import)
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
                 }
@@ -83,7 +83,7 @@ impl Rule for NoRelativeParentImports {
             // CommonJS require() calls
             AstKind::CallExpression(call_expr) => {
                 if let Some(str_literal) = call_expr.common_js_require()
-                    && is_parent_import(str_literal.value.as_str())
+                    && str_literal.value.as_str().is_some_and(is_parent_import)
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
                 }

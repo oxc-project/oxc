@@ -1,5 +1,6 @@
 use std::mem;
 
+use napi::bindgen_prelude::{Either, Utf16String};
 use napi_derive::napi;
 
 use oxc_napi::{Comment, OxcError};
@@ -114,7 +115,8 @@ pub struct Span {
 
 #[napi(object)]
 pub struct ValueSpan {
-    pub value: String,
+    #[napi(ts_type = "string")]
+    pub value: Either<String, Utf16String>,
     pub start: u32,
     pub end: u32,
 }

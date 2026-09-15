@@ -9,7 +9,7 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
 
-use crate::{JSChar, JSStrBuilder, Str};
+use crate::{Ident, JSChar, JSStrBuilder, Str};
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -77,6 +77,22 @@ pub struct JSStr<'a> {
     has_lone_surrogate: bool,
     _marker: PhantomData<&'a [u8]>,
 }
+
+// Raw AST transfer relies on these field offsets and reads the bool niche for
+// `Option<JSStr>::None`. Verify both so a layout change cannot silently corrupt
+// string values. Reading an uninitialized byte here fails const evaluation.
+const _: () = {
+    assert!(std::mem::offset_of!(JSStr<'_>, ptr) == 0);
+    assert!(std::mem::offset_of!(JSStr<'_>, len) == size_of::<NonNull<u8>>());
+    assert!(size_of::<Option<JSStr<'_>>>() == size_of::<JSStr<'_>>());
+    let none: Option<JSStr<'_>> = None;
+    let offset = std::mem::offset_of!(JSStr<'_>, has_lone_surrogate);
+    assert!(offset == size_of::<NonNull<u8>>() + size_of::<u32>());
+    // SAFETY: The offset is within `none`, which has the same size as `JSStr`.
+    // Const evaluation also checks that the niche byte is initialized.
+    let niche = unsafe { (&raw const none).cast::<u8>().add(offset).read() };
+    assert!(niche == 2);
+};
 
 impl JSStr<'static> {
     /// Return the empty string without allocating.
@@ -236,6 +252,13 @@ impl<'a> From<&'a str> for JSStr<'a> {
 impl<'a> From<Str<'a>> for JSStr<'a> {
     #[inline]
     fn from(value: Str<'a>) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
+impl<'a> From<Ident<'a>> for JSStr<'a> {
+    #[inline]
+    fn from(value: Ident<'a>) -> Self {
         Self::from(value.as_str())
     }
 }

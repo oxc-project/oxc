@@ -22,6 +22,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::VisitJs;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
+use oxc_str::JSStr;
 use oxc_tasks_common::project_root;
 
 mod json;
@@ -246,7 +247,7 @@ fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Opt
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
         tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw))
     } else {
-        tag_expr.quasi.single_quasi().map(|quasi| quasi.to_string())
+        tag_expr.quasi.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
     }
 }
 
@@ -274,7 +275,7 @@ impl<'a> VisitJs<'a> for TestCase {
                 let ArrayExpressionElement::StringLiteral(lit) = arg else {
                     continue;
                 };
-                code.push_str(lit.value.as_str());
+                code.push_str(lit.value.as_str().expect("test source must be UTF-8"));
                 code.push('\n');
             }
             self.code = Some(code);
@@ -288,12 +289,12 @@ impl<'a> VisitJs<'a> for TestCase {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
+                                tag_expr.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
@@ -315,9 +316,10 @@ impl<'a> VisitJs<'a> for TestCase {
                                         .elements
                                         .iter()
                                         .map(|arg| match arg {
-                                            ArrayExpressionElement::StringLiteral(string) => {
-                                                string.value.as_str()
-                                            }
+                                            ArrayExpressionElement::StringLiteral(string) => string
+                                                .value
+                                                .as_str()
+                                                .expect("test source must be UTF-8"),
                                             _ => "",
                                         })
                                         .collect::<Vec<_>>()
@@ -329,12 +331,12 @@ impl<'a> VisitJs<'a> for TestCase {
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "output" => {
                         self.output = match &prop.value {
-                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::StringLiteral(s) => s.value.as_str().map(str::to_owned),
                             Expression::TaggedTemplateExpression(tag_expr) => {
                                 format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.single_quasi().map(|quasi| quasi.to_string())
+                                tag_expr.single_quasi().and_then(JSStr::as_str).map(str::to_owned)
                             }
                             _ => None,
                         }
@@ -374,13 +376,15 @@ impl<'a> VisitJs<'a> for TestCase {
         self.code = Some(
             lit.single_quasi()
                 .expect("Expected template literal to have a single quasi")
-                .to_string(),
+                .as_str()
+                .expect("test source must be UTF-8")
+                .to_owned(),
         );
         self.config = None;
     }
 
     fn visit_string_literal(&mut self, lit: &StringLiteral) {
-        self.code = Some(lit.value.to_string());
+        self.code = lit.value.as_str().map(str::to_owned);
         self.config = None;
     }
 
@@ -557,7 +561,9 @@ impl<'a> VisitJs<'a> for State<'a> {
                 && let Some(Argument::StringLiteral(lit)) = expr.arguments.first()
             {
                 pushed = true;
-                self.group_comment_stack.push(lit.value.to_string());
+                self.group_comment_stack.push(
+                    lit.value.as_str().map_or_else(|| format!("{:?}", lit.value), str::to_owned),
+                );
             }
         }
         for arg in &expr.arguments {
@@ -983,14 +989,14 @@ impl<'a> RuleConfig<'a> {
 
     // Helper function to parse type string literals
     fn parse_type_string_literal(&mut self, lit: &StringLiteral) -> Option<RuleConfigElement> {
-        match lit.value.as_str() {
+        match lit.value.as_str()? {
             "string" => Some(RuleConfigElement::String),
             "boolean" => Some(RuleConfigElement::Boolean),
             "number" => Some(RuleConfigElement::Number),
             "integer" => Some(RuleConfigElement::Integer),
             "array" | "object" => None,
             _ => {
-                self.log_error(&format!("Unhandled `type` value: {}", lit.value));
+                self.log_error(&format!("Unhandled `type` value: {:?}", lit.value));
                 None
             }
         }
@@ -1096,9 +1102,10 @@ impl<'a> RuleConfig<'a> {
             .elements
             .iter()
             .filter_map(|arg| match arg {
-                ArrayExpressionElement::StringLiteral(string_literal) => {
-                    Some(RuleConfigElement::StringLiteral(string_literal.value.into()))
-                }
+                ArrayExpressionElement::StringLiteral(string_literal) => string_literal
+                    .value
+                    .as_str()
+                    .map(|value| RuleConfigElement::StringLiteral(value.into())),
                 ArrayExpressionElement::BooleanLiteral(boolean_literal) => {
                     if boolean_literal.value {
                         Some(RuleConfigElement::True)

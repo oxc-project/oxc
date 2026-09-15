@@ -346,9 +346,10 @@ impl LabelHasAssociatedControl {
                                 attribute.is_identifier(labelling_prop)
                                     && attribute.value.as_ref().is_some_and(|attribute_value| {
                                         match attribute_value {
-                                            JSXAttributeValue::StringLiteral(literal) => {
-                                                !literal.value.as_str().trim().is_empty()
-                                            }
+                                            JSXAttributeValue::StringLiteral(literal) => literal
+                                                .value
+                                                .as_str()
+                                                .is_none_or(|value| !value.trim().is_empty()),
                                             _ => true,
                                         }
                                     })

@@ -529,16 +529,10 @@ function deserializeTaggedTemplateExpression(pos) {
 function deserializeTemplateElement(pos) {
   let tail = deserializeBool(pos + 12),
     start = deserializeI32(pos),
-    end = deserializeI32(pos + 4),
-    value = deserializeTemplateElementValue(pos + 16);
-  value.cooked !== null
-    && deserializeBool(pos + 13)
-    && (value.cooked = value.cooked.replace(/\uFFFD(.{4})/g, (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)),
-    ));
+    end = deserializeI32(pos + 4);
   return {
     type: "TemplateElement",
-    value,
+    value: deserializeTemplateElementValue(pos + 16),
     tail,
     start,
     end,
@@ -549,7 +543,7 @@ function deserializeTemplateElement(pos) {
 function deserializeTemplateElementValue(pos) {
   return {
     raw: deserializeStr(pos),
-    cooked: deserializeOptionStr(pos + 16),
+    cooked: deserializeOptionJSStr(pos + 16),
   };
 }
 
@@ -2793,25 +2787,18 @@ function deserializeNumericLiteral(pos) {
 
 function deserializeStringLiteral(pos) {
   let start = deserializeI32(pos),
-    end = deserializeI32(pos + 4),
-    node = {
-      type: "Literal",
-      value: null,
-      raw:
-        int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
-          ? null
-          : sourceText.slice(start, end),
-      start,
-      end,
-      range: [start, end],
-    },
-    value = deserializeStr(pos + 16);
-  deserializeBool(pos + 12)
-    && (value = value.replace(/\uFFFD(.{4})/g, (_, hex) =>
-      String.fromCodePoint(parseInt(hex, 16)),
-    ));
-  node.value = value;
-  return node;
+    end = deserializeI32(pos + 4);
+  return {
+    type: "Literal",
+    value: deserializeJSStr(pos + 16),
+    raw:
+      int32[(pos >> 2) + 8] === 0 && int32[(pos >> 2) + 9] === 0
+        ? null
+        : sourceText.slice(start, end),
+    start,
+    end,
+    range: [start, end],
+  };
 }
 
 function deserializeBigIntLiteral(pos) {
@@ -4914,6 +4901,16 @@ function deserializeNameSpan(pos) {
   };
 }
 
+function deserializeModuleRequest(pos) {
+  let start, end;
+  return {
+    value: deserializeJSStr(pos + 8),
+    start: (start = deserializeI32(pos)),
+    end: (end = deserializeI32(pos + 4)),
+    range: [start, end],
+  };
+}
+
 function deserializeImportEntry(pos) {
   return {
     importName: deserializeImportImportName(pos + 32),
@@ -4958,7 +4955,7 @@ function deserializeImportImportName(pos) {
 function deserializeExportEntry(pos) {
   let start, end;
   return {
-    moduleRequest: deserializeOptionNameSpan(pos + 16),
+    moduleRequest: deserializeOptionModuleRequest(pos + 16),
     importName: deserializeExportImportName(pos + 40),
     exportName: deserializeExportExportName(pos + 72),
     localName: deserializeExportLocalName(pos + 104),
@@ -5275,7 +5272,7 @@ function deserializeEcmaScriptModule(pos) {
 function deserializeStaticImport(pos) {
   let start, end;
   return {
-    moduleRequest: deserializeNameSpan(pos + 8),
+    moduleRequest: deserializeModuleRequest(pos + 8),
     entries: deserializeVecImportEntry(pos + 32),
     start: (start = deserializeI32(pos)),
     end: (end = deserializeI32(pos + 4)),
@@ -5612,8 +5609,36 @@ function deserializeOptionBoxTSTypeParameterInstantiation(pos) {
     : deserializeBoxTSTypeParameterInstantiation(pos);
 }
 
-function deserializeOptionStr(pos) {
-  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0 ? null : deserializeStr(pos);
+function deserializeJSStr(pos) {
+  if (uint8[pos + 12] === 0) return deserializeStr(pos);
+  let buffer = uint8,
+    pos32 = pos >> 2,
+    len = int32[pos32 + 2];
+  pos = int32[pos32];
+  let end = pos + len,
+    out = "";
+  for (; pos < end;) {
+    let first = buffer[pos++],
+      codePoint;
+    codePoint =
+      first < 128
+        ? first
+        : first < 224
+          ? ((first & 31) << 6) | (buffer[pos++] & 63)
+          : first < 240
+            ? ((first & 15) << 12) | ((buffer[pos++] & 63) << 6) | (buffer[pos++] & 63)
+            : ((first & 7) << 18)
+              | ((buffer[pos++] & 63) << 12)
+              | ((buffer[pos++] & 63) << 6)
+              | (buffer[pos++] & 63);
+    // Unlike UTF-8 decoders, fromCodePoint preserves surrogate code points.
+    out += String.fromCodePoint(codePoint);
+  }
+  return out;
+}
+
+function deserializeOptionJSStr(pos) {
+  return uint8[pos + 12] === 2 ? null : deserializeJSStr(pos);
 }
 
 function deserializeBoxComputedMemberExpression(pos) {
@@ -6146,6 +6171,10 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
+function deserializeOptionStr(pos) {
+  return int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0 ? null : deserializeStr(pos);
+}
+
 function deserializeU8(pos) {
   return uint8[pos];
 }
@@ -6524,10 +6553,8 @@ function deserializeI32(pos) {
   return int32[pos >> 2];
 }
 
-function deserializeOptionNameSpan(pos) {
-  return int32[(pos >> 2) + 2] === 0 && int32[(pos >> 2) + 3] === 0
-    ? null
-    : deserializeNameSpan(pos);
+function deserializeOptionModuleRequest(pos) {
+  return uint8[pos + 20] === 2 ? null : deserializeModuleRequest(pos);
 }
 
 function deserializeVecError(pos) {
