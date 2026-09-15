@@ -1,0 +1,6 @@
+{
+  "categories": { "correctness": "off" },
+  "rules": {
+    "no-console": "error"
+  }
+}
