@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -634,6 +635,7 @@ impl OnlyExportComponents {
             {
                 return member_expr
                     .static_property_name()
+                    .and_then(JSStr::as_str)
                     .is_some_and(|name| matches!(name, "Component" | "PureComponent"));
             }
 

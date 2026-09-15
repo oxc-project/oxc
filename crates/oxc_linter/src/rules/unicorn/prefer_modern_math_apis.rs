@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
@@ -148,7 +149,7 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
             };
 
             if !matches!(
-                member_expr.static_property_name(),
+                member_expr.static_property_name().and_then(JSStr::as_str),
                 Some("LN10" | "LN2" | "LOG10E" | "LOG2E")
             ) {
                 return;
@@ -160,7 +161,9 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
 
             ctx.diagnostic(prefer_math_log_n(
                 expr.span,
-                get_math_log_replacement(member_expr.static_property_name()),
+                get_math_log_replacement(
+                    member_expr.static_property_name().and_then(JSStr::as_str),
+                ),
                 &clean_string(expr.span.source_text(ctx.source_text())),
             ));
         }
@@ -206,7 +209,10 @@ fn check_multiplication<'a, 'b>(
         return;
     };
 
-    if !matches!(member_expr.static_property_name(), Some("LN10" | "LN2" | "LOG10E" | "LOG2E")) {
+    if !matches!(
+        member_expr.static_property_name().and_then(JSStr::as_str),
+        Some("LN10" | "LN2" | "LOG10E" | "LOG2E")
+    ) {
         return;
     }
 
@@ -216,7 +222,7 @@ fn check_multiplication<'a, 'b>(
 
     ctx.diagnostic(prefer_math_log_n(
         expr_span,
-        get_math_log_replacement(member_expr.static_property_name()),
+        get_math_log_replacement(member_expr.static_property_name().and_then(JSStr::as_str)),
         &clean_string(expr_span.source_text(ctx.source_text())),
     ));
 }

@@ -174,7 +174,8 @@ fn is_define_property_call(call_expr: &CallExpression) -> bool {
             me.object()
                 .get_identifier_reference()
                 .is_some_and(|ident_ref| ident_ref.name == "Object")
-                && (prop_name == Some("defineProperty") || prop_name == Some("defineProperties"))
+                && prop_name
+                    .is_some_and(|name| name == "defineProperty" || name == "defineProperties")
         }
         _ => false,
     }
