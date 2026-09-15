@@ -333,8 +333,7 @@ const eolBlock = {} /* c */ satisfies {};
 Prettier is converging on its own piecewise fixes (own-line comments in prettier/prettier#19939, endOfLine comments reattached in prettier/prettier#19958, both normalizing toward own-line); we preserve the written position instead, so the entry outlives them.
 
 `as const` follows the same policy (`const` is a type like any other; the pinned Prettier relocates its comments across `const` and the `;`).
-The one exclusion, pinned in the fixture: union types defer to the union printer's own comment claiming (a same-line line comment before a union still moves behind the statement, crossing the type — an invariant violation tolerated only here) — that claiming is its own subsystem, see #union-leading-pipe-comment-normalization and #union-added-paren-comment-side.
-Drop when: the union printer's claiming is bounded to its own gap; this exclusion then collapses into the general slot rule above (the `unionEol` pin flips).
+A union type claims the after-operator comments as its leading comments and places them itself (own-line and line comments lead the members, inline blocks go behind the `|`, see #union-leading-pipe-comment-normalization), the same placement as after a type alias's `=`; the glued line comment keeps the operator's line either way (`1 as // c` + break, where the pinned Prettier relocates it across the type and the `;`).
 
 ## head-body-comment-relocation
 

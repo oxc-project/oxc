@@ -145,6 +145,8 @@ The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expr
 - paragraph-like promotion: a line-ending multiline block goes own-line above the type.
   `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
+- a union type claims the after-operator comments itself and breaks + indents for them (`union_type.rs`, the same placement as after a type alias's `=`);
+  the operator side breaks only for a riding line comment before the operator, and the union then hands its indent over (`Comments::has_printed_line_comment_after`)
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.
