@@ -653,6 +653,7 @@ pub(crate) mod unicorn {
     pub mod prefer_event_target;
     pub mod prefer_export_from;
     pub mod prefer_global_this;
+    pub mod prefer_https;
     pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
     pub mod prefer_keyboard_event_key;

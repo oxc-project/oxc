@@ -717,6 +717,7 @@ pub use crate::rules::unicorn::prefer_dom_node_text_content::PreferDomNodeTextCo
 pub use crate::rules::unicorn::prefer_event_target::PreferEventTarget as UnicornPreferEventTarget;
 pub use crate::rules::unicorn::prefer_export_from::PreferExportFrom as UnicornPreferExportFrom;
 pub use crate::rules::unicorn::prefer_global_this::PreferGlobalThis as UnicornPreferGlobalThis;
+pub use crate::rules::unicorn::prefer_https::PreferHttps as UnicornPreferHttps;
 pub use crate::rules::unicorn::prefer_import_meta_properties::PreferImportMetaProperties as UnicornPreferImportMetaProperties;
 pub use crate::rules::unicorn::prefer_includes::PreferIncludes as UnicornPreferIncludes;
 pub use crate::rules::unicorn::prefer_keyboard_event_key::PreferKeyboardEventKey as UnicornPreferKeyboardEventKey;
@@ -1371,6 +1372,7 @@ pub enum RuleEnum {
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
     ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp),
+    UnicornPreferHttps(UnicornPreferHttps),
     UnicornCatchErrorName(UnicornCatchErrorName),
     UnicornConsistentAssert(UnicornConsistentAssert),
     UnicornConsistentDateClone(UnicornConsistentDateClone),
@@ -2300,7 +2302,8 @@ const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID + 1usize;
-const UNICORN_CATCH_ERROR_NAME_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
+const UNICORN_PREFER_HTTPS_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
+const UNICORN_CATCH_ERROR_NAME_ID: usize = UNICORN_PREFER_HTTPS_ID + 1usize;
 const UNICORN_CONSISTENT_ASSERT_ID: usize = UNICORN_CATCH_ERROR_NAME_ID + 1usize;
 const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = UNICORN_CONSISTENT_ASSERT_ID + 1usize;
 const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = UNICORN_CONSISTENT_DATE_CLONE_ID + 1usize;
@@ -2748,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3228,6 +3231,7 @@ static RULE_NAMES: [&str; 870usize] = [
     ReactPerfJsxNoNewArrayAsProp::NAME,
     ReactPerfJsxNoNewFunctionAsProp::NAME,
     ReactPerfJsxNoNewObjectAsProp::NAME,
+    UnicornPreferHttps::NAME,
     UnicornCatchErrorName::NAME,
     UnicornConsistentAssert::NAME,
     UnicornConsistentDateClone::NAME,
@@ -4178,6 +4182,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID,
+            Self::UnicornPreferHttps(_) => UNICORN_PREFER_HTTPS_ID,
             Self::UnicornCatchErrorName(_) => UNICORN_CATCH_ERROR_NAME_ID,
             Self::UnicornConsistentAssert(_) => UNICORN_CONSISTENT_ASSERT_ID,
             Self::UnicornConsistentDateClone(_) => UNICORN_CONSISTENT_DATE_CLONE_ID,
@@ -5207,6 +5212,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::CATEGORY,
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::CATEGORY,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::CATEGORY,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::CATEGORY,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::CATEGORY,
@@ -6228,6 +6234,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::FIX,
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::FIX,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::FIX,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::FIX,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::FIX,
@@ -7343,6 +7350,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::documentation()
             }
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::documentation(),
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::documentation(),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::documentation(),
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::documentation(),
@@ -9282,6 +9290,8 @@ impl RuleEnum {
                 ReactPerfJsxNoNewObjectAsProp::config_schema(generator)
                     .or_else(|| ReactPerfJsxNoNewObjectAsProp::schema(generator))
             }
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::config_schema(generator)
+                .or_else(|| UnicornPreferHttps::schema(generator)),
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::config_schema(generator)
                 .or_else(|| UnicornCatchErrorName::schema(generator)),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::config_schema(generator)
@@ -10908,6 +10918,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewObjectAsProp(_) => "react_perf",
+            Self::UnicornPreferHttps(_) => "unicorn",
             Self::UnicornCatchErrorName(_) => "unicorn",
             Self::UnicornConsistentAssert(_) => "unicorn",
             Self::UnicornConsistentDateClone(_) => "unicorn",
@@ -12041,6 +12052,9 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => Ok(Self::ReactPerfJsxNoNewObjectAsProp(
                 ReactPerfJsxNoNewObjectAsProp::from_configuration(value)?,
             )),
+            Self::UnicornPreferHttps(_) => {
+                Ok(Self::UnicornPreferHttps(UnicornPreferHttps::from_configuration(value)?))
+            }
             Self::UnicornCatchErrorName(_) => {
                 Ok(Self::UnicornCatchErrorName(UnicornCatchErrorName::from_configuration(value)?))
             }
@@ -12431,6 +12445,7 @@ impl RuleEnum {
             Self::TypescriptStrictVoidReturn(rule) => rule.to_configuration(),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.to_configuration(),
             Self::TypescriptUnboundMethod(rule) => rule.to_configuration(),
+            Self::UnicornPreferHttps(rule) => rule.to_configuration(),
             _ => None,
         }
     }
@@ -12916,6 +12931,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run(node, ctx),
+            Self::UnicornPreferHttps(rule) => rule.run(node, ctx),
             Self::UnicornCatchErrorName(rule) => rule.run(node, ctx),
             Self::UnicornConsistentAssert(rule) => rule.run(node, ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run(node, ctx),
@@ -13803,6 +13819,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_once(ctx),
+            Self::UnicornPreferHttps(rule) => rule.run_once(ctx),
             Self::UnicornCatchErrorName(rule) => rule.run_once(ctx),
             Self::UnicornConsistentAssert(rule) => rule.run_once(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run_once(ctx),
@@ -14763,6 +14780,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferHttps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornCatchErrorName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentAssert(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15695,6 +15713,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.should_run(ctx),
+            Self::UnicornPreferHttps(rule) => rule.should_run(ctx),
             Self::UnicornCatchErrorName(rule) => rule.should_run(ctx),
             Self::UnicornConsistentAssert(rule) => rule.should_run(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.should_run(ctx),
@@ -16765,6 +16784,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::IS_TSGOLINT_RULE
             }
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::IS_TSGOLINT_RULE,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::IS_TSGOLINT_RULE,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::IS_TSGOLINT_RULE,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::IS_TSGOLINT_RULE,
@@ -17931,6 +17951,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::VERSION,
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::VERSION,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::VERSION,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::VERSION,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::VERSION,
@@ -18998,6 +19019,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::HAS_CONFIG,
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::HAS_CONFIG,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::HAS_CONFIG,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::HAS_CONFIG,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::HAS_CONFIG,
@@ -20042,6 +20064,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::INFO,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::INFO,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::INFO,
+            Self::UnicornPreferHttps(_) => UnicornPreferHttps::INFO,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::INFO,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::INFO,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::INFO,
@@ -20965,6 +20988,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.types_info(),
+            Self::UnicornPreferHttps(rule) => rule.types_info(),
             Self::UnicornCatchErrorName(rule) => rule.types_info(),
             Self::UnicornConsistentAssert(rule) => rule.types_info(),
             Self::UnicornConsistentDateClone(rule) => rule.types_info(),
@@ -21839,6 +21863,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_info(),
+            Self::UnicornPreferHttps(rule) => rule.run_info(),
             Self::UnicornCatchErrorName(rule) => rule.run_info(),
             Self::UnicornConsistentAssert(rule) => rule.run_info(),
             Self::UnicornConsistentDateClone(rule) => rule.run_info(),
@@ -22805,6 +22830,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp::default()),
+        RuleEnum::UnicornPreferHttps(UnicornPreferHttps::default()),
         RuleEnum::UnicornCatchErrorName(UnicornCatchErrorName::default()),
         RuleEnum::UnicornConsistentAssert(UnicornConsistentAssert::default()),
         RuleEnum::UnicornConsistentDateClone(UnicornConsistentDateClone::default()),
