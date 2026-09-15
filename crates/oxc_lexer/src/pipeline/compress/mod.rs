@@ -1,8 +1,10 @@
 use oxc_span::Span;
 
-use crate::{lanes::Lanes, tables::Tables, token::SPAN_SENTINELS};
-
-use super::EOF;
+use crate::{
+    lanes::Lanes,
+    tables::Tables,
+    token::{SPAN_SENTINELS, tk},
+};
 
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 mod avx2;
@@ -59,7 +61,7 @@ pub unsafe fn write_sentinels(n: u32, spans: *mut Span, sig_kinds: *mut u8) {
     let eof = u64::from(n) | (u64::from(n) << 32);
     for s in 0..SPAN_SENTINELS {
         *spans.cast::<u64>().add(s) = eof;
-        *sig_kinds.add(s) = EOF;
+        *sig_kinds.add(s) = tk!(Eof);
     }
 }
 

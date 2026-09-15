@@ -14,9 +14,9 @@
 //! [`type_list`]: super::type_list
 //! [`context`]: super::context
 
-use crate::{opmap::OP_KIND_BASE, tables::Tables};
+use crate::{opmap::OP_KIND_BASE, tables::Tables, token::tk};
 
-use super::super::super::{IDENT, bitmap::bm_next1};
+use super::super::super::bitmap::bm_next1;
 
 use super::super::common::{
     AngleMatch, angle_match_back, as_gated_type_ref, as_type_operand, bm_prev_sig, class_like_walk,
@@ -105,14 +105,16 @@ unsafe fn type_list_head_is_relational(
     }
     let hw = hq as usize;
     let hk = kind_at(kind, hw);
-    if hk == IDENT && !prop_name(src, hw) && ident_is(src, hw, b"this") {
+    if hk == tk!(Ident) && !prop_name(src, hw) && ident_is(src, hw, b"this") {
         let p = bm_prev_sig(st, kind, hw);
         if p < 0 {
             return false;
         }
         let pw = p as usize;
         let pk = kind_at(kind, pw);
-        if pk == IDENT && !prop_name(src, pw) && word_is_any(src, pw, &[b"extends", b"implements"])
+        if pk == tk!(Ident)
+            && !prop_name(src, pw)
+            && word_is_any(src, pw, &[b"extends", b"implements"])
         {
             return false;
         }
@@ -126,7 +128,7 @@ unsafe fn type_list_head_is_relational(
             return as_gated_type_ref(t, src, st, kind, n, lt2);
         }
     }
-    hk == IDENT
+    hk == tk!(Ident)
         && !prop_name(src, hw)
         && as_type_operand(src, st, kind, hw)
         && lt_in_range(src, bm_next1(st, hw + 1, n), head)
