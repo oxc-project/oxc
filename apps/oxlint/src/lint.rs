@@ -1,10 +1,8 @@
 use std::{
     env,
-    ffi::OsStr,
     fmt::Debug,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
-    sync::Arc,
     time::Instant,
 };
 
@@ -129,7 +127,7 @@ impl CliRunner {
 
         let mut override_builder = None;
 
-        if !ignore_options.no_ignore {
+        if !ignore_options.no_ignore.cli {
             let mut builder = OverrideBuilder::new(&self.cwd);
 
             if !ignore_options.ignore_pattern.is_empty() {
@@ -193,8 +191,10 @@ impl CliRunner {
         // NOTE: Applied regardless of `--no-ignore`.
         // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
         // not git's. (Aligns with during walk filtering behavior)
-        let mut gitignore_checker = GitignoreChecker::new();
-        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
+        if !ignore_options.no_ignore.vcs {
+            let mut gitignore_checker = GitignoreChecker::new();
+            paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
+        }
 
         // If explicit paths were provided but all have been filtered,
         // or the default cwd target is gitignored, return early.
@@ -364,18 +364,17 @@ impl CliRunner {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
-        let ignore_matcher = LintIgnoreMatcher::new(
-            &root_config.ignore_patterns,
-            // Without a config file there are no patterns and the root is never consulted,
-            // so the CWD fallback is an arbitrary placeholder.
-            root_config.dir().unwrap_or(&self.cwd),
-            nested_ignore_patterns,
-        );
-
-        let files_to_lint = paths
-            .into_iter()
-            .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
-            .collect::<Vec<Arc<OsStr>>>();
+        let mut files_to_lint = paths;
+        if !ignore_options.no_ignore.config {
+            let ignore_matcher = LintIgnoreMatcher::new(
+                &root_config.ignore_patterns,
+                // Without a config file there are no patterns and the root is never consulted,
+                // so the CWD fallback is an arbitrary placeholder.
+                root_config.dir().unwrap_or(&self.cwd),
+                nested_ignore_patterns,
+            );
+            files_to_lint.retain(|path| !ignore_matcher.should_ignore(Path::new(path)));
+        }
 
         if debug_files {
             return crate::mode::run_debug_files(
@@ -866,8 +865,10 @@ mod test {
         fs::write(repo_path.join("sub").join(".gitignore"), "generated\n").unwrap();
         fs::write(pkg_path.join("index.ts"), "debugger;\n").unwrap();
 
+        let run = |args: &[&str]| Tester::new().with_cwd(pkg_path.clone()).test_output(args);
+
         // Running from inside the ignored tree finds nothing.
-        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
+        let (_, result) = run(&[]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
         // Explicitly passed gitignored directories are skipped too.
@@ -876,10 +877,36 @@ mod test {
 
         // But an explicitly named file is linted even when gitignored;
         // `.gitignore` only scopes discovery.
-        let (stdout, result) =
-            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        let (stdout, result) = run(&["-D", "no-debugger", "index.ts"]);
         assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
         assert!(stdout.contains("on 1 file"), "{stdout}");
+
+        // `--no-ignore=vcs` disables the gitignore layer for the walk as well.
+        // https://github.com/oxc-project/oxc/issues/25259
+        let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore=vcs"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore=all"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+    }
+
+    #[test]
+    fn no_ignore_config_disables_config_ignore_patterns() {
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let root = temp_dir.path();
+        fs::write(root.join(".oxlintrc.json"), r#"{ "ignorePatterns": ["ignored"] }"#).unwrap();
+        fs::create_dir(root.join("ignored")).unwrap();
+        fs::write(root.join("ignored").join("index.js"), "debugger;\n").unwrap();
+
+        let run = |args: &[&str]| Tester::new().with_cwd(root.to_path_buf()).test_output(args);
+
+        let (_, result) = run(&["-D", "no-debugger", "ignored/index.js"]);
+        assert!(!matches!(result, CliRunResult::LintFoundErrors), "{result:?}");
+
+        let (stdout, result) =
+            run(&["-D", "no-debugger", "--no-ignore=config", "ignored/index.js"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
     }
 
     #[cfg(unix)]
