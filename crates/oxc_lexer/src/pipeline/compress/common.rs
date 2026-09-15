@@ -51,7 +51,7 @@ pub(super) unsafe fn invalid_diags(
         l.min(nn - cs)
     };
     for j in 0..m {
-        if *out_kinds.add(j) == 255 {
+        if *out_kinds.add(j) == tk!(Invalid) {
             let sp = *out_spans.add(j);
             let (s, e) = (sp.start, sp.end);
             let b0 = src[s as usize];
