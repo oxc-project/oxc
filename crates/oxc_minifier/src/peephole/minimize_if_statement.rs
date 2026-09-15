@@ -25,13 +25,12 @@ impl<'a> PeepholeOptimizations {
                 });
                 return;
             }
-            let alternate = if_stmt.alternate.take().unwrap();
+            let new_consequent = if_stmt.alternate.take().unwrap();
 
-            if matches!(&alternate, Statement::ExpressionStatement(_)) {
+            if let Statement::ExpressionStatement(expr_stmt) = new_consequent {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { test, span, .. } = if_stmt.unbox();
-                    let Statement::ExpressionStatement(b) = alternate else { unreachable!() };
                     let (op, a) = match test {
                         // `if (!a); else b();` => `a && b();`
                         Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
@@ -40,7 +39,7 @@ impl<'a> PeepholeOptimizations {
                         // `if (a); else b();` => `a || b();`
                         e => (LogicalOperator::Or, e),
                     };
-                    let b = b.unbox().expression;
+                    let b = expr_stmt.unbox().expression;
                     let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
                     Statement::new_expression_statement(span, expr, ctx)
                 });
@@ -52,7 +51,7 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_expression_with(&mut if_stmt.test, |old, ctx| {
                 Self::minimize_not(old.span(), old, ctx, true)
             });
-            ctx.replace_statement(&mut if_stmt.consequent, alternate);
+            ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
 
         // Consequent is non-empty from here on.
@@ -64,7 +63,6 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_statement_with(stmt, |stmt, ctx| {
                         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                         let IfStatement { test, consequent, alternate, span, .. } = if_stmt.unbox();
-
                         let Statement::ExpressionStatement(a) = consequent else { unreachable!() };
                         let Statement::ExpressionStatement(b) = alternate.unwrap() else {
                             unreachable!()
