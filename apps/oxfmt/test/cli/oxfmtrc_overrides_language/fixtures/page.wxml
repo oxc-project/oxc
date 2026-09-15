@@ -1,0 +1,2 @@
+<view class="container"><text>{{message}}</text>
+<button bindtap="onTap">Tap</button></view>
