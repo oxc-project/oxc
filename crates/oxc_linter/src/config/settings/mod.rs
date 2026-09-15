@@ -371,6 +371,43 @@ mod test {
     }
 
     #[test]
+    fn test_parse_additional_test_patterns() {
+        let settings = OxlintSettings::deserialize(&serde_json::json!({
+            "jest": { "additionalTestPatterns": ["**/*.steps.ts"] },
+            "vitest": { "additionalTestPatterns": ["e2e/*.helper.ts"] }
+        }))
+        .unwrap();
+
+        assert!(settings.jest.additional_test_patterns.is_match("e2e/login.steps.ts"));
+        assert!(!settings.jest.additional_test_patterns.is_match("e2e/login.helper.ts"));
+
+        assert!(settings.vitest.additional_test_patterns.is_match("e2e/login.helper.ts"));
+        assert!(!settings.vitest.additional_test_patterns.is_match("src/login.helper.ts"));
+    }
+
+    #[test]
+    fn test_additional_test_patterns_default_to_empty() {
+        let settings = OxlintSettings::default();
+
+        assert!(settings.jest.additional_test_patterns.is_empty());
+        assert!(settings.vitest.additional_test_patterns.is_empty());
+    }
+
+    #[test]
+    fn test_invalid_additional_test_pattern_fails() {
+        // Deserializing a `GlobSet` validates each pattern, so a malformed glob is a config
+        // error rather than one that silently never matches.
+        let err = OxlintSettings::deserialize(&serde_json::json!({
+            "jest": { "additionalTestPatterns": ["**/*.{steps,helper.ts"] }
+        }))
+        .expect_err("unclosed brace expansion must be rejected");
+
+        let message = err.to_string();
+        assert!(message.contains("**/*.{steps,helper.ts"), "{message}");
+        assert!(message.contains("unclosed brace expansion"), "{message}");
+    }
+
+    #[test]
     fn test_negative_integer_jest_version_fail() {
         let json_value = serde_json::json!({
             "jest": {
