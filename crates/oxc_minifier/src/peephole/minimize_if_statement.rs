@@ -57,9 +57,9 @@ impl<'a> PeepholeOptimizations {
 
         // Consequent is non-empty from here on.
 
-        if if_stmt.alternate.is_some() {
+        if let Some(alternate) = &if_stmt.alternate {
             if matches!(&if_stmt.consequent, Statement::ExpressionStatement(_)) {
-                if matches!(&if_stmt.alternate, Some(Statement::ExpressionStatement(_))) {
+                if matches!(alternate, Statement::ExpressionStatement(_)) {
                     // `if (a) b(); else c();` => `a ? b() : c();`
                     ctx.replace_statement_with(stmt, |stmt, ctx| {
                         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
@@ -80,7 +80,7 @@ impl<'a> PeepholeOptimizations {
                 // Normalize: move the `!` out of the test by swapping branches.
                 // Avoid swapping when alternate is an `if` — that risks a worse chain.
                 // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
-                if !matches!(&if_stmt.alternate, Some(Statement::IfStatement(_)))
+                if !matches!(alternate, Statement::IfStatement(_))
                     && let Expression::UnaryExpression(unary_expr) = &if_stmt.test
                     && unary_expr.operator.is_not()
                 {
