@@ -588,57 +588,63 @@ impl<'a> PeepholeOptimizations {
                     });
                     ctx.drop_statement(&previous.consequent);
                 }
+            }
 
-                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
-                    // Don't do this transformation if the branch condition could
-                    // potentially access symbols declared later on on this scope below.
-                    // If so, inverting the branch condition and nesting statements after
-                    // this in a block would break that access which is a behavior change.
-                    //
-                    //   // This transformation is incorrect
-                    //   if (a()) return; function a() {}
-                    //   if (!a()) { function a() {} }
-                    //
-                    //   // This transformation is incorrect
-                    //   if (a(() => b)) return; let b;
-                    //   if (a(() => b)) { let b; }
-                    //
-                    let can_move_branch_condition_outside_scope =
-                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
-                            && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
+            let can_merge_with_alternate = match &if_stmt.consequent {
+                Statement::BlockStatement(block) => block.body.last().is_some_and(|last| {
+                    last.is_jump_statement() && Self::can_remove_termination_statement(last, ctx)
+                }),
+                e => e.is_jump_statement() && Self::can_remove_termination_statement(e, ctx),
+            };
+            if can_merge_with_alternate {
+                // Don't do this transformation if the branch condition could
+                // potentially access symbols declared later on on this scope below.
+                // If so, inverting the branch condition and nesting statements after
+                // this in a block would break that access which is a behavior change.
+                //
+                //   // This transformation is incorrect
+                //   if (a()) return; function a() {}
+                //   if (!a()) { function a() {} }
+                //
+                //   // This transformation is incorrect
+                //   if (a(() => b)) return; let b;
+                //   if (a(() => b)) { let b; }
+                //
+                let can_move_branch_condition_outside_scope =
+                    !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
+                        && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
 
-                    if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.by_ref();
-                        let mut body = if let Some(alternate) = if_stmt.alternate.take() {
-                            ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
-                        } else {
-                            ArenaVec::from_iter_in(drained_stmts, ctx)
-                        };
+                if can_move_branch_condition_outside_scope {
+                    let drained_stmts = stmts.by_ref();
+                    let mut body = if let Some(alternate) = if_stmt.alternate.take() {
+                        ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
+                    } else {
+                        ArenaVec::from_iter_in(drained_stmts, ctx)
+                    };
+                    let span = if body.is_empty() { SPAN } else { body[0].span() };
+                    Self::minimize_statements(&mut body, ctx);
+                    let alternate = if body.len() == 1 {
+                        body.remove(0)
+                    } else {
+                        let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                        Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
+                    };
 
-                        Self::minimize_statements(&mut body, ctx);
-                        let span = if body.is_empty() {
-                            if_stmt.consequent.span()
-                        } else {
-                            body[0].span()
-                        };
-                        let test = if_stmt.unbox().test;
-                        let test = Self::minimize_not(test.span(), test, ctx, true);
-                        let consequent = if body.len() == 1 {
-                            body.remove(0)
-                        } else {
-                            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
-                        };
-                        let mut if_stmt =
-                            IfStatement::new(test.span(), test, consequent, None, ctx);
-                        let if_stmt =
-                            Self::try_minimize_if(&mut if_stmt, ctx).unwrap_or_else(|| {
-                                Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx))
-                            });
-                        ctx.notice_change();
-                        Self::minimize_statement(if_stmt, stmts, result, ctx);
-                        return;
-                    }
+                    if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
+                        ctx.drop_statement(&block.body.pop().unwrap());
+                        if_stmt.alternate = Some(alternate);
+                    } else {
+                        ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                            Self::minimize_not(test.span(), test, ctx, true)
+                        });
+                        ctx.replace_statement(&mut if_stmt.consequent, alternate);
+                    };
+
+                    let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
+                        .unwrap_or_else(|| Statement::IfStatement(if_stmt));
+                    ctx.notice_change();
+                    Self::minimize_statement(if_stmt, stmts, result, ctx);
+                    return;
                 }
             }
 
