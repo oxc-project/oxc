@@ -1009,7 +1009,7 @@ export class TemplateElementValue {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $raw: void 0 };
+    this.#internal = { pos, ast, $raw: void 0, $cooked: void 0 };
     nodes.set(pos, this);
   }
 
@@ -1021,8 +1021,10 @@ export class TemplateElementValue {
   }
 
   get cooked() {
-    const internal = this.#internal;
-    return constructOptionJSStr(internal.pos + 16, internal.ast);
+    const internal = this.#internal,
+      cached = internal.$cooked;
+    if (cached !== void 0) return cached;
+    return (internal.$cooked = constructOptionJSStr(internal.pos + 16, internal.ast));
   }
 
   toJSON() {
@@ -6665,7 +6667,7 @@ export class StringLiteral {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $raw: void 0 };
+    this.#internal = { pos, ast, $value: void 0, $raw: void 0 };
     nodes.set(pos, this);
   }
 
@@ -6680,8 +6682,10 @@ export class StringLiteral {
   }
 
   get value() {
-    const internal = this.#internal;
-    return constructJSStr(internal.pos + 16, internal.ast);
+    const internal = this.#internal,
+      cached = internal.$value;
+    if (cached !== void 0) return cached;
+    return (internal.$value = constructJSStr(internal.pos + 16, internal.ast));
   }
 
   get raw() {
