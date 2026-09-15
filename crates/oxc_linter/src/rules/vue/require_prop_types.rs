@@ -193,7 +193,7 @@ impl RequirePropTypes {
     ) -> Option<&'a ObjectExpression<'a>> {
         let member_expr = call_expr.callee.get_member_expr()?;
 
-        if member_expr.static_property_name() == Some("extend")
+        if member_expr.static_property_name().is_some_and(|name| name == "extend")
             && let Expression::ObjectExpression(obj) =
                 call_expr.arguments.first()?.as_expression()?.get_inner_expression()
         {

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
-use oxc_str::Ident;
+use oxc_str::{Ident, JSStr};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -114,7 +114,7 @@ impl Rule for NoAlert {
             return;
         }
 
-        let Some(property_name) = member_expr.static_property_name() else {
+        let Some(property_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
         if is_prohibited_identifier(property_name) {
