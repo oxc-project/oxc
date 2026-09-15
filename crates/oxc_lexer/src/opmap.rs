@@ -133,46 +133,47 @@ pub struct OpDef {
     pub kind: TokenKind,
 }
 
-macro_rules! op {
-    ($t:literal, $k:expr) => {
-        OpDef { txt: $t, len: $t.len() as u8, kind: $k }
-    };
+impl OpDef {
+    const fn new(txt: &'static str, kind: TokenKind) -> Self {
+        assert!(txt.len() <= 255);
+        Self { txt: txt.as_bytes(), len: txt.len() as u8, kind }
+    }
 }
 
 pub static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
-    op!(b"<=", TokenKind::Le),
-    op!(b">=", TokenKind::Ge),
-    op!(b"==", TokenKind::EqEq),
-    op!(b"!=", TokenKind::BangEq),
-    op!(b"===", TokenKind::EqEqEq),
-    op!(b"!==", TokenKind::BangEqEq),
-    op!(b"**", TokenKind::StarStar),
-    op!(b"++", TokenKind::PlusPlus),
-    op!(b"--", TokenKind::MinusMinus),
-    op!(b"<<", TokenKind::LShift),
-    op!(b">>", TokenKind::RShift),
-    op!(b">>>", TokenKind::URShift),
-    op!(b"&&", TokenKind::AmpAmp),
-    op!(b"||", TokenKind::PipePipe),
-    op!(b"??", TokenKind::Nullish),
-    op!(b"?.", TokenKind::OptionalChain),
-    op!(b"=>", TokenKind::Arrow),
-    op!(b"+=", TokenKind::PlusEq),
-    op!(b"-=", TokenKind::MinusEq),
-    op!(b"*=", TokenKind::StarEq),
-    op!(b"%=", TokenKind::PercentEq),
-    op!(b"<<=", TokenKind::LShiftEq),
-    op!(b">>=", TokenKind::RShiftEq),
-    op!(b">>>=", TokenKind::URShiftEq),
-    op!(b"&=", TokenKind::AmpEq),
-    op!(b"|=", TokenKind::PipeEq),
-    op!(b"^=", TokenKind::CaretEq),
-    op!(b"&&=", TokenKind::AmpAmpEq),
-    op!(b"||=", TokenKind::PipePipeEq),
-    op!(b"??=", TokenKind::NullishEq),
-    op!(b"**=", TokenKind::StarStarEq),
-    op!(b"...", TokenKind::Ellipsis),
-    op!(b"/=", TokenKind::SlashEq),
+    OpDef::new("<=", TokenKind::Le),
+    OpDef::new(">=", TokenKind::Ge),
+    OpDef::new("==", TokenKind::EqEq),
+    OpDef::new("!=", TokenKind::BangEq),
+    OpDef::new("===", TokenKind::EqEqEq),
+    OpDef::new("!==", TokenKind::BangEqEq),
+    OpDef::new("**", TokenKind::StarStar),
+    OpDef::new("++", TokenKind::PlusPlus),
+    OpDef::new("--", TokenKind::MinusMinus),
+    OpDef::new("<<", TokenKind::LShift),
+    OpDef::new(">>", TokenKind::RShift),
+    OpDef::new(">>>", TokenKind::URShift),
+    OpDef::new("&&", TokenKind::AmpAmp),
+    OpDef::new("||", TokenKind::PipePipe),
+    OpDef::new("??", TokenKind::Nullish),
+    OpDef::new("?.", TokenKind::OptionalChain),
+    OpDef::new("=>", TokenKind::Arrow),
+    OpDef::new("+=", TokenKind::PlusEq),
+    OpDef::new("-=", TokenKind::MinusEq),
+    OpDef::new("*=", TokenKind::StarEq),
+    OpDef::new("%=", TokenKind::PercentEq),
+    OpDef::new("<<=", TokenKind::LShiftEq),
+    OpDef::new(">>=", TokenKind::RShiftEq),
+    OpDef::new(">>>=", TokenKind::URShiftEq),
+    OpDef::new("&=", TokenKind::AmpEq),
+    OpDef::new("|=", TokenKind::PipeEq),
+    OpDef::new("^=", TokenKind::CaretEq),
+    OpDef::new("&&=", TokenKind::AmpAmpEq),
+    OpDef::new("||=", TokenKind::PipePipeEq),
+    OpDef::new("??=", TokenKind::NullishEq),
+    OpDef::new("**=", TokenKind::StarStarEq),
+    OpDef::new("...", TokenKind::Ellipsis),
+    OpDef::new("/=", TokenKind::SlashEq),
 ];
 
 pub const PUNCT1_NKNOWN: usize = 26;
