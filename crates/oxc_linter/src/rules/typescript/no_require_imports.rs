@@ -157,10 +157,9 @@ impl Rule for NoRequireImports {
                             }
                         }
                         Argument::StringLiteral(string_literal)
-                            if match_argument_value_with_regex(
-                                &self.allow,
-                                &string_literal.value,
-                            ) =>
+                            if string_literal.value.as_str().is_some_and(|value| {
+                                match_argument_value_with_regex(&self.allow, value)
+                            }) =>
                         {
                             return;
                         }
@@ -177,7 +176,9 @@ impl Rule for NoRequireImports {
                     }
 
                     if !self.allow.is_empty()
-                        && match_argument_value_with_regex(&self.allow, &mod_ref.expression.value)
+                        && mod_ref.expression.value.as_str().is_some_and(|value| {
+                            match_argument_value_with_regex(&self.allow, value)
+                        })
                     {
                         return;
                     }

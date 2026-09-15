@@ -256,9 +256,9 @@ fn is_content_editable(jsx_el: &JSXOpeningElement) -> bool {
 fn role_value<'b>(jsx_el: &'b JSXOpeningElement<'_>) -> Option<&'b str> {
     has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_prop_value).and_then(
         |value| match value {
-            JSXAttributeValue::StringLiteral(role) => Some(role.value.as_str()),
+            JSXAttributeValue::StringLiteral(role) => role.value.as_str(),
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-                JSXExpression::StringLiteral(role) => Some(role.value.as_str()),
+                JSXExpression::StringLiteral(role) => role.value.as_str(),
                 _ => None,
             },
             _ => None,

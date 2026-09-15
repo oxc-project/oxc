@@ -91,18 +91,22 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
                 return true;
             };
             match expression.get_inner_expression() {
-                Expression::StringLiteral(literal) => is_valid_language_tag(&literal.value),
+                Expression::StringLiteral(literal) => {
+                    literal.value.as_str().is_some_and(is_valid_language_tag)
+                }
                 Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
                     template
                         .quasis
                         .first()
                         .and_then(|quasi| quasi.value.cooked.as_ref())
-                        .is_none_or(|value| is_valid_language_tag(value))
+                        .is_none_or(|value| value.as_str().is_some_and(is_valid_language_tag))
                 }
                 _ => !expression.is_undefined(),
             }
         }
-        Some(JSXAttributeValue::StringLiteral(literal)) => is_valid_language_tag(&literal.value),
+        Some(JSXAttributeValue::StringLiteral(literal)) => {
+            literal.value.as_str().is_some_and(is_valid_language_tag)
+        }
         _ => true,
     }
 }
@@ -170,6 +174,8 @@ fn test() {
         (r"<html lang={`zz-LL`} />", None, None),
         (r#"<Foo lang={"foo"} />"#, None, Some(settings())),
         (r#"<Box as="html" lang={`foo`} />"#, None, Some(settings())),
+        (r#"<html lang={"\uD800"} />"#, None, None),
+        (r"<html lang={`\uD800`} />", None, None),
     ];
 
     Tester::new(Lang::NAME, Lang::PLUGIN, pass, fail).test_and_snapshot();

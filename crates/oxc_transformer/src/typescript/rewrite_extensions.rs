@@ -53,8 +53,10 @@ impl TypeScriptRewriteExtensions {
     }
 
     pub fn rewrite_extensions<'a>(&self, source: &mut StringLiteral<'a>, ctx: &TraverseCtx<'a>) {
-        if let Some(rewritten) = rewritten_specifier(source.value.as_str(), self.mode, ctx) {
-            source.value = rewritten;
+        if let Some(value) = source.value.as_str()
+            && let Some(rewritten) = rewritten_specifier(value, self.mode, ctx)
+        {
+            source.value = rewritten.into();
             source.raw = None;
         }
     }
@@ -74,7 +76,7 @@ impl TypeScriptRewriteExtensions {
         // specifiers never do.
         if let Some(rewritten) = rewritten_specifier(quasi.value.raw.as_str(), self.mode, ctx) {
             quasi.value.raw = rewritten;
-            quasi.value.cooked = Some(rewritten);
+            quasi.value.cooked = Some(rewritten.into());
         }
     }
 }

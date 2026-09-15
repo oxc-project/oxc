@@ -2,6 +2,7 @@ use std::slice;
 
 use oxc_ast::ast::StringLiteral;
 use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
+use oxc_str::JSStr;
 use oxc_syntax::{
     identifier::NBSP,
     line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
@@ -31,7 +32,7 @@ impl Codegen<'_> {
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
-        self.print_string_impl(s.value.as_str(), s.lone_surrogates, allow_backtick);
+        self.print_string_impl(s.value, allow_backtick);
     }
 
     /// Print a [`StringLiteral`] as a template literal, whatever its contents.
@@ -42,15 +43,10 @@ impl Codegen<'_> {
         self.print_property_key_annotation(s.span.start);
         self.add_source_mapping(s.span);
         Quote::Backtick.print(self);
-        self.print_string_body(s.value.as_str(), s.lone_surrogates, Some(Quote::Backtick), true);
+        self.print_string_body(s.value, Some(Quote::Backtick), true);
     }
 
-    pub(super) fn print_string_impl(
-        &mut self,
-        s: &str,
-        lone_surrogates: bool,
-        allow_backtick: bool,
-    ) {
+    pub(super) fn print_string_impl(&mut self, s: JSStr<'_>, allow_backtick: bool) {
         // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
         // What is the best quote to use will be determined when first character needing escape is found.
         // This avoids iterating through the string twice if it contains no quotes (common case).
@@ -65,30 +61,18 @@ impl Codegen<'_> {
             Some(quote)
         };
 
-        self.print_string_body(s, lone_surrogates, quote, allow_backtick);
+        self.print_string_body(s, quote, allow_backtick);
     }
 
     /// Print the contents of a string, and its closing quote.
     ///
     /// `quote` is `None` where it has yet to be chosen - it is then calculated from the contents,
     /// and the opening quote printed, when the first character needing an escape is found.
-    fn print_string_body(
-        &mut self,
-        s: &str,
-        lone_surrogates: bool,
-        quote: Option<Quote>,
-        allow_backtick: bool,
-    ) {
+    fn print_string_body(&mut self, s: JSStr<'_>, quote: Option<Quote>, allow_backtick: bool) {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.as_bytes().iter();
-        let mut state = PrintStringState {
-            chunk_start: bytes.ptr(),
-            bytes,
-            quote,
-            lone_surrogates,
-            allow_backtick,
-        };
+        let mut state = PrintStringState { chunk_start: bytes.ptr(), bytes, quote, allow_backtick };
 
         // With `ascii_only`, every UTF-8 lead byte routes to the unicode-escape handler.
         let table = if self.options.ascii_only { &ESCAPES_ASCII_ONLY.0 } else { &ESCAPES.0 };
@@ -136,7 +120,6 @@ struct PrintStringState<'s> {
     chunk_start: *const u8,
     bytes: slice::Iter<'s, u8>,
     quote: Option<Quote>,
-    lone_surrogates: bool,
     allow_backtick: bool,
 }
 
@@ -227,10 +210,11 @@ impl PrintStringState<'_> {
             bytes_ptr.offset_from_unsigned(self.chunk_start)
         };
 
-        // SAFETY: `chunk_start` is within bounds of original `&str`.
-        // `bytes` iter cannot go past end of `&str` either.
-        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the `&str`.
+        // SAFETY: `chunk_start` is within bounds of original string.
+        // `bytes` iter cannot go past end of the string either.
+        // So a slice of `len` bytes starting at `chunk_start` must be within bounds of the string.
         // `bytes` iterator is always positioned on a UTF-8 character boundary, as is `chunk_start`.
+        // `print_surrogate` never leaves a lone surrogate in a chunk.
         // Therefore the slice between these two must be a valid UTF-8 string.
         unsafe {
             let slice = slice::from_raw_parts(self.chunk_start, len);
@@ -338,12 +322,6 @@ const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
 const _: () = assert!(NBSP_BYTES[0] == 0xC2);
 const NBSP_LAST_BYTE: u8 = NBSP_BYTES[1];
 
-/// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
-const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
-const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
-    [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
-
 /// Escape codes.
 ///
 /// Discriminant - 1 is used as index into `BYTE_HANDLERS` (except for `__` variant).
@@ -367,7 +345,7 @@ enum Escape {
     LT = 14, // <     - Less-than sign
     LS = 15, // LS/PS - U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR (first byte)
     NB = 16, // NBSP  - Non-breaking space (first byte)
-    LO = 17, // �     - U+FFFD lossy replacement character (first byte)
+    SU = 17, // 0xED  - Lone surrogate or U+D000..U+D7FF (first byte)
     UC = 18, // any non-ASCII character (UTF-8 lead byte) - `ascii_only` mode
 }
 
@@ -399,14 +377,13 @@ static ESCAPES: Aligned128<[Escape; 256]> = {
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
         __, __, NB, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
-        __, __, LS, __, __, __, __, __, __, __, __, __, __, __, __, LO, // E
+        __, __, LS, __, __, __, __, __, __, __, __, __, __, SU, __, __, // E
         __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
     ])
 };
 
 /// As [`ESCAPES`], but all non-ASCII UTF-8 lead bytes trigger Unicode escaping.
-/// Keep `Escape::LO` for 0xEF so surrogate markers are decoded by the same handler
-/// in both modes.
+/// Keep `Escape::SU` for 0xED so lone surrogates are printed by the same handler in both modes.
 static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
     let mut table = ESCAPES.0;
     let mut i = 0xC0;
@@ -414,7 +391,7 @@ static ESCAPES_ASCII_ONLY: Aligned128<[Escape; 256]> = {
         table[i] = Escape::UC;
         i += 1;
     }
-    table[0xEF] = Escape::LO;
+    table[0xED] = Escape::SU;
     Aligned128(table)
 };
 
@@ -427,7 +404,7 @@ type ByteHandler = unsafe fn(&mut Codegen, &mut PrintStringState);
 ///
 /// On 64-bit targets, the 18 function pointer entries occupy 144 bytes before alignment padding.
 /// Aligned on 128, so the first 16 entries occupy a pair of 64-byte cache lines.
-/// The remaining two handlers process lossy replacement markers and Unicode escapes.
+/// The remaining two handlers process surrogates and Unicode escapes.
 static BYTE_HANDLERS: Aligned128<[ByteHandler; 18]> = Aligned128([
     print_null,
     print_bell,
@@ -445,7 +422,7 @@ static BYTE_HANDLERS: Aligned128<[ByteHandler; 18]> = Aligned128([
     print_less_than,
     print_ls_or_ps,
     print_non_breaking_space,
-    print_lossy_replacement,
+    print_surrogate,
     print_unicode_escaped,
 ]);
 
@@ -691,77 +668,46 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
     }
 }
 
-// 0xEF - first byte of lossy replacement character (U+FFFD)
-unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) {
-    debug_assert_eq!(state.peek(), Some(0xEF));
+// 0xED - first byte of a lone surrogate, or of a character in U+D000..U+D7FF
+unsafe fn print_surrogate(codegen: &mut Codegen, state: &mut PrintStringState) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
 
-    if state.lone_surrogates {
-        // String contains lone surrogates which use the lossy replacement character (U+FFFD)
-        // as an escape marker.
-        // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-        let next2: [u8; 2] = {
-            // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-            // so there must be 2 more bytes available to consume
-            let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
-            next2.try_into().unwrap()
-        };
+    debug_assert_eq!(state.peek(), Some(0xED));
 
-        if next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
-            // Get the 4 hex bytes
-            let bytes = &mut state.bytes;
-            let mut hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
+    let [second, third]: [u8; 2] = {
+        // SAFETY: 0xED is always the start of a 3-byte WTF-8 sequence,
+        // so there must be 2 more bytes available to consume
+        let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
+        next2.try_into().unwrap()
+    };
 
-            if hex == *b"fffd" {
-                // Actual lossy replacement character.
-                if !codegen.options.ascii_only {
-                    // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
-                    // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                    unsafe { state.consume_bytes_unchecked(3) };
-                    state.flush(codegen);
-                    // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
-                    // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
-                    // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                    unsafe { state.consume_bytes_unchecked(4) };
-                    // Start next chunk after the 4 hex bytes
-                    state.start_chunk();
-                    return;
-                }
-                // Match the uppercase hex digits used by `print_unicode_escape`.
-                hex = *b"FFFD";
-            }
-
-            // Flush text before the lossy replacement character
-            state.flush(codegen);
-
-            // Check all 4 hex bytes are ASCII
-            assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-
-            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
-            // remaining. First 3 bytes are lossy replacement character, and we just checked that
-            // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked(7) };
-
-            // Start next chunk after the 4 hex bytes
-            state.start_chunk();
-
-            codegen.print_str("\\u");
-            // SAFETY: Just checked all 4 hex bytes are ASCII
-            unsafe { codegen.code.print_bytes_unchecked(&hex) };
-
-            return;
+    // Second byte 0xA0..=0xBF encodes a surrogate, which must be a lone surrogate in WTF-8.
+    // Valid UTF-8 characters starting with 0xED have second byte 0x80..=0x9F.
+    if second < 0xA0 {
+        if codegen.options.ascii_only {
+            // SAFETY: 0xED is a UTF-8 lead byte, as required by the Unicode escape handler.
+            unsafe { print_unicode_escaped(codegen, state) };
+        } else {
+            // Advance past the character.
+            // SAFETY: 0xED is always the start of a 3-byte Unicode character
+            unsafe { state.consume_bytes_unchecked(3) };
         }
-    }
-
-    // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
-    if codegen.options.ascii_only {
-        // SAFETY: 0xEF is a UTF-8 lead byte, as required by the Unicode escape handler.
-        unsafe { print_unicode_escaped(codegen, state) };
         return;
     }
 
-    // Advance past the character.
-    // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-    unsafe { state.consume_bytes_unchecked(3) };
+    // SAFETY: 0xED is always the start of a 3-byte WTF-8 sequence
+    unsafe { state.flush_and_consume_bytes(codegen, 3) };
+
+    // Print the lone surrogate as `\uXXXX`, with lower case hex digits
+    let code_point = 0xD000 | (usize::from(second & 0x3F) << 6) | usize::from(third & 0x3F);
+    codegen.code.print_ascii_bytes([
+        b'\\',
+        b'u',
+        HEX[code_point >> 12],
+        HEX[(code_point >> 8) & 0xF],
+        HEX[(code_point >> 4) & 0xF],
+        HEX[code_point & 0xF],
+    ]);
 }
 
 // Non-ASCII UTF-8 lead byte, `ascii_only` mode: print the character as `\uXXXX`
@@ -770,12 +716,16 @@ unsafe fn print_unicode_escaped(codegen: &mut Codegen, state: &mut PrintStringSt
     debug_assert!(state.peek().is_some_and(|b| b >= 0xC0));
 
     // Decode the character at the current position.
-    // SAFETY: `bytes` is always positioned on a UTF-8 character boundary within a valid `&str`,
-    // so the remaining slice is valid UTF-8 and non-empty.
-    let rest = unsafe { std::str::from_utf8_unchecked(state.bytes.as_slice()) };
-    let ch = rest.chars().next().unwrap();
+    // Only decode this character, because the rest of the string may contain lone surrogates.
+    let rest = state.bytes.as_slice();
+    let len = rest[0].leading_ones() as usize;
+    // SAFETY: `bytes` is always positioned on a character boundary.
+    // The number of leading 1 bits in a UTF-8 lead byte is the length of the character.
+    // `print_surrogate` handles lone surrogates, so this character is valid UTF-8.
+    let ch = unsafe { std::str::from_utf8_unchecked(rest.get_unchecked(..len)) };
+    let ch = ch.chars().next().unwrap();
     // SAFETY: consuming exactly one whole character keeps `bytes` on a char boundary.
-    unsafe { state.flush_and_consume_bytes(codegen, ch.len_utf8()) };
+    unsafe { state.flush_and_consume_bytes(codegen, len) };
     codegen.print_unicode_escape(ch);
 }
 

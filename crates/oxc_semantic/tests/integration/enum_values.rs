@@ -230,3 +230,22 @@ fn unary_on_string() {
     }
     debug_assert_eq!(get_enum_member_value(source, "Z"), Some(ConstantValue::Number(-1.0)));
 }
+
+#[test]
+fn surrogate_member_string_kind() {
+    let allocator = Allocator::default();
+    let source = r#"enum E { "\uD800" = "x", B = E["\uD800"], C = "\uD800", D = C }"#;
+    let parsed = Parser::new(&allocator, source, SourceType::ts()).parse();
+    assert!(parsed.diagnostics.is_empty());
+    let semantic = SemanticBuilder::new().with_enum_eval(true).build(&parsed.program);
+    assert!(semantic.diagnostics.is_empty());
+    let scoping = semantic.semantic.scoping();
+    let enum_symbol = scoping.symbol_ids().find(|&id| scoping.symbol_name(id) == "E").unwrap();
+    let scope = scoping.get_enum_body_scopes(enum_symbol).unwrap()[0];
+    let oxc_ast::ast::Statement::TSEnumDeclaration(decl) = &parsed.program.body[0] else {
+        panic!()
+    };
+    for member in &decl.body.members {
+        assert!(scoping.is_string_enum_member(scope, member.id.static_name()));
+    }
+}

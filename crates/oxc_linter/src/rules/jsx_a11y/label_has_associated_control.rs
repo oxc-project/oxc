@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{StringToNumber, ToInt32};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use oxc_syntax::{
     identifier::is_white_space, line_terminator::is_line_terminator, operator::UnaryOperator,
 };
@@ -390,7 +390,7 @@ impl LabelHasAssociatedControl {
 fn has_attribute_value(value: Option<&JSXAttributeValue<'_>>, trim_strings: bool) -> bool {
     match value {
         Some(JSXAttributeValue::StringLiteral(literal)) => {
-            AttributeValue::from_literal(&literal.value).has_value(trim_strings)
+            AttributeValue::from_literal(literal.value).has_value(trim_strings)
         }
         Some(JSXAttributeValue::ExpressionContainer(container)) => container
             .expression
@@ -405,16 +405,16 @@ fn has_attribute_value(value: Option<&JSXAttributeValue<'_>>, trim_strings: bool
 // Match jsx-ast-utils' primitive value extraction rather than runtime string truthiness.
 #[derive(Clone, Copy)]
 enum AttributeValue<'a> {
-    String(&'a str),
+    String(JSStr<'a>),
     Number(f64),
     BigInt(bool),
 }
 
 impl<'a> AttributeValue<'a> {
-    fn from_literal(text: &'a str) -> Self {
-        if text.eq_ignore_ascii_case("false") {
+    fn from_literal(text: JSStr<'a>) -> Self {
+        if text.as_str().is_some_and(|text| text.eq_ignore_ascii_case("false")) {
             Self::Number(0.0)
-        } else if text.eq_ignore_ascii_case("true") {
+        } else if text.as_str().is_some_and(|text| text.eq_ignore_ascii_case("true")) {
             Self::Number(1.0)
         } else {
             Self::String(text)
@@ -423,14 +423,14 @@ impl<'a> AttributeValue<'a> {
 
     fn has_value(self, trim_strings: bool) -> bool {
         match self {
-            Self::String(text) => {
+            Self::String(text) => text.as_str().is_none_or(|text| {
                 let text = if trim_strings {
                     text.trim_matches(|c| is_white_space(c) || is_line_terminator(c))
                 } else {
                     text
                 };
                 !text.is_empty()
-            }
+            }),
             Self::Number(value) => value != 0.0 && !value.is_nan(),
             Self::BigInt(nonzero) => nonzero,
         }
@@ -438,7 +438,9 @@ impl<'a> AttributeValue<'a> {
 
     fn to_number(self) -> Option<f64> {
         match self {
-            Self::String(text) => Some(text.string_to_number()),
+            Self::String(text) => {
+                Some(text.as_str().map_or(f64::NAN, |text| text.string_to_number()))
+            }
             Self::Number(value) => Some(value),
             Self::BigInt(_) => None,
         }
@@ -449,10 +451,10 @@ fn get_attribute_expression_value<'a>(
     expression: &'a Expression<'_>,
 ) -> Option<AttributeValue<'a>> {
     let value = match expression.get_inner_expression() {
-        Expression::StringLiteral(literal) => AttributeValue::from_literal(&literal.value),
+        Expression::StringLiteral(literal) => AttributeValue::from_literal(literal.value),
         Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
             // jsx-ast-utils uses raw template text, including escape sequences.
-            AttributeValue::String(template.quasis.first()?.value.raw.as_str())
+            AttributeValue::String(template.quasis.first()?.value.raw.into())
         }
         Expression::NullLiteral(_) => AttributeValue::Number(0.0),
         Expression::BooleanLiteral(literal) => AttributeValue::Number(f64::from(literal.value)),
@@ -462,7 +464,7 @@ fn get_attribute_expression_value<'a>(
             "undefined" => AttributeValue::Number(f64::NAN),
             "Infinity" => AttributeValue::Number(f64::INFINITY),
             // Upstream represents unknown identifiers by their name.
-            name => AttributeValue::String(name),
+            name => AttributeValue::String(name.into()),
         },
         Expression::UnaryExpression(unary) => {
             let value = match unary.operator {
@@ -522,6 +524,8 @@ fn test() {
     }
 
     let mut pass = vec![
+        (r#"<label htmlFor="id" aria-label={"\uD800"} />"#, None, None),
+        (r#"<label htmlFor="id"><span aria-label={"\uD800"} /></label>"#, None, None),
         (
             r#"<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>"#,
             Some(serde_json::json!([{ "depth": 4, "assert": "htmlFor" }])),
@@ -1078,6 +1082,8 @@ fn test() {
     ];
 
     let mut fail = vec![
+        (r#"<label htmlFor="id" aria-label={!"\uD800"} />"#, None, None),
+        (r#"<label htmlFor="id" aria-label={+"\uD800"} />"#, None, None),
         (
             r#"<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>"#,
             Some(serde_json::json!([{

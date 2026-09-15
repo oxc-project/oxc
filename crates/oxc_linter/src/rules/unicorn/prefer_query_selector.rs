@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -138,10 +139,17 @@ impl Rule for PreferQuerySelector {
             }
 
             let literal_value = match argument_expr {
-                Expression::StringLiteral(literal) => Some(literal.value.trim()),
+                Expression::StringLiteral(literal) => literal.value.as_str().map(str::trim),
                 Expression::TemplateLiteral(literal) => {
                     if literal.expressions.is_empty() {
-                        literal.quasis.first().unwrap().value.cooked.as_deref().map(str::trim)
+                        literal
+                            .quasis
+                            .first()
+                            .unwrap()
+                            .value
+                            .cooked
+                            .and_then(JSStr::as_str)
+                            .map(str::trim)
                     } else {
                         None
                     }
@@ -207,10 +215,11 @@ fn is_non_literal_argument(expr: &Expression) -> bool {
         | Expression::BinaryExpression(_) => false,
         Expression::TemplateLiteral(template) => {
             !template.expressions.is_empty()
-                && template
-                    .quasis
-                    .iter()
-                    .all(|quasi| quasi.value.cooked.is_none_or(|cooked| cooked.trim().is_empty()))
+                && template.quasis.iter().all(|quasi| {
+                    quasi.value.cooked.is_none_or(|cooked| {
+                        cooked.as_str().is_some_and(|cooked| cooked.trim().is_empty())
+                    })
+                })
         }
         _ => true,
     }
@@ -368,6 +377,10 @@ fn test() {
         ),
         (
             "document.getElementsByClassName(`foo ${someClass}`);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r"document.getElementById(`\uD800${someId}`);",
             Some(serde_json::json!([{ "allowWithVariables": true }])),
         ),
     ];

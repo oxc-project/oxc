@@ -192,11 +192,11 @@ impl Rule for StylePropObject {
 
                 let name = match expr {
                     Expression::StringLiteral(literal) => literal.value.as_str(),
-                    Expression::Identifier(identifier) => identifier.name.as_str(),
+                    Expression::Identifier(identifier) => Some(identifier.name.as_str()),
                     _ => return,
                 };
 
-                if self.allow.iter().any(|s| s == name) {
+                if name.is_some_and(|name| self.allow.iter().any(|s| s == name)) {
                     return;
                 }
 

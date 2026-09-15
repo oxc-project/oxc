@@ -423,7 +423,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "StringLiteral",
             StructDetails {
-                field_order: Some(&[1, 0, 3, 4, 2]),
+                field_order: Some(&[1, 0, 2, 3]),
                 is_node: true,
                 is_transparent: false,
             },
@@ -1270,7 +1270,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         (
             "TemplateElement",
             StructDetails {
-                field_order: Some(&[1, 0, 4, 2, 3]),
+                field_order: Some(&[1, 0, 3, 2]),
                 is_node: true,
                 is_transparent: false,
             },
