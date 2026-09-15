@@ -39,7 +39,10 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
-                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                    Expression::StringLiteral(s) => {
+                        let Some(name) = s.value.as_str() else { return };
+                        (name, &member.object)
+                    }
                     _ => return,
                 }
             }
@@ -273,6 +276,10 @@ impl<'a> PeepholeOptimizations {
                     return None;
                 }
 
+                let base_value = base_str.value.as_str()?;
+                if args.iter().any(|arg| matches!(arg, Argument::StringLiteral(lit) if lit.value.has_lone_surrogate())) {
+                    return None;
+                }
                 let expression_count =
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
                 let string_count = args.len() - expression_count;
@@ -299,7 +306,7 @@ impl<'a> PeepholeOptimizations {
                 // separator quasi without a state-machine flag.
                 let scratch = &mut ctx.state.concat_scratch;
                 scratch.clear();
-                scratch.push_str(base_str.value.as_str());
+                scratch.push_str(base_value);
 
                 let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
                 let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
@@ -307,7 +314,8 @@ impl<'a> PeepholeOptimizations {
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
                         // Append onto the in-progress quasi.
-                        scratch.push_str(&str_lit.value);
+                        // Checked before draining the arguments.
+                        scratch.push_str(str_lit.value.as_str().unwrap());
                     } else {
                         // Flush the current quasi (possibly empty) before
                         // pushing the next expression.
@@ -317,7 +325,7 @@ impl<'a> PeepholeOptimizations {
                         // `raw` is already escaped
                         quasis.push(TemplateElement::new(
                             SPAN,
-                            TemplateElementValue { raw, cooked: Some(cooked) },
+                            TemplateElementValue { raw, cooked: Some(cooked.into()) },
                             false,
                             ast,
                         ));
@@ -342,7 +350,7 @@ impl<'a> PeepholeOptimizations {
                 // `raw` is already escaped
                 quasis.push(TemplateElement::new(
                     SPAN,
-                    TemplateElementValue { raw, cooked: Some(cooked) },
+                    TemplateElementValue { raw, cooked: Some(cooked.into()) },
                     true, /* tail */
                     ast,
                 ));
@@ -386,7 +394,10 @@ impl<'a> PeepholeOptimizations {
                 match &member.expression {
                     Expression::StringLiteral(s) => {
                         let span = member.span;
-                        (s.value.as_str(), &mut member.object, span)
+                        {
+                            let Some(name) = s.value.as_str() else { return };
+                            (name, &mut member.object, span)
+                        }
                     }
                     Expression::NumericLiteral(n) => {
                         if let Some(integer_index) = n.value.to_integer_index() {
@@ -552,10 +563,10 @@ impl<'a> PeepholeOptimizations {
         match object {
             Expression::StringLiteral(s) => {
                 if let StringCharAtResult::Value(c) =
-                    s.value.as_str().char_at(Some(property.into()))
+                    s.value.as_str()?.char_at(Some(property.into()))
                 {
                     s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx);
+                    s.value = Str::from_str_in(&c.to_string(), ctx).into();
                     s.raw = None;
                     Some(object.take_in(ctx))
                 } else {
