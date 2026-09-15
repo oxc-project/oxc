@@ -207,12 +207,12 @@ impl Collector {
                 // Ambient module declarations can be interpreted as augmentations of existing
                 // external modules: in an external module file, any of them; in a script file,
                 // the non-relative ones immediately nested in a top-level ambient module.
-                let Some(value) = name.value.as_str() else { return };
-                if self.is_external_module
-                    || (in_ambient_module && !is_external_module_name_relative(value))
-                {
-                    self.module_augmentations.push(CompactStr::from(value));
-                } else if !in_ambient_module {
+                if self.is_external_module || in_ambient_module {
+                    let Some(value) = name.value.as_str() else { return };
+                    if self.is_external_module || !is_external_module_name_relative(value) {
+                        self.module_augmentations.push(CompactStr::from(value));
+                    }
+                } else {
                     // A top-level ambient module declaration in a script file *declares* the
                     // module — nothing to resolve, but its body may reference other modules.
                     if let Some(block) = &decl.body {
@@ -303,5 +303,36 @@ impl<'a> Visit<'a> for CallCollector<'_> {
             self.add_string_literal_like(argument);
         }
         walk::walk_call_expression(self, it);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    use super::collect_external_module_references;
+
+    #[test]
+    fn ambient_module_name_does_not_hide_body_references() {
+        for name in ["normal", r"\uD800", r"\uDC00", r"a\uD800b"] {
+            let allocator = Allocator::default();
+            let source = format!(
+                r#"declare module "{name}" {{
+                    import "package";
+                    import "./relative";
+                    export * from "other";
+                    module "nested" {{}}
+                    module "\uD800" {{}}
+                }}"#
+            );
+            let parsed = Parser::new(&allocator, &source, SourceType::ts()).parse();
+            assert!(parsed.diagnostics.is_empty(), "{name}: {:?}", parsed.diagnostics);
+            let references =
+                collect_external_module_references(&parsed.program, &parsed.module_record, false);
+            assert_eq!(references.imports, ["package", "other"], "{name}");
+            assert_eq!(references.module_augmentations, ["nested"], "{name}");
+        }
     }
 }
