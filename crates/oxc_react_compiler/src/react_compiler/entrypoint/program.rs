@@ -2063,24 +2063,22 @@ fn find_functions_to_compile<'b, 'ast>(
 // -----------------------------------------------------------------------
 
 /// Cheap, sound pre-check for [`find_functions_to_compile`]: `false` means the
-/// discovery walk cannot queue anything, so the compile is a no-op. Built from
-/// data `Semantic` already computed instead of walking the AST, and delegating
-/// all judgment to discovery's own helpers:
+/// discovery walk cannot queue anything, so the compile is a no-op.
 ///
-/// - every discoverable function creates a function scope, so the node behind
-///   each function scope is run through [`try_make_compile_source`] with the
-///   name discovery would infer — own id for declarations, the directly
-///   enclosing `const Foo = ...` declarator for expressions/arrows, the only
-///   name sources discovery uses outside forwardRef/memo. This covers the
-///   named and directive-opt-in selection paths, nested functions included;
-/// - the forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
-///   or `React` in callee position of a call [`get_callee_name_if_react_api`]
-///   recognizes, so checking the reference shapes of those three names —
-///   bindings and unresolved globals — covers wrapped anonymous functions.
+/// `precise` (compile/emit) runs each function through [`try_make_compile_source`]
+/// so files like `react.development.js` — hook *implementations*, not callers —
+/// do not pay a discovery walk that queues nothing. Lint uses a name-only
+/// over-approximation: a PascalCase / `useX` name or a non-empty directive list
+/// is enough; the JSX/hook body scan is left to discovery.
+///
+/// The forwardRef/memo path needs an identifier named `memo`, `forwardRef`,
+/// or `React` in callee position of a call [`get_callee_name_if_react_api`]
+/// recognizes, so checking the reference shapes of those three names —
+/// bindings and unresolved globals — covers wrapped anonymous functions.
 ///
 /// Over-approximation is fine (the walk then finds an empty queue); a missed
 /// witness is not, since a skipped file is never compiled.
-fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> bool {
+fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions, precise: bool) -> bool {
     // 'all' mode compiles every top-level function; always walk.
     if opts.compilation_mode == CompilationMode::All {
         return true;
@@ -2102,10 +2100,9 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
         }
     }
 
-    // Named components/hooks and directive opt-ins: run the node behind every
-    // function scope through discovery's candidate constructor. parent_callee
-    // is None — wrapper-selected functions are witnessed by reference shapes.
+    // Named components/hooks and directive opt-ins.
     let mut discarded = FxHashSet::default();
+    let jsx = semantic.source_type().is_jsx();
     for scope_id in scoping.scope_descendants_from_root() {
         if !scoping.scope_flags(scope_id).is_function() {
             continue;
@@ -2122,7 +2119,6 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
                         (declarator_name_for(nodes, node.id()), OriginalFnKind::FunctionExpression)
                     }
                 };
-                // A nameless function without directives can never classify.
                 if name.is_none()
                     && func.body.as_ref().is_none_or(|body| body.directives.is_empty())
                 {
@@ -2141,8 +2137,21 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
             }
             _ => continue,
         };
-        if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
-            .is_some()
+        if precise {
+            if try_make_compile_source(fn_node, name, original_kind, None, opts, &mut discarded)
+                .is_some()
+            {
+                return true;
+            }
+        } else if name.is_some_and(|n| is_hook_name(n) || (jsx && is_component_name(n)))
+            || match fn_node {
+                FunctionNode::Function(func) => {
+                    func.body.as_ref().is_some_and(|body| !body.directives.is_empty())
+                }
+                FunctionNode::Arrow(arrow) => {
+                    arrow.get_function_body().is_some_and(|body| !body.directives.is_empty())
+                }
+            }
         {
             return true;
         }
@@ -3126,7 +3135,7 @@ pub fn compile_program<'a, const EMIT: bool>(
     // Find all functions to compile. An empty queue means no work, so return
     // before all the setup below, which only compilation needs. The pre-check
     // decides emptiness from semantic data without walking the AST.
-    if !may_have_functions_to_compile(semantic, &options) {
+    if !may_have_functions_to_compile(semantic, &options, EMIT) {
         return CompileResult::Success { output: None, diagnostics: Diagnostics::new() };
     }
     let queue = find_functions_to_compile(program, &options);
@@ -3176,10 +3185,10 @@ pub fn compile_program<'a, const EMIT: bool>(
     let ast = AstBuilder::new(allocator);
     let scope = ScopeResolver::new(semantic, allocator);
 
-    // Initialize known referenced names from scope bindings for UID collision detection
-    context.init_from_scope(&scope);
-
     if EMIT {
+        // Seed UID collision detection with every binding in the file. Lint
+        // does not generate identifiers, so skip the walk.
+        context.init_from_scope(&scope);
         // Pre-register instrumentation imports to get stable local names.
         // These are needed before compilation so codegen can use the correct names.
         let (instrument_fn_name, instrument_gating_name) = if let Some(ref instrument_config) =
