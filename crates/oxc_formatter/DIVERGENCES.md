@@ -127,6 +127,36 @@ type WithComment = SerializedProps
 Prettier's output changes line (own-line to same-line, behind `& `) and is not a fixpoint (the second pass inlines the type with the comment behind `;`).
 Binary-like chains hoist the comment in both formatters; the own-line invariant over Prettier's internal inconsistency.
 
+## union-suppression-after-operator-line
+
+- Why: uniform-rule (same construct, same output: any other right-hand side after `= // prettier-ignore`, see #eol-suppression-after-assign-colon)
+- Pin: `tests/fixtures/ts/union/suppression.ts`
+
+A suppression line comment on the operator's line covers the whole union, verbatim under the operator, like every other right-hand side.
+
+```ts
+// input (= ours)
+type A = // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+let a: // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+
+// prettier
+type A =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X, Y>;
+let a: // prettier-ignore
+| Aaaa<X,Y>
+  | Bbbb<X,Y>;
+```
+
+Prettier's `handleUnionTypeComments` retargets an own-line comment to the first member (attachment time).
+After `type =` its printer own-lines the comment, so the second pass retargets it (the first pass keeps the whole union);
+after `let :` the whole union stays, printed from column 0;
+after `as` / `satisfies` the comment relocates behind the statement and the target is lost (#binary-cast-own-line-comment).
+
 ## union-added-paren-comment-side
 
 - Why: uniform-rule (same construct, same output: array / indexed-access types)
@@ -181,6 +211,31 @@ Prettier treats the same shape three ways:
 - simple-typed property signatures get it flushed past the member and its `;` separator
 
 Not yet covered: default parameters, destructuring defaults, enum members (different formatting paths still flush, Prettier-compatible).
+
+## eol-suppression-after-assign-colon
+
+- Why: invariant
+- Pin: `tests/fixtures/ts/ignore/eol-after-operator.ts`
+
+Prettier's output loses the suppression's target: the right-hand side is reformatted.
+A suppression line comment ending the `=` / `:` line keeps its line (#eol-comment-after-assign-colon) and still suppresses the right-hand side.
+
+```ts
+// input
+const c = // prettier-ignore
+  foo( a,b );
+
+// ours
+const c = // prettier-ignore
+  foo( a,b );
+
+// prettier
+const c = // prettier-ignore
+  foo(a, b);
+```
+
+Prettier attaches the comment as the left side's trailing comment for variable declarators and class properties (the marker then targets the name),
+and as the value's leading comment for object properties and type aliases (own-lined there), so the same shape is suppressed at two of the four sites.
 
 ## union-leading-pipe-comment-normalization
 

@@ -98,6 +98,8 @@ each node's generated `fmt` prints its leading and trailing runs (`formatter/tri
   - the cursor-based ones (`comments_before` and friends, the unprinted view) are for PRINTING
   - the position-based ones (`all_comments_*`) are for LAYOUT DECISIONS
 - A decision evaluated more than once for a node (cached bodies, a re-entered `fmt`) must not depend on the cursor
+- A parent hands a decision to a node by a position-keyed mark when the cursor cannot carry it (`mark_as_type_cast_node`, `mark_suppressed_after_operator`);
+  marks are never cleared, node starts are unique
 
 ### Token classes
 
@@ -145,8 +147,8 @@ The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expr
 - paragraph-like promotion: a line-ending multiline block goes own-line above the type.
   `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
-- a union type claims the after-operator comments itself and breaks + indents for them (`union_type.rs`, the same placement as after a type alias's `=`);
-  the operator side breaks only for a riding line comment before the operator, and the union then hands its indent over (`Comments::has_printed_line_comment_after`)
+- a union type claims the after-operator comments itself, the same placement as after a type alias's `=` (`union_type.rs`);
+  the operator side breaks only for a riding line comment before the operator
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.
@@ -155,8 +157,9 @@ their rustdocs cover how the head's generic trailing pass is kept from claiming 
 
 A suppression comment protects content; the token classes above still apply to what the node prints around it.
 
-- Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`),
-  and the outermost node ending there claims it; a union leaves it to its member instead (Prettier's `handleUnionTypeComments`)
+- Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`), and the outermost node ending there claims it.
+  A union is a list without a delimiter: a comment starting on the operator's line is the union's (as before a `[`), an own-line one at member indentation or a trailing one is that member's
+- Placement and target are separate questions: a suppression line comment ending the `=` line (or a property's `:` line) keeps its line as the left side's trailing run and still targets the right-hand side
 - Statements and class members: content verbatim, terminator per `semi` (`write_suppressed_statement`, `FormatClassElementWithSemicolon`);
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
@@ -173,16 +176,26 @@ except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e.
 
 ### Couplings to keep in step
 
-Each row pairs a decision with the site that acts on it, on purpose. No assert catches drift, so change both and pin the change in a fixture.
+Each item pairs a decision with the site that acts on it, on purpose.
+No assert catches drift, so change both and pin the change in a fixture.
+The second line of each item is the drift symptom.
 
-| Coupling                                                                                                                                                                                                      | Drift symptom                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| keeps table: `keeps_trailing_comment_inside_parens` (statement side) ⇄ `write_trailing_comments_inside_parens` (expression side), plus its arrow-body slice `arrow_body_keeps_trailing_comment_inside_parens` | a comment silently lands elsewhere                                   |
-| terminator set: `Comments::has_semicolon_or_closing_paren_in_range` (does the run move) ⇄ `lines_after_skipping_terminators` (deferred break measurement)                                                     | a deferred comment's blank lines miscounted                          |
-| suppressed content end: `suppressed_statement_content_end` ⇄ the reprint's `;` sites (`FormatContentWithSemicolon` / `OptionalSemicolon`); same terminator, NOT the same content end (see its rustdoc)        | a suppressed statement's `;` differs from the reprint's              |
-| `is_node_suppressed`: the import sorter's partition test ⇄ the printer                                                                                                                                        | a suppressed import is a boundary to one and not the other           |
-| `limit_comments_up_to` after `has_trailing_suppression_comment`                                                                                                                                               | the node loses its suppression                                       |
-| any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) asks `write_suppressed_statement` first                                                                | the generic verbatim path prints the source `;` regardless of `semi` |
+- keeps table: `keeps_trailing_comment_inside_parens` (statement side) ⇄ `write_trailing_comments_inside_parens` (expression side),
+  plus its arrow-body slice `arrow_body_keeps_trailing_comment_inside_parens`
+  - a comment silently lands elsewhere
+- terminator set: `Comments::has_semicolon_or_closing_paren_in_range` (does the run move) ⇄ `lines_after_skipping_terminators` (deferred break measurement)
+  - a deferred comment's blank lines miscounted
+- suppressed content end: `suppressed_statement_content_end` ⇄ the reprint's `;` sites (`FormatContentWithSemicolon` / `OptionalSemicolon`);
+  same terminator, NOT the same content end (see its rustdoc)
+  - a suppressed statement's `;` differs from the reprint's
+- `is_node_suppressed`: the import sorter's partition test ⇄ the printer
+  - a suppressed import is a boundary to one and not the other
+- `limit_comments_up_to` after `has_trailing_suppression_comment`
+  - the node loses its suppression
+- any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) asks `write_suppressed_statement` first
+  - the generic verbatim path prints the source `;` regardless of `semi`
+- `AssignmentLike::right_start` (the node `mark_suppressed_after_operator` keys on) ⇄ the `span().start` that node's generated `fmt` asks `is_suppressed` with
+  - the right-hand side after `= // prettier-ignore` is reformatted
 
 ### Open debts
 

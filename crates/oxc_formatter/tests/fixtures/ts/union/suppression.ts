@@ -1,0 +1,67 @@
+// A suppression comment before a union: on the operator's line it covers the whole union,
+// on its own line the first member (AGENTS.md "Suppression").
+// Prettier differs only for the operator line's line comment (DIVERGENCES.md#union-suppression-after-operator-line).
+// statement-level: the whole alias, the usual way to keep a union's layout
+// oxfmt-ignore
+type Statement =
+  | 1
+    | 2;
+// alias, inline
+type A1 = /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// annotation, inline
+let a2: /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// inline before a hand-aligned union: the whole layout is kept
+type Aligned = /* prettier-ignore */ 'aaa'   | 'b'
+             | 'ccccc' | 'dd';
+// as, inline
+const a3 = 1 as /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// alias, own-line (before leading pipe)
+type A4 =
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// annotation, own-line
+let a5:
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, own-line, no leading pipe
+type A6 =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>;
+// alias, inline after leading pipe
+type A7 = | /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// alias, mid-chain
+type A8 = Aaaa<X,Y> | /* prettier-ignore */ Bbbb<X,Y>;
+// single member alias
+type A9 = /* prettier-ignore */ Aaaa<X,Y>;
+// operator line's line comment: the whole union under the operator
+// (divergence: Prettier prints it from column 0 for `let :`, first member for `type =`)
+let a10: // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+type A10 = // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+const a10b = 1 as // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, block comment ending its line: the whole union, pulled onto the comment's line
+type A11 = /* prettier-ignore */
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// own-line before a hand-aligned union: only the first member is protected (Prettier too)
+type A12 =
+  // prettier-ignore
+  | 'aaa'   | 'b'
+  | 'ccccc' | 'dd';
+// Under a formatter paren the comment prints outside the `(` before the union decides; the rule is unchanged
+type P1 = keyof /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>);
+type P2 = Aaaa & /* prettier-ignore */ (Bbbb<X,Y> | Cccc<X,Y>);
+type P3 = Aaaa & (
+  // prettier-ignore
+  Bbbb<X,Y> | Cccc<X,Y>
+);
+let p4: /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>)[];
+type P5 = // prettier-ignore
+  (Aaaa<X,Y> | Bbbb<X,Y>)[];
