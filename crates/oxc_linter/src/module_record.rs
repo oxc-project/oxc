@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_semantic::Semantic;
 use oxc_span::Span;
@@ -218,18 +218,15 @@ pub struct ImportEntry {
     pub is_type: bool,
 }
 
-impl ImportEntry {
-    fn from_module_record(other: &oxc_syntax::module_record::ImportEntry<'_>) -> Option<Self> {
-        Some(Self {
+impl<'a> From<&oxc_syntax::module_record::ImportEntry<'a>> for ImportEntry {
+    fn from(other: &oxc_syntax::module_record::ImportEntry<'a>) -> Self {
+        Self {
             statement_span: other.statement_span,
-            module_request: NameSpan {
-                name: CompactStr::from(other.module_request.name.as_str()?),
-                span: other.module_request.span,
-            },
+            module_request: NameSpan::from(&other.module_request),
             import_name: ImportImportName::from(&other.import_name),
             local_name: NameSpan::from(&other.local_name),
             is_type: other.is_type,
-        })
+        }
     }
 }
 
@@ -321,22 +318,17 @@ pub struct ExportEntry {
     pub is_type: bool,
 }
 
-impl ExportEntry {
-    fn from_module_record(other: &oxc_syntax::module_record::ExportEntry<'_>) -> Option<Self> {
-        let module_request = if let Some(request) = &other.module_request {
-            Some(NameSpan { name: CompactStr::from(request.name.as_str()?), span: request.span })
-        } else {
-            None
-        };
-        Some(Self {
+impl<'a> From<&oxc_syntax::module_record::ExportEntry<'a>> for ExportEntry {
+    fn from(other: &oxc_syntax::module_record::ExportEntry<'a>) -> Self {
+        Self {
             statement_span: other.statement_span,
             span: other.span,
-            module_request,
+            module_request: other.module_request.as_ref().map(NameSpan::from),
             import_name: ExportImportName::from(&other.import_name),
             export_name: ExportExportName::from(&other.export_name),
             local_name: ExportLocalName::from(&other.local_name),
             is_type: other.is_type,
-        })
+        }
     }
 }
 
@@ -473,43 +465,32 @@ impl ModuleRecord {
         other: &oxc_syntax::module_record::ModuleRecord,
         _semantic: &Semantic,
     ) -> Self {
-        let mut requested_modules =
-            FxHashMap::with_capacity_and_hasher(other.requested_modules.len(), FxBuildHasher);
-        // The owned record currently stores only UTF-8 names. Apply the same filter to
-        // requests and entries so every retained entry still has a matching request.
-        requested_modules.extend(other.requested_modules.iter().filter_map(
-            |(name, occurrences)| {
-                Some((
-                    CompactStr::from(name.as_str()?),
-                    occurrences.iter().copied().collect::<Vec<_>>(),
-                ))
-            },
-        ));
         Self {
             has_module_syntax: other.has_module_syntax,
             resolved_absolute_path: path.to_path_buf(),
-            requested_modules,
-            import_entries: other
-                .import_entries
+            requested_modules: other
+                .requested_modules
                 .iter()
-                .filter_map(ImportEntry::from_module_record)
+                .map(|(name, requested_modules)| {
+                    (
+                        CompactStr::from(name.as_str()),
+                        requested_modules.iter().copied().collect::<Vec<_>>(),
+                    )
+                })
                 .collect(),
+            import_entries: other.import_entries.iter().map(ImportEntry::from).collect(),
 
             local_export_entries: other
                 .local_export_entries
                 .iter()
-                .filter_map(ExportEntry::from_module_record)
+                .map(ExportEntry::from)
                 .collect(),
             indirect_export_entries: other
                 .indirect_export_entries
                 .iter()
-                .filter_map(ExportEntry::from_module_record)
+                .map(ExportEntry::from)
                 .collect(),
-            star_export_entries: other
-                .star_export_entries
-                .iter()
-                .filter_map(ExportEntry::from_module_record)
-                .collect(),
+            star_export_entries: other.star_export_entries.iter().map(ExportEntry::from).collect(),
             exported_bindings: other
                 .exported_bindings
                 .iter()

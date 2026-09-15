@@ -56,7 +56,7 @@ pub(super) fn collect_external_module_references(
     // each request comes from the module record, so ordering below can interleave them with the
     // statements the walk finds).
     for (specifier, requests) in &module_record.requested_modules {
-        let Some(specifier) = specifier.as_str() else { continue };
+        let specifier = specifier.as_str();
         if specifier.is_empty() {
             continue;
         }

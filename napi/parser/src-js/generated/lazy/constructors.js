@@ -12196,50 +12196,6 @@ export class NameSpan {
 
 const DebugNameSpan = class NameSpan {};
 
-export class ModuleRequest {
-  #internal;
-
-  constructor(pos, ast) {
-    if (ast?.token !== TOKEN) constructorError();
-
-    const { nodes } = ast;
-    const cached = nodes.get(pos);
-    if (cached !== void 0) return cached;
-
-    this.#internal = { pos, ast };
-    nodes.set(pos, this);
-  }
-
-  get value() {
-    const internal = this.#internal;
-    return constructJSStr(internal.pos + 8, internal.ast);
-  }
-
-  get start() {
-    const internal = this.#internal;
-    return constructI32(internal.pos, internal.ast);
-  }
-
-  get end() {
-    const internal = this.#internal;
-    return constructI32(internal.pos + 4, internal.ast);
-  }
-
-  toJSON() {
-    return {
-      value: this.value,
-      start: this.start,
-      end: this.end,
-    };
-  }
-
-  [inspectSymbol]() {
-    return Object.setPrototypeOf(this.toJSON(), DebugModuleRequest.prototype);
-  }
-}
-
-const DebugModuleRequest = class ModuleRequest {};
-
 export class ImportEntry {
   #internal;
 
@@ -12323,7 +12279,7 @@ export class ExportEntry {
 
   get moduleRequest() {
     const internal = this.#internal;
-    return constructOptionModuleRequest(internal.pos + 16, internal.ast);
+    return constructOptionNameSpan(internal.pos + 16, internal.ast);
   }
 
   get importName() {
@@ -12867,7 +12823,7 @@ export class StaticImport {
 
   get moduleRequest() {
     const internal = this.#internal;
-    return new ModuleRequest(internal.pos + 8, internal.ast);
+    return new NameSpan(internal.pos + 8, internal.ast);
   }
 
   get entries() {
@@ -14131,9 +14087,9 @@ function constructI32(pos, ast) {
   return ast.buffer.int32[pos >> 2];
 }
 
-function constructOptionModuleRequest(pos, ast) {
-  if (ast.buffer[pos + 20] === 2) return null;
-  return new ModuleRequest(pos, ast);
+function constructOptionNameSpan(pos, ast) {
+  if (ast.buffer.int32[(pos >> 2) + 2] === 0 && ast.buffer.int32[(pos >> 2) + 3] === 0) return null;
+  return new NameSpan(pos, ast);
 }
 
 function constructVecError(pos, ast) {
