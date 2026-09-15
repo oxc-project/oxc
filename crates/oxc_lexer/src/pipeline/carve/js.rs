@@ -1,7 +1,6 @@
-use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables};
+use crate::{comment_meta, error::diag_code, lanes::Lanes, tables::Tables, token::tk};
 
 use super::super::{
-    HASHBANG, LCOM, TMPL_HEAD, TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL,
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
 };
@@ -25,7 +24,7 @@ pub(super) unsafe fn carve_js(
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2);
-        *kind = HASHBANG;
+        *kind = tk!(Hashbang);
         bm_clear_range(st, 1, end - 1);
         if end < n {
             bm_set(st, end);
@@ -44,8 +43,17 @@ pub(super) unsafe fn carve_js(
                 i = lex_string(src, srcs, n, st, kind, s, c, lanes);
             }
             b'`' => {
-                let (end, opened_sub) =
-                    lex_template_segment(src, srcs, n, st, kind, s, TMPL_HEAD, TMPL_NOSUB, lanes);
+                let (end, opened_sub) = lex_template_segment(
+                    src,
+                    srcs,
+                    n,
+                    st,
+                    kind,
+                    s,
+                    tk!(TemplateHead),
+                    tk!(TemplateNoSub),
+                    lanes,
+                );
                 if opened_sub {
                     depth.push(0);
                 }
@@ -74,8 +82,8 @@ pub(super) unsafe fn carve_js(
                         st,
                         kind,
                         s,
-                        TMPL_MIDDLE,
-                        TMPL_TAIL,
+                        tk!(TemplateMiddle),
+                        tk!(TemplateTail),
                         lanes,
                     );
                     if opened_sub {
@@ -97,7 +105,7 @@ pub(super) unsafe fn carve_js(
                         lanes.push_diag(s as u32, 4, diag_code::HTML_COMMENT_IN_MODULE);
                     }
                     let end = find_line_terminator(src, n, s + 4);
-                    *kind.add(s) = LCOM;
+                    *kind.add(s) = tk!(LineComment);
                     if end > s + 1 {
                         bm_clear_range(st, s + 1, end - 1);
                     }
@@ -132,7 +140,7 @@ pub(super) unsafe fn carve_js(
                 {
                     let start = s - 2;
                     let end = find_line_terminator(src, n, s + 1);
-                    *kind.add(start) = LCOM;
+                    *kind.add(start) = tk!(LineComment);
                     bm_set(st, start);
                     if end > start + 1 {
                         bm_clear_range(st, start + 1, end - 1);

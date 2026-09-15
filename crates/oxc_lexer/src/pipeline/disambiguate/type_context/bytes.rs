@@ -19,9 +19,12 @@
 //! [`match_delim_back`]: super::super::common::match_delim_back
 //! [`angle_match_back`]: super::super::common::angle_match_back
 
-use crate::tables::{is_id_start, is_ws};
+use crate::{
+    tables::{is_id_start, is_ws},
+    token::tk,
+};
 
-use super::super::super::{TMPL_MIDDLE, TMPL_TAIL, bitmap::bm_get};
+use super::super::super::bitmap::bm_get;
 
 use super::super::common::kind_at;
 
@@ -139,7 +142,7 @@ pub(super) unsafe fn gt_run_closes_type_args(
                 // preceding one — counting it would leave every
                 // `Array<Map<A, `p${s}q`>>` looking brace-unbalanced.
                 let kk = kind_at(kind, i);
-                if kk == TMPL_MIDDLE || kk == TMPL_TAIL {
+                if kk == tk!(TemplateMiddle) || kk == tk!(TemplateTail) {
                     continue;
                 }
                 brc += 1;
@@ -223,7 +226,7 @@ pub(super) unsafe fn enclosing_opener(
             }
             b'}' => {
                 let kk = kind_at(kind, i);
-                if kk == TMPL_MIDDLE || kk == TMPL_TAIL {
+                if kk == tk!(TemplateMiddle) || kk == tk!(TemplateTail) {
                     continue;
                 }
                 brc += 1;
@@ -414,7 +417,7 @@ pub(super) unsafe fn angle_close_fwd_capped(
                 b'{' => brc += 1,
                 b'}' => {
                     let kk = kind_at(kind, i);
-                    if kk != TMPL_MIDDLE && kk != TMPL_TAIL {
+                    if kk != tk!(TemplateMiddle) && kk != tk!(TemplateTail) {
                         brc -= 1;
                         if brc < 0 {
                             return (None, false);

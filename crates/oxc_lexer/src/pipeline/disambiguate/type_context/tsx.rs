@@ -15,11 +15,10 @@
 use crate::{
     opmap::OP_KIND_BASE,
     tables::{Tables, is_ws},
+    token::tk,
 };
 
-use super::super::super::{
-    BCOM, BIGINT, IDENT, IDENT_ESC, LCOM, NUM, STR, TMPL_NOSUB, TMPL_TAIL, WS, bitmap::bm_next1,
-};
+use super::super::super::bitmap::bm_next1;
 
 use super::super::common::{
     AngleMatch, angle_match_back, annotation_colon_is_declaration, bm_prev_sig,
@@ -102,7 +101,7 @@ unsafe fn member_or_param_colon_in_type(
         return false;
     }
     let mut q = bm_prev_sig(st, kind, colon);
-    if q >= 0 && kind_at(kind, q as usize) == IDENT && !prop_name(src, q as usize) {
+    if q >= 0 && kind_at(kind, q as usize) == tk!(Ident) && !prop_name(src, q as usize) {
         let u = bm_prev_sig(st, kind, q as usize);
         if u >= 0 && kind_at(kind, u as usize) >= OP_KIND_BASE && *src.add(u as usize) == b'(' {
             return true;
@@ -131,13 +130,13 @@ unsafe fn member_or_param_colon_in_type(
                     let mut p = bm_prev_sig(st, kind, w);
                     if c == b'('
                         && p >= 0
-                        && kind_at(kind, p as usize) == IDENT
+                        && kind_at(kind, p as usize) == tk!(Ident)
                         && !prop_name(src, p as usize)
                         && ident_is(src, p as usize, b"new")
                     {
                         p = bm_prev_sig(st, kind, p as usize);
                         if p >= 0
-                            && kind_at(kind, p as usize) == IDENT
+                            && kind_at(kind, p as usize) == tk!(Ident)
                             && ident_is(src, p as usize, b"abstract")
                         {
                             p = bm_prev_sig(st, kind, p as usize);
@@ -155,7 +154,7 @@ unsafe fn member_or_param_colon_in_type(
                         if c == b'(' && pc == b'*' {
                             let f = bm_prev_sig(st, kind, pp);
                             if f >= 0
-                                && kind_at(kind, f as usize) == IDENT
+                                && kind_at(kind, f as usize) == tk!(Ident)
                                 && !prop_name(src, f as usize)
                                 && ident_is(src, f as usize, b"function")
                             {
@@ -236,7 +235,7 @@ unsafe fn type_head_keyword(
             w = q as usize;
             continue;
         }
-        if !matches!(*kind.add(w), IDENT | IDENT_ESC) {
+        if !matches!(*kind.add(w), tk!(Ident) | tk!(IdentEscaped)) {
             return false;
         }
         if !prop_name(src, w) {
@@ -276,7 +275,7 @@ pub unsafe fn type_parameter_list_head(
             b'*' => {
                 let p = bm_prev_sig(st, kind, w);
                 p >= 0
-                    && kind_at(kind, p as usize) == IDENT
+                    && kind_at(kind, p as usize) == tk!(Ident)
                     && !prop_name(src, p as usize)
                     && ident_is(src, p as usize, b"function")
             }
@@ -291,7 +290,7 @@ pub unsafe fn type_parameter_list_head(
             _ => false,
         };
     }
-    if k == IDENT {
+    if k == tk!(Ident) {
         if prop_name(src, w) {
             return false;
         }
@@ -314,7 +313,7 @@ pub unsafe fn type_parameter_list_head(
         return lt_in_range(src, bm_next1(st, w + 1, n), lt)
             && enclosing_brace_is_type_literal(t, src, st, opch, kind, n, w);
     }
-    matches!(k, NUM | BIGINT | STR | TMPL_NOSUB | TMPL_TAIL)
+    matches!(k, tk!(Number) | tk!(BigInt) | tk!(String) | tk!(TemplateNoSub) | tk!(TemplateTail))
         && lt_in_range(src, bm_next1(st, w + 1, n), lt)
         && enclosing_brace_is_type_literal(t, src, st, opch, kind, n, w)
 }
@@ -341,7 +340,7 @@ pub unsafe fn jsx_site_is_expression(
         }
         let w = q as usize;
         let k = kind_at(kind, w);
-        if k == IDENT || k == IDENT_ESC {
+        if k == tk!(Ident) || k == tk!(IdentEscaped) {
             if prop_name(src, w) {
                 return false;
             }
@@ -397,7 +396,7 @@ pub unsafe fn jsx_site_is_expression(
                         }
                         let bw = b as usize;
                         let bk = kind_at(kind, bw);
-                        if bk == IDENT || bk == IDENT_ESC {
+                        if bk == tk!(Ident) || bk == tk!(IdentEscaped) {
                             return !prop_name(src, bw) && word_is_any(src, bw, JSX_EXPR_WORDS);
                         }
                         if bk < OP_KIND_BASE {
@@ -454,7 +453,7 @@ pub unsafe fn jsx_site_is_expression(
                 }
                 let bw = b as usize;
                 let bk = kind_at(kind, bw);
-                if bk == IDENT || bk == IDENT_ESC {
+                if bk == tk!(Ident) || bk == tk!(IdentEscaped) {
                     if prop_name(src, bw) {
                         return true;
                     }
@@ -482,7 +481,7 @@ pub unsafe fn jsx_site_is_expression(
                     b'*' if c == b'(' => {
                         let f = bm_prev_sig(st, kind, bw);
                         return !(f >= 0
-                            && kind_at(kind, f as usize) == IDENT
+                            && kind_at(kind, f as usize) == tk!(Ident)
                             && !prop_name(src, f as usize)
                             && ident_is(src, f as usize, b"function"));
                     }
@@ -541,7 +540,7 @@ unsafe fn paren_return_type_colon(
     };
     let h = bm_prev_sig(st, kind, lp);
     if h >= 0
-        && kind_at(kind, h as usize) == IDENT
+        && kind_at(kind, h as usize) == tk!(Ident)
         && !prop_name(src, h as usize)
         && ident_is(src, h as usize, b"case")
     {
@@ -568,14 +567,14 @@ unsafe fn index_signature_colon(
         return false;
     }
     let mut i = bm_next1(st, lb + 1, n);
-    while i < n && matches!(*kind.add(i), WS | LCOM | BCOM) {
+    while i < n && matches!(*kind.add(i), tk!(Whitespace) | tk!(LineComment) | tk!(BlockComment)) {
         i = bm_next1(st, i + 1, n);
     }
-    if i >= n || kind_at(kind, i) != IDENT {
+    if i >= n || kind_at(kind, i) != tk!(Ident) {
         return false;
     }
     let mut j = bm_next1(st, i + 1, n);
-    while j < n && matches!(*kind.add(j), WS | LCOM | BCOM) {
+    while j < n && matches!(*kind.add(j), tk!(Whitespace) | tk!(LineComment) | tk!(BlockComment)) {
         j = bm_next1(st, j + 1, n);
     }
     j < n && *kind.add(j) >= OP_KIND_BASE && *src.add(j) == b':'
