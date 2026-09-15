@@ -37,6 +37,43 @@ macro_rules! define_token_kind {
                 }
             }
         }
+
+        /// Constants used by `tk!` macro.
+        #[doc(hidden)]
+        #[allow(unused, clippy::allow_attributes)]
+        #[expect(non_upper_case_globals)]
+        pub(crate) mod __kind_u8 {
+            use super::TokenKind;
+
+            $(
+                pub const $variant: u8 = TokenKind::$variant as u8;
+            )+
+        }
+
+        /// Get the numeric (`u8`) value of a [`TokenKind`].
+        ///
+        /// # Example
+        ///
+        /// ```ignore
+        /// let ident: u8 = tk!(Ident);
+        /// assert_eq!(ident, TokenKind::Ident as u8);
+        /// ```
+        ///
+        /// # Implementation detail
+        ///
+        /// Uses `const`s as intermediaries so that `tk!` can be used in match arms e.g.:
+        ///
+        /// ```ignore
+        /// match kind {
+        ///   tk!(Ident) => do_something(),
+        ///   tk!(PrivateIdent) => do_something_else(),
+        /// }
+        /// ```
+        macro_rules! tk {
+            ($kind:ident) => { $crate::token::__kind_u8::$kind };
+        }
+
+        pub(crate) use tk;
     };
 }
 
@@ -223,8 +260,8 @@ define_token_kind! {
 }
 
 /// First keyword kind: every kind `>= KW_BASE` other than [`TokenKind::Invalid`] is a keyword.
-pub const KW_BASE: u8 = TokenKind::KwBreak as u8;
-pub(crate) const KW_MAX: u8 = TokenKind::KwUsing as u8;
+pub const KW_BASE: u8 = tk!(KwBreak);
+pub(crate) const KW_MAX: u8 = tk!(KwUsing);
 
 impl TokenKind {
     #[inline]
@@ -347,8 +384,8 @@ pub(crate) fn debug_assert_kind_bytes(bytes: &[u8]) {
 
 pub const SPAN_SENTINELS: usize = 8;
 
-pub const TRIVIA_MIN: u8 = TokenKind::LineComment as u8;
-pub const TRIVIA_MAX: u8 = TokenKind::LineTerminator as u8;
+pub const TRIVIA_MIN: u8 = tk!(LineComment);
+pub const TRIVIA_MAX: u8 = tk!(LineTerminator);
 
 /// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
 #[inline]
@@ -371,8 +408,8 @@ pub mod token_flags {
     pub const ASI_RESTRICTED: u16 = 1 << 10;
 }
 
-const _: () = assert!(TokenKind::Hashbang as u8 > TokenKind::LineComment as u8);
-const _: () = assert!((TokenKind::Hashbang as u8) < TokenKind::LineTerminator as u8);
+const _: () = assert!(tk!(Hashbang) > tk!(LineComment));
+const _: () = assert!(tk!(Hashbang) < tk!(LineTerminator));
 
 /// Bit 31 of a `starts` entry: reserved "newline before this token" flag.
 /// The lexer does not set it yet, but consumers must still read offsets
@@ -506,7 +543,10 @@ mod tests {
                 assert!((TRIVIA_MIN..=TRIVIA_MAX).contains(&byte), "{}", kind.name());
             }
         }
-        assert!(TokenKind::LBrace as u8 >= 32 && (TokenKind::At as u8) < KW_BASE);
+        #[expect(clippy::assertions_on_constants)]
+        {
+            assert!(tk!(LBrace) >= 32 && tk!(At) < KW_BASE);
+        }
         assert!(!TokenKind::Invalid.is_keyword());
         assert!(TokenKind::Hashbang.is_trivia());
     }

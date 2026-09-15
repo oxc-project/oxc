@@ -21,13 +21,10 @@
 use crate::{
     opmap::OP_KIND_BASE,
     tables::{Tables, is_ws},
+    token::tk,
 };
 
-use super::super::super::{
-    BIGINT, IDENT, IDENT_ESC, NUM, PRIV_IDENT, PRIV_IDENT_ESC, STR, TMPL_HEAD, TMPL_NOSUB,
-    TMPL_TAIL,
-    bitmap::{bm_get, bm_next1},
-};
+use super::super::super::bitmap::{bm_get, bm_next1};
 
 use super::super::common::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, annotation_colon_is_declaration,
@@ -210,13 +207,13 @@ pub(super) unsafe fn ctx_for_lt(
     }
     let w = q as usize;
     let k = kind_at(kind, w);
-    if matches!(k, IDENT | IDENT_ESC | PRIV_IDENT | PRIV_IDENT_ESC) {
+    if matches!(k, tk!(Ident) | tk!(IdentEscaped) | tk!(PrivateIdent) | tk!(PrivateIdentEscaped)) {
         if !prop_name(src, w) && ident_is(src, w, b"this") {
             let p = bm_prev_sig(st, kind, w);
             if p >= 0 {
                 let pw = p as usize;
                 let pk = kind_at(kind, pw);
-                if pk == IDENT
+                if pk == tk!(Ident)
                     && !prop_name(src, pw)
                     && word_is_any(src, pw, &[b"extends", b"implements"])
                 {
@@ -291,7 +288,9 @@ pub(super) unsafe fn ctx_for_lt(
         }
         return Ctx::Type;
     }
-    if matches!(k, STR | NUM | BIGINT) && member_start_before(src, st, kind, w, true) {
+    if matches!(k, tk!(String) | tk!(Number) | tk!(BigInt))
+        && member_start_before(src, st, kind, w, true)
+    {
         return enclosing_context(t, src, st, opch, kind, n, w, false, hops + 1);
     }
     Ctx::Expr
@@ -414,7 +413,7 @@ pub(super) unsafe fn lt_head_is_operand(
     let asi_head = |t: &Tables| {
         broke && operand_head_context(t, src, st, opch, kind, n, lt, true, hops + 1) == Ctx::Type
     };
-    if k == IDENT || k == IDENT_ESC {
+    if k == tk!(Ident) || k == tk!(IdentEscaped) {
         if !prop_name(src, w) && word_is_any(src, w, LT_OPERAND_WORDS) {
             return true;
         }
@@ -423,7 +422,8 @@ pub(super) unsafe fn lt_head_is_operand(
         }
         return ctx_for_lt(t, src, st, opch, kind, n, lt, hops + 1) == Ctx::Type;
     }
-    if matches!(k, NUM | BIGINT | STR | TMPL_NOSUB | TMPL_TAIL) {
+    if matches!(k, tk!(Number) | tk!(BigInt) | tk!(String) | tk!(TemplateNoSub) | tk!(TemplateTail))
+    {
         return asi_head(t);
     }
     if k >= OP_KIND_BASE {
@@ -442,7 +442,7 @@ pub(super) unsafe fn lt_head_is_operand(
         if c == b'>' && !(w > 0 && *src.add(w - 1) == b'=') && broke {
             if let AngleMatch::Found(lt2) = angle_match_back(src, st, kind, w) {
                 let p = bm_prev_sig(st, kind, lt2);
-                if p >= 0 && matches!(kind_at(kind, p as usize), IDENT | IDENT_ESC) {
+                if p >= 0 && matches!(kind_at(kind, p as usize), tk!(Ident) | tk!(IdentEscaped)) {
                     return asi_head(t);
                 }
             }
@@ -526,7 +526,7 @@ unsafe fn operand_head_context(
                     continue;
                 }
                 b'-' if start >= 0
-                    && matches!(kind_at(kind, start as usize), NUM | BIGINT)
+                    && matches!(kind_at(kind, start as usize), tk!(Number) | tk!(BigInt))
                     && !matches!(*src.add(v + 1), b'-' | b'=') =>
                 {
                     start = v as i64;
@@ -535,8 +535,16 @@ unsafe fn operand_head_context(
                 }
                 _ => break,
             }
-        } else if matches!(vk, IDENT | IDENT_ESC | NUM | BIGINT | STR | TMPL_NOSUB) {
-            if (vk == IDENT || vk == IDENT_ESC)
+        } else if matches!(
+            vk,
+            tk!(Ident)
+                | tk!(IdentEscaped)
+                | tk!(Number)
+                | tk!(BigInt)
+                | tk!(String)
+                | tk!(TemplateNoSub)
+        ) {
+            if (vk == tk!(Ident) || vk == tk!(IdentEscaped))
                 && !prop_name(src, v)
                 && word_is_any(src, v, &[b"as", b"satisfies"])
             {
@@ -545,14 +553,14 @@ unsafe fn operand_head_context(
             start = v as i64;
             q = bm_prev_sig(st, kind, v);
             continue;
-        } else if vk == TMPL_TAIL {
+        } else if vk == tk!(TemplateTail) {
             let mut depth = 1u32;
             let mut h = bm_prev_sig(st, kind, v);
             while h >= 0 {
                 let hk = kind_at(kind, h as usize);
-                if hk == TMPL_TAIL {
+                if hk == tk!(TemplateTail) {
                     depth += 1;
-                } else if hk == TMPL_HEAD {
+                } else if hk == tk!(TemplateHead) {
                     depth -= 1;
                     if depth == 0 {
                         break;
@@ -596,7 +604,7 @@ pub(super) unsafe fn ctx_after_token(
     }
     let w = p as usize;
     let k = kind_at(kind, w);
-    if k == IDENT || k == IDENT_ESC {
+    if k == tk!(Ident) || k == tk!(IdentEscaped) {
         if prop_name(src, w) {
             let Some(h) = chain_head(src, st, kind, w) else {
                 return Ctx::Expr;
@@ -694,7 +702,7 @@ pub(super) unsafe fn ctx_after_token(
                         Ctx::Expr
                     };
                 }
-                if (pk == IDENT || pk == IDENT_ESC) && !prop_name(src, pw) {
+                if (pk == tk!(Ident) || pk == tk!(IdentEscaped)) && !prop_name(src, pw) {
                     if ident_is(src, pw, b"function") {
                         return Ctx::Type;
                     }
@@ -817,16 +825,21 @@ unsafe fn colon_context(
     }
     let v = q as usize;
     let vk = kind_at(kind, v);
-    if (vk == IDENT || vk == IDENT_ESC) && !prop_name(src, v) && ident_is(src, v, b"default") {
+    if (vk == tk!(Ident) || vk == tk!(IdentEscaped))
+        && !prop_name(src, v)
+        && ident_is(src, v, b"default")
+    {
         return Ctx::Expr;
     }
     let q2 = bm_prev_sig(st, kind, v);
     if q2 >= 0 {
         let u = q2 as usize;
-        if kind_at(kind, u) == IDENT && !prop_name(src, u) && ident_is(src, u, b"case") {
+        if kind_at(kind, u) == tk!(Ident) && !prop_name(src, u) && ident_is(src, u, b"case") {
             return Ctx::Expr;
         }
-        if (vk == IDENT || vk == IDENT_ESC) && !prop_name(src, v) && is_binder_keyword(src, kind, u)
+        if (vk == tk!(Ident) || vk == tk!(IdentEscaped))
+            && !prop_name(src, v)
+            && is_binder_keyword(src, kind, u)
         {
             return Ctx::Type;
         }
@@ -971,7 +984,10 @@ unsafe fn optional_method_marker(
             return false;
         };
         name = lb;
-    } else if !matches!(nk, IDENT | STR | NUM | BIGINT | PRIV_IDENT) {
+    } else if !matches!(
+        nk,
+        tk!(Ident) | tk!(String) | tk!(Number) | tk!(BigInt) | tk!(PrivateIdent)
+    ) {
         return false;
     }
     if !member_start_before(src, st, kind, name, true) {
@@ -1025,7 +1041,7 @@ pub(super) unsafe fn brace_is_type_literal(
             _ => true,
         };
     }
-    if k == IDENT {
+    if k == tk!(Ident) {
         if prop_name(src, w) || word_is_any(src, w, JSX_BLOCK_WORDS) {
             return false;
         }
@@ -1074,14 +1090,14 @@ pub(super) unsafe fn arrow_context(
     if b >= 0 {
         let bw = b as usize;
         let bk = kind_at(kind, bw);
-        if (bk == IDENT || bk == IDENT_ESC) && !prop_name(src, bw) {
+        if (bk == tk!(Ident) || bk == tk!(IdentEscaped)) && !prop_name(src, bw) {
             if ident_is(src, bw, b"async") {
                 return Ctx::Expr;
             }
             if ident_is(src, bw, b"new") {
                 b = bm_prev_sig(st, kind, bw);
                 if b >= 0
-                    && kind_at(kind, b as usize) == IDENT
+                    && kind_at(kind, b as usize) == tk!(Ident)
                     && ident_is(src, b as usize, b"abstract")
                 {
                     b = bm_prev_sig(st, kind, b as usize);
@@ -1139,7 +1155,7 @@ unsafe fn brace_is_member_container(
     }
     let w = q as usize;
     let k = kind_at(kind, w);
-    if k == IDENT || k == IDENT_ESC {
+    if k == tk!(Ident) || k == tk!(IdentEscaped) {
         if prop_name(src, w) {
             return chain_head(src, st, kind, w).is_some_and(|h| class_like_walk(src, st, kind, h));
         }
@@ -1171,7 +1187,7 @@ unsafe fn paren_is_statement_head(
 ) -> bool {
     let h = bm_prev_sig(st, kind, lp);
     h >= 0
-        && kind_at(kind, h as usize) == IDENT
+        && kind_at(kind, h as usize) == tk!(Ident)
         && !prop_name(src, h as usize)
         && word_is_any(src, h as usize, &[b"if", b"while", b"for", b"with"])
 }
@@ -1225,7 +1241,13 @@ unsafe fn signature_colon(
                 name = lb;
             } else if !matches!(
                 nk,
-                IDENT | IDENT_ESC | STR | NUM | BIGINT | PRIV_IDENT | PRIV_IDENT_ESC
+                tk!(Ident)
+                    | tk!(IdentEscaped)
+                    | tk!(String)
+                    | tk!(Number)
+                    | tk!(BigInt)
+                    | tk!(PrivateIdent)
+                    | tk!(PrivateIdentEscaped)
             ) {
                 return Some(Ctx::Expr);
             }
@@ -1237,7 +1259,7 @@ unsafe fn signature_colon(
         }
     }
     let k = kind_at(kind, w);
-    if k != IDENT && k != IDENT_ESC {
+    if k != tk!(Ident) && k != tk!(IdentEscaped) {
         return None;
     }
     if !prop_name(src, w) && word_is_any(src, w, SIGNATURE_HEAD_WORDS) {
@@ -1264,7 +1286,7 @@ unsafe fn signature_colon(
         }
         return None;
     }
-    if (pk == IDENT || pk == IDENT_ESC)
+    if (pk == tk!(Ident) || pk == tk!(IdentEscaped))
         && !prop_name(src, pw)
         && word_is_any(src, pw, SIGNATURE_HEAD_WORDS)
     {
@@ -1294,12 +1316,12 @@ pub(super) unsafe fn member_start_before(
             };
             let d = bm_prev_sig(st, kind, lp);
             return d >= 0
-                && matches!(kind_at(kind, d as usize), IDENT | IDENT_ESC)
+                && matches!(kind_at(kind, d as usize), tk!(Ident) | tk!(IdentEscaped))
                 && decorator_before(src, st, kind, d as usize);
         }
         return matches!(c, b'{' | b';' | b'}' | b'*') || (allow_comma && c == b',');
     }
-    if (pk == IDENT || pk == IDENT_ESC) && !prop_name(src, pw) {
+    if (pk == tk!(Ident) || pk == tk!(IdentEscaped)) && !prop_name(src, pw) {
         return word_is_any(src, pw, MEMBER_MODIFIER_WORDS) || decorator_before(src, st, kind, pw);
     }
     false

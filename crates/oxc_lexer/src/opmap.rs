@@ -8,7 +8,7 @@
     clippy::collapsible_match
 )]
 
-use crate::token::TokenKind;
+use crate::token::{TokenKind, tk};
 
 pub const KW_COUNT_JS: usize = 46;
 pub const KW_COUNT_TS: usize = 81;
@@ -124,7 +124,7 @@ const fn keywords_ts() -> [(&'static str, TokenKind); KW_COUNT_TS] {
 pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] = keywords_ts();
 
 /// First punctuator kind — the token-kind space reserves [32, 128) for them.
-pub const OP_KIND_BASE: u8 = TokenKind::LBrace as u8;
+pub const OP_KIND_BASE: u8 = tk!(LBrace);
 pub const OPMAP_NOPS: usize = 33;
 
 pub struct OpDef {
@@ -175,10 +175,6 @@ pub static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
     op!(b"/=", TokenKind::SlashEq),
 ];
 
-pub const OP_QDOT: u8 = TokenKind::OptionalChain as u8;
-pub const OP_SLASH_EQ: u8 = TokenKind::SlashEq as u8;
-
-pub const PUNCT1_KIND_UNKNOWN: u8 = TokenKind::Invalid as u8;
 pub const PUNCT1_NKNOWN: usize = 26;
 
 /// Single-char punctuators and their kinds. `#` maps to UNKNOWN: a bare `#`
@@ -474,7 +470,7 @@ impl KwSet {
 impl OpMap {
     pub fn new() -> OpMap {
         let mut m =
-            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [PUNCT1_KIND_UNKNOWN; 256] };
+            OpMap { opmap_mul: 0, opmap_slot: [0xFF; 256], punct1_ord: [tk!(Invalid); 256] };
         m.opmap_init();
         m.punct1_init();
         m.self_check();
@@ -531,7 +527,7 @@ impl OpMap {
     }
 
     fn punct1_init(&mut self) {
-        self.punct1_ord = [PUNCT1_KIND_UNKNOWN; 256];
+        self.punct1_ord = [tk!(Invalid); 256];
         for i in 0..PUNCT1_NKNOWN {
             self.punct1_ord[PUNCT1_LIST[i] as usize] = PUNCT1_TOK[i];
         }
@@ -597,7 +593,7 @@ impl OpMap {
             let ord = self.punct1_ord[b];
             let is_known = PUNCT1_LIST.contains(&(b as u8));
             assert!(
-                is_known || ord == PUNCT1_KIND_UNKNOWN,
+                is_known || ord == tk!(Invalid),
                 "opmap self-check: PUNCT1_ORD should be unknown"
             );
         }

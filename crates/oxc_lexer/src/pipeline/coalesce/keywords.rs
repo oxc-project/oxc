@@ -1,6 +1,4 @@
-use crate::opmap::KwSet;
-
-use super::super::IDENT;
+use crate::{opmap::KwSet, token::tk};
 
 pub const KWB: usize = 64;
 
@@ -65,7 +63,7 @@ unsafe fn kw_verify_batch<const TS_KEY: bool>(
         // Candidates are code-level identifier starts (carve cleared every
         // literal interior and JSX start from the masks), so the incumbent
         // kind is IDENT: select over it instead of a read-modify-write.
-        *kind.add(p) = (IDENT & !hm) | (kw.kwh_kind[h] & hm);
+        *kind.add(p) = (tk!(Ident) & !hm) | (kw.kwh_kind[h] & hm);
     }
 }
 
