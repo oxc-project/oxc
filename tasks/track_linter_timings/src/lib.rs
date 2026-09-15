@@ -38,7 +38,8 @@ pub fn run() -> Result<(), io::Error> {
 
         let path = Path::new(&file.file_name);
         let semantic = SemanticBuilder::new_linter().build(&parser_ret.program).semantic;
-        let module_record = Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
+        let module_record =
+            Arc::new(ModuleRecord::new(path, 0, &parser_ret.module_record, &semantic));
 
         let _ = linter.run_with_disable_directives::<true>(
             path,
