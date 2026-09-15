@@ -29,6 +29,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
    ╭─[no_unreadable_iife.tsx:1:20]
+ 1 │ const foo = (() => (/* comment */ a ? b : c))();
+   ·                    ─────────────────────────
+   ╰────
+  help: Rewrite the IIFE to avoid having a parenthesized arrow function body.
+
+  ⚠ unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
+   ╭─[no_unreadable_iife.tsx:1:20]
  1 │ ╭─▶ const foo = (() => (
  2 │ │                   a, b
  3 │ ╰─▶             ))();
