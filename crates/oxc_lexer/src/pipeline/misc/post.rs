@@ -1,4 +1,4 @@
-use crate::{opmap::KW_KIND_BASE, token::tk};
+use crate::token::{KW_KIND_BASE, tk};
 
 use super::super::bitmap::{bm_clear, bm_get, bm_prev1};
 

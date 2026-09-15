@@ -10,10 +10,10 @@
 
 use crate::{
     opmap::{
-        KEYWORDS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KW_KIND_BASE, KwSet, OPMAP_NOPS,
-        OPMAP_OPS, OpMap, PUNCT1_LIST, PUNCT1_NKNOWN, PUNCT1_TOK, op_key,
+        KEYWORDS, KEYWORDS_TS, KW_HASH_HINT_JS, KW_HASH_HINT_TS, KwSet, OPMAP_NOPS, OPMAP_OPS,
+        OpMap, PUNCT1_LIST, PUNCT1_NKNOWN, PUNCT1_TOK, op_key,
     },
-    token::tk,
+    token::{KW_KIND_BASE, tk},
 };
 
 #[inline(always)]
