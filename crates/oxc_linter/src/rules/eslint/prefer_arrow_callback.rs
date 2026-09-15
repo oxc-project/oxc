@@ -194,7 +194,7 @@ fn get_callback_info<'a>(
             }
             AstKind::ComputedMemberExpression(m) => {
                 if m.object.span() != current_span
-                    || m.static_property_name().is_none_or(|name| name.as_str() != "bind")
+                    || m.static_property_name().is_none_or(|name| name != "bind")
                 {
                     return info;
                 }

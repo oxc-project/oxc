@@ -130,7 +130,7 @@ fn is_event_emitter_member_access_from_ignored_packages(expr: &Expression) -> bo
 
     !member_expr.optional()
         && !member_expr.is_computed()
-        && member_expr.static_property_name() == Some("EventEmitter")
+        && member_expr.static_property_name().is_some_and(|name| name == "EventEmitter")
         && is_await_import_or_require_from_ignored_packages(member_expr.object())
 }
 

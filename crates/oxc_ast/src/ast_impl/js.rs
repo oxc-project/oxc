@@ -5,7 +5,7 @@ use std::{
 
 use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, JSStr, Str};
+use oxc_str::{Ident, JSStr};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
@@ -601,7 +601,7 @@ impl<'a> MemberExpression<'a> {
     }
 
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
-    /// Names containing lone surrogates cannot be represented as UTF-8 and return `None`.
+    /// The name may contain lone surrogates.
     ///
     /// If you need the [`Span`] of the property name, use [`MemberExpression::static_property_info`] instead.
     ///
@@ -611,12 +611,10 @@ impl<'a> MemberExpression<'a> {
     /// - `a["b"]` would return `Some("b")`
     /// - `a[b]` would return `None`
     /// - `a.#b` would return `None`
-    pub fn static_property_name(&self) -> Option<&'a str> {
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
-            MemberExpression::ComputedMemberExpression(expr) => {
-                expr.static_property_name().map(|name| name.as_str())
-            }
-            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
+            MemberExpression::ComputedMemberExpression(expr) => expr.static_property_name(),
+            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.into()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
@@ -625,21 +623,17 @@ impl<'a> MemberExpression<'a> {
     /// or `None` otherwise.
     ///
     /// If you don't need the [`Span`], use [`MemberExpression::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, JSStr<'a>)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str()?)),
-                Expression::TemplateLiteral(lit) => {
-                    if lit.quasis.len() == 1 {
-                        Some((lit.span, lit.quasis[0].value.cooked?.as_str()?))
-                    } else {
-                        None
-                    }
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value)),
+                Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
+                    Some((lit.span, lit.quasis[0].value.cooked?))
                 }
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, expr.property.name.as_str()))
+                Some((expr.property.span, expr.property.name.into()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -672,14 +666,12 @@ impl<'a> MemberExpression<'a> {
 
 impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, or `None` otherwise.
-    /// Names containing lone surrogates cannot be represented as UTF-8 and return `None`.
-    pub fn static_property_name(&self) -> Option<Str<'a>> {
+    /// The name may contain lone surrogates.
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match &self.expression {
-            Expression::StringLiteral(lit) => lit.value.as_str().map(Str::from),
-            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                lit.quasis[0].value.cooked.and_then(JSStr::as_str).map(Str::from)
-            }
-            Expression::RegExpLiteral(lit) => lit.raw,
+            Expression::StringLiteral(lit) => Some(lit.value),
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
+            Expression::RegExpLiteral(lit) => lit.raw.map(JSStr::from),
             _ => None,
         }
     }
@@ -687,13 +679,13 @@ impl<'a> ComputedMemberExpression<'a> {
     /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
     /// or `None` otherwise.
     /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+    pub fn static_property_info(&self) -> Option<(Span, JSStr<'a>)> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str()?)),
+            Expression::StringLiteral(lit) => Some((lit.span, lit.value)),
             Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => {
-                Some((lit.span, lit.quasis[0].value.cooked?.as_str()?))
+                Some((lit.span, lit.quasis[0].value.cooked?))
             }
-            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
+            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.into())),
             _ => None,
         }
     }
@@ -722,10 +714,9 @@ impl<'a> StaticMemberExpression<'a> {
         }
     }
 
-    /// Returns the static property name of this static member expression, if it has one, along with the source code [`Span`],
-    /// or `None` otherwise.
-    pub fn static_property_info(&self) -> (Span, &'a str) {
-        (self.property.span, self.property.name.as_str())
+    /// Returns the property name of this static member expression and its source code [`Span`].
+    pub fn static_property_info(&self) -> (Span, JSStr<'a>) {
+        (self.property.span, self.property.name.into())
     }
 }
 
@@ -755,11 +746,14 @@ impl<'a> From<ChainElement<'a>> for Expression<'a> {
 }
 
 impl CallExpression<'_> {
-    /// Returns the static name of the callee, if it has one, or `None` otherwise.
+    /// Returns the static name of the callee as UTF-8, or `None` if it is dynamic or contains a lone surrogate.
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
-            expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
+            expr => expr
+                .as_member_expression()
+                .and_then(MemberExpression::static_property_name)
+                .and_then(JSStr::as_str),
         }
     }
 
@@ -793,7 +787,7 @@ impl CallExpression<'_> {
             expr => match expr.as_member_expression() {
                 Some(member) => {
                     matches!(member.object(), Expression::Identifier(id) if id.name == "Symbol")
-                        && member.static_property_name() == Some("for")
+                        && member.static_property_name().is_some_and(|name| name == "for")
                 }
                 None => false,
             },
@@ -914,6 +908,7 @@ impl<'a> AssignmentTarget<'a> {
 impl<'a> SimpleAssignmentTarget<'a> {
     /// Returns the identifier name of this assignment target if the target is an identifier or
     /// a member expression, or `None` otherwise.
+    /// Member names containing lone surrogates return `None`.
     ///
     /// ## Example
     ///
@@ -923,7 +918,9 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_identifier_name(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
-            match_member_expression!(Self) => self.to_member_expression().static_property_name(),
+            match_member_expression!(Self) => {
+                self.to_member_expression().static_property_name().and_then(JSStr::as_str)
+            }
             _ => None,
         }
     }

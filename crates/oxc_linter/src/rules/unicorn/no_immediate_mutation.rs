@@ -10,6 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -193,7 +194,7 @@ fn check_call_mutation<'a>(
         return;
     }
 
-    let Some(method_name) = member.static_property_name() else {
+    let Some(method_name) = member.static_property_name().and_then(JSStr::as_str) else {
         return;
     };
 
