@@ -2,7 +2,7 @@ use std::fmt::Write;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 use rustc_hash::FxHashMap;
 
@@ -57,8 +57,10 @@ impl StylishReporter {
         let mut total_errors = 0;
         let mut total_warnings = 0;
 
+        // Resolve line/column for the whole batch at once, so diagnostics of the same file share
+        // one scan of its source instead of rescanning it per diagnostic.
         let mut entries: Vec<(Info, &Error)> =
-            self.diagnostics.iter().map(|diagnostic| (Info::new(diagnostic), diagnostic)).collect();
+            batch_infos(&self.diagnostics).map(|(diagnostic, info)| (info, diagnostic)).collect();
 
         entries.sort_by_key(|(info, _)| info.start.line);
 

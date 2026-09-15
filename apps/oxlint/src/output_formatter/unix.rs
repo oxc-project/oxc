@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::{
     Error, Severity,
-    reporter::{DiagnosticReporter, DiagnosticResult, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info, batch_infos},
 };
 
 use crate::output_formatter::InternalFormatter;
@@ -39,19 +39,29 @@ impl DiagnosticReporter for UnixReporter {
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.total += 1;
-        Some(format_unix(&error))
+        Some(format_unix(&Info::new(&error)))
+    }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        // Resolve line/column for the whole batch at once, so diagnostics of the same file share
+        // one scan of its source instead of rescanning it per diagnostic.
+        self.total += errors.len();
+        for (_, info) in batch_infos(&errors) {
+            emit(&format_unix(&info));
+        }
     }
 }
 
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-unix>
-fn format_unix(diagnostic: &Error) -> String {
-    let Info { start, end: _, filename, message, severity, rule_id } = Info::new(diagnostic);
+fn format_unix(info: &Info) -> String {
+    let Info { start, end: _, filename, message, severity, rule_id } = info;
     let severity = match severity {
         Severity::Error => "Error",
         _ => "Warning",
     };
-    let rule_id =
-        rule_id.map_or_else(|| Cow::Borrowed(""), |rule_id| Cow::Owned(format!("/{rule_id}")));
+    let rule_id = rule_id
+        .as_deref()
+        .map_or_else(|| Cow::Borrowed(""), |rule_id| Cow::Owned(format!("/{rule_id}")));
     format!("{filename}:{}:{}: {message} [{severity}{rule_id}]\n", start.line, start.column)
 }
 
