@@ -37,7 +37,9 @@ use crate::{
 pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
-    #[napi(ts_arg_type = "(numThreads: number) => Promise<void>")]
+    #[napi(
+        ts_arg_type = "(numThreads: number, plugins: { base: string; specifiers: string[] } | null) => Promise<{ languages: { parsers: string[]; extensions: string[]; filenames: string[] }[]; failures: { specifier: string; message: string }[] }>"
+    )]
     init_external_services_cb: JsInitExternalServicesCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>"

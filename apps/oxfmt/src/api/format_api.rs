@@ -45,7 +45,9 @@ pub fn run(
     );
 
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
-    let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+    // No plugins here: this path takes caller-supplied options and never runs
+    // `ExternalServices::init`, which is where plugins are discovered.
+    let Some(kind) = classify_file_kind(Arc::from(filepath), None) else {
         external_services.cleanup();
         return ApiFormatResult {
             code: source_text,

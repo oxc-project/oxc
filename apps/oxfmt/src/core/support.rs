@@ -6,13 +6,23 @@ use oxc_formatter_css::CssVariant;
 use oxc_formatter_json::JsonVariant;
 use oxc_span::SourceType;
 
+use super::plugins::PluginLanguages;
+
 #[cfg(feature = "napi")]
 use super::oxfmtrc::FormatConfig;
 
 /// Classify a file path into a [`FileKind`].
 ///
+/// `plugin_languages` carries the extensions and filenames that user-configured
+/// Prettier plugins declared. They are consulted last, so a plugin can add file
+/// types but never take one away from a built-in formatter.
+///
 /// Returns `None` when the file type is not a formatting target.
-pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
+#[cfg_attr(not(feature = "napi"), expect(unused_variables))]
+pub fn classify_file_kind(
+    path: Arc<Path>,
+    plugin_languages: Option<&PluginLanguages>,
+) -> Option<FileKind> {
     // PERF: Standard JS/TS extensions are by far the most common case,
     // so resolve them straight from the path before extracting `file_name`/`extension` for anything else.
     // NOTE:
@@ -74,7 +84,10 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     // Prettier-delegated files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
     {
-        if let Some(parser_name) = get_prettier_parser_name(file_name, extension) {
+        let parser_name = get_prettier_parser_name(file_name, extension).or_else(|| {
+            plugin_languages.and_then(|languages| languages.parser_for(file_name, extension))
+        });
+        if let Some(parser_name) = parser_name {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
             let supports_svelte = SVELTE_PARSERS.contains(parser_name);
@@ -606,7 +619,7 @@ mod tests {
             "shader.end.frag",
         ];
         for file_name in js_or_ts_files {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxcFormatter { .. })),
                 "`{file_name}` should be routed to oxc_formatter"
@@ -615,7 +628,7 @@ mod tests {
 
         // Plain `.frag` files (not `*.start.frag` / `*.end.frag`) are not JS.
         for file_name in ["shader.frag", "random.frag", "xstart.frag"] {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 !matches!(result, Some(FileKind::OxcFormatter { .. })),
                 "`{file_name}` should NOT be routed to oxc_formatter"
@@ -713,7 +726,7 @@ mod tests {
         ];
 
         for (file_name, expected) in test_cases {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxcFormatterJson { variant, .. }) if variant == expected),
                 "`{file_name}` should be routed to oxc_formatter_json ({expected:?})"
@@ -722,14 +735,14 @@ mod tests {
 
         // `package.json` also uses the `json-stringify` variant,
         // but is the lone dedicated kind for the sorting pre-process
-        let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
+        let kind = classify_file_kind(Arc::from(Path::new("package.json")), None).unwrap();
         assert!(matches!(kind, FileKind::OxcFormatterJsonPackageJson { .. }));
     }
 
     #[test]
     fn test_graphql_files_route_to_oxc_formatter_graphql() {
         for file_name in ["schema.graphql", "query.gql", "types.graphqls"] {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxcFormatterGraphql { .. })),
                 "`{file_name}` should be routed to oxc_formatter_graphql"
@@ -749,7 +762,7 @@ mod tests {
         ];
 
         for (file_name, expected) in test_cases {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxcFormatterCss { variant, .. }) if variant == expected),
                 "`{file_name}` should be routed to oxc_formatter_css ({expected:?})"
@@ -767,7 +780,7 @@ mod tests {
             ".clang-format",
             "CITATION.cff",
         ] {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxcFormatterYaml { .. })),
                 "`{file_name}` should be routed to oxc_formatter_yaml"
@@ -776,7 +789,7 @@ mod tests {
 
         // rc files Prettier tries as JSON first
         for file_name in [".prettierrc", ".stylelintrc", ".lintstagedrc"] {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxcFormatterYamlRc { .. })),
                 "`{file_name}` should be routed to the JSON-first YAML rc kind"
@@ -784,7 +797,7 @@ mod tests {
         }
 
         // YAML lock files are excluded, not formatted
-        let result = classify_file_kind(Arc::from(Path::new("pnpm-lock.yaml")));
+        let result = classify_file_kind(Arc::from(Path::new("pnpm-lock.yaml")), None);
         assert!(result.is_none(), "`pnpm-lock.yaml` should be excluded");
     }
 
@@ -801,7 +814,7 @@ mod tests {
         ];
 
         for file_name in toml_files {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(
                 matches!(result, Some(FileKind::OxfmtToml { .. })),
                 "`{file_name}` should be detected as TOML"
@@ -812,7 +825,7 @@ mod tests {
         let excluded_files = vec!["Cargo.lock", "poetry.lock", "pdm.lock", "uv.lock", "Gopkg.lock"];
 
         for file_name in excluded_files {
-            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            let result = classify_file_kind(Arc::from(Path::new(file_name)), None);
             assert!(result.is_none(), "`{file_name}` should be excluded (lock file)");
         }
     }

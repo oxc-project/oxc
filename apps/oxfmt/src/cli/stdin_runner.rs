@@ -11,8 +11,8 @@ use super::{
 };
 use crate::core::{
     ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
-    resolve_file_scope_config, utils,
+    ResolveOutcome, SourceFormatter, classify_file_kind, plugins::PluginLanguages,
+    resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
 
 pub struct StdinRunner {
@@ -83,12 +83,42 @@ impl StdinRunner {
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
-        if let Err(err) =
-            tokio::task::block_in_place(|| self.external_services.init(num_of_threads))
-        {
-            utils::print_and_flush(stderr, &format!("Failed to setup external services.\n{err}\n"));
-            return CliRunResult::InvalidOptionConfig;
-        }
+        let plugin_request = config_resolver.plugin_request().cloned();
+        let plugin_languages = match tokio::task::block_in_place(|| {
+            self.external_services.init(num_of_threads, plugin_request)
+        }) {
+            Ok(resolved) => {
+                // Fatal, for the same reason as the walk: see `walk_runner`.
+                if !resolved.failures.is_empty() {
+                    for failure in &resolved.failures {
+                        utils::print_and_flush(
+                            stderr,
+                            &format!(
+                                "Failed to load plugin `{}`.\n{}\n",
+                                failure.specifier, failure.message
+                            ),
+                        );
+                    }
+                    return CliRunResult::InvalidOptionConfig;
+                }
+                for specifier in &resolved.without_languages {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!(
+                            "Plugin `{specifier}` declares no file types, so it has no effect.\nPlugins that only override built-in parsers, such as import sorters, cannot apply: JS/TS is formatted by `oxc_formatter`, not Prettier.\n"
+                        ),
+                    );
+                }
+                PluginLanguages::new(resolved.languages)
+            }
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to setup external services.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         // Resolve filepath to absolute for nested config resolution and ignore check
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
@@ -99,6 +129,7 @@ impl StdinRunner {
                 NestedConfigCtx::new(
                     editorconfig_path.as_deref().map(Arc::from),
                     Some(Arc::clone(&self.js_config_loader)),
+                    config_resolver.config_dir().map(Arc::from),
                 )
             });
         let config_resolver = match resolve_file_scope_config(
@@ -134,7 +165,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+        let Some(kind) = classify_file_kind(Arc::from(filepath), Some(&plugin_languages)) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };

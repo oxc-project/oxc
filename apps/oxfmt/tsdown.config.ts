@@ -5,7 +5,19 @@ const require = createRequire(import.meta.url);
 
 export default defineConfig({
   // Build all entry points together to share Prettier chunks
-  entry: ["src-js/index.ts", "src-js/cli.ts", "src-js/cli-worker.ts"],
+  entry: [
+    "src-js/index.ts",
+    "src-js/cli.ts",
+    "src-js/cli-worker.ts",
+    // Entries, not chunks: `libs/plugin-resolution.ts` computes these paths at
+    // runtime to redirect a plugin's `prettier` import, so the names must be
+    // stable across builds. Chunk names carry a content hash.
+    "src-js/prettier-host/prettier.ts",
+    "src-js/prettier-host/doc.ts",
+    "src-js/prettier-host/hooks.ts",
+    "src-js/prettier-host/paths.ts",
+    "src-js/prettier-host/plugins/*.ts",
+  ],
   format: "esm",
   platform: "node",
   target: "node20",

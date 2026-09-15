@@ -162,6 +162,17 @@ export interface Oxfmtrc {
    */
   overrides?: OxfmtOverrideConfig[];
   /**
+   * Prettier plugins to load, as package names or paths.
+   * Resolved from the directory containing this configuration file.
+   *
+   * A plugin's declared file extensions are formatted by delegating to Prettier.
+   * Plugins declared in nested configurations or in `overrides` are not read:
+   * the set of extensions to collect is settled before per-file resolution.
+   *
+   * - Default: `[]`
+   */
+  plugins?: string[];
+  /**
    * Specify the line length that the printer will wrap on.
    *
    * If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.

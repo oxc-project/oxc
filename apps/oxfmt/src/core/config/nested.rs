@@ -55,12 +55,17 @@ pub struct NestedConfigCtx {
     js_config_loader: Option<JsConfigLoaderCb>,
     scope_by_dir: ScopeByDir,
     config_load_cache: ConfigLoadCache,
+    /// Directory of the config that is already serving as the run's root.
+    /// Probing revisits that directory, and the config found there is the root
+    /// one, not a nested one.
+    root_config_dir: Option<Arc<Path>>,
 }
 
 impl NestedConfigCtx {
     pub fn new(
         editorconfig_path: Option<Arc<Path>>,
         #[cfg(feature = "napi")] js_config_loader: Option<JsConfigLoaderCb>,
+        root_config_dir: Option<Arc<Path>>,
     ) -> Self {
         Self {
             discovery: config_discovery(),
@@ -70,6 +75,7 @@ impl NestedConfigCtx {
             js_config_loader,
             scope_by_dir: Arc::new(RwLock::new(FxHashMap::default())),
             config_load_cache: Arc::new(Mutex::new(FxHashMap::default())),
+            root_config_dir,
         }
     }
 
@@ -163,6 +169,14 @@ impl NestedConfigCtx {
         };
 
         resolver.build_and_validate().map_err(load_err)?;
+
+        // Plugins decide which extensions the walk collects at all, which is settled
+        // before any file reaches a nested scope. Rejecting the declaration keeps a
+        // misplaced one from looking like it took effect.
+        if resolver.plugin_request().is_some() && self.root_config_dir.as_deref() != Some(dir) {
+            return Err(load_err("`plugins` is only read from the root configuration".to_string()));
+        }
+
         Ok(Some(Arc::new(resolver)))
     }
 }
