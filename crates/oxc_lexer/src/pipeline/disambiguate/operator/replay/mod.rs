@@ -1,3 +1,20 @@
+//! Is `yield` or `await` a keyword at this position?
+//!
+//! Outside modules, `yield` and `await` are keywords in some places, and ordinary identifiers elsewhere.
+//! That decides whether a `/` after one starts a regex (`yield /re/`) or is division (`yield / 2`).
+//!
+//! - `yield` is a keyword inside a generator, and in strict mode code.
+//! - `await` is a keyword inside an async function.
+//! - Both are reserved inside a class's `static` block.
+//!
+//! That depends on every enclosing function, which is hard to see by walking backwards.
+//! So [`replay_is_keyword`] replays the tokens forwards from the start of the file,
+//! keeping a stack of the functions, classes and object literals it's inside.
+//! A `"use strict"` directive or a class body makes the code inside strict.
+//!
+//! This only runs when `yield` or `await` comes directly before a `/`, or before a `<` in a JSX file.
+//! That is rare, so replaying from the start of the file is affordable.
+
 use crate::{opmap::OP_KIND_BASE, tables::Tables};
 
 use super::super::super::{

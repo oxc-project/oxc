@@ -1,3 +1,22 @@
+//! Is a position directly after a complete value?
+//!
+//! [`not_operator_position`] answers this for `carve`, to tell a regex from division,
+//! and a JSX element from less-than. Its doc comment explains the question in detail.
+//!
+//! It looks at the token before the position, and for most tokens that settles it.
+//! The rest of this file handles the tokens which don't:
+//!
+//! - Operators and numbers such as `x++`, `a?.b` and `1.5e+3` aren't formed into their final tokens
+//!   until `coalesce`, which runs later. [`prev_regex_sim`] lexes such a stretch of source itself,
+//!   to find the last token.
+//! - After `)` or `}`, it depends on what the brackets closed.
+//!   `if (c) /re/` has a regex, but `f(c) / 2` has a division.
+//! - A line break can end a statement, so the next token starts a new one,
+//!   e.g. after `let x` or `break label`.
+//! - Outside modules, whether `yield` and `await` are keywords depends on the enclosing functions.
+//!   [`replay`] works that out.
+//! - TypeScript adds more cases, e.g. a postfix `!`, or a `>` closing type arguments.
+
 use crate::{
     opmap::{OP_KIND_BASE, OP_QDOT},
     tables::{Tables, is_digit, is_glue_join, is_word, is_ws},
