@@ -282,12 +282,16 @@ impl<'o, 'a> PropertyCollector<'o, 'a> {
     fn classify_key_expression(&mut self, expression: &Expression<'a>) {
         match expression.get_inner_expression() {
             Expression::StringLiteral(literal) if self.special_literal(literal.span) => {}
-            Expression::StringLiteral(literal) => self.quoted(Ident::from(literal.value)),
+            Expression::StringLiteral(literal) => {
+                if let Some(name) = literal.value.as_str() {
+                    self.quoted(Ident::from(name));
+                }
+            }
             Expression::TemplateLiteral(template)
                 if template.expressions.is_empty() && self.special_literal(template.span) => {}
             Expression::TemplateLiteral(template) if template.expressions.is_empty() => {
                 if let [quasi] = template.quasis.as_slice()
-                    && let Some(cooked) = quasi.value.cooked
+                    && let Some(cooked) = quasi.value.cooked.and_then(oxc_str::JSStr::as_str)
                 {
                     self.quoted(Ident::from(cooked));
                 }
@@ -329,7 +333,9 @@ impl<'o, 'a> PropertyCollector<'o, 'a> {
 impl<'a> Visit<'a> for PropertyCollector<'_, 'a> {
     fn visit_directive(&mut self, directive: &Directive<'a>) {
         // Directives are not property-name positions.
-        self.occupy(Ident::from(directive.expression.value));
+        if let Some(name) = directive.expression.value.as_str() {
+            self.occupy(Ident::from(name));
+        }
     }
 
     fn visit_ts_type(&mut self, _ty: &TSType<'a>) {}
@@ -387,13 +393,15 @@ impl<'a> Visit<'a> for PropertyCollector<'_, 'a> {
     }
 
     fn visit_string_literal(&mut self, literal: &StringLiteral<'a>) {
-        self.observe_literal(literal.span, Ident::from(literal.value));
+        if let Some(name) = literal.value.as_str() {
+            self.observe_literal(literal.span, Ident::from(name));
+        }
     }
 
     fn visit_template_literal(&mut self, template: &TemplateLiteral<'a>) {
         if template.expressions.is_empty()
             && let [quasi] = template.quasis.as_slice()
-            && let Some(cooked) = quasi.value.cooked
+            && let Some(cooked) = quasi.value.cooked.and_then(oxc_str::JSStr::as_str)
         {
             self.observe_literal(template.span, Ident::from(cooked));
         }
@@ -513,8 +521,10 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
         if !self.should_rewrite_literal(literal.span) {
             return;
         }
-        if let Some(target) = self.target(Ident::from(literal.value)) {
-            literal.value = Str::from_str_in(target.as_str(), &self.ast);
+        if let Some(name) = literal.value.as_str()
+            && let Some(target) = self.target(Ident::from(name))
+        {
+            literal.value = Str::from_str_in(target.as_str(), &self.ast).into();
             literal.raw = None;
         }
     }
@@ -524,11 +534,11 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
             return;
         }
         if let [quasi] = template.quasis.as_mut_slice()
-            && let Some(cooked) = quasi.value.cooked
+            && let Some(cooked) = quasi.value.cooked.and_then(oxc_str::JSStr::as_str)
             && let Some(target) = self.target(Ident::from(cooked))
         {
             let target = Str::from_str_in(target.as_str(), &self.ast);
-            quasi.value.cooked = Some(target);
+            quasi.value.cooked = Some(target.into());
             quasi.value.raw = target;
         }
     }
@@ -557,7 +567,7 @@ impl<'a, 'p> PropertyRewriter<'a, '_, 'p> {
 
     fn direct_string_key(key: &PropertyKey<'a>) -> Option<(Str<'a>, Span)> {
         if let PropertyKey::StringLiteral(literal) = key {
-            Some((literal.value, literal.span))
+            literal.value.as_str().map(|name| (Str::from(name), literal.span))
         } else {
             None
         }
@@ -620,6 +630,7 @@ impl<'a> VisitMut<'a> for PropertyRewriter<'a, '_, '_> {
             let original = literal.value;
             let property_span = literal.span;
             if self.should_rewrite_literal(property_span)
+                && let Some(original) = original.as_str()
                 && let Some(target) = self.target(Ident::from(original))
             {
                 let property = IdentifierName::new(

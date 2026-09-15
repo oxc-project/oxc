@@ -73,7 +73,7 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
             let member_name = match &member.id {
                 TSEnumMemberName::Identifier(ident) => Some(ident.name.as_str()),
                 TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
-                    Some(lit.value.as_str())
+                    lit.value.as_str()
                 }
                 TSEnumMemberName::ComputedTemplateString(_) => None,
             };
@@ -98,16 +98,19 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
         Expression::UnaryExpression(expr) => eval_unary_expression(expr, ctx),
         Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
         Expression::StringLiteral(lit) => {
-            Some(ConstantValue::String(CompactStr::from(lit.value.as_str())))
+            Some(ConstantValue::String(CompactStr::from(lit.value.as_str()?)))
         }
         Expression::TemplateLiteral(lit) => {
             if let Some(quasi) = lit.single_quasi() {
-                Some(ConstantValue::String(CompactStr::from(quasi.as_str())))
+                Some(ConstantValue::String(CompactStr::from(quasi.as_str()?)))
             } else {
                 let mut value = String::new();
                 for (i, quasi) in lit.quasis.iter().enumerate() {
-                    let cooked_or_raw = quasi.value.cooked.as_ref().unwrap_or(&quasi.value.raw);
-                    value.push_str(cooked_or_raw.as_str());
+                    let cooked_or_raw = match quasi.value.cooked {
+                        Some(cooked) => cooked.as_str()?,
+                        None => quasi.value.raw.as_str(),
+                    };
+                    value.push_str(cooked_or_raw);
                     if i < lit.expressions.len() {
                         match evaluate_expression(&lit.expressions[i], ctx)? {
                             ConstantValue::String(s) => value.push_str(&s),
@@ -173,7 +176,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 return None;
             };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(prop_lit.value.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(prop_lit.value.as_str()?, obj_symbol_id, ctx.scoping)
         }
         _ => None,
     }

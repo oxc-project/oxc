@@ -47,7 +47,7 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
                 _ => None,
             },
             Expression::StringLiteral(string_literal) => {
-                string_literal.value.as_str().string_to_big_int()
+                string_literal.value.as_str()?.string_to_big_int()
             }
             Expression::TemplateLiteral(_) => {
                 self.to_js_string(ctx).and_then(|value| value.as_ref().string_to_big_int())
