@@ -571,7 +571,7 @@ impl<'s> LocalCacheTypes<'s> {
                 }
             }
             TypeDef::Primitive(primitive_def) => {
-                matches!(primitive_def.name(), "&str" | "Str" | "Ident")
+                matches!(primitive_def.name(), "&str" | "Str" | "JSStr" | "Ident")
             }
             TypeDef::Vec(_) => true,
             TypeDef::Option(option_def) => {
