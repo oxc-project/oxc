@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "jsx_a11y": {
+    "repoUrl": "https://github.com/jsx-eslint/eslint-plugin-jsx-a11y",
+    "commitSha": "7f3d698f40d697471555e1dae74bfc7ee94d0b86",
+    "version": "6.10.2"
   }
 }

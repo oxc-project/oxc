@@ -272,3 +272,17 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# JSX A11y
+###############################################################################
+
+clone_repo jsx_a11y
+npm install --legacy-peer-deps
+
+# Transpile Flow and ES modules before the conformance runner's TypeScript loader.
+# Keep the upstream source/test layout and use the upstream Babel configuration.
+node node_modules/@babel/cli/bin/babel.js src --out-dir .oxlint-conformance/src --copy-files
+node node_modules/@babel/cli/bin/babel.js __tests__ --out-dir .oxlint-conformance/__tests__ --copy-files
+cp package.json .oxlint-conformance/
+cd ..

@@ -11,6 +11,7 @@ import playwright from "./playwright.ts";
 import cypress from "./cypress.ts";
 import mocha from "./mocha.ts";
 import regexp from "./regexp.ts";
+import jsxA11y from "./jsx_a11y.ts";
 
 export const TEST_GROUPS: TestGroup[] = [
   eslint,
@@ -24,4 +25,5 @@ export const TEST_GROUPS: TestGroup[] = [
   cypress,
   mocha,
   regexp,
+  jsxA11y,
 ];
