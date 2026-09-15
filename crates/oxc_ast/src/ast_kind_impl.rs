@@ -7,7 +7,7 @@ use std::ptr::NonNull;
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
-use oxc_str::{Ident, Str};
+use oxc_str::{Ident, JSStr, Str};
 
 use super::{AstKind, AstType, ast::*};
 
@@ -371,6 +371,15 @@ impl AstKind<'_> {
     pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
         use std::borrow::Cow;
 
+        fn debug_string(kind: &str, value: JSStr<'_>) -> String {
+            // Preserve the existing unquoted UTF-8 names. Debug quotes distinguish
+            // escaped surrogate text from a literal backslash in the source value.
+            match value.as_str() {
+                Some(value) => format!("{kind}({value})"),
+                None => format!("{kind}({value:?})"),
+            }
+        }
+
         const COMPUTED: &str = "<computed>";
         const ANONYMOUS: &str = "<anonymous>";
         const DESTRUCTURE: &str = "<destructure>";
@@ -420,14 +429,14 @@ impl AstKind<'_> {
             Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
-            Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
+            Self::StringLiteral(s) => debug_string("StringLiteral", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.single_quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+                t.single_quasi().map_or_else(|| "None".into(), |q| debug_string("Some", q))
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
@@ -591,7 +600,7 @@ impl AstKind<'_> {
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
             Self::TSExternalModuleDeclaration(m) => {
-                format!("TSExternalModuleDeclaration({})", m.id).into()
+                debug_string("TSExternalModuleDeclaration", m.id.value).into()
             }
             Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
@@ -664,10 +673,14 @@ impl<'a> MemberExpressionKind<'a> {
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str()?)),
                 Expression::TemplateLiteral(lit) => {
                     if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                        lit.quasis[0]
+                            .value
+                            .cooked
+                            .and_then(JSStr::as_str)
+                            .map(|cooked| (lit.span, cooked))
                     } else {
                         None
                     }

@@ -64,7 +64,7 @@ pub fn is_import_from_module(
         return false;
     };
 
-    import_decl.source.value.as_str() == module_name
+    import_decl.source.value == module_name
 }
 
 /// Returns `true` when `ident` resolves to a named import with the given source module and
@@ -268,7 +268,7 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
         (Expression::StringLiteral(string_lit), Expression::TemplateLiteral(template_lit))
         | (Expression::TemplateLiteral(template_lit), Expression::StringLiteral(string_lit)) => {
-            return template_lit.single_quasi().is_some_and(|val| val.as_str() == string_lit.value);
+            return template_lit.single_quasi().is_some_and(|val| val == string_lit.value);
         }
         (Expression::TemplateLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
             return left_str.quasis.content_eq(&right_str.quasis)
@@ -400,7 +400,7 @@ pub fn is_same_member_expression(
             // x[/regex/] === x['/regex/']
             (Expression::StringLiteral(string_lit), Expression::RegExpLiteral(regex_lit))
             | (Expression::RegExpLiteral(regex_lit), Expression::StringLiteral(string_lit)) => {
-                if string_lit.value != regex_lit.raw.as_ref().unwrap() {
+                if string_lit.value != regex_lit.raw.as_ref().unwrap().as_str() {
                     return false;
                 }
             }
@@ -410,7 +410,7 @@ pub fn is_same_member_expression(
             | (Expression::RegExpLiteral(regex_lit), Expression::TemplateLiteral(template_lit)) => {
                 if !template_lit
                     .single_quasi()
-                    .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap())
+                    .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap().as_str())
                 {
                     return false;
                 }

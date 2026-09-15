@@ -4,7 +4,7 @@ use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::{ScopeFlags, ScopeId};
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -15,17 +15,21 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
+use rustc_hash::FxHashSet;
 
 use crate::{context::TraverseCtx, state::TransformState};
 
 pub struct TypeScriptEnum {
     optimize_const_enums: bool,
     optimize_enums: bool,
+    /// Members whose value is a string but could not be evaluated, so a later
+    /// reference to one is also a string.
+    string_members: FxHashSet<SymbolId>,
 }
 
 impl TypeScriptEnum {
     pub fn new(optimize_const_enums: bool, optimize_enums: bool) -> Self {
-        Self { optimize_const_enums, optimize_enums }
+        Self { optimize_const_enums, optimize_enums, string_members: FxHashSet::default() }
     }
 }
 
@@ -38,14 +42,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 if self.may_remove_enum(decl, ctx) {
                     return;
                 }
-                if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
+                if let Some(new_stmt) = self.transform_ts_enum(decl, None, ctx) {
                     *stmt = new_stmt;
                 }
             }
             Statement::ExportDeclaration(export_decl) => {
                 let span = export_decl.span;
                 if let Declaration::TSEnumDeclaration(decl) = &mut export_decl.declaration
-                    && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), ctx)
+                    && let Some(new_stmt) = self.transform_ts_enum(decl, Some(span), ctx)
                 {
                     *stmt = new_stmt;
                 }
@@ -74,7 +78,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                 continue;
             }
             // Not removable after all (still has value references) — transform now.
-            if let Some(new_stmt) = Self::transform_ts_enum(decl, None, ctx) {
+            if let Some(new_stmt) = self.transform_ts_enum(decl, None, ctx) {
                 *stmt = new_stmt;
             }
         }
@@ -156,6 +160,7 @@ impl<'a> TypeScriptEnum {
     /// })(Foo || {});
     /// ```
     fn transform_ts_enum(
+        &mut self,
         decl: &mut TSEnumDeclaration<'a>,
         export_span: Option<Span>,
         ctx: &mut TraverseCtx<'a>,
@@ -203,7 +208,8 @@ impl<'a> TypeScriptEnum {
             )
         });
 
-        let statements = Self::transform_ts_enum_members(
+        let statements = self.transform_ts_enum_members(
+            decl.id.symbol_id(),
             func_scope_id,
             &mut decl.body.members,
             &param_binding,
@@ -312,6 +318,8 @@ impl<'a> TypeScriptEnum {
     }
 
     fn transform_ts_enum_members(
+        &mut self,
+        enum_symbol_id: SymbolId,
         enum_scope_id: ScopeId,
         members: &mut ArenaVec<'a, TSEnumMember<'a>>,
         param_binding: &BoundIdentifier<'a>,
@@ -331,12 +339,13 @@ impl<'a> TypeScriptEnum {
         for member in members.take_in(ctx) {
             let member_span = member.span;
             let member_name = member.id.static_name();
+            let member_symbol_id = member_name
+                .as_str()
+                .and_then(|name| ctx.scoping().get_binding(enum_scope_id, name.into()));
 
             let init = if let Some(mut initializer) = member.initializer {
                 // Look up the pre-computed constant value from Scoping
-                let constant_value: Option<ConstantValue> = ctx
-                    .scoping()
-                    .get_binding(enum_scope_id, member_name.as_str().into())
+                let constant_value: Option<ConstantValue> = member_symbol_id
                     .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                     .cloned();
 
@@ -390,7 +399,13 @@ impl<'a> TypeScriptEnum {
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
-            let is_str = Self::is_syntactically_string(&init);
+            let is_str = self.is_string_initializer(&init, enum_symbol_id, param_binding, ctx);
+            if is_str
+                && let Some(member_symbol_id) = member_symbol_id
+                && ctx.scoping().get_enum_member_value(member_symbol_id).is_none()
+            {
+                self.string_members.insert(member_symbol_id);
+            }
 
             // Foo["x"] = init
             let member_expr = {
@@ -480,39 +495,101 @@ impl<'a> TypeScriptEnum {
                 .get_binding(scope_id, ident.name.as_str().into())
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
-            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => ctx
-                .scoping()
-                .get_binding(scope_id, lit.value.as_str().into())
+            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => lit
+                .value
+                .as_str()
+                .and_then(|name| ctx.scoping().get_binding(scope_id, name.into()))
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
             TSEnumMemberName::ComputedTemplateString(_) => false,
         })
     }
 
-    /// Whether an enum member initializer is a string by syntax alone.
+    /// Whether an enum member initializer is a string, which decides that the
+    /// member gets no reverse mapping.
     ///
-    /// A string member gets no reverse mapping. tsc decides this without type
-    /// information: string literals, template literals, and `+` with a string on
-    /// either side are strings, looking through parentheses and type wrappers.
-    /// Anything else, including `typeof x`, keeps the reverse mapping.
-    ///
-    /// This also covers initializers the constant evaluator declined. Emitting a
-    /// reverse mapping for those wrote a bogus key that could overwrite another
-    /// member.
-    ///
-    /// See `isSyntacticallyString` in TypeScript's checker. TypeScript looks
-    /// through parentheses only, so an `as`, `satisfies`, non-null, or angle
-    /// bracket assertion around a string still gets a reverse mapping.
-    fn is_syntactically_string(expr: &Expression<'a>) -> bool {
+    /// This follows TypeScript: string literals, template literals, and `+`
+    /// with a string on either side are strings, looking through parentheses
+    /// only, so an `as`, `satisfies`, non-null, or angle bracket assertion
+    /// around a string still gets a reverse mapping. A reference to another
+    /// member is a string when that member is, even if its value could not be
+    /// evaluated, as in `B = A` after `A = f() + "x"`. Emitting a reverse
+    /// mapping for such a member wrote a key that could overwrite another member.
+    fn is_string_initializer(
+        &self,
+        expr: &Expression<'a>,
+        enum_symbol_id: SymbolId,
+        param_binding: &BoundIdentifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         match expr.without_parentheses() {
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
             Expression::BinaryExpression(binary) => {
                 binary.operator == BinaryOperator::Addition
-                    && (Self::is_syntactically_string(&binary.left)
-                        || Self::is_syntactically_string(&binary.right))
+                    && (self.is_string_initializer(
+                        &binary.left,
+                        enum_symbol_id,
+                        param_binding,
+                        ctx,
+                    ) || self.is_string_initializer(
+                        &binary.right,
+                        enum_symbol_id,
+                        param_binding,
+                        ctx,
+                    ))
             }
+            Expression::StaticMemberExpression(member) => self.is_string_member(
+                &member.object,
+                member.property.name.as_str(),
+                enum_symbol_id,
+                param_binding,
+                ctx,
+            ),
+            Expression::ComputedMemberExpression(member) => match &member.expression {
+                Expression::StringLiteral(name) => name.value.as_str().is_some_and(|name| {
+                    self.is_string_member(&member.object, name, enum_symbol_id, param_binding, ctx)
+                }),
+                _ => false,
+            },
             _ => false,
         }
+    }
+
+    /// Whether `object.name` refers to a string member of an enum.
+    ///
+    /// A reference to a member of the enum being transformed was rewritten to
+    /// `Enum.name` with an unresolved `Enum` identifier; any other object must
+    /// resolve to an enum declaration.
+    fn is_string_member(
+        &self,
+        object: &Expression<'a>,
+        name: &str,
+        enum_symbol_id: SymbolId,
+        param_binding: &BoundIdentifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Expression::Identifier(ident) = object else { return false };
+        let resolved = ident
+            .reference_id
+            .get()
+            .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id());
+        let symbol_id = match resolved {
+            Some(symbol_id) => symbol_id,
+            None if ident.name == param_binding.name => enum_symbol_id,
+            None => return false,
+        };
+        let Some(body_scopes) = ctx.scoping().get_enum_body_scopes(symbol_id) else {
+            return false;
+        };
+        body_scopes.iter().any(|&scope_id| {
+            ctx.scoping().get_binding(scope_id, name.into()).is_some_and(|member_symbol_id| {
+                self.string_members.contains(&member_symbol_id)
+                    || matches!(
+                        ctx.scoping().get_enum_member_value(member_symbol_id),
+                        Some(ConstantValue::String(_))
+                    )
+            })
+        })
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
@@ -559,7 +636,7 @@ impl<'a> TypeScriptEnum {
     ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         let Expression::StringLiteral(prop) = &expr.expression else { return None };
-        self.resolve_enum_member(ident, prop.value.as_str(), ctx)
+        self.resolve_enum_member(ident, prop.value.as_str()?, ctx)
     }
 
     /// Resolve an enum member value by identifier and property name.

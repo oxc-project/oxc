@@ -293,8 +293,8 @@ impl StatsCollector {
             // However, the formatter does not reorder arbitrary string content,
             // and Tailwind options (custom attributes/functions) are not available here,
             // so this broad approach is acceptable for detecting code removal.
-            AstKind::StringLiteral(s) => {
-                let parts: Vec<_> = s.value.split_whitespace().collect();
+            AstKind::StringLiteral(s) if let Some(value) = s.value.as_str() => {
+                let parts: Vec<_> = value.split_whitespace().collect();
                 if parts.len() > 1 {
                     // Deduplicate and sort
                     let unique: FxHashSet<_> = parts.into_iter().collect();

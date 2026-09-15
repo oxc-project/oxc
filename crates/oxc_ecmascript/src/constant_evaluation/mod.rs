@@ -162,14 +162,9 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
             Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
             Expression::StringLiteral(lit) => {
-                // The value of a string with lone surrogates encodes them with
-                // `\u{FFFD}` escapes. Consumers materialize the returned value
-                // into new string literals without the `lone_surrogates` flag,
-                // which would print the escape encoding as literal text.
-                if lit.lone_surrogates {
-                    return None;
-                }
-                Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
+                // The constant-value cache currently owns UTF-8 strings. Leave
+                // expressions it cannot represent for runtime evaluation.
+                Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str()?)))
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),
             Expression::ComputedMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),

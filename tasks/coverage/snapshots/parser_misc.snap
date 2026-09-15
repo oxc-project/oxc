@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 111/111 (100.00%)
 Positive Passed: 111/111 (100.00%)
-Negative Passed: 238/238 (100.00%)
+Negative Passed: 241/241 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -666,6 +666,26 @@ Negative Passed: 238/238 (100.00%)
    ╰────
   help: Wrap the type assertion in parentheses to make the precedence explicit
 
+  × Duplicated export 'a'
+   ╭─[misc/fail/export-duplicate-surrogate-source-reversed.js:1:14]
+ 1 │ export const a = 1;
+   ·              ┬
+   ·              ╰── Export has already been declared here
+ 2 │ export { a } from "\uD800";
+   ·          ┬
+   ·          ╰── It cannot be redeclared here
+   ╰────
+
+  × Duplicated export 'a'
+   ╭─[misc/fail/export-duplicate-surrogate-source.js:1:10]
+ 1 │ export { a } from "\uD800";
+   ·          ┬
+   ·          ╰── Export has already been declared here
+ 2 │ export const a = 1;
+   ·              ┬
+   ·              ╰── It cannot be redeclared here
+   ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[misc/fail/export-equal-with-normal-export.ts:4:1]
  3 │ 
@@ -736,6 +756,16 @@ Negative Passed: 238/238 (100.00%)
  1 │ const x = 1;
  2 │ export { x as "\uD800" };
    ·               ────────
+   ╰────
+
+  × Duplicated export 'a'
+   ╭─[misc/fail/export-namespace-duplicate-surrogate-source.js:1:13]
+ 1 │ export * as a from "\uD800";
+   ·             ┬
+   ·             ╰── Export has already been declared here
+ 2 │ export const a = 1;
+   ·              ┬
+   ·              ╰── It cannot be redeclared here
    ╰────
 
   × The left-hand side of a for...in statement cannot be an await using declaration.

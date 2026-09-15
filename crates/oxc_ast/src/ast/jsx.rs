@@ -447,6 +447,11 @@ pub enum JSXAttributeName<'a> {
 #[generate_derive(ContentEq, ESTree, GetAddress, GetNodeId, GetSpan, GetSpanMut)]
 pub enum JSXAttributeValue<'a> {
     /// `<Component foo="bar" />`
+    ///
+    /// JSX strings have no escape sequences, and the parser keeps the source
+    /// characters without decoding character references, so a parsed value is
+    /// always UTF-8. Only a value built by other means can contain a lone
+    /// surrogate.
     StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
     /// `<Component foo={someExpr} />`
     ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>) = 1,
