@@ -236,7 +236,7 @@ fn infer_module_type(init: &Expression) -> ModuleType {
     };
 
     let Some(value) = arg.as_expression().and_then(|expr| match expr {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::StringLiteral(lit) => lit.value.as_str(),
         _ => None,
     }) else {
         return ModuleType::Computed;

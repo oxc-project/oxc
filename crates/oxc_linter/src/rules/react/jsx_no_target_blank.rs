@@ -263,7 +263,9 @@ fn match_href_expression(
     is_dynamic_link: &mut bool,
 ) {
     match expr {
-        Expression::StringLiteral(str) => *is_external_link = check_is_external_link(&str.value),
+        Expression::StringLiteral(str) => {
+            *is_external_link = str.value.as_str().is_some_and(check_is_external_link);
+        }
         Expression::Identifier(_) => *is_dynamic_link = true,
         Expression::ConditionalExpression(expr) => {
             match_href_expression(&expr.consequent, is_external_link, is_dynamic_link);
@@ -283,7 +285,7 @@ fn check_href(
         matches!(enforce_dynamic_links, EnforceDynamicLinksEnum::Never);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            is_external_link = check_is_external_link(&str.value);
+            is_external_link = str.value.as_str().is_some_and(check_is_external_link);
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
@@ -309,7 +311,10 @@ fn check_href(
 }
 
 fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
-    let mut splits = str.value.as_str().split(' ');
+    let Some(value) = str.value.as_str() else {
+        return false;
+    };
+    let mut splits = value.split(' ');
     if allow_referrer {
         return splits.any(|str| {
             if str == "noopener" {
@@ -364,9 +369,12 @@ fn match_target_expression<'a>(
 ) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
     let default = (false, None, false, false);
     match expr {
-        Expression::StringLiteral(str) => {
-            (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
-        }
+        Expression::StringLiteral(str) => (
+            str.value.as_str().is_some_and(|value| value.eq_ignore_ascii_case("_blank")),
+            None,
+            false,
+            false,
+        ),
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
             let alternate = match_target_expression(&expr.alternate);
@@ -381,9 +389,12 @@ fn check_target<'a>(
 ) -> (bool, Option<&'a Expression<'a>>, bool, bool) {
     let default = (false, None, false, false);
     match attribute_value {
-        JSXAttributeValue::StringLiteral(str) => {
-            (str.value.eq_ignore_ascii_case("_blank"), None, false, false)
-        }
+        JSXAttributeValue::StringLiteral(str) => (
+            str.value.as_str().is_some_and(|value| value.eq_ignore_ascii_case("_blank")),
+            None,
+            false,
+            false,
+        ),
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
                 match_target_expression(expr)

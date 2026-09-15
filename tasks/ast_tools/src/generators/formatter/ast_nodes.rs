@@ -108,7 +108,7 @@ impl Generator for FormatterAstNodesGenerator {
             use oxc_ast::ast::*;
             use oxc_formatter_core::Format;
             use oxc_span::GetSpan;
-            use oxc_str::Ident;
+            use oxc_str::{Ident, JSStr};
             use oxc_syntax::node::NodeId;
             ///@@line_break
             use crate::ast_nodes::AstNode;

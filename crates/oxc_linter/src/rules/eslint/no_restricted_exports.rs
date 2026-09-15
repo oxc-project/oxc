@@ -228,7 +228,7 @@ impl NoRestrictedExports {
             self.check_no_restricted_named_exports(
                 ctx,
                 export.span,
-                std::iter::once(exported.name().into_string()),
+                exported.name().as_str().map(str::to_owned),
             );
 
             // If exported name is default, also check for restricted named default export
@@ -265,12 +265,14 @@ impl NoRestrictedExports {
         let (named_exports, has_default_exports, local_specifiers) = specifiers.iter().fold(
             (Vec::new(), false, Vec::new()),
             |(mut names, mut has_default, mut specifiers), spec| {
-                names.push(spec.exported.name().into_string());
+                if let Some(name) = spec.exported.name().as_str() {
+                    names.push(name.to_owned());
+                }
 
                 if spec.exported.name() == "default" {
                     has_default = true;
                     let local_spec = match spec.local.name().as_str() {
-                        "default" => LocalFromSpecifier::Default,
+                        Some("default") => LocalFromSpecifier::Default,
                         _ => LocalFromSpecifier::Named,
                     };
                     specifiers.push(local_spec);

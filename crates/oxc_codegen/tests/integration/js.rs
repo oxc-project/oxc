@@ -1073,7 +1073,7 @@ fn template_literal_escape_when_building_ast() {
     let cooked = "hello`world${foo}\\bar";
     let value = TemplateElementValue {
         raw: Str::from_str_in(cooked, &ast),
-        cooked: Some(Str::from_str_in(cooked, &ast)),
+        cooked: Some(Str::from_str_in(cooked, &ast).into()),
     };
     let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
     let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);
@@ -1132,4 +1132,61 @@ fn html_comments() {
         "const x = 1;\n--> comment\nconst y = 2;\n",
         "const x = 1;\n--> comment\nconst y = 2;\n",
     );
+}
+
+#[test]
+fn js_str_round_trip() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::JSStrBuilder;
+
+    let allocator = Allocator::new();
+    let source_type = SourceType::mjs();
+    let cases: &[&[u16]] = &[
+        &[0xD800],
+        &[0xDC00],
+        &[0xD800, 0xDC00],
+        &[0x61, 0xD800, 0x62, 0xDC00, 0x63],
+        &[0xFFFD, 0x64, 0x38, 0x30, 0x30],
+        &[0xD800, 0xFFFD, 0xD83D, 0xDE0E, 0x6F22],
+        &[0x22, 0x27, 0x5C, 0xD800, 0, 0x31, 0x0A, 0x2028, 0x2029],
+    ];
+    for &units in cases {
+        for minify in [false, true] {
+            let mut parsed = Parser::new(&allocator, "consume('');", source_type).parse();
+            assert!(parsed.diagnostics.is_empty());
+            let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+                panic!("expected expression statement");
+            };
+            let Expression::CallExpression(call) = &mut statement.expression else {
+                panic!("expected call expression");
+            };
+            let Argument::StringLiteral(literal) = &mut call.arguments[0] else {
+                panic!("expected string literal");
+            };
+            let mut builder = JSStrBuilder::new_in(&allocator);
+            builder.push_utf16(units);
+            literal.value = builder.into_js_str();
+            literal.raw = None;
+
+            let output = Codegen::new()
+                .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+                .build(&parsed.program)
+                .code;
+            let reparsed = Parser::new(&allocator, &output, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "{output}");
+            let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+                panic!("expected expression statement: {output}");
+            };
+            let Expression::CallExpression(call) = &statement.expression else {
+                panic!("expected call expression: {output}");
+            };
+            let value = match &call.arguments[0] {
+                Argument::StringLiteral(literal) => literal.value,
+                Argument::TemplateLiteral(literal) => literal.single_quasi().unwrap(),
+                _ => panic!("expected string value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+    }
 }
