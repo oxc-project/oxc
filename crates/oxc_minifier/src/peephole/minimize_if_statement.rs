@@ -31,6 +31,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { test, span, .. } = if_stmt.unbox();
+                    let Statement::ExpressionStatement(b) = alternate else { unreachable!() };
                     let (op, a) = match test {
                         // `if (!a); else b();` => `a && b();`
                         Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
@@ -39,7 +40,6 @@ impl<'a> PeepholeOptimizations {
                         // `if (a); else b();` => `a || b();`
                         e => (LogicalOperator::Or, e),
                     };
-                    let Statement::ExpressionStatement(b) = alternate else { unreachable!() };
                     let b = b.unbox().expression;
                     let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
                     Statement::new_expression_statement(span, expr, ctx)
@@ -66,10 +66,10 @@ impl<'a> PeepholeOptimizations {
                         let IfStatement { test, consequent, alternate, span, .. } = if_stmt.unbox();
 
                         let Statement::ExpressionStatement(a) = consequent else { unreachable!() };
-                        let a = a.unbox().expression;
                         let Statement::ExpressionStatement(b) = alternate.unwrap() else {
                             unreachable!()
                         };
+                        let a = a.unbox().expression;
                         let b = b.unbox().expression;
                         let expr = Self::minimize_conditional(span, test, a, b, ctx);
                         Statement::new_expression_statement(span, expr, ctx)
@@ -94,6 +94,7 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_statement_with(stmt, |stmt, ctx| {
                 let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                 let IfStatement { test, consequent, span, .. } = if_stmt.unbox();
+                let Statement::ExpressionStatement(b) = consequent else { unreachable!() };
                 let (op, a) = match test {
                     // `if (!a) b();` => `a || b();`
                     Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
@@ -102,7 +103,6 @@ impl<'a> PeepholeOptimizations {
                     // `if (a)  b();` => `a && b();`
                     e => (LogicalOperator::And, e),
                 };
-                let Statement::ExpressionStatement(b) = consequent else { unreachable!() };
                 let b = b.unbox().expression;
                 let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
                 Statement::new_expression_statement(span, expr, ctx)
