@@ -5,7 +5,7 @@ use super::super::super::{
     TMPL_MIDDLE, TMPL_NOSUB, TMPL_TAIL, WS, bitmap::bm_next1,
 };
 
-use super::super::{
+use super::super::common::{
     AngleMatch, angle_match_back, bm_prev_sig, ident_is, lt_in_range, match_delim_back,
     operand_position, prop_name, return_type_signature_paren, tail_before,
 };

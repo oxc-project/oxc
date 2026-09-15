@@ -10,7 +10,7 @@ use super::super::{
     scan::scan_number,
 };
 
-use super::{
+use super::common::{
     AngleMatch, LT_OPERAND_WORDS, angle_match_back, as_gated_type_ref, as_type_operand,
     bm_prev_sig, brace_opens_value, declarator_without_init, ident_is, kind_at, lt_in_range,
     match_delim_back, of_is_forof_keyword, prop_name, signature_return_type, trivia_at,
@@ -52,7 +52,7 @@ enum RunEnd {
 /// A `/` there starts a regex, so this function returns `true`.
 /// But a `{` there opens a block, not an object literal, so `operand_position` returns `false`.
 ///
-/// [`operand_position`]: super::operand_position
+/// [`operand_position`]: super::common::operand_position
 pub unsafe fn not_operator_position(
     t: &Tables,
     src: *const u8,
