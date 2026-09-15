@@ -72,7 +72,7 @@ pub(super) unsafe fn lanes_post(
             | eqm(x, tk!(BigInt))
             | eqm(x, tk!(IdentEscaped))
             | eqm(x, tk!(PrivateIdentEscaped));
-        inv |= eqm(x, 255);
+        inv |= eqm(x, tk!(Invalid));
         while hits != 0 {
             emit_value(src, out_kinds, out_spans, i + (hits.trailing_zeros() >> 3) as usize, lanes);
             hits &= hits - 1;
@@ -89,7 +89,7 @@ pub(super) unsafe fn lanes_post(
         {
             emit_value(src, out_kinds, out_spans, i, lanes);
         }
-        inv_dirty |= k == 255;
+        inv_dirty |= k == tk!(Invalid);
         i += 1;
     }
     if inv_dirty {

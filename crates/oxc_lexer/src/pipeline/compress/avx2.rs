@@ -188,10 +188,10 @@ pub(super) unsafe fn lanes_post(
             )
         }};
     }
-    // 255 (INVALID) is the byte-class default for stray/control bytes and
+    // `tk!(Invalid)` is the byte-class default for stray/control bytes and
     // reaches the output as a 1-byte token. Track "any seen" alongside the
     // value sweep; localize cold.
-    let v_inv = _mm256_set1_epi8(-1i8); // 0xFF == token_kind::INVALID
+    let v_inv = _mm256_set1_epi8(tk!(Invalid) as i8);
     let mut inv = _mm256_setzero_si256();
     let mut i = 0usize;
     while i + 64 <= m {

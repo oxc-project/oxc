@@ -124,6 +124,7 @@ pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] = keywords_ts();
 
 /// First punctuator kind — the token-kind space reserves [32, 128) for them.
 pub const OP_KIND_BASE: u8 = tk!(LBrace);
+pub const OP_KIND_MAX: u8 = tk!(At);
 pub const OPMAP_NOPS: usize = 33;
 
 pub struct OpDef {
@@ -480,7 +481,9 @@ impl OpMap {
         for i in 0..OPMAP_NOPS {
             let a = &OPMAP_OPS[i];
             assert!(
-                a.len as usize == a.txt.len() && a.kind as u8 >= OP_KIND_BASE && a.kind as u8 <= 89,
+                a.len as usize == a.txt.len()
+                    && a.kind as u8 >= OP_KIND_BASE
+                    && a.kind as u8 <= OP_KIND_MAX,
                 "opmap.rs: bad OpDef {i}"
             );
             for j in (i + 1)..OPMAP_NOPS {
@@ -597,15 +600,15 @@ impl OpMap {
             );
         }
         assert!(
-            self.punct1_ord[b'(' as usize] == 34
-                && self.punct1_ord[b'#' as usize] == 255
-                && self.punct1_ord[b'a' as usize] == 255
-                && self.punct1_ord[b'"' as usize] == 255
-                && self.punct1_ord[b'`' as usize] == 255
-                && self.punct1_ord[b'\\' as usize] == 255
-                && self.punct1_ord[b'$' as usize] == 255
-                && self.punct1_ord[b' ' as usize] == 255
-                && self.punct1_ord[0] == 255,
+            self.punct1_ord[b'(' as usize] == tk!(LParen)
+                && self.punct1_ord[b'#' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'a' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'"' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'`' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'\\' as usize] == tk!(Invalid)
+                && self.punct1_ord[b'$' as usize] == tk!(Invalid)
+                && self.punct1_ord[b' ' as usize] == tk!(Invalid)
+                && self.punct1_ord[0] == tk!(Invalid),
             "opmap self-check: PUNCT1 spot-checks failed"
         );
     }
