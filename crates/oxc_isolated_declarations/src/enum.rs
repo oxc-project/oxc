@@ -119,7 +119,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 let Expression::Identifier(ident) = expr.object() else { return None };
                 if ident.name == enum_name {
                     let property = expr.static_property_name()?;
-                    prev_members.get(&JSStr::from(property)).cloned()
+                    prev_members.get(&property).cloned()
                 } else {
                     None
                 }

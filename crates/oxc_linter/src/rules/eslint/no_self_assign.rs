@@ -333,6 +333,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (r#"obj["\uD800"] = obj["\uDC00"]"#, None),
+        (r#"obj["\uD800"] = obj["\uD801"]"#, None),
+        (r#"obj["\uD800"] = obj["\uFFFD"]"#, None),
+        (r#"obj["\uD800"] = obj[key]"#, None),
+        (r#"obj["\uD800"] = other["\uD800"]"#, None),
         ("var a = a", None),
         ("a = b", None),
         ("a += a", None),
@@ -387,6 +392,10 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"obj["\uD800"] = obj["\uD800"]"#, None),
+        (r#"obj["\uDC00"] = obj[`\uDC00`]"#, None),
+        (r#"obj[`a\uD800b`] = obj["a\uD800b"]"#, None),
+        (r#"obj["\uD800\uDC00"] = obj["𐀀"]"#, None),
         ("a = a", None),
         ("[a] = [a]", None),
         ("[a, b] = [a, b]", None),

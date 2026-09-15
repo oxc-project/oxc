@@ -71,9 +71,8 @@ impl Rule for PreferCatch {
             return;
         };
 
-        let is_promise_then_call = member_expr
-            .static_property_name()
-            .map_or_else(|| false, |prop_name| matches!(prop_name, "then"));
+        let is_promise_then_call =
+            member_expr.static_property_name().is_some_and(|prop_name| prop_name == "then");
 
         if is_promise_then_call && call_expr.arguments.len() >= 2 {
             ctx.diagnostic(prefer_catch_diagnostic(call_expr.span));
