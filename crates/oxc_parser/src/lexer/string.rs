@@ -172,13 +172,13 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     fn save_js_string(&mut self, value: JSStr<'a>) {
-        self.escaped_js_strings.insert(self.token.start(), value);
+        self.escaped_strings.insert(self.token.start(), value);
         self.token.set_escaped(true);
     }
 
     pub(crate) fn get_js_string(&self, token: Token) -> JSStr<'a> {
         if token.escaped() {
-            self.escaped_js_strings[&token.start()]
+            self.escaped_strings[&token.start()]
         } else {
             JSStr::from(self.get_string(token))
         }
@@ -195,13 +195,15 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[cold]
     fn save_escaped_string(&mut self, s: &'a str) {
-        self.escaped_strings.insert(self.token.start(), s);
+        self.escaped_strings.insert(self.token.start(), s.into());
         self.token.set_escaped(true);
     }
 
     pub(crate) fn get_string(&self, token: Token) -> &'a str {
         if token.escaped() {
-            return self.escaped_strings[&token.start()];
+            return self.escaped_strings[&token.start()]
+                .as_str()
+                .expect("identifier escape must be valid UTF-8");
         }
 
         let source_text = self.source.whole();

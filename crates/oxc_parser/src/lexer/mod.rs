@@ -103,11 +103,8 @@ pub struct Lexer<'a, C: Config> {
 
     pub(crate) trivia_builder: TriviaBuilder<'a>,
 
-    /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
-    pub escaped_strings: FxHashMap<u32, &'a str>,
-
-    /// Decoded string literals, indexed by [Token::start] when [Token::escaped] is true.
-    pub escaped_js_strings: FxHashMap<u32, JSStr<'a>>,
+    /// Decoded identifiers and string literals, indexed by [Token::start] when [Token::escaped] is true.
+    pub escaped_strings: FxHashMap<u32, JSStr<'a>>,
 
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
@@ -165,7 +162,6 @@ impl<'a, C: Config> Lexer<'a, C> {
             deferred_module_errors: vec![],
             trivia_builder: TriviaBuilder::new_in(allocator),
             escaped_strings: FxHashMap::default(),
-            escaped_js_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
             tokens,
