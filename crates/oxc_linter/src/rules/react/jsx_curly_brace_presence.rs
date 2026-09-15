@@ -425,7 +425,10 @@ impl JsxCurlyBracePresence {
                     report_missing_curly_for_string_attribute_value(
                         ctx,
                         string.span,
-                        string.value.as_str(),
+                        string
+                            .value
+                            .as_str()
+                            .unwrap_or_else(|| ctx.source_range(string.span.shrink(1))),
                     );
                 }
             }
@@ -485,11 +488,13 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template)
                 if allowed.is_never() && template.is_no_substitution_template() =>
             {
-                let string = template.single_quasi().unwrap();
-                if !parent_is_attribute && contains_quote_characters(string.as_str())
+                let Some(string) = template.single_quasi().and_then(oxc_str::JSStr::as_str) else {
+                    return;
+                };
+                if !parent_is_attribute && contains_quote_characters(string)
                     || is_allowed_string_like_in_container(
                         ctx,
-                        string.as_str(),
+                        string,
                         container,
                         node.id(),
                         parent_is_attribute,
@@ -586,13 +591,20 @@ fn report_unnecessary_curly<'a>(
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(template_lit.single_quasi().unwrap().as_str());
+                let Some(value) = template_lit.single_quasi().and_then(oxc_str::JSStr::as_str)
+                else {
+                    return fixer.noop();
+                };
+                fix.print_str(value);
 
                 fixer.replace(container.span, fix.into_source_text())
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(string_literal.value.as_str());
+                let Some(value) = string_literal.value.as_str() else {
+                    return fixer.noop();
+                };
+                fix.print_str(value);
 
                 fixer.replace(container.span, fix.into_source_text())
             }
@@ -625,11 +637,14 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
 
         let mut fix = fixer.codegen();
 
-        if !contains_double_quote_characters(str.as_str()) {
+        let Some(str) = str.as_str() else {
+            return fixer.noop();
+        };
+        if !contains_double_quote_characters(str) {
             fix = fix.with_options(CodegenOptions::default());
         }
 
-        fix.print_string(str.as_str());
+        fix.print_string(str);
 
         fixer.replace(container.span, fix.into_source_text())
     });

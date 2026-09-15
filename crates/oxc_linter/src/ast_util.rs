@@ -322,7 +322,7 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
     };
     let mut flags = RegExpFlags::empty();
     for ch in flag_arg.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
+        let flag = RegExpFlags::try_from(ch.to_char()?).ok()?;
         flags |= flag;
     }
     Some(flags)
@@ -833,7 +833,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
                 && template.quasis.len() == 1
                 && let Some(cooked) = &template.quasis[0].value.cooked
             {
-                return Some(Cow::Borrowed(cooked.as_str()));
+                return Some(Cow::Borrowed(cooked.as_str()?));
             }
 
             None

@@ -110,7 +110,8 @@ impl Rule for PreferDomNodeDataset {
             return;
         };
 
-        let Some(dataset_property_name) = strip_data_prefix(&string_lit.value) else {
+        let Some(dataset_property_name) = string_lit.value.as_str().and_then(strip_data_prefix)
+        else {
             return;
         };
 

@@ -21,7 +21,7 @@ use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, Str, format_ident, static_ident};
+use oxc_str::{Ident, JSStr, Str, format_ident, static_ident};
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
@@ -784,6 +784,7 @@ fn lower_inner<'a>(
             body_span = Some(block.span);
             directives = ArenaVec::from_iter_in(
                 block.directives.iter().map(|d| FunctionDirective {
+                    raw: d.directive,
                     value: d.expression.value,
                     span: d.span,
                     expression_span: d.expression.span,
@@ -4646,11 +4647,15 @@ fn lower_jsx_element_expr<'a>(
                 let value = match &attr.value {
                     Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
                         let str_span = Some(s.span);
-                        let decoded = match decode_jsx_entities(s.value.as_str()) {
-                            Cow::Borrowed(text) => Str::from(text),
-                            Cow::Owned(text) => {
-                                Str::from_str_in(&text, &builder.environment().allocator)
+                        let decoded = if let Some(value) = s.value.as_str() {
+                            match decode_jsx_entities(value) {
+                                Cow::Borrowed(text) => JSStr::from(text),
+                                Cow::Owned(text) => {
+                                    JSStr::from_str_in(&text, &builder.environment().allocator)
+                                }
                             }
+                        } else {
+                            s.value
                         };
                         lower_value_to_temporary(
                             builder,
@@ -4889,7 +4894,7 @@ fn lower_jsx_element_name<'a>(
             let place = lower_value_to_temporary(
                 builder,
                 InstructionValue::Primitive {
-                    value: PrimitiveValue::String(Str::from_str_in(
+                    value: PrimitiveValue::String(JSStr::from_str_in(
                         &tag,
                         &builder.environment().allocator,
                     )),
@@ -5574,10 +5579,12 @@ fn lower_object_property_key<'a>(
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
-        oxc::PropertyKey::StringLiteral(lit) => Ok(Some(ObjectPropertyKey::String {
-            name: Ident::from(lit.value.as_str()),
-            span: Some(lit.span),
-        })),
+        oxc::PropertyKey::StringLiteral(lit) => {
+            let name = lit.value.as_str().ok_or_else(|| {
+                diagnostics::todo_unsupported_key_type_object_expression(Some(lit.span))
+            })?;
+            Ok(Some(ObjectPropertyKey::String { name: Ident::from(name), span: Some(lit.span) }))
+        }
         oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
             Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
         }

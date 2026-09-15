@@ -314,14 +314,16 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
 }
 
 fn is_declaration_file_import(import_decl: &ImportDeclaration) -> bool {
-    let source = &import_decl.source.value;
+    let Some(source) = import_decl.source.value.as_str() else {
+        return false;
+    };
     // Relatively fast check to avoid unnecessary Path and extension parsing
     // if it doesn't even look like a declaration file import
     if !source.contains(".d") {
         return false;
     }
     // Slower check that parses the file name to check if it's a declaration file
-    let path = Path::new(source.as_str());
+    let path = Path::new(source);
     let Some(extension) = path.extension().and_then(std::ffi::os_str::OsStr::to_str) else {
         return false;
     };
