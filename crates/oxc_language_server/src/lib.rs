@@ -2,8 +2,8 @@ use std::{num::NonZero, sync::Arc};
 
 use futures::future::BoxFuture;
 use rustc_hash::FxBuildHasher;
-use tower_lsp_server::ls_types::Uri;
-use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
+use tower_lsp_server::gen_lsp_types::Uri;
+use tower_lsp_server::{LspService, Server, gen_lsp_types::ServerInfo};
 
 mod backend;
 mod capabilities;
@@ -15,6 +15,7 @@ mod position;
 mod tests;
 mod tool;
 mod tool_params;
+pub mod uri_utils;
 pub mod utils;
 mod worker;
 mod worker_manager;

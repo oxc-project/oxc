@@ -269,7 +269,7 @@ tempfile = "3.27.0" # Temporary files
 textwrap = "0.16.2" # Text wrapping
 tokio = { version = "1.52.3", default-features = false } # Async runtime
 toml = { version = "1.1.2" } # TOML parsing
-tower-lsp-server = "0.23.0" # LSP server framework
+tower-lsp-server = "0.24.0-rc.1" # LSP server framework
 tracing = "0.1.44" # Tracing framework
 tracing-subscriber = "0.3.23" # Tracing implementation
 unicode-width = "0.2" # Unicode display width
