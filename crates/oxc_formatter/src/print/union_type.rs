@@ -29,6 +29,22 @@ use crate::{
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // A leading suppression comment that ends its line covers the first member (`format_union_types`),
+        // the union's own layout goes on below it; one on the union's line covers the whole union.
+        // Prettier's `handleUnionTypeComments` converges to the same split
+        // (an end-of-line line comment reaches it as own-line on its second pass).
+        let comments = f.comments();
+        if comments
+            .comments_before_iter(self.span().start)
+            .any(|c| !c.followed_by_newline() && comments.is_suppression_comment(c))
+        {
+            write_suppressed_expression(self.span(), self.span().start, false, f);
+            return;
+        }
+        // A line-ending one (the operator line's included, `Comments::mark_suppressed_after_operator`)
+        // covers the first member
+        let first_member_suppressed = comments.is_suppressed(self.span().start);
+
         let types = self.types();
 
         let is_alias_level = matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_));
@@ -70,7 +86,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             let has_alias_level_own_line_comments =
                 is_alias_level && (has_comment_before_pipe || has_comment_after_pipe);
             if !has_alias_level_own_line_comments {
-                return format_union_types(self.types(), Span::default(), true, f);
+                let suppressed_node_span =
+                    if first_member_suppressed { self.types[0].span() } else { Span::default() };
+                return format_union_types(self.types(), suppressed_node_span, true, f);
             }
         }
 
@@ -184,10 +202,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 // and breaks + indents itself only for a riding line comment before the operator
                 // (`as_or_satisfies_expression.rs`), printed by now.
                 AstNodes::TSAsExpression(cast) => {
-                    !f.comments().has_printed_line_comment_after(cast.expression.span().end)
+                    f.comments().printed_line_comment_after(cast.expression.span().end).is_none()
                 }
                 AstNodes::TSSatisfiesExpression(cast) => {
-                    !f.comments().has_printed_line_comment_after(cast.expression.span().end)
+                    f.comments().printed_line_comment_after(cast.expression.span().end).is_none()
                 }
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
@@ -201,10 +219,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         };
 
         let types = format_with(|f| {
-            let is_suppressed = leading_comments
-                .iter()
-                .rev()
-                .any(|comment| f.comments().is_suppression_comment(comment));
+            let is_suppressed = first_member_suppressed
+                || leading_comments
+                    .iter()
+                    .any(|comment| f.comments().is_suppression_comment(comment));
 
             let suppressed_node_span =
                 if is_suppressed { self.types.first().unwrap().span() } else { Span::default() };
