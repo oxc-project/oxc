@@ -144,7 +144,9 @@ pub fn parse_jest_fn_call<'a>(
         let is_vitest = ctx.frameworks().is_vitest();
         if is_jest || is_vitest {
             let mut call_chains = Vec::from([Cow::Borrowed(name)]);
-            call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
+            for member in &members {
+                call_chains.push(member.name()?);
+            }
 
             match (is_jest, is_vitest) {
                 (true, true) => {
@@ -539,13 +541,17 @@ impl<'a> MemberExpressionElement<'a> {
     pub fn from_member_expr(
         member_expr: &'a MemberExpression<'a>,
     ) -> Option<(Span, MemberExpressionElement<'a>)> {
-        let (span, _) = member_expr.static_property_info()?;
         match member_expr {
             MemberExpression::ComputedMemberExpression(expr) => {
+                let span = match &expr.expression {
+                    Expression::StringLiteral(lit) => lit.span,
+                    Expression::TemplateLiteral(lit) if lit.single_quasi().is_some() => lit.span,
+                    _ => return None,
+                };
                 Some((span, Self::Expression(&expr.expression)))
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((span, Self::IdentName(&expr.property)))
+                Some((expr.property.span, Self::IdentName(&expr.property)))
             }
             // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,
