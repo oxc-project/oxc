@@ -11,7 +11,7 @@ use super::super::{
     scan::scan_block_comment,
 };
 
-use super::{
+use super::common::{
     AngleMatch, KW_AWAIT, KW_BREAK, KW_CASE, KW_CATCH, KW_CLASS, KW_CONST, KW_CONTINUE,
     KW_DEBUGGER, KW_DEFAULT, KW_DELETE, KW_DO, KW_ELSE, KW_ENUM, KW_EXPORT, KW_EXTENDS, KW_FINALLY,
     KW_FOR, KW_FUNCTION, KW_IF, KW_IN, KW_INSTANCEOF, KW_IS, KW_LET, KW_RETURN, KW_SUPER,
