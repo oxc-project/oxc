@@ -10,7 +10,6 @@ use oxc_transformer::{TransformOptions, Transformer};
 
 fn bench_codegen(criterion: &mut Criterion) {
     for file in TestFiles::minimal().files() {
-        let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = &file.source_text;
         let source_type = file.source_type;
         let allocator = Allocator::default();
@@ -28,18 +27,23 @@ fn bench_codegen(criterion: &mut Criterion) {
                 .build_with_scoping(scoping, &mut program);
         assert!(transformer_ret.diagnostics.is_empty());
 
-        let mut group = criterion.benchmark_group("codegen");
-        group.bench_function(id, |b| {
-            b.iter_with_large_drop(|| {
-                Codegen::new()
-                    .with_options(CodegenOptions {
-                        source_map_path: Some(PathBuf::from(&file.file_name)),
-                        ..CodegenOptions::default()
-                    })
-                    .build(&program)
+        for ascii_only in [false, true] {
+            let name = format!("codegen{}", if ascii_only { "_ascii_only" } else { "" });
+            let id = BenchmarkId::from_parameter(&file.file_name);
+            let mut group = criterion.benchmark_group(name);
+            group.bench_function(id, |b| {
+                b.iter_with_large_drop(|| {
+                    Codegen::new()
+                        .with_options(CodegenOptions {
+                            ascii_only,
+                            source_map_path: Some(PathBuf::from(&file.file_name)),
+                            ..CodegenOptions::default()
+                        })
+                        .build(&program)
+                });
             });
-        });
-        group.finish();
+            group.finish();
+        }
     }
 }
 
