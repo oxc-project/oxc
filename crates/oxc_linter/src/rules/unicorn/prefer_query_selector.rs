@@ -96,6 +96,7 @@ impl Rule for PreferQuerySelector {
         let Some((property_span, property_name)) = member_expr.static_property_info() else {
             return;
         };
+        let Some(property_name) = property_name.as_str() else { return };
 
         if let Some(preferred_selector) = get_preferred_identifier_name(property_name) {
             let diagnostic =

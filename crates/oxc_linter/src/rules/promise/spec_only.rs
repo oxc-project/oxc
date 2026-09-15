@@ -1,7 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -78,7 +78,7 @@ impl Rule for SpecOnly {
             return;
         }
 
-        let Some(prop_name) = member_expr.static_property_name().map(|s| s.as_str()) else {
+        let Some(prop_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
         if PROMISE_STATIC_METHODS.contains(&prop_name) {

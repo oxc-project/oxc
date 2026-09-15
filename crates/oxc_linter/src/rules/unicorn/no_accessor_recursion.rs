@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -266,9 +267,7 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
 fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
     match expr {
-        MemberExpressionKind::Computed(expr) => {
-            expr.static_property_name().map(|name| name.as_str())
-        }
+        MemberExpressionKind::Computed(expr) => expr.static_property_name().and_then(JSStr::as_str),
         MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
         MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
     }

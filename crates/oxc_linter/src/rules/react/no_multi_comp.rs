@@ -10,6 +10,7 @@ use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use oxc_syntax::scope::ScopeFlags;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -415,6 +416,7 @@ fn is_es6_component_class(class: &Class) -> bool {
         {
             return member_expr
                 .static_property_name()
+                .and_then(JSStr::as_str)
                 .is_some_and(|name| matches!(name, "Component" | "PureComponent"));
         }
         super_class
@@ -429,7 +431,7 @@ fn is_es5_component_call(call: &CallExpression) -> bool {
         && let Expression::Identifier(ident) = member_expr.object()
         && ident.name == "React"
     {
-        return member_expr.static_property_name() == Some("createReactClass");
+        return member_expr.static_property_name().is_some_and(|name| name == "createReactClass");
     }
     call.callee.get_identifier_reference().is_some_and(|id| id.name == "createReactClass")
 }

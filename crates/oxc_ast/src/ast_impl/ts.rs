@@ -257,7 +257,7 @@ impl TSModuleReference<'_> {
 }
 
 impl<'a> Decorator<'a> {
-    /// Get the name of the decorator
+    /// Get the name of the decorator as UTF-8, or `None` if it contains a lone surrogate.
     /// ```ts
     /// // The name of the decorator is `decorator`
     /// @decorator
@@ -269,11 +269,13 @@ impl<'a> Decorator<'a> {
         match &self.expression {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
             expr @ match_member_expression!(Expression) => {
-                expr.to_member_expression().static_property_name()
+                expr.to_member_expression().static_property_name().and_then(JSStr::as_str)
             }
-            Expression::CallExpression(call) => {
-                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
-            }
+            Expression::CallExpression(call) => call
+                .callee
+                .get_member_expr()
+                .and_then(MemberExpression::static_property_name)
+                .and_then(JSStr::as_str),
             _ => None,
         }
     }

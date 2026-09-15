@@ -10,7 +10,7 @@ use oxc_ast::{
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
     identifier::is_irregular_whitespace,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -415,7 +415,9 @@ pub fn is_method_call<'a>(
         let Some(static_property_name) = member_expr.static_property_name() else {
             return false;
         };
-        if !methods.contains(&static_property_name) {
+        // Direct comparison already rejects lone surrogates for these UTF-8
+        // method names, so this shared helper does not need an `as_str` check.
+        if !methods.iter().any(|method| *method == static_property_name) {
             return false;
         }
     }
@@ -451,11 +453,13 @@ pub fn is_new_expression<'a>(
     true
 }
 
+/// Returns the method span and UTF-8 name for rules matching known method names.
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
     let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
-    member_expr.static_property_info()
+    let (span, name) = member_expr.static_property_info()?;
+    Some((span, name.as_str()?))
 }
 
 pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
@@ -647,7 +651,7 @@ fn is_array_from_family_method(callee: &Expression) -> bool {
 
     let object = member_expr.object();
 
-    match member_expr.static_property_name() {
+    match member_expr.static_property_name().and_then(JSStr::as_str) {
         Some("from") => matches!(
             object.get_inner_expression(),
             Expression::Identifier(ident) if ident.name.ends_with("Array")
@@ -792,6 +796,7 @@ pub fn is_default_this_binding<'a>(
                 if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
                     mem_expr
                         .static_property_name()
+                        .and_then(JSStr::as_str)
                         .is_some_and(|name| METHOD_WHICH_HAS_THIS_ARG.binary_search(&name).is_ok())
                 }) {
                     return call_expr.arguments.len() != 2
