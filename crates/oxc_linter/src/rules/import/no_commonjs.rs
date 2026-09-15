@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -144,7 +144,7 @@ impl Rule for NoCommonjs {
                     return;
                 };
                 let Some(property_name) =
-                    member_expr_kind.static_property_name().map(|s| s.as_str())
+                    member_expr_kind.static_property_name().and_then(JSStr::as_str)
                 else {
                     return;
                 };

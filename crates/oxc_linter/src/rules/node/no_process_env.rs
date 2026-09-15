@@ -88,7 +88,7 @@ impl Rule for NoProcessEnv {
                 mem.span
             }
             AstKind::ComputedMemberExpression(mem)
-                if mem.static_property_name().is_some_and(|name| name.as_str() == "env")
+                if mem.static_property_name().is_some_and(|name| name == "env")
                     && is_process_global_object(&mem.object, ctx) =>
             {
                 mem.span
@@ -106,7 +106,10 @@ impl Rule for NoProcessEnv {
                     && obj_mem.span() == span
                 {
                     let (.., prop_name) = parent_mem.static_property_info();
-                    if self.0.allowed_variables.contains(prop_name) {
+                    if prop_name
+                        .as_str()
+                        .is_some_and(|name| self.0.allowed_variables.contains(name))
+                    {
                         should_report = false;
                     }
                 }
@@ -115,7 +118,7 @@ impl Rule for NoProcessEnv {
                 if let Some(obj_mem) = parent_mem.object.as_member_expression()
                     && obj_mem.span() == span
                     && let Some((_, name)) = parent_mem.static_property_info()
-                    && self.0.allowed_variables.contains(name)
+                    && name.as_str().is_some_and(|name| self.0.allowed_variables.contains(name))
                 {
                     should_report = false;
                 }

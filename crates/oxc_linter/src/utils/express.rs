@@ -18,7 +18,7 @@ pub fn as_endpoint_registration<'a, 'n>(
     call: &'n CallExpression<'a>,
 ) -> Option<(Option<Str<'a>>, &'n [Argument<'a>])> {
     let callee = call.callee.as_member_expression()?;
-    let method_name = callee.static_property_name()?;
+    let method_name = callee.static_property_name()?.as_str()?;
     if ROUTER_HANDLER_METHOD_NAMES.binary_search(&method_name).is_err() {
         return None;
     }
