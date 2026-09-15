@@ -1,0 +1,124 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:3:1]
+ 2 │ //My comment
+ 3 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ import { describe } from 'vitest';
+ 2 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:3:1]
+ 2 │ import { helper } from './helper';
+ 3 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ import './setup';
+ 2 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:3:1]
+ 2 │ /* block comment */
+ 3 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:5:1]
+ 4 │  */
+ 5 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:3:1]
+ 2 │ describe('bar', () => {});
+ 3 │ describe('baz', () => {});
+   · ▲
+ 4 │ });
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:3:1]
+ 2 │ /* setup notes */
+ 3 │ describe('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ describe.each([1, 2])('foo %i', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ describe.only('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ describe.skip('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before suite block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ suite('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the suite block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before suite block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ const thing = 123;
+ 2 │ suite.each([1, 2])('foo %i', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the suite block
+
+  ⚠ vitest(padding-around-describe-blocks): Missing padding before describe block
+   ╭─[padding_around_describe_blocks.tsx:2:1]
+ 1 │ describe('foo', () => {});
+ 2 │ describe('bar', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the describe block
