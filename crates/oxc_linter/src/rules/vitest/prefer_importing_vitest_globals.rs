@@ -137,7 +137,11 @@ impl Rule for PreferImportingVitestGlobals {
                 continue;
             };
 
-            if is_vitest_import_source(import_decl.source.value.as_str())
+            // Bindings imported from a Vitest import source are already explicitly
+            // imported, so nothing to report. This covers both the built-in
+            // sources (`vitest`, `vite-plus/test`, `@effect/vitest`) and any
+            // custom sources configured via `settings.vitest.vitestImports`.
+            if ctx.settings().vitest.is_vitest_import_source(import_decl.source.value.as_str())
                 && import_decl.import_kind == ImportOrExportKind::Value
             {
                 continue;
@@ -475,5 +479,63 @@ fn test() {
     )
     .with_vitest_plugin(true)
     .expect_fix(fix)
+    .test_and_snapshot();
+}
+
+#[test]
+fn test_vitest_imports() {
+    use crate::tester::Tester;
+
+    let settings = || {
+        Some(serde_json::json!({
+            "settings": {
+                "vitest": {
+                    "vitestImports": ["$test/setup/fixtures"]
+                }
+            }
+        }))
+    };
+
+    let pass = vec![
+        // When `$test/setup/fixtures` is configured via `vitestImports`, its
+        // bindings count as explicit Vitest imports, so nothing is reported.
+        (
+            r"
+            import { describe, it } from '$test/setup/fixtures';
+            describe('suite', () => {
+                it('test', () => {});
+            });
+            ",
+            None,
+            settings(),
+            None,
+        ),
+    ];
+
+    let fail = vec![
+        // Without the `vitestImports` configuration the same module is not a
+        // Vitest import source, so its bindings are still reported.
+        (
+            r"
+            import { describe, it } from '$test/setup/fixtures';
+            describe('suite', () => {
+                it('test', () => {});
+            });
+            ",
+            None,
+            None,
+            None,
+        ),
+    ];
+
+    Tester::new(
+        PreferImportingVitestGlobals::NAME,
+        PreferImportingVitestGlobals::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_vitest_plugin(true)
+    .intentionally_allow_no_fix_tests()
+    .with_snapshot_suffix("vitest_imports")
     .test_and_snapshot();
 }

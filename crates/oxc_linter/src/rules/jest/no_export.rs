@@ -60,15 +60,17 @@ impl Rule for NoExport {
         // `iter_possible_jest_call_node` yields uses of `JEST_METHOD_NAMES`.
         // We focus on "fit", "it", "test", "xit", and "xtest" (JestGeneralFnKind::Test).
         // Presence of any of these is taken to mean the module has tests, and the rule should enforce no exports.
-        let has_tests = iter_possible_jest_call_node(ctx).any(|possible_node| {
-            let AstKind::CallExpression(call_expr) = possible_node.node.kind() else {
-                return false;
-            };
-            let Some(general) = parse_general_jest_fn_call(call_expr, &possible_node, ctx) else {
-                return false;
-            };
-            matches!(general.kind, JestFnKind::General(JestGeneralFnKind::Test))
-        });
+        let has_tests =
+            iter_possible_jest_call_node(ctx.semantic(), ctx.settings()).any(|possible_node| {
+                let AstKind::CallExpression(call_expr) = possible_node.node.kind() else {
+                    return false;
+                };
+                let Some(general) = parse_general_jest_fn_call(call_expr, &possible_node, ctx)
+                else {
+                    return false;
+                };
+                matches!(general.kind, JestFnKind::General(JestGeneralFnKind::Test))
+            });
 
         if has_tests {
             for span in ctx.module_record().exported_bindings.values() {
