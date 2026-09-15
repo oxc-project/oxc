@@ -1,6 +1,5 @@
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::OxcCode;
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{DiagnosticFix, OxcCode, OxcDiagnostic};
 use oxc_span::{GetSpan, SourceType, Span};
 use std::borrow::Cow;
 
@@ -298,7 +297,20 @@ impl Message {
 impl From<Message> for OxcDiagnostic {
     #[inline]
     fn from(message: Message) -> Self {
-        message.error
+        let Message { error, fixes, .. } = message;
+        match fixes {
+            PossibleFixes::None => error,
+            PossibleFixes::Single(fix) => error.with_fixes(Box::new([fix.into()])),
+            PossibleFixes::Multiple(fixes) => error.with_fixes(
+                fixes.into_iter().map(DiagnosticFix::from).collect::<Vec<_>>().into_boxed_slice(),
+            ),
+        }
+    }
+}
+
+impl From<Fix> for DiagnosticFix {
+    fn from(fix: Fix) -> Self {
+        Self::new(fix.kind.to_string(), fix.message, fix.span, fix.content)
     }
 }
 
