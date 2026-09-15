@@ -454,7 +454,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     /// Replace an expression slot with a value built from the owned old expression.
     ///
-    /// Prefer this over [`Expression::take_in`] followed by [`Self::replace_expression`]. It avoids
+    /// Prefer this over `take_in` followed by [`Self::replace_expression`]. It avoids
     /// leaving a dummy node in the arena. The closure must report any discarded
     /// subtrees through the `drop_*` helpers; values moved into its result are not dropped.
     #[inline]
@@ -482,7 +482,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
     /// Replace a statement slot with a value built from the owned old statement.
     ///
-    /// Prefer this over [`Statement::take_in`] followed by [`Self::replace_statement`]. It avoids
+    /// Prefer this over `take_in` followed by [`Self::replace_statement`]. It avoids
     /// leaving a dummy node in the arena. The closure must report any discarded
     /// subtrees through the `drop_*` helpers; values moved into its result are not dropped.
     #[inline]
