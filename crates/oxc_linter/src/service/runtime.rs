@@ -45,7 +45,7 @@ type ModulesByPath =
 pub struct Runtime {
     cwd: Box<Path>,
     pub(super) linter: Linter,
-    resolver: Option<Resolver>,
+    resolver: Option<Arc<Resolver>>,
 
     /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
@@ -205,7 +205,7 @@ impl RuntimeFileSystem for OsFileSystem {
 }
 
 impl Runtime {
-    pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+    pub(super) fn new(mut linter: Linter, options: LintServiceOptions) -> Self {
         // If global thread pool wasn't already initialized, do it now.
         // This "locks" config for the thread pool, which ensures `rayon::current_num_threads()`
         // cannot change from now on.
@@ -256,7 +256,10 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
-        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
+        let resolver = options.cross_module.then(|| Arc::new(Self::get_resolver(options.tsconfig)));
+        linter.imports = resolver
+            .as_ref()
+            .map(|resolver| Arc::new(crate::context::ImportContext::new(Arc::clone(resolver))));
 
         Self {
             allocator_pool,
@@ -602,6 +605,13 @@ impl Runtime {
         self.run_impl::<TIMINGS>(file_system, paths, tx_error, diff_manager, rule_timing_store);
     }
 
+    fn prepare_run(&self, path_count: usize) {
+        if let Some(imports) = &self.linter.imports {
+            imports.clear_package_json_cache();
+        }
+        self.modules_by_path.pin().reserve(path_count);
+    }
+
     fn run_impl<const TIMINGS: bool>(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
@@ -610,7 +620,7 @@ impl Runtime {
         diff_manager: &Arc<DiffManager>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) {
-        self.modules_by_path.pin().reserve(paths.len());
+        self.prepare_run(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         rayon::scope(|scope| {
@@ -755,7 +765,7 @@ impl Runtime {
     ) -> Vec<Message> {
         use std::sync::Mutex;
 
-        self.modules_by_path.pin().reserve(paths.len());
+        self.prepare_run(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
@@ -900,7 +910,7 @@ impl Runtime {
     ) -> Vec<Message> {
         use std::sync::Mutex;
 
-        self.modules_by_path.pin().reserve(paths.len());
+        self.prepare_run(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());

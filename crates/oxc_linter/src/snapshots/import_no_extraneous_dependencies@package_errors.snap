@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ import(no-extraneous-dependencies): The package.json file could not be read.
+   ╭─[no-extraneous-dependencies/index.ts:1:1]
+ 1 │ import './local';
+   · ▲
+   ╰────
+  help: Set packageDir to a directory containing a readable package.json.
+
+  ⚠ import(no-extraneous-dependencies): The package.json file could not be parsed: key must be a string at line 1 column 3
+   ╭─[no-extraneous-dependencies/index.ts:1:1]
+ 1 │ import './local';
+   · ▲
+   ╰────
+  help: Correct the JSON in the configured packageDir manifest.

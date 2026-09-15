@@ -1,0 +1,22 @@
+{
+  "name": "test-project",
+  "dependencies": {
+    "acorn": "*",
+    "rxjs": "*",
+    "esm-package": "*"
+  },
+  "devDependencies": {
+    "chai": "*",
+    "require-only": "*",
+    "types-only": "*"
+  },
+  "optionalDependencies": {
+    "left-pad": "*"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "bundledDependencies": [
+    "@generated/foo"
+  ]
+}
