@@ -5230,16 +5230,6 @@ function deserializeNameSpan(pos) {
   };
 }
 
-function deserializeModuleRequest(pos) {
-  let start, end;
-  return {
-    value: deserializeJSStr(pos + 8),
-    start: (start = deserializeI32(pos)),
-    end: (end = deserializeI32(pos + 4)),
-    range: [start, end],
-  };
-}
-
 function deserializeImportEntry(pos) {
   return {
     importName: deserializeImportImportName(pos + 32),
@@ -5284,7 +5274,7 @@ function deserializeImportImportName(pos) {
 function deserializeExportEntry(pos) {
   let start, end;
   return {
-    moduleRequest: deserializeOptionModuleRequest(pos + 16),
+    moduleRequest: deserializeOptionNameSpan(pos + 16),
     importName: deserializeExportImportName(pos + 40),
     exportName: deserializeExportExportName(pos + 72),
     localName: deserializeExportLocalName(pos + 104),
@@ -5601,7 +5591,7 @@ function deserializeEcmaScriptModule(pos) {
 function deserializeStaticImport(pos) {
   let start, end;
   return {
-    moduleRequest: deserializeModuleRequest(pos + 8),
+    moduleRequest: deserializeNameSpan(pos + 8),
     entries: deserializeVecImportEntry(pos + 32),
     start: (start = deserializeI32(pos)),
     end: (end = deserializeI32(pos + 4)),
@@ -6898,8 +6888,10 @@ function deserializeI32(pos) {
   return int32[pos >> 2];
 }
 
-function deserializeOptionModuleRequest(pos) {
-  return uint8[pos + 20] === 2 ? null : deserializeModuleRequest(pos);
+function deserializeOptionNameSpan(pos) {
+  return int32[(pos >> 2) + 2] === 0 && int32[(pos >> 2) + 3] === 0
+    ? null
+    : deserializeNameSpan(pos);
 }
 
 function deserializeVecError(pos) {
