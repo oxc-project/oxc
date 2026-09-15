@@ -295,7 +295,7 @@ fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Str
         {
             // this["property"]
             if let Expression::StringLiteral(str) = &expr.expression {
-                Some(str.value)
+                str.value.as_str().map(Str::from)
             } else {
                 None
             }

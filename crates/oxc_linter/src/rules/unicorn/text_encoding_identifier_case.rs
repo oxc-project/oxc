@@ -90,10 +90,13 @@ impl Rule for TextEncodingIdentifierCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (s, span) = match node.kind() {
             AstKind::StringLiteral(string_lit) => (string_lit.value.as_str(), string_lit.span),
-            AstKind::JSXText(jsx_text) => (jsx_text.value.as_str(), jsx_text.span),
+            AstKind::JSXText(jsx_text) => (Some(jsx_text.value.as_str()), jsx_text.span),
             _ => return,
         };
 
+        let Some(s) = s else {
+            return;
+        };
         let with_dash = self.with_dash || should_enforce_dash(node.id(), ctx);
 
         if let Some(replacement) = get_replacement(s, with_dash)

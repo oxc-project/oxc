@@ -223,7 +223,7 @@ fn json5_unquoted_key<'a>(lit: &StringLiteral<'a>) -> Option<&'a str> {
     let raw = lit.raw.as_ref()?.as_str();
     // Body between the quotes; bail on anything that isn't a well-formed quoted literal
     let inner = raw.get(1..raw.len().checked_sub(1)?)?;
-    let value = lit.value.as_str();
+    let value = lit.value.as_str()?;
     // Any escape makes the raw body differ from the cooked value -> not safe to unquote
     if inner != value {
         return None;

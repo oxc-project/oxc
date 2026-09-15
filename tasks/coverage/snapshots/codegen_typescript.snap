@@ -2,6 +2,4 @@ commit: f29aeb9f
 
 codegen_typescript Summary:
 AST Parsed     : 9666/9666 (100.00%)
-Positive Passed: 9665/9666 (99.99%)
-Normal: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/braceEscapedSurrogatePairLiteralType.ts
-
+Positive Passed: 9666/9666 (100.00%)

@@ -3,6 +3,7 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
@@ -75,8 +76,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.lexer.get_string(self.token)
     }
 
+    /// Get the decoded value of the current string literal.
+    pub(crate) fn cur_js_string(&self) -> JSStr<'a> {
+        self.lexer.get_js_string(self.token)
+    }
+
     /// Get current template string
-    pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
+    pub(crate) fn cur_template_string(&self) -> Option<JSStr<'a>> {
         self.lexer.get_template_string(self.token.start())
     }
 

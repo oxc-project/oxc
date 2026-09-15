@@ -1896,8 +1896,8 @@ Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(10): [ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7), ReferenceId(9), ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22)]
+after transform: SymbolId(10): [ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
+rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7), ReferenceId(9), ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/computedEnumMemberSyntacticallyString2.ts
 Missing ReferenceId: "Foo"
@@ -1906,8 +1906,8 @@ Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Foo"
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(14): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(32)]
-rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(14), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(29), ReferenceId(30), ReferenceId(31), ReferenceId(32)]
+after transform: SymbolId(14): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29)]
+rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(14), ReferenceId(16), ReferenceId(17), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(27), ReferenceId(28), ReferenceId(29)]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/computedEnumTypeWidening.ts
 Bindings mismatch:

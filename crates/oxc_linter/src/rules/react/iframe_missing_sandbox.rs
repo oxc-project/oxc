@@ -171,7 +171,11 @@ impl Rule for IframeMissingSandbox {
 }
 
 fn validate_sandbox_value(literal: &StringLiteral, ctx: &LintContext) {
-    let attrs = literal.value.split(' ');
+    let Some(value) = literal.value.as_str() else {
+        ctx.diagnostic(invalid_sandbox_prop(literal.span, ctx.source_range(literal.span)));
+        return;
+    };
+    let attrs = value.split(' ');
     let mut has_allow_same_origin = false;
     let mut has_allow_scripts = false;
     for trimmed_atr in attrs.into_iter().map(str::trim) {

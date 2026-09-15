@@ -273,7 +273,11 @@ impl JsxNoLiterals {
                 JSXChild::ExpressionContainer(container) if options.no_strings => {
                     match &container.expression {
                         JSXExpression::StringLiteral(literal) => {
-                            if !Self::is_allowed_string(literal.value.as_str(), options) {
+                            if !literal
+                                .value
+                                .as_str()
+                                .is_some_and(|value| Self::is_allowed_string(value, options))
+                            {
                                 ctx.diagnostic(literal_text_diagnostic(literal.span));
                             }
                         }
@@ -296,7 +300,11 @@ impl JsxNoLiterals {
     ) {
         match &expr {
             Expression::StringLiteral(literal) => {
-                if !Self::is_allowed_string(literal.value.as_str(), options) {
+                if !literal
+                    .value
+                    .as_str()
+                    .is_some_and(|value| Self::is_allowed_string(value, options))
+                {
                     ctx.diagnostic(literal_attribute_diagnostic(attr.span));
                 }
             }
@@ -327,7 +335,11 @@ impl JsxNoLiterals {
 
             match value {
                 JSXAttributeValue::StringLiteral(str_literal) => {
-                    if Self::is_allowed_string(str_literal.value.as_str(), options) {
+                    if str_literal
+                        .value
+                        .as_str()
+                        .is_some_and(|value| Self::is_allowed_string(value, options))
+                    {
                         continue;
                     }
 
