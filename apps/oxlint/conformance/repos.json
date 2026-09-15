@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "tsdoc": {
+    "repoUrl": "https://github.com/microsoft/tsdoc",
+    "commitSha": "fab621701370f1488776d06161ffbd46173e9152",
+    "version": "0.5.2"
   }
 }
