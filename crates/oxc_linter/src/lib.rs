@@ -1,4 +1,8 @@
 #![expect(clippy::self_named_module_files)]
+// The generated `rules_enum.rs` emits a chain of `const … = <prev> + 1` rule ids.
+// Under the parallel frontend this exceeds the default query depth limit.
+// See https://github.com/rust-lang/rust/issues/146616 for more info.
+#![recursion_limit = "512"]
 // for rules.rs
 // RuleEnum contains rule configs with interior mutability (e.g. Regex),
 // but Hash/Eq/Ord are based only on the rule id, so it's safe as a map key.
