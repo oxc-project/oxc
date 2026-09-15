@@ -70,20 +70,40 @@ describe.each(modes)("JavaScript strings (%s)", (_mode, options) => {
       });
     });
 
-    test("preserves module request values in the AST and module record", () => {
-      const source = String.raw`import "\uD800"; import "\uFFFDd800"; export * from "\uDC00";`;
+    test("preserves module request values in the AST and UTF-8 module metadata", () => {
+      const source = String.raw`import "\uD800"; import "\uFFFDd800"; export * from "\uDC00"; export { value } from "valid";`;
       const result = parseSync(`test.${extension}`, source, options);
       expect(result.errors).toEqual([]);
       expect(result.program.body).toMatchObject([
         { source: { value: "\uD800" } },
         { source: { value: "\uFFFDd800" } },
         { source: { value: "\uDC00" } },
+        { source: { value: "valid" } },
       ]);
+      // Module records remain UTF-8-only until their follow-up migration.
       expect(result.module.staticImports.map((entry) => entry.moduleRequest.value)).toEqual([
-        "\uD800",
         "\uFFFDd800",
       ]);
-      expect(result.module.staticExports[0].entries[0].moduleRequest?.value).toBe("\uDC00");
+      expect(result.module.staticExports).toHaveLength(1);
+      expect(result.module.staticExports[0].entries[0].moduleRequest?.value).toBe("valid");
+    });
+
+    test.each([
+      String.raw`import "\uD800";`,
+      String.raw`import { value } from "\uDC00";`,
+      String.raw`export * from "\uD800";`,
+      String.raw`export * as ns from "\uDC00";`,
+      String.raw`export { value } from "\uD800";`,
+    ])("retains module syntax with a non-UTF-8 source: %s", (source) => {
+      const result = parseSync(`test.${extension}`, source, {
+        ...options,
+        sourceType: "unambiguous",
+      });
+      expect(result.errors).toEqual([]);
+      expect(result.program.body).toHaveLength(1);
+      expect(result.module.hasModuleSyntax).toBe(true);
+      expect(result.module.staticImports).toEqual([]);
+      expect(result.module.staticExports).toEqual([]);
     });
 
     test("reports invalid module export names without corrupting recovery", () => {
