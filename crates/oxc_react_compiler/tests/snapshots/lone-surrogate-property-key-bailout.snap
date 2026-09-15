@@ -1,0 +1,61 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/lone-surrogate-property-key-bailout.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 99, end: 107 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 186, end: 194 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 256, end: 264 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 339, end: 347 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 408, end: 416 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 514, end: 522 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 621, end: 629 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Unsupported key type in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 764, end: 772 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Advice, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer" @panicThreshold:"none"
+export function Component() {
+	return <div>{{ "\ud800": 1 }["\ud800"]}</div>;
+}
+export function TrailSurrogate() {
+	return <div>{{ "\udc00": 2 }["\udc00"]}</div>;
+}
+export const Arrow = () => <div>{{ "\ud800": 3 }["\ud800"]}</div>;
+export function ComputedKey() {
+	return <div>{{ ["\ud800"]: 4 }["\ud800"]}</div>;
+}
+export function DestructuredKey({ "\ud800": value }) {
+	return <div>{value}</div>;
+}
+export function AssignedKey(props) {
+	let value;
+	({"\udc00": value} = props);
+	return <div>{value}</div>;
+}
+export function MethodKey() {
+	const object = { "\ud800"() {
+		return 5;
+	} };
+	return <div>{object["\ud800"]()}</div>;
+}
+export function NestedFunction() {
+	const read = () => {
+		return { "\udc00": 6 }["\udc00"];
+	};
+	return <div>{read()}</div>;
+}
+export function SupportedKeys() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = <div>{{
+			"𐀀": 7,
+			"�d800": 8
+		}["𐀀"]}</div>;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}
