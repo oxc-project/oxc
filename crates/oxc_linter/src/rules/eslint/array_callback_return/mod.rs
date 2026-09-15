@@ -403,6 +403,7 @@ pub fn get_array_method_info<'a>(
 
                 // "methods",
                 let (array_method_span, array_method) = callee.static_property_info()?;
+                let array_method = array_method.as_str()?;
 
                 if TARGET_METHODS.contains(&array_method)
                     // Check that current node is parent's first argument

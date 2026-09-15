@@ -309,7 +309,9 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>
             let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));
             if let Some(name) = member_expr.static_property_name() {
-                chain.push(Cow::Borrowed(name));
+                chain.push(
+                    name.as_str().map_or_else(|| Cow::Owned(format!("{name:?}")), Cow::Borrowed),
+                );
             }
         }
         Expression::NewExpression(new_expr) => {
