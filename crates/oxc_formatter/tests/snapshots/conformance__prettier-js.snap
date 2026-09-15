@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
-assertion_line: 172
 expression: report
 ---
-js compatibility: 765/810 (94.44%), 23 files skipped
+js compatibility: 767/810 (94.69%), 23 files skipped
 
 # Failed
 
@@ -11,7 +10,6 @@ js compatibility: 765/810 (94.44%), 23 files skipped
 | :-------- | :--------------: | :---------: |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 93.75% |
 | js/arrows/issue-17421.js | 💥💥 | 88.70% |
-| js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/assignment-comments/string.js | 💥 | 96.59% |
 | js/binary-expressions/mutiple-comments/17192.js | 💥✨ | 45.83% |
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
@@ -30,7 +28,6 @@ js compatibility: 765/810 (94.44%), 23 files skipped
 | js/comments/function/18146.js | 💥 | 51.80% |
 | js/comments/function/between-parentheses-and-function-body.js | 💥 | 47.62% |
 | js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
-| js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 88.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 88.24% |
 | js/for/9812-2.js | 💥 | 88.89% |

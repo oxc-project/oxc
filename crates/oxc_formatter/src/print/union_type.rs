@@ -10,6 +10,7 @@
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::SourceText;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
     formatter::{
         Comments, JsFormatter,
         prelude::*,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{FormatLeadingComments, FormatTrailingComments, is_alignable_block_comment},
     },
     parentheses::NeedsParentheses,
     print::FormatWrite,
@@ -145,7 +146,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // (`= | /* c */\n'A'` gives `= /* c */ 'A'`, matching Prettier).
         // The sibling rule for the formatter-added `(` is `format_outer_leading_comments_and_open_paren`,
         // keyed on the source `(` instead.
-        let comment_info = LeadingCommentsInfo::from_comments(leading_comments);
+        let comment_info = LeadingCommentsInfo::from_comments(leading_comments, f.source_text());
         let all_inline = !comment_info.has_end_of_line_comment;
         let (before_pipe_comments, inline_member_comments) = if all_inline {
             (&leading_comments[..0], leading_comments)
@@ -286,12 +287,14 @@ struct LeadingCommentsInfo {
     has_end_of_line_comment: bool,
     has_line_ending_trailing_non_jsdoc_block_comment: bool,
     has_line_ending_trailing_jsdoc_comment: bool,
+    has_alignable_block_comment: bool,
 }
 
 impl LeadingCommentsInfo {
-    fn from_comments(comments: &[Comment]) -> Self {
+    fn from_comments(comments: &[Comment], source_text: SourceText) -> Self {
         let mut info = Self::default();
         for comment in comments {
+            info.has_alignable_block_comment |= is_alignable_block_comment(comment, source_text);
             info.has_own_line_comment |= comment.preceded_by_newline();
             info.has_end_of_line_comment |= comment.followed_by_newline();
             info.has_line_ending_trailing_non_jsdoc_block_comment |= comment.is_block()
@@ -323,7 +326,8 @@ pub fn type_alias_left_end(decl: &TSTypeAliasDeclaration) -> u32 {
 
 /// Whether an alias-level union relies on the assignment's operator-side break + indent
 /// instead of owning them itself (`should_indent_alias_union` is the negation).
-/// True when a comment ends the `=` line:
+/// True when a comment ends the `=` line, or a multi-line `*`-aligned block comment leads the union
+/// (`AssignmentLike::right_has_leading_alignable_block_comment` chose the break):
 /// - a trailing own-line JSDoc comment, still pending for the union's leading-comments pass
 ///   the caller decides the comment range to scan, which differs per site
 ///   ```ts
@@ -353,7 +357,8 @@ fn should_indent_alias_union<'a>(
 ) -> bool {
     !alias_union_breaks_after_operator(
         alias,
-        comment_info.has_line_ending_trailing_jsdoc_comment,
+        comment_info.has_line_ending_trailing_jsdoc_comment
+            || comment_info.has_alignable_block_comment,
         f.comments(),
     )
 }
