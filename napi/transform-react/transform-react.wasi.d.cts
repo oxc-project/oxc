@@ -198,6 +198,18 @@ export interface ReactCompilerOptions {
    */
   panicThreshold?: 'none' | 'critical_errors' | 'all_errors'
   /**
+   * Include recoverable React Compiler diagnostics in `errors`.
+   *
+   * By default only fatal diagnostics are reported, matching Babel's default
+   * `logger: null`. Enable this to also receive the diagnostic behind every
+   * function the compiler left untouched (bail-outs, rule suppressions, lint
+   * findings) while code is still produced. Fatal diagnostics are reported
+   * regardless of this option.
+   *
+   * @default false
+   */
+  reportDiagnostics?: boolean
+  /**
    * React runtime target. React 17 and 18 use `react-compiler-runtime`;
    * React 19 uses `react/compiler-runtime`.
    *
@@ -209,13 +221,17 @@ export interface ReactCompilerOptions {
   /** Enable `"use memo if(...)"` directive-driven gating. */
   dynamicGating?: ReactCompilerDynamicGating
   /**
-   * Analyze and report diagnostics without applying compiler output.
+   * Analyze without applying compiler output. Pair with `reportDiagnostics`
+   * to receive the findings.
    *
    * @deprecated Prefer `outputMode: "lint"`.
    * @default false
    */
   noEmit?: boolean
-  /** Select client, SSR, or lint output. */
+  /**
+   * Select client, SSR, or lint output. Lint findings are recoverable
+   * diagnostics, so pair lint output with `reportDiagnostics`.
+   */
   outputMode?: 'client' | 'ssr' | 'lint'
   /**
    * ESLint rule names whose suppressions opt a function out of compilation.
@@ -326,7 +342,12 @@ export interface TransformResult {
   code: string
   /** Source map, populated when `sourcemap` is `true`. */
   map?: SourceMap
-  /** Parse, semantic, downstream transform, and fatal React Compiler diagnostics. */
+  /**
+   * Parse, semantic, downstream transform, and fatal React Compiler diagnostics.
+   *
+   * Recoverable React Compiler diagnostics are included when
+   * `reactCompiler.reportDiagnostics` is `true`.
+   */
   errors: Array<OxcError>
 }
 
