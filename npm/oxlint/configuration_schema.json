@@ -9586,6 +9586,26 @@
             }
           ]
         },
+        "unicorn/prefer-temporal": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferTemporal"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/prefer-ternary": {
           "anyOf": [
             {
@@ -18138,6 +18158,30 @@
             "type": "string"
           },
           "markdownDescription": "List of functions that are allowed to be used for deep cloning instead of structuredClone."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferTemporal": {
+      "type": "object",
+      "properties": {
+        "checkDateNow": {
+          "description": "Whether to also flag `Date.now()`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also flag `Date.now()`."
+        },
+        "checkMethods": {
+          "description": "Whether to also flag methods called on `Date` instances, such as `date.getFullYear()`.\nThis option needs type information, which oxlint does not have, so it does nothing.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also flag methods called on `Date` instances, such as `date.getFullYear()`.\nThis option needs type information, which oxlint does not have, so it does nothing."
+        },
+        "checkReferences": {
+          "description": "Whether to also flag bare references to `Date`, such as `x instanceof Date`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also flag bare references to `Date`, such as `x instanceof Date`."
         }
       },
       "additionalProperties": false
