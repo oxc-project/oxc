@@ -4,6 +4,8 @@ use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
+use oxc_linter::table::RuleTable;
+use rustc_hash::FxHashSet;
 
 use crate::output_formatter::InternalFormatter;
 
@@ -11,6 +13,21 @@ use crate::output_formatter::InternalFormatter;
 pub struct AgentOutputFormatter;
 
 impl InternalFormatter for AgentOutputFormatter {
+    fn all_rules(&self, enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
+        // `--rules` is a catalog, not a diagnostic stream. Agent format used to
+        // inherit InternalFormatter::all_rules → None, so oxlint --rules printed
+        // nothing and still exited 0 (oxc-project/oxc#26343).
+        let mut output = String::new();
+        let table = RuleTable::default();
+        for section in &table.sections {
+            output.push_str(&section.render_markdown_table_cli(&enabled_rules));
+            output.push('\n');
+        }
+        output.push_str(&format!("Default: {}\n", table.turned_on_by_default_count));
+        output.push_str(&format!("Total: {}\n", table.total));
+        Some(output)
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(AgentReporter)
     }
@@ -103,8 +120,10 @@ mod test {
 
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticReporter};
     use oxc_span::Span;
+    use rustc_hash::FxHashSet;
 
-    use super::{AgentReporter, compact_message};
+    use super::{AgentOutputFormatter, AgentReporter, compact_message};
+    use crate::output_formatter::InternalFormatter;
 
     // The borrowed fast path has to agree with the collapsing slow path on every input,
     // or messages silently change shape depending on which branch is taken.
@@ -178,6 +197,16 @@ mod test {
         let result = reporter.render_error(error);
 
         assert_eq!(result.unwrap(), "file://test.js:1:1: error: Expected `;` but found `:`\n");
+    }
+
+    #[test]
+    fn all_rules_prints_catalog() {
+        let output = AgentOutputFormatter
+            .all_rules(FxHashSet::default())
+            .expect("agent --rules must print the catalog");
+        assert!(output.contains("Total:"), "expected Total line, got {output:?}");
+        assert!(output.contains("Default:"), "expected Default line, got {output:?}");
+        assert!(!output.is_empty());
     }
 
     #[test]
