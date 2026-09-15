@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Comments, JsFormatter,
+        JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::{FormatTrailingComments, is_alignable_block_comment},
     },
@@ -484,7 +484,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
     /// A leading multi-line `*`-aligned block comment on the right-hand side
     /// breaks after the operator ahead of every shape rule (prettier/prettier#19180).
-    /// Reads the unprinted view, so it runs after `write_left` (like `left_printed_eol_line_comment`).
+    /// Reads the unprinted view, so it runs after `write_left`.
     /// An alias-level union sees the same comment and hands its indent over (`alias_union_breaks_after_operator`).
     fn right_has_leading_alignable_block_comment(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let right_start = match self {
@@ -534,17 +534,6 @@ impl<'a> AssignmentLike<'a, '_> {
                 .map_or(property.key.span().end, |annotation| annotation.span.end),
             Self::TSTypeAliasDeclaration(declaration) => type_alias_left_end(declaration),
         }
-    }
-
-    /// Whether `write_left` printed an end-of-line line comment after the left side (`const a = // c`).
-    /// Such a comment is a pending `line_suffix`:
-    /// the operator side MUST break right after it, or it flushes past the right-hand side.
-    /// Layout runs after `write_left`, hence a printed-comments check, cursor-based queries no longer see the comment.
-    fn left_printed_eol_line_comment(&self, comments: &Comments) -> bool {
-        comments
-            .printed_comments()
-            .last()
-            .is_some_and(|comment| comment.is_line() && comment.span.start > self.left_end())
     }
 
     /// Checks that a [AssignmentLike] consists only of the left part usually,
@@ -657,7 +646,9 @@ impl<'a> AssignmentLike<'a, '_> {
         f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
-        if self.left_printed_eol_line_comment(comments) {
+        // `const a = // c`: the pending `line_suffix` must be followed by the break,
+        // or it flushes past the right-hand side
+        if comments.has_printed_line_comment_after(self.left_end()) {
             return true;
         }
         if let Some(right_expression) = right_expression {
@@ -899,12 +890,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // when the left side printed an end-of-line line comment, and for non-conditional type aliases,
             // those also reach the arm via own-line-comment paths where nothing was printed,
             // and their union interplay needs the ungrouped variant.
-            let keeps_comment_order = matches!(
-                self,
-                AssignmentLike::TSTypeAliasDeclaration(decl)
-                    if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
-            ) || self
-                .left_printed_eol_line_comment(f.context().comments());
+            let keeps_comment_order =
+                matches!(
+                    self,
+                    AssignmentLike::TSTypeAliasDeclaration(decl)
+                        if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+                ) || f.context().comments().has_printed_line_comment_after(self.left_end());
 
             let inner_content = format_with(|f| {
                 if matches!(&layout, AssignmentLikeLayout::BreakLeftHandSide) {

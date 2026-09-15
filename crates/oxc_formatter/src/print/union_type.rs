@@ -147,11 +147,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // The sibling rule for the formatter-added `(` is `format_outer_leading_comments_and_open_paren`,
         // keyed on the source `(` instead.
         let comment_info = LeadingCommentsInfo::from_comments(leading_comments, f.source_text());
-        let all_inline = !comment_info.has_end_of_line_comment;
-        let (before_pipe_comments, inline_member_comments) = if all_inline {
-            (&leading_comments[..0], leading_comments)
+        // The inline ones stay unprinted for the first member's own leading pass,
+        // inside its `align(2)` like every other member's (a multi-line comment re-aligns under its `/*`).
+        let before_pipe_comments = if comment_info.has_end_of_line_comment {
+            leading_comments
         } else {
-            (leading_comments, &leading_comments[..0])
+            &leading_comments[..0]
         };
 
         // A `?`/`:` branch hugs its leading comments behind the operator,
@@ -178,6 +179,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             match parent {
                 AstNodes::TSTypeAliasDeclaration(alias) => {
                     should_indent_alias_union(alias, comment_info, f)
+                }
+                // The cast site leaves the after-operator comments to this printer
+                // and breaks + indents itself only for a riding line comment before the operator
+                // (`as_or_satisfies_expression.rs`), printed by now.
+                AstNodes::TSAsExpression(cast) => {
+                    !f.comments().has_printed_line_comment_after(cast.expression.span().end)
+                }
+                AstNodes::TSSatisfiesExpression(cast) => {
+                    !f.comments().has_printed_line_comment_after(cast.expression.span().end)
                 }
                 AstNodes::TSTypeAssertion(_)
                 | AstNodes::TSTupleType(_)
@@ -209,7 +219,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
             });
 
             write!(f, [if_group_breaks(&separator)]);
-            FormatLeadingComments::Comments(inline_member_comments).fmt(f);
 
             format_union_types(types, suppressed_node_span, false, f);
         });
