@@ -5580,9 +5580,13 @@ fn lower_object_property_key<'a>(
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
         oxc::PropertyKey::StringLiteral(lit) => {
-            let name = lit.value.as_str().ok_or_else(|| {
-                diagnostics::todo_unsupported_key_type_object_expression(Some(lit.span))
-            })?;
+            let Some(name) = lit.value.as_str() else {
+                // Record the diagnostic so the compiler discards this function's partial HIR.
+                let error =
+                    diagnostics::todo_unsupported_key_type_object_expression(Some(lit.span));
+                builder.record_error(error.clone())?;
+                return Err(error);
+            };
             Ok(Some(ObjectPropertyKey::String { name: Ident::from(name), span: Some(lit.span) }))
         }
         oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
