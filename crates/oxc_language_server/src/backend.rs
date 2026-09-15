@@ -14,8 +14,9 @@ use tower_lsp_server::{
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo,
-        TextDocumentContentChangeEvent, TextEdit, Uri, WorkspaceEdit,
+        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport,
+        RelatedUnchangedDocumentDiagnosticReport, ServerInfo, TextDocumentContentChangeEvent,
+        TextEdit, UnchangedDocumentDiagnosticReport, Uri, WorkspaceEdit,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -23,6 +24,7 @@ use tracing::{debug, error, info, warn};
 use crate::{
     ClientMessage, ConcurrentHashMap, LanguageId,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
+    diagnostic_state::DiagnosticState,
     file_system::LSPFileSystem,
     options::WorkspaceOption,
     worker::WorkspaceWorker,
@@ -69,6 +71,9 @@ pub struct Backend {
     // A simple in-memory file system to store the content of open files.
     // The client will send the content of in-memory files on `textDocument/didOpen` and `textDocument/didChange`.
     file_system: Arc<LSPFileSystem>,
+    // State used to hand out `resultId`s for the pull diagnostics model and to decide whether a
+    // pull can be answered with `unchanged`.
+    diagnostic_state: DiagnosticState,
     // Messages collected during `initialize` that must be deferred until `initialized`,
     // because the LSP spec forbids server-to-client communication before the initialize response is sent.
     pending_initialization_messages: OnceCell<Vec<ClientMessage>>,
@@ -406,9 +411,17 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let result = worker
-                .did_change_configuration(option.options, &mut needs_diagnostics_refresh, fs)
-                .await;
+            // Only a linter that was rebuilt can produce different diagnostics for text that did
+            // not change. Invalidate its result ids, but leave the ids of the other workspaces
+            // alone: their diagnostics are untouched, so a client that re-pulls every open
+            // document can still be answered with `unchanged` for them.
+            let mut worker_refresh = false;
+            let result =
+                worker.did_change_configuration(option.options, &mut worker_refresh, fs).await;
+            if worker_refresh {
+                self.diagnostic_state.invalidate(worker.get_root_uri());
+            }
+            needs_diagnostics_refresh |= worker_refresh;
 
             if let Some(diagnostics) = result.diagnostics {
                 new_diagnostics.extend(diagnostics);
@@ -470,9 +483,16 @@ impl LanguageServer for Backend {
             // to only restart the internal linter / diagnostics for once.
             // A change can affect multiple workspaces if the file is in a shared location, for example a config file in the home directory.
             for worker in self.worker_manager.read_workspace_workers().await.iter() {
-                let result = worker
-                    .did_change_watched_files(file_event, &mut needs_diagnostics_refresh, fs)
-                    .await;
+                // A watched file is a config or a `tsconfig.json`, which can change the diagnostics
+                // of documents whose text did not change — but only for the workspaces whose
+                // linter was actually rebuilt, so only their result ids are invalidated.
+                let mut worker_refresh = false;
+                let result =
+                    worker.did_change_watched_files(file_event, &mut worker_refresh, fs).await;
+                if worker_refresh {
+                    self.diagnostic_state.invalidate(worker.get_root_uri());
+                }
+                needs_diagnostics_refresh |= worker_refresh;
 
                 if let Some(diagnostics) = result.diagnostics {
                     new_diagnostics.extend(diagnostics);
@@ -523,6 +543,19 @@ impl LanguageServer for Backend {
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         let capabilities = self.capabilities.get();
         let diagnostic_mode = capabilities.map(|c| c.diagnostic_mode.clone()).unwrap_or_default();
+
+        // A document can be served by a different linter now: adding a workspace folder can move the
+        // open documents inside it from the workspace that covered them before to the new, more
+        // specific one, and removing a folder moves them back. The same text can produce different
+        // diagnostics under a different configuration.
+        //
+        // Documents whose serving workspace root changes are covered by the root being part of
+        // their result id. The roots listed here also need a new generation, because their own
+        // linter can be rebuilt even when documents keep the same root: a folder that was covered
+        // by a dynamically created single-file worker gets a real workspace worker for example.
+        for folder in params.event.added.iter().chain(&params.event.removed) {
+            self.diagnostic_state.invalidate(&folder.uri);
+        }
 
         // === Phase 1: Update worker state (brief write lock, no async I/O) ===
         // Extract workers that need to be shut down and update the mode flags.
@@ -624,6 +657,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_didChange>
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
+        self.diagnostic_state.mark_changed(&uri);
         if let Some(content) = params
             .content_changes
             .into_iter()
@@ -734,6 +768,7 @@ impl LanguageServer for Backend {
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
         self.file_system.remove(uri);
+        self.diagnostic_state.remove_document(uri);
 
         let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return;
@@ -870,6 +905,26 @@ impl LanguageServer for Backend {
         };
 
         let document = self.file_system.get_document(uri);
+        let result_id = self.diagnostic_state.result_id(&document, worker.get_root_uri());
+
+        // The client already holds the diagnostics for exactly this document state, so there is
+        // nothing to recompute. `previous_result_id` is only ever the id we handed out for the
+        // current text and configuration, and a pull is only answered this way when no change
+        // arrived since the lint that produced it.
+        if !self.diagnostic_state.is_changed(uri)
+            && let Some(result_id) = result_id.as_deref()
+            && params.previous_result_id.as_deref() == Some(result_id)
+        {
+            return Ok(DocumentDiagnosticReportResult::Report(
+                DocumentDiagnosticReport::Unchanged(RelatedUnchangedDocumentDiagnosticReport {
+                    related_documents: None,
+                    unchanged_document_diagnostic_report: UnchangedDocumentDiagnosticReport {
+                        result_id: result_id.to_string(),
+                    },
+                }),
+            ));
+        }
+
         let diagnostics = worker.run_diagnostic(document).await;
 
         let diagnostics = match diagnostics {
@@ -884,6 +939,8 @@ impl LanguageServer for Backend {
             Ok(diagnostics) => diagnostics,
         };
 
+        self.diagnostic_state.mark_linted(uri);
+
         let uri_diagnostics = diagnostics
             .iter()
             .filter(|(diag_uri, _)| diag_uri == uri)
@@ -897,7 +954,7 @@ impl LanguageServer for Backend {
             RelatedFullDocumentDiagnosticReport {
                 full_document_diagnostic_report: FullDocumentDiagnosticReport {
                     items: uri_diagnostics,
-                    ..Default::default()
+                    result_id,
                 },
                 related_documents: if related_diagnostics.is_empty() {
                     None
@@ -959,6 +1016,7 @@ impl Backend {
             worker_manager,
             capabilities: OnceCell::new(),
             file_system: Arc::new(LSPFileSystem::default()),
+            diagnostic_state: DiagnosticState::default(),
             pending_initialization_messages: OnceCell::new(),
         }
     }
