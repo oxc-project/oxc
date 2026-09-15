@@ -33,8 +33,6 @@ const IGNORE: &[&str] = &[
     "js/async-do-expressions/",
     "js/do",
     "jsx/do/",
-    // Facebook Translation (fbt) is not supported
-    "jsx/fbt/",
     // Experimental syntax: `export X from "mod"`
     "js/export-default/export-default-from",
     "js/export-default/escaped",

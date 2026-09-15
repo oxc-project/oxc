@@ -1,9 +1,9 @@
 ---
 source: crates/oxc_formatter/tests/conformance.rs
-assertion_line: 178
+assertion_line: 177
 expression: report
 ---
-ts compatibility: 621/659 (94.23%), 16 files skipped
+ts compatibility: 622/660 (94.24%), 16 files skipped
 
 # Failed
 
