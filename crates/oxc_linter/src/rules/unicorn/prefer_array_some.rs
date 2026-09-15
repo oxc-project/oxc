@@ -231,7 +231,7 @@ impl Rule for PreferArraySome {
                     return;
                 };
 
-                if !matches!(static_property_name, "length") {
+                if static_property_name != "length" {
                     return;
                 }
 

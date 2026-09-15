@@ -47,7 +47,7 @@
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_str::{Ident, JSStr, Str, static_ident};
+use oxc_str::{Ident, JSStr, static_ident};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -83,7 +83,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                         break ident.name.into();
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name.into();
+                        break expr.property.name.as_js_str();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -108,14 +108,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
-                        break Str::from_str_in(&name, ctx);
+                        break JSStr::from_str_in(&name, ctx);
                     }
                     return;
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    break Str::from_str_in(&ctx.state.filename, ctx);
+                    break JSStr::from_str_in(&ctx.state.filename, ctx);
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_parent_of_statement() => return,
@@ -123,7 +123,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
             }
         };
 
-        Self::add_display_name(obj_expr, name.into(), ctx);
+        Self::add_display_name(obj_expr, name, ctx);
     }
 }
 

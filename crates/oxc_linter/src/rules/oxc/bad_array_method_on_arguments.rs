@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, MemberExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -80,14 +81,11 @@ impl Rule for BadArrayMethodOnArguments {
         let AstKind::CallExpression(_) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
-        let Some(name) = member_expr.static_property_name() else {
+        let Some(name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
-        if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
-            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                name.as_str(),
-                member_expr.span(),
-            ));
+        if ARRAY_METHODS.binary_search(&name).is_ok() {
+            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(name, member_expr.span()));
         }
     }
 }
