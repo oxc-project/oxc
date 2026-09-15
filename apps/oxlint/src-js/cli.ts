@@ -1,5 +1,7 @@
-import { lint } from "./bindings.js";
+import { Worker } from "node:worker_threads";
+import { lint, reportJsPluginWorkerFailure } from "./bindings.js";
 import { debugAssertIsNonNull, debugAssertIsNotUndefined } from "./utils/asserts.ts";
+import { getErrorMessage } from "./utils/utils.ts";
 
 // Lazy-loaded JS plugin-related functions.
 // The type annotations below use `typeof import("./plugins/index.ts").<fn>` so that the lazy-loaded variables
@@ -11,6 +13,77 @@ let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | nul
 let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
 // Lazy-loaded JS/TS config loader (experimental)
 let resolvedConfigLoader: import("./js_config.ts").ConfigLoader | null = null;
+
+const PLUGIN_WORKER_URL = new URL("./plugin-worker.js", import.meta.url);
+const pluginWorkers: Worker[] = [];
+let pluginWorkersShuttingDown = false;
+
+interface PluginWorkerMessage {
+  ready?: true;
+  error?: string;
+}
+
+/**
+ * Create JS-plugin workers after Rust has finished resolving the canonical plugin configuration.
+ */
+async function initializePluginWorkersWrapper(
+  poolId: number,
+  workerCount: number,
+  bootstrapJSON: string,
+): Promise<undefined> {
+  const startupPromises: Promise<void>[] = [];
+
+  for (let workerIndex = 0; workerIndex < workerCount; workerIndex++) {
+    const worker = new Worker(PLUGIN_WORKER_URL, {
+      workerData: { poolId, workerIndex, bootstrapJSON },
+    });
+    pluginWorkers.push(worker);
+
+    startupPromises.push(
+      new Promise((resolve, reject) => {
+        let ready = false;
+        let startupSettled = false;
+
+        const fail = (error: unknown) => {
+          const message = typeof error === "string" ? error : getErrorMessage(error);
+          reportJsPluginWorkerFailure(poolId, workerIndex, message);
+          if (!startupSettled) {
+            startupSettled = true;
+            reject(new Error(`JS plugin worker ${workerIndex} failed: ${message}`));
+          }
+        };
+
+        worker.once("message", (message: PluginWorkerMessage) => {
+          if (message?.ready === true) {
+            ready = true;
+            startupSettled = true;
+            resolve();
+          } else {
+            fail(message?.error ?? "Worker sent an invalid startup response");
+          }
+        });
+        worker.on("error", fail);
+        worker.on("exit", (code) => {
+          if (pluginWorkersShuttingDown) return;
+          const message = ready
+            ? `JS plugin worker ${workerIndex} exited unexpectedly with code ${code}`
+            : `JS plugin worker ${workerIndex} exited during startup with code ${code}`;
+          reportJsPluginWorkerFailure(poolId, workerIndex, message);
+          if (!startupSettled) {
+            startupSettled = true;
+            reject(new Error(message));
+          }
+        });
+      }),
+    );
+  }
+
+  // Handle every startup promise concurrently, then propagate any failure after all workers settle.
+  for (const result of await Promise.allSettled(startupPromises)) {
+    if (result.status === "rejected") throw result.reason;
+  }
+  return undefined;
+}
 
 /**
  * Load a plugin.
@@ -182,15 +255,24 @@ if (!process.stdout.isTTY) {
 if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
 
 // Call Rust, passing callbacks and CLI arguments
-const success = await lint(
-  args,
-  loadPluginWrapper,
-  setupRuleConfigsWrapper,
-  lintFileWrapper,
-  createWorkspaceWrapper,
-  destroyWorkspaceWrapper,
-  loadJsConfigsWrapper,
-);
+let success = false;
+try {
+  success = await lint(
+    args,
+    loadPluginWrapper,
+    setupRuleConfigsWrapper,
+    lintFileWrapper,
+    createWorkspaceWrapper,
+    destroyWorkspaceWrapper,
+    loadJsConfigsWrapper,
+    initializePluginWorkersWrapper,
+  );
+} finally {
+  pluginWorkersShuttingDown = true;
+  const terminations = pluginWorkers.map((worker) => worker.terminate());
+  // Wait for every worker to terminate without masking a linting error with a shutdown failure.
+  await Promise.allSettled(terminations);
+}
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

@@ -4,13 +4,27 @@ use std::{
 };
 
 use napi::{
-    Status,
+    Error, Status,
     bindgen_prelude::{FnArgs, Promise, Uint8Array},
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
 
 use crate::{init::init_tracing, lint::CliRunner, result::CliRunResult};
+
+/// JS callback which creates worker isolates for external plugins.
+#[napi]
+pub type JsInitializePluginWorkersCb = ThreadsafeFunction<
+    FnArgs<(
+        u32,    // Worker pool ID
+        u32,    // Number of workers to create (does not include main JS isolate)
+        String, // Serialized plugin bootstrap state
+    )>,
+    Promise<()>,
+    FnArgs<(u32, u32, String)>,
+    Status,
+    false,
+>;
 
 /// JS callback to load a JS plugin.
 #[napi]
@@ -132,6 +146,7 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
 /// 5. `create_workspace`: Create a workspace.
 /// 6. `destroy_workspace`: Destroy a workspace.
 /// 7. `load_js_configs`: Load JavaScript config files.
+/// 8. `initialize_plugin_workers`: Create worker isolates for JS plugins.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -145,6 +160,7 @@ pub async fn lint(
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
+    initialize_plugin_workers: JsInitializePluginWorkersCb,
 ) -> bool {
     lint_impl(
         args,
@@ -154,6 +170,7 @@ pub async fn lint(
         create_workspace,
         destroy_workspace,
         load_js_configs,
+        initialize_plugin_workers,
     )
     .await
     .report()
@@ -169,6 +186,7 @@ async fn lint_impl(
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
+    initialize_plugin_workers: JsInitializePluginWorkersCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -199,6 +217,7 @@ async fn lint_impl(
             load_plugin,
             setup_rule_configs,
             lint_file,
+            initialize_plugin_workers,
             create_workspace,
             destroy_workspace,
         ));
@@ -206,10 +225,11 @@ async fn lint_impl(
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let (external_linter, js_config_loader) = {
-        let (_, _, _, _, _, _) = (
+        let (_, _, _, _, _, _, _) = (
             load_plugin,
             setup_rule_configs,
             lint_file,
+            initialize_plugin_workers,
             create_workspace,
             destroy_workspace,
             load_js_configs,
@@ -219,6 +239,11 @@ async fn lint_impl(
 
     // If --lsp flag is set, run the language server
     if command.lsp {
+        if command.misc_options.js_plugin_threads.is_some_and(|threads| threads > 1) {
+            print_js_plugin_threads_lsp_error();
+            return CliRunResult::InvalidOptionJsPluginThreads;
+        }
+
         crate::lsp::run_lsp(external_linter, js_config_loader).await;
         return CliRunResult::LintSucceeded;
     }
@@ -236,6 +261,42 @@ async fn lint_impl(
     }
 
     cli_runner.run(&mut stdout)
+}
+
+#[expect(clippy::print_stderr, reason = "LSP reserves stdout for protocol messages")]
+fn print_js_plugin_threads_lsp_error() {
+    eprintln!("`--js-plugin-threads` greater than 1 is not supported with `--lsp`.");
+}
+
+/// Register a JS-plugin worker isolate with the currently initializing worker pool.
+///
+/// # Errors
+/// Returns an error if the pool or worker index is invalid, or the worker already registered.
+#[napi]
+pub fn register_js_plugin_worker(
+    pool_id: u32,
+    worker_index: u32,
+    lint_file: JsLintFileCb,
+) -> napi::Result<()> {
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    {
+        crate::js_plugins::register_worker(pool_id, worker_index, lint_file)
+            .map_err(Error::from_reason)
+    }
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    {
+        let _ = (pool_id, worker_index, lint_file);
+        Err(Error::from_reason("JS plugins are not supported on this platform".to_string()))
+    }
+}
+
+/// Report that a JS-plugin worker isolate failed after it was created.
+#[napi]
+pub fn report_js_plugin_worker_failure(pool_id: u32, worker_index: u32, error: String) {
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    crate::js_plugins::report_worker_failure(pool_id, worker_index, error);
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    let _ = (pool_id, worker_index, error);
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

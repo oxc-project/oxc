@@ -31,6 +31,15 @@ pub struct MiscOptions {
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
 
+    /// Number of JavaScript threads to use for JS plugins, including the main thread.
+    #[bpaf(
+        long("js-plugin-threads"),
+        argument("INT"),
+        guard(|threads| *threads != Some(0), "must be greater than 0"),
+        hide
+    )]
+    pub js_plugin_threads: Option<usize>,
+
     /// This option outputs the configuration to be used.
     /// When present, no linting is performed and only config-related options are valid.
     #[bpaf(switch, hide_usage)]
@@ -62,6 +71,7 @@ mod misc_options {
         let options = get_misc_options(".");
         assert!(!options.no_error_on_unmatched_pattern);
         assert!(options.threads.is_none());
+        assert!(options.js_plugin_threads.is_none());
     }
 
     #[test]
@@ -74,5 +84,17 @@ mod misc_options {
     fn threads() {
         let options = get_misc_options("--threads 4 .");
         assert_eq!(options.threads, Some(4));
+    }
+
+    #[test]
+    fn js_plugin_threads() {
+        let options = get_misc_options("--js-plugin-threads 4 .");
+        assert_eq!(options.js_plugin_threads, Some(4));
+    }
+
+    #[test]
+    fn js_plugin_threads_cannot_be_zero() {
+        let args = ["--js-plugin-threads", "0", "."].map(std::string::ToString::to_string);
+        assert!(lint_command().run_inner(args.as_slice()).is_err());
     }
 }
