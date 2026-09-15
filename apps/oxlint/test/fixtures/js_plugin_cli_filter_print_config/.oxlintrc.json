@@ -1,0 +1,6 @@
+{
+  "jsPlugins": [{ "name": "custom", "specifier": "./plugin.js" }],
+  "rules": {
+    "custom/rule": "warn"
+  }
+}
