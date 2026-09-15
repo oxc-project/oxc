@@ -2,6 +2,30 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
+## array-hole-leading-comment
+
+- Why: invariant (oxc#22799)
+- Pin: `tests/fixtures/js/comments/array-holes.js`
+
+```js
+// input
+;[a, /* c */, b] = x;
+
+// ours
+[a, /* c */, b] = x;
+
+// prettier
+[a /* c */, , b] = x;
+```
+
+A comment between the commas sits in the hole's slot; Prettier's attachment relocates it across a comma
+(backward to the previous element, or forward past the hole's comma when own-line: `[, /* lead */ 2]` for `[/* lead */, 2]`).
+We print it as the hole's leading comment, keeping its side of both commas.
+A same-line line comment after the separator still trails the previous element (`[a, // c`),
+per the riding-the-separator rule in FORMATTER_POLICY.md.
+Affects conformance `js/arrays/numbers-with-holes.js`: matching Prettier's relocated output there had no fixpoint
+(the comment moved again on our second pass, the file was listed under "Not idempotent"); keeping the slot is idempotent.
+
 ## array-hole-trailing-comment
 
 - Why: invariant

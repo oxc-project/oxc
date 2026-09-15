@@ -70,6 +70,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 filler.finish();
             }
             ArrayLayout::OnePerLine => write_array_node(
+                self.elements.parent().span(),
                 self.elements.len(),
                 self.elements.iter().map(|e| if e.is_elision() { None } else { Some(e) }),
                 f,
