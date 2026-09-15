@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 use oxc_ast::{
     AstKind,
@@ -17,7 +17,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
+fn no_export(span: Span, specifier_name: impl Debug, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{specifier_name:?} not found in imported namespace {namespace_name:?}."
     ))
@@ -26,7 +26,7 @@ fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagn
 
 fn no_export_in_deeply_imported_namespace(
     span: Span,
-    specifier_name: &str,
+    specifier_name: impl Debug,
     namespace_name: &str,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -201,7 +201,7 @@ impl Rule for Namespace {
                     AstKind::JSXMemberExpression(expr) => {
                         check_binding_exported(
                             &expr.property.name,
-                            || no_export(expr.property.span, &expr.property.name, &source),
+                            || no_export(expr.property.span, expr.property.name.as_str(), &source),
                             &module,
                             ctx,
                         );
@@ -280,6 +280,15 @@ fn check_deep_namespace_for_node(
         _ => return None,
     };
 
+    let Some(name) = name.as_str() else {
+        // A module export name cannot contain a lone surrogate, so this key is never exported.
+        ctx.diagnostic(if namespaces.len() > 1 {
+            no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
+        } else {
+            no_export(span, name, source)
+        });
+        return None;
+    };
     if let Some(module_source) = get_module_request_name(name, module) {
         let parent_node = ctx.nodes().parent_node(node.id());
         let module_record = module.get_loaded_module(module_source.as_str())?;
@@ -501,6 +510,10 @@ fn test() {
 
     let fail = vec![
         (r"import * as names from './named-exports'; console.log(names.c)", None),
+        (
+            r"import * as names from './named-exports'; console.log(names['\uD800']);",
+            Some(json!([{ "allowComputed": true }])),
+        ),
         (r"import * as names from './named-exports'; console.log(names['a']);", None),
         (r"import * as foo from './bar'; foo.foo = 'y';", None),
         (r"import * as foo from './bar'; foo.x = 'y';", None),

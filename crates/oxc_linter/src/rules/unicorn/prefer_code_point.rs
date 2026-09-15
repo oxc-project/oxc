@@ -54,20 +54,22 @@ impl Rule for PreferCodePoint {
         };
 
         let (span, property_name) = member_expr.static_property_info();
-        let (current, replacement) = match property_name {
-            "fromCharCode" => {
+        let (current, replacement) = match property_name.as_str() {
+            Some("fromCharCode") => {
                 if !member_expr.object.is_specific_id("String") {
                     return;
                 }
                 ("fromCharCode", "fromCodePoint")
             }
-            "charCodeAt" => {
+            Some("charCodeAt") => {
                 let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) else {
                     return;
                 };
                 if call_expr.optional
                     || call_expr.callee.as_member_expression().and_then(|callee| {
-                        callee.static_property_info().map(|(_, property_name)| property_name)
+                        callee
+                            .static_property_info()
+                            .and_then(|(_, property_name)| property_name.as_str())
                     }) != Some("charCodeAt")
                 {
                     return;

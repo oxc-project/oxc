@@ -70,6 +70,7 @@ pub fn run<'a>(node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
     let Some((property_span, property_name)) = mem_expr.static_property_info() else {
         return;
     };
+    let Some(property_name) = property_name.as_str() else { return };
     let Some(expr) = call_expr.arguments.first().and_then(Argument::as_expression) else {
         return;
     };

@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, Reference};
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule};
@@ -175,7 +176,7 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
     };
 
     if let Expression::Identifier(ident) = member_expr.object() {
-        let Some(property_name) = member_expr.static_property_name() else {
+        let Some(property_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return false;
         };
 

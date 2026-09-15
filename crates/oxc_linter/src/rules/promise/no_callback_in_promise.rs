@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -173,7 +173,8 @@ impl NoCallbackInPromise {
             call_expr
                 .callee
                 .as_member_expression()
-                .and_then(MemberExpression::static_property_name),
+                .and_then(MemberExpression::static_property_name)
+                .and_then(JSStr::as_str),
             Some("then" | "catch")
         )
     }

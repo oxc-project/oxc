@@ -9,6 +9,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
 
@@ -342,7 +343,9 @@ fn has_valid_super_class(class: &Class) -> bool {
     };
     let name = match super_class.get_inner_expression() {
         Expression::Identifier(ident) => Some(ident.name.as_str()),
-        e @ match_member_expression!(Expression) => e.to_member_expression().static_property_name(),
+        e @ match_member_expression!(Expression) => {
+            e.to_member_expression().static_property_name().and_then(JSStr::as_str)
+        }
         _ => None,
     };
     name.is_some_and(is_valid_super_class_name)

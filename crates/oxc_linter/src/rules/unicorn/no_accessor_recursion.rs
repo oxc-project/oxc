@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -130,15 +131,12 @@ impl Rule for NoAccessorRecursion {
                 match func_parent.kind() {
                     // e.g. "const foo = { get bar() { return this.bar }}"
                     AstKind::ObjectProperty(property) => {
-                        let Some(prop_key_name) = property.key.name() else {
-                            return;
-                        };
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && is_key_named(&property.key, expr_key_name)
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                is_key_named(&property.key, expr_key_name)
                             }
                         };
                         if !is_same_key {
@@ -160,15 +158,12 @@ impl Rule for NoAccessorRecursion {
                     }
                     // e.g. "class Foo { get bar(value) { return this.bar } }"
                     AstKind::MethodDefinition(method_def) => {
-                        let Some(prop_key_name) = method_def.key.name() else {
-                            return;
-                        };
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && is_key_named(&method_def.key, expr_key_name)
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                is_key_named(&method_def.key, expr_key_name)
                             }
                         };
                         if !is_same_key {
@@ -264,13 +259,20 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
+fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr<'a>> {
     match expr {
-        MemberExpressionKind::Computed(expr) => {
-            expr.static_property_name().map(|name| name.as_str())
-        }
-        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
-        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
+        MemberExpressionKind::Computed(expr) => expr.static_property_name(),
+        MemberExpressionKind::Static(expr) => Some(JSStr::from(expr.property.name)),
+        MemberExpressionKind::PrivateField(priv_field) => Some(JSStr::from(priv_field.field.name)),
+    }
+}
+
+// String and template keys are compared as `JSStr` so names with lone surrogates still match.
+fn is_key_named(key: &PropertyKey, name: JSStr) -> bool {
+    match key {
+        PropertyKey::StringLiteral(lit) => lit.value == name,
+        PropertyKey::TemplateLiteral(lit) => lit.single_quasi() == Some(name),
+        _ => key.name().is_some_and(|key_name| name == key_name.as_ref()),
     }
 }
 
@@ -470,6 +472,7 @@ fn test() {
                 }
             };
         ",
+        r#"const o = { get "\uD800"() { return this["\uDC00"]; } };"#,
     ];
 
     let fail = vec![
@@ -628,6 +631,8 @@ fn test() {
                 }
             }
         ",
+        r#"const o = { get "\uD800"() { return this["\uD800"]; } };"#,
+        r#"class Foo { get "\uD800"() { return this["\uD800"]; } }"#,
     ];
 
     Tester::new(NoAccessorRecursion::NAME, NoAccessorRecursion::PLUGIN, pass, fail)
