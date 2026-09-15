@@ -272,3 +272,21 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# Import X
+###############################################################################
+
+clone_repo import_x
+
+# Use the repository's pinned Yarn and lockfile.
+node .yarn/releases/yarn-4.9.2.cjs install --immutable
+
+# Stop fixture resolution from inheriting Oxc's TypeScript configuration.
+printf '%s\n' '{}' > tsconfig.json
+
+# Build the exported entry points. Disable discovery of Oxc's parent configs.
+node .yarn/releases/yarn-4.9.2.cjs build:tsc
+node .yarn/releases/yarn-4.9.2.cjs exec tsdown --no-config --tsconfig src/tsconfig.json --no-clean -d lib -f cjs src/index.ts
+
+cd ..

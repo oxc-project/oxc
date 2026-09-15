@@ -7,6 +7,7 @@ extend-exclude = [
   "**/*.snap",
   "**/*/CHANGELOG.md",
   "apps/oxlint/conformance/snapshot.md",
+  "apps/oxlint/conformance/snapshots/import-x.md",
   "apps/oxlint/src-js/package/config.generated.ts",
   "apps/oxfmt/test/**/fixtures/**",
   "apps/oxfmt/conformance/snapshots/diffs/**/",

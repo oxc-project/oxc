@@ -74,6 +74,9 @@ export interface TestGroup {
    */
   testFilesDirPath: string;
 
+  /** Working directory for the group, relative to its submodule. */
+  cwd?: string;
+
   /**
    * Transform test file name to test name.
    *
@@ -234,7 +237,15 @@ function initMocks(): Mocks {
 function runGroups(groups: TestGroup[], mocks: Mocks) {
   for (const group of groups) {
     if (SHOULD_SKIP_GROUP(group.name)) continue;
-    runGroup(group, mocks);
+    const cwd = process.cwd();
+    try {
+      if (group.cwd !== undefined) {
+        process.chdir(pathJoin(SUBMODULES_DIR_PATH, group.submoduleName, group.cwd));
+      }
+      runGroup(group, mocks);
+    } finally {
+      process.chdir(cwd);
+    }
   }
 }
 
