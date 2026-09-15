@@ -48,7 +48,7 @@ multi_index_vec! {
     /// Scope tree stored as struct-of-arrays in a single allocation.
     ///
     /// Contains parent IDs, node IDs, and flags for all scopes. Using a single
-    /// allocation with one `len`/`cap` instead of 3 separate `IndexVec`s saves
+    /// allocation with one `len`/`cap` instead of separate `IndexVec`s saves
     /// memory (no redundant len/cap) and CPU (one bounds check, one capacity
     /// check on push).
     struct ScopeTable<ScopeId> {
@@ -62,7 +62,7 @@ multi_index_vec! {
     /// Symbol table stored as struct-of-arrays in a single allocation.
     ///
     /// Contains spans, flags, scope IDs, and declaration node IDs for all symbols.
-    /// Using a single allocation with one `len`/`cap` instead of 4 separate `IndexVec`s
+    /// Using a single allocation with one `len`/`cap` instead of separate `IndexVec`s
     /// saves memory and CPU.
     struct SymbolTable<SymbolId> {
         symbol_spans => symbol_spans_mut: Span,
@@ -542,6 +542,23 @@ impl Scoping {
         });
     }
 
+    /// Update a declaration's flags when its syntax is lowered to a runtime binding.
+    /// The symbol's combined flags are managed separately by the transform.
+    pub fn set_symbol_declaration_flags(
+        &mut self,
+        symbol_id: SymbolId,
+        span: Span,
+        flags: SymbolFlags,
+    ) {
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            if let Some(declarations) = cell.symbol_redeclarations.get_mut(&symbol_id)
+                && let Some(declaration) = declarations.iter_mut().find(|d| d.span == span)
+            {
+                declaration.flags = flags;
+            }
+        });
+    }
+
     /// Remove one declaration from a merged symbol and promote the first surviving declaration.
     pub fn remove_symbol_declaration(&mut self, symbol_id: SymbolId, span: Span) {
         let replacement = self.cell.with_dependent_mut(|_allocator, cell| {
@@ -565,6 +582,114 @@ impl Scoping {
             *self.symbol_table.symbol_declarations_mut(symbol_id) = replacement.declaration;
             *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
         }
+    }
+
+    /// Retain declarations of a symbol, promoting the first survivor.
+    ///
+    /// Returns `false` when no declaration survives. The caller must remove the
+    /// binding and repair its references after removing all other dead bindings.
+    /// Flags already rewritten by a transform are preserved; original declaration
+    /// flags must not undo enum or namespace lowering.
+    pub fn retain_symbol_declarations(
+        &mut self,
+        symbol_id: SymbolId,
+        mut keep: impl FnMut(Span, SymbolFlags) -> bool,
+    ) -> bool {
+        let old_flags = self.symbol_flags(symbol_id);
+        let old_span = self.symbol_span(symbol_id);
+        let result = self.cell.with_dependent_mut(|_allocator, cell| {
+            let Some(declarations) = cell.symbol_redeclarations.get_mut(&symbol_id) else {
+                return (keep(old_span, old_flags), None);
+            };
+            let original_flags = declarations.iter().fold(SymbolFlags::None, |f, d| f | d.flags);
+            let original_len = declarations.len();
+            let mut old_span_survives = false;
+            declarations.retain(|d| {
+                let retained = keep(d.span, d.flags);
+                old_span_survives |= retained && d.span == old_span;
+                retained
+            });
+            if declarations.len() == original_len {
+                return (true, None);
+            }
+            let replacement = declarations.first().cloned();
+            let flags = declarations.iter().fold(SymbolFlags::None, |f, d| f | d.flags);
+            if declarations.len() < 2 {
+                cell.symbol_redeclarations.remove(&symbol_id);
+            }
+            (
+                replacement.is_some(),
+                replacement.map(|d| (d, original_flags, flags, old_span_survives)),
+            )
+        });
+        if let Some((first, original_flags, flags, old_span_survives)) = result.1 {
+            // Lowering may have replaced the original declaration with a JS binding.
+            // Preserve that binding's flags and location when it survives.
+            if old_flags == original_flags {
+                *self.symbol_table.symbol_flags_mut(symbol_id) = flags;
+                *self.symbol_table.symbol_spans_mut(symbol_id) = first.span;
+                *self.symbol_table.symbol_declarations_mut(symbol_id) = first.declaration;
+            } else {
+                // Keep flags introduced by lowering and remove original flags
+                // contributed exclusively by erased declarations. Do not restore
+                // flags deliberately removed by an earlier transform.
+                *self.symbol_table.symbol_flags_mut(symbol_id) =
+                    (old_flags - original_flags) | (old_flags & flags);
+                if !old_span_survives {
+                    *self.symbol_table.symbol_spans_mut(symbol_id) = first.span;
+                    *self.symbol_table.symbol_declarations_mut(symbol_id) = first.declaration;
+                }
+            }
+        }
+        result.0
+    }
+
+    /// Remove bindings for erased symbols, then resolve their remaining references
+    /// against the surviving scope tree. Symbol and reference IDs stay stable.
+    pub fn remove_bindings_and_resolve_references(&mut self, removed: &FxHashSet<SymbolId>) {
+        if removed.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|allocator, cell| {
+            for bindings in &mut cell.bindings {
+                bindings.retain(|_, id| !removed.contains(id));
+            }
+            for &symbol_id in removed {
+                let name = cell.symbol_names[symbol_id.index()];
+                let reference_ids = mem::replace(
+                    &mut cell.resolved_references[symbol_id.index()],
+                    ArenaVec::new_in(&allocator),
+                );
+                for reference_id in reference_ids {
+                    let reference = &mut self.references[reference_id];
+                    // Resume at the erased binding, not the reference's lexical scope.
+                    // A parameter default can share a scope with body declarations that
+                    // were deliberately skipped during its original resolution.
+                    // TODO: Nested closures in parameter initializers can still resolve
+                    // to inaccessible body bindings because parameters and the body share
+                    // a scope. Separate parameter/body scopes are needed to model this.
+                    let mut scope = Some(*self.symbol_table.symbol_scope_ids(symbol_id));
+                    let mut resolved = None;
+                    while let Some(scope_id) = scope {
+                        if let Some(&id) = cell.bindings[scope_id].get(&name) {
+                            resolved = Some(id);
+                            break;
+                        }
+                        scope = *self.scope_table.parent_ids(scope_id);
+                    }
+                    if let Some(id) = resolved {
+                        reference.set_symbol_id(id);
+                        cell.resolved_references[id.index()].push(reference_id);
+                    } else {
+                        reference.clear_symbol_id();
+                        cell.root_unresolved_references
+                            .entry(name)
+                            .or_insert_with(|| ArenaVec::new_in(&allocator))
+                            .push(reference_id);
+                    }
+                }
+            }
+        });
     }
 
     #[inline]
@@ -679,6 +804,22 @@ impl Scoping {
             for reference_ids in &mut cell.resolved_references {
                 reference_ids.retain(|id| !excluded.contains(id.index()));
             }
+        });
+    }
+
+    /// Remove references belonging to erased syntax from both reference indexes.
+    pub fn remove_references(&mut self, removed: &FxHashSet<ReferenceId>) {
+        if removed.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|_allocator, cell| {
+            for ids in &mut cell.resolved_references {
+                ids.retain(|id| !removed.contains(id));
+            }
+            cell.root_unresolved_references.retain(|_, ids| {
+                ids.retain(|id| !removed.contains(id));
+                !ids.is_empty()
+            });
         });
     }
 
@@ -1069,6 +1210,17 @@ impl Scoping {
 
     /// Remove bindings that exist only in TypeScript syntax.
     pub fn delete_typescript_bindings(&mut self) {
+        self.delete_typescript_bindings_with(|_, _| false);
+    }
+
+    /// Remove TypeScript bindings and additional declarations erased by a transform.
+    ///
+    /// `is_erased` identifies declarations by symbol and binding span. All bindings
+    /// are removed before any remaining value references are resolved again.
+    pub fn delete_typescript_bindings_with(
+        &mut self,
+        mut is_erased: impl FnMut(SymbolId, Span) -> bool,
+    ) {
         #[expect(
             clippy::inline_always,
             reason = "Hot predicate called for every semantic reference"
@@ -1092,19 +1244,33 @@ impl Scoping {
                     .retain(|reference_id| !is_typescript_reference(&references[*reference_id]));
                 !reference_ids.is_empty()
             });
+        });
 
-            for bindings in &mut cell.bindings {
-                bindings.retain(|_name, symbol_id| {
-                    let flags = *self.symbol_table.symbol_flags(*symbol_id);
-                    !flags.intersects(
-                        SymbolFlags::TypeAlias
-                            | SymbolFlags::Interface
-                            | SymbolFlags::TypeParameter
-                            | SymbolFlags::EnumMember,
-                    )
+        let mut removed = FxHashSet::default();
+        for index in 0..self.symbols_len() {
+            let symbol_id = SymbolId::from_usize(index);
+            // Enum lowering replaces member references with property accesses or
+            // constants. They are not live references to a disappearing lexical binding.
+            if self.symbol_flags(symbol_id).contains(SymbolFlags::EnumMember) {
+                self.cell.with_dependent_mut(|_, cell| {
+                    cell.resolved_references[symbol_id.index()].clear();
                 });
             }
-        });
+            if !self.retain_symbol_declarations(symbol_id, |span, flags| {
+                !is_erased(symbol_id, span)
+                    && !flags.intersects(
+                        SymbolFlags::Ambient
+                            | SymbolFlags::TypeAlias
+                            | SymbolFlags::Interface
+                            | SymbolFlags::TypeParameter
+                            | SymbolFlags::EnumMember
+                            | SymbolFlags::NamespaceModule,
+                    )
+            }) {
+                removed.insert(symbol_id);
+            }
+        }
+        self.remove_bindings_and_resolve_references(&removed);
     }
 }
 

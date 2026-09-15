@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 279/407
+Passed: 360/425
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,12 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (42/61)
-* allow-declare-fields-false/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
+# babel-plugin-transform-typescript (69/79)
 * computed-constant-value/input.ts
 Unresolved references mismatch:
 after transform: ["Infinity", "NaN"]
@@ -84,11 +79,6 @@ rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12
     `----
 
 
-* elimination-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "ReactiveMarker", "ReactiveMarkerSymbol"]
-rebuilt        : ScopeId(0): []
-
 * enum-member-reference/input.ts
 Missing ReferenceId: "Foo"
 Missing ReferenceId: "Merge"
@@ -99,9 +89,6 @@ rebuilt        : SymbolId(0): [ReferenceId(7)]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(14): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8)]
-Symbol redeclarations mismatch for "Merge":
-after transform: SymbolId(5): [Span { start: 70, end: 75 }, Span { start: 103, end: 108 }]
-rebuilt        : SymbolId(3): []
 Symbol reference IDs mismatch for "Merge":
 after transform: SymbolId(16): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
 rebuilt        : SymbolId(5): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
@@ -132,80 +119,59 @@ Symbol reference IDs mismatch for "NumberEnum":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
 
-* export-elimination/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
-rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "T":
-after transform: SymbolId(9): Span { start: 205, end: 206 }
-rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
+* oxc/semantic-ambient-parameter-defaults/input.ts
+Symbol reference IDs mismatch for "y":
+after transform: SymbolId(10): [ReferenceId(2)]
+rebuilt        : SymbolId(9): [ReferenceId(2), ReferenceId(4)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(18): [ReferenceId(3)]
+rebuilt        : SymbolId(15): []
+Symbol reference IDs mismatch for "y":
+after transform: SymbolId(22): [ReferenceId(4)]
+rebuilt        : SymbolId(18): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(18) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "y":
+after transform: SymbolId(22) "y"
+rebuilt        : SymbolId(9) "y"
+Unresolved reference IDs mismatch for "x":
+after transform: [ReferenceId(0), ReferenceId(1)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+
+* oxc/semantic-parameter-environments/input.ts
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(6): []
+rebuilt        : SymbolId(5): [ReferenceId(1)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(10): [ReferenceId(1)]
 rebuilt        : SymbolId(8): []
-
-* namespace/import-=/input.ts
-Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(0): [ReferenceId(2)]
-
-* namespace/redeclaration-with-enum/input.ts
-Symbol redeclarations mismatch for "x":
-after transform: SymbolId(0): [Span { start: 10, end: 11 }, Span { start: 39, end: 40 }]
-rebuilt        : SymbolId(0): []
-Symbol redeclarations mismatch for "y":
-after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
-rebuilt        : SymbolId(3): []
-
-* optimize-enums/merged-enum/input.ts
-Unresolved references mismatch:
-after transform: ["A"]
-rebuilt        : []
-
-* redeclarations/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): ["A", "B", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Import)
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
-rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
-rebuilt        : SymbolId(2): []
-
-* remove-class-properties-without-initializer/input.ts
-Unresolved references mismatch:
-after transform: ["dce"]
-rebuilt        : []
-
-* remove-unused-import-equals/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
-rebuilt        : ScopeId(0): ["a", "b", "bar", "c"]
-Unresolved reference IDs mismatch for "foo":
-after transform: [ReferenceId(0), ReferenceId(6)]
-rebuilt        : [ReferenceId(0)]
-
-* ts-declaration-empty-output/input.d.ts
-x Output mismatch
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(16): [ReferenceId(2)]
+rebuilt        : SymbolId(13): []
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(32): []
+rebuilt        : SymbolId(26): [ReferenceId(6)]
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(36): [ReferenceId(6)]
+rebuilt        : SymbolId(29): []
+Reference symbol mismatch for "x":
+after transform: SymbolId(10) "x"
+rebuilt        : SymbolId(5) "x"
+Reference symbol mismatch for "x":
+after transform: SymbolId(16) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(36) "x"
+rebuilt        : SymbolId(26) "x"
+Unresolved reference IDs mismatch for "x":
+after transform: [ReferenceId(0)]
+rebuilt        : [ReferenceId(0), ReferenceId(2)]
 
 * use-define-for-class-fields/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
-
-* use-define-for-class-fields-without-class-properties/input.ts
-Unresolved reference IDs mismatch for "dce":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
-rebuilt        : [ReferenceId(5)]
 
 
 # babel-plugin-transform-react-jsx (51/54)
@@ -223,88 +189,19 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (20/106)
+# legacy-decorators (74/106)
 * oxc/accessor/input.ts
 x Output mismatch
-
-* oxc/accessor-name-collision/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop", "property"]
-rebuilt        : ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop"]
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "property"]
-
-* oxc/accessor-with-class-properties/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage", "a", "dec"]
-rebuilt        : ScopeId(0): ["C", "_a", "_a2", "_a_accessor_storage", "_a_computed_accessor_storage", "_b_accessor_storage", "_c_accessor_storage"]
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["WeakMap", "babelHelpers"]
-rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
 
 * oxc/class-without-name-with-decorated_class/input.ts
 Symbol flags mismatch for "_default":
 after transform: SymbolId(1): SymbolFlags(Class)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 
-* oxc/metadata/ambient-declared-class/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Ambient", "Source", "dec"]
-rebuilt        : ScopeId(0): ["Source"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "Ambient":
-after transform: SymbolId(0) "Ambient"
-rebuilt        : <None>
-Reference symbol mismatch for "Ambient":
-after transform: SymbolId(0) "Ambient"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Ambient", "Object", "babelHelpers", "dec"]
-
 * oxc/metadata/class-expression-via-const/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "Source", "dec"]
-rebuilt        : ScopeId(0): ["C", "Source"]
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(0): []
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5)]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
 Reference symbol mismatch for "C":
 after transform: <None>
 rebuilt        : SymbolId(0) "C"
@@ -318,164 +215,16 @@ Reference flags mismatch for "C":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read)
 Unresolved references mismatch:
-after transform: ["C", "Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/constructor-overload/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["MyService", "dec"]
-rebuilt        : ScopeId(0): ["MyService"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["String", "babelHelpers"]
-rebuilt        : ["String", "babelHelpers", "dec"]
-
-* oxc/metadata/cross-file-imported-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Source", "StringEnum", "dec"]
-rebuilt        : ScopeId(0): ["Source", "StringEnum"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/erased-import-no-type-keyword/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Source", "T", "dec"]
-rebuilt        : ScopeId(0): ["Source", "T"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/forward-ref-class/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["LaterClass", "Source", "dec"]
-rebuilt        : ScopeId(0): ["LaterClass", "Source"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/getter-setter-method/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Getter", "Setter", "UntypedGetter", "UntypedSetter", "dec"]
-rebuilt        : ScopeId(0): ["Getter", "Setter", "UntypedGetter", "UntypedSetter"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "Number", "Object", "String", "babelHelpers"]
-rebuilt        : ["Function", "Number", "Object", "String", "babelHelpers", "dec"]
-
-* oxc/metadata/imports/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Cls", "Foo", "dec"]
-rebuilt        : ScopeId(0): ["Cls", "Foo"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(3) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers", "console"]
-rebuilt        : ["Object", "babelHelpers", "console", "dec"]
-
-* oxc/metadata/namespace-imported-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["NS", "Source", "dec"]
-rebuilt        : ScopeId(0): ["NS", "Source"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(1) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
+after transform: ["C", "Object", "babelHelpers", "dec"]
 rebuilt        : ["Object", "babelHelpers", "dec"]
 
 * oxc/metadata/nullable-union/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Source", "dec"]
-rebuilt        : ScopeId(0): ["Source"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Boolean", "Number", "Object", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Number", "Object", "String", "babelHelpers", "dec"]
 Unresolved reference IDs mismatch for "String":
 after transform: [ReferenceId(5), ReferenceId(20)]
 rebuilt        : [ReferenceId(3)]
 Unresolved reference IDs mismatch for "Number":
 after transform: [ReferenceId(9), ReferenceId(21)]
 rebuilt        : [ReferenceId(8)]
-
-* oxc/metadata/params/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "methodDecorator", "paramDecorator"]
-rebuilt        : ScopeId(0): ["Foo"]
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
 * oxc/metadata/private-in-expression-in-decorator/input.ts
 Binding symbols mismatch:
@@ -517,42 +266,6 @@ rebuilt        : SymbolId(2) "Cls2"
 Unresolved reference IDs mismatch for "babelHelpers":
 after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
 rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
-
-* oxc/metadata/readonly-array/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Source", "dec"]
-rebuilt        : ScopeId(0): ["Source"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Array", "babelHelpers"]
-rebuilt        : ["Array", "babelHelpers", "dec"]
-
-* oxc/metadata/readonly-array-interface-shadow/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Source", "dec"]
-rebuilt        : ScopeId(0): ["Source"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(2) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "dec"]
-
-* oxc/metadata/static-anonymous-class-expression/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "Foo", "dec"]
-rebuilt        : ScopeId(0): ["A", "Foo"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Error", "Object", "babelHelpers"]
-rebuilt        : ["Error", "Object", "babelHelpers", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
 
@@ -596,28 +309,6 @@ Symbol flags mismatch for "_default":
 after transform: SymbolId(0): SymbolFlags(Class)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
-* typescript/accessor/decoratorOnClassAccessor1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/accessor/decoratorOnClassAccessor2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
 * typescript/accessor/decoratorOnClassAccessor3/input.ts
 
   x Expected `;` but found `@`
@@ -629,28 +320,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/accessor/decoratorOnClassAccessor4/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/accessor/decoratorOnClassAccessor5/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/accessor/decoratorOnClassAccessor6/input.ts
 
@@ -672,34 +341,6 @@ x Output mismatch
 
 * typescript/constructor/decoratorOnClassConstructor1/input.ts
 x Output mismatch
-
-* typescript/constructor/decoratorOnClassConstructor4/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "dec"]
-rebuilt        : ScopeId(0): ["A", "B", "C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Number", "babelHelpers"]
-rebuilt        : ["Number", "babelHelpers", "dec"]
-
-* typescript/constructor/parameter/decoratorOnClassConstructorParameter1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/constructor/parameter/decoratorOnClassConstructorParameter4/input.ts
 
@@ -729,30 +370,8 @@ x Output mismatch
 * typescript/decoratedClassExportsCommonJS1/input.ts
 x Output mismatch
 
-* typescript/decoratedClassExportsCommonJS2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123", "forwardRef"]
-rebuilt        : ScopeId(0): ["Testing123"]
-Reference symbol mismatch for "Something":
-after transform: SymbolId(2) "Something"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["Something", "babelHelpers"]
-
 * typescript/decoratedClassExportsSystem1/input.ts
 x Output mismatch
-
-* typescript/decoratedClassExportsSystem2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123", "forwardRef"]
-rebuilt        : ScopeId(0): ["Testing123"]
-Reference symbol mismatch for "Something":
-after transform: SymbolId(2) "Something"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["Something", "babelHelpers"]
 
 * typescript/decoratorChecksFunctionBodies/input.ts
 Scope flags mismatch:
@@ -762,149 +381,14 @@ Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(0))
 
-* typescript/decoratorOnClass1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass4/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass5/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/decoratorOnClass8/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
 * typescript/decoratorOnClass9/input.ts
 x Output mismatch
-
-* typescript/method/decoratorOnClassMethod1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod10/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod11/input.ts
 x Output mismatch
 
 * typescript/method/decoratorOnClassMethod12/input.ts
 x Output mismatch
-
-* typescript/method/decoratorOnClassMethod13/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod14/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "decorator"]
-rebuilt        : ScopeId(0): ["Foo"]
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "babelHelpers"]
-rebuilt        : ["Function", "babelHelpers", "decorator"]
-
-* typescript/method/decoratorOnClassMethod15/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "decorator"]
-rebuilt        : ScopeId(0): ["Foo"]
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "babelHelpers"]
-rebuilt        : ["Function", "babelHelpers", "decorator"]
-
-* typescript/method/decoratorOnClassMethod16/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "decorator"]
-rebuilt        : ScopeId(0): ["Foo"]
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Function", "babelHelpers"]
-rebuilt        : ["Function", "babelHelpers", "decorator"]
 
 * typescript/method/decoratorOnClassMethod17/input.ts
 
@@ -918,30 +402,8 @@ rebuilt        : ["Function", "babelHelpers", "decorator"]
    `----
 
 
-* typescript/method/decoratorOnClassMethod18/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "decorator"]
-rebuilt        : ScopeId(0): ["Foo"]
-Reference symbol mismatch for "decorator":
-after transform: SymbolId(0) "decorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Object", "babelHelpers"]
-rebuilt        : ["Object", "babelHelpers", "decorator"]
-
 * typescript/method/decoratorOnClassMethod19/input.ts
 x Output mismatch
-
-* typescript/method/decoratorOnClassMethod2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod3/input.ts
 
@@ -954,61 +416,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/method/decoratorOnClassMethod4/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod5/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod6/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/decoratorOnClassMethod8/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethodOverload1/input.ts
 
@@ -1023,50 +430,6 @@ rebuilt        : ["babelHelpers", "dec"]
   help: Move this after all the overloads
 
 
-* typescript/method/decoratorOnClassMethodOverload2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/parameter/decoratorOnClassMethodParameter1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/parameter/decoratorOnClassMethodParameter2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/method/parameter/decoratorOnClassMethodParameter3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["dec", "fn"]
-rebuilt        : ScopeId(0): ["fn"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
 * typescript/method/parameter/decoratorOnClassMethodThisParameter/input.ts
 
   x Identifier expected. 'this' is a reserved word that cannot be used here.
@@ -1077,89 +440,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/property/decoratorOnClassAccessorProperty1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty10/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty11/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty12/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "dec"]
-rebuilt        : ScopeId(0): ["A"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["String", "babelHelpers"]
-rebuilt        : ["String", "babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty13/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/property/decoratorOnClassProperty3/input.ts
 
@@ -1172,28 +452,6 @@ rebuilt        : ["babelHelpers", "dec"]
  7 | }
    `----
 
-
-* typescript/property/decoratorOnClassProperty6/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
-
-* typescript/property/decoratorOnClassProperty7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
 
 
 # plugin-styled-components (25/40)

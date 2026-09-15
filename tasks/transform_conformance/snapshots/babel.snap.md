@@ -1,6 +1,6 @@
 commit: 1eac4481
 
-Passed: 731/1162
+Passed: 750/1162
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1155,7 +1155,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (110/155)
+# babel-plugin-transform-typescript (129/155)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private
@@ -1219,30 +1219,7 @@ If you have already enabled that plugin (or '@babel/preset-typescript'), make su
  - @babel/plugin-transform-private-methods
  - @babel/plugin-proposal-decorators
 
-* declarations/const-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["E"]
-rebuilt        : ScopeId(0): []
-
-* declarations/erased/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "E", "N", "f", "x"]
-rebuilt        : ScopeId(0): []
-
-* declarations/export-declare-enum/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-
-* declarations/nested-namespace/input.mjs
-Bindings mismatch:
-after transform: ScopeId(0): ["P"]
-rebuilt        : ScopeId(0): []
-
 * enum/enum-merging-inner-references/input.ts
-Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(0): [Span { start: 5, end: 12 }, Span { start: 41, end: 48 }]
-rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["Cat", "Dog"]
 rebuilt        : []
@@ -1254,14 +1231,6 @@ rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch for "Dog":
 after transform: SymbolId(1): [ReferenceId(1)]
 rebuilt        : SymbolId(1): []
-Symbol redeclarations mismatch for "Animals":
-after transform: SymbolId(2): [Span { start: 38, end: 45 }, Span { start: 65, end: 72 }, Span { start: 92, end: 99 }]
-rebuilt        : SymbolId(2): []
-
-* enum/export/input.ts
-Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 12, end: 13 }, Span { start: 40, end: 41 }]
-rebuilt        : SymbolId(0): []
 
 * enum/mix-references/input.ts
 x Output mismatch
@@ -1272,11 +1241,6 @@ Missing ReferenceId: "Foo"
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(7): [ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12)]
-
-* enum/non-scoped/input.ts
-Symbol redeclarations mismatch for "E":
-after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 40, end: 41 }]
-rebuilt        : SymbolId(0): []
 
 * enum/outer-references/input.ts
 Symbol reference IDs mismatch for "socketType":
@@ -1289,39 +1253,6 @@ x Output mismatch
 * enum/ts5.0-const-foldable/input.ts
 x Output mismatch
 
-* exports/declare-namespace/input.ts
-Symbol flags mismatch for "N":
-after transform: SymbolId(0): SymbolFlags(Class | NamespaceModule | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Class)
-Symbol redeclarations mismatch for "N":
-after transform: SymbolId(0): [Span { start: 13, end: 14 }, Span { start: 83, end: 84 }]
-rebuilt        : SymbolId(0): []
-
-* exports/declare-shadowed/input.ts
-Symbol flags mismatch for "Signal":
-after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "Signal":
-after transform: SymbolId(0): Span { start: 14, end: 20 }
-rebuilt        : SymbolId(0): Span { start: 54, end: 60 }
-Symbol redeclarations mismatch for "Signal":
-after transform: SymbolId(0): [Span { start: 14, end: 20 }, Span { start: 54, end: 60 }]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "Signal2":
-after transform: SymbolId(3): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(2): SymbolFlags(Function)
-Symbol redeclarations mismatch for "Signal2":
-after transform: SymbolId(3): [Span { start: 147, end: 154 }, Span { start: 225, end: 232 }]
-rebuilt        : SymbolId(2): []
-
-* exports/declared-types/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "N", "f", "foo", "x"]
-rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
-Symbol redeclarations mismatch for "BB":
-after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
-rebuilt        : SymbolId(1): []
-
 * exports/export=/input.ts
 x Expected transform error, but transformation succeeded: `export = <value>;` is only supported when compiling modules to CommonJS.
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
@@ -1329,65 +1260,12 @@ Please consider using `export default <value>;`, or add @babel/plugin-transform-
 * exports/interface/input.ts
 x Output mismatch
 
-* function/overloads/input.ts
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
-* function/overloads-exports/input.mjs
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
-
 * imports/import=-module/input.ts
 x Expected transform error, but transformation succeeded: `import lib = require(...);` is only supported when compiling modules to CommonJS.
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 * imports/type-only-export-specifier-2/input.ts
 x Output mismatch
-
-* namespace/alias/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
-Reference symbol mismatch for "LongNameModule":
-after transform: SymbolId(0) "LongNameModule"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["console"]
-rebuilt        : ["LongNameModule", "console"]
-
-* namespace/clobber-enum/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 5, end: 6 }, Span { start: 30, end: 31 }]
-rebuilt        : SymbolId(0): []
-
-* namespace/declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "C", "_N", "e", "f", "v"]
-rebuilt        : ScopeId(1): ["_N"]
-
-* namespace/empty-removed/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["_a", "b", "c", "d"]
-rebuilt        : ScopeId(1): ["_a", "c"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
-rebuilt        : ScopeId(3): ["_WithTypes", "d"]
-Bindings mismatch:
-after transform: ScopeId(12): ["D", "_d"]
-rebuilt        : ScopeId(4): ["_d"]
-
-* namespace/export-type-only/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Platform"]
-rebuilt        : ScopeId(0): []
 
 * namespace/mutable-fail/input.ts
 
@@ -1413,18 +1291,8 @@ rebuilt        : ScopeId(0): []
    `----
 
 
-* namespace/nested-namespace/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["B", "G", "_A"]
-rebuilt        : ScopeId(1): ["G", "_A"]
-
 * optimize-const-enums/custom-values-exported/input.ts
 x Output mismatch
-
-* optimize-const-enums/declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
 
 * optimize-const-enums/export-const-enum/input.ts
 x Output mismatch
@@ -1437,11 +1305,6 @@ x Output mismatch
 
 * optimize-const-enums/exported/input.ts
 x Output mismatch
-
-* optimize-const-enums/merged/input.ts
-Symbol redeclarations mismatch for "A":
-after transform: SymbolId(0): [Span { start: 11, end: 12 }, Span { start: 36, end: 37 }]
-rebuilt        : SymbolId(0): []
 
 * optimize-const-enums/merged-exported/input.ts
 x Output mismatch
