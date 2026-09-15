@@ -373,6 +373,15 @@ impl<'a> AssignmentLike<'a, '_> {
     }
 
     fn write_right(&self, f: &mut JsFormatter<'_, 'a>, layout: AssignmentLikeLayout) {
+        // `= // prettier-ignore` + newline: mark the right-hand side, see `Comments::mark_suppressed_after_operator`
+        let comments = f.comments();
+        if let Some(comment) = comments.printed_line_comment_after(self.left_end())
+            && comments.is_suppression_comment(comment)
+            && let Some(start) = self.right_start()
+        {
+            f.context_mut().comments_mut().mark_suppressed_after_operator(start);
+        }
+
         match self {
             Self::VariableDeclarator(declarator) => {
                 write!(f, [with_assignment_layout(declarator.init().unwrap(), Some(layout))]);
@@ -487,16 +496,26 @@ impl<'a> AssignmentLike<'a, '_> {
     /// Reads the unprinted view, so it runs after `write_left`.
     /// An alias-level union sees the same comment and hands its indent over (`alias_union_breaks_after_operator`).
     fn right_has_leading_alignable_block_comment(&self, f: &JsFormatter<'_, 'a>) -> bool {
-        let right_start = match self {
-            AssignmentLike::TSTypeAliasDeclaration(decl) => decl.type_annotation.span().start,
-            _ => match self.get_right_expression() {
-                Some(expr) => expr.span().start,
-                None => return false,
-            },
+        self.right_start().is_some_and(|right_start| {
+            f.comments()
+                .comments_before_iter(right_start)
+                .any(|comment| is_alignable_block_comment(comment, f.source_text()))
+        })
+    }
+
+    /// Start of the right-hand side: the value, the type annotation of a type alias.
+    /// Reads the inner nodes: the `AstNode` accessors (`init()`, `right()`, ...) allocate a wrapper per call.
+    fn right_start(&self) -> Option<u32> {
+        let span = match self {
+            AssignmentLike::VariableDeclarator(declarator) => declarator.init.as_ref()?.span(),
+            AssignmentLike::AssignmentExpression(assignment) => assignment.right.span(),
+            AssignmentLike::ObjectProperty(property) => property.value.span(),
+            AssignmentLike::BindingProperty(property) => property.value.span(),
+            AssignmentLike::PropertyDefinition(property) => property.value.as_ref()?.span(),
+            AssignmentLike::AccessorProperty(property) => property.value.as_ref()?.span(),
+            AssignmentLike::TSTypeAliasDeclaration(decl) => decl.type_annotation.span(),
         };
-        f.comments()
-            .comments_before_iter(right_start)
-            .any(|comment| is_alignable_block_comment(comment, f.source_text()))
+        Some(span.start)
     }
 
     fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
@@ -648,7 +667,7 @@ impl<'a> AssignmentLike<'a, '_> {
         let comments = f.context().comments();
         // `const a = // c`: the pending `line_suffix` must be followed by the break,
         // or it flushes past the right-hand side
-        if comments.has_printed_line_comment_after(self.left_end()) {
+        if comments.printed_line_comment_after(self.left_end()).is_some() {
             return true;
         }
         if let Some(right_expression) = right_expression {
@@ -895,7 +914,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
                     self,
                     AssignmentLike::TSTypeAliasDeclaration(decl)
                         if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
-                ) || f.context().comments().has_printed_line_comment_after(self.left_end());
+                ) || f.context().comments().printed_line_comment_after(self.left_end()).is_some();
 
             let inner_content = format_with(|f| {
                 if matches!(&layout, AssignmentLikeLayout::BreakLeftHandSide) {

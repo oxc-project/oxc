@@ -146,7 +146,7 @@ The `as`/`satisfies` operator gap follows the same policy (`as_or_satisfies_expr
   `=`/`:` reach the same outputs through `AssignmentLike` (DIVERGENCES.md#eol-comment-after-assign-colon);
   the head-body `write_*` helpers split on `preceded_by_newline` alone and do not promote
 - a union type claims the after-operator comments itself and breaks + indents for them (`union_type.rs`, the same placement as after a type alias's `=`);
-  the operator side breaks only for a riding line comment before the operator, and the union then hands its indent over (`Comments::has_printed_line_comment_after`)
+  the operator side breaks only for a riding line comment before the operator, and the union then hands its indent over (`Comments::printed_line_comment_after`)
 
 Implemented by the `write_*` helpers in `utils/statement_body.rs` and `FormatParenHeadExpression` (`print/mod.rs`);
 their rustdocs cover how the head's generic trailing pass is kept from claiming the gap.
@@ -156,7 +156,10 @@ their rustdocs cover how the head's generic trailing pass is kept from claiming 
 A suppression comment protects content; the token classes above still apply to what the node prints around it.
 
 - Target: a trailing suppression comment counts like a leading one for every node (`is_span_suppressed` in the generated `fmt`),
-  and the outermost node ending there claims it; a union leaves it to its member instead (Prettier's `handleUnionTypeComments`)
+  and the outermost node ending there claims it; a union claims only a leading one on its own line,
+  a trailing one or a leading one that ends its line goes to a member (`TSUnionType::write`, DIVERGENCES.md#union-suppression-line-ending-comment)
+- Placement and target are separate questions: a suppression line comment ending the `=` line (or a property's `:` line)
+  is the left side's trailing run and still targets the right-hand side (`Comments::mark_suppressed_after_operator`, DIVERGENCES.md#eol-suppression-after-assign-colon)
 - Statements and class members: content verbatim, terminator per `semi` (`write_suppressed_statement`, `FormatClassElementWithSemicolon`);
   a node without a terminator of its own prints its whole span.
   Prettier re-adds a statement's `;` only when the source had one and prints class members whole (DIVERGENCES.md#suppressed-terminator-per-semi)
@@ -183,6 +186,7 @@ Each row pairs a decision with the site that acts on it, on purpose. No assert c
 | `is_node_suppressed`: the import sorter's partition test ⇄ the printer                                                                                                                                        | a suppressed import is a boundary to one and not the other           |
 | `limit_comments_up_to` after `has_trailing_suppression_comment`                                                                                                                                               | the node loses its suppression                                       |
 | any site printing a statement outside the generated `Statement` fmt (an `if` consequent before `else`) asks `write_suppressed_statement` first                                                                | the generic verbatim path prints the source `;` regardless of `semi` |
+| `AssignmentLike::right_start` (the node `mark_suppressed_after_operator` keys on) ⇄ the `span().start` that node's `fmt` asks `is_suppressed` with (`TSUnionType::write` re-keys to its first member)         | the right-hand side after `= // prettier-ignore` is reformatted      |
 
 ### Open debts
 

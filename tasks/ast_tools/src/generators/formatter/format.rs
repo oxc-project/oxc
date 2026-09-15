@@ -49,10 +49,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
     &["TSUnionType", "ExpressionStatement"];
 
-// A trailing suppression comment counts like a leading one, and the outermost node ending there claims it.
-// A union leaves it to its member instead, like Prettier (`handleUnionTypeComments`); see `format_union_types`.
-const AST_NODE_WITHOUT_TRAILING_SUPPRESSION_LIST: &[&str] = &["TSUnionType"];
-
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -188,7 +184,8 @@ fn generate_struct_implementation(
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
+        // `JSXElement`, `JSXFragment` and `TSUnionType` implement suppression formatting in their formatting logic
+        // (a union decides between itself and its first member, see `TSUnionType::write`).
         // Statements are decided before their own `fmt`
         // (the `Statement` fmt below hands them to `write_suppressed_statement` first, which owns their terminator);
         // the two export kinds are skipped here as well because their ignored range starts at a pre-`export` decorator,
@@ -198,16 +195,11 @@ fn generate_struct_implementation(
             "Program"
                 | "JSXElement"
                 | "JSXFragment"
+                | "TSUnionType"
                 | "ExportDeclaration"
                 | "ExportDefaultDeclaration"
         ))
-        .then(|| {
-            if AST_NODE_WITHOUT_TRAILING_SUPPRESSION_LIST.contains(&struct_name) {
-                quote! { let is_suppressed = f.comments().is_suppressed(self.span().start); }
-            } else {
-                quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); }
-            }
-        });
+        .then(|| quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); });
 
         // Expression-shaped nodes (formatter parens + own comment printing) hand the whole suppressed sequence to one owner,
         // so the cast-target decision is made once while every comment is still unprinted (see `write_suppressed_expression`).
