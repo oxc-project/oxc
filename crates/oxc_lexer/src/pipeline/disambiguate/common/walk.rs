@@ -29,7 +29,7 @@ use core::cell::{Cell, RefCell};
 use crate::{
     opmap::OP_KIND_BASE,
     tables::is_word,
-    token::{KW_BASE, KW_MAX, tk},
+    token::{KW_KIND_BASE, KW_KIND_MAX, tk},
 };
 
 use super::super::super::bitmap::{bm_next1, bm_prev1};
@@ -360,7 +360,7 @@ pub unsafe fn bm_prev_sig(st: *const u64, kind: *const u8, pos: usize) -> i64 {
 #[inline(always)]
 pub unsafe fn kind_at(kind: *const u8, w: usize) -> u8 {
     let k = *kind.add(w);
-    if k >= KW_BASE && k <= KW_MAX {
+    if k >= KW_KIND_BASE && k <= KW_KIND_MAX {
         return tk!(Ident);
     }
     if k == tk!(IdentEscaped) || k == tk!(PrivateIdentEscaped) {

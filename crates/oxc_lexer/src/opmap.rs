@@ -12,7 +12,6 @@ use crate::token::{TokenKind, tk};
 
 pub const KW_COUNT_JS: usize = 46;
 pub const KW_COUNT_TS: usize = 81;
-pub const KW_KIND_BASE: u8 = crate::token::KW_BASE;
 
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to IDENT (contextual, never keywords at lex time) but
